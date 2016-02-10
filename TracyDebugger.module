@@ -1,0 +1,164 @@
+<?php
+
+/**
+ * Processwire module for running the Tracy debugger from Nette.
+ * by Adrian Jones
+ *
+ * ProcessWire 2.x
+ * Copyright (C) 2011 by Ryan Cramer
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ *
+ * http://www.processwire.com
+ * http://www.ryancramer.com
+ *
+ */
+
+use Tracy\Debugger;
+
+class TracyDebugger extends WireData implements Module, ConfigurableModule {
+
+    /**
+     * Basic information about module
+     */
+    public static function getModuleInfo() {
+        return array(
+            'title' => 'Tracy Debugger',
+            'summary' => 'Tracy debugger from Nette.',
+            'href' => '',
+            'version' => 1,
+            'autoload' => true,
+            'singular' => true,
+            'icon' => 'bug'
+        );
+    }
+
+
+    /**
+     * Data as used by the get/set functions
+     *
+     */
+    protected $data = array();
+
+
+   /**
+     * Default configuration for module
+     *
+     */
+    static public function getDefaultData() {
+            return array(
+                "enabled" => 1,
+                "showDebugBar" => 1,
+                "strictMode" => null,
+                "outputMode" => 'detect',
+                "email" => ''
+            );
+    }
+
+
+    /**
+     * Populate the default config data
+     *
+     */
+    public function __construct() {
+       foreach(self::getDefaultData() as $key => $value) {
+               $this->$key = $value;
+       }
+    }
+
+
+    /**
+     * Initialize the module and setup hooks
+     */
+    public function init() {
+
+        if(!$this->data['enabled']) return;
+
+        require $this->wire('config')->paths->siteModules.'TracyDebugger/tracy/src/tracy.php';
+
+        if($this->data['outputMode'] == 'production') {
+            $outputMode = Debugger::PRODUCTION;
+        }
+        elseif($this->data['outputMode'] == 'development') {
+            $outputMode = Debugger::DEVELOPMENT;
+        }
+        else {
+            $outputMode = Debugger::DETECT;
+        }
+
+        $logFolder = $this->wire('config')->paths->logs.'/tracy';
+        if(!is_dir($logFolder)) wireMkdir($logFolder);
+
+        Debugger::enable($outputMode, $logFolder, $this->data['email']);
+
+        $this->data['showDebugBar'] ? Debugger::$showBar = TRUE : Debugger::$showBar = FALSE;
+        $this->data['strictMode'] ? Debugger::$strictMode = TRUE : Debugger::$strictMode = FALSE;
+
+        //if($this->data['email']) Debugger::$email = $this->data['email'];
+
+        //Debugger::$scream = TRUE;
+
+        //if($this->data['logSeverity']) Debugger::$logSeverity = E_NOTICE | E_WARNING;
+
+    }
+
+
+    /**
+     * Return an InputfieldsWrapper of Inputfields used to configure the class
+     *
+     * @param array $data Array of config values indexed by field name
+     * @return InputfieldsWrapper
+     *
+     */
+    public static function getModuleConfigInputfields(array $data) {
+
+        $data = array_merge(self::getDefaultData(), $data);
+
+        $wrapper = new InputfieldWrapper();
+
+        $f = wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'enabled');
+        $f->label = __('Enable Tracy Debugger', __FILE__);
+        $f->description = __('Uncheck to disable the Tracy Debugger.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['enabled'] == '1' ? 'checked' : '' );
+        $wrapper->add($f);
+
+        $f = wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'showDebugBar');
+        $f->label = __('Show Debug Bar', __FILE__);
+        $f->description = __('Uncheck to hide the debug bar.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['showDebugBar'] == '1' ? 'checked' : '' );
+        $wrapper->add($f);
+
+        $f = wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'strictMode');
+        $f->label = __('Strict Mode', __FILE__);
+        $f->description = __('Check to enable strict mode.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['strictMode'] == '1' ? 'checked' : '' );
+        $wrapper->add($f);
+
+        $f = wire('modules')->get("InputfieldSelect");
+        $f->attr('name', 'outputMode');
+        $f->label = 'Output Mode';
+        $f->description = __('The DETECT option automatically switches from DEVELOPMENT to PRODUCTION mode based on whether the IP of the site is publicly accessible or not.', __FILE__);
+        $f->columnWidth = 50;
+        $f->required = true;
+        $f->addOption('detect', 'DETECT');
+        $f->addOption('development', 'DEVELOPMENT');
+        $f->addOption('production', 'PRODUCTION');
+        if($data['outputMode']) $f->attr('value', $data['outputMode']);
+        $wrapper->add($f);
+
+        $f = wire('modules')->get("InputfieldEmail");
+        $f->attr('name', 'email');
+        $f->label = __('Email for error logs', __FILE__);
+        $f->description = __('This email address will receive notification of errors.', __FILE__);
+        if($data['email']) $f->attr('value', $data['email']);
+        $wrapper->add($f);
+
+        return $wrapper;
+    }
+
+}
