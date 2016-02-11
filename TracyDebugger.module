@@ -25,7 +25,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => '',
-            'version' => 1,
+            'version' => 2,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -127,6 +127,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'showDebugBar');
         $f->label = __('Show Debug Bar', __FILE__);
         $f->description = __('Uncheck to hide the debug bar.', __FILE__);
+        $f->showIf = "enabled=1";
         $f->columnWidth = 50;
         $f->attr('checked', $data['showDebugBar'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
@@ -135,6 +136,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'strictMode');
         $f->label = __('Strict Mode', __FILE__);
         $f->description = __('Check to enable strict mode.', __FILE__);
+        $f->showIf = "enabled=1";
         $f->columnWidth = 50;
         $f->attr('checked', $data['strictMode'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
@@ -143,6 +145,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'outputMode');
         $f->label = 'Output Mode';
         $f->description = __('The DETECT option automatically switches from DEVELOPMENT to PRODUCTION mode based on whether the IP of the site is publicly accessible or not.', __FILE__);
+        $f->showIf = "enabled=1";
         $f->columnWidth = 50;
         $f->required = true;
         $f->addOption('detect', 'DETECT');
@@ -155,10 +158,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'email');
         $f->label = __('Email for error logs', __FILE__);
         $f->description = __('This email address will receive notification of errors.', __FILE__);
+        $f->showIf = "enabled=1";
         if($data['email']) $f->attr('value', $data['email']);
         $wrapper->add($f);
 
         return $wrapper;
     }
 
+}
+
+/**
+ * Various helper methods
+ */
+
+function barDump($var, $title = NULL, array $options = NULL) {
+    return Debugger::barDump($var, $title, $options);
 }
