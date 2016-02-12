@@ -197,8 +197,8 @@ class Logger implements ILogger
 				'body' => $this->formatMessage($message) . "\n\nsource: " . Helpers::getSource(),
 			)
 		);
-		echo Debugger::dump('email:'.$email);
-		wireMail($email, $parts['subject'], $parts['body'], $parts['headers']);
+
+		mail($email, $parts['subject'], $parts['body'], $parts['headers']);
 	}
 
 }
