@@ -20,13 +20,14 @@ Includes config settings for a variety of Tracy options.
 A custom ProcessWire panel in the debug bar provides all the information from the PW admin
 debug tools, as well a tree version of the current Page object.
 
-Additionally, content can be dumped to the page via dump() or to the debug bar via barDump() from
-PW template files. eg.
+Additionally, content can be dumped to the page via TD::dump() or to the debug bar via TD::barDump(),
+or sent via TD::log() to site/assets/logs/tracy/info.log from PW template files. eg.
 
 ```
-barDump($page, 'Current Page');
-barDump($page->body, 'Body Field');
-dump($page);
+TD::barDump($page, 'Current Page');
+TD::barDump($page->body, 'Body Field');
+TD::dump($page);
+TD::log('Log Message');
 ```
 
 ## License

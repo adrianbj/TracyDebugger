@@ -11,9 +11,14 @@
  * http://www.processwire.com
  * http://www.ryancramer.com
  *
+ *
+ * A big thanks to Roland Toth (https://github.com/rolandtoth/) for the idea for this module
+ * and for significant feedback, testing, and feature suggestions.
+ *
  */
 
 use Tracy\Debugger;
+use Tracy\ILogger;
 
 class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
@@ -25,7 +30,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => '',
-            'version' => 5,
+            'version' => 6,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -188,10 +193,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
  * don't get a undefined function error when calling these from a template file.
  */
 
-function barDump($var, $title = NULL, array $options = NULL) {
-    if(class_exists('\Tracy\Debugger')) return Debugger::barDump($var, $title, $options);
-}
+class TD {
+    public static function barDump($var, $title = NULL, array $options = NULL) {
+        if(class_exists('\Tracy\Debugger')) return Debugger::barDump($var, $title, $options);
+    }
 
-function dump($var, $return = FALSE) {
-    if(class_exists('\Tracy\Debugger')) return Debugger::dump($var, $return);
+    public static function dump($var, array $options = NULL) {
+        if(class_exists('\Tracy\Debugger')) return Debugger::dump($var, $options);
+    }
+
+    public static function log($message, $priority = ILogger::INFO) {
+        if(class_exists('\Tracy\Debugger')) return Debugger::log($message, $priority);
+    }
 }
