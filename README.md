@@ -3,9 +3,31 @@ Tracy Debugger
 
 Processwire module for running the Tracy debugger from Nette (https://tracy.nette.org/).
 
+### About Tracy
+
+Tracy library is a useful helper for everyday PHP programmers. It helps you to:
+
+* quickly detect and correct errors with an expandable call stack tree
+* log errors (and optionally receive emails when an error occurs)
+* dump variables
+* measure execution time of scripts/queries
+* see memory consumption
+
+### Module features
+
 Includes config settings for a variety of Tracy options.
 
-More details coming soon.
+A custom ProcessWire panel in the debug bar provides all the information from the PW admin
+debug tools, as well a tree version of the current Page object.
+
+Additionally, content can be dumped to the page via dump() or to the debug bar via barDump() from
+PW template files. eg.
+
+```
+barDump($page, 'Current Page');
+barDump($page->body, 'Body Field');
+dump($page);
+```
 
 ## License
 

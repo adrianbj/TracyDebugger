@@ -73,7 +73,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if(!wire('user')->isSuperuser() || !$this->data['enabled']) return;
 
         require_once './tracy/src/tracy.php';
-        require_once './processwire_panel.inc';
+        require_once './ProcesswirePanel.inc';
 
         if($this->data['outputMode'] == 'production') {
             $outputMode = Debugger::PRODUCTION;
