@@ -18,7 +18,6 @@
  */
 
 use Tracy\Debugger;
-use Tracy\ILogger;
 
 class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
@@ -30,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => '',
-            'version' => 6,
+            'version' => 7,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -53,10 +52,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             return array(
                 "enabled" => 1,
                 "strictMode" => null,
+                "forceScream" => null,
                 "outputMode" => 'detect',
+                "showLocation" => array(),
                 "showDebugBar" => 1,
                 "showPWPanel" => 1,
-                "email" => ''
+                "email" => '',
+                "clearEmailSent" => null
             );
     }
 
@@ -93,21 +95,26 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $logFolder = $this->wire('config')->paths->logs.'tracy';
         if(!is_dir($logFolder)) wireMkdir($logFolder);
 
-        Debugger::enable($outputMode, $logFolder, $this->data['email']);
+        Debugger::enable($outputMode, $logFolder, $this->data['email'] != '' ? $this->data['email'] : null);
 
-        $this->data['showDebugBar'] ? Debugger::$showBar = TRUE : Debugger::$showBar = FALSE;
-        $this->data['strictMode'] ? Debugger::$strictMode = TRUE : Debugger::$strictMode = FALSE;
+        //convert checked location strings to constants and array_reduce to bitwise OR (|) line
+        $locations = array_map('constant', $this->data['showLocation']);
+        Debugger::$showLocation = array_reduce($locations, function($a, $b) { return $a | $b; }, 0);
+
+        Debugger::$strictMode = $this->data['strictMode'] ? TRUE : FALSE;
+
+        // TODO - waiting on feedback from here (https://forum.nette.org/en/25569-strict-and-scream-modes-together#p169933) before implementing
+        //Debugger::$scream = $this->data['forceScream'] ? TRUE : FALSE;
+
+        // TODO - doesn't seem to make a difference - need to investigate further
+        //Debugger::$logSeverity = E_NOTICE | E_WARNING;
+
+        Debugger::$showBar = $this->data['showDebugBar'] ? TRUE : FALSE;
 
         if($this->data['showPWPanel']) {
             require_once './ProcesswirePanel.inc';
             Debugger::getBar()->addPanel(new ProcessWirePanel);
         }
-
-        //if($this->data['email']) Debugger::$email = $this->data['email'];
-
-        //Debugger::$scream = TRUE;
-
-        //if($this->data['logSeverity']) Debugger::$logSeverity = E_NOTICE | E_WARNING;
 
     }
 
@@ -120,6 +127,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     public static function getModuleConfigInputfields(array $data) {
+
+        if(wire('input')->post->clearEmailSent) {
+            $emailSentPath = wire('config')->paths->logs.'tracy/email-sent';
+            if(file_exists($emailSentPath)) {
+                $removed = unlink($emailSentPath);
+            }
+            if (!isset($removed) || !$removed) wire()->error( __('No file to remove'));
+            else wire()->message(__("email-sent file deleted successfully"));
+        }
 
         $data = array_merge(self::getDefaultData(), $data);
 
@@ -135,23 +151,48 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'strictMode');
         $f->label = __('Strict Mode', __FILE__);
-        $f->description = __('Check to enable strict mode.', __FILE__);
+        $f->description = __('Check to enable strict mode which displays notices and warnings like errors.', __FILE__);
         $f->showIf = "enabled=1";
-        $f->columnWidth = 50;
+        $f->columnWidth = 33;
         $f->attr('checked', $data['strictMode'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
+
+// TODO - waiting on feedback from here (https://forum.nette.org/en/25569-strict-and-scream-modes-together#p169933) before implementing
+/*
+        $f = wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'forceScream');
+        $f->label = __('Force Scream', __FILE__);
+        $f->description = __('Check to force "scream" of mode which disables the @ (shut-up) operator so that notices and warnings are no longer hidden.', __FILE__);
+        $f->showIf = "enabled=1";
+        $f->columnWidth = 33;
+        $f->attr('checked', $data['forceScream'] == '1' ? 'checked' : '' );
+        $wrapper->add($f);
+*/
 
         $f = wire('modules')->get("InputfieldSelect");
         $f->attr('name', 'outputMode');
         $f->label = 'Output Mode';
         $f->description = __('The DETECT option automatically switches from DEVELOPMENT to PRODUCTION mode based on whether the IP of the site is publicly accessible or not.', __FILE__);
         $f->showIf = "enabled=1";
-        $f->columnWidth = 50;
+        $f->columnWidth = 34;
         $f->required = true;
         $f->addOption('detect', 'DETECT');
         $f->addOption('development', 'DEVELOPMENT');
         $f->addOption('production', 'PRODUCTION');
         if($data['outputMode']) $f->attr('value', $data['outputMode']);
+        $wrapper->add($f);
+
+        $f = wire('modules')->get("InputfieldCheckboxes");
+        $f->attr('name', 'showLocation');
+        $f->label = 'Show Location';
+        $f->description = __('Shows the location of a dump() call in various ways. For details, read the $showLocation section below here: https://doc.nette.org/en/2.3/debugging#toc-variables-dumping', __FILE__);
+        $f->notes = __('The shown location information will only be accurate if you use "Tracy\Debugger::" rather than "TD::" calls. For pros and cons of each, please read the ReadMe for this module at: https://github.com/adrianbj/TracyDebugger');
+        $f->showIf = "enabled=1";
+        $f->columnWidth = 33;
+        $f->addOption('Tracy\Dumper::LOCATION_SOURCE', 'LOCATION_SOURCE');
+        $f->addOption('Tracy\Dumper::LOCATION_LINK', 'LOCATION_LINK');
+        $f->addOption('Tracy\Dumper::LOCATION_CLASS', 'LOCATION_CLASS');
+        if($data['showLocation']) $f->attr('value', $data['showLocation']);
         $wrapper->add($f);
 
         $f = wire('modules')->get("InputfieldCheckbox");
@@ -177,7 +218,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Email for error logs', __FILE__);
         $f->description = __('This email address will receive notification of errors.', __FILE__);
         $f->showIf = "enabled=1";
+        $f->columnWidth = 66;
         if($data['email']) $f->attr('value', $data['email']);
+        $wrapper->add($f);
+
+        $f = wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'clearEmailSent');
+        $f->label = __('Clear Email Sent Flag', __FILE__);
+        $f->description = __('Check and save settings to remove the "email-sent" file so that you will start receiving new error emails.', __FILE__);
+        $f->showIf = "enabled=1, email!=''";
+        $f->columnWidth = 34;
         $wrapper->add($f);
 
         return $wrapper;
@@ -202,7 +252,7 @@ class TD {
         if(class_exists('\Tracy\Debugger')) return Debugger::dump($var, $options);
     }
 
-    public static function log($message, $priority = ILogger::INFO) {
+    public static function log($message, $priority = Debugger::INFO) {
         if(class_exists('\Tracy\Debugger')) return Debugger::log($message, $priority);
     }
 }

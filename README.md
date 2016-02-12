@@ -8,7 +8,7 @@ Processwire module for running the Tracy debugger from Nette (https://tracy.nett
 Tracy library is a useful helper for everyday PHP programmers. It helps you to:
 
 * quickly detect and correct errors with an expandable call stack tree
-* log errors (and optionally receive emails when an error occurs)
+* log errors (and optionally receive emails when an error occurs in production mode)
 * dump variables
 * measure execution time of scripts/queries
 * see memory consumption
@@ -21,7 +21,7 @@ A custom ProcessWire panel in the debug bar provides all the information from th
 debug tools, as well a tree version of the current Page object.
 
 Additionally, content can be dumped to the page via TD::dump() or to the debug bar via TD::barDump(),
-or sent via TD::log() to site/assets/logs/tracy/info.log from PW template files. eg.
+or logged via TD::log() from PW template files. eg.
 
 ```
 TD::barDump($page, 'Current Page');
@@ -29,6 +29,27 @@ TD::barDump($page->body, 'Body Field');
 TD::dump($page);
 TD::log('Log Message');
 ```
+
+By default, manually logged content is sent to: /site/assets/logs/tracy/info.log,
+but you can specify an optional second parameter to one of the following:
+'debug', 'info', 'warning', 'error', 'exception', 'critical' files.
+
+eg. `TD::log('Log Message', 'debug');` which will put the message in the debug.info file.
+
+##### Alternate Syntax
+
+You can also call the methods directly via Tracy\Debugger, eg.
+```
+Tracy\Debugger::dump('Dump Content');
+```
+###### Advantages
+* You can access any of the built-in Tracy methods, even if they haven't beeen implemented in this module, eg `Tracy\Debugger::timer()`
+* The location from where the dump() method was called will be correct, rather than referencing a line in this module.
+
+###### Disadvantages
+* Longer to type compared with TD::dump('Dump Content');
+* Non superusers will get a `Error: Class 'Tracy\Debugger' not found` error message because the module, and hence the Tracy library is not loaded for them.
+
 
 ## License
 
