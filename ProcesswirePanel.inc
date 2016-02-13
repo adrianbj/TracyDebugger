@@ -60,24 +60,76 @@ class ProcessWirePanel implements IBarPanel {
          * Custom PW panel sections
          */
 
-        // Current Page Object
-        $currentPageObject = Dumper::toHtml(wire('page'));
+        if(wire('page') && wire('page')->process != 'ProcessPageEdit' && wire('page')->process != 'ProcessPageList') {
 
-        // Current Page Fields List
-        $currentPageFieldsList = $this->sectionHeader(array('ID', 'Name', 'Label', 'Type'));
-        foreach(wire('page')->fields as $f) {
-            $currentPageFieldsList .= "\n<tr>" .
-                "<td>$f->id</td>" .
-                '<td><a href="'.wire('config')->urls->admin.'setup/field/edit?id='.$f->id.'" target="_blank">'.$f->name.'</a></td>' .
-                "<td>$f->label</td>" .
-                "<td>$f->type</td>" .
-                "</tr>";
+            // Page info
+            $currentPageInfo = '
+            <table>
+                <tr>
+                    <th>Title</th>
+                    <td>'.wire('page')->title.'</td>
+                </tr>
+                <tr>
+                    <th>Name</th>
+                    <td><a href="'.wire('config')->urls->admin.'page/edit?id='.wire('page')->id.'" target="_blank">'.wire('page')->name.'</a></td>
+                </tr>
+                <tr>
+                    <th>ID</th>
+                    <td>'.wire('page')->id.'</td>
+                </tr>
+                <tr>
+                    <th>Template</th>
+                    <td><a href="'.wire('config')->urls->admin.'setup/template/edit?id='.wire('page')->template->id.'" target="_blank">'.wire('page')->template->name.'</td>
+                </tr>
+                <tr>
+                    <th>Children</th>
+                    <td><a href="'.wire('config')->urls->admin.'page/list/?open='.wire('page')->id.'" target="_blank">'.wire('page')->numChildren().'</a></td>
+                </tr>
+                <tr>
+                    <th>Created</th>
+                    <td>'.date("Y-m-d H:i:s", wire('page')->created).'</td>
+                </tr>
+                <tr>
+                    <th>Modified</th>
+                    <td>'.date("Y-m-d H:i:s", wire('page')->modified).'</td>
+                </tr>
+                <tr>
+                    <th>Created by</th>
+                    <td>'.wire('page')->createdUser->name.'</td>
+                </tr>
+                <tr>
+                    <th>Modified by</th>
+                    <td>'.wire('page')->modifiedUser->name.'</td>
+                </tr>
+                <tr>
+                    <th>Hidden</th>
+                    <td>'. (wire('page')->isHidden() ? "true" : "false") .'</td>
+                </tr>
+                <tr>
+                    <th>Unpublished</th>
+                    <td>'. (wire('page')->isUnpublished() ? "true" : "false") .'</td>
+                </tr>
+            </table>';
+
+            // Current Page Object
+            $currentPageObject = Dumper::toHtml(wire('page'));
+
+            // Current Page Fields List
+            $currentPageFieldsList = $this->sectionHeader(array('ID', 'Name', 'Label', 'Type'));
+            foreach(wire('page')->fields as $f) {
+                $currentPageFieldsList .= "\n<tr>" .
+                    "<td>$f->id</td>" .
+                    '<td><a href="'.wire('config')->urls->admin.'setup/field/edit?id='.$f->id.'" target="_blank">'.$f->name.'</a></td>' .
+                    "<td>$f->label</td>" .
+                    "<td>$f->type</td>" .
+                    "</tr>";
+            }
+            $currentPageFieldsList .= $sectionEnd;
+
+            // Current Page Fields Object
+            $currentPageFieldsObject = Dumper::toHtml(wire('page')->fields);
+
         }
-        $currentPageFieldsList .= $sectionEnd;
-
-        // Current Page Fields Object
-        $currentPageFieldsObject = Dumper::toHtml(wire('page')->fields);
-
 
         // Pages Loaded
         $pagesInfo = $this->sectionHeader(array('ID', 'Path', 'Type', 'Loader'));
@@ -222,16 +274,23 @@ class ProcessWirePanel implements IBarPanel {
         $autoload .= $sectionEnd;
 
         // Load all the panel sections
-        $out = '
-        <a href="#" rel="#current-page-object" class="tracy-toggle tracy-collapsed">Current Page Object</a>
-        <div id="current-page-object" class="tracy-collapsed">'.$currentPageObject.'</div><br />
+        $out = '';
+        if(wire('page') && wire('page')->process != 'ProcessPageEdit' && wire('page')->process != 'ProcessPageList') {
+            $out .= '
+            <a href="#" rel="#current-page-info" class="tracy-toggle tracy-collapsed">Current Page Info</a>
+            <div id="current-page-info" class="tracy-collapsed">'.$currentPageInfo.'</div><br />
 
-        <a href="#" rel="#current-page-fields-list" class="tracy-toggle tracy-collapsed">Current Page Fields List</a>
-        <div id="current-page-fields-list" class="tracy-collapsed">'.$currentPageFieldsList.'</div><br />
+            <a href="#" rel="#current-page-object" class="tracy-toggle tracy-collapsed">Current Page Object</a>
+            <div id="current-page-object" class="tracy-collapsed">'.$currentPageObject.'</div><br />
 
-        <a href="#" rel="#current-page-fields-object" class="tracy-toggle tracy-collapsed">Current Page Fields Object</a>
-        <div id="current-page-fields-object" class="tracy-collapsed">'.$currentPageFieldsObject.'</div><br />
+            <a href="#" rel="#current-page-fields-list" class="tracy-toggle tracy-collapsed">Current Page Fields List</a>
+            <div id="current-page-fields-list" class="tracy-collapsed">'.$currentPageFieldsList.'</div><br />
 
+            <a href="#" rel="#current-page-fields-object" class="tracy-toggle tracy-collapsed">Current Page Fields Object</a>
+            <div id="current-page-fields-object" class="tracy-collapsed">'.$currentPageFieldsObject.'</div><br />';
+        }
+
+        $out .= '
         <a href="#" rel="#pages-loaded" class="tracy-toggle tracy-collapsed">Pages Loaded</a>
         <div id="pages-loaded" class="tracy-collapsed">'.$pagesInfo.'</div><br />
 
