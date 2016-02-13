@@ -60,8 +60,24 @@ class ProcessWirePanel implements IBarPanel {
          * Custom PW panel sections
          */
 
-        // Current Page
-        $currentPage = Dumper::toHtml(wire('page'));
+        // Current Page Object
+        $currentPageObject = Dumper::toHtml(wire('page'));
+
+        // Current Page Fields List
+        $currentPageFieldsList = $this->sectionHeader(array('ID', 'Name', 'Label', 'Type'));
+        foreach(wire('page')->fields as $f) {
+            $currentPageFieldsList .= "\n<tr>" .
+                "<td>$f->id</td>" .
+                '<td><a href="'.wire('config')->urls->admin.'setup/field/edit?id='.$f->id.'" target="_blank">'.$f->name.'</a></td>' .
+                "<td>$f->label</td>" .
+                "<td>$f->type</td>" .
+                "</tr>";
+        }
+        $currentPageFieldsList .= $sectionEnd;
+
+        // Current Page Fields Object
+        $currentPageFieldsObject = Dumper::toHtml(wire('page')->fields);
+
 
         // Pages Loaded
         $pagesInfo = $this->sectionHeader(array('ID', 'Path', 'Type', 'Loader'));
@@ -207,8 +223,14 @@ class ProcessWirePanel implements IBarPanel {
 
         // Load all the panel sections
         $out = '
-        <a href="#" rel="#current-page" class="tracy-toggle tracy-collapsed">Current Page</a>
-        <div id="current-page" class="tracy-collapsed">'.$currentPage.'</div><br />
+        <a href="#" rel="#current-page-object" class="tracy-toggle tracy-collapsed">Current Page Object</a>
+        <div id="current-page-object" class="tracy-collapsed">'.$currentPageObject.'</div><br />
+
+        <a href="#" rel="#current-page-fields-list" class="tracy-toggle tracy-collapsed">Current Page Fields List</a>
+        <div id="current-page-fields-list" class="tracy-collapsed">'.$currentPageFieldsList.'</div><br />
+
+        <a href="#" rel="#current-page-fields-object" class="tracy-toggle tracy-collapsed">Current Page Fields Object</a>
+        <div id="current-page-fields-object" class="tracy-collapsed">'.$currentPageFieldsObject.'</div><br />
 
         <a href="#" rel="#pages-loaded" class="tracy-toggle tracy-collapsed">Pages Loaded</a>
         <div id="pages-loaded" class="tracy-collapsed">'.$pagesInfo.'</div><br />
