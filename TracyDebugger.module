@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 10,
+            'version' => 11,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -103,8 +103,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         Debugger::$strictMode = $this->data['strictMode'] ? TRUE : FALSE;
 
-        // TODO - waiting on feedback from here (https://forum.nette.org/en/25569-strict-and-scream-modes-together#p169933) before implementing
-        //Debugger::$scream = $this->data['forceScream'] ? TRUE : FALSE;
+        Debugger::$scream = $this->data['forceScream'] ? TRUE : FALSE;
 
         // TODO - doesn't seem to make a difference - need to investigate further
         //Debugger::$logSeverity = E_NOTICE | E_WARNING;
@@ -157,8 +156,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('checked', $data['strictMode'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
 
-// TODO - waiting on feedback from here (https://forum.nette.org/en/25569-strict-and-scream-modes-together#p169933) before implementing
-/*
         $f = wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'forceScream');
         $f->label = __('Force Scream', __FILE__);
@@ -167,7 +164,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->columnWidth = 33;
         $f->attr('checked', $data['forceScream'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
-*/
 
         $f = wire('modules')->get("InputfieldSelect");
         $f->attr('name', 'outputMode');
