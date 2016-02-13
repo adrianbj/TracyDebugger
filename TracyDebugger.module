@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 8,
+            'version' => 10,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -80,7 +80,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         if(!wire('user')->isSuperuser() || !$this->data['enabled']) return;
 
-        require_once './tracy/src/tracy.php';
+        require_once __DIR__ . '/tracy/src/tracy.php';
 
         if($this->data['outputMode'] == 'production') {
             $outputMode = Debugger::PRODUCTION;
@@ -112,7 +112,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         Debugger::$showBar = $this->data['showDebugBar'] ? TRUE : FALSE;
 
         if($this->data['showPWPanel']) {
-            require_once './ProcesswirePanel.inc';
+            require_once __DIR__ . '/ProcesswirePanel.inc';
             Debugger::getBar()->addPanel(new ProcessWirePanel);
         }
 
@@ -255,4 +255,16 @@ class TD {
     public static function log($message, $priority = Debugger::INFO) {
         if(class_exists('\Tracy\Debugger')) return Debugger::log($message, $priority);
     }
+}
+
+function bd() {
+    return call_user_func_array('TD::barDump', func_get_args());
+}
+
+function d() {
+    return call_user_func_array('TD::dump', func_get_args());
+}
+
+function l() {
+    return call_user_func_array('TD::log', func_get_args());
 }
