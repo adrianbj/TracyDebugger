@@ -28,8 +28,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         return array(
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
-            'href' => '',
-            'version' => 7,
+            'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
+            'version' => 8,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
