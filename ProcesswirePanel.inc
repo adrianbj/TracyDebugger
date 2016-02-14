@@ -51,10 +51,6 @@ class ProcessWirePanel implements IBarPanel {
                 </table>
             </div>';
 
-        // panel title
-        $out = '
-        <h1>ProcessWire Debug Info</h1>';
-
 
         /**
          * Custom PW panel sections
@@ -327,7 +323,7 @@ class ProcessWirePanel implements IBarPanel {
         $autoload .= $sectionEnd;
 
         // Load all the panel sections
-        $out = '';
+        $out = '<h1>ProcessWire Info</h1>';
         if(wire('page') && wire('page')->process != 'ProcessPageEdit' && wire('page')->process != 'ProcessPageList') {
             $out .= '
             <a href="#" rel="#current-page-info" class="tracy-toggle">Current Page Info</a>
