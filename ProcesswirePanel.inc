@@ -87,19 +87,15 @@ class ProcessWirePanel implements IBarPanel {
                 </tr>
                 <tr>
                     <th>Created</th>
-                    <td>'.date("Y-m-d H:i:s", wire('page')->created).'</td>
+                    <td>'.wire('page')->createdUser->name.' ('.date("Y-m-d H:i:s", wire('page')->created).')</td>
+                </tr>
+                <tr>
+                    <th>Published</th>
+                    <td>'.date("Y-m-d H:i:s", wire('page')->published).'</td>
                 </tr>
                 <tr>
                     <th>Modified</th>
-                    <td>'.date("Y-m-d H:i:s", wire('page')->modified).'</td>
-                </tr>
-                <tr>
-                    <th>Created by</th>
-                    <td>'.wire('page')->createdUser->name.'</td>
-                </tr>
-                <tr>
-                    <th>Modified by</th>
-                    <td>'.wire('page')->modifiedUser->name.'</td>
+                    <td>'.wire('page')->modifiedUser->name.' ('.date("Y-m-d H:i:s", wire('page')->modified).')</td>
                 </tr>
                 <tr>
                     <th>Hidden</th>
@@ -108,6 +104,10 @@ class ProcessWirePanel implements IBarPanel {
                 <tr>
                     <th>Unpublished</th>
                     <td>'. (wire('page')->isUnpublished() ? "true" : "false") .'</td>
+                </tr>
+                <tr>
+                    <th>Locked</th>
+                    <td>'. (wire('page')->is(Page::statusLocked) ? "true" : "false") .'</td>
                 </tr>
             </table>';
 
