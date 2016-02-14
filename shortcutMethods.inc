@@ -19,6 +19,11 @@ if(!function_exists('timer') && in_array('timer', $this->data['enabledShortcutMe
     }
 }
 
+if(!function_exists('fireLog') && in_array('fireLog', $this->data['enabledShortcutMethods'])) {
+    function fireLog() {
+        return call_user_func_array('TD::fireLog', func_get_args());
+    }
+}
 
 
 // really short alias methods for really lazy typists :)
@@ -46,3 +51,8 @@ if(!function_exists('t') && in_array('t', $this->data['enabledShortcutMethods'])
     }
 }
 
+if(!function_exists('fl') && in_array('fl', $this->data['enabledShortcutMethods'])) {
+    function fl() {
+        return call_user_func_array('TD::fireLog', func_get_args());
+    }
+}
