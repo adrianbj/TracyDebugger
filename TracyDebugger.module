@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 21,
+            'version' => 22,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -293,7 +293,15 @@ class TD {
     }
 
     public static function timer($name = NULL) {
-        if(class_exists('\Tracy\Debugger')) return round(Debugger::timer($name),4);
+        if(class_exists('\Tracy\Debugger')) {
+            $roundedTime = round(Debugger::timer($name),4);
+            if($name) {
+                return $name.' : '.$roundedTime;
+            }
+            else{
+                return $roundedTime;
+            }
+        }
     }
 
 }
