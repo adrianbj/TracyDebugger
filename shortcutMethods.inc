@@ -13,6 +13,14 @@ if(!function_exists('dump') && in_array('dump', $this->data['enabledShortcutMeth
     }
 }
 
+if(!function_exists('timer') && in_array('timer', $this->data['enabledShortcutMethods'])) {
+    function timer() {
+        return call_user_func_array('TD::timer', func_get_args());
+    }
+}
+
+
+
 // really short alias methods for really lazy typists :)
 if(!function_exists('bd') && in_array('bd', $this->data['enabledShortcutMethods'])) {
     function bd() {
@@ -29,6 +37,12 @@ if(!function_exists('d') && in_array('d', $this->data['enabledShortcutMethods'])
 if(!function_exists('l') && in_array('l', $this->data['enabledShortcutMethods'])) {
     function l() {
         return call_user_func_array('TD::log', func_get_args());
+    }
+}
+
+if(!function_exists('t') && in_array('t', $this->data['enabledShortcutMethods'])) {
+    function t() {
+        return call_user_func_array('TD::timer', func_get_args());
     }
 }
 

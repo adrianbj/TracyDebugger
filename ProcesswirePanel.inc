@@ -89,11 +89,22 @@ class ProcessWirePanel implements IBarPanel {
                 <tr>
                     <th>Parent</th>
                     <td><a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->parent->id.'" target="_blank">'.wire('page')->parent->name.'</a></td>
-                </tr>
-                <tr>
-                    <th>Siblings</th>
-                    <td><a href="'.wire('page')->prev->url.'">&lt; Prev</a> | <a href="'.wire('page')->next->url.'">Next &gt;</a></td>
-                </tr>
+                </tr>';
+                if(wire('page')->prev->id && wire('page')->prev->viewable()) {
+                    $currentPageInfo .= '
+                    <tr>
+                        <th>Prev Sibling</th>
+                        <td><a href="'.wire('page')->prev->url.'">&lt; '.wire('page')->prev->name.'</a></td>
+                    </tr>';
+                }
+                if(wire('page')->next->id && wire('page')->next->viewable()) {
+                    $currentPageInfo .= '
+                    <tr>
+                        <th>Next Sibling</th>
+                        <td><a href="'.wire('page')->next->url.'">'.wire('page')->next->name.' &gt;</a></td>
+                    </tr>';
+                }
+                $currentPageInfo .= '
                 <tr>
                     <th>Children</th>
                     <td><a href="'.wire('config')->urls->admin.'page/list/?open='.wire('page')->id.'" target="_blank">'.wire('page')->numChildren().'</a></td>

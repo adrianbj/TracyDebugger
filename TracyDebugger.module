@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 19,
+            'version' => 20,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -51,7 +51,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     static public function getDefaultData() {
             return array(
                 "enabled" => 1,
-                "loadTracyNonsuperusers" => null,
                 "strictMode" => null,
                 "forceScream" => null,
                 "outputMode" => 'detect',
@@ -61,7 +60,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "email" => '',
                 "clearEmailSent" => null,
                 "enableShortcutMethods" => 1,
-                "enabledShortcutMethods" => array('dump', 'd', 'barDump', 'bd', 'l')
+                "enabledShortcutMethods" => array('dump', 'd', 'barDump', 'bd', 'l', 'timer', 't')
             );
     }
 
@@ -83,9 +82,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         if(!$this->data['enabled']) return;
 
-        if($this->data['enableShortcutMethods']) require_once __DIR__ . '/shortcutMethods.inc';
+        if($this->data['enableShortcutMethods']) require_once __DIR__ . '/ShortcutMethods.inc';
 
-        if($this->data['loadTracyNonsuperusers'] || wire('user')->isSuperuser()) require_once __DIR__ . '/tracy/src/tracy.php';
+        // if not superuser then load dummy class to prevent "class not found" errors when
+        // calling \Tracy\Debugger::method() directly
+        if(wire('user')->isSuperuser()) {
+            require_once __DIR__ . '/tracy/src/tracy.php';
+        }
+        else {
+            require_once __DIR__ . '/DummyTracyDebuggerClass.inc';
+        }
 
         if(!wire('user')->isSuperuser()) return;
 
@@ -151,18 +157,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'enabled');
         $f->label = __('Enable Tracy Debugger', __FILE__);
         $f->description = __('Uncheck to disable the Tracy Debugger.', __FILE__);
-        $f->columnWidth = 50;
         $f->attr('checked', $data['enabled'] == '1' ? 'checked' : '' );
-        $wrapper->add($f);
-
-        $f = wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'loadTracyNonsuperusers');
-        $f->label = __('Load Tracy for Non-superusers', __FILE__);
-        $f->description = __('This will NOT show errors or the debug bar for anyone else. It just loads the Tracy library so that you can call Tracy methods directly, eg. `Tracy\Debugger::dump()` without non-superusers getting a "Fatal error: Class \'Tracy\Debugger\' not found" fatal error.', __FILE__);
-        $f->notes = __('The downside to this setting is that the library is loaded for everyone - while it may not be a significant increase in resources, it is still something, so in general I recommend leaving this unchecked.');
-        $f->showIf = "enabled=1";
-        $f->columnWidth = 50;
-        $f->attr('checked', $data['loadTracyNonsuperusers'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
 
         $f = wire('modules')->get("InputfieldCheckbox");
@@ -247,7 +242,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'enableShortcutMethods');
         $f->label = __('Enable Shortcut Methods', __FILE__);
-        $f->description = __('Uncheck to not define any of the shortcut methods. If you are not going to use these in your templates, unchecking means that they will not be defined which may reduce possible future name clashes. If in doubt, uncheck and use the full methods:'."\n".'TD:: dump()'."\n".'TD:: barDump()'."\n".'TD::log().', __FILE__);
+        $f->description = __('Uncheck to not define any of the shortcut methods. If you are not going to use these in your templates, unchecking means that they will not be defined which may reduce possible future name clashes. If in doubt, uncheck and use the full methods:'."\n".'TD:: dump()'."\n".'TD:: barDump()'."\n".'TD::log()'."\n".'TD:: timer()', __FILE__);
         $f->notes = __('If this, or one of the shortcut methods is not enabled, but is called in your templates, all users will get a "call to undefined function" fatal error, so please be aware when using the shortcut methods in your templates if they are not enabled here.', __FILE__);
         $f->showIf = "enabled=1";
         $f->columnWidth = 50;
@@ -266,6 +261,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->addOption('barDump', 'barDump() for TD::barDump()');
         $f->addOption('bd', 'bd() for TD::barDump()');
         $f->addOption('l', 'l() for TD::log()');
+        $f->addOption('timer', 'timer() for TD::timer()');
+        $f->addOption('t', 't() for TD::timer()');
         if($data['enabledShortcutMethods']) $f->attr('value', $data['enabledShortcutMethods']);
         $wrapper->add($f);
 
@@ -294,5 +291,10 @@ class TD {
     public static function log($message, $priority = Debugger::INFO) {
         if(class_exists('\Tracy\Debugger')) return Debugger::log($message, $priority);
     }
+
+    public static function timer($name = NULL) {
+        if(class_exists('\Tracy\Debugger')) return Debugger::timer($name);
+    }
+
 }
 
