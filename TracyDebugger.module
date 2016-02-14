@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 17,
+            'version' => 18,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -51,6 +51,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     static public function getDefaultData() {
             return array(
                 "enabled" => 1,
+                "loadTracyNonsuperusers" => null,
                 "strictMode" => null,
                 "forceScream" => null,
                 "outputMode" => 'detect',
@@ -84,9 +85,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         if($this->data['enableShortcutMethods']) require_once __DIR__ . '/shortcutMethods.inc';
 
-        if(!wire('user')->isSuperuser()) return;
+        if($this->data['loadTracyNonsuperusers'] || wire('user')->isSuperuser()) require_once __DIR__ . '/tracy/src/tracy.php';
 
-        require_once __DIR__ . '/tracy/src/tracy.php';
+        if(!wire('user')->isSuperuser()) return;
 
         if($this->data['outputMode'] == 'production') {
             $outputMode = Debugger::PRODUCTION;
@@ -150,7 +151,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'enabled');
         $f->label = __('Enable Tracy Debugger', __FILE__);
         $f->description = __('Uncheck to disable the Tracy Debugger.', __FILE__);
+        $f->columnWidth = 50;
         $f->attr('checked', $data['enabled'] == '1' ? 'checked' : '' );
+        $wrapper->add($f);
+
+        $f = wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'loadTracyNonsuperusers');
+        $f->label = __('Load Tracy for Non-superusers', __FILE__);
+        $f->description = __('This will NOT show errors or the debug bar for anyone else. It just loads the Tracy library so that you can call Tracy methods directly, eg. `Tracy\Debugger::dump()` without non-superusers getting a "Fatal error: Class \'Tracy\Debugger\' not found" fatal error.', __FILE__);
+        $f->notes = __('The downside to this setting is that the library is loaded for everyone - while it may not be a significant increase in resources, it is still something, so in general I recommend leaving this unchecked.');
+        $f->showIf = "enabled=1";
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['loadTracyNonsuperusers'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
 
         $f = wire('modules')->get("InputfieldCheckbox");

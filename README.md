@@ -43,12 +43,12 @@ You can also call the methods directly via Tracy\Debugger, eg.
 Tracy\Debugger::dump('Dump Content');
 ```
 ###### Advantages
-* You can access any of the built-in Tracy methods, even if they haven't beeen implemented in this module, eg `Tracy\Debugger::timer()`
+* You can access any of the built-in Tracy methods, even if they haven't been implemented in this module, eg. `Tracy\Debugger::timer()`
 * The location from where the dump() method was called will be correct, rather than referencing a line in this module.
 
 ###### Disadvantages
 * Longer to type compared with TD::dump('Dump Content');
-* Non superusers will get a `Error: Class 'Tracy\Debugger' not found` error message because the module, and hence the Tracy library is not loaded for them.
+* Non superusers will get a `Error: Class 'Tracy\Debugger' not found` error message because the Tracy library is not loaded for them.
 
 
 ## License
