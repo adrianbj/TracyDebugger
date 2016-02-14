@@ -32,6 +32,9 @@ TD::dump($page);
 
 TD::log('Log Message');
     Alias; l()
+
+TD::timer();
+    Alias; timer(), t()
 ```
 
 By default, manually logged content is sent to: /site/assets/logs/tracy/info.log,
@@ -44,15 +47,15 @@ eg. `TD::log('Log Message', 'debug');` which will put the message in the debug.i
 
 You can also call the methods directly via Tracy\Debugger, eg.
 ```
-Tracy\Debugger::dump('Dump Content');
+Tracy\Debugger::barDump('Dump Content');
 ```
 ###### Advantages
-* You can access any of the built-in Tracy methods, even if they haven't been implemented in this module, eg. `Tracy\Debugger::timer()`
 * The location from where the dump() method was called will be correct, rather than referencing a line in this module.
+* You can access any built-in Tracy methods, even if they haven't been implemented in this module yet.
+
 
 ###### Disadvantages
-* Longer to type compared with TD::dump('Dump Content');
-* Non superusers will get a `Error: Class 'Tracy\Debugger' not found` error message because the Tracy library is not loaded for them.
+* Longer to type `Tracy\Debugger::barDump('Dump Content')` compared with `bd('Dump Content')`
 
 
 ## License
