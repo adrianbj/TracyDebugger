@@ -71,7 +71,7 @@ class ProcessWirePanel implements IBarPanel {
                 </tr>
                 <tr>
                     <th>Name</th>
-                    <td><a href="'.wire('config')->urls->admin.'page/edit?id='.wire('page')->id.'" target="_blank">'.wire('page')->name.'</a></td>
+                    <td><a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->id.'" target="_blank">'.wire('page')->name.'</a></td>
                 </tr>
                 <tr>
                     <th>ID</th>
@@ -277,8 +277,8 @@ class ProcessWirePanel implements IBarPanel {
         $out = '';
         if(wire('page') && wire('page')->process != 'ProcessPageEdit' && wire('page')->process != 'ProcessPageList') {
             $out .= '
-            <a href="#" rel="#current-page-info" class="tracy-toggle tracy-collapsed">Current Page Info</a>
-            <div id="current-page-info" class="tracy-collapsed">'.$currentPageInfo.'</div><br />
+            <a href="#" rel="#current-page-info" class="tracy-toggle">Current Page Info</a>
+            <div id="current-page-info">'.$currentPageInfo.'</div><br />
 
             <a href="#" rel="#current-page-object" class="tracy-toggle tracy-collapsed">Current Page Object</a>
             <div id="current-page-object" class="tracy-collapsed">'.$currentPageObject.'</div><br />
