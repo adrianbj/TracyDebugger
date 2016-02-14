@@ -34,7 +34,7 @@ TD::log('Log Message');
     Alias; l()
 
 TD::timer();
-    Alias; timer(), t()
+    Aliases; timer(), t()
 ```
 
 By default, manually logged content is sent to: /site/assets/logs/tracy/info.log,
