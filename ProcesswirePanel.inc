@@ -78,8 +78,21 @@ class ProcessWirePanel implements IBarPanel {
                     <td>'.wire('page')->id.'</td>
                 </tr>
                 <tr>
+                <tr>
+                    <th>Path</th>
+                    <td>'.wire('page')->path.'</td>
+                </tr>
+                <tr>
                     <th>Template</th>
                     <td><a href="'.wire('config')->urls->admin.'setup/template/edit?id='.wire('page')->template->id.'" target="_blank">'.wire('page')->template->name.'</td>
+                </tr>
+                <tr>
+                    <th>Parent</th>
+                    <td><a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->parent->id.'" target="_blank">'.wire('page')->parent->name.'</a></td>
+                </tr>
+                <tr>
+                    <th>Siblings</th>
+                    <td><a href="'.wire('page')->prev->url.'">&lt; Prev</a> | <a href="'.wire('page')->next->url.'">Next &gt;</a></td>
                 </tr>
                 <tr>
                     <th>Children</th>
@@ -113,6 +126,35 @@ class ProcessWirePanel implements IBarPanel {
 
             // Current Page Object
             $currentPageObject = Dumper::toHtml(wire('page'));
+
+            // Template info
+            $currentTemplateInfo = '
+            <table>
+                <tr>
+                    <th>Label</th>
+                    <td>'.wire('page')->template->label.'</td>
+                </tr>
+                <tr>
+                    <th>Name</th>
+                    <td><a href="'.wire('config')->urls->admin.'setup/template/edit?id='.wire('page')->template->id.'" target="_blank">'.wire('page')->template->name.'</a></td>
+                </tr>
+                <tr>
+                    <th>ID</th>
+                    <td>'.wire('page')->template->id.'</td>
+                </tr>
+                <tr>
+                    <th>Filename</th>
+                    <td>'.str_replace(wire('config')->paths->root, '/', wire('page')->template->filename).'</td>
+                </tr>
+                <tr>
+                    <th>Page Numbers</th>
+                    <td>'.(wire('page')->template->allowPageNum ? 'Enabled' : 'Disabled').'</td>
+                </tr>
+                <tr>
+                    <th>URL Segments</th>
+                    <td>'.(wire('page')->template->urlSegments ? 'Enabled' : 'Disabled').'</td>
+                </tr>
+            </table>';
 
             // Current Page Fields List
             $currentPageFieldsList = $this->sectionHeader(array('ID', 'Name', 'Label', 'Type'));
@@ -282,6 +324,9 @@ class ProcessWirePanel implements IBarPanel {
 
             <a href="#" rel="#current-page-object" class="tracy-toggle tracy-collapsed">Current Page Object</a>
             <div id="current-page-object" class="tracy-collapsed">'.$currentPageObject.'</div><br />
+
+            <a href="#" rel="#current-template-info" class="tracy-toggle tracy-collapsed">Current Template Info</a>
+            <div id="current-template-info" class="tracy-collapsed">'.$currentTemplateInfo.'</div><br />
 
             <a href="#" rel="#current-page-fields-list" class="tracy-toggle tracy-collapsed">Current Page Fields List</a>
             <div id="current-page-fields-list" class="tracy-collapsed">'.$currentPageFieldsList.'</div><br />

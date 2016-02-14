@@ -25,9 +25,13 @@ or logged via TD::log() from PW template files. eg.
 
 ```
 TD::barDump($page, 'Current Page');
-TD::barDump($page->body, 'Body Field');
+   Aliases;  barDump(), bd()
+
 TD::dump($page);
+   Aliases; dump(), d()
+
 TD::log('Log Message');
+    Alias; l()
 ```
 
 By default, manually logged content is sent to: /site/assets/logs/tracy/info.log,
