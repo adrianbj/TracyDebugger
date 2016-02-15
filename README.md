@@ -47,6 +47,8 @@ but you can specify an optional second parameter to one of the following:
 eg. `TD::log('Log Message', 'debug');` which will put the message in the debug.info file.
 
 
+#### FireLog
+
 To make fireLog work, you need to add some browser extensions:
 
 Chrome:
