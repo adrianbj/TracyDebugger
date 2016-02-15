@@ -4,7 +4,7 @@
  * Processwire module for running the Tracy debugger from Nette.
  * by Adrian Jones
  *
- * ProcessWire 2.x
+ * ProcessWire 3.x
  * Copyright (C) 2011 by Ryan Cramer
  * Licensed under GNU/GPL v2, see LICENSE.TXT
  *
@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 24,
+            'version' => 25,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -80,10 +80,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public function init() {
 
-        if(!$this->data['enabled']) return;
-
-        if($this->data['enableShortcutMethods']) require_once __DIR__ . '/ShortcutMethods.inc';
-
         // if not superuser then load dummy class to prevent "class not found" errors when
         // calling \Tracy\Debugger::method() directly
         if(wire('user')->isSuperuser()) {
@@ -93,7 +89,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             require_once __DIR__ . '/DummyTracyDebuggerClass.inc';
         }
 
-        if(!wire('user')->isSuperuser()) return;
+        require_once __DIR__ . '/TDClass.inc';
+
+        if($this->data['enableShortcutMethods']) require_once __DIR__ . '/ShortcutMethods.inc';
+
+        // now that required classes above have been loaded if requested, we exit now
+        // if enabled unchecked, or non-superuser
+        if(!$this->data['enabled'] || !wire('user')->isSuperuser()) return;
 
         if($this->data['outputMode'] == 'production') {
             $outputMode = Debugger::PRODUCTION;
@@ -131,6 +133,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         require_once __DIR__ . '/MethodsInfoPanel.inc';
         Debugger::getBar()->addPanel(new MethodsInfoPanel);
 
+        if(wire('config')->debug === true) {
+            require_once __DIR__ . '/DebugModePanel.inc';
+            Debugger::getBar()->addPanel(new DebugModePanel);
+        }
+
     }
 
 
@@ -167,7 +174,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'strictMode');
         $f->label = __('Strict Mode', __FILE__);
         $f->description = __('Check to enable strict mode which displays notices and warnings like errors.', __FILE__);
-        $f->showIf = "enabled=1";
         $f->columnWidth = 33;
         $f->attr('checked', $data['strictMode'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
@@ -176,7 +182,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'forceScream');
         $f->label = __('Force Scream', __FILE__);
         $f->description = __('Check to force "scream" of mode which disables the @ (shut-up) operator so that notices and warnings are no longer hidden.', __FILE__);
-        $f->showIf = "enabled=1";
         $f->columnWidth = 34;
         $f->attr('checked', $data['forceScream'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
@@ -185,7 +190,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'outputMode');
         $f->label = 'Output Mode';
         $f->description = __('The DETECT option automatically switches from DEVELOPMENT to PRODUCTION mode based on whether the IP of the site is publicly accessible or not.', __FILE__);
-        $f->showIf = "enabled=1";
         $f->columnWidth = 33;
         $f->required = true;
         $f->addOption('detect', 'DETECT');
@@ -199,7 +203,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = 'Show Location';
         $f->description = __('Shows the location of a dump() call in various ways. For details, read the $showLocation section below here: https://doc.nette.org/en/2.3/debugging#toc-variables-dumping', __FILE__);
         $f->notes = __('The shown location information will only be accurate if you use "Tracy\Debugger::" rather than "TD::" calls. For pros and cons of each, please read the ReadMe for this module at: https://github.com/adrianbj/TracyDebugger', __FILE__);
-        $f->showIf = "enabled=1";
         $f->columnWidth = 33;
         $f->addOption('Tracy\Dumper::LOCATION_SOURCE', 'LOCATION_SOURCE');
         $f->addOption('Tracy\Dumper::LOCATION_LINK', 'LOCATION_LINK');
@@ -211,7 +214,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'showDebugBar');
         $f->label = __('Show Debug Bar', __FILE__);
         $f->description = __('Uncheck to hide the debug bar.', __FILE__);
-        $f->showIf = "enabled=1";
         $f->columnWidth = 34;
         $f->attr('checked', $data['showDebugBar'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
@@ -220,7 +222,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'showPWPanel');
         $f->label = __('Show ProcessWire Panel', __FILE__);
         $f->description = __('Uncheck to hide the ProcessWire panel from the debug bar.', __FILE__);
-        $f->showIf = "enabled=1, showDebugBar=1";
+        $f->showIf = "showDebugBar=1";
         $f->columnWidth = 33;
         $f->attr('checked', $data['showPWPanel'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
@@ -229,7 +231,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'email');
         $f->label = __('Email for error logs', __FILE__);
         $f->description = __('This email address will receive notification of errors.', __FILE__);
-        $f->showIf = "enabled=1";
         $f->columnWidth = 66;
         if($data['email']) $f->attr('value', $data['email']);
         $wrapper->add($f);
@@ -238,7 +239,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'clearEmailSent');
         $f->label = __('Clear Email Sent Flag', __FILE__);
         $f->description = __('Check and save settings to remove the "email-sent" file so that you will start receiving new error emails.', __FILE__);
-        $f->showIf = "enabled=1, email!=''";
+        $f->showIf = "email!=''";
         $f->columnWidth = 34;
         $wrapper->add($f);
 
@@ -247,7 +248,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Enable Shortcut Methods', __FILE__);
         $f->description = __('Uncheck to not define any of the shortcut methods. If you are not going to use these in your templates, unchecking means that they will not be defined which may reduce possible future name clashes. If in doubt, uncheck and use the full methods:'."\n".'TD:: dump()'."\n".'TD:: barDump()'."\n".'TD::log()'."\n".'TD:: timer()'."\n".'TD:: fireLog()', __FILE__);
         $f->notes = __('If this, or one of the shortcut methods is not enabled, but is called in your templates, all users will get a "call to undefined function" fatal error, so please be aware when using the shortcut methods in your templates if they are not enabled here.', __FILE__);
-        $f->showIf = "enabled=1";
         $f->columnWidth = 50;
         $f->attr('checked', $data['enableShortcutMethods'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
@@ -257,7 +257,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Enabled Shortcut Methods', __FILE__);
         $f->description = __('Uncheck any shortcuts/aliases to methods that you do not want available.', __FILE__);
         $f->notes = __('Useful if any of these functions/methods are defined elswhere in your site and you are getting a "previously declared" fatal error.', __FILE__);
-        $f->showIf = "enabled=1, enableShortcutMethods=1";
+        $f->showIf = "enableShortcutMethods=1";
         $f->columnWidth = 50;
         $f->addOption('dump', 'dump() for TD::dump()');
         $f->addOption('d', 'd() for TD::dump()');
@@ -275,43 +275,3 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     }
 
 }
-
-
-/**
- * Helper methods
- *
- * These are here so that they are available even when non-superuser or module not enabled so we
- * don't get a undefined function error when calling these from a template file.
- */
-
-class TD {
-    public static function barDump($var, $title = NULL, array $options = NULL) {
-        if(class_exists('\Tracy\Debugger')) return Debugger::barDump($var, $title, $options);
-    }
-
-    public static function dump($var, $return = FALSE) {
-        if(class_exists('\Tracy\Debugger')) return Debugger::dump($var, $return);
-    }
-
-    public static function log($message, $priority = Debugger::INFO) {
-        if(class_exists('\Tracy\Debugger')) return Debugger::log($message, $priority);
-    }
-
-    public static function timer($name = NULL) {
-        if(class_exists('\Tracy\Debugger')) {
-            $roundedTime = round(Debugger::timer($name),4);
-            if($name) {
-                return $name.' : '.$roundedTime;
-            }
-            else{
-                return $roundedTime;
-            }
-        }
-    }
-
-    public static function fireLog($message = NULL) {
-        if(class_exists('\Tracy\Debugger')) return Debugger::fireLog($message);
-    }
-
-}
-

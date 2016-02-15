@@ -29,9 +29,11 @@ class MethodsInfoPanel implements IBarPanel {
 
         // panel title
         $out = '
-        <h1>Method Info</h1>';
+        <h1>Method Info</h1>
 
-        $out .= '
+        <p style="font-size:16px">Tracy Documentation: <a href="https://doc.nette.org/en/2.3/debugging" target="_blank">https://doc.nette.org/en/2.3/debugging</a></p>
+        <br />
+
         <p style="font-size:16px"><strong>dump($var, $return = FALSE)</strong></p>
         <p>
         TD::dump();<br />
