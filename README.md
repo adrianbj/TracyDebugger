@@ -52,11 +52,11 @@ eg. `TD::log('Log Message', 'debug');` which will put the message in the debug.i
 To make fireLog work, you need to add some browser extensions:
 
 Chrome:
-https://github.com/MattSkala/chrome-firelogger
+* https://github.com/MattSkala/chrome-firelogger
 
 Firefox:
-http://www.getfirebug.com/
-http://firelogger.binaryage.com/
+* http://www.getfirebug.com/
+* http://firelogger.binaryage.com/
 
 
 ## License
