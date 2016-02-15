@@ -33,6 +33,9 @@ TD::dump($page);
 TD::log('Log Message');
     Alias; l()
 
+TD::fireLog('Log Message');
+    Alias; fireLog(), fl()
+
 TD::timer();
     Aliases; timer(), t()
 ```
@@ -43,6 +46,15 @@ but you can specify an optional second parameter to one of the following:
 
 eg. `TD::log('Log Message', 'debug');` which will put the message in the debug.info file.
 
+
+To make fireLog work, you need to add some browser extensions:
+
+Chrome:
+https://github.com/MattSkala/chrome-firelogger
+
+Firefox:
+http://www.getfirebug.com/
+http://firelogger.binaryage.com/
 
 
 ## License
