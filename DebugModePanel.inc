@@ -16,9 +16,11 @@ class DebugModePanel implements IBarPanel {
                 overflow-y: scroll !important;
             }
         </style>
-        <span title='ProcessWire Debug Mode Status\nMake sure it is \"Off\" for sites in production.'>
-            <img style='height: 15px' src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABDElEQVQ4T6WT3VVCQQyEv1QgHWgJWIFSgViBUIGWgB1IBWIF0oFaAZQAHVwriGf2ZnFZ98oDOWdfMtnJ38QYMIcn4C7gtcGyFWotp8ML8FhhzwaLOj4ROIwNthn05PprBoeE+U8m6IB3g7nDCBgPdLY16BxWwNRgdKgA+BQJPfifzYB74FZVH5UEbE58zvB1bvloiI3eJ/HjoyQuZ3E+Qez7IjLUa2pWwO86O3NY009edlPNYIjgK+K681soMzrsgMvC16pgb3CVY+oKpIWyjRbBm4G0kKzUgZyvwL6ooib4BjTwuYXgshKnocIEeJ9BTxcp03GtApNSH6RGA11puhytTxNV4EmLa1X84gfSBUwucK12ggAAAABJRU5ErkJggg==' />
-            <span style='display:inline-block;background:#FF0000; color:#FFFFFF'>&nbsp;Debug Mode ON&nbsp;</span>
+        <span title='ProcessWire Debug Mode is ON\nMake sure it is OFF for sites in production.'>
+            <span style='display:inline-block;background:#FF0000; color:#FFFFFF'>
+                &nbsp;<img style='height: 15px' src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQEAQAAADlauupAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAAAFoAAABaAHAjuH0AAAAHdElNRQfgAg8QEiJJgWBTAAABUUlEQVQ4y41Sy8pBURhd33YGiozJgLHMeQDlMnAZKgNSQpm6ZK54CY9gpmPC2IwncHkETuqUzvoHO6LD76z62u1vf2t9tw18AClCdrvkeq2t0yFF4BV0ZjO6MJ1+JzCRIJXS5GCQvN/dAvc7GQjoeKXIRAIADF3aZgOYJtlogEqB1ernVD6fTjSfA9ksGYmIzppKQVYrYLkEF4t/+5NKBSgUwGxW1Hb70ncm46rasSw6luX2ZzIfBheLuQNrNTq1mtsfiz14yvNqvsAg220gHgdCIc8sGQzIywU4Hg0gnQajUYjf7z1vMgnaNiQcNkTq9cf+IderN4FcTtTt9jYDUZYFnE6/yYeDiCZ/GOJ+/1vANF9vTwGy19MfZLf7Tj6fgWaTLBbf3GS5rP96q0XHMPS52ZClkrb1+vnmTCakbZP5/IvAaET2+153QI7H5HAIAH84Ix6H3KC7VAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAxNi0wMi0xNVQxNjoxODozNCswMTowMKwM8OEAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMTYtMDItMTVUMTY6MTg6MzQrMDE6MDDdUUhdAAAAMXRFWHRzdmc6YmFzZS11cmkAZmlsZTovLy90bXAvbWFnaWNrLTIxODUzQVpOUWdQdDZkOGhPZudetAAAAABJRU5ErkJggg==' />
+                &nbsp;PW Debug Mode ON&nbsp;
+            </span>
         </span>
         ";
     }

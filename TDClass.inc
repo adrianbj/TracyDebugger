@@ -9,32 +9,55 @@ class TD {
 	 * don't get a undefined function error when calling these from a template file.
 	 */
 
+    /**
+     * Tracy\Debugger::barDump() shortcut.
+     * @tracySkipLocation
+     */
     public static function barDump($var, $title = NULL, array $options = NULL) {
-        if(class_exists('\Tracy\Debugger')) return Debugger::barDump($var, $title, $options);
+        if(!wire('user')->isSuperuser() || !class_exists('\Tracy\Debugger')) return false;
+        return Debugger::barDump($var, $title, $options);
     }
 
+    /**
+     * Tracy\Debugger::dump() shortcut.
+     * @tracySkipLocation
+     */
     public static function dump($var, $return = FALSE) {
-        if(class_exists('\Tracy\Debugger')) return Debugger::dump($var, $return);
+        if(!wire('user')->isSuperuser() || !class_exists('\Tracy\Debugger')) return false;
+        return Debugger::dump($var, $return);
     }
 
+    /**
+     * Tracy\Debugger::log() shortcut.
+     * @tracySkipLocation
+     */
     public static function log($message, $priority = Debugger::INFO) {
-        if(class_exists('\Tracy\Debugger')) return Debugger::log($message, $priority);
+        if(!wire('user')->isSuperuser() || !class_exists('\Tracy\Debugger')) return false;
+        return Debugger::log($message, $priority);
     }
 
+    /**
+     * Tracy\Debugger::timer() shortcut.
+     * @tracySkipLocation
+     */
     public static function timer($name = NULL) {
-        if(class_exists('\Tracy\Debugger')) {
-            $roundedTime = round(Debugger::timer($name),4);
-            if($name) {
-                return $name.' : '.$roundedTime;
-            }
-            else{
-                return $roundedTime;
-            }
+        if(!wire('user')->isSuperuser() || !class_exists('\Tracy\Debugger')) return false;
+        $roundedTime = round(Debugger::timer($name),4);
+        if($name) {
+            return $name.' : '.$roundedTime;
+        }
+        else{
+            return $roundedTime;
         }
     }
 
+    /**
+     * Tracy\Debugger::fireLog() shortcut.
+     * @tracySkipLocation
+     */
     public static function fireLog($message = NULL) {
-        if(class_exists('\Tracy\Debugger')) return Debugger::fireLog($message);
+        if(!wire('user')->isSuperuser() || !class_exists('\Tracy\Debugger')) return false;
+        return Debugger::fireLog($message);
     }
 
 }

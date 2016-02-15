@@ -91,7 +91,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         require_once __DIR__ . '/TDClass.inc';
 
-        if($this->data['enableShortcutMethods']) require_once __DIR__ . '/ShortcutMethods.inc';
+        if($this->data['enableShortcutMethods']) {
+            require_once __DIR__ . '/ShortcutMethods.inc';
+        }
 
         // now that required classes above have been loaded if requested, we exit now
         // if enabled unchecked, or non-superuser

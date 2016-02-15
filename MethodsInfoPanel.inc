@@ -51,6 +51,7 @@ class MethodsInfoPanel implements IBarPanel {
         </p>
 
         <p style="font-size:16px"><strong>log($message, $priority = ILogger::INFO)</strong></p>
+        @priority: "debug", "info", "warning", "error", "exception", "critical"
         <p>
         TD::log();<br />
         l();<br />

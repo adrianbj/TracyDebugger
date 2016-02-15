@@ -43,19 +43,6 @@ but you can specify an optional second parameter to one of the following:
 
 eg. `TD::log('Log Message', 'debug');` which will put the message in the debug.info file.
 
-##### Alternate Syntax
-
-You can also call the methods directly via Tracy\Debugger, eg.
-```
-Tracy\Debugger::barDump('Dump Content');
-```
-###### Advantages
-* The location from where the dump() method was called will be correct, rather than referencing a line in this module.
-* You can access any built-in Tracy methods, even if they haven't been implemented in this module yet.
-
-
-###### Disadvantages
-* Longer to type `Tracy\Debugger::barDump('Dump Content')` compared with `bd('Dump Content')`
 
 
 ## License
