@@ -73,7 +73,16 @@ class MethodsInfoPanel implements IBarPanel {
         fl();<br />
         <br />
         </p>
-
+        <p style="font-size:14px"><strong>For fireLog to work, you need to have installed these browser plugins:</strong></p>
+        <p>
+            <em>Chrome</em><br />
+            <a href="https://github.com/MattSkala/chrome-firelogger" target="_blank">FireLogger</a>
+        </p>
+        <p>
+            <em>Firefox</em><br />
+            <a href="http://www.getfirebug.com/" target="_blank">Firebug</a><br />
+            <a href="http://firelogger.binaryage.com/" target="_blank">FireLogger</a><br />
+        </p>
         ';
 
         return $out;
