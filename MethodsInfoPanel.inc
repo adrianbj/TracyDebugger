@@ -17,7 +17,15 @@ class MethodsInfoPanel implements IBarPanel {
             }
         </style>
         <span title="Methods info">
-            <img style="height: 15px" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABJ0lEQVQ4T5VT21HDMBC8dQWUECoAOjAVECogkgpIUgGUYBcgiRKSCnAJpgLcAg1oGWksxmOkDPGMP+61p7vdg6w+7/0mhLAH0IrI/RweSQ5N0/RKqWlZgqXhnOtEZL8GXdokO2PMMft+Aay1I4C7S8WL2Ki1foh2Aqh1JvnZNM02hLAD8LoC77XWB8SZSX5VOqekWg6AW/xj7kFENvO/7tOjNDvJbwAnkhOAyMRT5YVjfAELwYnkaIx5nndUykllNYAU1FrnJdcBLtB31lpvvfctyY/SCJGl6hJJHo0xnbX2rUBhxuurNAJ4VEoNzrlTbYmJxpqQSL5H7YvITQjhBcCuKKTsvEbKcXZjTDq0q49JRJI6/xxTdsyyPZBs83GlbQMDgG59zj89yafh2g81MAAAAABJRU5ErkJggg==" />
+            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Capa_1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 612 612" style="enable-background:new 0 0 612 612;" xml:space="preserve">
+            <g>
+                <g id="Info">
+                    <g>
+                        <path d="M306,153c-21.114,0-38.25,17.136-38.25,38.25S284.886,229.5,306,229.5s38.25-17.117,38.25-38.25S327.133,153,306,153z      M306,267.75c-21.114,0-38.25,17.117-38.25,38.25v114.75c0,21.114,17.136,38.25,38.25,38.25s38.25-17.136,38.25-38.25V306     C344.25,284.886,327.133,267.75,306,267.75z M306,0C137.279,0,0,137.279,0,306s137.279,306,306,306s306-137.279,306-306     S474.721,0,306,0z M306,554.625C168.893,554.625,57.375,443.088,57.375,306S168.893,57.375,306,57.375     c137.088,0,248.625,111.537,248.625,248.625S443.088,554.625,306,554.625z" fill="#444"/>
+                    </g>
+                </g>
+            </g>
+            </svg>
             Method Info
         </span>
         ';
