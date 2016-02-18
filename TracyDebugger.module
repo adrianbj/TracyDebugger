@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 28,
+            'version' => 29,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -151,21 +151,27 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     }
 
     public function ready() {
-        if(wire('page')->template == "admin") {
-            if(in_array('backend', $this->data['showDebugBar'])) {
-                Debugger::$showBar = true;
+        if(is_array($this->data['showDebugBar'])) {
+            if(wire('page')->template == "admin") {
+                if(in_array('backend', $this->data['showDebugBar'])) {
+                    Debugger::$showBar = true;
+                }
+                else {
+                    Debugger::$showBar = false;
+                }
             }
-            else {
-                Debugger::$showBar = false;
+            if(wire('page')->template != "admin") {
+                if(in_array('frontend', $this->data['showDebugBar'])) {
+                    Debugger::$showBar = true;
+                }
+                else {
+                    Debugger::$showBar = false;
+                }
             }
         }
-        if(wire('page')->template != "admin") {
-            if(in_array('frontend', $this->data['showDebugBar'])) {
-                Debugger::$showBar = true;
-            }
-            else {
-                Debugger::$showBar = false;
-            }
+        // backwards compatible to versions < 0.2.8 when it was a single checkbox
+        else {
+            Debugger::$showBar = $this->data['showDebugBar'] ? true : false;
         }
     }
 
