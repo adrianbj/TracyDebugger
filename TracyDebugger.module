@@ -208,7 +208,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'enabled');
         $f->label = __('Enable Tracy Debugger', __FILE__);
-        $f->description = __('Uncheck to disable the Tracy Debugger. For more details on Tracy and the settings below, see: [https://doc.nette.org/en/2.3/debugging#toc-variables-dumping](https://doc.nette.org/en/2.3/debugging#toc-variables-dumping)', __FILE__);
+        $f->description = __('Uncheck to disable the Tracy Debugger. For more details on Tracy and the settings below, see: [https://doc.nette.org/en/2.3/debugging](https://doc.nette.org/en/2.3/debugging)', __FILE__);
         $f->attr('checked', $data['enabled'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
 
