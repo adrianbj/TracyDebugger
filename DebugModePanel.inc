@@ -16,7 +16,7 @@ class DebugModePanel implements IBarPanel {
                 overflow-y: scroll !important;
             }
         </style>
-        <span title='ProcessWire Debug Mode is ON\nMake sure it is OFF for sites in production.'>
+        <span>
             <span style='display:inline-block;background:#FF0000; color:#FFFFFF'>
                 &nbsp;
                 <svg xmlns=http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' version='1.1' x='0px' y='0px' width='16px' height='16px' viewBox='0 0 456.828 456.828' style='enable-background:new 0 0 456.828 456.828;' xml:space='preserve'>
@@ -36,7 +36,9 @@ class DebugModePanel implements IBarPanel {
 
 
     public function getPanel() {
-        return false;
+        return '
+        <h1>ProcessWire Debug Mode</h1>
+        <p style="font-size:15px"><strong>WARNING</strong><br />ProcessWire Debug Mode is ON<br />Make sure it is OFF for live sites.</p>';
     }
 
 }

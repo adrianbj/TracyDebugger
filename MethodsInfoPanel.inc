@@ -3,7 +3,7 @@
 use Tracy\IBarPanel;
 
 /**
- * Custom PW panel
+ * Method Info panel
  */
 
 class MethodsInfoPanel implements IBarPanel {

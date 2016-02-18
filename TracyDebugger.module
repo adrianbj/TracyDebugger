@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 33,
+            'version' => 34,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -84,9 +84,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public function init() {
 
-        // if not superuser then load dummy class to prevent "class not found" errors when
+        // if user not allowed then load dummy class to prevent "class not found" errors when
         // calling \Tracy\Debugger::method() directly
-        if(wire('user')->isSuperuser()) {
+        if(traceyUsersAllowed()) {
             require_once __DIR__ . '/tracy/src/tracy.php';
         }
         else {
@@ -100,8 +100,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         // now that required classes above have been loaded if requested, we exit now
-        // if enabled unchecked, or non-superuser
-        if(!$this->data['enabled'] || !wire('user')->isSuperuser()) return;
+        // if enabled unchecked, or user not allowed
+        if(!$this->data['enabled'] || !traceyUsersAllowed()) return;
 
         if($this->data['outputMode'] == 'production') {
             $outputMode = Debugger::PRODUCTION;
@@ -152,12 +152,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             Debugger::getBar()->addPanel(new DebugModePanel);
         }
 
+        require_once __DIR__ . '/AllowedUsersPanel.inc';
+        Debugger::getBar()->addPanel(new AllowedUsersPanel);
+
     }
 
     public function ready() {
 
-        // if enabled unchecked, or non-superuser
-        if(!$this->data['enabled'] || !wire('user')->isSuperuser()) return;
+        // if enabled unchecked, or user not allowed
+        if(!$this->data['enabled'] || !traceyUsersAllowed()) return;
 
         if(is_array($this->data['showDebugBar'])) {
             if(wire('page')->template == "admin") {
@@ -354,4 +357,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         return $wrapper;
     }
 
+}
+
+function traceyUsersAllowed($u = null) {
+    $u = $u ? $u : wire('user');
+    if($u->isSuperuser() || $u->hasPermission('tracy-debugger')) {
+        return true;
+    }
+    else {
+        return false;
+    }
 }
