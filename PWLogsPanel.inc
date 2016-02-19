@@ -15,6 +15,12 @@ class PWLogsPanel implements IBarPanel {
                 max-width: 95% !important;
                 overflow-y: scroll !important;
             }
+            #tracy-debug-panel-PWLogsPanel {
+                bottom: 30px;
+                left: 20px;
+                min-height: 90% !important;
+                min-width: 95% !important;
+            }
         </style>
         <span title="ProcessWire logs">
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 433.494 433.494" style="enable-background:new 0 0 433.494 433.494;" xml:space="preserve" style="height:16px">
@@ -65,7 +71,7 @@ class PWLogsPanel implements IBarPanel {
         $logEntries = $this->sectionHeader(array('Type', 'Date', 'User', 'URL', 'Text'));
         foreach(wire('log')->getLogs() as $log) {
             if(!in_array($log['name'], array('errors', 'exceptions', 'messages', 'warnings'))) continue;
-            foreach(wire('log')->getEntries($log['name'], array("limit" =>3)) as $entry) {
+            foreach(wire('log')->getEntries($log['name'], array("limit" =>4)) as $entry) {
                 $logEntries .= "\n<tr>" .
                 "<td><a href='".wire('config')->urls->admin."setup/logs/view/".$log['name']."/'>".$log['name']."</a></td>" .
                 "<td>".$entry['date']."</td>" .
