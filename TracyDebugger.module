@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 35,
+            'version' => 36,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -59,6 +59,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "maxLength" => 150,
                 "showDebugBar" => 'frontend',
                 "showPWPanel" => 1,
+                "showPWLogsPanel" => 1,
                 "showMethodsPanel" => 1,
                 "showDebugModeIndicator" => 1,
                 "email" => '',
@@ -141,6 +142,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         require_once __DIR__ . '/VariablesPanel.inc';
         Debugger::getBar()->addPanel(new VariablesPanel);
         */
+
+        if($this->data['showPWLogsPanel']) {
+            require_once __DIR__ . '/PWLogsPanel.inc';
+            Debugger::getBar()->addPanel(new PWLogsPanel);
+        }
 
         if($this->data['showMethodsPanel']) {
             require_once __DIR__ . '/MethodsInfoPanel.inc';
@@ -293,21 +299,21 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $wrapper->add($f);
 
         $f = wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'showPWLogsPanel');
+        $f->label = __('Show PW Logs Panel', __FILE__);
+        $f->description = __('Uncheck to hide the PW Logs panel from the debug bar.', __FILE__);
+        $f->showIf = "showDebugBar=frontend|backend";
+        $f->columnWidth = 25;
+        $f->attr('checked', $data['showPWLogsPanel'] == '1' ? 'checked' : '' );
+        $wrapper->add($f);
+
+        $f = wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'showMethodsPanel');
         $f->label = __('Show Methods Info Panel', __FILE__);
         $f->description = __('Uncheck to hide the Methods Info panel from the debug bar.', __FILE__);
         $f->showIf = "showDebugBar=frontend|backend";
         $f->columnWidth = 25;
         $f->attr('checked', $data['showMethodsPanel'] == '1' ? 'checked' : '' );
-        $wrapper->add($f);
-
-        $f = wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'showDebugModeIndicator');
-        $f->label = __('Show Debug Mode Indictor', __FILE__);
-        $f->description = __('Uncheck to hide the Debug Mode Indicator from the debug bar.', __FILE__);
-        $f->showIf = "showDebugBar=frontend|backend";
-        $f->columnWidth = 25;
-        $f->attr('checked', $data['showDebugModeIndicator'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
 
         $f = wire('modules')->get("InputfieldEmail");
