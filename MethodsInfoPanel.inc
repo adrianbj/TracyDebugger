@@ -26,7 +26,7 @@ class MethodsInfoPanel implements IBarPanel {
                 </g>
             </g>
             </svg>
-            Method Info
+            Methods Info
         </span>
         ';
     }
@@ -37,7 +37,7 @@ class MethodsInfoPanel implements IBarPanel {
 
         // panel title
         $out = '
-        <h1>Method Info</h1>
+        <h1>Methods Info</h1>
 
         <p style="font-size:16px">Tracy Documentation: <a href="https://doc.nette.org/en/2.3/debugging" target="_blank">https://doc.nette.org/en/2.3/debugging</a></p>
         <br />
