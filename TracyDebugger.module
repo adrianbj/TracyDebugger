@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 37,
+            'version' => 38,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -128,10 +128,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         Debugger::$maxLen = $this->data['maxLength'];
         Debugger::$strictMode = $this->data['strictMode'] ? TRUE : FALSE;
         Debugger::$scream = $this->data['forceScream'] ? TRUE : FALSE;
-
-        // TODO - doesn't seem to make a difference - need to investigate further
-        // Should be a config setting
-        //Debugger::$logSeverity = E_NOTICE | E_WARNING;
 
         if($this->data['showPerformancePanel']) {
             require_once __DIR__ . '/PerformancePanel/Panel.php';
