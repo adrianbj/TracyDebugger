@@ -66,6 +66,8 @@ class ProcessWirePanel implements IBarPanel {
 
     public function getPanel() {
 
+        $PwVersion = wire('config')->version;
+
         // end for each section
         $sectionEnd = '
                     </tbody>
@@ -202,27 +204,44 @@ class ProcessWirePanel implements IBarPanel {
         }
 
         // Pages Loaded
-        $pagesInfo = $this->sectionHeader(array('ID', 'Path', 'Type', 'Loader'));
-        foreach(wire('pages')->getCache() as $p) {
-            $parts = explode('/', trim($p->path, '/'));
-            $name = array_pop($parts);
-            $path = implode('/', $parts) . "/<b>$name</b>/";
-            if($path[0] != '/') $path = "/$path";
-            $pagesInfo .= "\n<tr>" .
-                "<td>$p->id</td>" .
-                "<td>$path</td>" .
-                "<td>" . wireClassName($p) . "</td>" .
-                "<td>$p->_debug_loader</td>" .
-                "</tr>";
+        if($PwVersion >= 3) {
+            $pagesInfo = $this->sectionHeader(array('ID', 'Path', 'Type', 'Loader'));
+            foreach(wire('pages')->getCache() as $p) {
+                $parts = explode('/', trim($p->path, '/'));
+                $name = array_pop($parts);
+                $path = implode('/', $parts) . "/<b>$name</b>/";
+                if($path[0] != '/') $path = "/$path";
+                $pagesInfo .= "\n<tr>" .
+                    "<td>$p->id</td>" .
+                    "<td>$path</td>" .
+                    "<td>" . wireClassName($p) . "</td>" .
+                    "<td>$p->_debug_loader</td>" .
+                    "</tr>";
+            }
+        }
+        else {
+            $pagesInfo = $this->sectionHeader(array('ID', 'Path', 'Title'));
+            foreach(wire('pages')->getCache() as $p) {
+                $pagesInfo .= "\n<tr><td>$p->id</td><td>$p->path</td><td>$p->title</td></tr>";
+            }
         }
         $pagesInfo .= $sectionEnd;
 
         // API Variables
         $apiVariables = $this->sectionHeader(array('Name', 'Class'));
-        foreach(wire('fuel') as $key => $value) {
-            if(!is_object($value)) continue;
-            $apiVariables .= "\n<tr><td><a target='_blank' href='https://processwire.com/api/variables/$key/'>\$$key</a></td>" .
-                "<td>" . get_class($value) . "</td></tr>";
+        if($PwVersion >= 3) {
+            foreach(wire('fuel') as $key => $value) {
+                if(!is_object($value)) continue;
+                $apiVariables .= "\n<tr><td><a target='_blank' href='https://processwire.com/api/variables/$key/'>\$$key</a></td>" .
+                    "<td>" . get_class($value) . "</td></tr>";
+            }
+        }
+        else {
+                foreach(wire() as $key => $value) {
+                    if(!is_object($value)) continue;
+                    $apiVariables .= "\n<tr><td><a target='_blank' href='http://processwire.com/api/variables/$key/'>\$$key</a></td>" .
+                        "<td>" . get_class($value) . "</td></tr>";
+                }
         }
         $apiVariables .= $sectionEnd;
 
@@ -250,32 +269,62 @@ class ProcessWirePanel implements IBarPanel {
 
         // Hooks
         $hooksCalled = $this->sectionHeader(array('When', 'Method::object', 'Visited by', 'Type', 'Priority'));
-        $hooks = array_merge(wire('pages')->getHooks('*'), wire('hooks')->getAllLocalHooks());
-        $hooksSorted = array();
-        foreach($hooks as $hook) {
-            $whenKey = $hook['options']['before'] ? '0' : '1';
-            $sortKey = $hook['options']['fromClass'] . ":$hook[method]:$whenKey:" . $hook['options']['priority'];
-            $hooksSorted[$sortKey] = $hook;
+        if($PwVersion >= 3) {
+            $hooks = array_merge(wire('pages')->getHooks('*'), wire('hooks')->getAllLocalHooks());
+            $hooksSorted = array();
+            foreach($hooks as $hook) {
+                $whenKey = $hook['options']['before'] ? '0' : '1';
+                $sortKey = $hook['options']['fromClass'] . ":$hook[method]:$whenKey:" . $hook['options']['priority'];
+                $hooksSorted[$sortKey] = $hook;
+            }
+            ksort($hooksSorted);
+            foreach($hooksSorted as $key => $hook) {
+                $suffix = $hook['options']['type'] == 'method' ? '()' : '';
+                $toObject = !empty($hook['toObject']) ? $hook['toObject'] : '';
+                $toMethod = $hook['toMethod'];
+                if(is_callable($toMethod)) $toMethod = 'anonymous function';
+                $hooksCalled .= "<tr>";
+                $hooksCalled .= "<td>" . ($hook['options']['before'] ? 'before ' : '') . ($hook['options']['after'] ? 'after' : '') . "</td>";
+                $hooksCalled .= "<td>" . ($hook['options']['fromClass'] ? $hook['options']['fromClass'] . '::' : '') . "$hook[method]$suffix</td>";
+                $hooksCalled .= "<td>" . ($toObject ? "$toObject::$toMethod" : $toMethod) . "()</td>";
+                $hooksCalled .= "<td>" . ($hook['options']['allInstances'] || $hook['options']['fromClass'] ? "class " : "instance ") . $hook['options']['type'] . "</td>";
+                $hooksCalled .= "<td>" . $hook['options']['priority'] . "</td>";
+                $hooksCalled .= "</tr>";
+            }
         }
-        ksort($hooksSorted);
-        foreach($hooksSorted as $key => $hook) {
-            $suffix = $hook['options']['type'] == 'method' ? '()' : '';
-            $toObject = !empty($hook['toObject']) ? $hook['toObject'] : '';
-            $toMethod = $hook['toMethod'];
-            if(is_callable($toMethod)) $toMethod = 'anonymous function';
-            $hooksCalled .= "<tr>";
-            $hooksCalled .= "<td>" . ($hook['options']['before'] ? 'before ' : '') . ($hook['options']['after'] ? 'after' : '') . "</td>";
-            $hooksCalled .= "<td>" . ($hook['options']['fromClass'] ? $hook['options']['fromClass'] . '::' : '') . "$hook[method]$suffix</td>";
-            $hooksCalled .= "<td>" . ($toObject ? "$toObject::$toMethod" : $toMethod) . "()</td>";
-            $hooksCalled .= "<td>" . ($hook['options']['allInstances'] || $hook['options']['fromClass'] ? "class " : "instance ") . $hook['options']['type'] . "</td>";
-            $hooksCalled .= "<td>" . $hook['options']['priority'] . "</td>";
-            $hooksCalled .= "</tr>";
+        else {
+            $hooks = array_merge(wire()->getHooks('*'), Wire::$allLocalHooks);
+            $hooksSorted = array();
+            foreach($hooks as $hook) {
+                $whenKey = $hook['options']['before'] ? '0' : '1';
+                $sortKey = $hook['options']['fromClass'] . ":$hook[method]:$whenKey:" . $hook['options']['priority'];
+                $hooksSorted[$sortKey] = $hook;
+            }
+            ksort($hooksSorted);
+            foreach($hooksSorted as $key => $hook) {
+                $suffix = $hook['options']['type'] == 'method' ? '()' : '';
+                $toObject = !empty($hook['toObject']) ? $hook['toObject'] : '';
+                $toMethod = $hook['toMethod'];
+                if(is_callable($toMethod)) $toMethod = 'anonymous function';
+                $hooksCalled .= "<tr>";
+                $hooksCalled .= "<td>" . ($hook['options']['before'] ? 'before ' : '') . ($hook['options']['after'] ? 'after' : '') . "</td>";
+                $hooksCalled .= "<td>" . ($hook['options']['fromClass'] ? $hook['options']['fromClass'] . '::' : '') . "$hook[method]$suffix</td>";
+                $hooksCalled .= "<td>" . ($toObject ? "$toObject::$toMethod" : $toMethod) . "()</td>";
+                $hooksCalled .= "<td>" . ($hook['options']['allInstances'] || $hook['options']['fromClass'] ? "class " : "instance ") . $hook['options']['type'] . "</td>";
+                $hooksCalled .= "<td>" . $hook['options']['priority'] . "</td>";
+                $hooksCalled .= "</tr>";
+            }
         }
         $hooksCalled .= $sectionEnd;
 
         // Database Queries
         $databaseQueries = $this->sectionHeader(array('Order', 'Query'));
-        foreach(wire('database')->queryLog() as $n => $sql) $databaseQueries .= "\n<tr><th>$n</th><td>$sql</td></tr>";
+        if($PwVersion >= 3) {
+            foreach(wire('database')->queryLog() as $n => $sql) $databaseQueries .= "\n<tr><th>$n</th><td>$sql</td></tr>";
+        }
+        else {
+            foreach(WireDatabasePDO::getQueryLog() as $n => $sql) $databaseQueries .= "\n<tr><th>$n</th><td>$sql</td></tr>";
+        }
         $databaseQueries .= $sectionEnd;
 
         // Timers
@@ -335,13 +384,15 @@ class ProcessWirePanel implements IBarPanel {
         }
 
         // Autoload
-        $autoload = $this->sectionHeader(array('Class', 'File/Details'));
-        foreach(wire('classLoader')->getDebugLog() as $className => $classFile) {
-            $className = wire('sanitizer')->entities($className);
-            $classFile = wire('sanitizer')->entities($classFile);
-            $autoload .= "<tr><th width='40%'>$className</th><td>$classFile</td></tr>";
+        if($PwVersion >= 3) {
+            $autoload = $this->sectionHeader(array('Class', 'File/Details'));
+            foreach(wire('classLoader')->getDebugLog() as $className => $classFile) {
+                $className = wire('sanitizer')->entities($className);
+                $classFile = wire('sanitizer')->entities($classFile);
+                $autoload .= "<tr><th width='40%'>$className</th><td>$classFile</td></tr>";
+            }
+            $autoload .= $sectionEnd;
         }
-        $autoload .= $sectionEnd;
 
         // Load all the panel sections
         $out = '
@@ -435,12 +486,16 @@ class ProcessWirePanel implements IBarPanel {
 
         $out .= '
         <a href="#" rel="#cache-details" class="tracy-toggle tracy-collapsed">Cache</a>
-        <div id="cache-details" class="tracy-collapsed">'.$cacheDetails.'</div><br />
+        <div id="cache-details" class="tracy-collapsed">'.$cacheDetails.'</div><br />';
 
-        <a href="#" rel="#autoload" class="tracy-toggle tracy-collapsed">Autoload</a>
-        <div id="autoload" class="tracy-collapsed">'.$autoload.'</div><br />
+        if($PwVersion >= 3) {
+            $out .= '
+            <a href="#" rel="#autoload" class="tracy-toggle tracy-collapsed">Autoload</a>
+            <div id="autoload" class="tracy-collapsed">'.$autoload.'</div><br />
+            ';
+        }
 
-        <div style="border-top:1px solid #ccc; margin-top:10px; padding-top:5px;">
+        $out .= '<div style="border-top:1px solid #ccc; margin-top:10px; padding-top:5px;">
             <a href="'.wire('config')->urls->admin.'" title="PW Admin">
                 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
                      viewBox="0 0 20 20.2" enable-background="new 0 0 20 20.2" xml:space="preserve" style="height:16px">
