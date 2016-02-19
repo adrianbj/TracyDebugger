@@ -58,6 +58,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "maxDepth" => 3,
                 "maxLength" => 150,
                 "showDebugBar" => 'frontend',
+                "showPerformancePanel" => 1,
                 "showPWPanel" => 1,
                 "showPWLogsPanel" => 1,
                 "showMethodsPanel" => 1,
@@ -65,7 +66,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "email" => '',
                 "clearEmailSent" => null,
                 "enableShortcutMethods" => 1,
-                "enabledShortcutMethods" => array('dump', 'd', 'barDump', 'bd', 'l', 'timer', 't', 'fireLog', 'fl')
+                "enabledShortcutMethods" => array('dump', 'd', 'barDump', 'bd', 'l', 'timer', 't', 'fireLog', 'fl', 'addBreakpoint', 'bp')
             );
     }
 
@@ -132,6 +133,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // Should be a config setting
         //Debugger::$logSeverity = E_NOTICE | E_WARNING;
 
+        if($this->data['showPerformancePanel']) {
+            require_once __DIR__ . '/PerformancePanel/Panel.php';
+            require_once __DIR__ . '/PerformancePanel/Register.php';
+            Debugger::getBar()->addPanel(new Zarganwar\PerformancePanel\Panel);
+        }
+
         if($this->data['showPWPanel']) {
             require_once __DIR__ . '/ProcesswirePanel.inc';
             Debugger::getBar()->addPanel(new ProcessWirePanel);
@@ -153,7 +160,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             Debugger::getBar()->addPanel(new MethodsInfoPanel);
         }
 
-        if(wire('config')->debug === true && $this->data['showDebugModeIndicator']) {
+        if(wire('config')->debug === true) {
             require_once __DIR__ . '/DebugModePanel.inc';
             Debugger::getBar()->addPanel(new DebugModePanel);
         }
@@ -283,10 +290,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'showDebugBar');
         $f->label = __('Show Debug Bar', __FILE__);
         $f->description = __('Uncheck to hide the debug bar.', __FILE__);
-        $f->columnWidth = 25;
+        $f->columnWidth = 20;
         $f->addOption('frontend', 'Frontend');
         $f->addOption('backend', 'Backend');
         if($data['showDebugBar']) $f->attr('value', $data['showDebugBar']);
+        $wrapper->add($f);
+
+        $f = wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'showPerformancePanel');
+        $f->label = __('Show Performance Panel', __FILE__);
+        $f->description = __('Uncheck to hide the Performace panel from the debug bar.', __FILE__);
+        $f->showIf = "showDebugBar=frontend|backend";
+        $f->columnWidth = 20;
+        $f->attr('checked', $data['showPerformancePanel'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
 
         $f = wire('modules')->get("InputfieldCheckbox");
@@ -294,7 +310,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Show ProcessWire Panel', __FILE__);
         $f->description = __('Uncheck to hide the ProcessWire panel from the debug bar.', __FILE__);
         $f->showIf = "showDebugBar=frontend|backend";
-        $f->columnWidth = 25;
+        $f->columnWidth = 20;
         $f->attr('checked', $data['showPWPanel'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
 
@@ -303,7 +319,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Show PW Logs Panel', __FILE__);
         $f->description = __('Uncheck to hide the PW Logs panel from the debug bar.', __FILE__);
         $f->showIf = "showDebugBar=frontend|backend";
-        $f->columnWidth = 25;
+        $f->columnWidth = 20;
         $f->attr('checked', $data['showPWLogsPanel'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
 
@@ -312,7 +328,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Show Methods Info Panel', __FILE__);
         $f->description = __('Uncheck to hide the Methods Info panel from the debug bar.', __FILE__);
         $f->showIf = "showDebugBar=frontend|backend";
-        $f->columnWidth = 25;
+        $f->columnWidth = 20;
         $f->attr('checked', $data['showMethodsPanel'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
 
@@ -335,7 +351,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'enableShortcutMethods');
         $f->label = __('Enable Shortcut Methods', __FILE__);
-        $f->description = __('Uncheck to not define any of the shortcut methods. If you are not going to use these in your templates, unchecking means that they will not be defined which may reduce possible future name clashes. If in doubt, uncheck and use the full methods:'."\n".'TD:: dump()'."\n".'TD:: barDump()'."\n".'TD::log()'."\n".'TD:: timer()'."\n".'TD:: fireLog()', __FILE__);
+        $f->description = __('Uncheck to not define any of the shortcut methods. If you are not going to use these in your templates, unchecking means that they will not be defined which may reduce possible future name clashes. If in doubt, uncheck and use the full methods:'."\n".'TD:: dump()'."\n".'TD:: barDump()'."\n".'TD::log()'."\n".'TD:: timer()'."\n".'TD:: fireLog()'."\n".'TD:: addBreakpoint()', __FILE__);
         $f->notes = __('If this, or one of the shortcut methods is not enabled, but is called in your templates, all users will get a "call to undefined function" fatal error, so please be aware when using the shortcut methods in your templates if they are not enabled here.', __FILE__);
         $f->columnWidth = 50;
         $f->attr('checked', $data['enableShortcutMethods'] == '1' ? 'checked' : '' );
@@ -357,6 +373,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->addOption('t', 't() for TD::timer()');
         $f->addOption('fireLog', 'fireLog() for TD::fireLog()');
         $f->addOption('fl', 'fl() for TD::fireLog()');
+        $f->addOption('addBreakpoint', 'addBreakpoint() for TD::addBreakpoint()');
+        $f->addOption('bp', 'bp() for TD::addBreakpoint()');
         if($data['enabledShortcutMethods']) $f->attr('value', $data['enabledShortcutMethods']);
         $wrapper->add($f);
 

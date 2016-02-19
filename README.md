@@ -11,7 +11,7 @@ Tracy library is a useful helper for everyday PHP programmers. It helps you to:
 * log errors (and optionally receive emails when an error occurs in production mode)
 * dump variables
 * measure execution time of scripts/queries
-* see memory consumption
+* see memory consumption between breakpoints
 
 ### Module features
 
@@ -35,6 +35,9 @@ TD::log('Log Message');
 
 TD::fireLog('Log Message');
     Alias; fireLog(), fl()
+
+TD::addBreakpoint('Name');
+    Alias; addBreakpoint(), bp()
 
 TD::timer();
     Aliases; timer(), t()

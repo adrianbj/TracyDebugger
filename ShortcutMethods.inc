@@ -51,6 +51,17 @@ if(!function_exists('fireLog') && in_array('fireLog', $this->data['enabledShortc
     }
 }
 
+/**
+ * TD::addBreakpoint() shortcut.
+ * @tracySkipLocation
+ */
+if(!function_exists('addBreakpoint') && in_array('addBreakpoint', $this->data['enabledShortcutMethods'])) {
+    function addBreakpoint($name = NULL) {
+        if(!traceyUsersAllowed() || !class_exists('TD') || !class_exists('\Zarganwar\PerformancePanel\Register')) return false;
+        return TD::addBreakpoint($name);
+    }
+}
+
 
 
 /**
@@ -109,5 +120,16 @@ if(!function_exists('fl') && in_array('fl', $this->data['enabledShortcutMethods'
     function fl($message = NULL) {
         if(!traceyUsersAllowed() || !class_exists('TD')) return false;
         return TD::fireLog($message);
+    }
+}
+
+/**
+ * TD::addBreakpoint() shortcut.
+ * @tracySkipLocation
+ */
+if(!function_exists('bp') && in_array('bp', $this->data['enabledShortcutMethods'])) {
+    function bp($name = NULL) {
+        if(!traceyUsersAllowed() || !class_exists('TD') || !class_exists('\Zarganwar\PerformancePanel\Register')) return false;
+        return TD::addBreakpoint($name);
     }
 }
