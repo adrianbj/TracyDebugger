@@ -56,10 +56,7 @@ class Bar
 	 */
 	public function render()
 	{
-		//@session_start(); // @ session may be already started or it is not possible to start session
-		if (session_status() == PHP_SESSION_NONE) {
-    		session_start();
-		}
+		@session_start(); // @ session may be already started or it is not possible to start session
 		$session = & $_SESSION['__NF']['debuggerbar'];
 		$redirect = preg_match('#^Location:#im', implode("\n", headers_list()));
 		if ($redirect) {

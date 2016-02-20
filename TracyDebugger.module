@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 39,
+            'version' => 40,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -236,6 +236,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'forceScream');
         $f->label = __('Force Scream', __FILE__);
         $f->description = __('Check to force "scream" of mode which disables the @ (shut-up) operator so that notices and warnings are no longer hidden.', __FILE__);
+        $f->notes = __('This is disabled when Strict Mode is enabled because of a bug? [https://forum.nette.org/en/25569-strict-and-scream-modes-together](https://forum.nette.org/en/25569-strict-and-scream-modes-together) in the core Tracy package.', __FILE__);
+        $f->showIf="strictMode!='1'";
         $f->columnWidth = 34;
         $f->attr('checked', $data['forceScream'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
