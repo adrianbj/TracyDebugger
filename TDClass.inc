@@ -64,7 +64,7 @@ class TD {
      * Zarganwar\PerformancePanel\Register::add() shortcut.
      * @tracySkipLocation
      */
-    public static function addBreakpoint($name = NULL) {
+    public static function addBreakpoint($name = null, $enforceParent = null) {
         if(!allowedTracyUsers() || !class_exists('\Tracy\Debugger') || !class_exists('\Zarganwar\PerformancePanel\Register')) return false;
         return Zarganwar\PerformancePanel\Register::add($name);
     }

@@ -11,7 +11,11 @@ use Tracy\IBarPanel;
  */
 class Panel implements IBarPanel
 {
-
+	
+	/**
+	 * 
+	 * @return string
+	 */
 	protected function getHeaderString()
 	{
 		return "<tr>"
@@ -24,29 +28,41 @@ class Panel implements IBarPanel
 			. "</tr>";
 	}
 
+	/**
+	 * 
+	 * @return string
+	 */
 	protected function getBaseRowString()
 	{
 		return "<tr>"
-				. "<td><b>%s</b></td>"
-				. "<td><b>%s</b></td>"
-				. "<td>%s</td><td>%s</td>"
-				. "<td>%s</td><td>%s</td>"
-				. "</tr>";
+			. "<td><b>%s</b></td>"
+			. "<td><b>%s</b></td>"
+			. "<td>%s</td><td>%s</td>"
+			. "<td>%s</td><td>%s</td>"
+			. "</tr>";
 	}
 
-
+	/**
+	 * 
+	 * @return string
+	 * @todo Draw time vs. memory graph
+	 */
 	public function getPanel()
 	{
 		return ''
-				. '<h1>Performance between breakpoints</h1>'
-				. '<p><i>'
-				. 'Add breakpoint: Zarganwar\PerformancePanel\Register::add();'
-				. '</i></p>'
-				. '<p>'
-				. '<table>' . $this->getRowsString() . '<tr><th><b>Total breakpoints</b></th><th colspan="4">' . $this->countBreakpoints() . '</th></tr></table>'
-				. '</p>';
+			. '<h1>Performance between breakpoints</h1>'
+			. '<p><i>'
+			. 'Add breakpoint: Zarganwar\PerformancePanel\Register::add([name], [parent]);'
+			. '</i></p>'
+			. '<p>'
+			. '<table>' . $this->getRowsString() . '<tr><th><b>Total breakpoints</b></th><th colspan="4">' . $this->countBreakpoints() . '</th></tr></table>'
+			. '</p>';
 	}
 
+	/**
+	 * 
+	 * @return string
+	 */
 	public function getTab()
 	{
 		return ''
@@ -57,11 +73,19 @@ class Panel implements IBarPanel
 		;
 	}
 
+	/**
+	 * 
+	 * @return int
+	 */
 	protected function countBreakpoints()
 	{
 		return count(Register::getNames());
 	}
 
+	/**
+	 * 
+	 * @return string
+	 */
 	protected function getRowsString()
 	{
 		$return = $this->getHeaderString();
@@ -69,6 +93,12 @@ class Panel implements IBarPanel
 		$data = Register::getData();
 		foreach ($data as $name => $current) {
 			$memory = $time = $peakMemory = null;
+			
+			$possibleParent = Register::getParent($name);
+			if ($possibleParent) {
+				$namePrevious = $possibleParent;
+			}
+			
 			if ($namePrevious !== null) {
 				$previous = $data[$namePrevious];
 				$memory = $current[Register::MEMORY] - $previous[Register::MEMORY];
@@ -90,11 +120,21 @@ class Panel implements IBarPanel
 		return $return;
 	}
 
+	/**
+	 * 
+	 * @param int $value
+	 * @return string
+	 */
 	protected function memoryToNumber($value)
 	{
 		return number_format($value / 1000000, 3, '.', ' ');
 	}
 
+	/**
+	 * 
+	 * @param int $value
+	 * @return string
+	 */
 	protected function timeToNumber($value)
 	{
 		return number_format($value * 1000, 0, '.', ' ');

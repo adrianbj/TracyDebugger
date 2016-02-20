@@ -16,34 +16,60 @@ class Register
 
 	const DEFAULT_BP_NAME = 'BP_';
 
-	public static $data = array();
+	public static $data = [];
+	public static $relations = [];
 	public static $breakpointCounter = 1;
 
 	/**
 	 * Add breakpoint
 	 * @param string|null $name
-	 * @param string|null $enforceParent unsupported yet
+	 * @param string|null $enforceParent
+	 * @deprecated
 	 */
 	public static function addBreakpoint($name = null, $enforceParent = null)
 	{
+		self::add($name, $enforceParent);
+	}
+	
+	/**
+	 * Add breakpoint
+	 * @param string|null $name
+	 * @param string|null $enforceParent
+	 */
+	public static function add($name = null, $enforceParent = null)
+	{		
 		$safeName = self::getName($name);
-		self::$data[$safeName] = array(
+		self::$data[$safeName] = [
 			self::NAME => $safeName,
 			self::MEMORY => memory_get_usage(),
 			self::MEMORY_PEAK => memory_get_peak_usage(),
 			self::TIME => microtime(true),
-		);
+		];
+		
+		if ($enforceParent !== null) {
+			self::createRelation($safeName, $enforceParent);
+		}
+		
 		self::$breakpointCounter++;
 	}
 
 	/**
-	 * Add breakpoint - addBreakpoint alias
-	 * @param string|null $name
-	 * @param string|null $enforceParent unsupported yet
+	 * 
+	 * @param type $child
+	 * @param type $parent
+	 * @throws \InvalidArgumentException
 	 */
-	public static function add($name = null, $enforceParent = null)
+	private static function createRelation($child, $parent)
 	{
-		self::addBreakpoint($name, $enforceParent);
+		if (!self::isNameUsed($child)) {
+			throw new \InvalidArgumentException("Unkwnown child breakpoint '$child'");
+		}
+		
+		if (!self::isNameUsed($parent)) {
+			throw new \InvalidArgumentException("Unkwnown parent breakpoint '$parent'");
+		}
+		
+		self::$relations[$child] = $parent;
 	}
 
 	/**
@@ -62,17 +88,54 @@ class Register
 		}
 		return $name;
 	}
+	
+	/**
+	 * 
+	 * @param string $name
+	 * @return bool
+	 */
+	public static function hasParent($name)
+	{
+		return isset(self::$relations[$name]);
+	}
+	
+	/**
+	 * 
+	 * @param string $name
+	 * @return string
+	 */
+	public static function getParent($name)
+	{
+		$parent = null;
+		if (self::hasParent($name)) {
+			$parent = self::$relations[$name];
+		}
+		return $parent;
+	}
 
+	/**
+	 * 
+	 * @param string $name
+	 * @return bool
+	 */
 	public static function isNameUsed($name)
 	{
 		return isset(self::$data[$name]);
 	}
 
+	/**
+	 * 
+	 * @return array
+	 */
 	public static function getNames()
 	{
 		return array_keys(self::$data);
 	}
 
+	/**
+	 * 
+	 * @return array
+	 */
 	public static function getData()
 	{
 		return self::$data;

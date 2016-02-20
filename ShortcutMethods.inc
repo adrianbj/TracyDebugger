@@ -56,9 +56,9 @@ if(!function_exists('fireLog') && in_array('fireLog', $this->data['enabledShortc
  * @tracySkipLocation
  */
 if(!function_exists('addBreakpoint') && in_array('addBreakpoint', $this->data['enabledShortcutMethods'])) {
-    function addBreakpoint($name = NULL) {
+    function addBreakpoint($name = null, $enforceParent = null) {
         if(!allowedTracyUsers() || !class_exists('TD') || !class_exists('\Zarganwar\PerformancePanel\Register')) return false;
-        return TD::addBreakpoint($name);
+        return TD::addBreakpoint($name, $enforceParent);
     }
 }
 
@@ -128,8 +128,8 @@ if(!function_exists('fl') && in_array('fl', $this->data['enabledShortcutMethods'
  * @tracySkipLocation
  */
 if(!function_exists('bp') && in_array('bp', $this->data['enabledShortcutMethods'])) {
-    function bp($name = NULL) {
+    function bp($name = null, $enforceParent = null) {
         if(!allowedTracyUsers() || !class_exists('TD') || !class_exists('\Zarganwar\PerformancePanel\Register')) return false;
-        return TD::addBreakpoint($name);
+        return TD::addBreakpoint($name, $enforceParent);
     }
 }
