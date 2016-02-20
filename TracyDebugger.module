@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 38,
+            'version' => 39,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -88,7 +88,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // if user not allowed then load dummy class to prevent "class not found" errors when
         // calling \Tracy\Debugger::method() directly
-        if(traceyUsersAllowed()) {
+        if(allowedTracyUsers()) {
             require_once __DIR__ . '/tracy/src/tracy.php';
         }
         else {
@@ -103,7 +103,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // now that required classes above have been loaded if requested, we exit now
         // if enabled unchecked, or user not allowed
-        if(!$this->data['enabled'] || !traceyUsersAllowed()) return;
+        if(!$this->data['enabled'] || !allowedTracyUsers()) return;
 
         if($this->data['outputMode'] == 'production') {
             $outputMode = Debugger::PRODUCTION;
@@ -140,11 +140,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             Debugger::getBar()->addPanel(new ProcessWirePanel);
         }
 
-        // TODO coming soon
-        /*
-        require_once __DIR__ . '/VariablesPanel.inc';
-        Debugger::getBar()->addPanel(new VariablesPanel);
-        */
+        //TODO - maybe coming soon if I can manage to get the variables from the correct scope
+        //require_once __DIR__ . '/VariablesPanel.inc';
+        //Debugger::getBar()->addPanel(new VariablesPanel);
+
 
         if($this->data['showPWLogsPanel']) {
             require_once __DIR__ . '/PWLogsPanel.inc';
@@ -169,7 +168,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public function ready() {
 
         // if enabled unchecked, or user not allowed
-        if(!$this->data['enabled'] || !traceyUsersAllowed()) return;
+        if(!$this->data['enabled'] || !allowedTracyUsers()) return;
 
         if(is_array($this->data['showDebugBar'])) {
             if(wire('page')->template == "admin") {
@@ -194,6 +193,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             Debugger::$showBar = $this->data['showDebugBar'] ? true : false;
         }
     }
+
 
     /**
      * Return an InputfieldWrapper of Inputfields used to configure the class
@@ -379,7 +379,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 }
 
-function traceyUsersAllowed($u = null) {
+function allowedTracyUsers($u = null) {
     $u = $u ? $u : wire('user');
     if($u->isSuperuser() || $u->hasPermission('tracy-debugger')) {
         return true;
