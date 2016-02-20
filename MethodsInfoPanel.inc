@@ -66,6 +66,14 @@ class MethodsInfoPanel implements IBarPanel {
         <br />
         </p>
 
+        <p style="font-size:16px"><strong>addBreakpoint($name = NULL)</strong></p>
+        <p>
+        TD::addBreakpoint();<br />
+        addBreakpoint();<br />
+        bp();<br />
+        <br />
+        </p>
+
         <p style="font-size:16px"><strong>timer($name = NULL)</strong></p>
         <p>
         TD::timer();<br />
