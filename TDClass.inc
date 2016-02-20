@@ -66,7 +66,7 @@ class TD {
      */
     public static function addBreakpoint($name = null, $enforceParent = null) {
         if(!allowedTracyUsers() || !class_exists('\Tracy\Debugger') || !class_exists('\Zarganwar\PerformancePanel\Register')) return false;
-        return Zarganwar\PerformancePanel\Register::add($name);
+        return Zarganwar\PerformancePanel\Register::add($name, $enforceParent);
     }
-
 }
+

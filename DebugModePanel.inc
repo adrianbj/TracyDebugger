@@ -17,7 +17,7 @@ class DebugModePanel implements IBarPanel {
             }
         </style>
         <span>
-            <span style='display:inline-block;background:#FF0000; color:#FFFFFF'>
+            <span style='display:inline-block;background:#CD1818; color:#FFFFFF'>
                 &nbsp;
                 <svg xmlns=http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' version='1.1' x='0px' y='0px' width='16px' height='16px' viewBox='0 0 456.828 456.828' style='enable-background:new 0 0 456.828 456.828;' xml:space='preserve'>
                 <g>

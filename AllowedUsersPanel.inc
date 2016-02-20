@@ -54,7 +54,7 @@ class AllowedUsersPanel implements IBarPanel {
             }
         </style>
         <span title="Users">
-            <span style="display:inline-block;background:'.($this->nonSuperusers() ? '#FF0000' : '#009900').'; color:#FFFFFF">
+            <span style="display:inline-block;background:'.($this->nonSuperusers() ? '#CD1818' : '#009900').'; color:#FFFFFF">
                 &nbsp;
                 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 80.13 80.13" style="enable-background:new 0 0 80.13 80.13;" xml:space="preserve">
                 <g>

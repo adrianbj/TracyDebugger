@@ -203,15 +203,21 @@ class ProcessWirePanel implements IBarPanel {
 
         }
 
+
+        /**
+         * PW Debug Mode Tools panel sections
+         */
+
+
         // Pages Loaded
         if($PwVersion >= 3) {
-            $pagesInfo = $this->sectionHeader(array('ID', 'Path', 'Type', 'Loader'));
+            $pagesLoaded = $this->sectionHeader(array('ID', 'Path', 'Type', 'Loader'));
             foreach(wire('pages')->getCache() as $p) {
                 $parts = explode('/', trim($p->path, '/'));
                 $name = array_pop($parts);
                 $path = implode('/', $parts) . "/<b>$name</b>/";
                 if($path[0] != '/') $path = "/$path";
-                $pagesInfo .= "\n<tr>" .
+                $pagesLoaded .= "\n<tr>" .
                     "<td>$p->id</td>" .
                     "<td>$path</td>" .
                     "<td>" . wireClassName($p) . "</td>" .
@@ -220,12 +226,12 @@ class ProcessWirePanel implements IBarPanel {
             }
         }
         else {
-            $pagesInfo = $this->sectionHeader(array('ID', 'Path', 'Title'));
+            $pagesLoaded = $this->sectionHeader(array('ID', 'Path', 'Title'));
             foreach(wire('pages')->getCache() as $p) {
-                $pagesInfo .= "\n<tr><td>$p->id</td><td>$p->path</td><td>$p->title</td></tr>";
+                $pagesLoaded .= "\n<tr><td>$p->id</td><td>$p->path</td><td>$p->title</td></tr>";
             }
         }
-        $pagesInfo .= $sectionEnd;
+        $pagesLoaded .= $sectionEnd;
 
         // API Variables
         $apiVariables = $this->sectionHeader(array('Name', 'Class'));
@@ -443,7 +449,7 @@ class ProcessWirePanel implements IBarPanel {
 
         $out .= '
         <a href="#" rel="#pages-loaded" class="tracy-toggle tracy-collapsed">Pages Loaded</a>
-        <div id="pages-loaded" class="tracy-collapsed">'.$pagesInfo.'</div><br />
+        <div id="pages-loaded" class="tracy-collapsed">'.$pagesLoaded.'</div><br />
 
         <a href="#" rel="#api-variables" class="tracy-toggle tracy-collapsed">API Variables</a>
         <div id="api-variables" class="tracy-collapsed">'.$apiVariables.'</div><br />
