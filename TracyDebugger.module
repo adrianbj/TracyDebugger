@@ -19,6 +19,8 @@
 
 use Tracy\Debugger;
 
+$this->wire('templateVars', array());
+
 class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     /**
@@ -29,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 43,
+            'version' => 44,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -61,6 +63,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "showPerformancePanel" => 1,
                 "showPWPanel" => 1,
                 "showPWLogsPanel" => 1,
+                "showVariablesPanel" => 1,
                 "showMethodsPanel" => 1,
                 "showDebugModeIndicator" => 1,
                 "email" => '',
@@ -81,6 +84,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
        }
     }
 
+
     /**
      * Initialize the module and setup hooks
      */
@@ -95,8 +99,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             require_once __DIR__ . '/DummyTracyDebuggerClass.inc';
         }
 
+        // always needs to be loaded to prevent function not defined errors when user not allowed to use Tracy
         require_once __DIR__ . '/TDClass.inc';
 
+        // always needs to be loaded to prevent function not defined errors when user not allowed to use Tracy
         if($this->data['enableShortcutMethods']) {
             require_once __DIR__ . '/ShortcutMethods.inc';
         }
@@ -129,40 +135,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         Debugger::$strictMode = $this->data['strictMode'] ? TRUE : FALSE;
         Debugger::$scream = $this->data['forceScream'] ? TRUE : FALSE;
 
-        if($this->data['showPerformancePanel']) {
-            require_once __DIR__ . '/PerformancePanel/Panel.php';
-            require_once __DIR__ . '/PerformancePanel/Register.php';
-            Debugger::getBar()->addPanel(new Zarganwar\PerformancePanel\Panel);
-        }
-
-        if($this->data['showPWPanel']) {
-            require_once __DIR__ . '/ProcesswirePanel.inc';
-            Debugger::getBar()->addPanel(new ProcessWirePanel);
-        }
-
-        //TODO - maybe coming soon if I can manage to get the variables from the correct scope
-        //require_once __DIR__ . '/VariablesPanel.inc';
-        //Debugger::getBar()->addPanel(new VariablesPanel);
-
-
-        if($this->data['showPWLogsPanel']) {
-            require_once __DIR__ . '/PWLogsPanel.inc';
-            Debugger::getBar()->addPanel(new PWLogsPanel);
-        }
-
-        if($this->data['showMethodsPanel']) {
-            require_once __DIR__ . '/MethodsInfoPanel.inc';
-            Debugger::getBar()->addPanel(new MethodsInfoPanel);
-        }
-
-        if(wire('config')->debug === true) {
-            require_once __DIR__ . '/DebugModePanel.inc';
-            Debugger::getBar()->addPanel(new DebugModePanel);
-        }
-
-        require_once __DIR__ . '/AllowedUsersPanel.inc';
-        Debugger::getBar()->addPanel(new AllowedUsersPanel);
-
     }
 
     public function ready() {
@@ -182,6 +154,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if(wire('page')->template != "admin") {
                 if(in_array('frontend', $this->data['showDebugBar'])) {
                     Debugger::$showBar = true;
+                    // hook to add code to template file to grab template variables
+                    if($this->data['showVariablesPanel']) {
+                        $this->addHookAfter('FileCompiler::compileData', $this, 'setTemplateVars');
+                    }
                 }
                 else {
                     Debugger::$showBar = false;
@@ -191,7 +167,86 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // backwards compatible to versions < 0.2.8 when it was a single checkbox
         else {
             Debugger::$showBar = $this->data['showDebugBar'] ? true : false;
+            // hook to add code to template file to grab template variables
+            if($this->data['showVariablesPanel'] && wire('page')->template != "admin") {
+                $this->addHookAfter('FileCompiler::compileData', $this, 'setTemplateVars');
+            }
         }
+
+        if($this->data['showPerformancePanel']) {
+            require_once __DIR__ . '/PerformancePanel/Panel.php';
+            require_once __DIR__ . '/PerformancePanel/Register.php';
+            Debugger::getBar()->addPanel(new Zarganwar\PerformancePanel\Panel);
+        }
+
+        if($this->data['showPWPanel']) {
+            require_once __DIR__ . '/ProcesswirePanel.inc';
+            Debugger::getBar()->addPanel(new ProcessWirePanel);
+        }
+
+        if($this->data['showPWLogsPanel']) {
+            require_once __DIR__ . '/PWLogsPanel.inc';
+            Debugger::getBar()->addPanel(new PWLogsPanel);
+        }
+
+        if($this->data['showVariablesPanel'] && wire('page')->template != "admin") {
+            require_once __DIR__ . '/VariablesPanel.inc';
+            Debugger::getBar()->addPanel(new VariablesPanel);
+        }
+
+        if($this->data['showMethodsPanel']) {
+            require_once __DIR__ . '/MethodsInfoPanel.inc';
+            Debugger::getBar()->addPanel(new MethodsInfoPanel);
+        }
+
+        if(wire('config')->debug === true) {
+            require_once __DIR__ . '/DebugModePanel.inc';
+            Debugger::getBar()->addPanel(new DebugModePanel);
+        }
+
+        require_once __DIR__ . '/AllowedUsersPanel.inc';
+        Debugger::getBar()->addPanel(new AllowedUsersPanel);
+
+    }
+
+
+    public function setTemplateVars($event) {
+        //remove trailing whitespace and any existing closing php tag
+        //add call to populate wire("templateVars")
+        //only for filename which matches the name of the template for this page
+        if ($event['arguments'][1] == wire('page')->template->filename) {
+            $event->return = preg_replace('/(\?>)?$/s', '$1', $event->return) . "\n" . "?>\n".'<?php $this->wire("templateVars", TracyDebugger::templateVars(get_defined_vars(), wire("page")));';
+        }
+    }
+
+
+    /**
+     * Helper function to remove PW variables from get_defined_vars() call.
+     */
+    public static function templateVars($vars, $p) {
+
+        $pwVars = array('fuel','options');
+        foreach(wire('fuel') as $key => $value) {
+            if(!is_object($value)) continue;
+            $pwVars[] = $key;
+        }
+
+        $nonPwVars = $vars;
+        foreach($vars as $key => $var) {
+            if(is_object($var) || is_array($var)) {
+                if(in_array($key, $pwVars)) unset($nonPwVars[$key]);
+            }
+        }
+
+        unset($nonPwVars['templateVars']);
+        unset($nonPwVars['pwVars']);
+        unset($nonPwVars['key']);
+        unset($nonPwVars['value']);
+        unset($nonPwVars['p']);
+        unset($nonPwVars['ps']);
+
+        return $nonPwVars;
+
     }
 
 
@@ -288,7 +343,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'showDebugBar');
         $f->label = __('Show Debug Bar', __FILE__);
         $f->description = __('Uncheck to hide the debug bar.', __FILE__);
-        $f->columnWidth = 20;
+        $f->columnWidth = 17;
         $f->addOption('frontend', 'Frontend');
         $f->addOption('backend', 'Backend');
         if($data['showDebugBar']) $f->attr('value', $data['showDebugBar']);
@@ -299,7 +354,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Show Performance Panel', __FILE__);
         $f->description = __('Uncheck to hide the Performace panel from the debug bar.', __FILE__);
         $f->showIf = "showDebugBar=frontend|backend";
-        $f->columnWidth = 20;
+        $f->columnWidth = 17;
         $f->attr('checked', $data['showPerformancePanel'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
 
@@ -308,7 +363,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Show ProcessWire Panel', __FILE__);
         $f->description = __('Uncheck to hide the ProcessWire panel from the debug bar.', __FILE__);
         $f->showIf = "showDebugBar=frontend|backend";
-        $f->columnWidth = 20;
+        $f->columnWidth = 17;
         $f->attr('checked', $data['showPWPanel'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
 
@@ -317,8 +372,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Show PW Logs Panel', __FILE__);
         $f->description = __('Uncheck to hide the PW Logs panel from the debug bar.', __FILE__);
         $f->showIf = "showDebugBar=frontend|backend";
-        $f->columnWidth = 20;
+        $f->columnWidth = 17;
         $f->attr('checked', $data['showPWLogsPanel'] == '1' ? 'checked' : '' );
+        $wrapper->add($f);
+
+        $f = wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'showVariablesPanel');
+        $f->label = __('Show Variables Panel', __FILE__);
+        $f->description = __('Uncheck to hide the Variables panel from the debug bar.', __FILE__);
+        $f->notes = __('Only relevant on the frontend, so is always disabled on the backend', __FILE__);
+        $f->showIf = "showDebugBar=frontend|backend";
+        $f->columnWidth = 16;
+        $f->attr('checked', $data['showVariablesPanel'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
 
         $f = wire('modules')->get("InputfieldCheckbox");
@@ -326,7 +391,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Show Methods Info Panel', __FILE__);
         $f->description = __('Uncheck to hide the Methods Info panel from the debug bar.', __FILE__);
         $f->showIf = "showDebugBar=frontend|backend";
-        $f->columnWidth = 20;
+        $f->columnWidth = 16;
         $f->attr('checked', $data['showMethodsPanel'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
 

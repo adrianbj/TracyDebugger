@@ -68,5 +68,5 @@ class TD {
         if(!allowedTracyUsers() || !class_exists('\Tracy\Debugger') || !class_exists('\Zarganwar\PerformancePanel\Register')) return false;
         return Zarganwar\PerformancePanel\Register::add($name, $enforceParent);
     }
-}
 
+}

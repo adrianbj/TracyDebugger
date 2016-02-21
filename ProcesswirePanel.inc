@@ -40,8 +40,7 @@ class ProcessWirePanel implements IBarPanel {
                 c-0.9,0.9-1.6,2-2,3.3c-0.4,1.3-0.5,2.2-0.6,3.7c0,1.1,0,2.1,0,3c0,1,0,2,0,3.1s0,2.1,0,3.1c0,2-0.1,2.3,0,3.3
                 c0,0.7,0.1,1.4,0.4,2.3c0.3,0.9,0.9,1.8,1.4,2.3c0.6,0.7,1.4,1.2,2.1,1.5c1.7,0.8,4.1,0.9,6,0.8c1.3,0,2.5-0.2,3.8-0.5
                 c2.5-0.6,4.9-1.7,7-3.2c2.3-1.6,4.2-3.8,5.3-5.7c1.4-2.2,2.3-4.7,2.8-7.2C39.9,20.9,39.8,18.3,39.3,15.8z"/>
-            </svg>
-            ProcessWire
+            </svg> ProcessWire
         </span>
         ';
     }
@@ -79,10 +78,10 @@ class ProcessWirePanel implements IBarPanel {
          * Custom PW panel sections
          */
 
-        if(wire('page') && wire('page')->process != 'ProcessPageEdit' && wire('page')->process != 'ProcessPageList') {
+        if(wire('page')->template != 'admin') {
 
             // Page info
-            $currentPageInfo = '
+            $pageSummary = '
             <table>
                 <tr>
                     <th>Title</th>
@@ -110,20 +109,20 @@ class ProcessWirePanel implements IBarPanel {
                     <td><a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->parent->id.'" target="_blank">'.wire('page')->parent->name.'</a></td>
                 </tr>';
                 if(wire('page')->prev->id && wire('page')->prev->viewable()) {
-                    $currentPageInfo .= '
+                    $pageSummary .= '
                     <tr>
                         <th>Prev Sibling</th>
                         <td><a href="'.wire('page')->prev->url.'">&lt; '.wire('page')->prev->name.'</a></td>
                     </tr>';
                 }
                 if(wire('page')->next->id && wire('page')->next->viewable()) {
-                    $currentPageInfo .= '
+                    $pageSummary .= '
                     <tr>
                         <th>Next Sibling</th>
                         <td><a href="'.wire('page')->next->url.'">'.wire('page')->next->name.' &gt;</a></td>
                     </tr>';
                 }
-                $currentPageInfo .= '
+                $pageSummary .= '
                 <tr>
                     <th>Children</th>
                     <td><a href="'.wire('config')->urls->admin.'page/list/?open='.wire('page')->id.'" target="_blank">'.wire('page')->numChildren().'</a></td>
@@ -154,11 +153,11 @@ class ProcessWirePanel implements IBarPanel {
                 </tr>
             </table>';
 
-            // Current Page Object
-            $currentPageObject = Dumper::toHtml(wire('page'), array(Dumper::COLLAPSE => false));
+            // Page Object
+            $pageObject = Dumper::toHtml(wire('page'), array(Dumper::COLLAPSE => false));
 
             // Template info
-            $currentTemplateInfo = '
+            $pageTemplateInfo = '
             <table>
                 <tr>
                     <th>Label</th>
@@ -177,6 +176,10 @@ class ProcessWirePanel implements IBarPanel {
                     <td>'.str_replace(wire('config')->paths->root, '/', wire('page')->template->filename).'</td>
                 </tr>
                 <tr>
+                    <th>Fieldgroup</th>
+                    <td>'.wire('page')->template->fieldgroup.'</td>
+                </tr>
+                <tr>
                     <th>Page Numbers</th>
                     <td>'.(wire('page')->template->allowPageNum ? 'Enabled' : 'Disabled').'</td>
                 </tr>
@@ -184,22 +187,49 @@ class ProcessWirePanel implements IBarPanel {
                     <th>URL Segments</th>
                     <td>'.(wire('page')->template->urlSegments ? 'Enabled' : 'Disabled').'</td>
                 </tr>
+                <tr>
+                    <th>Children Allowed</th>
+                    <td>'.(wire('page')->template->noChildren ? 'No' : 'Yes').'</td>
+                </tr>
+                <tr>
+                    <th>Allow for New Page</th>
+                    <td>'.(wire('page')->template->noParents < 0 ? 'Only One' : (wire('page')->template->noParents == 1 ? 'No' : 'Yes')).'</td>
+                </tr>
+                <tr>
+                    <th>Children Sorted By</th>
+                    <td>'.wire('page')->template->sortfield.'</td>
+                </tr>
+                <tr>
+                    <th>Cache Time</th>
+                    <td>'.wire('page')->template->cache_time.'</td>
+                </tr>
             </table>';
 
-            // Current Page Fields List
-            $currentPageFieldsList = $this->sectionHeader(array('ID', 'Name', 'Label', 'Type'));
+            // Template Object
+            $pageTemplateObject = Dumper::toHtml(wire('page')->template, array(Dumper::COLLAPSE => false));
+
+            // Page Fields List
+            $pageFieldsList = $this->sectionHeader(array('ID', 'Name', 'Label', 'Type'));
             foreach(wire('page')->fields as $f) {
-                $currentPageFieldsList .= "\n<tr>" .
+                $pageFieldsList .= "\n<tr>" .
                     "<td>$f->id</td>" .
                     '<td><a href="'.wire('config')->urls->admin.'setup/field/edit?id='.$f->id.'" target="_blank">'.$f->name.'</a></td>' .
                     "<td>$f->label</td>" .
                     "<td>$f->type</td>" .
                     "</tr>";
             }
-            $currentPageFieldsList .= $sectionEnd;
+            $pageFieldsList .= $sectionEnd;
 
-            // Current Page Fields Object
-            $currentPageFieldsObject = Dumper::toHtml(wire('page')->fields, array(Dumper::COLLAPSE => false));
+            // Page Fields Object
+            $pageFieldsObject = Dumper::toHtml(wire('page')->fields, array(Dumper::COLLAPSE => false));
+
+
+            // Page Fields and Values
+            $pageFieldArray = array();
+            foreach(wire('page')->fields as $f) {
+                $pageFieldArray[wire('fields')->get($f->name)->name] = wire('page')->$f;
+            }
+            $pageFieldValues = Dumper::toHtml($pageFieldArray, array(Dumper::COLLAPSE => false));
 
         }
 
@@ -343,18 +373,18 @@ class ProcessWirePanel implements IBarPanel {
         $userDetails = '
         <p><strong>Username:</strong> '.wire('user')->name.'</p>
         <p><strong>User ID:</strong> '.wire('user')->id.'</p>
-        <p><strong>Current User Roles</strong>
+        <p><strong>User Roles</strong>
         <ol>';
         foreach(wire('user')->roles as $role) $userDetails .= "\n<li>{$role->name}</li>";
         $userDetails .= '
         </ol>
         </p>
-        <p><strong>Current User Permissions</strong>
+        <p><strong>User Permissions</strong>
         <ol>';
         foreach(wire('user')->getPermissions() as $permission) $userDetails .= "\n<li>{$permission->name}</li>";
         $userDetails .= '</ol>
         </p>
-        <p><strong>Current User Permissions on this page</strong>
+        <p><strong>User Permissions on this page</strong>
         <ol>
         ';
         foreach(wire('user')->getPermissions(wire('page')) as $permission) $userDetails .= "\n<li>{$permission->name}</li>";
@@ -403,7 +433,6 @@ class ProcessWirePanel implements IBarPanel {
         // Load all the panel sections
         $out = '
         <h1>
-            <a title="ProcessWire Admin" href="'.wire('config')->urls->admin.'" target="_blank">
             <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
                  viewBox="0 0 20 20.2" enable-background="new 0 0 20 20.2" xml:space="preserve" style="height:20px">
             <path fill="none" stroke="#3A4163" stroke-width="4.2" stroke-miterlimit="10" d="M5.8,9.8"/>
@@ -426,28 +455,37 @@ class ProcessWirePanel implements IBarPanel {
                 c0,0.3,0.1,0.7,0.2,1.1C5.7,18.3,6,18.8,6.3,19c0.3,0.3,0.7,0.6,1.1,0.8c0.9,0.4,2.1,0.5,3,0.4c0.6,0,1.3-0.1,1.9-0.3
                 c1.3-0.3,2.5-0.8,3.5-1.6c1.1-0.8,2.1-1.9,2.7-2.9c0.7-1.1,1.2-2.4,1.4-3.6C20.1,10.5,20.1,9.2,19.8,7.9z"/>
             </svg>
-                ProcessWire Info
-            </a>
+            ProcessWire Info
         </h1>';
-        if(wire('page') && wire('page')->process != 'ProcessPageEdit' && wire('page')->process != 'ProcessPageList') {
+
+        if(wire('page')->template != 'admin') {
             $out .= '
-            <a href="#" rel="#current-page-info" class="tracy-toggle">Current Page Info</a>
-            <div id="current-page-info">'.$currentPageInfo.'</div><br />
+            <p><strong>CURRENT PAGE INFO</strong></p>
+            <a href="#" rel="#page-summary" class="tracy-toggle">Summary</a>
+            <div id="page-summary">'.$pageSummary.'</div><br />
 
-            <a href="#" rel="#current-page-object" class="tracy-toggle tracy-collapsed">Current Page Object</a>
-            <div id="current-page-object" class="tracy-collapsed">'.$currentPageObject.'</div><br />
+            <a href="#" rel="#page-object" class="tracy-toggle tracy-collapsed">Page Object</a>
+            <div id="page-object" class="tracy-collapsed">'.$pageObject.'</div><br />
 
-            <a href="#" rel="#current-template-info" class="tracy-toggle tracy-collapsed">Current Template Info</a>
-            <div id="current-template-info" class="tracy-collapsed">'.$currentTemplateInfo.'</div><br />
+            <a href="#" rel="#page-template-info" class="tracy-toggle tracy-collapsed">Template Info</a>
+            <div id="page-template-info" class="tracy-collapsed">'.$pageTemplateInfo.'</div><br />
 
-            <a href="#" rel="#current-page-fields-list" class="tracy-toggle tracy-collapsed">Current Page Fields List</a>
-            <div id="current-page-fields-list" class="tracy-collapsed">'.$currentPageFieldsList.'</div><br />
+            <a href="#" rel="#page-template-object" class="tracy-toggle tracy-collapsed">Template Object</a>
+            <div id="page-template-object" class="tracy-collapsed">'.$pageTemplateObject.'</div><br />
 
-            <a href="#" rel="#current-page-fields-object" class="tracy-toggle tracy-collapsed">Current Page Fields Object</a>
-            <div id="current-page-fields-object" class="tracy-collapsed">'.$currentPageFieldsObject.'</div><br />';
+            <a href="#" rel="#page-fields-list" class="tracy-toggle tracy-collapsed">Fields List</a>
+            <div id="page-fields-list" class="tracy-collapsed">'.$pageFieldsList.'</div><br />
+
+            <a href="#" rel="#page-fields-object" class="tracy-toggle tracy-collapsed">Fields Object</a>
+            <div id="page-fields-object" class="tracy-collapsed">'.$pageFieldsObject.'</div><br />
+
+            <a href="#" rel="#page-field-values" class="tracy-toggle tracy-collapsed">Field Values</a>
+            <div id="page-field-values" class="tracy-collapsed">'.$pageFieldValues.'</div><br />';
         }
 
         $out .= '
+        <br />
+        <p><strong>DEBUG INFO</strong></p>
         <a href="#" rel="#pages-loaded" class="tracy-toggle tracy-collapsed">Pages Loaded</a>
         <div id="pages-loaded" class="tracy-collapsed">'.$pagesLoaded.'</div><br />
 
@@ -501,7 +539,7 @@ class ProcessWirePanel implements IBarPanel {
             ';
         }
 
-        $out .= '<div style="border-top:1px solid #ccc; margin-top:10px; padding-top:5px;">
+        $out .= '<div style="text-align: center; border-top:1px solid #CCCCCC; margin-top:10px; padding-top:10px;">
             <a href="'.wire('config')->urls->admin.'" title="PW Admin">
                 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
                      viewBox="0 0 20 20.2" enable-background="new 0 0 20 20.2" xml:space="preserve" style="height:16px">
