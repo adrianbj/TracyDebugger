@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 47,
+            'version' => 48,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -341,7 +341,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = wire('modules')->get("InputfieldCheckboxes");
         $f->attr('name', 'showDebugBar');
         $f->label = __('Show Debug Bar', __FILE__);
-        $f->description = __('Uncheck to hide the debug bar.', __FILE__);
+        $f->description = __('Show the debug bar.', __FILE__);
         $f->columnWidth = 17;
         $f->addOption('frontend', 'Frontend');
         $f->addOption('backend', 'Backend');
@@ -351,7 +351,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'showPerformancePanel');
         $f->label = __('Show Performance Panel', __FILE__);
-        $f->description = __('Uncheck to hide the Performace panel from the debug bar.', __FILE__);
+        $f->description = __('Show the Performace panel on the debug bar.', __FILE__);
         $f->showIf = "showDebugBar=frontend|backend";
         $f->columnWidth = 17;
         $f->attr('checked', $data['showPerformancePanel'] == '1' ? 'checked' : '' );
@@ -360,7 +360,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'showPWPanel');
         $f->label = __('Show ProcessWire Panel', __FILE__);
-        $f->description = __('Uncheck to hide the ProcessWire panel from the debug bar.', __FILE__);
+        $f->description = __('Show the ProcessWire panel on the debug bar.', __FILE__);
         $f->showIf = "showDebugBar=frontend|backend";
         $f->columnWidth = 17;
         $f->attr('checked', $data['showPWPanel'] == '1' ? 'checked' : '' );
@@ -369,7 +369,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'showPWLogsPanel');
         $f->label = __('Show PW Logs Panel', __FILE__);
-        $f->description = __('Uncheck to hide the PW Logs panel from the debug bar.', __FILE__);
+        $f->description = __('Show the PW Logs panel on the debug bar.', __FILE__);
         $f->showIf = "showDebugBar=frontend|backend";
         $f->columnWidth = 17;
         $f->attr('checked', $data['showPWLogsPanel'] == '1' ? 'checked' : '' );
@@ -378,8 +378,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'showVariablesPanel');
         $f->label = __('Show Variables Panel', __FILE__);
-        $f->description = __('Uncheck to hide the Variables panel from the debug bar.', __FILE__);
-        $f->notes = __('Only relevant on the frontend, so is always disabled on the backend', __FILE__);
+        $f->description = __('Show the Variables panel on the debug bar. Only relevant on the frontend, so is always disabled on the backend.', __FILE__);
+        $f->notes = __('NOTE: Only works with PW 3+ and only with compiled templates.', __FILE__);
         $f->showIf = "showDebugBar=frontend|backend";
         $f->columnWidth = 16;
         $f->attr('checked', $data['showVariablesPanel'] == '1' ? 'checked' : '' );
@@ -388,7 +388,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'showMethodsPanel');
         $f->label = __('Show Methods Info Panel', __FILE__);
-        $f->description = __('Uncheck to hide the Methods Info panel from the debug bar.', __FILE__);
+        $f->description = __('Show the Methods Info panel on the debug bar.', __FILE__);
         $f->showIf = "showDebugBar=frontend|backend";
         $f->columnWidth = 16;
         $f->attr('checked', $data['showMethodsPanel'] == '1' ? 'checked' : '' );
