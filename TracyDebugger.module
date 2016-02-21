@@ -19,8 +19,6 @@
 
 use Tracy\Debugger;
 
-$this->wire('templateVars', array());
-
 class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     /**
@@ -31,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 46,
+            'version' => 47,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -190,6 +188,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         if($this->data['showVariablesPanel'] && wire('page')->template != "admin") {
+            $this->wire('templateVars', array());
             require_once __DIR__ . '/VariablesPanel.inc';
             Debugger::getBar()->addPanel(new VariablesPanel);
         }
