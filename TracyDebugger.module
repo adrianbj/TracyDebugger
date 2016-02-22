@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 49,
+            'version' => 50,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -352,7 +352,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'showPerformancePanel');
         $f->label = __('Show Performance Panel', __FILE__);
         $f->description = __('Show the Performace panel on the debug bar.', __FILE__);
-        $f->showIf = "showDebugBar=frontend|backend";
+        //$f->showIf = "showDebugBar=frontend|backend";
         $f->columnWidth = wire('config')->version >= 3 ? 17 : 20;
         $f->attr('checked', $data['showPerformancePanel'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
@@ -361,7 +361,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'showPWPanel');
         $f->label = __('Show ProcessWire Panel', __FILE__);
         $f->description = __('Show the ProcessWire panel on the debug bar.', __FILE__);
-        $f->showIf = "showDebugBar=frontend|backend";
+        //$f->showIf = "showDebugBar=frontend|backend";
         $f->columnWidth = wire('config')->version >= 3 ? 17 : 20;
         $f->attr('checked', $data['showPWPanel'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
@@ -370,7 +370,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'showPWLogsPanel');
         $f->label = __('Show PW Logs Panel', __FILE__);
         $f->description = __('Show the PW Logs panel on the debug bar.', __FILE__);
-        $f->showIf = "showDebugBar=frontend|backend";
+        //$f->showIf = "showDebugBar=frontend|backend";
         $f->columnWidth = wire('config')->version >= 3 ? 17 : 20;
         $f->attr('checked', $data['showPWLogsPanel'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
@@ -381,7 +381,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $f->label = __('Show Variables Panel', __FILE__);
             $f->description = __('Show the Variables panel on the debug bar. Only relevant on the frontend, so is always disabled on the backend.', __FILE__);
             $f->notes = __('NOTE: Only works with compiled templates.', __FILE__);
-            $f->showIf = "showDebugBar=frontend|backend";
+            //$f->showIf = "showDebugBar=frontend|backend";
             $f->columnWidth = 16;
             $f->attr('checked', $data['showVariablesPanel'] == '1' ? 'checked' : '' );
             $wrapper->add($f);
@@ -391,7 +391,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'showMethodsPanel');
         $f->label = __('Show Methods Info Panel', __FILE__);
         $f->description = __('Show the Methods Info panel on the debug bar.', __FILE__);
-        $f->showIf = "showDebugBar=frontend|backend";
+        //$f->showIf = "showDebugBar=frontend|backend";
         $f->columnWidth = wire('config')->version >= 3 ? 16 : 20;
         $f->attr('checked', $data['showMethodsPanel'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
