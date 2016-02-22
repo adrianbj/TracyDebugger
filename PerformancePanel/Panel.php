@@ -86,7 +86,7 @@ class Panel implements IBarPanel
 							</linearGradient>
 							<rect x="22" y="0.5" fill="url(#SVGID_2_)" stroke="#773B37" width="10.7" height="10.7"/>
 							<polygon fill="#9ADAEA" stroke="#28A0DA" points="16.5,8.1 14,8.1 14,10.5 9,5.9 14,1.2 14,3.6 16.5,3.6 "/>
-							<polygon fill="#9ADAEA" stroke="#28A0DA" points="16.5,8 19,8 19,10.5 24.1,5.7 19.1,1.2 19.1,3.6 16.5,3.6 "/>'
+							<polygon fill="#9ADAEA" stroke="#28A0DA" points="16.5,8.1 19,8.1 19,10.5 24.1,5.7 19.1,1.2 19.1,3.6 16.5,3.6 "/>'
 					. '</svg>'
 				. '</span>'
 		;
