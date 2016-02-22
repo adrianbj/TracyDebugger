@@ -13,7 +13,7 @@ use Tracy\Debugger;
  */
 if(!function_exists('barDump') && in_array('barDump', $this->data['enabledShortcutMethods'])) {
     function barDump($var, $title = NULL, array $options = NULL) {
-        if(!allowedTracyUsers() || !class_exists('TD')) return false;
+        if(!TracyDebugger::allowedTracyUsers() || !class_exists('TD')) return false;
         return TD::barDump($var, $title, $options);
     }
 }
@@ -24,7 +24,7 @@ if(!function_exists('barDump') && in_array('barDump', $this->data['enabledShortc
  */
 if(!function_exists('dump') && in_array('dump', $this->data['enabledShortcutMethods'])) {
     function dump($var, $return = FALSE) {
-        if(!allowedTracyUsers() || !class_exists('TD')) return false;
+        if(!TracyDebugger::allowedTracyUsers() || !class_exists('TD')) return false;
         return TD::dump($var, $return);
     }
 }
@@ -35,7 +35,7 @@ if(!function_exists('dump') && in_array('dump', $this->data['enabledShortcutMeth
  */
 if(!function_exists('timer') && in_array('timer', $this->data['enabledShortcutMethods'])) {
     function timer($name = NULL) {
-        if(!allowedTracyUsers() || !class_exists('TD')) return false;
+        if(!TracyDebugger::allowedTracyUsers() || !class_exists('TD')) return false;
         return TD::timer($name);
     }
 }
@@ -46,7 +46,7 @@ if(!function_exists('timer') && in_array('timer', $this->data['enabledShortcutMe
  */
 if(!function_exists('fireLog') && in_array('fireLog', $this->data['enabledShortcutMethods'])) {
     function fireLog($message = NULL) {
-        if(!allowedTracyUsers() || !class_exists('TD')) return false;
+        if(!TracyDebugger::allowedTracyUsers() || !class_exists('TD')) return false;
         return TD::fireLog($message);
     }
 }
@@ -57,7 +57,7 @@ if(!function_exists('fireLog') && in_array('fireLog', $this->data['enabledShortc
  */
 if(!function_exists('addBreakpoint') && in_array('addBreakpoint', $this->data['enabledShortcutMethods'])) {
     function addBreakpoint($name = null, $enforceParent = null) {
-        if(!allowedTracyUsers() || !class_exists('TD') || !class_exists('\Zarganwar\PerformancePanel\Register')) return false;
+        if(!TracyDebugger::allowedTracyUsers() || !class_exists('TD') || !class_exists('\Zarganwar\PerformancePanel\Register')) return false;
         return TD::addBreakpoint($name, $enforceParent);
     }
 }
@@ -74,7 +74,7 @@ if(!function_exists('addBreakpoint') && in_array('addBreakpoint', $this->data['e
  */
 if(!function_exists('bd') && in_array('bd', $this->data['enabledShortcutMethods'])) {
     function bd($var, $title = NULL, array $options = NULL) {
-        if(!allowedTracyUsers() || !class_exists('TD')) return false;
+        if(!TracyDebugger::allowedTracyUsers() || !class_exists('TD')) return false;
         return TD::barDump($var, $title, $options);
     }
 }
@@ -85,7 +85,7 @@ if(!function_exists('bd') && in_array('bd', $this->data['enabledShortcutMethods'
  */
 if(!function_exists('d') && in_array('d', $this->data['enabledShortcutMethods'])) {
     function d($var, $return = FALSE) {
-        if(!allowedTracyUsers() || !class_exists('TD')) return false;
+        if(!TracyDebugger::allowedTracyUsers() || !class_exists('TD')) return false;
         return TD::dump($var, $return);
     }
 }
@@ -96,7 +96,7 @@ if(!function_exists('d') && in_array('d', $this->data['enabledShortcutMethods'])
  */
 if(!function_exists('l') && in_array('l', $this->data['enabledShortcutMethods'])) {
     function l($message, $priority = Debugger::INFO) {
-        if(!allowedTracyUsers() || !class_exists('TD')) return false;
+        if(!TracyDebugger::allowedTracyUsers() || !class_exists('TD')) return false;
         return TD::log($message, $priority);
     }
 }
@@ -107,7 +107,7 @@ if(!function_exists('l') && in_array('l', $this->data['enabledShortcutMethods'])
  */
 if(!function_exists('t') && in_array('t', $this->data['enabledShortcutMethods'])) {
     function t($name = NULL) {
-        if(!allowedTracyUsers() || !class_exists('TD')) return false;
+        if(!TracyDebugger::allowedTracyUsers() || !class_exists('TD')) return false;
         return TD::timer($name);
     }
 }
@@ -118,7 +118,7 @@ if(!function_exists('t') && in_array('t', $this->data['enabledShortcutMethods'])
  */
 if(!function_exists('fl') && in_array('fl', $this->data['enabledShortcutMethods'])) {
     function fl($message = NULL) {
-        if(!allowedTracyUsers() || !class_exists('TD')) return false;
+        if(!TracyDebugger::allowedTracyUsers() || !class_exists('TD')) return false;
         return TD::fireLog($message);
     }
 }
@@ -129,7 +129,7 @@ if(!function_exists('fl') && in_array('fl', $this->data['enabledShortcutMethods'
  */
 if(!function_exists('bp') && in_array('bp', $this->data['enabledShortcutMethods'])) {
     function bp($name = null, $enforceParent = null) {
-        if(!allowedTracyUsers() || !class_exists('TD') || !class_exists('\Zarganwar\PerformancePanel\Register')) return false;
+        if(!TracyDebugger::allowedTracyUsers() || !class_exists('TD') || !class_exists('\Zarganwar\PerformancePanel\Register')) return false;
         return TD::addBreakpoint($name, $enforceParent);
     }
 }

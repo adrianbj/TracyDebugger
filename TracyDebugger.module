@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 50,
+            'version' => 51,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -43,7 +43,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     protected $data = array();
 
-
    /**
      * Default configuration for module
      *
@@ -51,6 +50,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     static public function getDefaultData() {
             return array(
                 "enabled" => 1,
+                "superuserForceDevelopment" => null,
+                "ipAddress" => null,
                 "strictMode" => null,
                 "forceScream" => null,
                 "outputMode" => 'detect',
@@ -76,10 +77,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * Populate the default config data
      *
      */
+    public static $_data = array();
+
     public function __construct() {
-       foreach(self::getDefaultData() as $key => $value) {
-               $this->$key = $value;
-       }
+        foreach(self::getDefaultData() as $key => $value) {
+            $this->$key = $value;
+        }
+        //populate for later static access to data
+        self::$_data[] = $this;
     }
 
 
@@ -90,7 +95,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // if user not allowed then load dummy class to prevent "class not found" errors when
         // calling \Tracy\Debugger::method() directly
-        if(allowedTracyUsers()) {
+        if($this->allowedTracyUsers()) {
             require_once __DIR__ . '/tracy/src/tracy.php';
         }
         else {
@@ -107,13 +112,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // now that required classes above have been loaded if requested, we exit now
         // if enabled unchecked, or user not allowed
-        if(!$this->data['enabled'] || !allowedTracyUsers()) return;
+        if(!$this->data['enabled'] || !$this->allowedTracyUsers()) return;
 
-        if($this->data['outputMode'] == 'production') {
-            $outputMode = Debugger::PRODUCTION;
-        }
-        elseif($this->data['outputMode'] == 'development') {
+        if($this->data['outputMode'] == 'development' || ($this->user->isSuperuser() && $this->data['superuserForceDevelopment'])) {
             $outputMode = Debugger::DEVELOPMENT;
+        }
+        elseif($this->data['outputMode'] == 'production') {
+            $outputMode = Debugger::PRODUCTION;
         }
         else {
             $outputMode = Debugger::DETECT;
@@ -138,7 +143,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public function ready() {
 
         // if enabled unchecked, or user not allowed
-        if(!$this->data['enabled'] || !allowedTracyUsers()) return;
+        if(!$this->data['enabled'] || !$this->allowedTracyUsers()) return;
 
         if(is_array($this->data['showDebugBar'])) {
             if(wire('page')->template == "admin") {
@@ -275,7 +280,26 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'enabled');
         $f->label = __('Enable Tracy Debugger', __FILE__);
         $f->description = __('Uncheck to disable the Tracy Debugger. For more details on Tracy and the settings below, see: [https://doc.nette.org/en/2.3/debugging](https://doc.nette.org/en/2.3/debugging)', __FILE__);
+        $f->columnWidth = 33;
         $f->attr('checked', $data['enabled'] == '1' ? 'checked' : '' );
+        $wrapper->add($f);
+
+        $f = wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'superuserForceDevelopment');
+        $f->label = __('Superuser Force Development Mode', __FILE__);
+        $f->description = __('Check to force DEVELOPMENT mode for superusers even on live sites.', __FILE__);
+        $f->notes = __('By default, the Output Mode setting\'s DETECT option will force a site into PRODUCTION mode when it is live. This hides the DebugBar and sends errors and dumps to a log file. However, with this checked, Superusers will always be in DEVELOPMENT mode.', __FILE__);
+        $f->columnWidth = 34;
+        $f->attr('checked', $data['superuserForceDevelopment'] == '1' ? 'checked' : '' );
+        $wrapper->add($f);
+
+        $f = wire('modules')->get("InputfieldText");
+        $f->attr('name', 'ipAddress');
+        $f->label = __('Restrict Non-superusers', __FILE__);
+        $f->description = __('IP Address that non-superusers need to use TracyDebugger. Enter IP address or a PCRE regular expression to match IP address of user, eg. /^123\.456\.789\./ would match all IP addresses that started with 123.456.789.', __FILE__);
+        $f->columnWidth = 33;
+        $f->notes = __('Non-superusers are already blocked unless they have the "tracey-debugger" permission. But once a user has been given the permission, this option restricts access to the listed IP address. Highly recommended for debugging live sites that you have manually set into DEVELOPMENT mode.', __FILE__);
+        if($data['ipAddress']) $f->attr('value', $data['ipAddress']);
         $wrapper->add($f);
 
         $f = wire('modules')->get("InputfieldCheckbox");
@@ -300,6 +324,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'outputMode');
         $f->label = 'Output Mode';
         $f->description = __('The DETECT option automatically switches from DEVELOPMENT to PRODUCTION mode based on whether the IP of the site is publicly accessible or not.', __FILE__);
+        $f->notes = __('In PRODUCTION mode, all errors and dumps etc are logged to file. Nothing is displayed in the browser.', __FILE__);
         $f->columnWidth = 33;
         $f->required = true;
         $f->addOption('detect', 'DETECT');
@@ -445,14 +470,39 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         return $wrapper;
     }
 
-}
 
-function allowedTracyUsers($u = null) {
-    $u = $u ? $u : wire('user');
-    if($u->isSuperuser() || $u->hasPermission('tracy-debugger')) {
-        return true;
+    public static function checkIpAddress() {
+        foreach (self::$_data as $datum) {
+            $ipAddress = trim($datum['ipAddress']);
+        }
+
+        $ipAddressAllowed = null;
+
+        if($ipAddress != '') {
+            if(strpos($ipAddress, '/') === 0) $ipAddressAllowed = (bool) @preg_match($ipAddress, $_SERVER['REMOTE_ADDR']); // regex IPs
+                else $ipAddressAllowed = $ipAddress === $_SERVER['REMOTE_ADDR']; // exact IP match
+        }
+        return array('ipAddress' => $ipAddress, 'ipAddressAllowed' => $ipAddressAllowed);
     }
-    else {
-        return false;
+
+
+    public static function allowedTracyUsers($u = null) {
+        $u = $u ? $u : wire('user');
+        if($u->isSuperuser()) {
+            return true;
+        }
+        else {
+            $checkIpAddress = static::checkIpAddress();
+            if($checkIpAddress['ipAddress'] != '' && $u->hasPermission('tracy-debugger')) {
+                return $checkIpAddress['ipAddressAllowed'];
+            }
+            elseif($u->hasPermission('tracy-debugger')) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
     }
+
 }

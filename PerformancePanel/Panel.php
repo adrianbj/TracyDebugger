@@ -11,9 +11,9 @@ use Tracy\IBarPanel;
  */
 class Panel implements IBarPanel
 {
-	
+
 	/**
-	 * 
+	 *
 	 * @return string
 	 */
 	protected function getHeaderString()
@@ -29,7 +29,7 @@ class Panel implements IBarPanel
 	}
 
 	/**
-	 * 
+	 *
 	 * @return string
 	 */
 	protected function getBaseRowString()
@@ -43,7 +43,7 @@ class Panel implements IBarPanel
 	}
 
 	/**
-	 * 
+	 *
 	 * @return string
 	 * @todo Draw time vs. memory graph
 	 */
@@ -60,21 +60,40 @@ class Panel implements IBarPanel
 	}
 
 	/**
-	 * 
+	 *
 	 * @return string
 	 */
 	public function getTab()
 	{
 		return ''
-			. '<img '
-			. 'style="top: 0px;"'
-			. 'title="Performance Tracy panel"'
-			. 'src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAUCAMAAABPqWaPAAAAOVBMVEUAouh3OzZ8PzmDQz6LSUOSTUeZUkyZ2eqgV1CmWlOqXVbw7ub/npX/pJr/p53/p5//t7H/zcn/7uxI7FS1AAAAYUlEQVQoz8WQyxKAIAhFb77QrKz+/2NLQHPT2rNg5lx0FJD/wPzO2uBDyN2RbiGBO4PHSwChQlCPCCcDepEiQYAvFc5IKycebmOGOxI42EPo76hbmF0w+rfPl4bO033+rh+bKRPEr5Sr9wAAAABJRU5ErkJggg=="/>'
+				. '<style>'
+					. '#performance-panel svg
+						{
+							width: 1.93em !important;
+						}'
+				. '</style>'
+				. '<span id="performance-panel" title="Performance Tracy Panel">'
+					. '<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+		 					viewBox="0 0 33.1 11.7" enable-background="new 0 0 33.1 11.7" xml:space="preserve">
+							<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="5.8319" y1="0.5" x2="5.8319" y2="11.1638">
+								<stop  offset="0" style="stop-color:#FFFFFF"/>
+								<stop  offset="1" style="stop-color:#F7A69E"/>
+							</linearGradient>
+							<rect x="0.5" y="0.5" fill="url(#SVGID_1_)" stroke="#773B37" width="10.7" height="10.7"/>
+							<linearGradient id="SVGID_2_" gradientUnits="userSpaceOnUse" x1="27.3105" y1="0.5" x2="27.3105" y2="11.1638">
+								<stop  offset="0" style="stop-color:#FFFFFF"/>
+								<stop  offset="1" style="stop-color:#F7A69E"/>
+							</linearGradient>
+							<rect x="22" y="0.5" fill="url(#SVGID_2_)" stroke="#773B37" width="10.7" height="10.7"/>
+							<polygon fill="#9ADAEA" stroke="#28A0DA" points="16.5,8.1 14,8.1 14,10.5 9,5.9 14,1.2 14,3.6 16.5,3.6 "/>
+							<polygon fill="#9ADAEA" stroke="#28A0DA" points="16.5,8 19,8 19,10.5 24.1,5.7 19.1,1.2 19.1,3.6 16.5,3.6 "/>'
+					. '</svg>'
+				. '</span>'
 		;
 	}
 
 	/**
-	 * 
+	 *
 	 * @return int
 	 */
 	protected function countBreakpoints()
@@ -83,7 +102,7 @@ class Panel implements IBarPanel
 	}
 
 	/**
-	 * 
+	 *
 	 * @return string
 	 */
 	protected function getRowsString()
@@ -93,12 +112,12 @@ class Panel implements IBarPanel
 		$data = Register::getData();
 		foreach ($data as $name => $current) {
 			$memory = $time = $peakMemory = null;
-			
+
 			$possibleParent = Register::getParent($name);
 			if ($possibleParent) {
 				$namePrevious = $possibleParent;
 			}
-			
+
 			if ($namePrevious !== null) {
 				$previous = $data[$namePrevious];
 				$memory = $current[Register::MEMORY] - $previous[Register::MEMORY];
@@ -121,7 +140,7 @@ class Panel implements IBarPanel
 	}
 
 	/**
-	 * 
+	 *
 	 * @param int $value
 	 * @return string
 	 */
@@ -131,7 +150,7 @@ class Panel implements IBarPanel
 	}
 
 	/**
-	 * 
+	 *
 	 * @param int $value
 	 * @return string
 	 */

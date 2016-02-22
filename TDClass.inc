@@ -2,7 +2,7 @@
 
 use Tracy\Debugger;
 
-class TD {
+class TD extends TracyDebugger {
 
 	/**
 	 * These are here so that they are available even when user is not allowed or module not enabled so we
@@ -14,7 +14,7 @@ class TD {
      * @tracySkipLocation
      */
     public static function barDump($var, $title = NULL, array $options = NULL) {
-        if(!allowedTracyUsers() || !class_exists('\Tracy\Debugger')) return false;
+        if(!TracyDebugger::allowedTracyUsers() || !class_exists('\Tracy\Debugger')) return false;
         return Debugger::barDump($var, $title, $options);
     }
 
@@ -23,7 +23,7 @@ class TD {
      * @tracySkipLocation
      */
     public static function dump($var, $return = FALSE) {
-        if(!allowedTracyUsers() || !class_exists('\Tracy\Debugger')) return false;
+        if(!TracyDebugger::allowedTracyUsers() || !class_exists('\Tracy\Debugger')) return false;
         return Debugger::dump($var, $return);
     }
 
@@ -32,7 +32,7 @@ class TD {
      * @tracySkipLocation
      */
     public static function log($message, $priority = Debugger::INFO) {
-        if(!allowedTracyUsers() || !class_exists('\Tracy\Debugger')) return false;
+        if(!TracyDebugger::allowedTracyUsers() || !class_exists('\Tracy\Debugger')) return false;
         return Debugger::log($message, $priority);
     }
 
@@ -41,7 +41,7 @@ class TD {
      * @tracySkipLocation
      */
     public static function timer($name = NULL) {
-        if(!allowedTracyUsers() || !class_exists('\Tracy\Debugger')) return false;
+        if(!TracyDebugger::allowedTracyUsers() || !class_exists('\Tracy\Debugger')) return false;
         $roundedTime = round(Debugger::timer($name),4);
         if($name) {
             return $name.' : '.$roundedTime;
@@ -56,7 +56,7 @@ class TD {
      * @tracySkipLocation
      */
     public static function fireLog($message = NULL) {
-        if(!allowedTracyUsers() || !class_exists('\Tracy\Debugger')) return false;
+        if(!TracyDebugger::allowedTracyUsers() || !class_exists('\Tracy\Debugger')) return false;
         return Debugger::fireLog($message);
     }
 
@@ -65,7 +65,7 @@ class TD {
      * @tracySkipLocation
      */
     public static function addBreakpoint($name = null, $enforceParent = null) {
-        if(!allowedTracyUsers() || !class_exists('\Tracy\Debugger') || !class_exists('\Zarganwar\PerformancePanel\Register')) return false;
+        if(!TracyDebugger::allowedTracyUsers() || !class_exists('\Tracy\Debugger') || !class_exists('\Zarganwar\PerformancePanel\Register')) return false;
         return Zarganwar\PerformancePanel\Register::add($name, $enforceParent);
     }
 
