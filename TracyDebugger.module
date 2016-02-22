@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 55,
+            'version' => 56,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -42,6 +42,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     protected $data = array();
+
+    public static $templateVars = array();
 
    /**
      * Default configuration for module
@@ -193,7 +195,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         if($this->data['showVariablesPanel'] && wire('page')->template != "admin") {
-            $this->wire('templateVars', array());
             require_once __DIR__ . '/VariablesPanel.inc';
             Debugger::getBar()->addPanel(new VariablesPanel);
         }
@@ -219,7 +220,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         //add call to populate wire("templateVars")
         //only for filename which matches the name of the template for this page
         if ($event['arguments'][1] == wire('page')->template->filename) {
-            $event->return = preg_replace('/(\?>)?$/s', '$1', $event->return) . "\n?>\n<?php\nif(class_exists('TracyDebugger')) {\n\t\ProcessWire\wire('templateVars', TracyDebugger::templateVars(get_defined_vars(), wire('page')));\n}";
+            $event->return = preg_replace('/(\?>)?$/s', '$1', $event->return) . "\n?>\n<?php\nif(class_exists('TracyDebugger')) {\n\tTracyDebugger::".'$templateVars'." = TracyDebugger::templateVars(get_defined_vars(), wire('page'));\n}";
         }
     }
 

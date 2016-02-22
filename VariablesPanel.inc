@@ -51,7 +51,7 @@ class VariablesPanel implements IBarPanel {
             $out .= '<strong>This feature only works with PW 3+</strong>';
         }
         elseif(wire('page')->template->compile != 0 && wire('config')->templateCompile !== false && stripos($targetData, "ileCompiler=0") === false) {
-            $out .= TD::dump(wire('templateVars'), array(Dumper::COLLAPSE => false));
+            $out .= TD::dump(TracyDebugger::$templateVars, array(Dumper::COLLAPSE => false));
         }
         else {
             $out .= '<strong>This template could not be compiled, so the variables could not be determined.</strong>';
