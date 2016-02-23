@@ -158,7 +158,7 @@ class TracyLogsPanel implements IBarPanel {
          * PW log panel sections
          */
 
-        $logEntries = $this->sectionHeader(array('Type', 'Date', 'Text'));
+        $logEntries = $this->sectionHeader(array('Type', 'Date', 'URL', 'Text'));
         $entriesArr = array();
         foreach($this->getLogs() as $log) {
             foreach($this->getLines($log['name'], array("limit" => 10)) as $entry) {
@@ -169,7 +169,9 @@ class TracyLogsPanel implements IBarPanel {
                 $logDateTime = $logDate . ' ' . $logTime;
                 $entriesArr[strtotime($logDateTime)]['date'] = $logDateTime;
                 $entriesArr[strtotime($logDateTime)]['log'] = $log['name'];
-                $entriesArr[strtotime($logDateTime)]['text'] = substr($entry, 22); // get the rest of the line after the date
+                $entryUrlAndText = explode('@', substr($entry, 22)); // get the rest of the line after the date;
+                $entriesArr[strtotime($logDateTime)]['url'] = trim($entryUrlAndText[1]);
+                $entriesArr[strtotime($logDateTime)]['text'] = trim($entryUrlAndText[0]);
             }
         }
 
@@ -180,6 +182,7 @@ class TracyLogsPanel implements IBarPanel {
             $logEntries .= "\n<tr>" .
             "<td>".$item['log']."</td>" .
             "<td>".$item['date']."</td>" .
+            "<td>".$item['url']."</td>" .
             "<td>".strip_tags($item['text'])."</td>" .
             "</tr>";
         }
