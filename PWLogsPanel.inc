@@ -48,6 +48,7 @@ class PWLogsPanel implements IBarPanel {
         return $out;
     }
 
+
     public function getPanel() {
 
         $PwVersion = wire('config')->version;
@@ -64,17 +65,27 @@ class PWLogsPanel implements IBarPanel {
          */
 
         $logEntries = $this->sectionHeader(array('Type', 'Date', 'User', 'URL', 'Text'));
+        $entriesArr = array();
         foreach(wire('log')->getLogs() as $log) {
-            if(!in_array($log['name'], array('errors', 'exceptions', 'messages', 'warnings'))) continue;
-            foreach(wire('log')->getEntries($log['name'], array("limit" =>4)) as $entry) {
-                $logEntries .= "\n<tr>" .
-                "<td><a href='".wire('config')->urls->admin."setup/logs/view/".$log['name']."/'>".$log['name']."</a></td>" .
-                "<td>".$entry['date']."</td>" .
-                "<td>".$entry['user']."</td>" .
-                "<td>".$entry['url']."</td>" .
-                "<td>".strip_tags($entry['text'])."</td>" .
-                "</tr>";
+            //if(!in_array($log['name'], array('errors', 'exceptions', 'messages', 'warnings'))) continue;
+            foreach(wire('log')->getEntries($log['name'], array("limit" => 5)) as $entry) {
+                $entriesArr[strtotime($entry['date'])] = $entry;
+                $entriesArr[strtotime($entry['date'])]['log'] = $log['name'];
             }
+        }
+
+        //sort by key which is a timestamp from the date
+        krsort($entriesArr, SORT_NUMERIC);
+
+        //display 25 most recent entries from all log files
+        foreach(array_slice($entriesArr, 0, 25) as $item) {
+            $logEntries .= "\n<tr>" .
+            "<td><a href='".wire('config')->urls->admin."setup/logs/view/".$item['log']."/'>".$item['log']."</a></td>" .
+            "<td>".$item['date']."</td>" .
+            "<td>".$item['user']."</td>" .
+            "<td>".$item['url']."</td>" .
+            "<td>".strip_tags($item['text'])."</td>" .
+            "</tr>";
         }
         $logEntries .= $sectionEnd;
 
