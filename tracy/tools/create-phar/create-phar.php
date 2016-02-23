@@ -19,17 +19,17 @@ foreach ($iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterato
 	echo "adding: {$iterator->getSubPathname()}\n";
 	$s = php_strip_whitespace($file);
 
-	if (in_array($file->getExtension(), ['js', 'css'])) {
+	if (in_array($file->getExtension(), array('js', 'css'))) {
 		continue;
 
 	} elseif ($file->getExtension() === 'phtml') {
-		$s = preg_replace_callback('#<\?(?:php|=) (require |readfile\(|.*file_get_contents\().*?(/.+\.(js|css))\'\)* \?>#', function ($m) use ($file) {
+		$s = preg_replace_callback('#<\?php (require |readfile\(|.*file_get_contents\().*?(/.+\.(js|css))\'\)* \?>#', function ($m) use ($file) {
 			return file_get_contents($file->getPath() . $m[2]);
 		}, $s);
 		$s = preg_replace_callback('#(<(script|style).*>)(.*)(</)#Uis', function ($m) {
 			list(, $begin, $type, $s, $end) = $m;
 
-			if (strpos($s, '<?') !== FALSE) {
+			if (strpos($s, '<?php') !== FALSE) {
 				return $m[0];
 
 			} elseif ($type === 'script' && function_exists('curl_init')) {

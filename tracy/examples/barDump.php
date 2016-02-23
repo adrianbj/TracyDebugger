@@ -1,3 +1,11 @@
+<!DOCTYPE html><link rel="stylesheet" href="assets/style.css">
+
+<style> html { background: url(assets/arrow.png) no-repeat bottom right; height: 100%; } </style>
+
+<h1>Tracy Debug Bar demo</h1>
+
+<p>You can dump variables to bar in rightmost bottom egde.</p>
+
 <?php
 
 require __DIR__ . '/../src/tracy.php';
@@ -6,15 +14,8 @@ use Tracy\Debugger;
 
 Debugger::enable(Debugger::DEVELOPMENT, __DIR__ . '/log');
 
-?>
-<!DOCTYPE html><html class=arrow><link rel="stylesheet" href="assets/style.css">
+$arr = array(10, 20.2, TRUE, NULL, 'hello', (object) NULL, array());
 
-<h1>Tracy: bar dump demo</h1>
-
-<p>You can dump variables to bar in rightmost bottom egde.</p>
-
-<?php
-$arr = [10, 20.2, TRUE, NULL, 'hello', (object) NULL, []];
 
 Debugger::barDump(get_defined_vars());
 

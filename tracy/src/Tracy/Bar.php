@@ -13,8 +13,11 @@ namespace Tracy;
  */
 class Bar
 {
+	/** @deprecated */
+	public $info = array();
+
 	/** @var IBarPanel[] */
-	private $panels = [];
+	private $panels = array();
 
 
 	/**
@@ -62,7 +65,7 @@ class Bar
 		}
 
 		$obLevel = ob_get_level();
-		$panels = [];
+		$panels = array();
 		foreach ($this->panels as $id => $panel) {
 			$idHtml = preg_replace('#[^a-z0-9]+#i', '-', $id);
 			try {
@@ -72,18 +75,18 @@ class Bar
 					$panelHtml = preg_replace('~(["\'.\s#])nette-(debug|inner|collapsed|toggle|toggle-collapsed)(["\'\s])~', '$1tracy-$2$3', $panelHtml);
 					$panelHtml = str_replace('tracy-toggle-collapsed', 'tracy-toggle tracy-collapsed', $panelHtml);
 				}
-				$panels[] = ['id' => $idHtml, 'tab' => $tab, 'panel' => $panelHtml];
+				$panels[] = array('id' => $idHtml, 'tab' => $tab, 'panel' => $panelHtml);
 
 			} catch (\Throwable $e) {
 			} catch (\Exception $e) {
 			}
 			if (isset($e)) {
-				$panels[] = [
+				$panels[] = array(
 					'id' => "error-$idHtml",
 					'tab' => "Error in $id",
 					'panel' => '<h1>Error: ' . $id . '</h1><div class="tracy-inner">'
 						. nl2br(htmlSpecialChars($e, ENT_IGNORE, 'UTF-8')) . '</div>',
-				];
+				);
 				while (ob_get_level() > $obLevel) { // restore ob-level if broken
 					ob_end_clean();
 				}
@@ -91,18 +94,18 @@ class Bar
 		}
 
 		if ($redirect) {
-			$session[] = ['panels' => $panels, 'liveData' => Dumper::fetchLiveData()];
+			$session[] = array('panels' => $panels, 'liveData' => Dumper::fetchLiveData());
 			return;
 		}
 
 		$liveData = Dumper::fetchLiveData();
 
 		foreach (array_reverse((array) $session) as $reqId => $info) {
-			$panels[] = [
+			$panels[] = array(
 				'tab' => '<span title="Previous request before redirect">previous</span>',
 				'panel' => NULL,
 				'previous' => TRUE,
-			];
+			);
 			foreach ($info['panels'] as $panel) {
 				$panel['id'] .= '-' . $reqId;
 				$panels[] = $panel;

@@ -3,8 +3,7 @@
  */
 
 (function(){
-	var blueScreen = document.getElementById('tracy-bs');
-	document.body.appendChild(blueScreen);
+	document.body.appendChild(document.getElementById('tracy-bs'));
 
 	for (var i = 0, styles = []; i < document.styleSheets.length; i++) {
 		var style = document.styleSheets[i];
@@ -15,20 +14,16 @@
 		}
 	}
 
-	document.getElementById('tracy-bs-toggle').addEventListener('tracy-toggle', function(e) {
+	document.getElementById('tracy-bs-toggle').addEventListener('click', function(e) {
 		var collapsed = this.classList.contains('tracy-collapsed');
 		for (i = 0; i < styles.length; i++) {
-			styles[i].disabled = collapsed ? styles[i].oldDisabled : true;
+			styles[i].disabled = collapsed ? true : styles[i].oldDisabled;
 		}
 	});
 
 	document.addEventListener('keyup', function(e) {
 		if (e.keyCode === 27 && !e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey) { // ESC
-			Tracy.Toggle.toggle(document.getElementById('tracy-bs-toggle'));
+			document.getElementById('tracy-bs-toggle').click();
 		}
 	});
-
-	var id = location.href + document.getElementById('tracy-bs-error').textContent;
-	Tracy.Toggle.persist(blueScreen, localStorage.getItem('tracy-toggles-bskey') === id);
-	localStorage.setItem('tracy-toggles-bskey', id);
 })();
