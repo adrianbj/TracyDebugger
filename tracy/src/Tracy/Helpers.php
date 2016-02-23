@@ -46,16 +46,15 @@ class Helpers
 	public static function editorUri($file, $line = NULL)
 	{
 		if (Debugger::$editor && $file && is_file($file)) {
-			return strtr(Debugger::$editor, array('%file' => rawurlencode($file), '%line' => $line ? (int) $line : 1));
+			return strtr(Debugger::$editor, ['%file' => rawurlencode($file), '%line' => $line ? (int) $line : 1]);
 		}
 	}
 
 
-	public static function formatHtml($mask)
+	public static function formatHtml($mask, ...$args)
 	{
-		$args = func_get_args();
-		return preg_replace_callback('#%#', function () use (& $args, & $count) {
-			return htmlspecialchars($args[++$count], ENT_IGNORE | ENT_QUOTES, 'UTF-8');
+		return preg_replace_callback('#%#', function () use (& $args) {
+			return htmlspecialchars(each($args)[1], ENT_IGNORE | ENT_QUOTES, 'UTF-8');
 		}, $mask);
 	}
 
@@ -80,7 +79,7 @@ class Helpers
 	 */
 	public static function getClass($obj)
 	{
-		return current(explode("\x00", get_class($obj)));
+		return explode("\x00", get_class($obj))[0];
 	}
 
 
@@ -88,14 +87,14 @@ class Helpers
 	public static function fixStack($exception)
 	{
 		if (function_exists('xdebug_get_function_stack')) {
-			$stack = array();
+			$stack = [];
 			foreach (array_slice(array_reverse(xdebug_get_function_stack()), 2, -1) as $row) {
-				$frame = array(
+				$frame = [
 					'file' => $row['file'],
 					'line' => $row['line'],
 					'function' => isset($row['function']) ? $row['function'] : '*unknown*',
-					'args' => array(),
-				);
+					'args' => [],
+				];
 				if (!empty($row['class'])) {
 					$frame['type'] = isset($row['type']) && $row['type'] === 'dynamic' ? '->' : '::';
 					$frame['class'] = $row['class'];
@@ -113,18 +112,14 @@ class Helpers
 	/** @internal */
 	public static function fixEncoding($s)
 	{
-		if (PHP_VERSION_ID < 50400) {
-			return @iconv('UTF-16', 'UTF-8//IGNORE', iconv('UTF-8', 'UTF-16//IGNORE', $s)); // intentionally @
-		} else {
-			return htmlspecialchars_decode(htmlspecialchars($s, ENT_NOQUOTES | ENT_IGNORE, 'UTF-8'), ENT_NOQUOTES);
-		}
+		return htmlspecialchars_decode(htmlspecialchars($s, ENT_NOQUOTES | ENT_IGNORE, 'UTF-8'), ENT_NOQUOTES);
 	}
 
 
 	/** @internal */
 	public static function errorTypeToString($type)
 	{
-		$types = array(
+		$types = [
 			E_ERROR => 'Fatal Error',
 			E_USER_ERROR => 'User Error',
 			E_RECOVERABLE_ERROR => 'Recoverable Error',
@@ -140,7 +135,7 @@ class Helpers
 			E_STRICT => 'Strict standards',
 			E_DEPRECATED => 'Deprecated',
 			E_USER_DEPRECATED => 'User Deprecated',
-		);
+		];
 		return isset($types[$type]) ? $types[$type] : 'Unknown error';
 	}
 
@@ -165,8 +160,7 @@ class Helpers
 		if (!$e instanceof \Error && !$e instanceof \ErrorException) {
 			// do nothing
 		} elseif (preg_match('#^Call to undefined function (\S+\\\\)?(\w+)\(#', $message, $m)) {
-			$funcs = get_defined_functions();
-			$funcs = array_merge($funcs['internal'], $funcs['user']);
+			$funcs = array_merge(get_defined_functions()['internal'], get_defined_functions()['user']);
 			$hint = self::getSuggestion($funcs, $m[1] . $m[2]) ?: self::getSuggestion($funcs, $m[2]);
 			$message .= ", did you mean $hint()?";
 

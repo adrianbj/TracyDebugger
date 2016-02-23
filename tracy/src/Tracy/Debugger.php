@@ -16,7 +16,7 @@ use ErrorException;
  */
 class Debugger
 {
-	const VERSION = '2.3.8';
+	const VERSION = '2.4-dev';
 
 	/** server modes {@link Debugger::enable()} */
 	const
@@ -25,9 +25,6 @@ class Debugger
 		DETECT = NULL;
 
 	const COOKIE_SECRET = 'tracy-debug';
-
-	/** @deprecated */
-	public static $version = self::VERSION;
 
 	/** @var bool in production mode is suppressed any debugging output */
 	public static $productionMode = self::DETECT;
@@ -41,6 +38,9 @@ class Debugger
 	/** @var string reserved memory; also prevents double rendering */
 	private static $reserved;
 
+	/** @var int initial output buffer level */
+	private static $obLevel;
+
 	/********************* errors and exceptions reporting ****************d*g**/
 
 	/** @var bool|int determines whether any error will cause immediate death; if integer that it's matched against error severity */
@@ -50,7 +50,7 @@ class Debugger
 	public static $scream = FALSE;
 
 	/** @var array of callables specifies the functions that are automatically called after fatal error */
-	public static $onFatalError = array();
+	public static $onFatalError = [];
 
 	/********************* Debugger::dump() ****************d*g**/
 
@@ -87,9 +87,6 @@ class Debugger
 
 	/** @var int timestamp with microseconds of the start of the request */
 	public static $time;
-
-	/** @deprecated */
-	public static $source;
 
 	/** @var string URI pattern mask to open editor */
 	public static $editor = 'editor://open/?file=%file&line=%line';
@@ -135,7 +132,8 @@ class Debugger
 	{
 		self::$reserved = str_repeat('t', 3e5);
 		self::$time = isset($_SERVER['REQUEST_TIME_FLOAT']) ? $_SERVER['REQUEST_TIME_FLOAT'] : microtime(TRUE);
-		error_reporting(E_ALL | E_STRICT);
+		self::$obLevel = ob_get_level();
+		error_reporting(E_ALL);
 
 		if ($mode !== NULL || self::$productionMode === NULL) {
 			self::$productionMode = is_bool($mode) ? $mode : !self::detectDebugMode($mode);
@@ -168,12 +166,12 @@ class Debugger
 		}
 
 		if (!self::$enabled) {
-			register_shutdown_function(array(__CLASS__, 'shutdownHandler'));
-			set_exception_handler(array(__CLASS__, 'exceptionHandler'));
-			set_error_handler(array(__CLASS__, 'errorHandler'));
+			register_shutdown_function([__CLASS__, 'shutdownHandler']);
+			set_exception_handler([__CLASS__, 'exceptionHandler']);
+			set_error_handler([__CLASS__, 'errorHandler']);
 
-			array_map('class_exists', array('Tracy\Bar', 'Tracy\BlueScreen', 'Tracy\DefaultBarPanel', 'Tracy\Dumper',
-				'Tracy\FireLogger', 'Tracy\Helpers', 'Tracy\Logger'));
+			array_map('class_exists', [Bar::class, BlueScreen::class, DefaultBarPanel::class, Dumper::class,
+				FireLogger::class, Helpers::class, Logger::class]);
 
 			self::$enabled = TRUE;
 		}
@@ -201,13 +199,15 @@ class Debugger
 		}
 
 		$error = error_get_last();
-		if (in_array($error['type'], array(E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_PARSE, E_RECOVERABLE_ERROR, E_USER_ERROR), TRUE)) {
+		if (in_array($error['type'], [E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_PARSE, E_RECOVERABLE_ERROR, E_USER_ERROR], TRUE)) {
 			self::exceptionHandler(
 				Helpers::fixStack(new ErrorException($error['message'], 0, $error['type'], $error['file'], $error['line'])),
 				FALSE
 			);
 
 		} elseif (self::$showBar && !connection_aborted() && !self::$productionMode && self::isHtmlMode()) {
+			self::$reserved = NULL;
+			self::removeOutputBuffers(FALSE);
 			self::getBar()->render();
 		}
 	}
@@ -236,6 +236,7 @@ class Debugger
 		}
 
 		Helpers::improveException($exception);
+		self::removeOutputBuffers(TRUE);
 
 		if (self::$productionMode) {
 			try {
@@ -296,7 +297,7 @@ class Debugger
 		}
 
 		if ($exit) {
-			exit($exception instanceof \Error ? 255 : 254);
+			exit(255);
 		}
 	}
 
@@ -310,11 +311,11 @@ class Debugger
 	public static function errorHandler($severity, $message, $file, $line, $context)
 	{
 		if (self::$scream) {
-			error_reporting(E_ALL | E_STRICT);
+			error_reporting(E_ALL);
 		}
 
 		if ($severity === E_RECOVERABLE_ERROR || $severity === E_USER_ERROR) {
-			if (Helpers::findTrace(debug_backtrace(PHP_VERSION_ID >= 50306 ? DEBUG_BACKTRACE_IGNORE_ARGS : FALSE), '*::__toString')) {
+			if (Helpers::findTrace(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), '*::__toString')) {
 				$previous = isset($context['e']) && ($context['e'] instanceof \Exception || $context['e'] instanceof \Throwable) ? $context['e'] : NULL;
 				$e = new ErrorException($message, 0, $severity, $file, $line, $previous);
 				$e->context = $context;
@@ -344,10 +345,6 @@ class Debugger
 			$e = new ErrorException($message, 0, $severity, $file, $line);
 			$e->context = $context;
 			$e->skippable = TRUE;
-			do {
-				$level = ob_get_level();
-				@ob_end_clean(); // @ may not exist or is not removable
-			} while ($level !== ob_get_level());
 			self::exceptionHandler($e);
 		}
 
@@ -380,6 +377,21 @@ class Debugger
 	}
 
 
+	private static function removeOutputBuffers($errorOccurred)
+	{
+		while (ob_get_level() > self::$obLevel) {
+			$status = ob_get_status();
+			if (in_array($status['name'], ['ob_gzhandler', 'zlib output compression'])) {
+				break;
+			}
+			$fnc = $status['chunk_size'] || !$errorOccurred ? 'ob_end_flush' : 'ob_end_clean';
+			if (!@$fnc()) { // @ may be not removable
+				break;
+			}
+		}
+	}
+
+
 	/********************* services ****************d*g**/
 
 
@@ -390,11 +402,11 @@ class Debugger
 	{
 		if (!self::$blueScreen) {
 			self::$blueScreen = new BlueScreen;
-			self::$blueScreen->info = array(
+			self::$blueScreen->info = [
 				'PHP ' . PHP_VERSION,
 				isset($_SERVER['SERVER_SOFTWARE']) ? $_SERVER['SERVER_SOFTWARE'] : NULL,
 				'Tracy ' . self::VERSION,
-			);
+			];
 		}
 		return self::$blueScreen;
 	}
@@ -462,19 +474,19 @@ class Debugger
 	public static function dump($var, $return = FALSE)
 	{
 		if ($return) {
-			ob_start();
-			Dumper::dump($var, array(
+			ob_start(function () {});
+			Dumper::dump($var, [
 				Dumper::DEPTH => self::$maxDepth,
 				Dumper::TRUNCATE => self::$maxLen,
-			));
+			]);
 			return ob_get_clean();
 
 		} elseif (!self::$productionMode) {
-			Dumper::dump($var, array(
+			Dumper::dump($var, [
 				Dumper::DEPTH => self::$maxDepth,
 				Dumper::TRUNCATE => self::$maxLen,
 				Dumper::LOCATION => self::$showLocation,
-			));
+			]);
 		}
 
 		return $var;
@@ -488,7 +500,7 @@ class Debugger
 	 */
 	public static function timer($name = NULL)
 	{
-		static $time = array();
+		static $time = [];
 		$now = microtime(TRUE);
 		$delta = isset($time[$name]) ? $now - $time[$name] : 0;
 		$time[$name] = $now;
@@ -511,11 +523,11 @@ class Debugger
 			if (!$panel) {
 				self::getBar()->addPanel($panel = new DefaultBarPanel('dumps'));
 			}
-			$panel->data[] = array('title' => $title, 'dump' => Dumper::toHtml($var, (array) $options + array(
+			$panel->data[] = ['title' => $title, 'dump' => Dumper::toHtml($var, (array) $options + [
 				Dumper::DEPTH => self::$maxDepth,
 				Dumper::TRUNCATE => self::$maxLen,
 				Dumper::LOCATION => self::$showLocation ?: Dumper::LOCATION_CLASS | Dumper::LOCATION_SOURCE,
-			)));
+			])];
 		}
 		return $var;
 	}

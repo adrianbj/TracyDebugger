@@ -8,6 +8,7 @@
 namespace Tracy\Bridges\Nette;
 
 use Nette;
+use Tracy;
 
 
 /**
@@ -15,7 +16,7 @@ use Nette;
  */
 class TracyExtension extends Nette\DI\CompilerExtension
 {
-	public $defaults = array(
+	public $defaults = [
 		'email' => NULL,
 		'fromEmail' => NULL,
 		'logSeverity' => NULL,
@@ -23,13 +24,14 @@ class TracyExtension extends Nette\DI\CompilerExtension
 		'browser' => NULL,
 		'errorTemplate' => NULL,
 		'strictMode' => NULL,
+		'showBar' => NULL,
 		'maxLen' => NULL,
 		'maxDepth' => NULL,
 		'showLocation' => NULL,
 		'scream' => NULL,
-		'bar' => array(), // of class name
-		'blueScreen' => array(), // of callback
-	);
+		'bar' => [], // of class name
+		'blueScreen' => [], // of callback
+	];
 
 	/** @var bool */
 	private $debugMode;
@@ -47,7 +49,7 @@ class TracyExtension extends Nette\DI\CompilerExtension
 		$container = $this->getContainerBuilder();
 
 		$container->addDefinition($this->prefix('logger'))
-			->setClass('Tracy\ILogger')
+			->setClass(Tracy\ILogger::class)
 			->setFactory('Tracy\Debugger::getLogger');
 
 		$container->addDefinition($this->prefix('blueScreen'))
@@ -70,7 +72,7 @@ class TracyExtension extends Nette\DI\CompilerExtension
 				$key = ($key === 'fromEmail' ? 'getLogger()->' : '$') . $key;
 				$initialize->addBody($container->formatPhp(
 					'Tracy\Debugger::' . $key . ' = ?;',
-					Nette\DI\Compiler::filterArguments(array($value))
+					Nette\DI\Compiler::filterArguments([$value])
 				));
 			}
 		}
@@ -79,10 +81,10 @@ class TracyExtension extends Nette\DI\CompilerExtension
 			foreach ((array) $this->config['bar'] as $item) {
 				$initialize->addBody($container->formatPhp(
 					'$this->getService(?)->addPanel(?);',
-					Nette\DI\Compiler::filterArguments(array(
+					Nette\DI\Compiler::filterArguments([
 						$this->prefix('bar'),
 						is_string($item) ? new Nette\DI\Statement($item) : $item,
-					))
+					])
 				));
 			}
 		}
@@ -90,7 +92,7 @@ class TracyExtension extends Nette\DI\CompilerExtension
 		foreach ((array) $this->config['blueScreen'] as $item) {
 			$initialize->addBody($container->formatPhp(
 				'$this->getService(?)->addPanel(?);',
-				Nette\DI\Compiler::filterArguments(array($this->prefix('blueScreen'), $item))
+				Nette\DI\Compiler::filterArguments([$this->prefix('blueScreen'), $item])
 			));
 		}
 	}

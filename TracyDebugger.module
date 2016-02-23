@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 64,
+            'version' => 65,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -507,7 +507,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $u = $u ? $u : wire('user');
 
-        if(static::getDataValue('allowLogProduction') == 1) {
+        //allow Tracy to log to file for guest users when in production mode (not in development mode)
+        if(static::getDataValue('allowLogProduction') == 1 && static::getDataValue('outputMode') != 'development') {
             return true;
         }
         elseif($u->isSuperuser()) {

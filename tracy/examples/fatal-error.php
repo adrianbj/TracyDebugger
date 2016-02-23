@@ -1,17 +1,17 @@
-<!DOCTYPE html><link rel="stylesheet" href="assets/style.css">
-
-<h1>Tracy Fatal Error demo</h1>
-
 <?php
 
 require __DIR__ . '/../src/tracy.php';
 
 use Tracy\Debugger;
 
-
 Debugger::enable(Debugger::DETECT, __DIR__ . '/log');
 
+?>
+<!DOCTYPE html><link rel="stylesheet" href="assets/style.css">
 
+<h1>Tracy: fatal error demo</h1>
+
+<?php
 
 function first($arg1, $arg2)
 {
@@ -22,7 +22,7 @@ function first($arg1, $arg2)
 
 function second($arg1, $arg2)
 {
-	third(array(1, 2, 3));
+	third([1, 2, 3]);
 }
 
 

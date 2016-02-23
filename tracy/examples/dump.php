@@ -1,26 +1,28 @@
-<!DOCTYPE html><link rel="stylesheet" href="assets/style.css">
-
-<h1>Tracy Dumper demo</h1>
-
 <?php
 
 require __DIR__ . '/../src/tracy.php';
 
 use Tracy\Debugger;
 
-
 Debugger::enable(Debugger::DEVELOPMENT, __DIR__ . '/log');
+
+?>
+<!DOCTYPE html><link rel="stylesheet" href="assets/style.css">
+
+<h1>Tracy: Dumper demo</h1>
+
+<?php
 
 class Test
 {
-	public $x = array(10, NULL);
+	public $x = [10, NULL];
 
 	private $y = 'hello';
 
 	protected $z = 30;
 }
 
-$arr = array(10, 20.2, TRUE, NULL, 'hello', (object) NULL, array(), fopen(__FILE__, 'r'));
+$arr = [10, 20.2, TRUE, NULL, 'hello', (object) NULL, [], fopen(__FILE__, 'r')];
 
 $obj = new Test;
 
