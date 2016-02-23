@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 61,
+            'version' => 63,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -59,6 +59,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "forceScream" => null,
                 "outputMode" => 'detect',
                 "showLocation" => array('Tracy\Dumper::LOCATION_SOURCE', 'Tracy\Dumper::LOCATION_LINK', 'Tracy\Dumper::LOCATION_CLASS'),
+                "logSeverity" => array(),
                 "maxDepth" => 3,
                 "maxLength" => 150,
                 "showDebugBar" => 'frontend',
@@ -130,6 +131,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         //convert checked location strings to constants and array_reduce to bitwise OR (|) line
         $locations = array_map('constant', $this->data['showLocation']);
         Debugger::$showLocation = array_reduce($locations, function($a, $b) { return $a | $b; }, 0);
+
+        //convert checked log severity strings to constants and array_reduce to bitwise OR (|) line
+        $severityOptions = array_map('constant', $this->data['logSeverity']);
+        Debugger::$logSeverity = array_reduce($severityOptions, function($a, $b) { return $a | $b; }, 0);
 
         Debugger::$maxDepth = $this->data['maxDepth'];
         Debugger::$maxLen = $this->data['maxLength'];
@@ -281,7 +286,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'enabled');
         $f->label = __('Enable Tracy Debugger', __FILE__);
-        $f->description = __('Uncheck to disable the Tracy Debugger. For more details on Tracy and the settings below, see: [https://doc.nette.org/en/2.3/debugging](https://doc.nette.org/en/2.3/debugging)', __FILE__);
+        $f->description = __('Uncheck to disable the Tracy Debugger. For more details on Tracy and the settings below, see: [https://tracy.nette.org/](https://tracy.nette.org/)', __FILE__);
         $f->columnWidth = 33;
         $f->attr('checked', $data['enabled'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
@@ -336,36 +341,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $wrapper->add($f);
 
         $f = wire('modules')->get("InputfieldCheckboxes");
-        $f->attr('name', 'showLocation');
-        $f->label = 'Show Location';
-        $f->description = __('Shows the location of dump() and barDump() calls.', __FILE__);
-        $f->notes = __('LOCATION_SOURCE adds tooltip with path to the file, where the function was called. LOCATION_LINK adds a link to the file. LOCATION_CLASS adds a tooltip to every dumped object containing path to the file, in which the object\'s class is defined.');
-        $f->columnWidth = 33;
-        $f->addOption('Tracy\Dumper::LOCATION_SOURCE', 'LOCATION_SOURCE');
-        $f->addOption('Tracy\Dumper::LOCATION_LINK', 'LOCATION_LINK');
-        $f->addOption('Tracy\Dumper::LOCATION_CLASS', 'LOCATION_CLASS');
-        if($data['showLocation']) $f->attr('value', $data['showLocation']);
-        $wrapper->add($f);
-
-        $f = wire('modules')->get("InputfieldInteger");
-        $f->attr('name', 'maxDepth');
-        $f->label = __('Maximum Nesting Depth', __FILE__);
-        $f->description = __('Set the maximum nesting depth of dumped arrays and objects.', __FILE__);
-        $f->notes = __('Default: 3. Warning: making this too large can slow your page load down or even crash your browser.', __FILE__);
-        $f->columnWidth = 34;
-        $f->attr('value', $data['maxDepth']);
-        $wrapper->add($f);
-
-        $f = wire('modules')->get("InputfieldInteger");
-        $f->attr('name', 'maxLength');
-        $f->label = __('Maximum String Length', __FILE__);
-        $f->description = __('Set the maximum displayed strings length.', __FILE__);
-        $f->notes = __('Default: 150.', __FILE__);
-        $f->columnWidth = 33;
-        $f->attr('value', $data['maxLength']);
-        $wrapper->add($f);
-
-        $f = wire('modules')->get("InputfieldCheckboxes");
         $f->attr('name', 'showDebugBar');
         $f->label = __('Show Debug Bar', __FILE__);
         $f->description = __('Show the debug bar.', __FILE__);
@@ -387,6 +362,61 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if(wire('config')->version >= 3) $f->addOption('variables', 'Variables');
         $f->addOption('methods', 'Methods');
         if($data['showPanels']) $f->attr('value', $data['showPanels']);
+        $wrapper->add($f);
+
+        $f = wire('modules')->get("InputfieldCheckboxes");
+        $f->attr('name', 'showLocation');
+        $f->label = 'Show Location';
+        $f->description = __('Shows the location of dump() and barDump() calls.', __FILE__);
+        $f->notes = __('LOCATION_SOURCE adds tooltip with path to the file, where the function was called. LOCATION_LINK adds a link to the file. LOCATION_CLASS adds a tooltip to every dumped object containing path to the file, in which the object\'s class is defined.');
+        $f->columnWidth = 50;
+        $f->addOption('Tracy\Dumper::LOCATION_SOURCE', 'LOCATION_SOURCE');
+        $f->addOption('Tracy\Dumper::LOCATION_LINK', 'LOCATION_LINK');
+        $f->addOption('Tracy\Dumper::LOCATION_CLASS', 'LOCATION_CLASS');
+        if($data['showLocation']) $f->attr('value', $data['showLocation']);
+        $wrapper->add($f);
+
+        $f = wire('modules')->get("InputfieldCheckboxes");
+        $f->attr('name', 'logSeverity');
+        $f->label = 'Log Severity';
+        $f->description = __('If you want Tracy to log PHP errors like E_NOTICE or E_WARNING with detailed information (HTML report), set them here.', __FILE__);
+        $f->notes = __('These only affect log file content, not onscreen debug info.');
+        $f->columnWidth = 50;
+        $f->addOption('E_ERROR', 'E_ERROR');
+        $f->addOption('E_WARNING', 'E_WARNING');
+        $f->addOption('E_PARSE', 'E_PARSE');
+        $f->addOption('E_NOTICE', 'E_NOTICE');
+        $f->addOption('E_CORE_ERROR', 'E_CORE_ERROR');
+        $f->addOption('E_CORE_WARNING', 'E_CORE_WARNING');
+        $f->addOption('E_COMPILE_ERROR', 'E_COMPILE_ERROR');
+        $f->addOption('E_COMPILE_WARNING', 'E_COMPILE_WARNING');
+        $f->addOption('E_USER_ERROR', 'E_USER_ERROR');
+        $f->addOption('E_USER_WARNING', 'E_USER_WARNING');
+        $f->addOption('E_USER_NOTICE', 'E_USER_NOTICE');
+        $f->addOption('E_STRICT', 'E_STRICT');
+        $f->addOption('E_RECOVERABLE_ERROR', 'E_RECOVERABLE_ERROR');
+        $f->addOption('E_DEPRECATED', 'E_DEPRECATED');
+        $f->addOption('E_USER_DEPRECATED', 'E_USER_DEPRECATED');
+        $f->addOption('E_ALL', 'E_ALL');
+        if($data['logSeverity']) $f->attr('value', $data['logSeverity']);
+        $wrapper->add($f);
+
+        $f = wire('modules')->get("InputfieldInteger");
+        $f->attr('name', 'maxDepth');
+        $f->label = __('Maximum Nesting Depth', __FILE__);
+        $f->description = __('Set the maximum nesting depth of dumped arrays and objects.', __FILE__);
+        $f->notes = __('Default: 3. Warning: making this too large can slow your page load down or even crash your browser.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('value', $data['maxDepth']);
+        $wrapper->add($f);
+
+        $f = wire('modules')->get("InputfieldInteger");
+        $f->attr('name', 'maxLength');
+        $f->label = __('Maximum String Length', __FILE__);
+        $f->description = __('Set the maximum displayed strings length.', __FILE__);
+        $f->notes = __('Default: 150.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('value', $data['maxLength']);
         $wrapper->add($f);
 
         $f = wire('modules')->get("InputfieldEmail");
