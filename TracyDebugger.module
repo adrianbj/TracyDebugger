@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 68,
+            'version' => 69,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -227,7 +227,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         //add call to populate wire("templateVars")
         //only for filename which matches the name of the template for this page
         if ($event['arguments'][1] == wire('page')->template->filename) {
-            $event->return = preg_replace('/(\?>)?$/s', '$1', $event->return) . "\n?>\n<?php\nif(class_exists('\TracyDebugger')) {\n\t\TracyDebugger::".'$templateVars'." = \TracyDebugger::templateVars(get_defined_vars(), wire('page'));\n}";
+            $event->return = preg_replace('/(\?>)([\n\t\s]+)?$/s', '', $event->return) . "\n?>\n<?php\nif(class_exists('\TracyDebugger')) {\n\t\TracyDebugger::".'$templateVars'." = \TracyDebugger::templateVars(get_defined_vars(), wire('page'));\n}";
         }
     }
 
