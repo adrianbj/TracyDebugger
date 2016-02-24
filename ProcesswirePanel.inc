@@ -17,6 +17,15 @@ class ProcessWirePanel implements IBarPanel {
                 max-width: 95% !important;
                 overflow-y: scroll !important;
             }
+            #pw-admin-links a {
+                transition: transform 0.12s;
+            }
+            #pw-admin-links a:hover svg {
+                transform: scale(1.4);
+            }
+            #pw-admin-links a:hover, #pw-admin-links a:active, #pw-admin-links a:focus {
+                background-color: transparent !important;
+            }
         </style>
         <span title="ProcessWire debug info">
             <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -541,7 +550,7 @@ class ProcessWirePanel implements IBarPanel {
             ';
         }
 
-        $out .= '<div style="text-align: center; border-top:1px solid #CCCCCC; margin-top:10px; padding-top:10px;">
+        $out .= '<div id="pw-admin-links" style="text-align: center; border-top:1px solid #CCCCCC; margin-top:10px; padding-top:10px;">
             <a href="'.wire('config')->urls->admin.'" title="PW Admin">
                 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
                      viewBox="0 0 20 20.2" enable-background="new 0 0 20 20.2" xml:space="preserve" style="height:16px">
