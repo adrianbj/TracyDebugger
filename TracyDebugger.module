@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 69,
+            'version' => 70,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -201,9 +201,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             Debugger::getBar()->addPanel(new TracyLogsPanel);
         }
 
-        if(in_array('variables', $this->data['showPanels']) && wire('page')->template != "admin") {
-            require_once __DIR__ . '/VariablesPanel.inc';
-            Debugger::getBar()->addPanel(new VariablesPanel);
+        if(wire('config')->version >= 3
+            && in_array('variables', $this->data['showPanels'])
+            && wire('page')->template != "admin"
+            && wire('config')->templateCompile !== false) {
+                require_once __DIR__ . '/VariablesPanel.inc';
+                Debugger::getBar()->addPanel(new VariablesPanel);
         }
 
         if(in_array('methods', $this->data['showPanels'])) {
@@ -227,7 +230,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         //add call to populate wire("templateVars")
         //only for filename which matches the name of the template for this page
         if ($event['arguments'][1] == wire('page')->template->filename) {
-            $event->return = preg_replace('/(\?>)([\n\t\s]+)?$/s', '', $event->return) . "\n?>\n<?php\nif(class_exists('\TracyDebugger')) {\n\t\TracyDebugger::".'$templateVars'." = \TracyDebugger::templateVars(get_defined_vars(), wire('page'));\n}";
+            $event->return = preg_replace('/(\?>)([\n\t\s]+)?$/s', '', $event->return) . "\n?>\n<?php\nif(class_exists('\TracyDebugger')) {\n\t\TracyDebugger::".'$templateVars'." = \TracyDebugger::templateVars(get_defined_vars());\n}";
         }
     }
 
@@ -235,7 +238,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     /**
      * Helper function to remove PW variables from get_defined_vars() call.
      */
-    public static function templateVars($vars, $p) {
+    public static function templateVars($vars) {
 
         $pwVars = array('fuel','options');
         foreach(wire('fuel') as $key => $value) {
@@ -366,10 +369,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->description = __('Determines which panels are shown on the Debug Bar.', __FILE__);
         $f->columnWidth = 50;
         $f->addOption('performance', 'Performance');
-        $f->addOption('processwire', 'ProcessWire');
-        $f->addOption('processwireLogs', 'ProcessWire Logs');
+        $f->addOption('processwire', 'ProcessWire Info');
+        $f->addOption('processwireLogs', 'PW Logs');
         $f->addOption('tracyLogs', 'Tracy Logs');
-        if(wire('config')->version >= 3) $f->addOption('variables', 'Variables');
+        if(wire('config')->version >= 3 && wire('config')->templateCompile !== false) $f->addOption('variables', 'Variables');
         $f->addOption('methods', 'Methods');
         if($data['showPanels']) $f->attr('value', $data['showPanels']);
         $wrapper->add($f);
