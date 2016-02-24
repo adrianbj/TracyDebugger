@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 70,
+            'version' => 71,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -65,6 +65,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "maxLength" => 150,
                 "showDebugBar" => 'frontend',
                 "showPanels" => array('performance', 'processwire', 'processwireLogs', 'tracyLogs', 'methods'),
+                "showPanelLabels" => 1,
                 "email" => '',
                 "clearEmailSent" => null,
                 "enableShortcutMethods" => 1,
@@ -357,7 +358,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'showDebugBar');
         $f->label = __('Show Debug Bar', __FILE__);
         $f->description = __('Show the debug bar.', __FILE__);
-        $f->columnWidth = 50;
+        $f->columnWidth = 33;
         $f->addOption('frontend', 'Frontend');
         $f->addOption('backend', 'Backend');
         if($data['showDebugBar']) $f->attr('value', $data['showDebugBar']);
@@ -367,7 +368,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'showPanels');
         $f->label = __('Show Panels', __FILE__);
         $f->description = __('Determines which panels are shown on the Debug Bar.', __FILE__);
-        $f->columnWidth = 50;
+        $f->columnWidth = 34;
         $f->addOption('performance', 'Performance');
         $f->addOption('processwire', 'ProcessWire Info');
         $f->addOption('processwireLogs', 'PW Logs');
@@ -375,6 +376,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if(wire('config')->version >= 3 && wire('config')->templateCompile !== false) $f->addOption('variables', 'Variables');
         $f->addOption('methods', 'Methods');
         if($data['showPanels']) $f->attr('value', $data['showPanels']);
+        $wrapper->add($f);
+
+        $f = wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'showPanelLabels');
+        $f->label = __('Show Panel Labels', __FILE__);
+        $f->description = __('Show the labels next to each panel.', __FILE__);
+        $f->notes = __('Unchecking this will make the debugger bar much more compact.', __FILE__);
+        $f->columnWidth = 33;
+        $f->attr('checked', $data['showPanelLabels'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
 
         $f = wire('modules')->get("InputfieldCheckboxes");

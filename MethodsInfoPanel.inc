@@ -20,7 +20,7 @@ class MethodsInfoPanel implements IBarPanel {
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Capa_1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 612 612" style="enable-background:new 0 0 612 612;" xml:space="preserve">
                 <path d="M306,153c-21.114,0-38.25,17.136-38.25,38.25S284.886,229.5,306,229.5s38.25-17.117,38.25-38.25S327.133,153,306,153z      M306,267.75c-21.114,0-38.25,17.117-38.25,38.25v114.75c0,21.114,17.136,38.25,38.25,38.25s38.25-17.136,38.25-38.25V306     C344.25,284.886,327.133,267.75,306,267.75z M306,0C137.279,0,0,137.279,0,306s137.279,306,306,306s306-137.279,306-306     S474.721,0,306,0z M306,554.625C168.893,554.625,57.375,443.088,57.375,306S168.893,57.375,306,57.375     c137.088,0,248.625,111.537,248.625,248.625S443.088,554.625,306,554.625z" fill="#444"/>
             </svg>
-            Methods Info
+            ' . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Methods Info' : '') . '
         </span>
         ';
     }
@@ -37,7 +37,7 @@ class MethodsInfoPanel implements IBarPanel {
             </svg>
             Methods Info
         </h1>
-        <p style="font-size:16px">Tracy Documentation: <a href="https://doc.nette.org/en/2.3/debugging" target="_blank">https://doc.nette.org/en/2.3/debugging</a></p>
+        <p style="font-size:16px">Tracy Documentation: <a href="https://tracy.nette.org/" target="_blank">https://tracy.nette.org/</a></p>
         <br />
 
         <p style="font-size:16px"><strong>dump($var, $return = FALSE)</strong></p>

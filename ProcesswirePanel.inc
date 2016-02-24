@@ -42,7 +42,7 @@ class ProcessWirePanel implements IBarPanel {
                         c0,0.7,0.1,1.4,0.4,2.3c0.3,0.9,0.9,1.8,1.4,2.3c0.6,0.7,1.4,1.2,2.1,1.5c1.7,0.8,4.1,0.9,6,0.8c1.3,0,2.5-0.2,3.8-0.5
                         c2.5-0.6,4.9-1.7,7-3.2c2.3-1.6,4.2-3.8,5.3-5.7c1.4-2.2,2.3-4.7,2.8-7.2C39.9,20.9,39.8,18.3,39.3,15.8z"/>
                 </g>
-            </svg> ProcessWire
+            </svg>' . (\TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;ProcessWire' : '') . '
         </span>
         ';
     }
