@@ -27,9 +27,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static function getModuleInfo() {
         return array(
             'title' => 'Tracy Debugger',
-            'summary' => 'Tracy debugger from Nette.',
+            'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 73,
+            'version' => 74,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -64,7 +64,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "maxDepth" => 3,
                 "maxLength" => 150,
                 "showDebugBar" => 'frontend',
-                "showPanels" => array('performance', 'processwire', 'processwireLogs', 'tracyLogs', 'methods'),
+                "showPanels" => array('performance', 'processwire', 'processwireLogs', 'tracyLogs', 'methods', 'diagnostics'),
                 "showPanelLabels" => 1,
                 "email" => '',
                 "clearEmailSent" => null,
@@ -213,6 +213,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if(in_array('methods', $this->data['showPanels'])) {
             require_once __DIR__ . '/MethodsInfoPanel.inc';
             Debugger::getBar()->addPanel(new MethodsInfoPanel);
+        }
+
+        if(in_array('diagnostics', $this->data['showPanels'])) {
+            require_once __DIR__ . '/DiagnosticsPanel.inc';
+            Debugger::getBar()->addPanel(new DiagnosticsPanel);
         }
 
         if(wire('config')->debug === true) {
@@ -375,6 +380,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->addOption('tracyLogs', 'Tracy Logs');
         if(wire('config')->version >= 3 && wire('config')->templateCompile !== false) $f->addOption('variables', 'Variables');
         $f->addOption('methods', 'Methods');
+        $f->addOption('diagnostics', 'Diagnostics/Debug');
         if($data['showPanels']) $f->attr('value', $data['showPanels']);
         $wrapper->add($f);
 
