@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 74,
+            'version' => 75,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -220,10 +220,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             Debugger::getBar()->addPanel(new DiagnosticsPanel);
         }
 
-        if(wire('config')->debug === true) {
-            require_once __DIR__ . '/DebugModePanel.inc';
-            Debugger::getBar()->addPanel(new DebugModePanel);
-        }
+
+        require_once __DIR__ . '/DebugModePanel.inc';
+        Debugger::getBar()->addPanel(new DebugModePanel);
 
         require_once __DIR__ . '/AllowedUsersPanel.inc';
         Debugger::getBar()->addPanel(new AllowedUsersPanel);
