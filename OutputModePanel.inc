@@ -88,7 +88,7 @@ class OutputModePanel implements IBarPanel {
             if(\TracyDebugger::getDataValue('outputMode') == 'detect') {
                 $out .= 'This is automatically determined because you configured as "DETECT" mode.';
             }
-            $out .= '<p>Use caution with development mode on a live site. Be sure to limit authorized non-superusers by IP Address for short-term testing needs.</p>';
+            $out .= '<p>Use caution with development mode on a live site.</p><p>Be sure to limit authorized non-superusers by IP Address for short-term testing needs.</p>';
         }
         elseif($this->outputMode == 'production') {
             $out .= '<p>This mode is safe for live sites.</p><p>Only superusers will have access to the debugger tools.</p>';
