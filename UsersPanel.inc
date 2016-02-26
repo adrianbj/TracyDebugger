@@ -6,7 +6,7 @@ use Tracy\IBarPanel;
  * Allowed Non-Superusers panel
  */
 
-class AllowedUsersPanel implements IBarPanel {
+class UsersPanel implements IBarPanel {
 
     protected $nonSuperusers = 0;
     protected $listTracyUsers = null;

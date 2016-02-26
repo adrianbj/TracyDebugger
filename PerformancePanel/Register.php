@@ -13,12 +13,11 @@ class Register
 	const MEMORY = 'memory';
 	const TIME = 'time';
 	const NAME = 'name';
+	const PREVIOUS = 'previous';
 
 	const DEFAULT_BP_NAME = 'BP_';
 
 	public static $data = array();
-	public static $relations = array();
-	public static $breakpointCounter = 1;
 
 	/**
 	 * Add breakpoint
@@ -39,38 +38,25 @@ class Register
 	public static function add($name = null, $enforceParent = null)
 	{
 		$safeName = self::getName($name);
+		$previous = $enforceParent !== null && self::isNameUsed($enforceParent) ? $enforceParent : null;
 		self::$data[$safeName] = [
 			self::NAME => $safeName,
 			self::MEMORY => memory_get_usage(),
 			self::MEMORY_PEAK => memory_get_peak_usage(),
 			self::TIME => microtime(true),
+			self::PREVIOUS => $previous,
 		];
-
-		if ($enforceParent !== null) {
-			self::createRelation($safeName, $enforceParent);
-		}
-
-		self::$breakpointCounter++;
 	}
 
 	/**
-	 *
-	 * @param type $child
-	 * @param type $parent
-	 * @throws \InvalidArgumentException
+	 * 
+	 * @return int
 	 */
-	private static function createRelation($child, $parent)
+	private static function countBreakpoints()
 	{
-		if (!self::isNameUsed($child)) {
-			throw new \InvalidArgumentException("Unkwnown child breakpoint '$child'");
-		}
-
-		if (!self::isNameUsed($parent)) {
-			throw new \InvalidArgumentException("Unkwnown parent breakpoint '$parent'");
-		}
-
-		self::$relations[$child] = $parent;
+		return count(self::$data);
 	}
+
 
 	/**
 	 *
@@ -79,11 +65,12 @@ class Register
 	 */
 	public static function getName($name = null)
 	{
+		$countBreakpoints = self::countBreakpoints() + 1;
 		if ($name === null) {
-			$name = self::DEFAULT_BP_NAME . self::$breakpointCounter;
+			$name = self::DEFAULT_BP_NAME . $countBreakpoints;
 		} else {
 			if (self::isNameUsed($name)) {
-				$name = self::getName($name . '_' . self::$breakpointCounter);
+				$name = self::getName($name . '_' . $countBreakpoints);
 			}
 		}
 		return $name;
@@ -96,7 +83,7 @@ class Register
 	 */
 	public static function hasParent($name)
 	{
-		return isset(self::$relations[$name]);
+		return self::$data[$name][self::PREVIOUS] !== null;
 	}
 
 	/**
@@ -108,7 +95,7 @@ class Register
 	{
 		$parent = null;
 		if (self::hasParent($name)) {
-			$parent = self::$relations[$name];
+			$parent = self::$data[$name][self::PREVIOUS];
 		}
 		return $parent;
 	}

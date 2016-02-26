@@ -3,10 +3,10 @@
 use Tracy\IBarPanel;
 
 /**
- * PW logs panel
+ * Processwire logs panel
  */
 
-class PWLogsPanel implements IBarPanel {
+class ProcesswireLogsPanel implements IBarPanel {
     public function getTab() {
         return '
         <style>

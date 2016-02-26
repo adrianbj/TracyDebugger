@@ -64,7 +64,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "maxDepth" => 3,
                 "maxLength" => 150,
                 "showDebugBar" => 'frontend',
-                "showPanels" => array('performance', 'processwire', 'processwireLogs', 'tracyLogs', 'methods', 'diagnostics'),
+                "showPanels" => array('performance', 'processwireInfo', 'processwireLogs', 'tracyLogs', 'methods', 'diagnostics', 'debugMode', 'users'),
                 "showPanelLabels" => 1,
                 "email" => '',
                 "clearEmailSent" => null,
@@ -181,52 +181,35 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
 
-        if(in_array('performance', $this->data['showPanels'])) {
-            require_once __DIR__ . '/PerformancePanel/Panel.php';
-            require_once __DIR__ . '/PerformancePanel/Register.php';
-            Debugger::getBar()->addPanel(new Zarganwar\PerformancePanel\Panel);
+
+        foreach($this->data['showPanels'] as $panel) {
+            $panelName = ucfirst($panel).'Panel';
+            switch($panel) {
+                case 'performance':
+                    require_once __DIR__ . '/PerformancePanel/Panel.php';
+                    require_once __DIR__ . '/PerformancePanel/Register.php';
+                    Debugger::getBar()->addPanel(new Zarganwar\PerformancePanel\Panel);
+                    break;
+                case 'processwireInfo':
+                case 'processwireLogs':
+                case 'tracyLogs':
+                case 'methodsInfo':
+                case 'diagnostics':
+                case 'debugMode':
+                case 'users':
+                    require_once __DIR__ . '/'.$panelName.'.inc';
+                    Debugger::getBar()->addPanel(new $panelName);
+                    break;
+                case 'variables':
+                    if(wire('config')->version >= 3
+                        && in_array('variables', $this->data['showPanels'])
+                        && wire('page')->template != "admin"
+                        && wire('config')->templateCompile !== false) {
+                            require_once __DIR__ . '/'.$panelName.'.inc';
+                            Debugger::getBar()->addPanel(new $panelName);
+                    }
+            }
         }
-
-        if(in_array('processwire', $this->data['showPanels'])) {
-            require_once __DIR__ . '/ProcesswirePanel.inc';
-            Debugger::getBar()->addPanel(new ProcessWirePanel);
-        }
-
-        if(in_array('processwireLogs', $this->data['showPanels'])) {
-            require_once __DIR__ . '/PWLogsPanel.inc';
-            Debugger::getBar()->addPanel(new PWLogsPanel);
-        }
-
-        if(in_array('tracyLogs', $this->data['showPanels'])) {
-            require_once __DIR__ . '/TracyLogsPanel.inc';
-            Debugger::getBar()->addPanel(new TracyLogsPanel);
-        }
-
-        if(wire('config')->version >= 3
-            && in_array('variables', $this->data['showPanels'])
-            && wire('page')->template != "admin"
-            && wire('config')->templateCompile !== false) {
-                require_once __DIR__ . '/VariablesPanel.inc';
-                Debugger::getBar()->addPanel(new VariablesPanel);
-        }
-
-        if(in_array('methods', $this->data['showPanels'])) {
-            require_once __DIR__ . '/MethodsInfoPanel.inc';
-            Debugger::getBar()->addPanel(new MethodsInfoPanel);
-        }
-
-        if(in_array('diagnostics', $this->data['showPanels'])) {
-            require_once __DIR__ . '/DiagnosticsPanel.inc';
-            Debugger::getBar()->addPanel(new DiagnosticsPanel);
-        }
-
-
-        require_once __DIR__ . '/DebugModePanel.inc';
-        Debugger::getBar()->addPanel(new DebugModePanel);
-
-        require_once __DIR__ . '/AllowedUsersPanel.inc';
-        Debugger::getBar()->addPanel(new AllowedUsersPanel);
-
     }
 
 
@@ -368,18 +351,20 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($data['showDebugBar']) $f->attr('value', $data['showDebugBar']);
         $wrapper->add($f);
 
-        $f = wire('modules')->get("InputfieldCheckboxes");
+        $f = wire('modules')->get("InputfieldAsmSelect");
         $f->attr('name', 'showPanels');
         $f->label = __('Show Panels', __FILE__);
-        $f->description = __('Determines which panels are shown on the Debug Bar.', __FILE__);
+        $f->description = __('Determines which panels are shown on the Debug Bar. Sort to match order of panels in Debugger Bar.', __FILE__);
         $f->columnWidth = 34;
         $f->addOption('performance', 'Performance');
-        $f->addOption('processwire', 'ProcessWire Info');
+        $f->addOption('processwireInfo', 'ProcessWire Info');
         $f->addOption('processwireLogs', 'PW Logs');
         $f->addOption('tracyLogs', 'Tracy Logs');
         if(wire('config')->version >= 3 && wire('config')->templateCompile !== false) $f->addOption('variables', 'Variables');
         $f->addOption('methods', 'Methods');
-        $f->addOption('diagnostics', 'Diagnostics/Debug');
+        $f->addOption('diagnostics', 'Diagnostics');
+        $f->addOption('debugMode', 'Debug Mode');
+        $f->addOption('users', 'Users');
         if($data['showPanels']) $f->attr('value', $data['showPanels']);
         $wrapper->add($f);
 

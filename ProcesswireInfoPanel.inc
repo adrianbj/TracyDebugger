@@ -8,7 +8,7 @@ use Tracy\Dumper;
  * Custom PW panel
  */
 
-class ProcessWirePanel implements IBarPanel {
+class ProcesswireInfoPanel implements IBarPanel {
     public function getTab() {
         return '
         <style>
@@ -168,6 +168,11 @@ class ProcessWirePanel implements IBarPanel {
             $pageObject = Dumper::toHtml(wire('page'), array(Dumper::COLLAPSE => false));
 
             // Template info
+            $templateFilePath = wire('page')->template->filename;
+            $owner = posix_getpwuid(fileowner($templateFilePath));
+            $group = posix_getgrgid($owner['gid']);
+            $permission = !file_exists($templateFilePath) ? '' : substr(sprintf('%o', fileperms($templateFilePath)), -4);
+
             $pageTemplateInfo = '
             <table>
                 <tr>
@@ -184,11 +189,19 @@ class ProcessWirePanel implements IBarPanel {
                 </tr>
                 <tr>
                     <th>Filename</th>
-                    <td>'.str_replace(wire('config')->paths->root, '/', wire('page')->template->filename).'</td>
+                    <td>'.str_replace(wire('config')->paths->root, '/', $templateFilePath).'</td>
                 </tr>
                 <tr>
                     <th>File Last Modified</th>
-                    <td>'.date("Y-m-d H:i:s", filemtime(wire('page')->template->filename)).'</td>
+                    <td>'.date("Y-m-d H:i:s", filemtime($templateFilePath)).'</td>
+                </tr>
+                <tr>
+                    <th>Owner (User:Group)</th>
+                    <td>'.$owner['name'].":".$group['name'].'</td>
+                </tr>
+                <tr>
+                    <th>Permission</th>
+                    <td>'.$permission .'</td>
                 </tr>
                 <tr>
                     <th>Fieldgroup</th>
