@@ -155,7 +155,7 @@ class DiagnosticsPanel implements IBarPanel {
         $exists = file_exists($path) ? '&#10003;' : '';
         $readable = is_readable($path) ? '&#10003;' : '';
         $writeable = is_writeable($path) ? '&#10003;' : '';
-        $owner = posix_getpwuid(fileowner($path));
+        $owner = !file_exists($path) ? '' : posix_getpwuid(fileowner($path));
 
         $status = $this->getStatusNotes($attribute, $exists, $readable, $writeable, $permission);
 
@@ -201,7 +201,7 @@ class DiagnosticsPanel implements IBarPanel {
             <td>".$readable."</td>
             <td>".$writeable."</td>
             <td>".$permission."</td>
-            <td>".$owner['name'].":".$group['name']."</td>
+            <td>".(!empty($owner) ? $owner['name'].":".$group['name'] : '')."</td>
             <td style='background-color:".static::$color."; color:#FFFFFF'>".$status[0]."</td>
             <td>".$status[1]."</td>
         </tr>";
