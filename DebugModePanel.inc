@@ -56,6 +56,9 @@ class DebugModePanel implements IBarPanel {
                 max-width: 95% !important;
                 overflow-y: scroll !important;
             }
+            .tracy-toggle {
+                font-size: 1rem !important;
+            }
         </style>
         <span>
             <span style='display:inline-block;background:".$background."; color:#FFFFFF; padding: 0 ".$tabPadding."';>
@@ -308,7 +311,6 @@ class DebugModePanel implements IBarPanel {
         // Load all the panel sections
         $out .= '
         <br />
-        <p><strong>DEBUG INFO</strong></p>
         <a href="#" rel="#pages-loaded" class="tracy-toggle tracy-collapsed">Pages Loaded</a>
         <div id="pages-loaded" class="tracy-collapsed">'.$pagesLoaded.'</div><br />
 

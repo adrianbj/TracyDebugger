@@ -17,6 +17,9 @@ class ProcesswireInfoPanel implements IBarPanel {
                 max-width: 95% !important;
                 overflow-y: scroll !important;
             }
+            .tracy-toggle {
+                font-size: 1rem !important;
+            }
             .pw-admin-links a {
                 transition: transform 0.12s;
             }
@@ -300,7 +303,6 @@ class ProcesswireInfoPanel implements IBarPanel {
 
         if(wire('page')->template != 'admin') {
             $out .= '
-            <p><strong>CURRENT PAGE INFO</strong></p>
             <a href="#" rel="#page-summary" class="tracy-toggle">Summary</a>
             <div id="page-summary">'.$pageSummary.'</div><br />
 

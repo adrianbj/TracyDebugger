@@ -68,7 +68,7 @@ class ProcesswireLogsPanel implements IBarPanel {
         $entriesArr = array();
         foreach(wire('log')->getLogs() as $log) {
             //if(!in_array($log['name'], array('errors', 'exceptions', 'messages', 'warnings'))) continue;
-            foreach(wire('log')->getEntries($log['name'], array("limit" => 5)) as $entry) {
+            foreach(wire('log')->getEntries($log['name'], array("limit" => 10)) as $entry) {
                 $entriesArr[strtotime($entry['date'])] = $entry;
                 $entriesArr[strtotime($entry['date'])]['log'] = $log['name'];
             }

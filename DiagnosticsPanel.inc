@@ -24,6 +24,9 @@ class DiagnosticsPanel implements IBarPanel {
                 max-width: 95% !important;
                 overflow-y: scroll !important;
             }
+            .tracy-toggle {
+                font-size: 1rem !important;
+            }
         </style>
         <span title="ProcessWire Diagnostics">
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 511.626 511.627" style="enable-background:new 0 0 511.626 511.627;" xml:space="preserve">
@@ -278,6 +281,12 @@ class DiagnosticsPanel implements IBarPanel {
 
     public function getPanel() {
 
+        // data output from phpinfo()
+        ob_start();
+        phpinfo();
+        $phpInfo = ob_get_contents();
+        ob_get_clean();
+
         // Load all the panel sections
         $out .= '
         <h1>
@@ -290,10 +299,16 @@ class DiagnosticsPanel implements IBarPanel {
             </svg>
             Diagnostics
         </h1>
-        <p style="font-size:15px">Please read <a href="https://processwire.com/docs/security/file-permissions/">https://processwire.com/docs/security/file-permissions/</a> for details on how to secure these.</p>
-        <p style="font-size:15px">'.$this->getApacheUser().'</p><br />
-        <a href="#" rel="#page-filesystem" class="tracy-toggle">Filesystem</a>
-        <div id="filesystem">'.$this->filesystem.'</div><br />
+
+        <a href="#" rel="#filesystem" class="tracy-toggle">Filesystem</a>
+        <div id="filesystem">
+            <p style="font-size:15px">Please read <a href="https://processwire.com/docs/security/file-permissions/">https://processwire.com/docs/security/file-permissions/</a> for details on how to secure these.</p>
+            <p style="font-size:15px">'.$this->getApacheUser().'</p><br />
+            '.$this->filesystem.'
+        </div><br />
+
+        <a href="#" rel="#phpinfo" class="tracy-toggle tracy-collapsed">PHP Info</a>
+        <div id="phpinfo" class="tracy-collapsed"><br />'.str_replace('934px','100%',$phpInfo).'</div><br />
         ';
 
         return $out;
