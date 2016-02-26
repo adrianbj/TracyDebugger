@@ -240,8 +240,10 @@ class DiagnosticsPanel implements IBarPanel {
                 case 'Site Directory':
                 case 'Core Modules':
                 case 'Site Templates':
-                case 'Config File':
                     return !$readable || $writeable ? array('Failure', 'Needs to be readable, but not writeable.') : array('OK', '');
+                case 'Config File':
+                    if($permission > 600) return array('Warning', 'Readable by more than just the owner.');
+                        else return !$readable ? array('Failure', 'Needs to be readable.') : array('OK', '');
                 case 'Installation Directory':
                 case 'Install File':
                     return $exists ? array('Failure', 'Should be deleted for security.') : array('OK', '');
@@ -258,6 +260,21 @@ class DiagnosticsPanel implements IBarPanel {
         }
     }
 
+    protected function getApacheUser() {
+        if(function_exists('exec')) {
+            return 'Apache is running as user: ' . exec('whoami');
+        }
+        else {
+            $tempDir = new  WireTempDir('whoami');
+            $check = file_put_contents($tempDir."/test.txt", "test");
+            if(is_int($check) && $check > 0){
+                return 'Apache appears to be running as you.';
+            }
+            else {
+                return 'Apache appears to be running as another user, ie. not you.';
+            }
+        }
+    }
 
     public function getPanel() {
 
@@ -273,6 +290,8 @@ class DiagnosticsPanel implements IBarPanel {
             </svg>
             Diagnostics
         </h1>
+        <p style="font-size:15px">Please read <a href="https://processwire.com/docs/security/file-permissions/">https://processwire.com/docs/security/file-permissions/</a> for details on how to secure these.</p>
+        <p style="font-size:15px">'.$this->getApacheUser().'</p><br />
         <a href="#" rel="#page-filesystem" class="tracy-toggle">Filesystem</a>
         <div id="filesystem">'.$this->filesystem.'</div><br />
         ';
