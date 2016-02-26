@@ -169,8 +169,11 @@ class ProcesswireInfoPanel implements IBarPanel {
 
             // Template info
             $templateFilePath = wire('page')->template->filename;
-            $owner = posix_getpwuid(fileowner($templateFilePath));
-            $group = posix_getgrgid($owner['gid']);
+            // posix_getpwuid doesn't exist on Windows
+            if(function_exists('posix_getpwuid')) {
+                $owner = posix_getpwuid(fileowner($templateFilePath));
+                $group = posix_getgrgid($owner['gid']);
+            }
             $permission = !file_exists($templateFilePath) ? '' : substr(sprintf('%o', fileperms($templateFilePath)), -4);
 
             $pageTemplateInfo = '
@@ -194,11 +197,15 @@ class ProcesswireInfoPanel implements IBarPanel {
                 <tr>
                     <th>File Last Modified</th>
                     <td>'.date("Y-m-d H:i:s", filemtime($templateFilePath)).'</td>
-                </tr>
-                <tr>
-                    <th>Owner (User:Group)</th>
-                    <td>'.$owner['name'].":".$group['name'].'</td>
-                </tr>
+                </tr>';
+                if(isset($owner)) {
+                    $pageTemplateInfo .= '
+                    <tr>
+                        <th>Owner (User:Group)</th>
+                        <td>'.$owner['name'].":".$group['name'].'</td>
+                    </tr>';
+                }
+                $pageTemplateInfo .= '
                 <tr>
                     <th>Permission</th>
                     <td>'.$permission .'</td>

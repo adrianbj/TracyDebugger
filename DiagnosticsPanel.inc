@@ -70,7 +70,14 @@ class DiagnosticsPanel implements IBarPanel {
             'Sessions Directory'
         );
 
-        $this->filesystem = $this->sectionHeader(array('Attribute', 'Path', 'Exists', 'Readable', 'Writeable', 'Permissions', 'Owner (User:Group)', 'Status', 'Notes'));
+        // posix_getpwuid doesn't exist on Windows so don't add Owner column
+        if(function_exists('posix_getpwuid')) {
+            $this->filesystem = $this->sectionHeader(array('Attribute', 'Path', 'Exists', 'Readable', 'Writeable', 'Permissions', 'Owner (User:Group)', 'Status', 'Notes'));
+        }
+        else {
+            $this->filesystem = $this->sectionHeader(array('Attribute', 'Path', 'Exists', 'Readable', 'Writeable', 'Permissions', 'Status', 'Notes'));
+        }
+
         foreach($attributes as $attribute) {
             $this->filesystem .= $this->buildAttrRow($attribute);
         }
@@ -155,7 +162,12 @@ class DiagnosticsPanel implements IBarPanel {
         $exists = file_exists($path) ? '&#10003;' : '';
         $readable = is_readable($path) ? '&#10003;' : '';
         $writeable = is_writeable($path) ? '&#10003;' : '';
-        $owner = !file_exists($path) ? '' : posix_getpwuid(fileowner($path));
+
+        // posix_getpwuid doesn't exist on Windows
+        if(function_exists('posix_getpwuid')) {
+            $owner = !file_exists($path) ? '' : posix_getpwuid(fileowner($path));
+            $group = posix_getgrgid($owner['gid']);
+        }
 
         $status = $this->getStatusNotes($attribute, $exists, $readable, $writeable, $permission);
 
@@ -192,19 +204,24 @@ class DiagnosticsPanel implements IBarPanel {
             static::$iconColor = static::$color;
         }
 
-        $group = posix_getgrgid($owner['gid']);
 
-        return "\n<tr>
+        $out = "
+        \n<tr>
             <td>".$attribute."</td>
             <td title='".$this->getPaths($attribute)."'>".$this->getPaths($attribute, true)."</td>
             <td>".$exists."</td>
             <td>".$readable."</td>
             <td>".$writeable."</td>
-            <td>".$permission."</td>
-            <td>".(!empty($owner) ? $owner['name'].":".$group['name'] : '')."</td>
+            <td>".$permission."</td>";
+            if(isset($owner)) {
+                $out .= "<td>".(!empty($owner) ? $owner['name'].":".$group['name'] : '')."</td>";
+            }
+            $out .= "
             <td style='background-color:".static::$color."; color:#FFFFFF'>".$status[0]."</td>
             <td>".$status[1]."</td>
         </tr>";
+
+        return $out;
 
     }
 
