@@ -11,25 +11,6 @@ use Tracy\Dumper;
 class ProcesswireInfoPanel implements IBarPanel {
     public function getTab() {
         return '
-        <style>
-            .tracy-panel {
-                max-height: 90% !important;
-                max-width: 95% !important;
-                overflow-y: scroll !important;
-            }
-            .tracy-toggle {
-                font-size: 1rem !important;
-            }
-            .pw-admin-links a {
-                transition: transform 0.12s;
-            }
-            .pw-admin-links a:hover svg {
-                transform: scale(1.4);
-            }
-            .pw-admin-links a:hover, .pw-admin-links a:active, .pw-admin-links a:focus {
-                background-color: transparent !important;
-            }
-        </style>
         <span title="ProcessWire Page Info & Links">
             <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
                  viewBox="0 0 39.7 40.1" enable-background="new 0 0 39.7 40.1" xml:space="preserve">

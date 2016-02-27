@@ -9,19 +9,6 @@ use Tracy\IBarPanel;
 class TracyLogsPanel implements IBarPanel {
     public function getTab() {
         return '
-        <style>
-            .tracy-panel {
-                max-height: 90% !important;
-                max-width: 95% !important;
-                overflow-y: scroll !important;
-            }
-            #tracy-debug-panel-TracyLogsPanel {
-                bottom: 30px;
-                left: 20px;
-                min-height: 90% !important;
-                min-width: 95% !important;
-            }
-        </style>
         <span title="Tracy logs">
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 433.494 433.494" style="enable-background:new 0 0 433.494 433.494;" xml:space="preserve">
                 <polygon points="353.763,379.942 279.854,234.57 322.024,250.717 253.857,116.637 276.286,127.997 216.747,0 157.209,127.997     179.64,116.636 111.471,250.717 153.642,234.569 79.731,379.942 200.872,337.52 200.872,433.494 232.624,433.494 232.624,337.518       " fill="#444444"/>

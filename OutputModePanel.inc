@@ -60,13 +60,6 @@ class OutputModePanel implements IBarPanel {
 
 
         return '
-        <style>
-            .tracy-panel {
-                max-height: 90% !important;
-                max-width: 95% !important;
-                overflow-y: scroll !important;
-            }
-        </style>
         <span title="Output Mode">
             <span style="display:inline-block;background:'.$background.'; color:#FFFFFF; padding: 0 '.$tabPadding.';">
                 ' . $this->{$this->outputMode.'Icon'} . '

@@ -50,16 +50,6 @@ class DebugModePanel implements IBarPanel {
         static::$panelIconColor = $debugColor;
 
         return "
-        <style>
-            .tracy-panel {
-                max-height: 90% !important;
-                max-width: 95% !important;
-                overflow-y: scroll !important;
-            }
-            .tracy-toggle {
-                font-size: 1rem !important;
-            }
-        </style>
         <span>
             <span style='display:inline-block;background:".$background."; color:#FFFFFF; padding: 0 ".$tabPadding."';>
                 <svg xmlns=http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' version='1.1' x='0px' y='0px' width='16px' height='16px' viewBox='0 0 456.828 456.828' style='enable-background:new 0 0 456.828 456.828;' xml:space='preserve'>
