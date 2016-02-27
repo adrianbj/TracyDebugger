@@ -269,6 +269,14 @@ class DiagnosticsPanel implements IBarPanel {
         }
     }
 
+    function removeElementsByTagName($tagName, $document) {
+        $nodeList = $document->getElementsByTagName($tagName);
+        for ($nodeIdx = $nodeList->length; --$nodeIdx >= 0; ) {
+            $node = $nodeList->item($nodeIdx);
+            $node->parentNode->removeChild($node);
+        }
+    }
+
     public function getPanel() {
 
         // data output from phpinfo()
@@ -280,6 +288,7 @@ class DiagnosticsPanel implements IBarPanel {
         $dom = new DOMDocument();
         $dom->loadHTML($phpInfo);
         $body = $dom->getElementsByTagName('body')->item(0);
+        $this->removeElementsByTagName('img', $body);
         $phpInfo = $dom->saveHTML($body);
 
 
@@ -305,27 +314,27 @@ class DiagnosticsPanel implements IBarPanel {
 
         <a href="#" rel="#phpinfo" class="tracy-toggle tracy-collapsed">PHP Info</a>
         <div id="phpinfo" class="tracy-collapsed">
-        <style type="text/css">
-            #phpinfoBody pre {margin: 0; font-family: monospace;}
-            #phpinfoBody a:link {color: #009; text-decoration: none; background-color: #fff;}
-            #phpinfoBody a:hover {text-decoration: underline;}
-            #phpinfoBody table {border-collapse: collapse; border: 0; width: 934px; box-shadow: 1px 2px 3px #ccc;}
-            #phpinfoBody .center {text-align: center;}
-            #phpinfoBody .center table {margin: 1em auto; text-align: left;}
-            #phpinfoBody .center th {text-align: center !important;}
-            #phpinfoBody td, th {border: 1px solid #666; font-size: 100%; vertical-align: baseline; padding: 4px 5px;}
-            #phpinfoBody h1 {font-size: 175%;}
-            #phpinfoBody h2 {font-size: 150%;}
-            #phpinfoBody .p {text-align: left;}
-            #phpinfoBody .e {background-color: #ccf !important; width: 300px; font-weight: bold; }
-            #phpinfoBody .h th {background-color: #99c !important; font-weight: bold; }
-            #phpinfoBody .v {background-color: #ddd !important; max-width: 300px; overflow-x: auto; }
-            #phpinfoBody .v i {color: #999 !important; }
-            #phpinfoBody img {float: right; border: 0;}
-            #phpinfoBody hr {width: 934px; background-color: #ccc; border: 0; height: 1px;}
-            #phpinfoBody td {border: 1px solid #000 !important;}
-            #phpinfoBody th {border: 1px solid #000 !important; color:#000 !important;}
-        </style>
+            <style type="text/css">
+                #phpinfoBody pre {margin: 0; font-family: monospace;}
+                #phpinfoBody a:link {color: #009; text-decoration: none; background-color: #fff;}
+                #phpinfoBody a:hover {text-decoration: underline;}
+                #phpinfoBody table {border-collapse: collapse; border: 0; width: 934px; box-shadow: 1px 2px 3px #ccc;}
+                #phpinfoBody .center {text-align: center;}
+                #phpinfoBody .center table {margin: 1em auto; text-align: left;}
+                #phpinfoBody .center th {text-align: center !important;}
+                #phpinfoBody td, th {border: 1px solid #666; font-size: 100%; vertical-align: baseline; padding: 4px 5px;}
+                #phpinfoBody h1 {font-size: 175%;}
+                #phpinfoBody h2 {font-size: 150%;}
+                #phpinfoBody .p {text-align: left;}
+                #phpinfoBody .e {background-color: #ccf !important; width: 300px; font-weight: bold; }
+                #phpinfoBody .h th {background-color: #99c !important; font-weight: bold; }
+                #phpinfoBody .v {background-color: #ddd !important; max-width: 300px; overflow-x: auto; }
+                #phpinfoBody .v i {color: #999 !important; }
+                #phpinfoBody img {float: right; border: 0;}
+                #phpinfoBody hr {width: 934px; background-color: #ccc; border: 0; height: 1px;}
+                #phpinfoBody td {border: 1px solid #000 !important;}
+                #phpinfoBody th {border: 1px solid #000 !important; color:#000 !important;}
+            </style>
             <br />
             <div id="phpinfoBody" style="width:934px">'.$phpInfo.'</div>
         </div>
