@@ -118,7 +118,7 @@ class UsersPanel implements IBarPanel {
                             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 483.537 483.537" style="enable-background:new 0 0 483.537 483.537;" xml:space="preserve" width="16px" height="16px">
                                 <path d="M479.963,425.047L269.051,29.854c-5.259-9.88-15.565-16.081-26.782-16.081h-0.03     c-11.217,0-21.492,6.171-26.782,16.051L3.603,425.016c-5.046,9.485-4.773,20.854,0.699,29.974     c5.502,9.15,15.413,14.774,26.083,14.774H453.12c10.701,0,20.58-5.594,26.083-14.774     C484.705,445.84,484.979,434.471,479.963,425.047z M242.239,408.965c-16.781,0-30.399-13.619-30.399-30.399     c0-16.78,13.619-30.399,30.399-30.399c16.75,0,30.399,13.619,30.399,30.399C272.638,395.346,259.02,408.965,242.239,408.965z      M272.669,287.854c0,16.811-13.649,30.399-30.399,30.399c-16.781,0-30.399-13.589-30.399-30.399V166.256     c0-16.781,13.619-30.399,30.399-30.399c16.75,0,30.399,13.619,30.399,30.399V287.854z" fill="#ee1d62"/>
                             </svg>
-                            <p><strong>WARNING</strong><br />There are users with the "tracy-debugger" role that are not superusers.</p><p>This is only an issue in DEVLOPMENT mode, so you can ignore this if Tracy is in PRODUCTION mode.</p>
+                            <strong>WARNING</strong><br />There are users with the "tracy-debugger" role that are not superusers.</p><p style="font-size:15px">This is only an issue in DEVELOPMENT mode, so you can ignore this if Tracy is in PRODUCTION mode.</p>
                         </p>';
                 }
 
@@ -152,7 +152,7 @@ class UsersPanel implements IBarPanel {
                             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 483.537 483.537" style="enable-background:new 0 0 483.537 483.537;" xml:space="preserve" width="16px" height="16px">
                                 <path d="M479.963,425.047L269.051,29.854c-5.259-9.88-15.565-16.081-26.782-16.081h-0.03     c-11.217,0-21.492,6.171-26.782,16.051L3.603,425.016c-5.046,9.485-4.773,20.854,0.699,29.974     c5.502,9.15,15.413,14.774,26.083,14.774H453.12c10.701,0,20.58-5.594,26.083-14.774     C484.705,445.84,484.979,434.471,479.963,425.047z M242.239,408.965c-16.781,0-30.399-13.619-30.399-30.399     c0-16.78,13.619-30.399,30.399-30.399c16.75,0,30.399,13.619,30.399,30.399C272.638,395.346,259.02,408.965,242.239,408.965z      M272.669,287.854c0,16.811-13.649,30.399-30.399,30.399c-16.781,0-30.399-13.589-30.399-30.399V166.256     c0-16.781,13.619-30.399,30.399-30.399c16.75,0,30.399,13.619,30.399,30.399V287.854z" fill="#ee1d62"/>
                             </svg>
-                            <strong>THIS DOES NOT MATCH YOUR CURRENT IP ADDRESS</strong>
+                            <strong>This does not match your current IP address</strong>
                         </p>';
                     }
                     else {
@@ -161,7 +161,7 @@ class UsersPanel implements IBarPanel {
                             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 415.582 415.582" style="enable-background:new 0 0 415.582 415.582;" xml:space="preserve">
                                 <path d="M411.47,96.426l-46.319-46.32c-5.482-5.482-14.371-5.482-19.853,0L152.348,243.058l-82.066-82.064   c-5.48-5.482-14.37-5.482-19.851,0l-46.319,46.32c-5.482,5.481-5.482,14.37,0,19.852l138.311,138.31   c2.741,2.742,6.334,4.112,9.926,4.112c3.593,0,7.186-1.37,9.926-4.112L411.47,116.277c2.633-2.632,4.111-6.203,4.111-9.925   C415.582,102.628,414.103,99.059,411.47,96.426z" fill="#009900"/>
                             </svg>
-                            <strong>THIS MATCHES YOUR CURRENT IP ADDRESS</strong>
+                            <strong>This matches your current IP address</strong>
                         </p>';
                     }
                 }

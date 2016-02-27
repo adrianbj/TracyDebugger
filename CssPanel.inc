@@ -28,7 +28,7 @@ class CssPanel implements IBarPanel {
                     font-size: 15px !important;
                 }
 
-                #tracy-debug-panel-PWLogsPanel {
+                /*#tracy-debug-panel-ProcesswireLogsPanel {
                     bottom: 30px;
                     left: 20px;
                     min-height: 90% !important;
@@ -40,7 +40,7 @@ class CssPanel implements IBarPanel {
                     left: 20px;
                     min-height: 90% !important;
                     min-width: 95% !important;
-                }
+                }*/
 
                 .pw-admin-links a {
                     transition: transform 0.12s;
