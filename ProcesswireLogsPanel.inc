@@ -87,9 +87,11 @@ class ProcesswireLogsPanel implements IBarPanel {
                 </svg>
                 ProcessWire Logs
             </a>
-        </h1>';
+        </h1>
 
-        $out .= $logEntries;
+        <div class="tracy-inner">';
+            $out .= $logEntries . '
+        </div>';
 
         return $out;
     }

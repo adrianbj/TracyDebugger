@@ -13,7 +13,15 @@ class CssPanel implements IBarPanel {
                 .tracy-panel {
                     max-height: 90% !important;
                     max-width: 95% !important;
-                    overflow-y: scroll !important;
+                }
+
+                .tracy-panel h2 {
+                    font-size: 20px !important;
+                }
+
+                .tracy-inner {
+                    max-height: 768px !important;
+                    max-width: 1024px !important;
                 }
 
                 .tracy-toggle {

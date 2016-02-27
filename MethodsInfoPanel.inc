@@ -32,66 +32,68 @@ class MethodsInfoPanel implements IBarPanel {
             </svg>
             Methods Info
         </h1>
-        <p style="font-size:16px">Tracy Documentation: <a href="https://tracy.nette.org/">https://tracy.nette.org/</a></p>
-        <br />
+        <div class="tracy-inner">
+            <p style="font-size:16px">Tracy Documentation: <a href="https://tracy.nette.org/">https://tracy.nette.org/</a></p>
+            <br />
 
-        <p style="font-size:16px"><strong>dump($var, $return = FALSE)</strong></p>
-        <p>
-        TD::dump();<br />
-        dump();<br />
-        d();<br />
-        <br />
-        </p>
+            <p style="font-size:16px"><strong>dump($var, $return = FALSE)</strong></p>
+            <p>
+            TD::dump();<br />
+            dump();<br />
+            d();<br />
+            <br />
+            </p>
 
-        <p style="font-size:16px"><strong>barDump($var, $title = NULL, array $options = NULL)</strong></p>
-        <p>
-        TD::barDump();<br />
-        barDump();<br />
-        bd();<br />
-        <br />
-        </p>
+            <p style="font-size:16px"><strong>barDump($var, $title = NULL, array $options = NULL)</strong></p>
+            <p>
+            TD::barDump();<br />
+            barDump();<br />
+            bd();<br />
+            <br />
+            </p>
 
-        <p style="font-size:16px"><strong>log($message, $priority = ILogger::INFO)</strong></p>
-        @priority: "debug", "info", "warning", "error", "exception", "critical"
-        <p>
-        TD::log();<br />
-        l();<br />
-        <br />
-        </p>
+            <p style="font-size:16px"><strong>log($message, $priority = ILogger::INFO)</strong></p>
+            @priority: "debug", "info", "warning", "error", "exception", "critical"
+            <p>
+            TD::log();<br />
+            l();<br />
+            <br />
+            </p>
 
-        <p style="font-size:16px"><strong>addBreakpoint($name = NULL, $enforceParent = NULL)</strong></p>
-        <p>
-        TD::addBreakpoint();<br />
-        addBreakpoint();<br />
-        bp();<br />
-        <br />
-        </p>
+            <p style="font-size:16px"><strong>addBreakpoint($name = NULL, $enforceParent = NULL)</strong></p>
+            <p>
+            TD::addBreakpoint();<br />
+            addBreakpoint();<br />
+            bp();<br />
+            <br />
+            </p>
 
-        <p style="font-size:16px"><strong>timer($name = NULL)</strong></p>
-        <p>
-        TD::timer();<br />
-        timer();<br />
-        t();<br />
-        <br />
-        </p>
+            <p style="font-size:16px"><strong>timer($name = NULL)</strong></p>
+            <p>
+            TD::timer();<br />
+            timer();<br />
+            t();<br />
+            <br />
+            </p>
 
-        <p style="font-size:16px"><strong>fireLog($message)</strong></p>
-        <p>
-        TD::fireLog();<br />
-        fireLog();<br />
-        fl();<br />
-        <br />
-        </p>
-        <p style="font-size:14px"><strong>For fireLog to work, you need to have installed these browser plugins:</strong></p>
-        <p>
-            <em>Chrome</em><br />
-            <a href="https://github.com/MattSkala/chrome-firelogger">FireLogger</a>
-        </p>
-        <p>
-            <em>Firefox</em><br />
-            <a href="http://www.getfirebug.com/">Firebug</a><br />
-            <a href="http://firelogger.binaryage.com/">FireLogger</a><br />
-        </p>
+            <p style="font-size:16px"><strong>fireLog($message)</strong></p>
+            <p>
+            TD::fireLog();<br />
+            fireLog();<br />
+            fl();<br />
+            <br />
+            </p>
+            <p style="font-size:14px"><strong>For fireLog to work, you need to have installed these browser plugins:</strong></p>
+            <p>
+                <em>Chrome</em><br />
+                <a href="https://github.com/MattSkala/chrome-firelogger">FireLogger</a>
+            </p>
+            <p>
+                <em>Firefox</em><br />
+                <a href="http://www.getfirebug.com/">Firebug</a><br />
+                <a href="http://firelogger.binaryage.com/">FireLogger</a><br />
+            </p>
+        </div>
         ';
 
         return $out;

@@ -280,7 +280,9 @@ class ProcesswireInfoPanel implements IBarPanel {
                 c1.3-0.3,2.5-0.8,3.5-1.6c1.1-0.8,2.1-1.9,2.7-2.9c0.7-1.1,1.2-2.4,1.4-3.6C20.1,10.5,20.1,9.2,19.8,7.9z"/>
             </svg>
             ProcessWire Info
-        </h1>';
+        </h1>
+        <div class="tracy-inner">
+        ';
 
         if(wire('page')->template != 'admin') {
             $out .= '
@@ -437,6 +439,7 @@ class ProcesswireInfoPanel implements IBarPanel {
                         </svg>
                     </a>&nbsp;
                 </div>
+            </div>
         ';
 
         return $out;

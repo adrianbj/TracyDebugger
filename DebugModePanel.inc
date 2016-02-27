@@ -85,7 +85,8 @@ class DebugModePanel implements IBarPanel {
             </g>
         </svg>
         ProcessWire Debug Mode</h1>
-        <p style='font-size:15px'>";
+        <div class='tracy-inner'>
+            <p style='font-size:15px'>";
 
         if($debugMode) {
             $out .= '
@@ -353,6 +354,8 @@ class DebugModePanel implements IBarPanel {
             <div id="autoload" class="tracy-collapsed">'.$autoload.'</div><br />
             ';
         }
+
+        $out .= '</div>';
 
         return $out;
     }

@@ -30,22 +30,25 @@ class VariablesPanel implements IBarPanel {
             </svg>
             Non-ProcessWire Template Variables
         </h1>
-        <p>These are all the non-PW variables that are available in the template for this page.</p>
-        <p>If you are looking for the page fields and their values, look in the ProcessWire panel under "Page Field Values"</p>
-        <br >
-        ';
+        <div class="tracy-inner">
+            <p>These are all the non-PW variables that are available in the template for this page.</p>
+            <p>If you are looking for the page fields and their values, look in the ProcessWire panel under "Page Field Values"</p>
+            <br >
+            ';
 
-        $templateFilename = wire('page')->template->filename;
-        $targetData = file_get_contents($templateFilename);
-        //check to see if template can be compiled because we need that to get the variables
-        //the missing "F" in "ileCompiler=0" is an intentional hack - otherwise it prevents this file from being compiled and creates
-        //missing wire function errors
-        if(wire('page')->template->compile != 0 && wire('config')->templateCompile !== false && stripos($targetData, "ileCompiler=0") === false) {
-            $out .= TD::dump(TracyDebugger::$templateVars, array(Dumper::COLLAPSE => false));
-        }
-        else {
-            $out .= '<strong>Template compiling is disabled for this template, so the variables could not be determined.</strong>';
-        }
+            $templateFilename = wire('page')->template->filename;
+            $targetData = file_get_contents($templateFilename);
+            //check to see if template can be compiled because we need that to get the variables
+            //the missing "F" in "ileCompiler=0" is an intentional hack - otherwise it prevents this file from being compiled and creates
+            //missing wire function errors
+            if(wire('page')->template->compile != 0 && wire('config')->templateCompile !== false && stripos($targetData, "ileCompiler=0") === false) {
+                $out .= TD::dump(TracyDebugger::$templateVars, array(Dumper::COLLAPSE => false));
+            }
+            else {
+                $out .= '<strong>Template compiling is disabled for this template, so the variables could not be determined.</strong>';
+            }
+        $out .= '
+        </div>';
 
         return $out;
     }
