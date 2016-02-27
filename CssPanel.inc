@@ -24,8 +24,17 @@ class CssPanel implements IBarPanel {
                 }
 
                 .tracy-inner {
-                    max-height: 800px !important;
+                    max-height: 750px !important;
                     max-width: 2000px !important;
+                    padding-right:30px !important;
+                }
+
+                #tracy-debug pre.tracy-dump {
+                    padding: .4em 2em .4em .7em
+                }
+
+                .tracy-inner td {
+                    word-wrap: break-word;
                 }
 
                 .tracy-toggle {

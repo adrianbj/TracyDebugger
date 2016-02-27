@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 87,
+            'version' => 88,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -199,6 +199,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 case 'diagnostics':
                 case 'debugMode':
                 case 'users':
+                case 'phpInfo':
                 case 'outputMode':
                     require_once __DIR__ . '/'.$panelName.'.inc';
                     Debugger::getBar()->addPanel(new $panelName);
@@ -369,6 +370,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->addOption('diagnostics', 'Diagnostics');
         $f->addOption('debugMode', 'Debug Mode');
         $f->addOption('users', 'Users');
+        $f->addOption('phpInfo', 'PHP Info');
         $f->addOption('outputMode', 'Output Mode');
         if($data['showPanels']) $f->attr('value', $data['showPanels']);
         $wrapper->add($f);
