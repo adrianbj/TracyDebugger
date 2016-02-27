@@ -10,6 +10,10 @@ class CssPanel implements IBarPanel {
     public function getTab() {
         return '
             <style>
+                #tracy-debug h1 {
+                    max-width:2000px !important;
+                }
+
                 .tracy-panel {
                     max-height: 90% !important;
                     max-width: 95% !important;
@@ -20,8 +24,8 @@ class CssPanel implements IBarPanel {
                 }
 
                 .tracy-inner {
-                    max-height: 768px !important;
-                    max-width: 1024px !important;
+                    max-height: 800px !important;
+                    max-width: 2000px !important;
                 }
 
                 .tracy-toggle {
