@@ -191,10 +191,6 @@ class ProcesswireInfoPanel implements IBarPanel {
                     <td>'.date("Y-m-d H:i:s", filemtime($templateFilePath)).'</td>
                 </tr>
                 <tr>
-                    <th>Modified</th>
-                    <td>'.date("Y-m-d H:i:s", wire('page')->template->modified).'</td>
-                </tr>
-                <tr>
                     <th>Compile</th>
                     <td>'.(wire('page')->template->compile == 0 ? 'No' : (wire('page')->template->compile == 1 ? 'Yes (template file only)' : 'Yes (and included files)')).'</td>
                 </tr>
