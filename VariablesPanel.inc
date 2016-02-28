@@ -19,8 +19,33 @@ class VariablesPanel implements IBarPanel {
     }
 
 
+    protected function sectionHeader($columnNames = array()) {
+        $out = '
+        <div>
+            <table>
+                <thead>
+                    <tr>';
+        foreach($columnNames as $columnName) {
+            $out .= '<th>'.$columnName.'</th>';
+        }
+
+        $out .= '
+                    </tr>
+                </thead>
+            <tbody>
+        ';
+        return $out;
+    }
+
 
     public function getPanel() {
+
+        // end for each section
+        $sectionEnd = '
+                    </tbody>
+                </table>
+            </div>';
+
 
         // panel title
         $out = '
@@ -32,7 +57,7 @@ class VariablesPanel implements IBarPanel {
         </h1>
         <div class="tracy-inner">
             <p>These are all the non-PW variables that are available in the template for this page.</p>
-            <p>If you are looking for the fields and their values for this page, look in the ProcessWire Info panel under "Field Values"</p>
+            <p>If you are looking for the fields and their values for this page, look in the ProcessWire Info panel under "Fields List & Values"</p>
             <br >
             ';
 
@@ -42,7 +67,26 @@ class VariablesPanel implements IBarPanel {
             //the missing "F" in "ileCompiler=0" is an intentional hack - otherwise it prevents this file from being compiled and creates
             //missing wire function errors
             if(wire('page')->template->compile != 0 && wire('config')->templateCompile !== false && stripos($targetData, "ileCompiler=0") === false) {
-                $out .= TD::dump(TracyDebugger::$templateVars, array(Dumper::COLLAPSE => false));
+                //$out .= TD::dump(TracyDebugger::$templateVars, array(Dumper::COLLAPSE => false));
+                $out .= $this->sectionHeader(array('Name', 'Returns', 'Value'));
+                foreach(TracyDebugger::$templateVars as $var => $value) {
+
+                    if(is_object($var) || is_array($var)) {
+                        $varArray = array();
+                        foreach($var as $key => $value) {
+                            $varArray[$key] = $value;
+                        }
+                        $value = $varArray;
+                    }
+
+                    $out .= "\n<tr>" .
+                        '<td>'.$var.'</td>' .
+                        "<td>".gettype($value)."</td>" .
+                        "<td>".Dumper::toHtml($value, array(Dumper::COLLAPSE => (is_object($value) ? true : false)))."</td>" .
+                        "</tr>";
+                }
+                $out .= $sectionEnd;
+
             }
             else {
                 $out .= '<strong>Template compiling is disabled for this template, so the variables could not be determined.</strong>';

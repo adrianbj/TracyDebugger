@@ -272,6 +272,32 @@ class DiagnosticsPanel implements IBarPanel {
 
     public function getPanel() {
 
+        // end for each section
+        $sectionEnd = '
+                    </tbody>
+                </table>
+            </div>';
+
+        $config = wire('config');
+        $conn = new PDO("mysql:host={$config->dbHost};dbname={$config->dbName}", $config->dbUser, $config->dbPass);
+        $attributes = array(
+            "AUTOCOMMIT", "ERRMODE", "CASE", "CLIENT_VERSION", "CONNECTION_STATUS",
+            "ORACLE_NULLS", "PERSISTENT", "PREFETCH", "SERVER_INFO", "SERVER_VERSION",
+            "TIMEOUT"
+        );
+
+        $dbInfo = $this->sectionHeader(array('Attribute', 'Value'));
+
+        foreach ($attributes as $val) {
+
+            $dbInfo .= "\n<tr>" .
+                "<td>PDO::ATTR_$val</td>" .
+                "<td>".$conn->getAttribute(constant("PDO::ATTR_$val"))."</td>" .
+                "</tr>";
+        }
+        $dbInfo .= $sectionEnd;
+
+
         // Load all the panel sections
         $out .= '
         <h1>
@@ -285,9 +311,16 @@ class DiagnosticsPanel implements IBarPanel {
             Diagnostics
         </h1>
         <div class="tracy-inner">
-            <p style="font-size:15px">Please read <a href="https://processwire.com/docs/security/file-permissions/">https://processwire.com/docs/security/file-permissions/</a> for details on how to secure these.</p>
-            <p style="font-size:15px">'.$this->getApacheUser().'</p><br />
-            '.$this->filesystem.'
+            <a href="#" rel="#filesystem" class="tracy-toggle">Filesystem</a>
+            <div id="filesystem">
+                <p style="font-size:15px">Please read <a href="https://processwire.com/docs/security/file-permissions/">https://processwire.com/docs/security/file-permissions/</a> for details on how to secure these.</p>
+                <p style="font-size:15px">'.$this->getApacheUser().'</p><br />
+                '.$this->filesystem.'
+            </div><br />
+            <a href="#" rel="#mysqlinfo" class="tracy-toggle tracy-collapsed">MySQL Info</a>
+            <div id="mysqlinfo" class="tracy-collapsed">
+                '.$dbInfo.'
+            </div><br />
         </div>
         ';
 
