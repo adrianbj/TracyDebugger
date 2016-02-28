@@ -11,25 +11,18 @@ namespace Tracy;
 
 use Tracy;
 
-if(Debugger::$getrusage) {
-    $dat = getrusage();
-    $dat["ru_utime.tv_usec"] = ($dat["ru_utime.tv_sec"]*1e6 + $dat["ru_utime.tv_usec"]) - Debugger::$rusage;
-    $time = ($this->time) * 1000000;
-    // cpu per request
-    if($time > 0) {
-        $cpu = sprintf("%01.2f", ($dat["ru_utime.tv_usec"] / $time) * 100) . '%';
-    } else {
-        $cpu = '0.00%';
-    }
-}
-else {
-	$cpu = 'Not Available';
+if (isset($this->cpuUsage) && $this->time) {
+	foreach (getrusage() as $key => $val) {
+		$this->cpuUsage[$key] -= $val;
+	}
+	$userUsage = -round(($this->cpuUsage['ru_utime.tv_sec'] * 1e6 + $this->cpuUsage['ru_utime.tv_usec']) / $this->time / 10000);
+	$systemUsage = -round(($this->cpuUsage['ru_stime.tv_sec'] * 1e6 + $this->cpuUsage['ru_stime.tv_usec']) / $this->time / 10000);
 }
 
 $info = array_filter(array(
 	'Execution time' => str_replace(' ', ' ', number_format($this->time * 1000, 1, '.', ' ')) . ' ms',
+	'CPU usage user + system' => isset($userUsage) ? (int) $userUsage . ' % + ' . (int) $systemUsage . ' %' : NULL,
 	'Peak of allocated memory' => str_replace(' ', ' ', number_format(memory_get_peak_usage() / 1000000, 2, '.', ' ')) . ' MB',
-	'CPU' => $cpu,
 	'Included files' => count(get_included_files()),
 	'Classes + interfaces + traits' => count(get_declared_classes()) . ' + '
 		. count(get_declared_interfaces()) . ' + ' . (PHP_VERSION_ID >= 50400 ? count(get_declared_traits()) : '0'),
