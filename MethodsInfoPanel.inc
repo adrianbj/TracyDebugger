@@ -34,14 +34,12 @@ class MethodsInfoPanel implements IBarPanel {
         </h1>
         <div class="tracy-inner">
             <p style="font-size:16px">Tracy Documentation: <a href="https://tracy.nette.org/">https://tracy.nette.org/</a></p>
-            <br />
 
             <p style="font-size:16px"><strong>dump($var, $return = FALSE)</strong></p>
             <p>
             TD::dump();<br />
             dump();<br />
             d();<br />
-            <br />
             </p>
 
             <p style="font-size:16px"><strong>barDump($var, $title = NULL, array $options = NULL)</strong></p>
@@ -49,7 +47,6 @@ class MethodsInfoPanel implements IBarPanel {
             TD::barDump();<br />
             barDump();<br />
             bd();<br />
-            <br />
             </p>
 
             <p style="font-size:16px"><strong>log($message, $priority = ILogger::INFO)</strong></p>
@@ -57,7 +54,6 @@ class MethodsInfoPanel implements IBarPanel {
             <p>
             TD::log();<br />
             l();<br />
-            <br />
             </p>
 
             <p style="font-size:16px"><strong>addBreakpoint($name = NULL, $enforceParent = NULL)</strong></p>
@@ -65,7 +61,6 @@ class MethodsInfoPanel implements IBarPanel {
             TD::addBreakpoint();<br />
             addBreakpoint();<br />
             bp();<br />
-            <br />
             </p>
 
             <p style="font-size:16px"><strong>timer($name = NULL)</strong></p>
@@ -73,7 +68,6 @@ class MethodsInfoPanel implements IBarPanel {
             TD::timer();<br />
             timer();<br />
             t();<br />
-            <br />
             </p>
 
             <p style="font-size:16px"><strong>fireLog($message)</strong></p>
@@ -81,9 +75,8 @@ class MethodsInfoPanel implements IBarPanel {
             TD::fireLog();<br />
             fireLog();<br />
             fl();<br />
-            <br />
             </p>
-            <p style="font-size:14px"><strong>For fireLog to work, you need to have installed these browser plugins:</strong></p>
+            <p style="font-size:14px"><strong>FireLog needs these browser plugins:</strong></p>
             <p>
                 <em>Chrome</em><br />
                 <a href="https://github.com/MattSkala/chrome-firelogger">FireLogger</a>

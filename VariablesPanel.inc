@@ -32,7 +32,7 @@ class VariablesPanel implements IBarPanel {
         </h1>
         <div class="tracy-inner">
             <p>These are all the non-PW variables that are available in the template for this page.</p>
-            <p>If you are looking for the page fields and their values, look in the ProcessWire panel under "Page Field Values"</p>
+            <p>If you are looking for the fields and their values for this page, look in the ProcessWire Info panel under "Field Values"</p>
             <br >
             ';
 

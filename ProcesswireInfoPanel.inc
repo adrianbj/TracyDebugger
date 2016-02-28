@@ -175,13 +175,34 @@ class ProcesswireInfoPanel implements IBarPanel {
                     <td>'.wire('page')->template->id.'</td>
                 </tr>
                 <tr>
+                    <th>Modified</th>
+                    <td>'.date("Y-m-d H:i:s", wire('page')->template->modified).'</td>
+                </tr>
+                <tr>
+                    <th>Fieldgroup</th>
+                    <td>'.wire('page')->template->fieldgroup.'</td>
+                </tr>
+                <tr>
                     <th>Filename</th>
                     <td>'.str_replace(wire('config')->paths->root, '/', $templateFilePath).'</td>
                 </tr>
                 <tr>
                     <th>File Last Modified</th>
                     <td>'.date("Y-m-d H:i:s", filemtime($templateFilePath)).'</td>
-                </tr>';
+                </tr>
+                <tr>
+                    <th>Modified</th>
+                    <td>'.date("Y-m-d H:i:s", wire('page')->template->modified).'</td>
+                </tr>
+                <tr>
+                    <th>Compile</th>
+                    <td>'.(wire('page')->template->compile == 0 ? 'No' : (wire('page')->template->compile == 1 ? 'Yes (template file only)' : 'Yes (and included files)')).'</td>
+                </tr>
+                <tr>
+                    <th>Content Type</th>
+                    <td>'.wire('page')->template->contentType.'</td>
+                </tr>
+                ';
                 if(isset($owner)) {
                     $pageTemplateInfo .= '
                     <tr>
@@ -193,10 +214,6 @@ class ProcesswireInfoPanel implements IBarPanel {
                 <tr>
                     <th>Permission</th>
                     <td>'.$permission .'</td>
-                </tr>
-                <tr>
-                    <th>Fieldgroup</th>
-                    <td>'.wire('page')->template->fieldgroup.'</td>
                 </tr>
                 <tr>
                     <th>Page Numbers</th>
@@ -228,13 +245,14 @@ class ProcesswireInfoPanel implements IBarPanel {
             $pageTemplateObject = Dumper::toHtml(wire('page')->template, array(Dumper::COLLAPSE => false));
 
             // Page Fields List
-            $pageFieldsList = $this->sectionHeader(array('ID', 'Name', 'Label', 'Type'));
+            $pageFieldsList = $this->sectionHeader(array('ID', 'Name', 'Label', 'Type', 'Returns'));
             foreach(wire('page')->fields as $f) {
                 $pageFieldsList .= "\n<tr>" .
                     "<td>$f->id</td>" .
                     '<td><a href="'.wire('config')->urls->admin.'setup/field/edit?id='.$f->id.'">'.$f->name.'</a></td>' .
                     "<td>$f->label</td>" .
                     "<td>$f->type</td>" .
+                    "<td>".gettype(wire('page')->$f)."</td>" .
                     "</tr>";
             }
             $pageFieldsList .= $sectionEnd;

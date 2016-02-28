@@ -285,14 +285,9 @@ class DiagnosticsPanel implements IBarPanel {
             Diagnostics
         </h1>
         <div class="tracy-inner">
-
-            <a href="#" rel="#filesystem" class="tracy-toggle">Filesystem</a>
-            <div id="filesystem">
-                <p style="font-size:15px">Please read <a href="https://processwire.com/docs/security/file-permissions/">https://processwire.com/docs/security/file-permissions/</a> for details on how to secure these.</p>
-                <p style="font-size:15px">'.$this->getApacheUser().'</p><br />
-                '.$this->filesystem.'
-            </div><br />
-
+            <p style="font-size:15px">Please read <a href="https://processwire.com/docs/security/file-permissions/">https://processwire.com/docs/security/file-permissions/</a> for details on how to secure these.</p>
+            <p style="font-size:15px">'.$this->getApacheUser().'</p><br />
+            '.$this->filesystem.'
         </div>
         ';
 
