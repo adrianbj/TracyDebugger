@@ -225,10 +225,10 @@ class DebugModePanel implements IBarPanel {
         // Database Queries
         $databaseQueries = $this->sectionHeader(array('Order', 'Query'));
         if($PwVersion >= 3) {
-            foreach(wire('database')->queryLog() as $n => $sql) $databaseQueries .= "\n<tr><th>$n</th><td>$sql</td></tr>";
+            foreach(wire('database')->queryLog() as $n => $sql) $databaseQueries .= "\n<tr><th>$n</th><td class='tracy-force-break'>".htmlspecialchars($sql)."</td></tr>";
         }
         else {
-            foreach(WireDatabasePDO::getQueryLog() as $n => $sql) $databaseQueries .= "\n<tr><th>$n</th><td>$sql</td></tr>";
+            foreach(WireDatabasePDO::getQueryLog() as $n => $sql) $databaseQueries .= "\n<tr><th>$n</th><td class='tracy-force-break'>".htmlspecialchars($sql)."</td></tr>";
         }
         $databaseQueries .= $sectionEnd;
 
