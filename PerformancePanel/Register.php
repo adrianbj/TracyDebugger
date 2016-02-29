@@ -39,17 +39,17 @@ class Register
 	{
 		$safeName = self::getName($name);
 		$previous = $enforceParent !== null && self::isNameUsed($enforceParent) ? $enforceParent : null;
-		self::$data[$safeName] = [
+		self::$data[$safeName] = array(
 			self::NAME => $safeName,
 			self::MEMORY => memory_get_usage(),
 			self::MEMORY_PEAK => memory_get_peak_usage(),
 			self::TIME => microtime(true),
 			self::PREVIOUS => $previous,
-		];
+		);
 	}
 
 	/**
-	 * 
+	 *
 	 * @return int
 	 */
 	private static function countBreakpoints()
