@@ -162,13 +162,13 @@ class DiagnosticsPanel implements IBarPanel {
             $group = posix_getgrgid($owner['gid']);
         }
 
-        $status = $this->getStatusNotes($attribute, $exists, $readable, $writeable, $permission);
+        $statusNotes = $this->getStatusNotes($attribute, $exists, $readable, $writeable, $permission);
 
         $okColor = '#009900';
         $warningColor = '#FF9933';
         $failureColor = '#CD1818';
 
-        switch ($status[0]) {
+        switch ($statusNotes[0]) {
             case 'OK':
                 static::$color = $okColor;
                 break;
@@ -210,8 +210,8 @@ class DiagnosticsPanel implements IBarPanel {
                 $out .= "<td>".(!empty($owner) ? $owner['name'].":".$group['name'] : '')."</td>";
             }
             $out .= "
-            <td style='background-color:".static::$color."; color:#FFFFFF'>".$status[0]."</td>
-            <td>".$status[1]."</td>
+            <td style='background-color:".static::$color."; color:#FFFFFF'>".$statusNotes[0]."</td>
+            <td>".$statusNotes[1]."</td>
         </tr>";
 
         return $out;
@@ -233,7 +233,7 @@ class DiagnosticsPanel implements IBarPanel {
                 case 'Site Directory':
                 case 'Core Modules':
                 case 'Site Templates':
-                    return !$readable || $writeable ? array('Failure', 'Needs to be readable, but not writeable.') : array('OK', '');
+                    return !$readable ? array('Failure', 'Needs to be readable.') : array('OK', 'For added security, make read-only.');
                 case 'Config File':
                     if($permission > 600) return array('Warning', 'Readable by more than just the owner.');
                         else return !$readable ? array('Failure', 'Needs to be readable.') : array('OK', '');
@@ -242,7 +242,7 @@ class DiagnosticsPanel implements IBarPanel {
                     return $exists ? array('Failure', 'Should be deleted for security.') : array('OK', '');
                 case 'Site Modules':
                     if(!$readable) return array('Failure','Needs to be readable.');
-                        else return $writeable ? array('OK', '') : array('Warning', 'Needs to be writeable for automatic installation of modules.');
+                        else return $writeable ? array('OK', 'For added security, make read-only.') : array('Warning', 'Needs to be writeable for automatic installation of modules.');
                 case 'Assets Directory':
                 case 'Cache Directory':
                 case 'Files Directory':
@@ -281,9 +281,18 @@ class DiagnosticsPanel implements IBarPanel {
         $config = wire('config');
         $conn = new PDO("mysql:host={$config->dbHost};dbname={$config->dbName}", $config->dbUser, $config->dbPass);
         $attributes = array(
-            "AUTOCOMMIT", "ERRMODE", "CASE", "CLIENT_VERSION", "CONNECTION_STATUS",
-            "ORACLE_NULLS", "PERSISTENT", "PREFETCH", "SERVER_INFO", "SERVER_VERSION",
-            "TIMEOUT"
+            "CLIENT_VERSION",
+            "SERVER_VERSION",
+            "CONNECTION_STATUS",
+            "DRIVER_NAME",
+            "SERVER_INFO",
+            "ORACLE_NULLS",
+            "PERSISTENT",
+            "PREFETCH",
+            "TIMEOUT",
+            "AUTOCOMMIT",
+            "ERRMODE",
+            "CASE"
         );
 
         $dbInfo = $this->sectionHeader(array('Attribute', 'Value'));
