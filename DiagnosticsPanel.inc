@@ -230,10 +230,15 @@ class DiagnosticsPanel implements IBarPanel {
                 case 'Root Directory':
                 case 'Wire Directory':
                 case 'Core Directory':
-                case 'Site Directory':
                 case 'Core Modules':
+                    if(!$readable) return array('Failure','Needs to be readable.');
+                        else return $writeable ? array('Warning', 'For added security, make read-only.') : array('OK', 'Needs to be writeable for automatic core upgrades.');
                 case 'Site Templates':
-                    return !$readable ? array('Failure', 'Needs to be readable.') : array('OK', 'For added security, make read-only.');
+                    if(!$readable) return array('Failure','Needs to be readable.');
+                        else return $writeable ? array('Warning', 'For added security, make read-only.') : array('OK', '');
+                case 'Site Directory':
+                    if(!$readable) return array('Failure','Needs to be readable.');
+                        else return $writeable ? array('Warning', 'For added security, make read-only.') : array('OK', '');
                 case 'Config File':
                     if($permission > 600) return array('Warning', 'Readable by more than just the owner.');
                         else return !$readable ? array('Failure', 'Needs to be readable.') : array('OK', '');
@@ -242,7 +247,7 @@ class DiagnosticsPanel implements IBarPanel {
                     return $exists ? array('Failure', 'Should be deleted for security.') : array('OK', '');
                 case 'Site Modules':
                     if(!$readable) return array('Failure','Needs to be readable.');
-                        else return $writeable ? array('OK', 'For added security, make read-only.') : array('Warning', 'Needs to be writeable for automatic installation of modules.');
+                        else return $writeable ? array('Warning', 'For added security, make read-only.') : array('OK', 'Needs to be writeable for automatic installation of modules.');
                 case 'Assets Directory':
                 case 'Cache Directory':
                 case 'Files Directory':
