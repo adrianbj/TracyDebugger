@@ -101,8 +101,13 @@ class ProcesswireInfoPanel implements IBarPanel {
                 </tr>
                 <tr>
                     <th>Parent</th>
-                    <td><a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->parent->id.'">'.wire('page')->parent->name.'</a></td>
-                </tr>';
+                    <td><a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->parent->id.'">'.wire('page')->parent->name.' ('.wire('page')->parentID.')</a></td>
+                </tr>
+                <tr>
+                    <th>Root Parent</th>
+                    <td><a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->rootParent->id.'">'.wire('page')->rootParent->name.' ('.wire('page')->rootParent->id.')</a></td>
+                </tr>
+                ';
                 if(wire('page')->prev->id && wire('page')->prev->viewable()) {
                     $pageSummary .= '
                     <tr>
@@ -243,7 +248,6 @@ class ProcesswireInfoPanel implements IBarPanel {
             // Fields List & Values
             $pageFieldsListValues = $this->sectionHeader(array('ID', 'Name', 'Label', 'FieldType', 'InputfieldType/Class', 'Settings', 'Returns', 'Value'));
             foreach(wire('page')->fields as $f) {
-                $imageInfo = null;
                 $settings = null;
                 if($f->type instanceof FieldtypeFile) {
                     $settings .= 'maxFiles:&nbsp;' . wire('fields')->$f->maxFiles;
@@ -269,10 +273,17 @@ class ProcesswireInfoPanel implements IBarPanel {
                                 if($type == 'created_users_id' || $type == 'modified_users_id') $value .= ' ('.wire('users')->get($value)->name.')';
                                 $fieldArray[$key][$type] = is_object($value) ? $value->getArray() : $value;
                                 if($f->type instanceof FieldtypeFile) {
-                                    $fieldArray[$key]['fileSize'] = $item->filesize;
+                                    $fieldArray[$key]['name'] = $item->name;
+                                    $fieldArray[$key]['filename'] = $item->filename;
+                                    $fieldArray[$key]['ext'] = $item->ext;
+                                    $fieldArray[$key]['url'] = $item->url;
+                                    $fieldArray[$key]['httpUrl'] = $item->httpUrl;
+                                    $fieldArray[$key]['filesize'] = $item->filesize;
+                                    $fieldArray[$key]['filesizeStr'] = $item->filesizeStr;
                                 }
                                 if($f->type instanceof FieldtypeImage) {
-                                    $fieldArray[$key]['imageInfo'] = $imageInfo[$key];
+                                    $fieldArray[$key]['width'] = $image->width;
+                                    $fieldArray[$key]['height'] = $image->height;
                                     //$fieldArray[$key]['imageVariations'] = $imageVariations[$key];
                                     //just don't think there is any point showing the variations so remove to clean up
                                     unset($fieldArray[$key]['imageVariations']);

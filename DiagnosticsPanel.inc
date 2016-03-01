@@ -299,7 +299,6 @@ class DiagnosticsPanel implements IBarPanel {
         $dbInfo = $this->sectionHeader(array('Attribute', 'Value'));
 
         foreach ($attributes as $val) {
-
             $dbInfo .= "\n<tr>" .
                 "<td>PDO::ATTR_$val</td>" .
                 "<td>".wire('database')->getAttribute(constant("PDO::ATTR_$val"))."</td>" .
