@@ -241,35 +241,66 @@ class ProcesswireInfoPanel implements IBarPanel {
             $pageTemplateObject = Dumper::toHtml(wire('page')->template, array(Dumper::COLLAPSE => false));
 
             // Fields List & Values
-            $pageFieldsList = $this->sectionHeader(array('ID', 'Name', 'Label', 'Type', 'Settings', 'Returns', 'Value'));
+            $pageFieldsListValues = $this->sectionHeader(array('ID', 'Name', 'Label', 'FieldType', 'InputfieldType/Class', 'Settings', 'Returns', 'Value'));
             foreach(wire('page')->fields as $f) {
+                $imageInfo = null;
                 $settings = null;
                 if($f->type instanceof FieldtypeFile) {
                     $settings .= 'maxFiles:&nbsp;' . wire('fields')->$f->maxFiles;
                 }
+                if($f->type instanceof FieldtypeImage) {
+                    $imageInfo = array();
+                    if(gettype(wire('page')->$f) === 'object') {
+                        foreach(wire('page')->$f as $image) {
+                            $imageInfo[$image->name] = $image->getImageInfo(true);
+                            /*foreach($image->getVariations() as $variation) {
+                                $imageVariations[$image->name][$variation->basename] = $variation->getArray();
+                            }*/
+                        }
+                    }
+                }
 
                 if(is_object(wire('page')->$f)) {
-                    $pageFieldArray = array();
-                    foreach(wire('page')->$f as $key => $value) {
-                        $pageFieldArray[$key] = $value;
+                    $fieldArray = array();
+                    foreach(wire('page')->$f as $key => $item) {
+                        if(is_object($item)) {
+                            foreach($item as $type => $value) {
+                                if($type == 'created' || $type == 'modified' || $type == 'published') $value .= ' ('.date("Y-m-d H:i:s", $value).')';
+                                if($type == 'created_users_id' || $type == 'modified_users_id') $value .= ' ('.wire('users')->get($value)->name.')';
+                                $fieldArray[$key][$type] = is_object($value) ? $value->getArray() : $value;
+                                if($f->type instanceof FieldtypeFile) {
+                                    $fieldArray[$key]['fileSize'] = $item->filesize;
+                                }
+                                if($f->type instanceof FieldtypeImage) {
+                                    $fieldArray[$key]['imageInfo'] = $imageInfo[$key];
+                                    //$fieldArray[$key]['imageVariations'] = $imageVariations[$key];
+                                    //just don't think there is any point showing the variations so remove to clean up
+                                    unset($fieldArray[$key]['imageVariations']);
+                                }
+                            }
+                        }
+                        else {
+                            $fieldArray[$key] = $item;
+                        }
                     }
-                    $value = Dumper::toHtml($pageFieldArray, array(Dumper::COLLAPSE => false));
+                    $value = Dumper::toHtml($fieldArray, array(Dumper::COLLAPSE => false));
                 }
                 else {
                     $value = wire('page')->$f;
                 }
 
-                $pageFieldsList .= "\n<tr>" .
+                $pageFieldsListValues .= "\n<tr>" .
                     "<td>$f->id</td>" .
                     '<td><a href="'.wire('config')->urls->admin.'setup/field/edit?id='.$f->id.'">'.$f->name.'</a></td>' .
                     "<td>$f->label</td>" .
-                    "<td>$f->type</td>" .
+                    "<td>".str_replace('Fieldtype', '', $f->type)."</td>" .
+                    "<td>".str_replace('Inputfield', '', ($f->inputfield ? $f->inputfield : $f->inputfieldClass))."</td>" .
                     "<td>$settings</td>" .
                     "<td>".gettype(wire('page')->$f)."</td>" .
                     "<td>".$value."</td>" .
                     "</tr>";
             }
-            $pageFieldsList .= $sectionEnd;
+            $pageFieldsListValues .= $sectionEnd;
 
             // Fields Object
             $pageFieldsObject = Dumper::toHtml(wire('page')->fields, array(Dumper::COLLAPSE => false));
@@ -323,7 +354,7 @@ class ProcesswireInfoPanel implements IBarPanel {
             <div id="page-template-object" class="tracy-collapsed">'.$pageTemplateObject.'</div><br />
 
             <a href="#" rel="#page-fields-list" class="tracy-toggle tracy-collapsed">Fields List & Values</a>
-            <div id="page-fields-list" class="tracy-collapsed">'.$pageFieldsList.'</div><br />
+            <div id="page-fields-list" class="tracy-collapsed">'.$pageFieldsListValues.'</div><br />
 
             <a href="#" rel="#page-fields-object" class="tracy-toggle tracy-collapsed">Fields Object</a>
             <div id="page-fields-object" class="tracy-collapsed">'.$pageFieldsObject.'</div><br />';
