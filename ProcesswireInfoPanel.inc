@@ -252,17 +252,6 @@ class ProcesswireInfoPanel implements IBarPanel {
                 if($f->type instanceof FieldtypeFile) {
                     $settings .= 'maxFiles:&nbsp;' . wire('fields')->$f->maxFiles;
                 }
-                if($f->type instanceof FieldtypeImage) {
-                    $imageInfo = array();
-                    if(gettype(wire('page')->$f) === 'object') {
-                        foreach(wire('page')->$f as $image) {
-                            $imageInfo[$image->name] = $image->getImageInfo(true);
-                            /*foreach($image->getVariations() as $variation) {
-                                $imageVariations[$image->name][$variation->basename] = $variation->getArray();
-                            }*/
-                        }
-                    }
-                }
 
                 if(is_object(wire('page')->$f)) {
                     $fieldArray = array();
@@ -282,9 +271,8 @@ class ProcesswireInfoPanel implements IBarPanel {
                                     $fieldArray[$key]['filesizeStr'] = $item->filesizeStr;
                                 }
                                 if($f->type instanceof FieldtypeImage) {
-                                    $fieldArray[$key]['width'] = $image->width;
-                                    $fieldArray[$key]['height'] = $image->height;
-                                    //$fieldArray[$key]['imageVariations'] = $imageVariations[$key];
+                                    $fieldArray[$key]['width'] = $item->width;
+                                    $fieldArray[$key]['height'] = $item->height;
                                     //just don't think there is any point showing the variations so remove to clean up
                                     unset($fieldArray[$key]['imageVariations']);
                                 }
