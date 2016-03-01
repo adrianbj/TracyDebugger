@@ -283,8 +283,6 @@ class DiagnosticsPanel implements IBarPanel {
                 </table>
             </div>';
 
-        $config = wire('config');
-        $conn = new PDO("mysql:host={$config->dbHost};dbname={$config->dbName}", $config->dbUser, $config->dbPass);
         $attributes = array(
             "CLIENT_VERSION",
             "SERVER_VERSION",
@@ -293,8 +291,6 @@ class DiagnosticsPanel implements IBarPanel {
             "SERVER_INFO",
             "ORACLE_NULLS",
             "PERSISTENT",
-            "PREFETCH",
-            "TIMEOUT",
             "AUTOCOMMIT",
             "ERRMODE",
             "CASE"
@@ -306,7 +302,7 @@ class DiagnosticsPanel implements IBarPanel {
 
             $dbInfo .= "\n<tr>" .
                 "<td>PDO::ATTR_$val</td>" .
-                "<td>".$conn->getAttribute(constant("PDO::ATTR_$val"))."</td>" .
+                "<td>".wire('database')->getAttribute(constant("PDO::ATTR_$val"))."</td>" .
                 "</tr>";
         }
         $dbInfo .= $sectionEnd;
