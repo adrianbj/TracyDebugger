@@ -68,7 +68,7 @@ class ProcesswireLogsPanel implements IBarPanel {
         foreach(array_slice($entriesArr, 0, 25) as $item) {
             $logEntries .= "\n<tr>" .
             "<td><a href='".wire('config')->urls->admin."setup/logs/view/".$item['log']."/'>".$item['log']."</a></td>" .
-            "<td>".$item['date']."</td>" .
+            "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
             "<td>".$item['user']."</td>" .
             "<td>".$item['url']."</td>" .
             "<td>".strip_tags($item['text'])."</td>" .

@@ -246,13 +246,8 @@ class ProcesswireInfoPanel implements IBarPanel {
             $pageTemplateObject = Dumper::toHtml(wire('page')->template, array(Dumper::COLLAPSE => false));
 
             // Fields List & Values
-            $pageFieldsListValues = $this->sectionHeader(array('ID', 'Name', 'Label', 'FieldType', 'InputfieldType/Class', 'Settings', 'Returns', 'Value'));
+            $pageFieldsListValues = $this->sectionHeader(array('ID', 'Name', 'Label', 'FieldType', 'InputfieldType/Class', 'Returns', 'Value', 'Settings'));
             foreach(wire('page')->fields as $f) {
-                $settings = null;
-                if($f->type instanceof FieldtypeFile) {
-                    $settings .= 'maxFiles:&nbsp;' . wire('fields')->$f->maxFiles;
-                }
-
                 if(is_object(wire('page')->$f)) {
                     $fieldArray = array();
                     foreach(wire('page')->$f as $key => $item) {
@@ -260,33 +255,35 @@ class ProcesswireInfoPanel implements IBarPanel {
                             foreach($item as $type => $value) {
                                 if($type == 'created' || $type == 'modified' || $type == 'published') $value .= ' ('.date("Y-m-d H:i:s", $value).')';
                                 if($type == 'created_users_id' || $type == 'modified_users_id') $value .= ' ('.wire('users')->get($value)->name.')';
-                                $fieldArray[$key][$type] = is_object($value) ? $value->getArray() : $value;
+                                $fieldArray['value'][$key][$type] = is_object($value) ? $value->getArray() : $value;
                                 if($f->type instanceof FieldtypeFile) {
-                                    $fieldArray[$key]['name'] = $item->name;
-                                    $fieldArray[$key]['filename'] = $item->filename;
-                                    $fieldArray[$key]['ext'] = $item->ext;
-                                    $fieldArray[$key]['url'] = $item->url;
-                                    $fieldArray[$key]['httpUrl'] = $item->httpUrl;
-                                    $fieldArray[$key]['filesize'] = $item->filesize;
-                                    $fieldArray[$key]['filesizeStr'] = $item->filesizeStr;
+                                    $fieldArray['value'][$key]['name'] = $item->name;
+                                    $fieldArray['value'][$key]['filename'] = $item->filename;
+                                    $fieldArray['value'][$key]['ext'] = $item->ext;
+                                    $fieldArray['value'][$key]['url'] = $item->url;
+                                    $fieldArray['value'][$key]['httpUrl'] = $item->httpUrl;
+                                    $fieldArray['value'][$key]['filesize'] = $item->filesize;
+                                    $fieldArray['value'][$key]['filesizeStr'] = $item->filesizeStr;
                                 }
                                 if($f->type instanceof FieldtypeImage) {
-                                    $fieldArray[$key]['width'] = $item->width;
-                                    $fieldArray[$key]['height'] = $item->height;
+                                    $fieldArray['value'][$key]['width'] = $item->width;
+                                    $fieldArray['value'][$key]['height'] = $item->height;
                                     //just don't think there is any point showing the variations so remove to clean up
-                                    unset($fieldArray[$key]['imageVariations']);
+                                    unset($fieldArray['value'][$key]['imageVariations']);
                                 }
                             }
                         }
                         else {
-                            $fieldArray[$key] = $item;
+                            $fieldArray['value'][$key] = $item;
                         }
                     }
-                    $value = Dumper::toHtml($fieldArray, array(Dumper::COLLAPSE => false));
+                    $value = Dumper::toHtml($fieldArray['value'], array(Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
                 }
                 else {
                     $value = wire('page')->$f;
                 }
+                $fieldArray['settings'] = $f->getArray();
+                $settings = Dumper::toHtml($fieldArray['settings'], array(Dumper::COLLAPSE => true));
 
                 $pageFieldsListValues .= "\n<tr>" .
                     "<td>$f->id</td>" .
@@ -294,12 +291,13 @@ class ProcesswireInfoPanel implements IBarPanel {
                     "<td>$f->label</td>" .
                     "<td>".str_replace('Fieldtype', '', $f->type)."</td>" .
                     "<td>".str_replace('Inputfield', '', ($f->inputfield ? $f->inputfield : $f->inputfieldClass))."</td>" .
-                    "<td>$settings</td>" .
                     "<td>".gettype(wire('page')->$f)."</td>" .
                     "<td>".$value."</td>" .
+                    "<td>$settings</td>" .
                     "</tr>";
             }
             $pageFieldsListValues .= $sectionEnd;
+
 
             // Fields Object
             $pageFieldsObject = Dumper::toHtml(wire('page')->fields, array(Dumper::COLLAPSE => false));
@@ -352,8 +350,8 @@ class ProcesswireInfoPanel implements IBarPanel {
             <a href="#" rel="#page-template-object" class="tracy-toggle tracy-collapsed">Template Object</a>
             <div id="page-template-object" class="tracy-collapsed">'.$pageTemplateObject.'</div><br />
 
-            <a href="#" rel="#page-fields-list" class="tracy-toggle tracy-collapsed">Fields List & Values</a>
-            <div id="page-fields-list" class="tracy-collapsed">'.$pageFieldsListValues.'</div><br />
+            <a href="#" rel="#page-fields-list-values" class="tracy-toggle tracy-collapsed">Fields List & Values</a>
+            <div id="page-fields-list-values" class="tracy-collapsed">'.$pageFieldsListValues.'</div><br />
 
             <a href="#" rel="#page-fields-object" class="tracy-toggle tracy-collapsed">Fields Object</a>
             <div id="page-fields-object" class="tracy-collapsed">'.$pageFieldsObject.'</div><br />';

@@ -168,7 +168,7 @@ class TracyLogsPanel implements IBarPanel {
         foreach(array_slice($entriesArr, 0, 25) as $item) {
             $logEntries .= "\n<tr>" .
             "<td>".$item['log']."</td>" .
-            "<td>".$item['date']."</td>" .
+            "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
             "<td>".$item['url']."</td>" .
             "<td>".strip_tags($item['text'])."</td>" .
             "</tr>";
