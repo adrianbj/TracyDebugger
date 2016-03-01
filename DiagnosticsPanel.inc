@@ -323,9 +323,11 @@ class DiagnosticsPanel implements IBarPanel {
         <div class="tracy-inner">
             <a href="#" rel="#filesystem" class="tracy-toggle">Filesystem</a>
             <div id="filesystem">
-                <p style="font-size:15px">Please read <a href="https://processwire.com/docs/security/file-permissions/">https://processwire.com/docs/security/file-permissions/</a> for details on how to secure these.</p>
-                <p style="font-size:15px">'.$this->getApacheUser().'</p><br />
-                '.$this->filesystem.'
+                <p style="font-size:15px">Please read <a href="https://processwire.com/docs/security/file-permissions/">https://processwire.com/docs/security/file-permissions/</a> for details on how to secure these.</p>';
+                if(function_exists('posix_getpwuid')) {
+                    $out .= '<p style="font-size:15px">'.$this->getApacheUser().'</p><br />';
+                }
+                $out .= $this->filesystem.'
             </div><br />
             <a href="#" rel="#mysqlinfo" class="tracy-toggle tracy-collapsed">MySQL Info</a>
             <div id="mysqlinfo" class="tracy-collapsed">
