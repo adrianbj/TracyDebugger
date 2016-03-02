@@ -148,17 +148,20 @@ class TracyLogsPanel implements IBarPanel {
         $logEntries = $this->sectionHeader(array('Type', 'Date', 'URL', 'Text'));
         $entriesArr = array();
         foreach($this->getLogs() as $log) {
+            $i=0;
             foreach($this->getLines($log['name'], array("limit" => 10)) as $entry) {
                 $logDateTime = str_replace(array('[',']'), '', substr($entry, 0 , 21)); // get the date - first 21 chars
                 $logDateParts = explode(" ", $logDateTime);
                 $logDate = $logDateParts[0];
                 $logTime = str_replace('-',':', $logDateParts[1]);
                 $logDateTime = $logDate . ' ' . $logTime;
-                $entriesArr[strtotime($logDateTime)]['date'] = $logDateTime;
-                $entriesArr[strtotime($logDateTime)]['log'] = $log['name'];
+                $itemKey = strtotime($logDateTime) + $i;
+                $entriesArr[$itemKey]['date'] = $logDateTime;
+                $entriesArr[$itemKey]['log'] = $log['name'];
                 $entryUrlAndText = explode('@', substr($entry, 22)); // get the rest of the line after the date;
-                $entriesArr[strtotime($logDateTime)]['url'] = trim($entryUrlAndText[1]);
-                $entriesArr[strtotime($logDateTime)]['text'] = trim($entryUrlAndText[0]);
+                $entriesArr[$itemKey]['url'] = trim($entryUrlAndText[1]);
+                $entriesArr[$itemKey]['text'] = trim($entryUrlAndText[0]);
+                $i++;
             }
         }
 
