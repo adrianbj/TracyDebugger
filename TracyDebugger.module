@@ -29,7 +29,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 101,
+            'version' => 102,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -462,9 +462,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'editor');
         $f->label = __('Editor protocol handler', __FILE__);
         $f->description = __('Sets the Tracy `Debugger::$editor` variable. Enter the appropriate address to open your editor of choice.'."\n".'This approach only works for OSX. For more instructions and Windows and Linux alternatives, [read here](https://pla.nette.org/en/how-open-files-in-ide-from-debugger).'."\n".'For easily adding the SublimeText "subl://" protocol handler to your Mac, use this free [tool](https://github.com/saetia/sublime-url-protocol-mac).', __FILE__);
-        $f->notes = __('Initially configured for SublimeText. Change to work with your favorite editor.', __FILE__);
+        $f->notes = __('Initially configured for SublimeText (`subl://open/?url=file://%file&line=%line`). Change to work with your favorite editor.', __FILE__);
         $f->columnWidth = 100;
-        if($data['email']) $f->attr('value', $data['editor']);
+        if($data['editor']) $f->attr('value', $data['editor']);
         $wrapper->add($f);
 
         $f = wire('modules')->get("InputfieldCheckbox");
