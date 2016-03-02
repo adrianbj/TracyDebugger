@@ -34,7 +34,7 @@ class Panel implements IBarPanel
 	 */
 	protected function getBaseRowString()
 	{
-		return "<tr>"
+		return "<tr title='%s'>"
 			. "<td><b>%s</b></td>"
 			. "<td><b>%s</b></td>"
 			. "<td>%s</td><td>%s</td>"
@@ -121,8 +121,10 @@ class Panel implements IBarPanel
 				$time = $current[Register::TIME] - $previous[Register::TIME];
 			}
 			$row = $this->getBaseRowString();
+			$backtrace = $current[Register::BACKTRACE][0];
 			$return .= sprintf(
 				$row,
+				$backtrace['file'] . ':' . $backtrace['line'],
 				$name,
 				$namePrevious,
 				$this->memoryToNumber($current[Register::MEMORY]),

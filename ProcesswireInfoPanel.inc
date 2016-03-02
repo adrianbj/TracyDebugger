@@ -101,7 +101,7 @@ class ProcesswireInfoPanel implements IBarPanel {
                 </tr>
                 <tr>
                     <th>Parent</th>
-                    <td><a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->parent->id.'">'.wire('page')->parent->name.' ('.wire('page')->parentID.')</a></td>
+                    <td>'.(wire('page')->parent->id ? '<a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->parent->id.'">'.wire('page')->parent->name.' ('.wire('page')->parentID.')</a>' : '').'</td>
                 </tr>
                 <tr>
                     <th>Root Parent</th>
