@@ -73,8 +73,9 @@ class ProcesswireLogsPanel implements IBarPanel {
             "<td><a href='".wire('config')->urls->admin."setup/logs/view/".$item['log']."/'>".$item['log']."</a></td>" .
             "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
             "<td>".$item['user']."</td>" .
-            "<td>".$item['url']."</td>" .
-            "<td>".strip_tags($item['text'])."</td>" .
+            "<td>".$item['url']."</td>";
+            $trimmedText = trim(strip_tags($item['text']));
+            $logEntries .= "<td>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</td>" .
             "</tr>";
         }
         $logEntries .= $sectionEnd;
