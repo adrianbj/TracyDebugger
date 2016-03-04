@@ -164,7 +164,6 @@ class TracyLogsPanel implements IBarPanel {
                 $entryUrlAndText = explode('@', substr($entry, 22)); // get the rest of the line after the date;
                 $entriesArr[$itemKey]['url'] = trim($entryUrlAndText[1]);
                 $trimmedText = trim($entryUrlAndText[0]);
-                bd($entry);
                 $entriesArr[$itemKey]['text'] = strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText;
                 $x--;
                 $i++;
