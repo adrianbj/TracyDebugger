@@ -53,29 +53,42 @@ class ProcesswireLogsPanel implements IBarPanel {
 
         $logEntries = $this->sectionHeader(array('Type', 'Date', 'User', 'URL', 'Text'));
         $entriesArr = array();
+        $i=0;
         foreach(wire('log')->getLogs() as $log) {
-            //if(!in_array($log['name'], array('errors', 'exceptions', 'messages', 'warnings'))) continue;
-            $i=0;
-            foreach(wire('log')->getEntries($log['name'], array("limit" => 10)) as $entry) {
-                $itemKey = strtotime($entry['date']) + $i;
-                $entriesArr[$itemKey] = $entry;
+            $x=99;
+            foreach(wire('log')->getEntries($log['name'], array("limit" => 25)) as $entry) {
+                $itemKey = $log['name'] . '_' . $x;
+                $entriesArr[$itemKey]['timestamp'] = strtotime($entry['date']);
+                $entriesArr[$itemKey]['order'] = $itemKey;
+                $entriesArr[$itemKey]['date'] = $entry['date'];
+                $entriesArr[$itemKey]['text'] = $entry['text'];
+                $entriesArr[$itemKey]['user'] = $entry['user'];
+                $entriesArr[$itemKey]['url'] = $entry['url'];
                 $entriesArr[$itemKey]['log'] = $log['name'];
+                $x--;
                 $i++;
             }
         }
 
-        //sort by key which is a timestamp from the date
-        krsort($entriesArr, SORT_NUMERIC);
+        // get a list of sort columns and their data to pass to array_multisort
+        $sort = array();
+        foreach ($entriesArr as $key => $row) {
+            $timestamp[$key] = $row['timestamp'];
+            $order[$key] = $row['order'];
+        }
+        // sort by event_type desc and then title asc
+        array_multisort($timestamp, SORT_DESC, $order, SORT_DESC, $entriesArr);
 
         //display 25 most recent entries from all log files
         foreach(array_slice($entriesArr, 0, 25) as $item) {
-            $logEntries .= "\n<tr>" .
-            "<td><a href='".wire('config')->urls->admin."setup/logs/view/".$item['log']."/'>".$item['log']."</a></td>" .
-            "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
-            "<td>".$item['user']."</td>" .
-            "<td>".$item['url']."</td>";
             $trimmedText = trim(strip_tags($item['text']));
-            $logEntries .= "<td>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</td>" .
+            $logEntries .= "
+            \n<tr>" .
+                "<td><a href='".wire('config')->urls->admin."setup/logs/view/".$item['log']."/'>".$item['log']."</a></td>" .
+                "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
+                "<td>".$item['user']."</td>" .
+                "<td>".$item['url']."</td>" .
+                "<td>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</td>" .
             "</tr>";
         }
         $logEntries .= $sectionEnd;

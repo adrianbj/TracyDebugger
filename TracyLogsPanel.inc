@@ -147,34 +147,48 @@ class TracyLogsPanel implements IBarPanel {
 
         $logEntries = $this->sectionHeader(array('Type', 'Date', 'URL', 'Text'));
         $entriesArr = array();
+        $i=0;
         foreach($this->getLogs() as $log) {
-            $i=0;
-            foreach($this->getLines($log['name'], array("limit" => 10)) as $entry) {
+            $x=99;
+            foreach($this->getLines($log['name'], array("limit" => 25)) as $entry) {
                 $logDateTime = str_replace(array('[',']'), '', substr($entry, 0 , 21)); // get the date - first 21 chars
                 $logDateParts = explode(" ", $logDateTime);
                 $logDate = $logDateParts[0];
                 $logTime = str_replace('-',':', $logDateParts[1]);
                 $logDateTime = $logDate . ' ' . $logTime;
-                $itemKey = strtotime($logDateTime) + $i;
+                $itemKey = $log['name'] . '_' . $x;
+                $entriesArr[$itemKey]['timestamp'] = strtotime($logDateTime);
+                $entriesArr[$itemKey]['order'] = $itemKey;
                 $entriesArr[$itemKey]['date'] = $logDateTime;
                 $entriesArr[$itemKey]['log'] = $log['name'];
                 $entryUrlAndText = explode('@', substr($entry, 22)); // get the rest of the line after the date;
                 $entriesArr[$itemKey]['url'] = trim($entryUrlAndText[1]);
                 $trimmedText = trim($entryUrlAndText[0]);
+                bd($entry);
                 $entriesArr[$itemKey]['text'] = strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText;
+                $x--;
                 $i++;
             }
         }
 
-        //sort by key which is a timestamp from the date
-        krsort($entriesArr, SORT_NUMERIC);
+        # get a list of sort columns and their data to pass to array_multisort
+        $sort = array();
+        foreach ($entriesArr as $key => $row) {
+            $timestamp[$key] = $row['timestamp'];
+            $order[$key] = $row['order'];
+        }
+        # sort by event_type desc and then title asc
+        array_multisort($timestamp, SORT_DESC, $order, SORT_DESC, $entriesArr);
+
         //display 25 most recent entries from all log files
         foreach(array_slice($entriesArr, 0, 25) as $item) {
-            $logEntries .= "\n<tr>" .
-            "<td>".$item['log']."</td>" .
-            "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
-            "<td>".$item['url']."</td>" .
-            "<td>".strip_tags($item['text'])."</td>" .
+            $trimmedText = trim(strip_tags($item['text']));
+            $logEntries .= "
+            \n<tr>" .
+                "<td>".$item['log']."</td>" .
+                "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
+                "<td>".$item['url']."</td>" .
+                "<td>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</td>" .
             "</tr>";
         }
         $logEntries .= $sectionEnd;
