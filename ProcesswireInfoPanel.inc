@@ -130,7 +130,7 @@ class ProcesswireInfoPanel implements IBarPanel {
                 $pageSummary .= '
                 <tr>
                     <th>Children</th>
-                    <td><a href="'.wire('config')->urls->admin.'page/list/?open='.wire('page')->id.'">'.wire('page')->numChildren().'</a></td>
+                    <td>'.wire('page')->numChildren().' <a href="'.wire('config')->urls->admin.'page/list/?open='.wire('page')->id.'">open tree</a> | <a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->id.'#ProcessPageEditChildren">edit</a></td>
                 </tr>
                 <tr>
                     <th>Created</th>
