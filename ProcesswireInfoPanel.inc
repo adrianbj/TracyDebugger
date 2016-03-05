@@ -84,11 +84,11 @@ class ProcesswireInfoPanel implements IBarPanel {
                 </tr>
                 <tr>
                     <th>Name</th>
-                    <td><a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->id.'">'.wire('page')->name.'</a></td>
+                    <td>'.wire('page')->name.'</td>
                 </tr>
                 <tr>
                     <th>ID</th>
-                    <td>'.wire('page')->id.'</td>
+                    <td><a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->id.'">'.wire('page')->id.'</a></td>
                 </tr>
                 <tr>
                 <tr>
@@ -97,29 +97,34 @@ class ProcesswireInfoPanel implements IBarPanel {
                 </tr>
                 <tr>
                     <th>Template</th>
-                    <td><a href="'.wire('config')->urls->admin.'setup/template/edit?id='.wire('page')->template->id.'">'.wire('page')->template->name.'</td>
+                    <td><a href="'.wire('config')->urls->admin.'setup/template/edit?id='.wire('page')->template->id.'">'.wire('page')->template->name.(wire('page')->template->label ? '</a> ('.wire('page')->template->label.')' :'').'</td>
                 </tr>
-                <tr>
-                    <th>Parent</th>
-                    <td>'.(wire('page')->parent->id ? '<a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->parent->id.'">'.wire('page')->parent->name.' ('.wire('page')->parentID.')</a>' : '').'</td>
-                </tr>
+                ';
+                if(wire('page')->parent && wire('page')->parent->viewable()) {
+                    $pageSummary .= '
+                    <tr>
+                        <th>Parent</th>
+                        <td><a href="'.wire('page')->parent->url.'">'.wire('page')->parent->name.'</a> (<a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->parent->id.'">'.wire('page')->parent->id.'</a>)</td>
+                    </tr>';
+                }
+                $pageSummary .= '
                 <tr>
                     <th>Root Parent</th>
-                    <td><a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->rootParent->id.'">'.wire('page')->rootParent->name.' ('.wire('page')->rootParent->id.')</a></td>
+                    <td><a href="'.wire('page')->rootParent->url.'">'.wire('page')->rootParent->name.'</a> (<a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->rootParent->id.'">'.wire('page')->rootParent->id.'</a>)</td>
                 </tr>
                 ';
                 if(wire('page')->prev->id && wire('page')->prev->viewable()) {
                     $pageSummary .= '
                     <tr>
                         <th>Prev Sibling</th>
-                        <td><a href="'.wire('page')->prev->url.'">&lt; '.wire('page')->prev->name.'</a></td>
+                        <td><a href="'.wire('page')->prev->url.'">&lt; '.wire('page')->prev->name.'</a> (<a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->prev->id.'">'.wire('page')->prev->id.'</a>)</td>
                     </tr>';
                 }
                 if(wire('page')->next->id && wire('page')->next->viewable()) {
                     $pageSummary .= '
                     <tr>
                         <th>Next Sibling</th>
-                        <td><a href="'.wire('page')->next->url.'">'.wire('page')->next->name.' &gt;</a></td>
+                        <td><a href="'.wire('page')->next->url.'">'.wire('page')->next->name.' &gt;</a> (<a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->next->id.'">'.wire('page')->next->id.'</a>)</td>
                     </tr>';
                 }
                 $pageSummary .= '
@@ -189,7 +194,7 @@ class ProcesswireInfoPanel implements IBarPanel {
                 </tr>
                 <tr>
                     <th>Filename</th>
-                    <td>'.str_replace(wire('config')->paths->root, '/', $templateFilePath).'</td>
+                    <td><a href="'.str_replace('%file', $templateFilePath, str_replace('%line', '', \TracyDebugger::getDataValue('editor'))).'">'.str_replace(wire('config')->paths->root, '/', $templateFilePath).'</a></td>
                 </tr>
                 <tr>
                     <th>File Last Modified</th>
