@@ -86,6 +86,14 @@ class MethodsInfoPanel implements IBarPanel {
                 <a href="http://www.getfirebug.com/">Firebug</a><br />
                 <a href="http://firelogger.binaryage.com/">FireLogger</a><br />
             </p>
+
+            <p style="font-size:16px"><strong>templateVars(get_defined_vars())</strong></p>
+            <p>
+            TD::templateVars();<br />
+            templateVars();<br />
+            tv();<br />
+            </p>
+
         </div>
         ';
 

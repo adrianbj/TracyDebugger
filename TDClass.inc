@@ -69,4 +69,13 @@ class TD extends TracyDebugger {
         return Zarganwar\PerformancePanel\Register::add($name, $enforceParent);
     }
 
+    /**
+     * Template vars shortcut.
+     * @tracySkipLocation
+     */
+    public static function templateVars($vars) {
+        if(!TracyDebugger::allowedTracyUsers() || !class_exists('\Tracy\Debugger')) return false;
+        return TracyDebugger::templateVars((array) $vars);
+    }
+
 }
