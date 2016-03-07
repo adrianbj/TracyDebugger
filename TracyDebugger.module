@@ -28,8 +28,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         return array(
             'title' => 'Tracy Debugger',
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
+            'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 113,
+            'version' => 114,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -79,14 +80,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * Populate the default config data
      *
      */
-    public static $_data = array();
+    public static $_data;
 
     public function __construct() {
         foreach(self::getDefaultData() as $key => $value) {
             $this->$key = $value;
         }
         //populate for later static access to data
-        self::$_data[] = $this;
+        self::$_data = $this;
     }
 
 
@@ -520,11 +521,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * Getter function to get a $data index value
      */
     public static function getDataValue($property) {
-        $propertyValues = array();
-        foreach (self::$_data as $datum) {
-            $propertyValue = trim($datum->$property);
-        }
-        return $propertyValue;
+        return trim(self::$_data->$property);
     }
 
 

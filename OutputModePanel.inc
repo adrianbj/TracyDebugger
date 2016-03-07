@@ -91,7 +91,6 @@ class OutputModePanel implements IBarPanel {
             <br />
         </div>';
 
-
         return $out;
     }
 
