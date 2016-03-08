@@ -59,6 +59,7 @@ class ProcesswireLogsPanel implements IBarPanel {
             foreach(wire('log')->getEntries($log['name'], array("limit" => 25)) as $entry) {
                 $itemKey = $log['name'] . '_' . $x;
                 $entriesArr[$itemKey]['timestamp'] = strtotime($entry['date']);
+                $entriesArr[$itemKey]['linenumber'] = 99-$x;
                 $entriesArr[$itemKey]['order'] = $itemKey;
                 $entriesArr[$itemKey]['date'] = $entry['date'];
                 $entriesArr[$itemKey]['text'] = $entry['text'];
@@ -81,10 +82,17 @@ class ProcesswireLogsPanel implements IBarPanel {
 
         //display 25 most recent entries from all log files
         foreach(array_slice($entriesArr, 0, 25) as $item) {
+            $logInstance = new TracyFileLog(wire('config')->paths->logs . $item['log'].'.txt');
             $trimmedText = trim(strip_tags($item['text']));
             $logEntries .= "
-            \n<tr>" .
-                "<td><a href='".wire('config')->urls->admin."setup/logs/view/".$item['log']."/'>".$item['log']."</a></td>" .
+            \n<tr>";
+            if(\TracyDebugger::getDataValue('logsInEditor')) {
+                $logEntries .= "<td><a href='".str_replace("%file", wire('config')->paths->logs . $item['log'] . '.txt', str_replace("%line", ($logInstance->getTotalLines()-$item['linenumber']), \TracyDebugger::getDataValue("editor")))."'>".$item['log']."</a></td>";
+            }
+            else {
+                $logEntries .= "<td><a href='".wire('config')->urls->admin."setup/logs/view/".$item['log']."/'>".$item['log']."</a></td>";
+            }
+            $logEntries .=
                 "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
                 "<td>".$item['user']."</td>" .
                 "<td>".$item['url']."</td>" .

@@ -158,6 +158,7 @@ class TracyLogsPanel implements IBarPanel {
                 $logDateTime = $logDate . ' ' . $logTime;
                 $itemKey = $log['name'] . '_' . $x;
                 $entriesArr[$itemKey]['timestamp'] = strtotime($logDateTime);
+                $entriesArr[$itemKey]['linenumber'] = 99-$x;
                 $entriesArr[$itemKey]['order'] = $itemKey;
                 $entriesArr[$itemKey]['date'] = $logDateTime;
                 $entriesArr[$itemKey]['log'] = $log['name'];
@@ -180,11 +181,13 @@ class TracyLogsPanel implements IBarPanel {
         array_multisort($timestamp, SORT_DESC, $order, SORT_DESC, $entriesArr);
 
         //display 25 most recent entries from all log files
+
         foreach(array_slice($entriesArr, 0, 25) as $item) {
+            $logInstance = new TracyFileLog(wire('config')->paths->logs.'tracy/' . $item['log'].'.log');
             $trimmedText = trim(strip_tags($item['text']));
             $logEntries .= "
             \n<tr>" .
-                "<td>".$item['log']."</td>" .
+                "<td><a href='".str_replace("%file", wire('config')->paths->logs.'tracy/' . $item['log'] . '.log', str_replace("%line", ($logInstance->getTotalLines()-$item['linenumber']), \TracyDebugger::getDataValue("editor")))."'>".$item['log']."</a></td>" .
                 "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
                 "<td>".$item['url']."</td>" .
                 "<td>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</td>" .
