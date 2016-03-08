@@ -30,7 +30,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 115,
+            'version' => 116,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -70,7 +70,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "email" => '',
                 "clearEmailSent" => null,
                 "editor" => 'subl://open/?url=file://%file&line=%line',
-                "logsInEditor" => 1,
                 "enableShortcutMethods" => 1,
                 "enabledShortcutMethods" => array('dump', 'd', 'barDump', 'bd', 'l', 'timer', 't', 'fireLog', 'fl', 'addBreakpoint', 'bp', 'templateVars', 'tv')
             );
@@ -479,18 +478,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Editor protocol handler', __FILE__);
         $f->description = __('Sets the Tracy `Debugger::$editor` variable. Enter the appropriate address to open your code editor of choice.'."\n".'This approach only works for OSX. For more instructions on Windows and Linux alternatives, [read here](https://pla.nette.org/en/how-open-files-in-ide-from-debugger).'."\n".'For easily adding the SublimeText "subl://" protocol handler to your Mac, use this free [tool](https://github.com/saetia/sublime-url-protocol-mac).', __FILE__);
         $f->notes = __('Initially configured for SublimeText (`subl://open/?url=file://%file&line=%line`). Change to work with your favorite editor.', __FILE__);
-        $f->columnWidth = 66;
         if($data['editor']) $f->attr('value', $data['editor']);
-        $wrapper->add($f);
-
-        $f = wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'logsInEditor');
-        $f->label = __('Open PW logs in code editor', __FILE__);
-        $f->description = __('If path is local and this is checked, PW logs will be opened in your configured editor, rather than the PW admin logs viewer.', __FILE__);
-        $f->notes = __('Tracy logs will always be opened in your editor because there is no online viewer alternative like the PW logs have.', __FILE__);
-        $f->showIf = "editor!=''";
-        $f->columnWidth = 34;
-        $f->attr('checked', $data['logsInEditor'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
 
         $f = wire('modules')->get("InputfieldCheckbox");

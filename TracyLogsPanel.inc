@@ -187,10 +187,10 @@ class TracyLogsPanel implements IBarPanel {
             $trimmedText = trim(strip_tags($item['text']));
             $logEntries .= "
             \n<tr>" .
-                "<td><a href='".str_replace("%file", wire('config')->paths->logs.'tracy/' . $item['log'] . '.log', str_replace("%line", ($logInstance->getTotalLines()-$item['linenumber']), \TracyDebugger::getDataValue("editor")))."'>".$item['log']."</a></td>" .
+                "<td>".$item['log']."</td>" .
                 "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
                 "<td>".$item['url']."</td>" .
-                "<td>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</td>" .
+                "<td><a href='".str_replace("%file", wire('config')->paths->logs.'tracy/' . $item['log'] . '.log', str_replace("%line", ($logInstance->getTotalLines()-$item['linenumber']), \TracyDebugger::getDataValue("editor")))."'>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</a></td>" .
             "</tr>";
         }
         $logEntries .= $sectionEnd;
