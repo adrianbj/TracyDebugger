@@ -20,6 +20,11 @@ class Helpers
 	 */
 	public static function editorLink($file, $line = NULL)
 	{
+
+		// PW TracyDebugger hack for returning real file, not compiled version
+		// TODO See if I can get the Nette guys to add a public location variable or similar so this can be replaced outside Tracy core
+		if(strpos($file, '/site/assets/cache/FileCompiler') !== false) $file = str_replace('/site/assets/cache/FileCompiler', '', $file);
+
 		if ($editor = self::editorUri($file, $line)) {
 			$file = strtr($file, '\\', '/');
 			if (preg_match('#(^[a-z]:)?/.{1,50}$#i', $file, $m) && strlen($file) > strlen($m[0])) {
@@ -45,6 +50,11 @@ class Helpers
 	 */
 	public static function editorUri($file, $line = NULL)
 	{
+
+		// PW TracyDebugger hack for returning real file, not compiled version
+		// TODO See if I can get the Nette guys to add a public location variable or similar so this can be replaced outside Tracy core
+		if(strpos($file, '/site/assets/cache/FileCompiler') !== false) $file = str_replace('/site/assets/cache/FileCompiler', '', $file);
+
 		if (Debugger::$editor && $file && is_file($file)) {
 			return strtr(Debugger::$editor, array('%file' => rawurlencode($file), '%line' => $line ? (int) $line : 1));
 		}
