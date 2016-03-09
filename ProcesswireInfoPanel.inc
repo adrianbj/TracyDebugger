@@ -258,6 +258,9 @@ class ProcesswireInfoPanel implements IBarPanel {
                     foreach(wire('page')->$f as $key => $item) {
                         if(is_object($item)) {
                             foreach($item as $type => $value) {
+                                // TODO this is a temp fix for situations where the type is: 0
+                                // need to figure out why and deal with properly
+                                if($type === 0) break 2;
                                 if($type == 'created' || $type == 'modified' || $type == 'published') $value .= ' ('.date("Y-m-d H:i:s", $value).')';
                                 if($type == 'created_users_id' || $type == 'modified_users_id') $value .= ' ('.wire('users')->get($value)->name.')';
                                 $fieldArray['value'][$key][$type] = is_object($value) ? $value->getArray() : $value;
