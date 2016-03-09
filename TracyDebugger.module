@@ -30,7 +30,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 120,
+            'version' => 121,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -238,7 +238,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     // add conditional to make sure debug statements left in compiled templates are not
                     // executed if Tracy is uninstalled or the debugStatements field in the config settings is blank
                     $code = "if(class_exists('\TracyDebugger') && wire('user')->isSuperuser() && \TracyDebugger::getDataValue('debugStatements')) {" . $statements[2] . "}";
-                    if($statements[3]=='true') $code = "<?php "  . $code . " ?>";
+                    if(isset($statements[3]) && $statements[3]=='true') $code = "<?php "  . $code . " ?>";
                     array_splice($lines, ($statements[1]+$i), 0, $code);
                     $i++;
                 }
