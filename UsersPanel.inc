@@ -8,34 +8,40 @@ use Tracy\IBarPanel;
 
 class UsersPanel implements IBarPanel {
 
-    protected $nonSuperusers = 0;
-    protected $listTracyUsers = null;
-    protected $listTracyRoles = null;
+    protected $numNonSuperusers;
+    protected $listTracyUsers;
+    protected $listTracyRoles;
 
-    protected function nonSuperusers() {
-        $this->nonSuperusers = 0;
+    protected function numNonSuperusers() {
+
+        $this->numNonSuperusers = 0;
         $this->listTracyUsers = null;
         $this->listTracyRoles = null;
+        $tracyDebuggerRoles = false;
+        $tracyDebuggerRolesStr = null;
+
         $tooManyUsers = null;
 
-        foreach(wire('users') as $u) {
-            if(!$u->isSuperuser() && $u->hasPermission("tracy-debugger")) {
-                if($this->nonSuperusers > 24) {
-                    $tooManyUsers = '<p>There are more than 25 users, but we only show the first 25</p>';
-                    break;
-                }
-                $this->nonSuperusers++;
+        $tracyDebuggerRoles = wire('roles')->find("permissions=tracy-debugger, name!=superuser");
+        $tracyDebuggerRolesStr = $tracyDebuggerRoles->implode("|","name");
+
+        if($tracyDebuggerRolesStr) {
+            $this->numNonSuperusers = wire('users')->count("roles=$tracyDebuggerRolesStr");
+            if($this->numNonSuperusers > 25) {
+                $tooManyUsers = '<p>There are more than 25 users, but we only show the first 25</p>';
+            }
+            foreach(wire('users')->find("roles=$tracyDebuggerRolesStr, limit=25") as $u) {
                 $this->listTracyUsers .= '<a href="'.wire('config')->urls->admin.'access/users/edit/?id='.$u->id.'">' . $u->name . '</a>, ';
             }
+            $this->listTracyUsers = rtrim($this->listTracyUsers, ', ') . $tooManyUsers;
         }
-        $this->listTracyUsers = rtrim($this->listTracyUsers, ', ') . $tooManyUsers;
 
-        foreach(wire('roles') as $r) {
-            if($r->hasPermission("tracy-debugger")) $this->listTracyRoles .= '<a href="'.wire('config')->urls->admin.'access/roles/edit/?id='.$r->id.'">' . $r->name . '</a>, ';
+        foreach($tracyDebuggerRoles as $r) {
+            $this->listTracyRoles .= '<a href="'.wire('config')->urls->admin.'access/roles/edit/?id='.$r->id.'">' . $r->name . '</a>, ';
         }
         $this->listTracyRoles = rtrim($this->listTracyRoles, ', ');
 
-        if($this->nonSuperusers > 0){
+        if($this->numNonSuperusers > 0){
             return true;
         }
         else {
@@ -47,12 +53,12 @@ class UsersPanel implements IBarPanel {
 
         if(\TracyDebugger::getDataValue('showPanelLabels')) {
             $iconColor = '#FFFFFF';
-            $background = $this->nonSuperusers() ? '#CD1818' : '#009900';
+            $background = $this->numNonSuperusers() ? '#CD1818' : '#009900';
             $label = '&nbsp;Users';
             $tabPadding = '5px';
         }
         else {
-            $iconColor = $this->nonSuperusers() ? '#CD1818' : '#009900';
+            $iconColor = $this->numNonSuperusers() ? '#CD1818' : '#009900';
             $background = 'none';
             $label = '';
             $tabPadding = '0';
@@ -78,10 +84,7 @@ class UsersPanel implements IBarPanel {
             $userRoles[] = '<a href="'.wire('config')->urls->admin.'access/roles/edit/?id='.$r->id.'">'.$r->name.'</a>';
         }
 
-        $out = '';
-
-
-        $out .= '
+        $out = '
         <h1>
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 80.13 80.13" style="enable-background:new 0 0 80.13 80.13;" xml:space="preserve">
                 <path d="M48.355,17.922c3.705,2.323,6.303,6.254,6.776,10.817c1.511,0.706,3.188,1.112,4.966,1.112   c6.491,0,11.752-5.261,11.752-11.751c0-6.491-5.261-11.752-11.752-11.752C53.668,6.35,48.453,11.517,48.355,17.922z M40.656,41.984   c6.491,0,11.752-5.262,11.752-11.752s-5.262-11.751-11.752-11.751c-6.49,0-11.754,5.262-11.754,11.752S34.166,41.984,40.656,41.984   z M45.641,42.785h-9.972c-8.297,0-15.047,6.751-15.047,15.048v12.195l0.031,0.191l0.84,0.263   c7.918,2.474,14.797,3.299,20.459,3.299c11.059,0,17.469-3.153,17.864-3.354l0.785-0.397h0.084V57.833   C60.688,49.536,53.938,42.785,45.641,42.785z M65.084,30.653h-9.895c-0.107,3.959-1.797,7.524-4.47,10.088   c7.375,2.193,12.771,9.032,12.771,17.11v3.758c9.77-0.358,15.4-3.127,15.771-3.313l0.785-0.398h0.084V45.699   C80.13,37.403,73.38,30.653,65.084,30.653z M20.035,29.853c2.299,0,4.438-0.671,6.25-1.814c0.576-3.757,2.59-7.04,5.467-9.276   c0.012-0.22,0.033-0.438,0.033-0.66c0-6.491-5.262-11.752-11.75-11.752c-6.492,0-11.752,5.261-11.752,11.752   C8.283,24.591,13.543,29.853,20.035,29.853z M30.589,40.741c-2.66-2.551-4.344-6.097-4.467-10.032   c-0.367-0.027-0.73-0.056-1.104-0.056h-9.971C6.75,30.653,0,37.403,0,45.699v12.197l0.031,0.188l0.84,0.265   c6.352,1.983,12.021,2.897,16.945,3.185v-3.683C17.818,49.773,23.212,42.936,30.589,40.741z" fill="#EE1D62"/>
@@ -111,8 +114,8 @@ class UsersPanel implements IBarPanel {
 
             $out .= '
             <h2>Allowed Non-Superusers and Roles</h2>';
-            if($this->nonSuperusers>0) {
-                if($this->nonSuperusers()) {
+            if($this->numNonSuperusers>0) {
+                if($this->numNonSuperusers()) {
                     $out .= '
                         <p style="font-size:15px">
                             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 483.537 483.537" style="enable-background:new 0 0 483.537 483.537;" xml:space="preserve" width="16px" height="16px">
@@ -173,8 +176,6 @@ class UsersPanel implements IBarPanel {
                                 <strong>There is no defined IP Address restriction, so the Non-Superusers listed above will have full access from any location.</strong>
                         </p>';
                 }
-
-
             }
             else {
                 $out .= '<p style="font-size: 15px"><strong>All allowed users are Superusers</strong></p>';
