@@ -30,7 +30,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 124,
+            'version' => 125,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -257,13 +257,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         //only for filename which matches the name of the template for this page
         if ($event['arguments'][1] == wire('page')->template->filename) {
             $out = rtrim($event->return);
-            $lastPhpTag = substr(strrchr($out, "<?php"), 1);
-            if(substr($lastPhpTag, -2) == '?>' || strpos($lastPhpTag, '?>') === false) {
-                $out = rtrim($out, '?>');
-                $closeTag = "\n?>";
+            $pos = strrpos($out, '<?');
+            $lastPhpTag = $pos === false ? $out : substr($out, $pos + 1);
+
+            if (strpos($lastPhpTag, '?>') !== false) {
+                $closeTag = '';
             }
             else {
-                $closeTag = '';
+                $closeTag = '?>';
             }
 
             $event->return = $out . $closeTag . "\n<?php\nif(class_exists('\TracyDebugger')) {\n\t\TracyDebugger::".'$templateVars'." = \TracyDebugger::templateVars(get_defined_vars());\n}";
