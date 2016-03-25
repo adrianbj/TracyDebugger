@@ -61,6 +61,11 @@ Firefox:
 * http://www.getfirebug.com/
 * http://firelogger.binaryage.com/
 
+####Support forum:
+https://processwire.com/talk/topic/12208-tracy-debugger/
+
+####Blog Post:
+https://processwire.com/blog/posts/introducing-tracy-debugger/
 
 ## License
 
