@@ -51,6 +51,8 @@ class UsersPanel implements IBarPanel {
 
     public function getTab() {
 
+        if(\TracyDebugger::additionalBar()) return;
+
         if(\TracyDebugger::getDataValue('showPanelLabels')) {
             $iconColor = '#FFFFFF';
             $background = $this->numNonSuperusers() ? '#CD1818' : '#009900';

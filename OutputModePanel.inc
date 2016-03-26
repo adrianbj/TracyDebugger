@@ -18,6 +18,8 @@ class OutputModePanel implements IBarPanel {
 
     public function getTab() {
 
+        if(\TracyDebugger::additionalBar()) return;
+
         $this->outputMode = \TracyDebugger::getDataValue('outputMode');
 
         if($this->outputMode == 'detect') {

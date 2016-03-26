@@ -8,6 +8,9 @@ use Tracy\IBarPanel;
 
 class MethodsInfoPanel implements IBarPanel {
     public function getTab() {
+
+        if(\TracyDebugger::additionalBar()) return;
+
         return '
         <span title="Methods info">
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="16px" height="16px" viewBox="0 0 16 16">

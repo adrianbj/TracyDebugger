@@ -10,6 +10,9 @@ use Tracy\Dumper;
 
 class ProcesswireInfoPanel implements IBarPanel {
     public function getTab() {
+
+        if(\TracyDebugger::additionalBar()) return;
+
         return '
         <span title="ProcessWire Page Info & Links">
             <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -285,7 +288,7 @@ class ProcesswireInfoPanel implements IBarPanel {
                             $fieldArray['value'][$key] = $item;
                         }
                     }
-                    $value = Dumper::toHtml($fieldArray['value'], array(Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
+                    if(isset($fieldArray['value'])) $value = Dumper::toHtml($fieldArray['value'], array(Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
                 }
                 else {
                     $value = wire('page')->$f;

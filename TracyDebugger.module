@@ -18,6 +18,7 @@
  */
 
 use Tracy\Debugger;
+use Tracy\Helpers;
 
 class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
@@ -30,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 125,
+            'version' => 126,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -43,8 +44,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     protected $data = array();
-
     public static $templateVars = array();
+    protected static $tracyVersion;
 
 
    /**
@@ -97,11 +98,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public function init() {
 
+        if($this->allowedTracyUsers()) {
+            if (version_compare(phpversion(), '5.4.4', '>=')) {
+                static::$tracyVersion = 'master';
+                require_once __DIR__ . '/tracy-master/src/tracy.php';
+            }
+            else {
+                static::$tracyVersion = 'stable';
+                require_once __DIR__ . '/tracy-stable/src/tracy.php';
+            }
+        }
         // if user not allowed then load dummy class to prevent "class not found" errors when
         // calling \Tracy\Debugger::method() directly
-        if($this->allowedTracyUsers()) {
-            require_once __DIR__ . '/tracy/src/tracy.php';
-        }
         else {
             require_once __DIR__ . '/DummyTracyDebuggerClass.inc';
         }
@@ -561,6 +569,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         return trim(self::$_data->$property);
     }
 
+    /**
+    * Determine if Tracy is loading an additional panel - via AJAX, or a redirect panel
+    * In this case we don't want to add most of our custom panels to the new bar because they don't change
+    */
+    public static function additionalBar() {
+        $isRedirect = preg_match('#^Location:#im', implode("\n", headers_list()));
+        if((static::$tracyVersion == 'master' && Helpers::isAjax()) || $isRedirect) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
 
     public static function checkIpAddress() {
 

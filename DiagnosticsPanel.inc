@@ -14,6 +14,8 @@ class DiagnosticsPanel implements IBarPanel {
 
     public function getTab() {
 
+        if(\TracyDebugger::additionalBar()) return;
+
         // generate Filesystem diagnotics now so we can determine the color of the icon in the Debugger Bar
         $this->generateFilesystem();
 
@@ -159,7 +161,7 @@ class DiagnosticsPanel implements IBarPanel {
         // posix_getpwuid doesn't exist on Windows
         if(function_exists('posix_getpwuid')) {
             $owner = !file_exists($path) ? '' : posix_getpwuid(fileowner($path));
-            $group = posix_getgrgid($owner['gid']);
+            $group = !isset($owner['gid']) ? '' : posix_getgrgid($owner['gid']);
         }
 
         $statusNotes = $this->getStatusNotes($attribute, $exists, $readable, $writeable, $permission);
@@ -308,7 +310,7 @@ class DiagnosticsPanel implements IBarPanel {
 
 
         // Load all the panel sections
-        $out .= '
+        $out = '
         <h1>
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 511.626 511.627" style="enable-background:new 0 0 511.626 511.627;" xml:space="preserve">
                 <g>

@@ -10,6 +10,8 @@ class PhpInfoPanel implements IBarPanel {
 
     public function getTab() {
 
+        if(\TracyDebugger::additionalBar()) return;
+
         return '
         <span title="PHP Info">
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 16.172 16.172" style="enable-background:new 0 0 16.172 16.172;" xml:space="preserve" width="16px" height="16px">
@@ -65,7 +67,7 @@ class PhpInfoPanel implements IBarPanel {
 
 
         // Load all the panel sections
-        $out .= '
+        $out = '
         <h1>
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 16.172 16.172" style="enable-background:new 0 0 16.172 16.172;" xml:space="preserve" width="16px" height="16px">
                 <g>

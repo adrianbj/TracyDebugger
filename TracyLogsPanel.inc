@@ -8,6 +8,9 @@ use Tracy\IBarPanel;
 
 class TracyLogsPanel implements IBarPanel {
     public function getTab() {
+
+        if(\TracyDebugger::additionalBar()) return;
+
         return '
         <span title="Tracy logs">
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 433.494 433.494" style="enable-background:new 0 0 433.494 433.494;" xml:space="preserve">
