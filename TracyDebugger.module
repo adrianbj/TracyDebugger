@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 127,
+            'version' => 128,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -337,7 +337,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'enabled');
         $f->label = __('Enable Tracy Debugger', __FILE__);
-        $f->description = __('Uncheck to disable the Tracy Debugger. For more details on Tracy and the following config settings, see: [https://tracy.nette.org/](https://tracy.nette.org/)', __FILE__);
+        $f->description = __('Uncheck to disable the Tracy Debugger.'."\n".'For more details on the settings below:'."\n".'[TracyDebugger Blog: Docs and Tutorial](https://processwire.com/blog/posts/introducing-tracy-debugger/)'."\n".'[Tracy Docs](https://tracy.nette.org/)', __FILE__);
         $f->columnWidth = 25;
         $f->attr('checked', $data['enabled'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
@@ -442,7 +442,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'showLocation');
         $f->label = 'Show Location';
         $f->description = __('Shows the location of dump() and barDump() calls.', __FILE__);
-        $f->notes = __('LOCATION_SOURCE adds tooltip with path to the file, where the function was called. LOCATION_LINK adds a link to the file. LOCATION_CLASS adds a tooltip to every dumped object containing path to the file, in which the object\'s class is defined.');
+        $f->notes = __('LOCATION_SOURCE adds tooltip with path to the file, where the function was called.'."\n".'LOCATION_LINK adds a link to the file.'."\n".'LOCATION_CLASS adds a tooltip to every dumped object containing path to the file, in which the object\'s class is defined.');
         $f->columnWidth = 50;
         $f->addOption('Tracy\Dumper::LOCATION_SOURCE', 'LOCATION_SOURCE');
         $f->addOption('Tracy\Dumper::LOCATION_LINK', 'LOCATION_LINK');

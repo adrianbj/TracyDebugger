@@ -36,7 +36,8 @@ class MethodsInfoPanel implements IBarPanel {
             Methods Info
         </h1>
         <div class="tracy-inner">
-            <p style="font-size:16px">Tracy Documentation: <a href="https://tracy.nette.org/">https://tracy.nette.org/</a></p>
+            <p style="font-size:16px"><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/">TracyDebugger Blog Documentation</a></p>
+            <p style="font-size:16px"><a href="https://tracy.nette.org/">Tracy Documentation</a></p>
 
             <p style="font-size:16px"><strong>dump($var, $return = FALSE)</strong></p>
             <p>
@@ -78,16 +79,6 @@ class MethodsInfoPanel implements IBarPanel {
             TD::fireLog();<br />
             fireLog();<br />
             fl();<br />
-            </p>
-            <p style="font-size:14px"><strong>FireLog needs these browser plugins:</strong></p>
-            <p>
-                <em>Chrome</em><br />
-                <a href="https://github.com/MattSkala/chrome-firelogger">FireLogger</a>
-            </p>
-            <p>
-                <em>Firefox</em><br />
-                <a href="http://www.getfirebug.com/">Firebug</a><br />
-                <a href="http://firelogger.binaryage.com/">FireLogger</a><br />
             </p>
 
             <p style="font-size:16px"><strong>templateVars(get_defined_vars())</strong></p>
