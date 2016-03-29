@@ -254,6 +254,7 @@ class ProcesswireInfoPanel implements IBarPanel {
             $pageTemplateObject = Dumper::toHtml(wire('page')->template, array(Dumper::COLLAPSE => false));
 
             // Fields List & Values
+            // TODO - this is a mess - very repetitive and needs cleaning up a lot
             $pageFieldsListValues = $this->sectionHeader(array('ID', 'Name', 'Label', 'FieldType', 'InputfieldType/Class', 'Returns', 'Value', 'Settings'));
             foreach(wire('page')->fields as $f) {
                 if(is_object(wire('page')->$f)) {
@@ -282,6 +283,29 @@ class ProcesswireInfoPanel implements IBarPanel {
                                     //just don't think there is any point showing the variations so remove to clean up
                                     unset($fieldArray['value'][$key]['imageVariations']);
                                 }
+                            }
+                        }
+                        elseif($f->type instanceof FieldtypeFile || $f->type instanceof FieldtypeImage) {
+                            if($f->type instanceof FieldtypeFile) {
+                                $fieldArray['value']['basename'] = wire('page')->$f->name;
+                                $fieldArray['value']['name'] = wire('page')->$f->name;
+                                $fieldArray['value']['filename'] = wire('page')->$f->filename;
+                                $fieldArray['value']['ext'] = wire('page')->$f->ext;
+                                $fieldArray['value']['url'] = wire('page')->$f->url;
+                                $fieldArray['value']['httpUrl'] = wire('page')->$f->httpUrl;
+                                $fieldArray['value']['filesize'] = wire('page')->$f->filesize;
+                                $fieldArray['value']['filesizeStr'] = wire('page')->$f->filesizeStr;
+                            }
+                            if($f->type instanceof FieldtypeImage) {
+                                $fieldArray['value']['width'] = wire('page')->$f->width;
+                                $fieldArray['value']['height'] = wire('page')->$f->height;
+                                //just don't think there is any point showing the variations so remove to clean up
+                                unset($fieldArray['value']['imageVariations']);
+                            }
+                            foreach(wire('page')->$f->getArray() as $type => $value) {
+                                if($type == 'created' || $type == 'modified' || $type == 'published') $value .= ' ('.date("Y-m-d H:i:s", $value).')';
+                                if($type == 'created_users_id' || $type == 'modified_users_id') $value .= ' ('.wire('users')->get($value)->name.')';
+                                $fieldArray['value'][$type] = $value;
                             }
                         }
                         else {
