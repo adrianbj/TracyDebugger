@@ -39,49 +39,49 @@ class MethodsInfoPanel implements IBarPanel {
             <p style="font-size:16px"><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/">TracyDebugger Blog Documentation</a></p>
             <p style="font-size:16px"><a href="https://tracy.nette.org/">Tracy Documentation</a></p>
 
-            <p style="font-size:16px"><strong>dump($var, $return = FALSE)</strong></p>
+            <p style="font-size:16px"><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#dump" target="_blank">dump($var, $return = FALSE)</a></strong></p>
             <p>
             TD::dump();<br />
             dump();<br />
             d();<br />
             </p>
 
-            <p style="font-size:16px"><strong>barDump($var, $title = NULL, array $options = NULL)</strong></p>
+            <p style="font-size:16px"><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#bardump" target="_blank">barDump($var, $title = NULL, array $options = NULL)</a></strong></p>
             <p>
             TD::barDump();<br />
             barDump();<br />
             bd();<br />
             </p>
 
-            <p style="font-size:16px"><strong>log($message, $priority = ILogger::INFO)</strong></p>
+            <p style="font-size:16px"><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#log" target="_blank">log($message, $priority = ILogger::INFO)</a></strong></p>
             @priority: "debug", "info", "warning", "error", "exception", "critical"
             <p>
             TD::log();<br />
             l();<br />
             </p>
 
-            <p style="font-size:16px"><strong>addBreakpoint($name = NULL, $enforceParent = NULL)</strong></p>
+            <p style="font-size:16px"><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#additional-debug-methods" target="_blank">addBreakpoint($name = NULL, $enforceParent = NULL)</a></strong></p>
             <p>
             TD::addBreakpoint();<br />
             addBreakpoint();<br />
             bp();<br />
             </p>
 
-            <p style="font-size:16px"><strong>timer($name = NULL)</strong></p>
+            <p style="font-size:16px"><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#timer" target="_blank">timer($name = NULL)</a></strong></p>
             <p>
             TD::timer();<br />
             timer();<br />
             t();<br />
             </p>
 
-            <p style="font-size:16px"><strong>fireLog($message)</strong></p>
+            <p style="font-size:16px"><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#firelog" target="_blank">fireLog($message)</a></strong></p>
             <p>
             TD::fireLog();<br />
             fireLog();<br />
             fl();<br />
             </p>
 
-            <p style="font-size:16px"><strong>templateVars(get_defined_vars())</strong></p>
+            <p style="font-size:16px"><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#dump-all-variables-at-various-breakpoints" target="_blank">templateVars(get_defined_vars())</a></strong></p>
             <p>
             TD::templateVars();<br />
             templateVars();<br />

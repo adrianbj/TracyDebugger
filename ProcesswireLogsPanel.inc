@@ -89,11 +89,11 @@ class ProcesswireLogsPanel implements IBarPanel {
             $trimmedText = trim(strip_tags($item['text']));
             $logEntries .= "
             \n<tr>
-                <td><a href='".wire('config')->urls->admin."setup/logs/view/".$item['log']."/'>".$item['log']."</a></td>" .
+                <td><a title='View \"".$item['log']."\" log file in PW admin' href='".wire('config')->urls->admin."setup/logs/view/".$item['log']."/'>".$item['log']."</a></td>" .
                 "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
                 "<td>".$item['user']."</td>" .
                 "<td>".$item['url']."</td>" .
-                "<td><a href='".str_replace("%file", wire('config')->paths->logs . $item['log'] . '.txt', str_replace("%line", ($logInstance->getTotalLines()-$item['linenumber']), \TracyDebugger::getDataValue("editor")))."'>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</a></td>" .
+                "<td><a title='View this line of \"".$item['log']."\" log file in your code editor' href='".str_replace("%file", wire('config')->paths->logs . $item['log'] . '.txt', str_replace("%line", ($logInstance->getTotalLines()-$item['linenumber']), \TracyDebugger::getDataValue("editor")))."'>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</a></td>" .
             "</tr>";
         }
         $logEntries .= $sectionEnd;

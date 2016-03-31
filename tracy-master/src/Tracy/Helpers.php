@@ -20,7 +20,6 @@ class Helpers
 	 */
 	public static function editorLink($file, $line = NULL)
 	{
-
 		// PW TracyDebugger hack for returning real file, not compiled version
 		// TODO See if I can get the Nette guys to add a public location variable or similar so this can be replaced outside Tracy core
 		if(strpos($file, '/site/assets/cache/FileCompiler') !== false) $file = str_replace('/site/assets/cache/FileCompiler', '', $file);
@@ -50,7 +49,6 @@ class Helpers
 	 */
 	public static function editorUri($file, $line = NULL)
 	{
-
 		// PW TracyDebugger hack for returning real file, not compiled version
 		// TODO See if I can get the Nette guys to add a public location variable or similar so this can be replaced outside Tracy core
 		if(strpos($file, '/site/assets/cache/FileCompiler') !== false) $file = str_replace('/site/assets/cache/FileCompiler', '', $file);
@@ -65,8 +63,14 @@ class Helpers
 	{
 		$args = func_get_args();
 		return preg_replace_callback('#%#', function () use (& $args, & $count) {
-			return htmlspecialchars($args[++$count], ENT_IGNORE | ENT_QUOTES, 'UTF-8');
+			return Helpers::escapeHtml($args[++$count]);
 		}, $mask);
+	}
+
+
+	public static function escapeHtml($s)
+	{
+		return htmlspecialchars($s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 	}
 
 
@@ -159,7 +163,8 @@ class Helpers
 				. (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '')
 				. $_SERVER['REQUEST_URI'];
 		} else {
-			return empty($_SERVER['argv']) ? 'CLI' : 'CLI: ' . implode(' ', $_SERVER['argv']);
+			return 'CLI (PID: ' . getmypid() . ')'
+				. (empty($_SERVER['argv']) ? '' : ': ' . implode(' ', $_SERVER['argv']));
 		}
 	}
 

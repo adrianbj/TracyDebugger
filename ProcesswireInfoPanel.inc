@@ -91,7 +91,7 @@ class ProcesswireInfoPanel implements IBarPanel {
                 </tr>
                 <tr>
                     <th>ID</th>
-                    <td><a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->id.'">'.wire('page')->id.'</a></td>
+                    <td><a title="Edit Page" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->id.'">'.wire('page')->id.'</a></td>
                 </tr>
                 <tr>
                 <tr>
@@ -100,40 +100,40 @@ class ProcesswireInfoPanel implements IBarPanel {
                 </tr>
                 <tr>
                     <th>Template</th>
-                    <td><a href="'.wire('config')->urls->admin.'setup/template/edit?id='.wire('page')->template->id.'">'.wire('page')->template->name.(wire('page')->template->label ? '</a> ('.wire('page')->template->label.')' :'').'</td>
+                    <td><a title="Edit Template" href="'.wire('config')->urls->admin.'setup/template/edit?id='.wire('page')->template->id.'">'.wire('page')->template->name.(wire('page')->template->label ? '</a> ('.wire('page')->template->label.')' :'').'</td>
                 </tr>
                 ';
                 if(wire('page')->parent && wire('page')->parent->viewable()) {
                     $pageSummary .= '
                     <tr>
                         <th>Parent</th>
-                        <td><a href="'.wire('page')->parent->url.'">'.wire('page')->parent->name.'</a> (<a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->parent->id.'">'.wire('page')->parent->id.'</a>)</td>
+                        <td><a title="View Parent" href="'.wire('page')->parent->url.'">'.wire('page')->parent->name.'</a> (<a title="Edit Parent" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->parent->id.'">'.wire('page')->parent->id.'</a>)</td>
                     </tr>';
                 }
                 $pageSummary .= '
                 <tr>
                     <th>Root Parent</th>
-                    <td><a href="'.wire('page')->rootParent->url.'">'.wire('page')->rootParent->name.'</a> (<a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->rootParent->id.'">'.wire('page')->rootParent->id.'</a>)</td>
+                    <td><a title="View Root Parent" href="'.wire('page')->rootParent->url.'">'.wire('page')->rootParent->name.'</a> (<a title="Edit Root Parent" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->rootParent->id.'">'.wire('page')->rootParent->id.'</a>)</td>
                 </tr>
                 ';
                 if(wire('page')->prev->id && wire('page')->prev->viewable()) {
                     $pageSummary .= '
                     <tr>
                         <th>Prev Sibling</th>
-                        <td><a href="'.wire('page')->prev->url.'">&lt; '.wire('page')->prev->name.'</a> (<a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->prev->id.'">'.wire('page')->prev->id.'</a>)</td>
+                        <td><a title="View Prev Sibling" href="'.wire('page')->prev->url.'">&lt; '.wire('page')->prev->name.'</a> (<a title="Edit Prev Sibling" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->prev->id.'">'.wire('page')->prev->id.'</a>)</td>
                     </tr>';
                 }
                 if(wire('page')->next->id && wire('page')->next->viewable()) {
                     $pageSummary .= '
                     <tr>
                         <th>Next Sibling</th>
-                        <td><a href="'.wire('page')->next->url.'">'.wire('page')->next->name.' &gt;</a> (<a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->next->id.'">'.wire('page')->next->id.'</a>)</td>
+                        <td><a title="View Next Sibling" href="'.wire('page')->next->url.'">'.wire('page')->next->name.' &gt;</a> (<a title="Edit Next Sibling" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->next->id.'">'.wire('page')->next->id.'</a>)</td>
                     </tr>';
                 }
                 $pageSummary .= '
                 <tr>
                     <th>Children</th>
-                    <td>'.wire('page')->numChildren().' <a href="'.wire('config')->urls->admin.'page/list/?open='.wire('page')->id.'">open tree</a> | <a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->id.'#ProcessPageEditChildren">edit</a></td>
+                    <td>'.wire('page')->numChildren().' <a title="Open Page Tree" href="'.wire('config')->urls->admin.'page/list/?open='.wire('page')->id.'">open tree</a> | <a title="View Children Tab" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->id.'#ProcessPageEditChildren">edit</a></td>
                 </tr>
                 <tr>
                     <th>Created</th>
@@ -181,7 +181,7 @@ class ProcesswireInfoPanel implements IBarPanel {
                 </tr>
                 <tr>
                     <th>Name</th>
-                    <td><a href="'.wire('config')->urls->admin.'setup/template/edit?id='.wire('page')->template->id.'">'.wire('page')->template->name.'</a></td>
+                    <td><a title="Edit Template" href="'.wire('config')->urls->admin.'setup/template/edit?id='.wire('page')->template->id.'">'.wire('page')->template->name.'</a></td>
                 </tr>
                 <tr>
                     <th>ID</th>
@@ -197,7 +197,7 @@ class ProcesswireInfoPanel implements IBarPanel {
                 </tr>
                 <tr>
                     <th>Filename</th>
-                    <td><a href="'.str_replace('%file', $templateFilePath, str_replace('%line', '1', \TracyDebugger::getDataValue('editor'))).'">'.str_replace(wire('config')->paths->root, '/', $templateFilePath).'</a></td>
+                    <td><a title="Edit Template File" href="'.str_replace('%file', $templateFilePath, str_replace('%line', '1', \TracyDebugger::getDataValue('editor'))).'">'.str_replace(wire('config')->paths->root, '/', $templateFilePath).'</a></td>
                 </tr>
                 <tr>
                     <th>File Last Modified</th>
@@ -322,7 +322,7 @@ class ProcesswireInfoPanel implements IBarPanel {
 
                 $pageFieldsListValues .= "\n<tr>" .
                     "<td>$f->id</td>" .
-                    '<td><a href="'.wire('config')->urls->admin.'setup/field/edit?id='.$f->id.'">'.$f->name.'</a></td>' .
+                    '<td><a title="Edit Field" href="'.wire('config')->urls->admin.'setup/field/edit?id='.$f->id.'">'.$f->name.'</a></td>' .
                     "<td>$f->label</td>" .
                     "<td>".str_replace('Fieldtype', '', $f->type)."</td>" .
                     "<td>".str_replace('Inputfield', '', ($f->inputfield ? $f->inputfield : $f->inputfieldClass))."</td>" .

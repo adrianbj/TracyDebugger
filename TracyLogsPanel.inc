@@ -193,7 +193,7 @@ class TracyLogsPanel implements IBarPanel {
                 "<td>".$item['log']."</td>" .
                 "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
                 "<td>".$item['url']."</td>" .
-                "<td><a href='".str_replace("%file", wire('config')->paths->logs.'tracy/' . $item['log'] . '.log', str_replace("%line", ($logInstance->getTotalLines()-$item['linenumber']), \TracyDebugger::getDataValue("editor")))."'>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</a></td>" .
+                "<td><a title='View this line of \"".$item['log']."\" log file in your code editor' href='".str_replace("%file", wire('config')->paths->logs.'tracy/' . $item['log'] . '.log', str_replace("%line", ($logInstance->getTotalLines()-$item['linenumber']), \TracyDebugger::getDataValue("editor")))."'>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</a></td>" .
             "</tr>";
         }
         $logEntries .= $sectionEnd;
