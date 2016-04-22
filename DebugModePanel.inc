@@ -137,18 +137,15 @@ class DebugModePanel implements IBarPanel {
         // API Variables
         $apiVariables = $this->sectionHeader(array('Name', 'Class'));
         if($PwVersion >= 3) {
-            foreach(wire('fuel') as $key => $value) {
-                if(!is_object($value)) continue;
-                $apiVariables .= "\n<tr><td><a href='https://processwire.com/api/variables/$key/'>\$$key</a></td>" .
-                    "<td>" . get_class($value) . "</td></tr>";
-            }
+            $pwVars = wire('fuel');
         }
         else {
-                foreach(wire() as $key => $value) {
-                    if(!is_object($value)) continue;
-                    $apiVariables .= "\n<tr><td><a href='http://processwire.com/api/variables/$key/'>\$$key</a></td>" .
-                        "<td>" . get_class($value) . "</td></tr>";
-                }
+            $pwVars = wire();
+        }
+        foreach($pwVars as $key => $value) {
+            if(!is_object($value)) continue;
+            $apiVariables .= "\n<tr><td><a href='https://processwire.com/api/variables/$key/'>\$$key</a></td>" .
+                "<td>" . get_class($value) . "</td></tr>";
         }
         $apiVariables .= $sectionEnd;
 
@@ -178,60 +175,41 @@ class DebugModePanel implements IBarPanel {
         $hooksCalled = $this->sectionHeader(array('When', 'Method::object', 'Visited by', 'Type', 'Priority'));
         if($PwVersion >= 3) {
             $hooks = array_merge(wire('pages')->getHooks('*'), wire('hooks')->getAllLocalHooks());
-            $hooksSorted = array();
-            foreach($hooks as $hook) {
-                $whenKey = $hook['options']['before'] ? '0' : '1';
-                $sortKey = $hook['options']['fromClass'] . ":$hook[method]:$whenKey:" . $hook['options']['priority'];
-                $hooksSorted[$sortKey] = $hook;
-            }
-            ksort($hooksSorted);
-            foreach($hooksSorted as $key => $hook) {
-                $suffix = $hook['options']['type'] == 'method' ? '()' : '';
-                $toObject = !empty($hook['toObject']) ? $hook['toObject'] : '';
-                $toMethod = $hook['toMethod'];
-                if(is_callable($toMethod)) $toMethod = 'anonymous function';
-                $hooksCalled .= "<tr>";
-                $hooksCalled .= "<td>" . ($hook['options']['before'] ? 'before ' : '') . ($hook['options']['after'] ? 'after' : '') . "</td>";
-                $hooksCalled .= "<td>" . ($hook['options']['fromClass'] ? $hook['options']['fromClass'] . '::' : '') . "$hook[method]$suffix</td>";
-                $hooksCalled .= "<td>" . ($toObject ? "$toObject::$toMethod" : $toMethod) . "()</td>";
-                $hooksCalled .= "<td>" . ($hook['options']['allInstances'] || $hook['options']['fromClass'] ? "class " : "instance ") . $hook['options']['type'] . "</td>";
-                $hooksCalled .= "<td>" . $hook['options']['priority'] . "</td>";
-                $hooksCalled .= "</tr>";
-            }
         }
         else {
             $hooks = array_merge(wire()->getHooks('*'), Wire::$allLocalHooks);
-            $hooksSorted = array();
-            foreach($hooks as $hook) {
-                $whenKey = $hook['options']['before'] ? '0' : '1';
-                $sortKey = $hook['options']['fromClass'] . ":$hook[method]:$whenKey:" . $hook['options']['priority'];
-                $hooksSorted[$sortKey] = $hook;
-            }
-            ksort($hooksSorted);
-            foreach($hooksSorted as $key => $hook) {
-                $suffix = $hook['options']['type'] == 'method' ? '()' : '';
-                $toObject = !empty($hook['toObject']) ? $hook['toObject'] : '';
-                $toMethod = $hook['toMethod'];
-                if(is_callable($toMethod)) $toMethod = 'anonymous function';
-                $hooksCalled .= "<tr>";
-                $hooksCalled .= "<td>" . ($hook['options']['before'] ? 'before ' : '') . ($hook['options']['after'] ? 'after' : '') . "</td>";
-                $hooksCalled .= "<td>" . ($hook['options']['fromClass'] ? $hook['options']['fromClass'] . '::' : '') . "$hook[method]$suffix</td>";
-                $hooksCalled .= "<td>" . ($toObject ? "$toObject::$toMethod" : $toMethod) . "()</td>";
-                $hooksCalled .= "<td>" . ($hook['options']['allInstances'] || $hook['options']['fromClass'] ? "class " : "instance ") . $hook['options']['type'] . "</td>";
-                $hooksCalled .= "<td>" . $hook['options']['priority'] . "</td>";
-                $hooksCalled .= "</tr>";
-            }
+        }
+        $hooksSorted = array();
+        foreach($hooks as $hook) {
+            $whenKey = $hook['options']['before'] ? '0' : '1';
+            $sortKey = $hook['options']['fromClass'] . ":$hook[method]:$whenKey:" . $hook['options']['priority'];
+            $hooksSorted[$sortKey] = $hook;
+        }
+        ksort($hooksSorted);
+        foreach($hooksSorted as $key => $hook) {
+            $suffix = $hook['options']['type'] == 'method' ? '()' : '';
+            $toObject = !empty($hook['toObject']) ? $hook['toObject'] : '';
+            $toMethod = $hook['toMethod'];
+            if(is_callable($toMethod)) $toMethod = 'anonymous function';
+            $hooksCalled .= "<tr>";
+            $hooksCalled .= "<td>" . ($hook['options']['before'] ? 'before ' : '') . ($hook['options']['after'] ? 'after' : '') . "</td>";
+            $hooksCalled .= "<td>" . ($hook['options']['fromClass'] ? $hook['options']['fromClass'] . '::' : '') . "$hook[method]$suffix</td>";
+            $hooksCalled .= "<td>" . ($toObject ? "$toObject::$toMethod" : $toMethod) . "()</td>";
+            $hooksCalled .= "<td>" . ($hook['options']['allInstances'] || $hook['options']['fromClass'] ? "class " : "instance ") . $hook['options']['type'] . "</td>";
+            $hooksCalled .= "<td>" . $hook['options']['priority'] . "</td>";
+            $hooksCalled .= "</tr>";
         }
         $hooksCalled .= $sectionEnd;
 
         // Database Queries
         $databaseQueries = $this->sectionHeader(array('Order', 'Query'));
         if($PwVersion >= 3) {
-            foreach(wire('database')->queryLog() as $n => $sql) $databaseQueries .= "\n<tr><th>$n</th><td class='tracy-force-break'>".htmlspecialchars($sql)."</td></tr>";
+            $queryMethod = wire('database')->queryLog();
         }
         else {
-            foreach(WireDatabasePDO::getQueryLog() as $n => $sql) $databaseQueries .= "\n<tr><th>$n</th><td class='tracy-force-break'>".htmlspecialchars($sql)."</td></tr>";
+            $queryMethod = WireDatabasePDO::getQueryLog();
         }
+        foreach($queryMethod as $n => $sql) $databaseQueries .= "\n<tr><th>$n</th><td class='tracy-force-break'>".htmlspecialchars($sql)."</td></tr>";
         $databaseQueries .= $sectionEnd;
 
         // Timers
