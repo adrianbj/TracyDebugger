@@ -85,7 +85,7 @@ class ProcesswireLogsPanel implements IBarPanel {
 
         //display 25 most recent entries from all log files
         foreach(array_slice($entriesArr, 0, 25) as $item) {
-            $logInstance = new TracyFileLog(wire('config')->paths->logs . $item['log'].'.txt');
+            $logInstance = new FileLog(wire('config')->paths->logs . $item['log'].'.txt');
             $trimmedText = trim(strip_tags($item['text']));
             $logEntries .= "
             \n<tr>

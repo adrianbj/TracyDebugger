@@ -145,7 +145,7 @@ class TracyLogsPanel implements IBarPanel {
 
 
         /**
-         * PW log panel sections
+         * Tracy log panel sections
          */
 
         $logEntries = $this->sectionHeader(array('Type', 'Date', 'URL', 'Text'));
@@ -160,15 +160,20 @@ class TracyLogsPanel implements IBarPanel {
                 $logTime = str_replace('-',':', $logDateParts[1]);
                 $logDateTime = $logDate . ' ' . $logTime;
                 $itemKey = $log['name'] . '_' . $x;
+                $entryUrlAndText = explode('@', substr($entry, 22)); // get the rest of the line after the date;
+                if(isset($entryUrlAndText[1])) {
+                    $entriesArr[$itemKey]['url'] = trim($entryUrlAndText[1]);
+                }
+                else {
+                    continue; //bit of a hack - some entries getting duplicated but with empty URL, so ignore
+                }
+                $trimmedText = trim($entryUrlAndText[0]);
+                $entriesArr[$itemKey]['text'] = strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText;
                 $entriesArr[$itemKey]['timestamp'] = strtotime($logDateTime);
                 $entriesArr[$itemKey]['linenumber'] = 99-$x;
                 $entriesArr[$itemKey]['order'] = $itemKey;
                 $entriesArr[$itemKey]['date'] = $logDateTime;
                 $entriesArr[$itemKey]['log'] = $log['name'];
-                $entryUrlAndText = explode('@', substr($entry, 22)); // get the rest of the line after the date;
-                $entriesArr[$itemKey]['url'] = trim($entryUrlAndText[1]);
-                $trimmedText = trim($entryUrlAndText[0]);
-                $entriesArr[$itemKey]['text'] = strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText;
                 $x--;
                 $i++;
             }
@@ -184,7 +189,6 @@ class TracyLogsPanel implements IBarPanel {
         array_multisort($timestamp, SORT_DESC, $order, SORT_DESC, $entriesArr);
 
         //display 25 most recent entries from all log files
-
         foreach(array_slice($entriesArr, 0, 25) as $item) {
             $logInstance = new TracyFileLog(wire('config')->paths->logs.'tracy/' . $item['log'].'.log');
             $trimmedText = trim(strip_tags($item['text']));
@@ -192,7 +196,7 @@ class TracyLogsPanel implements IBarPanel {
             \n<tr>" .
                 "<td>".$item['log']."</td>" .
                 "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
-                "<td>".$item['url']."</td>" .
+                "<td>".(isset($item['url']) ? $item['url'] : '')."</td>" .
                 "<td><a title='View this line of \"".$item['log']."\" log file in your code editor' href='".str_replace("%file", wire('config')->paths->logs.'tracy/' . $item['log'] . '.log', str_replace("%line", ($logInstance->getTotalLines()-$item['linenumber']), \TracyDebugger::getDataValue("editor")))."'>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</a></td>" .
             "</tr>";
         }
