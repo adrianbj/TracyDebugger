@@ -88,22 +88,26 @@ class TracyLogsPanel implements IBarPanel {
 
         $logs = array();
         $dir = new DirectoryIterator(wire('config')->paths->logs.'tracy/');
-
-        foreach($dir as $file) {
-            if($file->isDot() || $file->isDir()) continue;
-            if($file->getExtension() != 'log') continue;
-            $name = basename($file, '.log');
-            if($name != wire('sanitizer')->pageName($name)) continue;
-            $logs[$name] = array(
-                'name' => $name,
-                'file' => $file->getPathname(),
-                'size' => $file->getSize(),
-                'modified' => $file->getMTime(),
-            );
+        if(!@file_exists(wire('config')->paths->logs.'tracy/.')) {
+            return null;
         }
+        else {
+            foreach($dir as $file) {
+                if($file->isDot() || $file->isDir()) continue;
+                if($file->getExtension() != 'log') continue;
+                $name = basename($file, '.log');
+                if($name != wire('sanitizer')->pageName($name)) continue;
+                $logs[$name] = array(
+                    'name' => $name,
+                    'file' => $file->getPathname(),
+                    'size' => $file->getSize(),
+                    'modified' => $file->getMTime(),
+                );
+            }
 
-        ksort($logs);
-        return $logs;
+            ksort($logs);
+            return $logs;
+        }
     }
 
 
@@ -151,7 +155,9 @@ class TracyLogsPanel implements IBarPanel {
         $logEntries = $this->sectionHeader(array('Type', 'Date', 'URL', 'Text'));
         $entriesArr = array();
         $i=0;
-        foreach($this->getLogs() as $log) {
+        $logs = $this->getLogs();
+        if($logs === null) return 'Tracy logs directory is not readable.';
+        foreach($logs as $log) {
             $x=99;
             foreach($this->getLines($log['name'], array("limit" => 25)) as $entry) {
                 $logDateTime = str_replace(array('[',']'), '', substr($entry, 0 , 21)); // get the date - first 21 chars
