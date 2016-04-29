@@ -111,13 +111,16 @@ class DebugModePanel implements IBarPanel {
 
 
         // Pages Loaded
+        $pagesLoaded_oc = 0;
         if($PwVersion >= 3) {
             $pagesLoaded = $this->sectionHeader(array('ID', 'Path', 'Type', 'Loader'));
             foreach(wire('pages')->getCache() as $p) {
+                $pagesLoaded_oc++;
                 $parts = explode('/', trim($p->path, '/'));
                 $name = array_pop($parts);
-                $path = implode('/', $parts) . "/<b>$name</b>/";
-                if($path[0] != '/') $path = "/$path";
+                $path = implode('/', $parts) . "/$name/";
+                $path = '/' . ltrim($path, '/');
+                $path = str_replace("/$name/", "/<b>$name</b>/", $path);
                 $pagesLoaded .= "\n<tr>" .
                     "<td>$p->id</td>" .
                     "<td>$path</td>" .
@@ -129,12 +132,14 @@ class DebugModePanel implements IBarPanel {
         else {
             $pagesLoaded = $this->sectionHeader(array('ID', 'Path', 'Title'));
             foreach(wire('pages')->getCache() as $p) {
+                $pagesLoaded_oc++;
                 $pagesLoaded .= "\n<tr><td>$p->id</td><td>$p->path</td><td>$p->title</td></tr>";
             }
         }
         $pagesLoaded .= $sectionEnd;
 
         // API Variables
+        $apiVars_oc = 0;
         $apiVariables = $this->sectionHeader(array('Name', 'Class'));
         if($PwVersion >= 3) {
             $pwVars = wire('fuel');
@@ -142,16 +147,24 @@ class DebugModePanel implements IBarPanel {
         else {
             $pwVars = wire();
         }
+        ksort($pwVars);
         foreach($pwVars as $key => $value) {
             if(!is_object($value)) continue;
-            $apiVariables .= "\n<tr><td><a href='https://processwire.com/api/variables/$key/'>\$$key</a></td>" .
+            $apiVars[$key] = $value;
+            $apiVars_oc++;
+        }
+        ksort($apiVars);
+        foreach($apiVars as $key => $value) {
+            $apiVariables .= "\n<tr><td><a href='https://processwire.com/api/ref/$key/'>\$$key</a></td>" .
                 "<td>" . get_class($value) . "</td></tr>";
         }
         $apiVariables .= $sectionEnd;
 
         // Session
+        $sessionEntries_oc = 0;
         $sessionEntries = $this->sectionHeader(array('Key', 'Value'));
         foreach(wire('session') as $key => $value) {
+            $sessionEntries_oc++;
             if(is_object($value)) $value = (string) $value;
             if(is_array($value)) $value = print_r($value, true);
             $sessionEntries .= "<tr><td>$key</td><td><pre>" . wire('sanitizer')->entities($value) . "</pre></td></tr>";
@@ -159,9 +172,15 @@ class DebugModePanel implements IBarPanel {
         $sessionEntries .= $sectionEnd;
 
         // Modules Loaded
+        $modulesNumLoaded = 0;
+        $modulesNumSkipped = 0;
         $modulesLoaded = $this->sectionHeader(array('Class', 'Version', 'Title'));
         foreach(wire('modules') as $module) {
-            if($module instanceof ModulePlaceholder) continue;
+            if($module instanceof ModulePlaceholder) {
+                $modulesNumSkipped++;
+                continue;
+            }
+            $modulesNumLoaded++;
             $info = wire('modules')->getModuleInfo($module, array('verbose' => false));
             $modulesLoaded .= "<tr>";
             $modulesLoaded .= "<td>$info[name]</td>";
@@ -172,9 +191,10 @@ class DebugModePanel implements IBarPanel {
         $modulesLoaded .= $sectionEnd;
 
         // Hooks
+        $hooksCalled_oc = 0;
         $hooksCalled = $this->sectionHeader(array('When', 'Method::object', 'Visited by', 'Type', 'Priority'));
         if($PwVersion >= 3) {
-            $hooks = array_merge(wire('pages')->getHooks('*'), wire('hooks')->getAllLocalHooks());
+            $hooks = array_merge(wire()->getHooks('*'), wire('hooks')->getAllLocalHooks());
         }
         else {
             $hooks = array_merge(wire()->getHooks('*'), Wire::$allLocalHooks);
@@ -184,6 +204,7 @@ class DebugModePanel implements IBarPanel {
             $whenKey = $hook['options']['before'] ? '0' : '1';
             $sortKey = $hook['options']['fromClass'] . ":$hook[method]:$whenKey:" . $hook['options']['priority'];
             $hooksSorted[$sortKey] = $hook;
+            $hooksCalled_oc++;
         }
         ksort($hooksSorted);
         foreach($hooksSorted as $key => $hook) {
@@ -202,6 +223,7 @@ class DebugModePanel implements IBarPanel {
         $hooksCalled .= $sectionEnd;
 
         // Database Queries
+        $databaseQueries_oc = 0;
         $databaseQueries = $this->sectionHeader(array('Order', 'Query'));
         if($PwVersion >= 3) {
             $queryMethod = wire('database')->queryLog();
@@ -209,31 +231,39 @@ class DebugModePanel implements IBarPanel {
         else {
             $queryMethod = WireDatabasePDO::getQueryLog();
         }
-        foreach($queryMethod as $n => $sql) $databaseQueries .= "\n<tr><th>$n</th><td class='tracy-force-break'>".htmlspecialchars($sql)."</td></tr>";
+        foreach($queryMethod as $n => $sql) {
+            $databaseQueries_oc++;
+            $sql = wire('sanitizer')->entities1($sql);
+            $databaseQueries .= "\n<tr><th>$n</th><td class='tracy-force-break'>".$sql."</td></tr>";
+        }
         $databaseQueries .= $sectionEnd;
 
         // Timers
+        $timers_oc = 0;
         $timers = $this->sectionHeader(array('Timer', 'Seconds'));
         $savedTimers = Debug::getSavedTimers();
-        foreach($savedTimers as $name => $timer) $timers .= "\n<tr><th>$name</th><td>$timer</td></tr>";
+        foreach($savedTimers as $name => $timer) {
+            $timers_oc++;
+            $timers .= "\n<tr><th>$name</th><td>$timer</td></tr>";
+        }
         $timers .= $sectionEnd;
 
         // User
         $userDetails = '
         <p><strong>Username:</strong> '.wire('user')->name.'</p>
         <p><strong>User ID:</strong> '.wire('user')->id.'</p>
-        <p><strong>User Roles</strong>
+        <p><strong>Current User Roles</strong>
         <ol>';
         foreach(wire('user')->roles as $role) $userDetails .= "\n<li>{$role->name}</li>";
         $userDetails .= '
         </ol>
         </p>
-        <p><strong>User Permissions</strong>
+        <p><strong>Current User Permissions</strong>
         <ol>';
         foreach(wire('user')->getPermissions() as $permission) $userDetails .= "\n<li>{$permission->name}</li>";
         $userDetails .= '</ol>
         </p>
-        <p><strong>User Permissions on this page</strong>
+        <p><strong>Current User Permissions on this page</strong>
         <ol>
         ';
         foreach(wire('user')->getPermissions(wire('page')) as $permission) $userDetails .= "\n<li>{$permission->name}</li>";
@@ -241,11 +271,15 @@ class DebugModePanel implements IBarPanel {
         </p>';
 
         // GET, POST, & COOKIE
+        $input_oc['get'] = 0;
+        $input_oc['post'] = 0;
+        $input_oc['cookie'] = 0;
         foreach(array('get', 'post', 'cookie') as $type) {
             $i = wire('input')->$type;
             if(!count($i)) continue;
             $input[$type] = $this->sectionHeader(array('Key', 'Value'));
             foreach($i as $key => $value) {
+                $input_oc[$type]++;
                 if(is_array($value)) $value = print_r($value, true);
                 $input[$type] .= "<tr><td>" . wire('sanitizer')->entities($key) . "</td><td><pre>" . wire('sanitizer')->entities($value) . "</pre></td></tr>";
             }
@@ -254,8 +288,17 @@ class DebugModePanel implements IBarPanel {
 
 
         // Cache
+        $cacheDetails_oc = 0;
+        $cacheDetails_oc2 = 0;
+        $fileCompilerCacheQty = 0;
         $cacheDetails = '';
         foreach(wire('cache')->getInfo() as $info) {
+            $oc++;
+            if(strpos($info['name'], 'FileCompiler') === 0) {
+                $fileCompilerCacheQty++;
+                continue;
+            }
+            $oc2++;
             $cacheDetails .= "<table class=''><thead><tr><th colspan='2'>";
             $cacheDetails .= wire('sanitizer')->entities($info['name']) . "</th></tr></thead><tbody>";
             foreach($info as $key => $value) {
@@ -269,9 +312,11 @@ class DebugModePanel implements IBarPanel {
         }
 
         // Autoload
+        $autoload_oc = 0;
         if($PwVersion >= 3) {
             $autoload = $this->sectionHeader(array('Class', 'File/Details'));
             foreach(wire('classLoader')->getDebugLog() as $className => $classFile) {
+                $autoload_oc++;
                 $className = wire('sanitizer')->entities($className);
                 $classFile = wire('sanitizer')->entities($classFile);
                 $autoload .= "<tr><th width='40%'>$className</th><td>$classFile</td></tr>";
@@ -282,55 +327,61 @@ class DebugModePanel implements IBarPanel {
         // Load all the panel sections
         $out .= '
         <br />
-        <a href="#" rel="#pages-loaded" class="tracy-toggle tracy-collapsed">Pages Loaded</a>
+        <a href="#" rel="#pages-loaded" class="tracy-toggle tracy-collapsed">Pages Loaded ('.$pagesLoaded_oc.')</a>
         <div id="pages-loaded" class="tracy-collapsed">'.$pagesLoaded.'</div><br />
 
-        <a href="#" rel="#api-variables" class="tracy-toggle tracy-collapsed">API Variables</a>
+        <a href="#" rel="#api-variables" class="tracy-toggle tracy-collapsed">API Variables ('.$apiVars_oc.')</a>
         <div id="api-variables" class="tracy-collapsed">'.$apiVariables.'</div><br />
 
-        <a href="#" rel="#session-entries" class="tracy-toggle tracy-collapsed">Session</a>
+        <a href="#" rel="#session-entries" class="tracy-toggle tracy-collapsed">Session ('.$sessionEntries_oc.')</a>
         <div id="session-entries" class="tracy-collapsed">'.$sessionEntries.'</div><br />
 
-        <a href="#" rel="#modules-loaded" class="tracy-toggle tracy-collapsed">Modules Loaded</a>
-        <div id="modules-loaded" class="tracy-collapsed">'.$modulesLoaded.'</div><br />
+        <a href="#" rel="#modules-loaded" class="tracy-toggle tracy-collapsed">Modules Loaded ('.$modulesNumLoaded.'/'.$modulesNumSkipped.')</a>
+        <div id="modules-loaded" class="tracy-collapsed">'.$modulesLoaded;
+        $out .= '<p>' . $modulesNumLoaded . ' modules loaded / ' . $modulesNumSkipped . ' not loaded</p>';
+        $out .= '</div><br />';
 
-        <a href="#" rel="#hooks" class="tracy-toggle tracy-collapsed">Hooks</a>
+        $out .= '<a href="#" rel="#hooks" class="tracy-toggle tracy-collapsed">Hooks ('.$hooksCalled_oc.')</a>
         <div id="hooks" class="tracy-collapsed">'.$hooksCalled.'</div><br />
 
-        <a href="#" rel="#database-queries" class="tracy-toggle tracy-collapsed">Database Queries</a>
+        <a href="#" rel="#database-queries" class="tracy-toggle tracy-collapsed">PDO Queries ($database) ('.$databaseQueries_oc.')</a>
         <div id="database-queries" class="tracy-collapsed">'.$databaseQueries.'</div><br />
 
-        <a href="#" rel="#timers" class="tracy-toggle tracy-collapsed">Timers</a>
+        <a href="#" rel="#timers" class="tracy-toggle tracy-collapsed">Timers ('.$timers_oc.')</a>
         <div id="timers" class="tracy-collapsed">'.$timers.'</div><br />
 
-        <a href="#" rel="#user-details" class="tracy-toggle tracy-collapsed">User</a>
+        <a href="#" rel="#user-details" class="tracy-toggle tracy-collapsed">User ('.wire('user')->name.')</a>
         <div id="user-details" class="tracy-collapsed">'.$userDetails.'</div><br />';
 
         if(isset($input['get'])) {
             $out .= '
-            <a href="#" rel="#input-get" class="tracy-toggle tracy-collapsed">$input->get</a>
+            <a href="#" rel="#input-get" class="tracy-toggle tracy-collapsed">$input->get ('.$input_oc['get'].')</a>
             <div id="input-get" class="tracy-collapsed">'.$input['get'].'</div><br />';
         }
 
         if(isset($input['post'])) {
             $out .= '
-            <a href="#" rel="#input-post" class="tracy-toggle tracy-collapsed">$input->post</a>
+            <a href="#" rel="#input-post" class="tracy-toggle tracy-collapsed">$input->post ('.$input_oc['post'].')</a>
             <div id="input-post" class="tracy-collapsed">'.$input['post'].'</div><br />';
         }
 
         if(isset($input['cookie'])) {
             $out .= '
-            <a href="#" rel="#input-cookie" class="tracy-toggle tracy-collapsed">$input->cookie</a>
+            <a href="#" rel="#input-cookie" class="tracy-toggle tracy-collapsed">$input->cookie ('.$input_oc['cookie'].')</a>
             <div id="input-cookie" class="tracy-collapsed">'.$input['cookie'].'</div><br />';
         }
 
         $out .= '
-        <a href="#" rel="#cache-details" class="tracy-toggle tracy-collapsed">Cache</a>
-        <div id="cache-details" class="tracy-collapsed">'.$cacheDetails.'</div><br />';
+        <a href="#" rel="#cache-details" class="tracy-toggle tracy-collapsed">Cache ('.$oc.'/'.$fileCompilerCacheQty.'/'.$oc2.')</a>
+        <div id="cache-details" class="tracy-collapsed">'.$cacheDetails;
+        if($fileCompilerCacheQty) {
+            $out .= "<p>Plus $fileCompilerCacheQty cached items for FileCompiler (not shown).</p>";
+        }
+        $out .= '</div><br />';
 
         if($PwVersion >= 3) {
             $out .= '
-            <a href="#" rel="#autoload" class="tracy-toggle tracy-collapsed">Autoload</a>
+            <a href="#" rel="#autoload" class="tracy-toggle tracy-collapsed">Autoload ('.$autoload_oc.')</a>
             <div id="autoload" class="tracy-collapsed">'.$autoload.'</div><br />
             ';
         }
