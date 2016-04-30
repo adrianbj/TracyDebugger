@@ -160,6 +160,67 @@ class DebugModePanel implements IBarPanel {
         }
         $apiVariables .= $sectionEnd;
 
+        // Core Classes
+        $coreClasses_oc = 0;
+        $coreClasses = $this->sectionHeader(array('Type', 'Name',));
+
+        $classTypes = array(
+            'Primary' => array(
+                'Wire',
+                'WireData',
+                'WireArray',
+            ),
+            'Pages' => array(
+                'Page',
+                'NullPage',
+                'User',
+                'Role',
+                'Permission',
+            ),
+            'Arrays' => array(
+                'WireArray',
+                'PageArray',
+                'PaginatedArray',
+            ),
+            'Modules' => array(
+                'Module',
+                'Fieldtype',
+                'Inputfield',
+                'Process',
+                'Textformatter',
+            ),
+            /*
+            'Files & Images' => array(
+                'Pagefile',
+                'Pagefiles',
+                'Pageimage',
+                'Pageimages',
+            ),
+            */
+            'Fields & Templates' => array(
+                'Field',
+                'Fieldgroup',
+                'Template',
+                //'TemplateFile',
+            ),
+            'Additional' => array(
+                'HookEvent',
+                'InputfieldWrapper',
+                'WireHttp',
+                //'PagesType',
+                //'Selector',
+                //'Selectors',
+                //'WireDatabaseBackup',
+            )
+        );
+        foreach($classTypes as $type => $classes) {
+            foreach($classes as $class) {
+                $coreClasses_oc++;
+                $coreClasses .= "\n<tr><td>".$type."</td><td><a href='https://processwire.com/api/ref/$class/'>".$class."</a></td></tr>";
+            }
+        }
+        $coreClasses .= $sectionEnd;
+
         // Session
         $sessionEntries_oc = 0;
         $sessionEntries = $this->sectionHeader(array('Key', 'Value'));
@@ -332,6 +393,9 @@ class DebugModePanel implements IBarPanel {
 
         <a href="#" rel="#api-variables" class="tracy-toggle tracy-collapsed">API Variables ('.$apiVars_oc.')</a>
         <div id="api-variables" class="tracy-collapsed">'.$apiVariables.'</div><br />
+
+        <a href="#" rel="#core-classes" class="tracy-toggle tracy-collapsed">Core Classes ('.$coreClasses_oc.')</a>
+        <div id="api-variables" class="tracy-collapsed">'.$coreClasses.'</div><br />
 
         <a href="#" rel="#session-entries" class="tracy-toggle tracy-collapsed">Session ('.$sessionEntries_oc.')</a>
         <div id="session-entries" class="tracy-collapsed">'.$sessionEntries.'</div><br />
