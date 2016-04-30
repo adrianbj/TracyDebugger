@@ -167,7 +167,7 @@ class DebugModePanel implements IBarPanel {
             $sessionEntries_oc++;
             if(is_object($value)) $value = (string) $value;
             if(is_array($value)) $value = print_r($value, true);
-            $sessionEntries .= "<tr><td>$key</td><td><pre>" . wire('sanitizer')->entities($value) . "</pre></td></tr>";
+            $sessionEntries .= "<tr><td>".wire('sanitizer')->entities($key)."</td><td><pre>" . wire('sanitizer')->entities($value) . "</pre></td></tr>";
         }
         $sessionEntries .= $sectionEnd;
 
