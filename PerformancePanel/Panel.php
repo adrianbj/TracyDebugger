@@ -51,12 +51,14 @@ class Panel implements IBarPanel
 	{
 		return ''
 			. '<h1>Performance between breakpoints</h1>'
+			. '<div class="tracy-inner">'
 			. '<p><i>'
 			. 'Add breakpoint: Zarganwar\PerformancePanel\Register::add([name], [parent]);'
 			. '</i></p>'
 			. '<p>'
 			. '<table>' . $this->getRowsString() . '<tr><th><b>Total breakpoints</b></th><th colspan="4">' . $this->countBreakpoints() . '</th></tr></table>'
-			. '</p>';
+			. '</p>'
+			. '</div>';
 	}
 
 	/**

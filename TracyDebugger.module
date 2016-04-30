@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 134,
+            'version' => 135,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -55,6 +55,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     static public function getDefaultData() {
             return array(
                 "enabled" => 1,
+                "coreBranch" => version_compare(phpversion(), '5.4.4', '>=') ? 'master' : 'stable',
                 "allowLogProduction" => 1,
                 "superuserForceDevelopment" => null,
                 "ipAddress" => null,
@@ -99,7 +100,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public function init() {
 
         if($this->allowedTracyUsers()) {
-            if (version_compare(phpversion(), '5.4.4', '>=')) {
+            if ($this->data['coreBranch'] == 'master' && version_compare(phpversion(), '5.4.4', '>=')) {
                 static::$tracyVersion = 'master';
                 require_once __DIR__ . '/tracy-master/src/tracy.php';
             }
@@ -338,8 +339,20 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'enabled');
         $f->label = __('Enable Tracy Debugger', __FILE__);
         $f->description = __('Uncheck to disable the Tracy Debugger.'."\n".'For more details on the settings below:'."\n".'[TracyDebugger Blog: Docs and Tutorial](https://processwire.com/blog/posts/introducing-tracy-debugger/)'."\n".'[Tracy Docs](https://tracy.nette.org/)', __FILE__);
-        $f->columnWidth = 25;
+        $f->columnWidth = 50;
         $f->attr('checked', $data['enabled'] == '1' ? 'checked' : '' );
+        $wrapper->add($f);
+
+        $f = wire('modules')->get("InputfieldSelect");
+        $f->attr('name', 'coreBranch');
+        $f->label = 'Core Tracy Branch';
+        $f->description = __('Which version of the Tracy core to use. Master (dev) requires PHP 5.4.4+ and will be automatically selected if your PHP version is sufficient.', __FILE__);
+        $f->notes = __('Some users are experiencing a slow load time of the debugger bar with this version of the Tracy core, so you can manually select the Stable version if you wish.', __FILE__);
+        $f->columnWidth = 50;
+        $f->required = true;
+        $f->addOption('master', 'Master (dev)');
+        $f->addOption('stable', 'Stable');
+        if($data['coreBranch']) $f->attr('value', $data['coreBranch']);
         $wrapper->add($f);
 
         $f = wire('modules')->get("InputfieldCheckbox");
@@ -347,7 +360,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Allow Logging in Production Mode', __FILE__);
         $f->description = __('Allows logging for all users in PRODUCTION mode, regardless of any other settings (ie "tracy-debugger" permission and IP Address restriction).', __FILE__);
         $f->notes = __('The DebugBar will be hidden, and all errors/warnings, and dumps etc will be sent to log files. The is safe for production and is the best option if you want Tracy to handle capturing and logging everything. RECOMMENDED!', __FILE__);
-        $f->columnWidth = 25;
+        $f->columnWidth = 33;
         $f->attr('checked', $data['allowLogProduction'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
 
@@ -356,7 +369,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Superuser Force Development Mode', __FILE__);
         $f->description = __('Check to force DEVELOPMENT mode for superusers even on live sites.', __FILE__);
         $f->notes = __('By default, the Output Mode setting\'s DETECT option will force a site into PRODUCTION mode when it is live, which hides the DebugBar and sends errors and dumps to log files. However, with this checked, Superusers will always be in DEVELOPMENT mode.', __FILE__);
-        $f->columnWidth = 25;
+        $f->columnWidth = 34;
         $f->attr('checked', $data['superuserForceDevelopment'] == '1' ? 'checked' : '' );
         $wrapper->add($f);
 
@@ -364,7 +377,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'ipAddress');
         $f->label = __('Restrict Non-superusers', __FILE__);
         $f->description = __('IP Address that non-superusers need to use TracyDebugger. Enter IP address or a PCRE regular expression to match IP address of user, eg. /^123\.456\.789\./ would match all IP addresses that started with 123.456.789.', __FILE__);
-        $f->columnWidth = 25;
+        $f->columnWidth = 33;
         $f->notes = __('Non-superusers are already blocked unless they have the "tracy-debugger" permission. But once a user has been given the permission, this option restricts access to the listed IP address. Highly recommended for debugging live sites that you have manually set into DEVELOPMENT mode.', __FILE__);
         if($data['ipAddress']) $f->attr('value', $data['ipAddress']);
         $wrapper->add($f);
