@@ -216,7 +216,7 @@ class DebugModePanel implements IBarPanel {
         foreach($classTypes as $type => $classes) {
             foreach($classes as $class) {
                 $coreClasses_oc++;
-                $coreClasses .= "\n<tr><td>".$type."</td><td><a href='https://processwire.com/api/ref/$class/'>".$class."</a></td></tr>";
+                $coreClasses .= "\n<tr><td>".$type."</td><td><a href='https://processwire.com/api/ref/".strtolower(preg_replace('/([a-z])([A-Z])/', '$1-$2', $class))."/'>".$class."</a></td></tr>";
             }
         }
         $coreClasses .= $sectionEnd;
