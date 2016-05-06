@@ -188,14 +188,14 @@ class DebugModePanel implements IBarPanel {
                 'Process',
                 'Textformatter',
             ),
-            /*
+
             'Files & Images' => array(
                 'Pagefile',
                 'Pagefiles',
+                'PagefilesManager',
                 'Pageimage',
                 'Pageimages',
             ),
-            */
             'Fields & Templates' => array(
                 'Field',
                 'Fieldgroup',
