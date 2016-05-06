@@ -147,7 +147,6 @@ class DebugModePanel implements IBarPanel {
         else {
             $pwVars = wire();
         }
-        ksort($pwVars);
         foreach($pwVars as $key => $value) {
             if(!is_object($value)) continue;
             $apiVars[$key] = $value;
@@ -354,12 +353,12 @@ class DebugModePanel implements IBarPanel {
         $fileCompilerCacheQty = 0;
         $cacheDetails = '';
         foreach(wire('cache')->getInfo() as $info) {
-            $oc++;
+            $cacheDetails_oc++;
             if(strpos($info['name'], 'FileCompiler') === 0) {
                 $fileCompilerCacheQty++;
                 continue;
             }
-            $oc2++;
+            $cacheDetails_oc2++;
             $cacheDetails .= "<table class=''><thead><tr><th colspan='2'>";
             $cacheDetails .= wire('sanitizer')->entities($info['name']) . "</th></tr></thead><tbody>";
             foreach($info as $key => $value) {
@@ -436,7 +435,7 @@ class DebugModePanel implements IBarPanel {
         }
 
         $out .= '
-        <a href="#" rel="#cache-details" class="tracy-toggle tracy-collapsed">Cache ('.$oc.'/'.$fileCompilerCacheQty.'/'.$oc2.')</a>
+        <a href="#" rel="#cache-details" class="tracy-toggle tracy-collapsed">Cache ('.$cacheDetails_oc.'/'.$fileCompilerCacheQty.'/'.$cacheDetails_oc2.')</a>
         <div id="cache-details" class="tracy-collapsed">'.$cacheDetails;
         if($fileCompilerCacheQty) {
             $out .= "<p>Plus $fileCompilerCacheQty cached items for FileCompiler (not shown).</p>";

@@ -10,31 +10,64 @@ class ValidatorPanel implements IBarPanel {
 
     protected $icon;
     protected $result;
+    protected $pageUrl;
     protected $validationUrl;
+    protected $validatorUrl;
 
     public function getTab() {
 
         if(\TracyDebugger::additionalBar()) return;
 
-        $this->validationUrl = "https://validator.nu/?doc=".wire('page')->httpUrl."&out=html";
+        // get url of current page and append tracyValidating to prevent
+        // loading of Tracy when getting the content of the page for validation
+        $this->pageUrl = wire('page')->httpUrl.'?tracyValidating=1';
 
-        $this->result = file_get_contents($this->validationUrl);
+        $http = new WireHttp();
+        $http->setHeader('content-type', 'text/html; charset=utf-8');
+        $pageHtml = $http->get($this->pageUrl);
 
-        $doc = new DOMDocument();
-        $doc->loadHTML($this->result);
-        $element = $doc->getElementsByTagName('form')->item(0);
-        $element->parentNode->removeChild($element);
-        $element = $doc->getElementsByTagName('h1')->item(0);
-        $element->parentNode->removeChild($element);
-        $this->result = $doc->saveHTML();
+        // strip everything after the closing html tag
+        //if(strpos($pageHtml, '</html>') !== false) {
+        //    $pageHtml = substr($pageHtml, 0, strpos($pageHtml, "</html>")) . '</html>';
+        //}
 
-        $errors = (strpos($this->result, 'class="error"') !== false || strpos($this->result, 'class="failure"') !== false) ? true : false;
+        // determine which version of the validator to use
+        $this->validatorUrl = strpos($pageHtml, '<!DOCTYPE html>') !== false ? "https://html5.validator.nu/" : "https://validator.nu/";
+
+        // get results from validator and convert any entities to UTF-8
+        $this->result = $http->post($this->validatorUrl, $pageHtml);
+        $this->result = mb_convert_encoding($this->result, 'HTML-ENTITIES', "UTF-8");
+
+        if($this->result) {
+            // remove existing h1 and form for adjusting validation
+            $doc = new DOMDocument();
+            $doc->loadHTML($this->result);
+            $element = $doc->getElementsByTagName('form')->item(0);
+            $element->parentNode->removeChild($element);
+            $element = $doc->getElementsByTagName('h1')->item(0);
+            $element->parentNode->removeChild($element);
+            $element = $doc->getElementsByTagName('link')->item(0);
+            $element->parentNode->removeChild($element);
+            $element = $doc->getElementsByTagName('link')->item(0);
+            $element->parentNode->removeChild($element);
+            $element = $doc->getElementsByTagName('title')->item(0);
+            $element->parentNode->removeChild($element);
+            $this->result = $doc->saveHTML();
+        }
+
+        $errors = (!$this->result ||
+            strpos($this->result, 'class="error"') !== false ||
+            strpos($this->result, 'class="failure"') !== false ||
+            strpos($this->result, 'Connection refused') !== false) ? true : false;
         $tab = '
         <span title="Validator">';
         if($errors) {
-            $this->icon = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 612 612" style="enable-background:new 0 0 612 612;" xml:space="preserve">
-                        <path d="M420.501,218.79c-0.286-6.942-2.868-13.827-8.186-19.125c-5.297-5.298-12.183-7.898-19.125-8.186     c-7.726-0.325-15.548,2.276-21.438,8.186L306,265.436l-65.752-65.771c-5.909-5.91-13.712-8.492-21.439-8.186     c-6.942,0.287-13.827,2.869-19.125,8.186c-5.297,5.298-7.898,12.183-8.186,19.125c-0.325,7.727,2.276,15.529,8.186,21.439     L265.436,306l-65.752,65.752c-5.91,5.909-8.492,13.713-8.186,21.438c0.287,6.942,2.869,13.828,8.186,19.125     c5.298,5.298,12.183,7.899,19.125,8.186c7.727,0.325,15.53-2.275,21.439-8.186L306,346.564l65.771,65.771     c5.91,5.909,13.713,8.491,21.439,8.186c6.942-0.287,13.827-2.869,19.125-8.186c5.298-5.298,7.898-12.183,8.186-19.125     c0.325-7.727-2.276-15.529-8.186-21.439L346.564,306l65.751-65.752C418.226,234.339,420.826,226.536,420.501,218.79z M306,0     C137.012,0,0,137.012,0,306s137.012,306,306,306s306-137.012,306-306S474.988,0,306,0z M306,554.625     C168.912,554.625,57.375,443.088,57.375,306S168.912,57.375,306,57.375S554.625,168.912,554.625,306S443.088,554.625,306,554.625     z" fill="#CD1818"/>
-                    </svg>';
+            $this->icon = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 26 26" enable-background="new 0 0 26 26" width="16px" height="16px">
+                                <g>
+                                    <path d="m13,0c-7.2,0-13,5.8-13,13s5.8,13 13,13 13-5.8 13-13-5.8-13-13-13zm0,22c-5,0-9-4-9-9s4-9 9-9 9,4 9,9-4,9-9,9z" fill="#CD1818"/>
+                                    <path d="m17.7,11.1c0.2-0.2 0.3-0.5 0.3-0.7s-0.1-0.5-0.3-0.7l-1.4-1.4c-0.2-0.2-0.5-0.3-0.7-0.3s-0.5,0.1-0.7,0.3l-1.5,1.5c-0.2,0.2-0.5,0.2-0.7,0l-1.5-1.5c-0.2-0.2-0.5-0.3-0.7-0.3s-0.5,0.1-0.7,0.3l-1.4,1.4c-0.2,0.2-0.3,0.5-0.3,0.7s0.1,0.5 0.3,0.7l1.5,1.5c0.2,0.2 0.2,0.5 0,0.7l-1.5,1.5c-0.2,0.2-0.3,0.5-0.3,0.7s0.1,0.5 0.3,0.7l1.4,1.4c0.2,0.2 0.5,0.3 0.7,0.3 0.3,0 0.5-0.1 0.7-0.3l1.5-1.5c0.2-0.2 0.5-0.2 0.7,0l1.5,1.5c0.2,0.2 0.5,0.3 0.7,0.3 0.3,0 0.5-0.1 0.7-0.3l1.4-1.4c0.2-0.2 0.3-0.5 0.3-0.7s-0.1-0.5-0.3-0.7l-1.5-1.5c-0.2-0.2-0.2-0.5 0-0.7l1.5-1.5z" fill="#CD1818"/>
+                                </g>
+                            </svg>';
         }
         elseif(strpos($this->result, 'class="warning"') !== false) {
             $this->icon = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 329.562 329.562" style="enable-background:new 0 0 329.562 329.562;" xml:space="preserve" width="16px" height="16px">
@@ -496,9 +529,16 @@ class ValidatorPanel implements IBarPanel {
                     border-width: 0.1em;
                 }
             </style>
-            <br />
-            <div id="validatorBody" style="width:934px"><h2><a href="'.$this->validationUrl.'">Results for '.wire('page')->httpUrl.' at Validator.nu</a></h2>'.$this->result.'</div>
-        </div>';
+            <br />';
+
+        if($this->result) {
+            $out .= '<div id="validatorBody" style="width:934px"><h2><a href="'.$this->validationUrl.'">Results for '.str_replace('?tracyValidating=1', '', $this->pageUrl).' at '.$this->validatorUrl.'</a></h2>'.$this->result.'</div>';
+        }
+        else {
+            $out .= '<div id="validatorBody" style="width:934px"><h2>Sorry, but there was a problem accessing the validation server at '.$this->validatorUrl.'</h2></div>';
+        }
+
+        $out .= '</div>';
 
         return $out;
     }

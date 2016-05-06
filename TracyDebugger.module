@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 138,
+            'version' => 139,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -99,6 +99,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public function init() {
 
+        if(isset($_GET['tracyValidating']) && $_GET['tracyValidating'] == 1) return;
+
         if($this->allowedTracyUsers()) {
             if ($this->data['coreBranch'] == 'master' && version_compare(phpversion(), '5.4.4', '>=')) {
                 static::$tracyVersion = 'master';
@@ -161,6 +163,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     public function ready() {
 
+        if(isset($_GET['tracyValidating']) && $_GET['tracyValidating'] == 1) return;
+
         // if enabled unchecked, or user not allowed
         if(!$this->data['enabled'] || !$this->allowedTracyUsers()) return;
 
@@ -212,9 +216,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 case 'users':
                 case 'phpInfo':
                 case 'outputMode':
-                case 'validator':
                     require_once __DIR__ . '/'.$panelName.'.inc';
                     Debugger::getBar()->addPanel(new $panelName);
+                    break;
+                case 'validator':
+                    if(wire('page')->template != "admin") {
+                        require_once __DIR__ . '/'.$panelName.'.inc';
+                        Debugger::getBar()->addPanel(new $panelName);
+                    }
                     break;
                 case 'variables':
                     if(wire('config')->version >= 3
