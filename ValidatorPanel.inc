@@ -127,41 +127,6 @@ class ValidatorPanel implements IBarPanel {
                     list-style-type: decimal !important;
                 }
 
-                #validatorBody body {
-                    font-family: sans-serif;
-                    font-size: inherit;
-                    padding: 3%;
-                    margin: 0;
-                }
-
-                #validatorBody html {
-                    margin: 0;
-                    padding: 0;
-                    font: caption;
-                }
-
-                #validatorBody form {
-                    font: caption;
-                    margin-bottom: 1em;
-                }
-
-                #validatorBody input[type=submit] {
-                    background: #FFFFFF;
-                    margin: 5px;
-                    padding: 5px;
-                    border: 1px solid #D2D2D2;
-                    -webkit-border-radius: 5px;
-                    -moz-border-radius: 5px;
-                    border-radius: 5px;
-                    cursor: pointer;
-                }
-
-                #validatorBody fieldset {
-                    padding: 1.5%;
-                    border: 1px dotted #666666;
-                    margin: 0;
-                }
-
                 #validatorBody #schema, #validatorBody #doc, #validatorBody #nsfilter {
                     width: 99%;
                 }
@@ -186,26 +151,8 @@ class ValidatorPanel implements IBarPanel {
                     color: #AAAAAA;
                 }
 
-                #validatorBody fieldeset td, #validatorBody fieldeset th {
-                    padding-top: 0.4em;
-                    padding-bottom: 0.4em;
-                }
-
                 #validatorBody tr:first-child td, #validatorBody tr:first-child th {
                     vertical-align: top;
-                }
-
-                #validatorBody fieldset th {
-                    padding-left: 0;
-                    padding-right: 0.4em;
-                    text-align: right;
-                    width: 8em;
-                    font-weight: inherit;
-                }
-
-                #validatorBody fieldset td {
-                    padding-left: 0;
-                    padding-right: 0;
                 }
 
                 #validatorBody textarea, #validatorBody #doc[type="url"], #validatorBody #schema, #validatorBody #nsfilter {
