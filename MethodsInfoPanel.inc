@@ -39,7 +39,7 @@ class MethodsInfoPanel implements IBarPanel {
             <p style="font-size:16px"><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/">TracyDebugger Blog Documentation</a></p>
             <p style="font-size:16px"><a href="https://tracy.nette.org/">Tracy Documentation</a></p>
 
-            <p style="font-size:16px"><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#debugAll" target="_blank">debugAll($var, $title)</a></strong></p>
+            <p style="font-size:16px"><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#debugall" target="_blank">debugAll($var, $title)</a></strong></p>
             <p>
             TD::debugAll();<br />
             debugAll();<br />
