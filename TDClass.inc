@@ -10,6 +10,18 @@ class TD extends TracyDebugger {
 	 */
 
     /**
+     * Tracy\Debugger::debugAll() shortcut.
+     * @tracySkipLocation
+     */
+    public static function debugAll($var, $title = NULL, array $options = NULL) {
+        if(!TracyDebugger::allowedTracyUsers() || !class_exists('\Tracy\Debugger')) return false;
+        Debugger::barDump($var, $title, $options);
+        Debugger::dump($var);
+        Debugger::fireLog($var);
+        Debugger::log($var);
+    }
+
+    /**
      * Tracy\Debugger::barDump() shortcut.
      * @tracySkipLocation
      */

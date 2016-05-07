@@ -8,6 +8,17 @@ use Tracy\Debugger;
 
 
 /**
+ * TD::debugAll() shortcut.
+ * @tracySkipLocation
+ */
+if(!function_exists('debugAll') && in_array('debugAll', $this->data['enabledShortcutMethods'])) {
+    function debugAll($var, $title = NULL, array $options = NULL) {
+        if(!TracyDebugger::allowedTracyUsers() || !class_exists('TD')) return false;
+        return TD::debugAll($var, $title, $options);
+    }
+}
+
+/**
  * TD::barDump() shortcut.
  * @tracySkipLocation
  */
@@ -77,6 +88,17 @@ if(!function_exists('templateVars') && in_array('templateVars', $this->data['ena
 /**
  * really short alias methods for really lazy typists :)
  */
+
+/**
+ * TD::debugAll() shortcut.
+ * @tracySkipLocation
+ */
+if(!function_exists('da') && in_array('da', $this->data['enabledShortcutMethods'])) {
+    function da($var, $title = NULL, array $options = NULL) {
+        if(!TracyDebugger::allowedTracyUsers() || !class_exists('TD')) return false;
+        return TD::debugAll($var, $title, $options);
+    }
+}
 
 /**
  * TD::barDump() shortcut.

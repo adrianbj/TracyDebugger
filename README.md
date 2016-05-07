@@ -24,6 +24,9 @@ Additionally, content can be dumped to the page via TD::dump() or to the debug b
 or logged via TD::log() from PW template files. eg.
 
 ```
+TD::debugAll($page, 'Current Page');
+   Aliases;  debugAll(), da()
+
 TD::barDump($page, 'Current Page');
    Aliases;  barDump(), bd()
 
