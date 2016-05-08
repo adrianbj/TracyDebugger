@@ -67,7 +67,8 @@ class PanelSelectorPanel implements IBarPanel {
                 return "";
             }
 
-            function changePanels() {
+            function changePanels(type) {
+                if(type == "once") document.cookie = "tracyPanelsOnce=1; expires=0; path=/";
                 document.cookie = "tracyPanels="+getSelectedCheckboxes()+"; expires=0; path=/";
                 location.reload();
             }
@@ -86,8 +87,9 @@ class PanelSelectorPanel implements IBarPanel {
                         $out .= '<input type="checkbox" name="selectedPanels[]" ' . ($name == 'panelSelector' ? 'disabled="disabled"' : '') . ' value="'.$name.'" ' . (in_array($name, $showPanels) ? 'checked="checked"' : '') . ' /> '.$label.'<br />';
                     }
                     $out .= '<br />
-                    <input type="submit" onclick="changePanels()" value="Apply" />&nbsp;
-                    <input type="submit" onclick="clearSelection()" value="Reset Default" />
+                    <input type="submit" onclick="changePanels(\'once\')" value="Once" />&nbsp;
+                    <input type="submit" onclick="changePanels(\'sticky\')" value="Sticky" />&nbsp;
+                    <input type="submit" onclick="clearSelection()" value="Reset" />
             </fieldset>
         </div>';
 
