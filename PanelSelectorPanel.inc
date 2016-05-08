@@ -34,10 +34,15 @@ class PanelSelectorPanel implements IBarPanel {
 
         $out = '
         <style type="text/css">
-            #tracy-debug-panel-PanelSelectorPanel input[type=submit] {
+            #tracy-debug-panel-PanelSelectorPanel fieldset {
+                all: initial;
+                font: inherit;
+                color: inherit;
+            }
+            #tracy-debug-panel-PanelSelectorPanel input[type="submit"] {
                 background: #FFFFFF !important;
-                margin: 5px !important;
-                padding: 5px !important;
+                margin: 3px !important;
+                padding: 3px !important;
                 border: 1px solid #D2D2D2 !important;
                 -webkit-border-radius: 5px !important;
                 -moz-border-radius: 5px !important;
@@ -73,23 +78,47 @@ class PanelSelectorPanel implements IBarPanel {
                 location.reload();
             }
 
-            function clearSelection() {
+            function resetPanels() {
                 document.cookie = "tracyPanels=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
                 location.reload();
             }
+
+             function toggleAll(ele) {
+                var checkboxes = document.getElementsByName("selectedPanels[]");
+                if (ele.checked) {
+                    for (var i = 0; i < checkboxes.length; i++) {
+                        if(checkboxes[i].disabled === false) {
+                            checkboxes[i].checked = true;
+                        }
+                    }
+                }
+                else {
+                     for (var i = 0; i < checkboxes.length; i++) {
+                        if(checkboxes[i].disabled === false) {
+                            checkboxes[i].checked = false;
+                        }
+                    }
+                }
+            }
+
         </script>
         <h1>'.$this->icon.' Panel Selector</h1>
         <div class="tracy-inner">
             <fieldset>
                 <legend>Temporarily enable/disable panels</legend><br />';
                     $showPanels = isset($_COOKIE['tracyPanels']) ? explode(',', $_COOKIE['tracyPanels']) : \TracyDebugger::getDataValue('showPanels');
+                    $out .= '<label><input type="checkbox" onchange="toggleAll(this)" /> Toggle All</label><br /><br />';
                     foreach(\TracyDebugger::$allPanels as $name => $label) {
-                        $out .= '<input type="checkbox" name="selectedPanels[]" ' . ($name == 'panelSelector' ? 'disabled="disabled"' : '') . ' value="'.$name.'" ' . (in_array($name, $showPanels) ? 'checked="checked"' : '') . ' /> '.$label.'<br />';
+                        $out .= '
+                            <label>
+                                <input type="checkbox" name="selectedPanels[]" ' . ($name == 'panelSelector' ? 'disabled="disabled"' : '') . ' value="'.$name.'" ' . (in_array($name, $showPanels) ? 'checked="checked"' : '') . ' />
+                                '.$label.'
+                            </label><br />';
                     }
                     $out .= '<br />
                     <input type="submit" onclick="changePanels(\'once\')" value="Once" />&nbsp;
                     <input type="submit" onclick="changePanels(\'sticky\')" value="Sticky" />&nbsp;
-                    <input type="submit" onclick="clearSelection()" value="Reset" />
+                    <input type="submit" onclick="resetPanels()" value="Reset" />
             </fieldset>
         </div>';
 
