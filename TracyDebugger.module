@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 145,
+            'version' => 146,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -46,6 +46,21 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     protected $data = array();
     public static $templateVars = array();
     protected static $tracyVersion;
+    public static $allPanels = array(
+        'performance' => 'Performance',
+        'processwireInfo' => 'ProcessWire Info',
+        'processwireLogs' => 'ProcessWire Logs',
+        'tracyLogs' => 'Tracy Logs',
+        'variables' => 'Variables',
+        'methodsInfo' => 'Methods Info',
+        'diagnostics' => 'Diagnostics',
+        'debugMode' => 'Debug Mode',
+        'validator' => 'Validator',
+        'users' => 'Users',
+        'outputMode' => 'Output Mode',
+        'phpInfo' => 'PHP Info',
+        'panelSelector' => 'Panel Selector'
+    );
 
 
    /**
@@ -67,7 +82,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "maxDepth" => 3,
                 "maxLength" => 150,
                 "showDebugBar" => array('frontend'),
-                "showPanels" => array('performance', 'processwireInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'diagnostics', 'debugMode', 'users', 'outputMode'),
+                "showPanels" => array('performance', 'processwireInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'diagnostics', 'debugMode', 'users', 'outputMode', 'panelSelector'),
                 "showPanelLabels" => 1,
                 "email" => '',
                 "clearEmailSent" => null,
@@ -91,6 +106,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
         //populate for later static access to data
         self::$_data = $this;
+
+        //if not PW 3 or template compilation is disabled, then remove variables panel from available list
+        if(wire('config')->version < 3 || (wire('config')->version >= 3 && wire('config')->templateCompile === false)) {
+            unset(static::$allPanels['variables']);
+        }
     }
 
 
@@ -199,7 +219,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         require_once __DIR__ . '/CssPanel.inc';
         Debugger::getBar()->addPanel(new CssPanel);
 
-        foreach($this->data['showPanels'] as $panel) {
+        $panels = isset($_COOKIE['tracyPanels']) ? explode(',', $_COOKIE['tracyPanels']) : $this->data['showPanels'];
+
+        foreach($panels as $panel) {
             $panelName = ucfirst($panel).'Panel';
             switch($panel) {
                 case 'performance':
@@ -216,6 +238,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 case 'users':
                 case 'phpInfo':
                 case 'outputMode':
+                case 'panelSelector':
                     require_once __DIR__ . '/'.$panelName.'.inc';
                     Debugger::getBar()->addPanel(new $panelName);
                     break;
@@ -437,18 +460,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Show Panels', __FILE__);
         $f->description = __('Determines which panels are shown on the Debug Bar. Sort to match order of panels in Debugger Bar.', __FILE__);
         $f->columnWidth = 34;
-        $f->addOption('performance', 'Performance');
-        $f->addOption('processwireInfo', 'ProcessWire Info');
-        $f->addOption('processwireLogs', 'ProcessWire Logs');
-        $f->addOption('tracyLogs', 'Tracy Logs');
-        if(wire('config')->version >= 3 && wire('config')->templateCompile !== false) $f->addOption('variables', 'Variables');
-        $f->addOption('methodsInfo', 'Methods Info');
-        $f->addOption('diagnostics', 'Diagnostics');
-        $f->addOption('debugMode', 'Debug Mode');
-        $f->addOption('validator', 'Validator');
-        $f->addOption('users', 'Users');
-        $f->addOption('phpInfo', 'PHP Info');
-        $f->addOption('outputMode', 'Output Mode');
+        foreach(static::$allPanels as $name => $label) {
+            $f->addOption($name, $label);
+        }
         if($data['showPanels']) $f->attr('value', $data['showPanels']);
         $wrapper->add($f);
 
@@ -591,7 +605,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * Getter function to get a $data index value
      */
     public static function getDataValue($property) {
-        return trim(self::$_data->$property);
+        if(is_array(self::$_data->$property)) {
+            return self::$_data->$property;
+        }
+        else {
+            return trim(self::$_data->$property);
+        }
     }
 
     /**

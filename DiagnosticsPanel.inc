@@ -276,6 +276,23 @@ class DiagnosticsPanel implements IBarPanel {
         }
     }
 
+    protected function incorrectPermissionFiles() {
+
+        $this->incorrectFiles = $this->sectionHeader(array('File', 'Permissions'));
+
+        foreach($iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($_SERVER['DOCUMENT_ROOT'], RecursiveDirectoryIterator::SKIP_DOTS), RecursiveIteratorIterator::SELF_FIRST) as $fileinfo){
+            if((strpos($fileinfo->getPathname(), 'assets/sessions/') === false && !$fileinfo->isDir() && strpos($fileinfo->getPathname(), '/.') === false) || $fileinfo->getFilename() == ".htaccess") {
+                $octal_perms = substr(sprintf('%o', $fileinfo->getPerms()), -4);
+                if($octal_perms != wire('config')->chmodFile) $this->incorrectFiles .= '<tr><td>'.$fileinfo->getPathname() . "</td><td>" . $octal_perms . "</tr>\n";
+            }
+        }
+        $this->incorrectFiles .= '
+                    </tbody>
+                </table>
+            </div>';
+
+        return $this->incorrectFiles;
+    }
 
     public function getPanel() {
 
@@ -328,7 +345,7 @@ class DiagnosticsPanel implements IBarPanel {
                 if(function_exists('posix_getpwuid')) {
                     $out .= '<p style="font-size:15px">'.$this->getApacheUser().'</p><br />';
                 }
-                $out .= $this->filesystem.'
+                $out .= '<p style="font-size:15px"><strong>Folders</strong></p>'.$this->filesystem.'<br /><p style="font-size:15px"><strong>Files</strong> with permissions that don\'t match the '. wire('config')->chmodFile .' octal from the $config->chmodFile setting.<br />These may be fine as is - this is just meant to provide an easy means to identify any possible inconsistencies.</p>'.$this->incorrectPermissionFiles().'
             </div><br />
             <a href="#" rel="#mysqlinfo" class="tracy-toggle tracy-collapsed">MySQL Info</a>
             <div id="mysqlinfo" class="tracy-collapsed">

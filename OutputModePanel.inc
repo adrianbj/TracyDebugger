@@ -62,7 +62,7 @@ class OutputModePanel implements IBarPanel {
 
 
         return '
-        <span title="Output Mode">
+        <span title="Output Mode: '.$label.'">
             <span style="display:inline-block;background:'.$background.'; color:#FFFFFF; padding: 0 '.$tabPadding.';">
                 ' . $this->{$this->outputMode.'Icon'} . '
                 ' . $label . '

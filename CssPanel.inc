@@ -76,6 +76,9 @@ class CssPanel implements IBarPanel {
                 #tracy-debug-panel-Tracy-info {
                     height: 350px !important;
                 }
+                #tracy-debug-panel-PanelSelectorPanel {
+                    height: 400px !important;
+                }
                 #tracy-debug-panel-Zarganwar-PerformancePanel-Panel {
                     height: 250px !important;
                 }
