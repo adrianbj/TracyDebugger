@@ -358,7 +358,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public static function generatedTime($timerStr) {
         $seconds = substr($timerStr, strrpos($timerStr, ':') + 1);
-        return '<p style="font-size:0.6rem; text-align:left"><br />Panel generated in '.round($seconds, 4).' seconds</p>';
+        return '<p style="font-size:9px; text-align:left"><br />Panel generated in '.round($seconds, 4).' seconds</p>';
     }
 
 
