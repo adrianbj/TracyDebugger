@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 148,
+            'version' => 149,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -79,6 +79,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "outputMode" => 'detect',
                 "showLocation" => array('Tracy\Dumper::LOCATION_SOURCE', 'Tracy\Dumper::LOCATION_LINK', 'Tracy\Dumper::LOCATION_CLASS'),
                 "logSeverity" => array(),
+                "numLogEntries" => 10,
                 "maxDepth" => 3,
                 "maxLength" => 150,
                 "showDebugBar" => array('frontend'),
@@ -353,6 +354,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     /**
+     * Helper function to insert generated time for a panel.
+     */
+    public static function generatedTime($timerStr) {
+        $seconds = substr($timerStr, strrpos($timerStr, ':') + 1);
+        return '<p style="font-size:0.6rem; text-align:left"><br />Panel generated in '.round($seconds, 4).' seconds</p>';
+    }
+
+
+    /**
      * Return an InputfieldWrapper of Inputfields used to configure the class
      *
      * @param array $data Array of config values indexed by field name
@@ -520,11 +530,20 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $wrapper->add($f);
 
         $f = wire('modules')->get("InputfieldInteger");
+        $f->attr('name', 'numLogEntries');
+        $f->label = __('Number of Log Entries', __FILE__);
+        $f->description = __('Set the number of log entries to be displayed for the Tracy and ProcessWire log viewer panels.', __FILE__);
+        $f->notes = __('Default: 10.', __FILE__);
+        $f->columnWidth = 33;
+        $f->attr('value', $data['numLogEntries']);
+        $wrapper->add($f);
+
+        $f = wire('modules')->get("InputfieldInteger");
         $f->attr('name', 'maxDepth');
         $f->label = __('Maximum Nesting Depth', __FILE__);
         $f->description = __('Set the maximum nesting depth of dumped arrays and objects.', __FILE__);
         $f->notes = __('Default: 3. Warning: making this too large can slow your page load down or even crash your browser.', __FILE__);
-        $f->columnWidth = 50;
+        $f->columnWidth = 34;
         $f->attr('value', $data['maxDepth']);
         $wrapper->add($f);
 
@@ -533,7 +552,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Maximum String Length', __FILE__);
         $f->description = __('Set the maximum displayed strings length.', __FILE__);
         $f->notes = __('Default: 150.', __FILE__);
-        $f->columnWidth = 50;
+        $f->columnWidth = 33;
         $f->attr('value', $data['maxLength']);
         $wrapper->add($f);
 

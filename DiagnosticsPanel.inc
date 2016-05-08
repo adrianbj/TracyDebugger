@@ -15,6 +15,7 @@ class DiagnosticsPanel implements IBarPanel {
     public function getTab() {
 
         if(\TracyDebugger::additionalBar()) return;
+        \Tracy\Debugger::timer('diagnostics');
 
         // generate Filesystem diagnotics now so we can determine the color of the icon in the Debugger Bar
         $this->generateFilesystem();
@@ -350,7 +351,7 @@ class DiagnosticsPanel implements IBarPanel {
             <a href="#" rel="#mysqlinfo" class="tracy-toggle tracy-collapsed">MySQL Info</a>
             <div id="mysqlinfo" class="tracy-collapsed">
                 '.$dbInfo.'
-            </div><br />
+            </div><br />' . \TracyDebugger::generatedTime(\Tracy\Debugger::timer('diagnostics')) . '
         </div>
         ';
 

@@ -12,6 +12,7 @@ class ProcesswireInfoPanel implements IBarPanel {
     public function getTab() {
 
         if(\TracyDebugger::additionalBar()) return;
+        \Tracy\Debugger::timer('processwireInfo');
 
         return '
         <span title="ProcessWire Page Info & Links">
@@ -554,7 +555,7 @@ class ProcesswireInfoPanel implements IBarPanel {
                                     <path d="M293.081,31.27c-17.795-17.795-39.352-26.696-64.667-26.696c-25.319,0-46.87,8.901-64.668,26.696    c-17.795,17.797-26.691,39.353-26.691,64.667h182.716C319.771,70.627,310.876,49.067,293.081,31.27z" fill="#ee1d62"></path>
                                 </g>
                             </svg>
-                        </a>&nbsp;
+                        </a>&nbsp;' . \TracyDebugger::generatedTime(\Tracy\Debugger::timer('processwireInfo')) . '
                     </div>
                 </div>
         ';

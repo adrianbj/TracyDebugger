@@ -8,8 +8,8 @@ use Tracy\IBarPanel;
 
 class ProcesswireLogsPanel implements IBarPanel {
     public function getTab() {
-
         if(\TracyDebugger::additionalBar()) return;
+        \Tracy\Debugger::timer('processwireLogs');
 
         return '
         <span title="ProcessWire logs">
@@ -59,7 +59,7 @@ class ProcesswireLogsPanel implements IBarPanel {
         $i=0;
         foreach(wire('log')->getLogs() as $log) {
             $x=99;
-            foreach(wire('log')->getEntries($log['name'], array("limit" => 25)) as $entry) {
+            foreach(wire('log')->getEntries($log['name'], array("limit" => \TracyDebugger::getDataValue("numLogEntries"))) as $entry) {
                 $itemKey = $log['name'] . '_' . $x;
                 $entriesArr[$itemKey]['timestamp'] = strtotime($entry['date']);
                 $entriesArr[$itemKey]['linenumber'] = 99-$x;
@@ -83,8 +83,8 @@ class ProcesswireLogsPanel implements IBarPanel {
         // sort by event_type desc and then title asc
         array_multisort($timestamp, SORT_DESC, $order, SORT_DESC, $entriesArr);
 
-        //display 25 most recent entries from all log files
-        foreach(array_slice($entriesArr, 0, 25) as $item) {
+        //display most recent entries from all log files
+        foreach(array_slice($entriesArr, 0, \TracyDebugger::getDataValue("numLogEntries")) as $item) {
             $logInstance = new FileLog(wire('config')->paths->logs . $item['log'].'.txt');
             $trimmedText = trim(strip_tags($item['text']));
             $logEntries .= "
@@ -111,7 +111,7 @@ class ProcesswireLogsPanel implements IBarPanel {
         </h1>
 
         <div class="tracy-inner">';
-            $out .= $logEntries . '
+            $out .= $logEntries .\TracyDebugger::generatedTime(\Tracy\Debugger::timer('processwireLogs')) .'
         </div>';
 
         return $out;

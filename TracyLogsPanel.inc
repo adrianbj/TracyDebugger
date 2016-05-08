@@ -10,6 +10,7 @@ class TracyLogsPanel implements IBarPanel {
     public function getTab() {
 
         if(\TracyDebugger::additionalBar()) return;
+        \Tracy\Debugger::timer('tracyLogs');
 
         return '
         <span title="Tracy logs">
@@ -99,12 +100,11 @@ class TracyLogsPanel implements IBarPanel {
                 if($name != wire('sanitizer')->pageName($name)) continue;
                 $logs[$name] = array(
                     'name' => $name,
-                    'file' => $file->getPathname(),
-                    'size' => $file->getSize(),
-                    'modified' => $file->getMTime(),
+                    //'file' => $file->getPathname(),
+                    //'size' => $file->getSize(),
+                    //'modified' => $file->getMTime(),
                 );
             }
-
             ksort($logs);
             return $logs;
         }
@@ -159,7 +159,7 @@ class TracyLogsPanel implements IBarPanel {
         if($logs === null) return 'Tracy logs directory is not readable.';
         foreach($logs as $log) {
             $x=99;
-            foreach($this->getLines($log['name'], array("limit" => 25)) as $entry) {
+            foreach($this->getLines($log['name'], array("limit" => \TracyDebugger::getDataValue("numLogEntries"))) as $entry) {
                 $logDateTime = str_replace(array('[',']'), '', substr($entry, 0 , 21)); // get the date - first 21 chars
                 $logDateParts = explode(" ", $logDateTime);
                 $logDate = $logDateParts[0];
@@ -194,8 +194,8 @@ class TracyLogsPanel implements IBarPanel {
         # sort by event_type desc and then title asc
         array_multisort($timestamp, SORT_DESC, $order, SORT_DESC, $entriesArr);
 
-        //display 25 most recent entries from all log files
-        foreach(array_slice($entriesArr, 0, 25) as $item) {
+        //display most recent entries from all log files
+        foreach(array_slice($entriesArr, 0, \TracyDebugger::getDataValue("numLogEntries")) as $item) {
             $logInstance = new TracyFileLog(wire('config')->paths->logs.'tracy/' . $item['log'].'.log');
             $trimmedText = trim(strip_tags($item['text']));
             $logEntries .= "
@@ -220,7 +220,7 @@ class TracyLogsPanel implements IBarPanel {
         </h1>
 
         <div class="tracy-inner">';
-            $out .= $logEntries . '
+            $out .= $logEntries . \TracyDebugger::generatedTime(\Tracy\Debugger::timer('tracyLogs')) . '
         </div>';
 
         return $out;

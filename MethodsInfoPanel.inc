@@ -8,8 +8,8 @@ use Tracy\IBarPanel;
 
 class MethodsInfoPanel implements IBarPanel {
     public function getTab() {
-
         if(\TracyDebugger::additionalBar()) return;
+        \Tracy\Debugger::timer('methodsInfo');
 
         return '
         <span title="Methods info">
@@ -93,9 +93,9 @@ class MethodsInfoPanel implements IBarPanel {
             TD::templateVars();<br />
             templateVars();<br />
             tv();<br />
-            </p>
-
-        </div>
+            </p>' .
+            \TracyDebugger::generatedTime(\Tracy\Debugger::timer('methodsInfo')) .
+        '</div>
         ';
 
         return $out;

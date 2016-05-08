@@ -12,8 +12,8 @@ class PanelSelectorPanel implements IBarPanel {
     protected $icon;
 
     public function getTab() {
-
         if(\TracyDebugger::additionalBar()) return;
+        \Tracy\Debugger::timer('panelSelector');
 
         $this->icon = '
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 369.793 369.792" style="enable-background:new 0 0 369.793 369.792;" xml:space="preserve">
@@ -119,7 +119,7 @@ class PanelSelectorPanel implements IBarPanel {
                     <input type="submit" onclick="changePanels(\'once\')" value="Once" />&nbsp;
                     <input type="submit" onclick="changePanels(\'sticky\')" value="Sticky" />&nbsp;
                     <input type="submit" onclick="resetPanels()" value="Reset" />
-            </fieldset>
+            </fieldset>' . \TracyDebugger::generatedTime(\Tracy\Debugger::timer('panelSelector')) . '
         </div>';
 
         return $out;

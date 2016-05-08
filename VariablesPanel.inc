@@ -9,8 +9,8 @@ use Tracy\Dumper;
 
 class VariablesPanel implements IBarPanel {
     public function getTab() {
-
         if(\TracyDebugger::additionalBar()) return;
+        \Tracy\Debugger::timer('variables');
 
         return '
         <span title="Variables">
@@ -94,7 +94,7 @@ class VariablesPanel implements IBarPanel {
             else {
                 $out .= '<strong>Template compiling is disabled for this template, so the variables could not be determined.</strong>';
             }
-        $out .= '
+        $out .= \TracyDebugger::generatedTime(\Tracy\Debugger::timer('variables')) . '
         </div>';
 
         return $out;

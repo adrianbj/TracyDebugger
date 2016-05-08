@@ -20,6 +20,7 @@ class ValidatorPanel implements IBarPanel {
     public function getTab() {
 
         if(\TracyDebugger::additionalBar()) return;
+        \Tracy\Debugger::timer('validator');
 
         // get url of current page and append tracyValidating to prevent
         // loading of Tracy when getting the content of the page for validation
@@ -494,6 +495,8 @@ class ValidatorPanel implements IBarPanel {
         else {
             $out .= '<div id="validatorBody" style="width:934px"><h2>Sorry, but there was a problem accessing the validation server at '.$this->validatorUrl.'</h2></div>';
         }
+
+        $out .= \TracyDebugger::generatedTime(\Tracy\Debugger::timer('validator'));
 
         $out .= '</div>';
 

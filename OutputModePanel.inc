@@ -19,6 +19,7 @@ class OutputModePanel implements IBarPanel {
     public function getTab() {
 
         if(\TracyDebugger::additionalBar()) return;
+        \Tracy\Debugger::timer('outputMode');
 
         $this->outputMode = \TracyDebugger::getDataValue('outputMode');
 
@@ -89,7 +90,7 @@ class OutputModePanel implements IBarPanel {
             }
 
             $out .= '</p>
-            <br />
+            ' . \TracyDebugger::generatedTime(\Tracy\Debugger::timer('outputMode')) . '
         </div>';
 
         return $out;

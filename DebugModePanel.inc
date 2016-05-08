@@ -11,27 +11,9 @@ class DebugModePanel implements IBarPanel {
     protected static $iconColor;
     protected static $panelIconColor;
 
-    protected function sectionHeader($columnNames = array()) {
-        $out = '
-        <div>
-            <table>
-                <thead>
-                    <tr>';
-        foreach($columnNames as $columnName) {
-            $out .= '<th>'.$columnName.'</th>';
-        }
-
-        $out .= '
-                    </tr>
-                </thead>
-            <tbody>
-        ';
-        return $out;
-    }
-
     public function getTab() {
-
         if(\TracyDebugger::additionalBar()) return;
+        \Tracy\Debugger::timer('debugMode');
 
         $debugMode = wire('config')->debug;
 
@@ -65,7 +47,23 @@ class DebugModePanel implements IBarPanel {
         ";
     }
 
+    protected function sectionHeader($columnNames = array()) {
+        $out = '
+        <div>
+            <table>
+                <thead>
+                    <tr>';
+        foreach($columnNames as $columnName) {
+            $out .= '<th>'.$columnName.'</th>';
+        }
 
+        $out .= '
+                    </tr>
+                </thead>
+            <tbody>
+        ';
+        return $out;
+    }
 
     public function getPanel() {
 
@@ -448,6 +446,8 @@ class DebugModePanel implements IBarPanel {
             <div id="autoload" class="tracy-collapsed">'.$autoload.'</div><br />
             ';
         }
+
+        $out .= \TracyDebugger::generatedTime(\Tracy\Debugger::timer('debugMode'));
 
         $out .= '</div>';
 

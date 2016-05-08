@@ -52,6 +52,7 @@ class UsersPanel implements IBarPanel {
     public function getTab() {
 
         if(\TracyDebugger::additionalBar()) return;
+        \Tracy\Debugger::timer('users');
 
         if(\TracyDebugger::getDataValue('showPanelLabels')) {
             $iconColor = '#FFFFFF';
@@ -182,6 +183,8 @@ class UsersPanel implements IBarPanel {
             else {
                 $out .= '<p style="font-size: 15px"><strong>All allowed users are Superusers</strong></p>';
             }
+
+        $out .= \TracyDebugger::generatedTime(\Tracy\Debugger::timer('users'));
 
         $out .= '</div>';
 
