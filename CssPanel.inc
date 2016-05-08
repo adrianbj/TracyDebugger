@@ -14,6 +14,13 @@ class CssPanel implements IBarPanel {
                     max-width: 2000px !important;
                 }
 
+                #tracy-debug input[type="checkbox"],
+                #tracy-debug input[type="radio"] {
+                    width: 12px;
+                    height: 12px;
+                    position: static
+                }
+
                 .tracy-panel {
                     height: 675px !important;
                     max-height: 90% !important;
