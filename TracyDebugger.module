@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 150,
+            'version' => 151,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -46,6 +46,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     protected $data = array();
     public static $templateVars = array();
     protected static $tracyVersion;
+    public static $stickyPanels;
+    public static $showPanels;
     public static $allPanels = array(
         'performance' => 'Performance',
         'processwireInfo' => 'ProcessWire Info',
@@ -216,20 +218,24 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
 
-
         require_once __DIR__ . '/CssPanel.inc';
         Debugger::getBar()->addPanel(new CssPanel);
 
-        $panels = isset($_COOKIE['tracyPanels']) ? explode(',', $_COOKIE['tracyPanels']) : $this->data['showPanels'];
-
-        if(isset($_COOKIE['tracyPanelsOnce'])) {
-            unset($_COOKIE['tracyPanelsOnce']);
-            unset($_COOKIE['tracyPanels']);
-            setcookie("tracyPanels", "", time()-3600, '/');
+        //determine which panels to display
+        static::$stickyPanels = explode(',', $this->input->cookie->tracyPanelsSticky);
+        if(isset($this->input->cookie->tracyPanelsOnce)) {
+            static::$showPanels = explode(',', $this->input->cookie->tracyPanelsOnce);
+            unset($this->input->cookie->tracyPanelsOnce);
             setcookie("tracyPanelsOnce", "", time()-3600, '/');
         }
+        elseif(isset($this->input->cookie->tracyPanelsSticky)) {
+            static::$showPanels = static::$stickyPanels;
+        }
+        else {
+            static::$showPanels = $this->data['showPanels'];
+        }
 
-        foreach($panels as $panel) {
+        foreach(static::$showPanels as $panel) {
             $panelName = ucfirst($panel).'Panel';
             switch($panel) {
                 case 'performance':

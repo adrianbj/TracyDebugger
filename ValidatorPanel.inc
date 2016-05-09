@@ -29,6 +29,9 @@ class ValidatorPanel implements IBarPanel {
         $http = new WireHttp();
         $http->setHeader('content-type', 'text/html; charset=utf-8');
         $pageHtml = $http->get($this->pageUrl);
+        // seems like on some systems, WireHttp::get is not working, so fallback to file_get_contents
+        // maybe this (or fopen) should actually be the default?
+        if($pageHtml == '') $pageHtml = file_get_contents($this->pageUrl);
 
         // strip everything after the closing html tag
         //if(strpos($pageHtml, '</html>') !== false) {

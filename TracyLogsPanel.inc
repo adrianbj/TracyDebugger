@@ -197,7 +197,7 @@ class TracyLogsPanel implements IBarPanel {
         //display most recent entries from all log files
         foreach(array_slice($entriesArr, 0, \TracyDebugger::getDataValue("numLogEntries")) as $item) {
             $logInstance = new TracyFileLog(wire('config')->paths->logs.'tracy/' . $item['log'].'.log');
-            $trimmedText = trim(strip_tags($item['text']));
+            $trimmedText = trim(htmlspecialchars($item['text'], ENT_QUOTES, 'UTF-8'));
             $logEntries .= "
             \n<tr>" .
                 "<td>".$item['log']."</td>" .
