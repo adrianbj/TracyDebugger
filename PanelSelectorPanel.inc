@@ -30,14 +30,20 @@ class PanelSelectorPanel implements IBarPanel {
 
 
     protected function isOnce($name, $defaultPanels) {
-        if(in_array($name, \TracyDebugger::$showPanels) && !in_array($name, $defaultPanels) && !in_array($name, \TracyDebugger::$stickyPanels)) {
-            return true;
-        }
-        elseif(!in_array($name, \TracyDebugger::$showPanels) && in_array($name, $defaultPanels) && in_array($name, \TracyDebugger::$stickyPanels)) {
-            return true;
+
+        $masterPanels = empty(\TracyDebugger::$stickyPanels) ? $defaultPanels : \TracyDebugger::$stickyPanels;
+
+        if(empty(\TracyDebugger::$oncePanels)) {
+            return false;
         }
         else {
-            return false;
+            if((in_array($name, \TracyDebugger::$oncePanels) && !in_array($name, $masterPanels)) ||
+            (!in_array($name, \TracyDebugger::$oncePanels) && in_array($name, $masterPanels))) {
+                return true;
+            }
+            else {
+                return false;
+            }
         }
     }
 

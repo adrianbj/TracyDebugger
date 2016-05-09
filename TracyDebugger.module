@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 151,
+            'version' => 152,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -46,6 +46,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     protected $data = array();
     public static $templateVars = array();
     protected static $tracyVersion;
+    public static $oncePanels;
     public static $stickyPanels;
     public static $showPanels;
     public static $allPanels = array(
@@ -222,9 +223,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         Debugger::getBar()->addPanel(new CssPanel);
 
         //determine which panels to display
-        static::$stickyPanels = explode(',', $this->input->cookie->tracyPanelsSticky);
+        static::$oncePanels = array_filter(explode(',', $this->input->cookie->tracyPanelsOnce));
+        static::$stickyPanels = array_filter(explode(',', $this->input->cookie->tracyPanelsSticky));
         if(isset($this->input->cookie->tracyPanelsOnce)) {
-            static::$showPanels = explode(',', $this->input->cookie->tracyPanelsOnce);
+            static::$showPanels = static::$oncePanels;
             unset($this->input->cookie->tracyPanelsOnce);
             setcookie("tracyPanelsOnce", "", time()-3600, '/');
         }
