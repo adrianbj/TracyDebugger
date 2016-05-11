@@ -220,7 +220,8 @@ class TracyLogsPanel implements IBarPanel {
         </h1>
 
         <div class="tracy-inner">';
-            $out .= $logEntries . \TracyDebugger::generatedTime(\Tracy\Debugger::timer('tracyLogs')) . '
+            \TracyDebugger::$panelGenerationTime['tracyLogs'] = \Tracy\Debugger::timer('tracyLogs');
+            $out .= $logEntries . \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['tracyLogs']) . '
         </div>';
 
         return $out;

@@ -80,17 +80,18 @@ class OutputModePanel implements IBarPanel {
         <div class="tracy-inner">';
 
             if(\TracyDebugger::getDataValue('outputMode') == 'detect') {
-                $out .= '<p style="font-size:15px">This is automatically switched from the configured "DETECT" mode.</p>';
+                $out .= '<p>This is automatically switched from the configured "DETECT" mode.</p>';
             }
             elseif($this->outputMode == 'development') {
-                $out .= '<p style="font-size:15px">This is forced development mode.</p><p style="font-size:15px">Use caution when forcing development mode on a live site.</p><p style="font-size:15px">Remember to limit any authorized non-superusers by IP Address.</p>';
+                $out .= '<p>This is forced development mode.</p><p>Use caution when forcing development mode on a live site.</p><p>Remember to limit any authorized non-superusers by IP Address.</p>';
             }
             elseif($this->outputMode == 'production') {
-                $out .= '<p style="font-size:15px">This mode is safe for live sites.</p><p style="font-size:15px">Only superusers will have access to the debugger tools.</p>';
+                $out .= '<p>This mode is safe for live sites.</p><p>Only superusers will have access to the debugger tools.</p>';
             }
 
-            $out .= '</p>
-            ' . \TracyDebugger::generatedTime(\Tracy\Debugger::timer('outputMode')) . '
+            $out .= '</p>';
+            \TracyDebugger::$panelGenerationTime['outputMode'] = \Tracy\Debugger::timer('outputMode');
+            $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['outputMode']) . '
         </div>';
 
         return $out;

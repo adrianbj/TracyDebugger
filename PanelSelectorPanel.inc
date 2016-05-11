@@ -22,9 +22,9 @@ class PanelSelectorPanel implements IBarPanel {
 
 
         return '
-        <span title="Panel Selector">
-            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Panel Selector' : '') . '
-        </span>
+            <span title="Panel Selector">
+                ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Panel Selector' : '') . '
+            </span>
         ';
     }
 
@@ -51,25 +51,8 @@ class PanelSelectorPanel implements IBarPanel {
     public function getPanel() {
 
         $out = '
-        <style type="text/css">
-            #tracy-debug-panel-PanelSelectorPanel fieldset {
-                all: initial;
-                font: inherit;
-                color: inherit;
-            }
-            #tracy-debug-panel-PanelSelectorPanel input[type="submit"] {
-                background: #FFFFFF !important;
-                margin: 3px !important;
-                padding: 3px !important;
-                border: 1px solid #D2D2D2 !important;
-                -webkit-border-radius: 5px !important;
-                -moz-border-radius: 5px !important;
-                border-radius: 5px !important;
-                cursor: pointer !important;
-            }
-        </style>
         <script>
-            function getSelectedCheckboxes() {
+            function getSelectedTracyPanelCheckboxes() {
                 var selchbox = [];
                 var inpfields = document.getElementsByName("selectedPanels[]");
                 var nr_inpfields = inpfields.length;
@@ -79,29 +62,18 @@ class PanelSelectorPanel implements IBarPanel {
                 return selchbox;
             }
 
-            function getCookie(cname) {
-                var name = cname + "=";
-                var ca = document.cookie.split(";");
-                for (var i = 0; i < ca.length; i++) {
-                    var c = ca[i];
-                    while (c.charAt(0) == " ") c = c.substring(1);
-                    if (c.indexOf(name) != -1) return c.substring(name.length, c.length);
-                }
-                return "";
-            }
-
-            function changePanels(type) {
-                document.cookie = "tracyPanels"+type+"="+getSelectedCheckboxes()+"; expires=0; path=/";
+            function changeTracyPanels(type) {
+                document.cookie = "tracyPanels"+type+"="+getSelectedTracyPanelCheckboxes()+"; expires=0; path=/";
                 location.reload();
             }
 
-            function resetPanels() {
+            function resetTracyPanels() {
                 document.cookie = "tracyPanelsSticky=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
                 document.cookie = "tracyPanelsOnce=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
                 location.reload();
             }
 
-             function toggleAll(ele) {
+             function toggleAllTracyPanels(ele) {
                 var checkboxes = document.getElementsByName("selectedPanels[]");
                 if (ele.checked) {
                     for (var i = 0; i < checkboxes.length; i++) {
@@ -119,16 +91,35 @@ class PanelSelectorPanel implements IBarPanel {
                 }
             }
 
-        </script>';
+        </script>
+
+
+        <style type="text/css">
+            #tracy-debug-panel-PanelSelectorPanel fieldset {
+                all: initial;
+                font: inherit;
+                color: inherit;
+            }
+            #tracy-debug-panel-PanelSelectorPanel input[type="submit"] {
+                background: #FFFFFF !important;
+                margin: 3px !important;
+                padding: 3px !important;
+                border: 1px solid #D2D2D2 !important;
+                -webkit-border-radius: 5px !important;
+                -moz-border-radius: 5px !important;
+                border-radius: 5px !important;
+                cursor: pointer !important;
+            }
+        </style>';
 
         $defaultTickIcon = '<svg title="default" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 191.667 191.667" style="enable-background:new 0 0 191.667 191.667;" xml:space="preserve" width="12px" height="12px">
                                 <path d="M95.833,0C42.991,0,0,42.99,0,95.833s42.991,95.834,95.833,95.834s95.833-42.991,95.833-95.834S148.676,0,95.833,0z   M150.862,79.646l-60.207,60.207c-2.56,2.56-5.963,3.969-9.583,3.969c-3.62,0-7.023-1.409-9.583-3.969l-30.685-30.685  c-2.56-2.56-3.97-5.963-3.97-9.583c0-3.621,1.41-7.024,3.97-9.584c2.559-2.56,5.962-3.97,9.583-3.97c3.62,0,7.024,1.41,9.583,3.971  l21.101,21.1l50.623-50.623c2.56-2.56,5.963-3.969,9.583-3.969c3.62,0,7.023,1.409,9.583,3.969  C156.146,65.765,156.146,74.362,150.862,79.646z" fill="#009900">
-                                    <title>Default panel from module config settings</title>
+                                    <title>enabled in module settings</title>
                                 </path>
                             </svg>';
         $onceIcon = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="12px" height="12px" viewBox="0 0 405.07 405.07" style="enable-background:new 0 0 405.07 405.07;" xml:space="preserve">
                         <path d="M202.531,0C90.676,0,0,90.678,0,202.535C0,314.393,90.676,405.07,202.531,405.07c111.859,0,202.539-90.678,202.539-202.535   C405.07,90.678,314.391,0,202.531,0z M243.192,312.198c0,8.284-6.716,15-15,15h-27.629c-8.284,0-15-6.716-15-15v-168.35   l-17.1,9.231c-4.069,2.197-8.924,2.393-13.155,0.536c-4.233-1.858-7.373-5.565-8.51-10.046l-5.459-21.518   c-1.695-6.683,1.383-13.66,7.461-16.913l47.626-25.491c2.177-1.166,4.608-1.775,7.078-1.775h24.688c8.284,0,15,6.716,15,15V312.198   z" fill="#FF9933">
-                            <title>Panel status changed once</title>
+                            <title>status changed "Once"</title>
                         </path>
                     </svg>';
 
@@ -138,18 +129,19 @@ class PanelSelectorPanel implements IBarPanel {
                 <legend>Temporarily enable/disable panels</legend><br />';
                     $defaultPanels = \TracyDebugger::getDataValue('showPanels');
                     $showPanels = \TracyDebugger::$showPanels;
-                    $out .= '<label><input type="checkbox" onchange="toggleAll(this)" ' . (count($showPanels) == count(\TracyDebugger::$allPanels) ? 'checked="checked"' : '') . ' /> Toggle All</label><br /><br />';
+                    $out .= '<label><input type="checkbox" onchange="toggleAllTracyPanels(this)" ' . (count($showPanels) == count(\TracyDebugger::$allPanels) ? 'checked="checked"' : '') . ' /> Toggle All</label><br />';
                     foreach(\TracyDebugger::$allPanels as $name => $label) {
+                        $seconds = \TracyDebugger::$panelGenerationTime[$name];
                         $out .= '
                             <label>
                                 <input type="checkbox" name="selectedPanels[]" ' . ($name == 'panelSelector' ? 'disabled="disabled"' : '') . ' value="'.$name.'" ' . (in_array($name, $showPanels) ? 'checked="checked"' : '') . ' />
-                                ' . $label . (in_array($name, $defaultPanels) ? '&nbsp;'.$defaultTickIcon : '') . '&nbsp;' . ($this->isOnce($name, $defaultPanels) ? '&nbsp;'.$onceIcon : '') . '
-                            </label><br />';
+                                ' . $label . ($seconds ? '&nbsp;(' . round($seconds, 4) . 's)&nbsp;' : '') . (in_array($name, $defaultPanels) ? '&nbsp;'.$defaultTickIcon : '') . '&nbsp;' . ($this->isOnce($name, $defaultPanels) ? '&nbsp;'.$onceIcon : '') . '
+                            </label>';
                     }
                     $out .= '<br />
-                    <input type="submit" onclick="changePanels(\'Once\')" value="Once" />&nbsp;
-                    <input type="submit" onclick="changePanels(\'Sticky\')" value="Sticky" />&nbsp;
-                    <input type="submit" onclick="resetPanels()" value="Reset" />
+                    <input type="submit" onclick="changeTracyPanels(\'Once\')" value="Once" />&nbsp;
+                    <input type="submit" onclick="changeTracyPanels(\'Sticky\')" value="Sticky" />&nbsp;
+                    <input type="submit" onclick="resetTracyPanels()" value="Reset" />
             </fieldset>' . \TracyDebugger::generatedTime(\Tracy\Debugger::timer('panelSelector')) . '
         </div>';
 

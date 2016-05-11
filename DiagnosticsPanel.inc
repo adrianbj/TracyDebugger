@@ -342,17 +342,19 @@ class DiagnosticsPanel implements IBarPanel {
         <div class="tracy-inner">
             <a href="#" rel="#filesystem" class="tracy-toggle">Filesystem</a>
             <div id="filesystem">
-                <p style="font-size:15px">Please read <a href="https://processwire.com/docs/security/file-permissions/">https://processwire.com/docs/security/file-permissions/</a> for details on how to secure these.</p>';
+                <p>Please read <a href="https://processwire.com/docs/security/file-permissions/">https://processwire.com/docs/security/file-permissions/</a> for details on how to secure these.</p>';
                 if(function_exists('posix_getpwuid')) {
-                    $out .= '<p style="font-size:15px">'.$this->getApacheUser().'</p><br />';
+                    $out .= '<p>'.$this->getApacheUser().'</p><br />';
                 }
-                $out .= '<p style="font-size:15px"><strong>Folders</strong></p>'.$this->filesystem.'<br /><p style="font-size:15px"><strong>Files</strong> with permissions that don\'t match the '. wire('config')->chmodFile .' octal from the $config->chmodFile setting.<br />These may be fine as is - this is just meant to provide an easy means to identify any possible inconsistencies.</p>'.$this->incorrectPermissionFiles().'
+                $out .= '<p><strong>Folders</strong></p>'.$this->filesystem.'<br /><p><strong>Files</strong> with permissions that don\'t match the '. wire('config')->chmodFile .' octal from the $config->chmodFile setting.<br />These may be fine as is - this is just meant to provide an easy means to identify any possible inconsistencies.</p>'.$this->incorrectPermissionFiles().'
             </div><br />
             <a href="#" rel="#mysqlinfo" class="tracy-toggle tracy-collapsed">MySQL Info</a>
             <div id="mysqlinfo" class="tracy-collapsed">
                 '.$dbInfo.'
-            </div><br />' . \TracyDebugger::generatedTime(\Tracy\Debugger::timer('diagnostics')) . '
-        </div>
+            </div><br />';
+        \TracyDebugger::$panelGenerationTime['diagnostics'] = \Tracy\Debugger::timer('diagnostics');
+        $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['diagnostics']);
+        $out .= '</div>
         ';
 
         return $out;

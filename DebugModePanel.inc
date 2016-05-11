@@ -86,7 +86,7 @@ class DebugModePanel implements IBarPanel {
         </svg>
         ProcessWire Debug Mode</h1>
         <div class='tracy-inner'>
-            <p style='font-size:15px'>";
+            <p>";
 
         if($debugMode) {
             $out .= '
@@ -96,7 +96,7 @@ class DebugModePanel implements IBarPanel {
             <strong>WARNING</strong><br />ProcessWire Debug Mode is ON<br />Make sure it is OFF for live sites.';
         }
         else {
-            $out .= '<p style="font-size:15px"><strong>ProcessWire Debug Mode is OFF</strong></p>
+            $out .= '<p><strong>ProcessWire Debug Mode is OFF</strong></p>
             <p>With debug mode off, it is not possible to access the "Database Queries", "Timers", and "Autload" sections.';
         }
 
@@ -447,7 +447,8 @@ class DebugModePanel implements IBarPanel {
             ';
         }
 
-        $out .= \TracyDebugger::generatedTime(\Tracy\Debugger::timer('debugMode'));
+        \TracyDebugger::$panelGenerationTime['debugMode'] = \Tracy\Debugger::timer('debugMode');
+        $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['debugMode']);
 
         $out .= '</div>';
 

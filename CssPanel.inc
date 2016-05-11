@@ -38,6 +38,14 @@ class CssPanel implements IBarPanel {
                     padding-right: 30px !important;
                 }
 
+                .tracy-inner fieldset label {
+                    display: block !important;
+                }
+
+                .tracy-inner p {
+                    font-size:15px !important;
+                }
+
                 #tracy-debug pre.tracy-dump {
                     padding: .4em 2em .4em .7em
                 }

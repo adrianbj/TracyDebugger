@@ -62,6 +62,11 @@ class ValidatorPanel implements IBarPanel {
             $element = $doc->getElementsByTagName('title')->item(0);
             $element->parentNode->removeChild($element);
             $this->result = $doc->saveHTML();
+
+            //strip out <html><body> etc at start
+            $this->result = strstr($this->result, '<ol>');
+            //strip out unnecessary code at end, including </body></html>
+            $this->result = strstr($this->result, '<hr><p><a href="https://about.validator.nu/">', true);
         }
 
         $errors = (!$this->result ||
@@ -139,6 +144,10 @@ class ValidatorPanel implements IBarPanel {
                 #validatorBody ol li {
                     list-style: initial !important;
                     list-style-type: decimal !important;
+                }
+
+                #validatorBody p, #validatorBody ol li p {
+                    font-size: 14px !important;
                 }
 
                 #validatorBody #schema, #validatorBody #doc, #validatorBody #nsfilter {
@@ -499,7 +508,8 @@ class ValidatorPanel implements IBarPanel {
             $out .= '<div id="validatorBody" style="width:934px"><h2>Sorry, but there was a problem accessing the validation server at '.$this->validatorUrl.'</h2></div>';
         }
 
-        $out .= \TracyDebugger::generatedTime(\Tracy\Debugger::timer('validator'));
+        \TracyDebugger::$panelGenerationTime['validator'] = \Tracy\Debugger::timer('validator');
+        $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['validator']);
 
         $out .= '</div>';
 
