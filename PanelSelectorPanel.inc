@@ -131,7 +131,7 @@ class PanelSelectorPanel implements IBarPanel {
                     $showPanels = \TracyDebugger::$showPanels;
                     $out .= '<label><input type="checkbox" onchange="toggleAllTracyPanels(this)" ' . (count($showPanels) == count(\TracyDebugger::$allPanels) ? 'checked="checked"' : '') . ' /> Toggle All</label><br />';
                     foreach(\TracyDebugger::$allPanels as $name => $label) {
-                        $seconds = \TracyDebugger::$panelGenerationTime[$name];
+                        $seconds = isset(\TracyDebugger::$panelGenerationTime[$name]) ? \TracyDebugger::$panelGenerationTime[$name] : '';
                         $out .= '
                             <label>
                                 <input type="checkbox" name="selectedPanels[]" ' . ($name == 'panelSelector' ? 'disabled="disabled"' : '') . ' value="'.$name.'" ' . (in_array($name, $showPanels) ? 'checked="checked"' : '') . ' />
