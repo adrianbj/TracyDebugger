@@ -281,7 +281,7 @@ class DiagnosticsPanel implements IBarPanel {
 
         $this->incorrectFiles = $this->sectionHeader(array('File', 'Permissions'));
 
-        foreach($iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($_SERVER['DOCUMENT_ROOT'], RecursiveDirectoryIterator::SKIP_DOTS), RecursiveIteratorIterator::SELF_FIRST) as $fileinfo){
+        foreach($iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(wire('config')->paths->root, RecursiveDirectoryIterator::SKIP_DOTS), RecursiveIteratorIterator::SELF_FIRST) as $fileinfo){
             if((strpos($fileinfo->getPathname(), 'assets/sessions/') === false && !$fileinfo->isDir() && strpos($fileinfo->getPathname(), '/.') === false) || $fileinfo->getFilename() == ".htaccess") {
                 $octal_perms = substr(sprintf('%o', $fileinfo->getPerms()), -4);
                 if($octal_perms != wire('config')->chmodFile) $this->incorrectFiles .= '<tr><td>'.$fileinfo->getPathname() . "</td><td>" . $octal_perms . "</tr>\n";
@@ -346,7 +346,11 @@ class DiagnosticsPanel implements IBarPanel {
                 if(function_exists('posix_getpwuid')) {
                     $out .= '<p>'.$this->getApacheUser().'</p><br />';
                 }
-                $out .= '<p><strong>Folders</strong></p>'.$this->filesystem.'<br /><p><strong>Files</strong> with permissions that don\'t match the '. wire('config')->chmodFile .' octal from the $config->chmodFile setting.<br />These may be fine as is - this is just meant to provide an easy means to identify any possible inconsistencies.</p>'.$this->incorrectPermissionFiles().'
+                $out .= '<p><strong>Folders</strong></p>'.$this->filesystem.'<br />';
+                if (substr(PHP_OS, 0, 3) != 'WIN') {
+                    $out .= '<p><strong>Files</strong> with permissions that don\'t match the '. wire('config')->chmodFile .' octal from the $config->chmodFile setting.<br />These may be fine as is - this is just meant to provide an easy means to identify any possible inconsistencies.</p>'.$this->incorrectPermissionFiles();
+                }
+            $out .= '
             </div><br />
             <a href="#" rel="#mysqlinfo" class="tracy-toggle tracy-collapsed">MySQL Info</a>
             <div id="mysqlinfo" class="tracy-collapsed">
