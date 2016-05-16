@@ -97,7 +97,7 @@ class DebugModePanel implements IBarPanel {
         }
         else {
             $out .= '<p><strong>ProcessWire Debug Mode is OFF</strong></p>
-            <p>With debug mode off, it is not possible to access the "Database Queries", "Timers", and "Autload" sections.';
+            <p>With debug mode off, it is not possible to access the "Database Queries", "Timers", and "Autoload" sections.';
         }
 
         $out .= '</p>';

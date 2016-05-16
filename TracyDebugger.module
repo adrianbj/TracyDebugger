@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 157,
+            'version' => 158,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -50,6 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $stickyPanels;
     public static $showPanels;
     public static $panelGenerationTime = array();
+    public static $hideInAdmin = array('validator', 'variables');
     public static $allPanels = array(
         'performance' => 'Performance',
         'processwireInfo' => 'ProcessWire Info',
@@ -124,7 +125,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public function init() {
 
-        if(isset($_GET['tracyValidating']) && $_GET['tracyValidating'] == 1) return;
+        if(isset(wire('input')->get->tracyValidating) && wire('input')->get->tracyValidating == 1) return;
+        if(isset(wire('input')->get->modal) && wire('input')->get->modal == 1) return;
 
         if($this->allowedTracyUsers()) {
             if ($this->data['coreBranch'] == 'master' && version_compare(phpversion(), '5.4.4', '>=')) {
@@ -166,6 +168,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         Debugger::$editor = $this->data['editor'];
 
+        Debugger::$editorMapping = array('/site/assets/cache/FileCompiler' => '');
+
         $logFolder = $this->wire('config')->paths->logs.'tracy';
         if(!is_dir($logFolder)) wireMkdir($logFolder);
 
@@ -188,7 +192,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     public function ready() {
 
-        if(isset($_GET['tracyValidating']) && $_GET['tracyValidating'] == 1) return;
+        if(isset(wire('input')->get->tracyValidating) && wire('input')->get->tracyValidating == 1) return;
+        if(isset(wire('input')->get->modal) && wire('input')->get->modal == 1) return;
 
         // if enabled unchecked, or user not allowed
         if(!$this->data['enabled'] || !$this->allowedTracyUsers()) return;
@@ -239,6 +244,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         foreach(static::$showPanels as $panel) {
+            if(wire('page')->template == 'admin' && in_array($panel, static::$hideInAdmin)) continue;
             $panelName = ucfirst($panel).'Panel';
             switch($panel) {
                 case 'performance':
@@ -256,19 +262,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 case 'phpInfo':
                 case 'outputMode':
                 case 'panelSelector':
+                case 'validator':
                     require_once __DIR__ . '/'.$panelName.'.inc';
                     Debugger::getBar()->addPanel(new $panelName);
                     break;
-                case 'validator':
-                    if(wire('page')->template != "admin") {
-                        require_once __DIR__ . '/'.$panelName.'.inc';
-                        Debugger::getBar()->addPanel(new $panelName);
-                    }
-                    break;
                 case 'variables':
-                    if(wire('config')->version >= 3
-                        && wire('page')->template != "admin"
-                        && wire('config')->templateCompile !== false) {
+                    if(wire('config')->version >= 3 && wire('config')->templateCompile !== false) {
                             require_once __DIR__ . '/'.$panelName.'.inc';
                             Debugger::getBar()->addPanel(new $panelName);
                     }

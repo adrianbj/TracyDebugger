@@ -20,12 +20,8 @@ class Helpers
 	 */
 	public static function editorLink($file, $line = NULL)
 	{
-
-		// PW TracyDebugger hack for returning real file, not compiled version
-		// TODO See if I can get the Nette guys to add a public location variable or similar so this can be replaced outside Tracy core
-		if(strpos($file, '/site/assets/cache/FileCompiler') !== false) $file = str_replace('/site/assets/cache/FileCompiler', '', $file);
-
-		if ($editor = self::editorUri($file, $line)) {
+		$file = strtr($origFile = $file, Debugger::$editorMapping);
+		if ($editor = self::editorUri($origFile, $line)) {
 			$file = strtr($file, '\\', '/');
 			if (preg_match('#(^[a-z]:)?/.{1,50}$#i', $file, $m) && strlen($file) > strlen($m[0])) {
 				$file = '...' . $m[0];
@@ -50,12 +46,8 @@ class Helpers
 	 */
 	public static function editorUri($file, $line = NULL)
 	{
-
-		// PW TracyDebugger hack for returning real file, not compiled version
-		// TODO See if I can get the Nette guys to add a public location variable or similar so this can be replaced outside Tracy core
-		if(strpos($file, '/site/assets/cache/FileCompiler') !== false) $file = str_replace('/site/assets/cache/FileCompiler', '', $file);
-
 		if (Debugger::$editor && $file && is_file($file)) {
+			$file = strtr($file, Debugger::$editorMapping);
 			return strtr(Debugger::$editor, ['%file' => rawurlencode($file), '%line' => $line ? (int) $line : 1]);
 		}
 	}
@@ -82,7 +74,7 @@ class Helpers
 		foreach ($trace as $i => $item) {
 			if (isset($item['function']) && $item['function'] === end($m)
 				&& isset($item['class']) === isset($m[1])
-				&& (!isset($item['class']) || $item['class'] === $m[0] || $m[0] === '*' || is_subclass_of($item['class'], $m[0]))
+				&& (!isset($item['class']) || $m[0] === '*' || is_a($item['class'], $m[0], TRUE))
 			) {
 				$index = $i;
 				return $item;
