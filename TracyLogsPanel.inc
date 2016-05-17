@@ -157,6 +157,7 @@ class TracyLogsPanel implements IBarPanel {
         $i=0;
         $logs = $this->getLogs();
         if($logs === null) return 'Tracy logs directory is not readable.';
+        if(count($logs) == 0) return 'There are no logs in the Tracy logs directory.';
         foreach($logs as $log) {
             $x=99;
             foreach($this->getLines($log['name'], array("limit" => \TracyDebugger::getDataValue("numLogEntries"))) as $entry) {
