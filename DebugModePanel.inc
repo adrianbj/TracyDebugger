@@ -139,21 +139,18 @@ class DebugModePanel implements IBarPanel {
         // API Variables
         $apiVars_oc = 0;
         $apiVariables = $this->sectionHeader(array('Name', 'Class'));
-        if($PwVersion >= 3) {
-            $pwVars = wire('fuel');
-        }
-        else {
-            $pwVars = wire();
-        }
-        foreach($pwVars as $key => $value) {
-            if(!is_object($value)) continue;
-            $apiVars[$key] = $value;
-            $apiVars_oc++;
-        }
-        ksort($apiVars);
-        foreach($apiVars as $key => $value) {
-            $apiVariables .= "\n<tr><td><a href='https://processwire.com/api/ref/$key/'>\$$key</a></td>" .
-                "<td>" . get_class($value) . "</td></tr>";
+        $pwVars = wire('fuel');
+        if(is_object($pwVars)) {
+            foreach($pwVars as $key => $value) {
+                if(!is_object($value)) continue;
+                $apiVars[$key] = $value;
+                $apiVars_oc++;
+            }
+            ksort($apiVars);
+            foreach($apiVars as $key => $value) {
+                $apiVariables .= "\n<tr><td><a href='https://processwire.com/api/ref/$key/'>\$$key</a></td>" .
+                    "<td>" . get_class($value) . "</td></tr>";
+            }
         }
         $apiVariables .= $sectionEnd;
 
