@@ -142,6 +142,7 @@
 			+ '<body id="tracy-debug">'
 		);
 		doc.body.innerHTML = '<div class="tracy-panel tracy-mode-window" id="' + this.elem.id + '">' + this.elem.innerHTML + '<\/div>';
+		evalScripts(doc.body, win);
 		if (this.elem.querySelector('h1')) {
 			doc.title = this.elem.querySelector('h1').innerHTML;
 		}
@@ -286,15 +287,15 @@
 
 	Debug.panels = {};
 
-	Debug.init = function(content, dumpData) {
-		if (!document.documentElement.classList) {
-			console.log('Warning: Tracy requires IE 10+');
+	Debug.init = function(content, dumps) {
+		if (!document.documentElement.dataset) {
+			console.log('Warning: Tracy requires IE 11+');
 			return;
 		}
 
 		layer.innerHTML = content;
 		evalScripts(layer);
-		Tracy.Dumper.init(dumpData);
+		Tracy.Dumper.init(dumps);
 		layer.style.display = 'block';
 		Debug.bar.init();
 
@@ -307,7 +308,7 @@
 		Debug.captureAjax();
 	};
 
-	Debug.loadAjax = function(content, dumpData) {
+	Debug.loadAjax = function(content, dumps) {
 		forEach(layer.querySelectorAll('.tracy-panel.tracy-ajax'), function(panel) {
 			Debug.panels[panel.id].savePosition();
 			delete Debug.panels[panel.id];
@@ -331,7 +332,7 @@
 			}
 		});
 
-		Tracy.Dumper.init(dumpData, layer);
+		Tracy.Dumper.init(dumps, layer);
 		Debug.bar.initTabs(ajaxBar);
 	};
 
@@ -353,13 +354,22 @@
 	};
 
 	Debug.captureAjax = function() {
-		var old = XMLHttpRequest.prototype.getAllResponseHeaders;
-		XMLHttpRequest.prototype.getAllResponseHeaders = function() {
-			if (this.readyState === 4 && document.cookie.match(/tracy-ajax=1/)) {
-				document.cookie = 'tracy-ajax=; path=/';
-				Debug.loadScript('?_tracy_bar=content.ajax&XDEBUG_SESSION_STOP=1&v=' + Math.random());
-			}
-			return old.call(this);
+		if (!layer.dataset.id) {
+			return;
+		}
+		var oldSend = XMLHttpRequest.prototype.send;
+		XMLHttpRequest.prototype.send = function() {
+			var oldHandler = this.onreadystatechange;
+			this.onreadystatechange = function() {
+				if (this.readyState === 4 /*done*/ && this.getResponseHeader('X-Tracy-Ajax')) {
+					Debug.loadScript('?_tracy_bar=content-ajax.' + layer.dataset.id + '&XDEBUG_SESSION_STOP=1&v=' + Math.random());
+				}
+				if (oldHandler) {
+					oldHandler.call(this);
+				}
+			};
+			this.setRequestHeader('X-Tracy-Ajax', layer.dataset.id);
+			oldSend.apply(this, arguments);
 		}
 	};
 
@@ -372,13 +382,14 @@
 		document.documentElement.appendChild(Debug.scriptElem);
 	};
 
-	function evalScripts(elem) {
+	function evalScripts(elem, scope) {
+		scope = scope || window;
 		forEach(elem.getElementsByTagName('script'), function(script) {
-			if (!script.hasAttribute('type') || script.type === 'text/javascript' || script.type === 'application/javascript') {
-				(window.execScript || function (data) {
-					window['eval'].call(window, data);
+			if ((!script.hasAttribute('type') || script.type === 'text/javascript' || script.type === 'application/javascript') && !script.tracyEvaluated) {
+				(scope.execScript || function (data) {
+					scope['eval'].call(scope, data);
 				})(script.innerHTML);
-				script.parentNode.removeChild(script);
+				script.tracyEvaluated = true;
 			}
 		});
 	};

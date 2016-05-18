@@ -137,6 +137,7 @@ class DebugModePanel implements IBarPanel {
         $pagesLoaded .= $sectionEnd;
 
         // API Variables
+        // TODO check/fix for PW 2.x
         $apiVars_oc = 0;
         $apiVariables = $this->sectionHeader(array('Name', 'Class'));
         $pwVars = wire('fuel');
