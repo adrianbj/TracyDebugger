@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 166,
+            'version' => 167,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -275,6 +275,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     break;
                 case 'templatePath':
                     require_once __DIR__ . '/'.$panelName.'.inc';
+                    static::$originalTemplatePath = wire('page')->template->filename;
                     $templatePathOnce = $this->input->cookie->tracyTemplatePathOnce;
                     $templatePathSticky = $this->input->cookie->tracyTemplatePathSticky;
                     if(isset($this->input->cookie->tracyTemplatePathOnce)) {
@@ -289,8 +290,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                         static::$templatePath = false;
                     }
                     if(static::$templatePath !== false) {
-                        static::$originalTemplatePath = wire('page')->template->filename;
-                        wire('page')->template->filename = static::$temporaryTemplatePath = str_replace('.php','-'.static::$templatePath.'.php', wire('page')->template->filename);
+                        wire('page')->template->filename = static::$temporaryTemplatePath = static::$templatePath;
                     }
                     Debugger::getBar()->addPanel(new $panelName);
                     break;

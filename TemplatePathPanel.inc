@@ -33,40 +33,39 @@ class TemplatePathPanel implements IBarPanel {
 
     public function getPanel() {
 
-        $defaultTickIcon = '<span title="Active via Sticky">
+        $defaultTickIcon = '<span title="Default Template File">
                                 <svg title="default" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 191.667 191.667" style="enable-background:new 0 0 191.667 191.667;" xml:space="preserve" width="12px" height="12px">
                                     <path d="M95.833,0C42.991,0,0,42.99,0,95.833s42.991,95.834,95.833,95.834s95.833-42.991,95.833-95.834S148.676,0,95.833,0z   M150.862,79.646l-60.207,60.207c-2.56,2.56-5.963,3.969-9.583,3.969c-3.62,0-7.023-1.409-9.583-3.969l-30.685-30.685  c-2.56-2.56-3.97-5.963-3.97-9.583c0-3.621,1.41-7.024,3.97-9.584c2.559-2.56,5.962-3.97,9.583-3.97c3.62,0,7.024,1.41,9.583,3.971  l21.101,21.1l50.623-50.623c2.56-2.56,5.963-3.969,9.583-3.969c3.62,0,7.023,1.409,9.583,3.969  C156.146,65.765,156.146,74.362,150.862,79.646z" fill="#009900" />
                                 </svg>
                             </span>';
-        $onceIcon = '<span title="Active via Once">
+        $onceIcon = '<span title="Template Changed Once">
                         <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="12px" height="12px" viewBox="0 0 405.07 405.07" style="enable-background:new 0 0 405.07 405.07;" xml:space="preserve">
                             <path d="M202.531,0C90.676,0,0,90.678,0,202.535C0,314.393,90.676,405.07,202.531,405.07c111.859,0,202.539-90.678,202.539-202.535   C405.07,90.678,314.391,0,202.531,0z M243.192,312.198c0,8.284-6.716,15-15,15h-27.629c-8.284,0-15-6.716-15-15v-168.35   l-17.1,9.231c-4.069,2.197-8.924,2.393-13.155,0.536c-4.233-1.858-7.373-5.565-8.51-10.046l-5.459-21.518   c-1.695-6.683,1.383-13.66,7.461-16.913l47.626-25.491c2.177-1.166,4.608-1.775,7.078-1.775h24.688c8.284,0,15,6.716,15,15V312.198   z" fill="#FF9933" />
                         </svg>
                     </span>';
 
-        $notActiveIcon = '<span title="Not Active or File Not Available, using default: '.pathinfo(wire('page')->template->filename, PATHINFO_BASENAME).'">
-                            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 27.965 27.965" style="enable-background:new 0 0 27.965 27.965;" xml:space="preserve" width="12px" height="12px">
-                                <path d="M13.98,0C6.259,0,0,6.261,0,13.983c0,7.721,6.259,13.982,13.98,13.982c7.725,0,13.985-6.262,13.985-13.982    C27.965,6.261,21.705,0,13.98,0z M19.992,17.769l-2.227,2.224c0,0-3.523-3.78-3.786-3.78c-0.259,0-3.783,3.78-3.783,3.78    l-2.228-2.224c0,0,3.784-3.472,3.784-3.781c0-0.314-3.784-3.787-3.784-3.787l2.228-2.229c0,0,3.553,3.782,3.783,3.782    c0.232,0,3.786-3.782,3.786-3.782l2.227,2.229c0,0-3.785,3.523-3.785,3.787C16.207,14.239,19.992,17.769,19.992,17.769z" fill="#CD1818"/>
-                            </svg>
-                        </span>';
-
         $templateIcon = '';
-        if(\TracyDebugger::$templatePath && \TracyDebugger::$originalTemplatePath !== wire('page')->template->filename && file_exists(\TracyDebugger::$temporaryTemplatePath)) {
+        if(\TracyDebugger::$templatePath && \TracyDebugger::$originalTemplatePath !== wire('page')->template->filename) {
             if(isset(wire('input')->cookie->tracyTemplatePathSticky) && wire('input')->cookie->tracyTemplatePathSticky == \TracyDebugger::$templatePath) {
-                $templateIcon = $defaultTickIcon;
+                $templateIcon = '';
             }
             else {
                 $templateIcon = $onceIcon;
             }
         }
         else {
-            $templateIcon = $notActiveIcon;
+            $templateIcon = $defaultTickIcon;
         }
 
         $out = '
         <script>
+            function getTracyTemplatePath() {
+                var e = document.getElementById("tracyTemplatePath");
+                return e.options[e.selectedIndex].value;
+            }
+
             function changeTemplatePath(type) {
-                document.cookie = "tracyTemplatePath"+type+"="+document.getElementById(\'tracyTemplatePath\').innerHTML+"; expires=0; path=/";
+                document.cookie = "tracyTemplatePath"+type+"="+getTracyTemplatePath()+"; expires=0; path=/";
                 location.reload();
             }
 
@@ -98,31 +97,26 @@ class TemplatePathPanel implements IBarPanel {
                 resize: horizontal;
                 width: auto;
             }
-            #flex {
-                display: flex;
-                display: -webkit-flex;
-                font-size: 16px !important;
-            }
-            #tracyTemplatePath {
-                min-width: 0px;
-                height: 20px;
-                padding: 0;
-                outline:none;
-                font-weight: bold !important;
-                background: #EDEDED !important;
-            }
         </style>';
 
 
         $out .= '<h1>'.$this->icon.' Template Path</h1>
         <div class="tracy-inner">
             <fieldset>
-                <legend>Temporarily use template files with this suffix.<br />eg. '.wire('page')->template->name.'-dev.php.<br /><br />Click to change from the "-dev" option.</legend><br />';
+                <legend>Temporarily use a template file with a suffix.<br />eg. '.wire('page')->template->name.'-dev.php.<br /><br />Select an alternate from the list.<br />Create the file in your templates directory first.</legend><br />';
 
                     $out .= '
-                    <div id="flex">' .
-                        wire('page')->template->name.'-<div id="tracyTemplatePath" contenteditable="true" spellcheck="false">'.(\TracyDebugger::$templatePath ? \TracyDebugger::$templatePath : 'dev').'</div>.php&nbsp;' . $templateIcon . '<br /><br />
-                    </div>
+                    <select id="tracyTemplatePath">';
+                        foreach (new \DirectoryIterator(wire('config')->paths->templates) as $file) {
+                            if($file->isFile()) {
+                                $fileName = pathinfo($file, PATHINFO_FILENAME);
+                                if(strpos($fileName, pathinfo(\TracyDebugger::$originalTemplatePath, PATHINFO_FILENAME)) !== false) {
+                                    $out .= '<option value="'.$file.'"'.(pathinfo(wire('page')->template->filename, PATHINFO_BASENAME) == $file ? 'selected="selected"' : '').'>'.$file.'</option>';
+                                }
+                            }
+                        }
+                    $out .= '
+                    </select>' . $templateIcon . '<br /><br />
                     <input type="submit" onclick="changeTemplatePath(\'Once\')" value="Once" />&nbsp;
                     <input type="submit" onclick="changeTemplatePath(\'Sticky\')" value="Sticky" />&nbsp;
                     <input type="submit" onclick="resetTemplatePath()" value="Reset" />
