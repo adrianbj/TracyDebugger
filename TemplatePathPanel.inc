@@ -35,16 +35,6 @@ class TemplatePathPanel implements IBarPanel {
 
         $out = '
         <script>
-            function getSelectedTracyTemplatePath() {
-                var selchbox = [];
-                var inpfields = document.getElementsByName("selectedPanels[]");
-                var nr_inpfields = inpfields.length;
-                for(var i=0; i<nr_inpfields; i++) {
-                    if(inpfields[i].checked == true) selchbox.push(inpfields[i].value);
-                }
-                return selchbox;
-            }
-
             function changeTemplatePath(type) {
                 document.cookie = "tracyTemplatePath"+type+"="+document.getElementById(\'tracyTemplatePath\').value+"; expires=0; path=/";
                 location.reload();
@@ -55,9 +45,6 @@ class TemplatePathPanel implements IBarPanel {
                 document.cookie = "tracyTemplatePathOnce=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
                 location.reload();
             }
-
-
-
         </script>
 
 
@@ -86,7 +73,7 @@ class TemplatePathPanel implements IBarPanel {
                 <legend>Temporarily use template files with this suffix.<br />eg. '.wire('page')->template->name.'-dev.php.<br /><br />Click to change from the "-dev" option.</legend><br />';
 
                     $out .= '
-                    -<input type="text" style="font-size:15px; background:#ECECEC" id="tracyTemplatePath" placeholder="dev" value="'.(\TracyDebugger::$templatePath ? \TracyDebugger::$templatePath : 'dev').'" /><br /><br />
+                    -<input type="text" style="display:inline; font-size:15px; background:#ECECEC; height:18px; width:150px;" id="tracyTemplatePath" placeholder="dev" value="'.(\TracyDebugger::$templatePath ? \TracyDebugger::$templatePath : 'dev').'" /><br /><br />
                     <input type="submit" onclick="changeTemplatePath(\'Once\')" value="Once" />&nbsp;
                     <input type="submit" onclick="changeTemplatePath(\'Sticky\')" value="Sticky" />&nbsp;
                     <input type="submit" onclick="resetTemplatePath()" value="Reset" />
