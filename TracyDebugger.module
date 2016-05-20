@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 162,
+            'version' => 163,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -49,6 +49,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $oncePanels;
     public static $stickyPanels;
     public static $showPanels;
+    public static $templatePath;
     public static $panelGenerationTime = array();
     public static $hideInAdmin = array('validator', 'variables');
     public static $allPanels = array(
@@ -64,6 +65,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'users' => 'Users',
         'outputMode' => 'Output Mode',
         'phpInfo' => 'PHP Info',
+        'templatePath' => 'Template Path',
         'panelSelector' => 'Panel Selector'
     );
 
@@ -226,6 +228,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
 
+        if(Debugger::$showBar == false) return;
+
         require_once __DIR__ . '/CssPanel.inc';
         Debugger::getBar()->addPanel(new CssPanel);
 
@@ -265,6 +269,24 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 case 'panelSelector':
                 case 'validator':
                     require_once __DIR__ . '/'.$panelName.'.inc';
+                    Debugger::getBar()->addPanel(new $panelName);
+                    break;
+                case 'templatePath':
+                    require_once __DIR__ . '/'.$panelName.'.inc';
+                    $templatePathOnce = $this->input->cookie->tracyTemplatePathOnce;
+                    $templatePathSticky = $this->input->cookie->tracyTemplatePathSticky;
+                    if(isset($this->input->cookie->tracyTemplatePathOnce)) {
+                        static::$templatePath = $templatePathOnce;
+                        unset($this->input->cookie->tracyTemplatePathOnce);
+                        setcookie("tracyTemplatePathOnce", "", time()-3600, '/');
+                    }
+                    elseif(isset($this->input->cookie->tracyTemplatePathSticky)) {
+                        static::$templatePath = $templatePathSticky;
+                    }
+                    else {
+                        static::$templatePath = false;
+                    }
+                    if(static::$templatePath !== false) wire('page')->template->filename = str_replace('.php','-'.static::$templatePath.'.php', wire('page')->template->filename);
                     Debugger::getBar()->addPanel(new $panelName);
                     break;
                 case 'variables':

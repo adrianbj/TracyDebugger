@@ -73,7 +73,7 @@ class PanelSelectorPanel implements IBarPanel {
                 location.reload();
             }
 
-             function toggleAllTracyPanels(ele) {
+            function toggleAllTracyPanels(ele) {
                 var checkboxes = document.getElementsByName("selectedPanels[]");
                 if (ele.checked) {
                     for (var i = 0; i < checkboxes.length; i++) {

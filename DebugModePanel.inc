@@ -142,6 +142,7 @@ class DebugModePanel implements IBarPanel {
         $apiVariables = $this->sectionHeader(array('Name', 'Class'));
         $pwVars = wire('fuel');
         if(is_object($pwVars)) {
+            $apiVars = array();
             foreach($pwVars as $key => $value) {
                 if(!is_object($value)) continue;
                 $apiVars[$key] = $value;

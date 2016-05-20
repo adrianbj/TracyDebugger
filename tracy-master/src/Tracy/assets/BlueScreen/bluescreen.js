@@ -56,6 +56,7 @@
 		ajaxBs = document.getElementById('tracy-bs');
 		Tracy.Dumper.init(dumps, ajaxBs);
 		BlueScreen.init(true);
+		window.scrollTo(0, 0);
 	};
 
 })();

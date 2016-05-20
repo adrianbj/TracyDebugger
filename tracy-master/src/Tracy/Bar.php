@@ -152,6 +152,7 @@ class Bar
 			header('Content-Type: text/css');
 			header('Cache-Control: max-age=864000');
 			header_remove('Pragma');
+			header_remove('Set-Cookie');
 			readfile(__DIR__ . '/assets/Bar/bar.css');
 			readfile(__DIR__ . '/assets/Toggle/toggle.css');
 			readfile(__DIR__ . '/assets/Dumper/dumper.css');
@@ -162,6 +163,7 @@ class Bar
 			header('Content-Type: text/javascript');
 			header('Cache-Control: max-age=864000');
 			header_remove('Pragma');
+			header_remove('Set-Cookie');
 			readfile(__DIR__ . '/assets/Bar/bar.js');
 			readfile(__DIR__ . '/assets/Toggle/toggle.js');
 			readfile(__DIR__ . '/assets/Dumper/dumper.js');
@@ -185,6 +187,7 @@ class Bar
 			$session = & $_SESSION['_tracy']['bar'][$m[2] . $m[1]];
 			header('Content-Type: text/javascript');
 			header('Cache-Control: max-age=60');
+			header_remove('Set-Cookie');
 			if ($session) {
 				$method = $m[1] ? 'loadAjax' : 'init';
 				echo "Tracy.Debug.$method(", json_encode($session['content']), ', ', json_encode($session['dumps']), ');';
