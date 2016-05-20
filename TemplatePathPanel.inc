@@ -51,7 +51,7 @@ class TemplatePathPanel implements IBarPanel {
                         </span>';
 
         $templateIcon = '';
-        if(\TracyDebugger::$templatePath && file_exists(\TracyDebugger::$templatePath)) {
+        if(\TracyDebugger::$templatePath && \TracyDebugger::$originalTemplatePath !== wire('page')->template->filename && file_exists(\TracyDebugger::$temporaryTemplatePath)) {
             if(isset(wire('input')->cookie->tracyTemplatePathSticky) && wire('input')->cookie->tracyTemplatePathSticky == \TracyDebugger::$templatePath) {
                 $templateIcon = $defaultTickIcon;
             }

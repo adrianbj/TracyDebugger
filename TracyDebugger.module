@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 165,
+            'version' => 166,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -50,6 +50,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $stickyPanels;
     public static $showPanels;
     public static $templatePath;
+    public static $originalTemplatePath;
+    public static $temporaryTemplatePath;
     public static $panelGenerationTime = array();
     public static $hideInAdmin = array('validator', 'variables');
     public static $allPanels = array(
@@ -286,7 +288,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     else {
                         static::$templatePath = false;
                     }
-                    if(static::$templatePath !== false) wire('page')->template->filename = str_replace('.php','-'.static::$templatePath.'.php', wire('page')->template->filename);
+                    if(static::$templatePath !== false) {
+                        static::$originalTemplatePath = wire('page')->template->filename;
+                        wire('page')->template->filename = static::$temporaryTemplatePath = str_replace('.php','-'.static::$templatePath.'.php', wire('page')->template->filename);
+                    }
                     Debugger::getBar()->addPanel(new $panelName);
                     break;
                 case 'variables':
