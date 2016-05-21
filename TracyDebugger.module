@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 166,
+            'version' => 167,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -50,6 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $stickyPanels;
     public static $showPanels;
     public static $templatePath;
+    public static $templatePathOnce;
     public static $originalTemplatePath;
     public static $temporaryTemplatePath;
     public static $panelGenerationTime = array();
@@ -275,22 +276,23 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     break;
                 case 'templatePath':
                     require_once __DIR__ . '/'.$panelName.'.inc';
-                    $templatePathOnce = $this->input->cookie->tracyTemplatePathOnce;
-                    $templatePathSticky = $this->input->cookie->tracyTemplatePathSticky;
-                    if(isset($this->input->cookie->tracyTemplatePathOnce)) {
-                        static::$templatePath = $templatePathOnce;
+                    static::$templatePathOnce = $this->findInCookie($this->input->cookie->tracyTemplatePathOnce);
+                    $templatePathSticky = $this->findInCookie($this->input->cookie->tracyTemplatePathSticky);
+                    if(static::$templatePathOnce) {
+                        static::$templatePath = static::$templatePathOnce;
                         unset($this->input->cookie->tracyTemplatePathOnce);
-                        setcookie("tracyTemplatePathOnce", "", time()-3600, '/');
+                        setcookie("tracyTemplatePathOnce", "", time()-3600, "/");
                     }
-                    elseif(isset($this->input->cookie->tracyTemplatePathSticky)) {
+                    elseif($templatePathSticky) {
                         static::$templatePath = $templatePathSticky;
                     }
                     else {
-                        static::$templatePath = false;
+                        static::$templatePath = '';
                     }
-                    if(static::$templatePath !== false) {
-                        static::$originalTemplatePath = wire('page')->template->filename;
-                        wire('page')->template->filename = static::$temporaryTemplatePath = str_replace('.php','-'.static::$templatePath.'.php', wire('page')->template->filename);
+                    $tempFileName = pathinfo(static::$templatePath, PATHINFO_FILENAME);
+                    static::$originalTemplatePath = wire('page')->template->filename;
+                    if(static::$templatePath != '') {
+                        wire('page')->template->filename = static::$templatePath;
                     }
                     Debugger::getBar()->addPanel(new $panelName);
                     break;
@@ -302,6 +304,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     break;
             }
         }
+    }
+
+    public function findInCookie($cookie) {
+        $templateEntries = explode(',', $cookie);
+        foreach($templateEntries as $templateEntry) {
+            $arr = explode("|", $templateEntry, 2);
+            if($arr[0] == wire('page')->template->name) {
+                return $arr[1];
+                break;
+            }
+        }
+        return false;
     }
 
     public function insertDebugStatements($event) {
