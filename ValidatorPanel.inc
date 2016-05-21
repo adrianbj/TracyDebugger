@@ -40,7 +40,6 @@ class ValidatorPanel implements IBarPanel {
 
         // determine which version of the validator to use
         $this->validatorUrl = strpos($pageHtml, '<!DOCTYPE html>') !== false ? "https://html5.validator.nu/" : "https://validator.nu/";
-
         $this->validationUrl = $this->validatorUrl . "?doc=".wire('page')->httpUrl."&out=html&showimagereport=yes&showsource=yes";
 
         // get results from validator and convert any entities to UTF-8
@@ -50,25 +49,13 @@ class ValidatorPanel implements IBarPanel {
         $showPanelLabels = \TracyDebugger::getDataValue('showPanelLabels');
 
         if($this->result) {
-            // remove existing h1 and form for adjusting validation
             $doc = new DOMDocument();
             $doc->loadHTML($this->result);
-            $element = $doc->getElementsByTagName('form')->item(0);
-            $element->parentNode->removeChild($element);
-            $element = $doc->getElementsByTagName('h1')->item(0);
-            $element->parentNode->removeChild($element);
-            $element = $doc->getElementsByTagName('link')->item(0);
-            $element->parentNode->removeChild($element);
-            $element = $doc->getElementsByTagName('link')->item(0);
-            $element->parentNode->removeChild($element);
-            $element = $doc->getElementsByTagName('title')->item(0);
-            $element->parentNode->removeChild($element);
-            $this->result = $doc->saveHTML();
-
-            //strip out <html><body> etc at start
-            $this->result = strstr($this->result, '<ol>');
-            //strip out unnecessary code at end, including </body></html>
-            $this->result = strstr($this->result, '<hr><p><a href="https://about.validator.nu/">', true);
+            $results = $doc->getElementsByTagName('ol');
+            if ($results && 0<$results->length) {
+                $results = $results->item(0);
+                $this->result = $doc->savehtml($results);
+            }
         }
 
         $errors = (!$this->result ||
