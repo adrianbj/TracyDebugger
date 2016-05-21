@@ -25,10 +25,6 @@ class CssPanel implements IBarPanel {
                     text-transform: none !important;
                 }
 
-                .tracy-panel {
-                    bottom: 25px !important;
-                }
-
                 .tracy-panel h2 {
                     font-size: 20px !important;
                 }
