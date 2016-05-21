@@ -11,7 +11,9 @@ class ValidatorPanel implements IBarPanel {
     protected $icon;
     protected $color;
     protected $label;
-    protected $result;
+    protected $rawResult;
+    protected $filteredResult;
+    protected $message;
     protected $resultLabel;
     protected $pageUrl;
     protected $validationUrl;
@@ -39,29 +41,42 @@ class ValidatorPanel implements IBarPanel {
         //}
 
         // determine which version of the validator to use
-        $this->validatorUrl = strpos($pageHtml, '<!DOCTYPE html>') !== false ? "https://html5.validator.nu/" : "https://validator.nu/";
+        //$this->validatorUrl = strpos($pageHtml, '<!DOCTYPE html>') !== false ? "https://html5.validator.nu/" : "https://validator.nu/";
+        $this->validatorUrl = "https://validator.nu/";
         $this->validationUrl = $this->validatorUrl . "?doc=".wire('page')->httpUrl."&out=html&showimagereport=yes&showsource=yes";
 
         // get results from validator and convert any entities to UTF-8
-        $this->result = $http->post($this->validatorUrl, $pageHtml);
-        $this->result = mb_convert_encoding($this->result, 'HTML-ENTITIES', "UTF-8");
+        $this->rawResult = $http->post($this->validatorUrl, $pageHtml);
+        $this->rawResult = mb_convert_encoding($this->rawResult, 'HTML-ENTITIES', "UTF-8");
 
         $showPanelLabels = \TracyDebugger::getDataValue('showPanelLabels');
 
-        if($this->result) {
+        if($this->rawResult) {
             $doc = new DOMDocument();
-            $doc->loadHTML($this->result);
-            $results = $doc->getElementsByTagName('ol');
-            if ($results && 0<$results->length) {
-                $results = $results->item(0);
-                $this->result = $doc->savehtml($results);
+            $doc->loadHTML($this->rawResult);
+
+            $xpath = new DOMXPath($doc);
+            $success = $xpath->query("//*[@class='success']");
+            $failure = $xpath->query("//*[@class='failure']");
+
+            if ($success->length > 0) {
+                $this->message = $success->item(0)->nodeValue;
+            }
+            if ($failure->length > 0) {
+                $this->message = $failure->item(0)->nodeValue;
+            }
+
+            $resultsList = $doc->getElementsByTagName('ol');
+            if($resultsList && $resultsList->length > 0) {
+                $resultsList = $resultsList->item(0);
+                $this->filteredResult = $doc->savehtml($resultsList);
             }
         }
 
-        $errors = (!$this->result ||
-            strpos($this->result, 'class="error"') !== false ||
-            strpos($this->result, 'class="failure"') !== false ||
-            strpos($this->result, 'Connection refused') !== false) ? true : false;
+        $errors = (!$this->rawResult ||
+            strpos($this->rawResult, 'class="error"') !== false ||
+            strpos($this->rawResult, 'class="failure"') !== false ||
+            strpos($this->rawResult, 'Connection refused') !== false) ? true : false;
 
         if($errors) {
             $this->color = '#CD1818';
@@ -71,7 +86,7 @@ class ValidatorPanel implements IBarPanel {
             $this->resultLabel = 'Validation Errors';
             $this->label = $showPanelLabels ? $this->resultLabel : '';
         }
-        elseif(strpos($this->result, 'class="warning"') !== false || strpos($this->result, 'class="info"') !== false || strpos($this->result, 'class="info warning"') !== false) {
+        elseif(strpos($this->rawResult, 'class="warning"') !== false || strpos($this->rawResult, 'class="info"') !== false || strpos($this->rawResult, 'class="info warning"') !== false) {
             $this->color = '#FF9933';
             $this->icon = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 483.537 483.537" style="enable-background:new 0 0 483.537 483.537;" xml:space="preserve" width="16px" height="16px">
                             <path d="M479.963,425.047L269.051,29.854c-5.259-9.88-15.565-16.081-26.782-16.081h-0.03     c-11.217,0-21.492,6.171-26.782,16.051L3.603,425.016c-5.046,9.485-4.773,20.854,0.699,29.974     c5.502,9.15,15.413,14.774,26.083,14.774H453.12c10.701,0,20.58-5.594,26.083-14.774     C484.705,445.84,484.979,434.471,479.963,425.047z M242.239,408.965c-16.781,0-30.399-13.619-30.399-30.399     c0-16.78,13.619-30.399,30.399-30.399c16.75,0,30.399,13.619,30.399,30.399C272.638,395.346,259.02,408.965,242.239,408.965z      M272.669,287.854c0,16.811-13.649,30.399-30.399,30.399c-16.781,0-30.399-13.589-30.399-30.399V166.256     c0-16.781,13.619-30.399,30.399-30.399c16.75,0,30.399,13.619,30.399,30.399V287.854z" fill="'.($showPanelLabels ? '#FFFFFF' : $this->color).'"/>
@@ -490,8 +505,8 @@ class ValidatorPanel implements IBarPanel {
             </style>
             <br />';
 
-        if($this->result) {
-            $out .= '<div id="validatorBody" style="width:934px"><h2><a href="'.$this->validationUrl.'">Results for '.str_replace('?tracyValidating=1', '', $this->pageUrl).' at '.$this->validatorUrl.'</a></h2>'.$this->result.'</div>';
+        if($this->rawResult) {
+            $out .= '<div id="validatorBody" style="width:934px"><h2><a href="'.$this->validationUrl.'">Results for '.str_replace('?tracyValidating=1', '', $this->pageUrl).' at '.$this->validatorUrl.'</a></h2>'.$this->message.$this->filteredResult.'</div>';
         }
         else {
             $out .= '<div id="validatorBody" style="width:934px"><h2>Sorry, but there was a problem accessing the validation server at '.$this->validatorUrl.'</h2></div>';
