@@ -112,11 +112,6 @@ class PanelSelectorPanel implements IBarPanel {
             }
         </style>';
 
-        $defaultTickIcon = '<span title="Enabled in module settings">
-                                <svg title="default" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 191.667 191.667" style="enable-background:new 0 0 191.667 191.667;" xml:space="preserve" width="12px" height="12px">
-                                    <path d="M95.833,0C42.991,0,0,42.99,0,95.833s42.991,95.834,95.833,95.834s95.833-42.991,95.833-95.834S148.676,0,95.833,0z   M150.862,79.646l-60.207,60.207c-2.56,2.56-5.963,3.969-9.583,3.969c-3.62,0-7.023-1.409-9.583-3.969l-30.685-30.685  c-2.56-2.56-3.97-5.963-3.97-9.583c0-3.621,1.41-7.024,3.97-9.584c2.559-2.56,5.962-3.97,9.583-3.97c3.62,0,7.024,1.41,9.583,3.971  l21.101,21.1l50.623-50.623c2.56-2.56,5.963-3.969,9.583-3.969c3.62,0,7.023,1.409,9.583,3.969  C156.146,65.765,156.146,74.362,150.862,79.646z" fill="#009900" />
-                                </svg>
-                            </span>';
         $onceIcon = '<span title="Status changed Once">
                         <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="12px" height="12px" viewBox="0 0 405.07 405.07" style="enable-background:new 0 0 405.07 405.07;" xml:space="preserve">
                             <path d="M202.531,0C90.676,0,0,90.678,0,202.535C0,314.393,90.676,405.07,202.531,405.07c111.859,0,202.539-90.678,202.539-202.535   C405.07,90.678,314.391,0,202.531,0z M243.192,312.198c0,8.284-6.716,15-15,15h-27.629c-8.284,0-15-6.716-15-15v-168.35   l-17.1,9.231c-4.069,2.197-8.924,2.393-13.155,0.536c-4.233-1.858-7.373-5.565-8.51-10.046l-5.459-21.518   c-1.695-6.683,1.383-13.66,7.461-16.913l47.626-25.491c2.177-1.166,4.608-1.775,7.078-1.775h24.688c8.284,0,15,6.716,15,15V312.198   z" fill="#FF9933" />
@@ -126,16 +121,17 @@ class PanelSelectorPanel implements IBarPanel {
         $out .= '<h1>'.$this->icon.' Panel Selector</h1>
         <div class="tracy-inner">
             <fieldset>
-                <legend>Temporarily enable/disable panels</legend><br />';
+                <legend>Temporarily enable/disable panels<br />*Panels with asterisk are on by default</legend><br />';
                     $defaultPanels = \TracyDebugger::getDataValue('showPanels');
                     $showPanels = \TracyDebugger::$showPanels;
                     $out .= '<label><input type="checkbox" onchange="toggleAllTracyPanels(this)" ' . (count($showPanels) == count(\TracyDebugger::$allPanels) ? 'checked="checked"' : '') . ' /> Toggle All</label><br />';
                     foreach(\TracyDebugger::$allPanels as $name => $label) {
                         $seconds = isset(\TracyDebugger::$panelGenerationTime[$name]) ? \TracyDebugger::$panelGenerationTime[$name] : '';
                         $out .= '
-                            <label style="white-space: nowrap;'.(wire('page')->template == 'admin' && in_array($name, \TracyDebugger::$hideInAdmin) ? ' visibility:hidden;position: absolute; left: -999em;' : '').'">
+                            <label style="white-space: nowrap;'.(wire('page')->template == 'admin' && in_array($name, \TracyDebugger::$hideInAdmin) ? ' visibility:hidden;position: absolute; left: -999em;' : '').'"> ' .
+                                ($this->isOnce($name, $defaultPanels) ? $onceIcon .'&nbsp;' : '<span style="display:inline-block;width:18px">&nbsp;</span>') . '
                                 <input type="checkbox" name="selectedPanels[]" ' . ($name == 'panelSelector' ? 'disabled="disabled"' : '') . ' value="'.$name.'" ' . (in_array($name, $showPanels) ? 'checked="checked"' : '') . ' />
-                                ' . $label . ($seconds ? '&nbsp;(' . round($seconds, 4) . 's)&nbsp;' : '') . (in_array($name, $defaultPanels) ? '&nbsp;'.$defaultTickIcon : '') . '&nbsp;' . ($this->isOnce($name, $defaultPanels) ? '&nbsp;'.$onceIcon : '') . '
+                                ' . $label . ($seconds ? '&nbsp;(' . round($seconds, 4) . 's)' : '') . (in_array($name, $defaultPanels) ? '&nbsp;<strong>*</strong>' : '') . '
                             </label>';
                     }
                     $out .= '<br />

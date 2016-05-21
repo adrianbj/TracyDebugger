@@ -18,14 +18,15 @@ class CssPanel implements IBarPanel {
                 #tracy-debug input[type="radio"] {
                     width: 12px;
                     height: 12px;
-                    position: static
+                    position: static;
+                }
+
+                #tracy-debug input[type="submit"] {
+                    text-transform: none !important;
                 }
 
                 .tracy-panel {
-                    height: 675px !important;
-                    max-height: 90% !important;
-                    max-width: 95% !important;
-                    padding-bottom: 50px !important;
+                    bottom: 25px !important;
                 }
 
                 .tracy-panel h2 {
@@ -33,7 +34,7 @@ class CssPanel implements IBarPanel {
                 }
 
                 .tracy-inner {
-                    max-height: 100% !important;
+                    max-height: calc(100vh - 85px) !important;
                     max-width: 2000px !important;
                     padding-right: 30px !important;
                 }
@@ -85,29 +86,7 @@ class CssPanel implements IBarPanel {
                     background-color: transparent !important;
                 }
 
-                #tracy-debug-panel-OutputModePanel {
-                    height: 175px !important;
-                }
-                #tracy-debug-panel-Tracy-info {
-                    height: 350px !important;
-                }
-                #tracy-debug-panel-PanelSelectorPanel {
-                    height: 470px !important;
-                }
-                #tracy-debug-panel-TemplatePathPanel {
-                    height: 275px !important;
-                }
-                #tracy-debug-panel-TracyLogsPanel {
-                    height: 500px !important;
-                }
-                #tracy-debug-panel-ProcesswireLogsPanel {
-                    height: 500px !important;
-                }
-                #tracy-debug-panel-Zarganwar-PerformancePanel-Panel {
-                    height: 250px !important;
-                }
             }
-
             </style>
         ';
     }
