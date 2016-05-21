@@ -41,8 +41,7 @@ class ValidatorPanel implements IBarPanel {
         //}
 
         // determine which version of the validator to use
-        //$this->validatorUrl = strpos($pageHtml, '<!DOCTYPE html>') !== false ? "https://html5.validator.nu/" : "https://validator.nu/";
-        $this->validatorUrl = "https://validator.nu/";
+        $this->validatorUrl = strpos($pageHtml, '<!DOCTYPE html>') !== false ? "https://html5.validator.nu/" : "https://validator.nu/";
         $this->validationUrl = $this->validatorUrl . "?doc=".wire('page')->httpUrl."&out=html&showimagereport=yes&showsource=yes";
 
         // get results from validator and convert any entities to UTF-8
