@@ -23,7 +23,9 @@
 		var _this = this, elem = this.elem;
 
 		elem.innerHTML = elem.dataset.tracyContent;
+		Tracy.Dumper.init(this.dumps, elem);
 		delete elem.dataset.tracyContent;
+		delete this.dumps;
 		evalScripts(elem);
 
 		draggable(elem, {
@@ -275,10 +277,12 @@
 	};
 
 	Bar.prototype.autoHideLabels = function() {
-		var labels = this.elem.querySelectorAll('.tracy-label');
-		for (var i = labels.length - 1; i >= 0 && this.elem.clientHeight >= 40; i--) {
-			labels.item(i).hidden = true;
-		}
+		forEach(this.elem.children, function (ul) {
+			var labels = ul.querySelectorAll('.tracy-label');
+			for (var i = labels.length - 1; i >= 0 && ul.clientHeight >= 40; i--) { // row height = 1em (cca 20px)
+				labels.item(i).hidden = true;
+			}
+		});
 	};
 
 	Bar.prototype.close = function() {
@@ -312,12 +316,12 @@
 
 		layer.innerHTML = content;
 		evalScripts(layer);
-		Tracy.Dumper.init(dumps);
 		layer.style.display = 'block';
 		Debug.bar.init();
 
 		forEach(document.querySelectorAll('.tracy-panel'), function(panel) {
 			Debug.panels[panel.id] = new Panel(panel.id);
+			Debug.panels[panel.id].dumps = dumps;
 			Debug.panels[panel.id].restorePosition();
 		});
 
@@ -345,11 +349,11 @@
 		forEach(document.querySelectorAll('.tracy-panel'), function(panel) {
 			if (!Debug.panels[panel.id]) {
 				Debug.panels[panel.id] = new Panel(panel.id);
+				Debug.panels[panel.id].dumps = dumps;
 				Debug.panels[panel.id].restorePosition();
 			}
 		});
 
-		Tracy.Dumper.init(dumps, layer);
 		Debug.bar.initTabs(ajaxBar);
 	};
 
