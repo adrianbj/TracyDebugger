@@ -11,7 +11,7 @@ class CssPanel implements IBarPanel {
         return '
             <style>
                 #tracy-debug h1 {
-                    max-width: 2000px !important;
+                    max-width: calc(100vw - 40px) !important;
                 }
 
                 #tracy-debug input[type="checkbox"],
@@ -31,7 +31,7 @@ class CssPanel implements IBarPanel {
 
                 .tracy-inner {
                     max-height: calc(100vh - 85px) !important;
-                    max-width: 2000px !important;
+                    max-width: calc(100vw - 40px) !important;
                     padding-right: 30px !important;
                 }
 
@@ -44,7 +44,7 @@ class CssPanel implements IBarPanel {
                 }
 
                 #tracy-debug pre.tracy-dump {
-                    padding: .4em 2em .4em .7em
+                    padding: .4em 2em .4em .7em;
                 }
 
                 .tracy-inner td {
