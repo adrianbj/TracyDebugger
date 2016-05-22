@@ -33,7 +33,21 @@ class ValidatorPanel implements IBarPanel {
         $pageHtml = $http->get($this->pageUrl);
         // seems like on some systems, WireHttp::get is not working, so fallback to file_get_contents
         // maybe this (or fopen) should actually be the default?
-        if($pageHtml == '') $pageHtml = file_get_contents($this->pageUrl);
+        if($pageHtml == '') {
+            $username = \TracyDebugger::getDataValue('htaccessUsername');
+            if($username != '') {
+                $password = \TracyDebugger::getDataValue('htaccessPassword');
+                $context = stream_context_create(array (
+                    'http' => array (
+                        'header' => 'Authorization: Basic ' . base64_encode("$username:$password")
+                    )
+                ));
+                $pageHtml = file_get_contents($this->pageUrl, false, $context);
+            }
+            else {
+                $pageHtml = file_get_contents($this->pageUrl);
+            }
+        }
 
         // strip everything after the closing html tag
         //if(strpos($pageHtml, '</html>') !== false) {

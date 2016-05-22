@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 174,
+            'version' => 175,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug'
@@ -99,6 +99,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "clearEmailSent" => null,
                 "editor" => 'subl://open/?url=file://%file&line=%line',
                 "localRootPath" => '',
+                "htaccessUsername" => '',
+                "htaccessPassword" => '',
                 "debugStatements" => null,
                 "enableShortcutMethods" => 1,
                 "enabledShortcutMethods" => array('debugAll', 'da', 'dump', 'd', 'barDump', 'bd', 'l', 'timer', 't', 'fireLog', 'fl', 'addBreakpoint', 'bp', 'templateVars', 'tv')
@@ -639,15 +641,23 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($data['localRootPath']) $f->attr('value', $data['localRootPath']);
         $wrapper->add($f);
 
-        if(wire('config')->version >= 3 && wire('config')->templateCompile !== false) {
-            $f = wire('modules')->get("InputfieldTextarea");
-            $f->attr('name', 'debugStatements');
-            $f->label = __('Debug Statements', __FILE__);
-            $f->description = __('These statements will be inserted into the compiled version of template files at runtime. Empty this field to remove debug statements.'."\n".'Format one statement per line with: template_name|line_number|debug_statement|php_tags(bool). Note the last element is optional and determines whether the statement should start and end with open (<?php) and close (?>) tags.'."\n\n".'eg. basic_page|23|bd($testVariable);|true', __FILE__);
-            $f->notes = __('This is useful for quickly debugging a live site without needing to edit the remote files.', __FILE__);
-            if($data['debugStatements']) $f->attr('value', $data['debugStatements']);
-            $wrapper->add($f);
-        }
+        $f = wire('modules')->get("InputfieldText");
+        $f->attr('name', 'htaccessUsername');
+        $f->label = __('htaccess Username', __FILE__);
+        $f->description = __('If your site is behind an htaccess login, enter the username here.', __FILE__);
+        $f->notes = __('This is for the Validator panel.', __FILE__);
+        $f->columnWidth = 50;
+        if($data['htaccessUsername']) $f->attr('value', $data['htaccessUsername']);
+        $wrapper->add($f);
+
+        $f = wire('modules')->get("InputfieldText");
+        $f->attr('name', 'htaccessPassword');
+        $f->label = __('htaccess Password', __FILE__);
+        $f->description = __('If your site is behind an htaccess login, enter the password here.', __FILE__);
+        $f->notes = __('This is for the Validator panel.', __FILE__);
+        $f->columnWidth = 50;
+        if($data['htaccessPassword']) $f->attr('value', $data['htaccessPassword']);
+        $wrapper->add($f);
 
         $f = wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'enableShortcutMethods');
@@ -682,6 +692,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->addOption('tv', 'tv() for TD::templateVars()');
         if($data['enabledShortcutMethods']) $f->attr('value', $data['enabledShortcutMethods']);
         $wrapper->add($f);
+
+        if(wire('config')->version >= 3 && wire('config')->templateCompile !== false) {
+            $f = wire('modules')->get("InputfieldTextarea");
+            $f->attr('name', 'debugStatements');
+            $f->label = __('Debug Statements', __FILE__);
+            $f->description = __('These statements will be inserted into the compiled version of template files at runtime. Empty this field to remove debug statements.'."\n".'Format one statement per line with: template_name|line_number|debug_statement|php_tags(bool). Note the last element is optional and determines whether the statement should start and end with open (<?php) and close (?>) tags.'."\n\n".'eg. basic_page|23|bd($testVariable);|true', __FILE__);
+            $f->notes = __('This is useful for quickly debugging a live site without needing to edit the remote files.', __FILE__);
+            if($data['debugStatements']) $f->attr('value', $data['debugStatements']);
+            $wrapper->add($f);
+        }
 
         return $wrapper;
     }
