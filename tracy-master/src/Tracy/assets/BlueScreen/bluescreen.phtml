@@ -18,9 +18,30 @@
 
 namespace Tracy;
 
+use Tracy;
+
 $code = $exception->getCode() ? ' #' . $exception->getCode() : '';
 
-?>
+?><!DOCTYPE html><!-- "' --></script></style></pre></xmp></table></a></abbr></address></article></aside></audio></b></bdi></bdo></blockquote></button></canvas></caption></cite></code></datalist></del></details></dfn></div></dl></em></fieldset></figcaption></figure></footer></form></h1></h2></h3></h4></h5></h6></header></hgroup></i></iframe></ins></kbd></label></legend></map></mark></menu></meter></nav></noscript></object></ol></optgroup></output></progress></q></rp></rt></ruby></s></samp></section></select></small></span></strong></sub></summary></sup></textarea></time></title></tr></u></ul></var></video>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="robots" content="noindex">
+	<meta name="generator" content="Tracy by Nette Framework">
+
+	<title><?= Helpers::escapeHtml($title . ': ' . $exception->getMessage() . $code) ?></title>
+	<?php if ($ex = $exception->getPrevious()): ?>
+<!--<?php do { echo str_replace('--', '- ', Helpers::escapeHtml("\n\tcaused by " . Helpers::getClass($ex) . ': ' . $ex->getMessage() . ($ex->getCode() ? ' #' . $ex->getCode() : ''))); } while ($ex = $ex->getPrevious()); ?> -->
+	<?php endif ?>
+
+	<style type="text/css" class="tracy-debug">
+	<?= preg_replace('#[\r\n\t ]+#', ' ', file_get_contents(__DIR__ . '/bluescreen.css')) ?>
+	</style>
+	<script>document.documentElement.className+=' tracy-js'</script>
+</head>
+
+
+<body>
 <div id="tracy-bs">
 	<a id="tracy-bs-toggle" href="#" class="tracy-toggle"></a>
 	<div>
@@ -244,6 +265,18 @@ $code = $exception->getCode() ? ' #' . $exception->getCode() : '';
 			<?php endif ?>
 
 
+			<h3><a data-tracy-ref="^+" class="tracy-toggle tracy-collapsed">Included files</a> (<?= count(get_included_files()) ?>)</h3>
+			<div class="outer tracy-collapsed">
+			<table>
+			<?php
+			foreach (get_included_files() as $v) {
+				echo '<tr><td>', Helpers::escapeHtml($v), "</td></tr>\n";
+			}
+			?>
+			</table>
+			</div>
+
+
 			<h3><a data-tracy-ref="^+" class="tracy-toggle tracy-collapsed">Configuration options</a></h3>
 			<div class="outer tracy-collapsed">
 			<?php ob_start(); @phpinfo(INFO_CONFIGURATION | INFO_MODULES); echo preg_replace('#^.+<body>|</body>.+\z#s', '', ob_get_clean()) // @ phpinfo can be disabled ?>
@@ -318,3 +351,22 @@ $code = $exception->getCode() ? ' #' . $exception->getCode() : '';
 		<div id="tracy-bs-logo"><a href="https://tracy.nette.org" rel="noreferrer"></a></div>
 	</div>
 </div>
+
+<script>
+(function() {
+	if (!document.documentElement.classList) {
+		document.getElementById('tracy-bs-error').innerHTML += '<div id=tracy-bs-ie-warning>Warning: Tracy requires IE 10+<\/div>';
+		return;
+	}
+	<?php readfile(__DIR__ . '/../Toggle/toggle.js') ?>
+	<?php readfile(__DIR__ . '/../Dumper/dumper.js') ?>
+})();
+</script>
+<script>
+Tracy && Tracy.Dumper.init(<?= json_encode(Dumper::fetchLiveData()) ?>);
+</script>
+<script>
+Tracy && <?php readfile(__DIR__ . '/bluescreen.js') ?>
+</script>
+</body>
+</html>

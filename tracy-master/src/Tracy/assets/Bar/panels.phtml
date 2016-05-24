@@ -12,19 +12,18 @@
 namespace Tracy;
 
 use Tracy;
-use Tracy\Helpers;
 
-$icons = <<<'HTML'
-	<div class="tracy-icons">
-		<a href="#" title="open in window">&curren;</a>
-		<a href="#" rel="close" title="close window">&times;</a>
-	</div>
-HTML;
 
 foreach ($rows as $row) {
 	foreach ($row->panels as $panel) {
-		$content = $panel->panel ? ($panel->panel . "\n" . $icons) : '';
-		$class = 'tracy-panel ' . ($row->type === 'ajax' ? 'tracy-ajax' : ''); ?>
-		<div class="<?= $class ?>" id="tracy-debug-panel-<?= $panel->id ?>" data-tracy-content="<?= Helpers::escapeHtml($content) ?>"></div><?php
+?>
+	<div class="tracy-panel <?= $row->type === 'ajax' ? 'tracy-ajax' : '' ?>" id="tracy-debug-panel-<?= $panel->id ?>">
+		<?php if ($panel->panel): echo $panel->panel ?>
+		<div class="tracy-icons">
+			<a href="#" title="open in window">&curren;</a>
+			<a href="#" rel="close" title="close window">&times;</a>
+		</div>
+		<?php endif ?>
+	</div><?php
 	}
 }

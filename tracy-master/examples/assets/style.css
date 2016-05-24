@@ -1,14 +1,14 @@
-html {
+html.arrow {
+	background: url(arrow.png) no-repeat bottom right;
+	height: 100%;
+}
+
+body {
 	font: 15px/1.5 Tahoma, sans-serif;
 	color: #333;
 	background: #fff;
-	margin: 0 1.6em;
+	margin: 1.6em;
 	padding: 0;
-}
-
-html.arrow {
-	background: #fff url(arrow.png) no-repeat bottom right;
-	height: 100%;
 }
 
 h1 {

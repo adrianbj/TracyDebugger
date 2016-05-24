@@ -141,8 +141,15 @@ class Logger implements ILogger
 	protected function logException($exception, $file = NULL)
 	{
 		$file = $file ?: $this->getExceptionFile($exception);
-		$bs = $this->blueScreen ?: new BlueScreen;
-		$bs->renderToFile($exception, $file);
+		if ($handle = @fopen($file, 'x')) { // @ file may already exist
+			ob_start(); // double buffer prevents sending HTTP headers in some PHP
+			ob_start(function ($buffer) use ($handle) { fwrite($handle, $buffer); }, 4096);
+			$bs = $this->blueScreen ?: new BlueScreen;
+			$bs->render($exception);
+			ob_end_flush();
+			ob_end_clean();
+			fclose($handle);
+		}
 		return $file;
 	}
 

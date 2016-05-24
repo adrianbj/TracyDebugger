@@ -52,39 +52,6 @@ class BlueScreen
 	 */
 	public function render($exception)
 	{
-		if (Helpers::isAjax() && session_status() === PHP_SESSION_ACTIVE) {
-			ob_start(function () {});
-			$this->renderTemplate($exception, __DIR__ . '/assets/BlueScreen/content.phtml');
-			$contentId = $_SERVER['HTTP_X_TRACY_AJAX'];
-			$_SESSION['_tracy']['bluescreen'][$contentId] = ['content' => ob_get_clean(), 'dumps' => Dumper::fetchLiveData()];
-
-		} else {
-			$this->renderTemplate($exception, __DIR__ . '/assets/BlueScreen/page.phtml');
-		}
-	}
-
-
-	/**
-	 * Renders blue screen to file (if file exists, it will not be overwritten).
-	 * @param  \Exception|\Throwable
-	 * @param  string file path
-	 * @return void
-	 */
-	public function renderToFile($exception, $file)
-	{
-		if ($handle = @fopen($file, 'x')) {
-			ob_start(); // double buffer prevents sending HTTP headers in some PHP
-			ob_start(function ($buffer) use ($handle) { fwrite($handle, $buffer); }, 4096);
-			$this->renderTemplate($exception, __DIR__ . '/assets/BlueScreen/page.phtml');
-			ob_end_flush();
-			ob_end_clean();
-			fclose($handle);
-		}
-	}
-
-
-	private function renderTemplate($exception, $template)
-	{
 		$panels = $this->panels;
 		$info = array_filter($this->info);
 		$source = Helpers::getSource();
@@ -95,7 +62,8 @@ class BlueScreen
 		$skipError = $sourceIsUrl && $exception instanceof \ErrorException && !empty($exception->skippable)
 			? $source . (strpos($source, '?') ? '&' : '?') . '_tracy_skip_error'
 			: NULL;
-		require $template;
+
+		require __DIR__ . '/assets/BlueScreen/bluescreen.phtml';
 	}
 
 
@@ -153,7 +121,7 @@ class BlueScreen
 		}
 
 		$out = str_replace('&nbsp;', ' ', $out);
-		return "<pre class='code'><div>$out</div></pre>";
+		return "<pre class='php'><div>$out</div></pre>";
 	}
 
 

@@ -76,11 +76,6 @@ class TracyExtension extends Nette\DI\CompilerExtension
 			}
 		}
 
-		$logger = $builder->getDefinition($this->prefix('logger'));
-		if ($logger->getFactory()->getEntity() !== 'Tracy\Debugger::getLogger') {
-			$initialize->addBody($builder->formatPhp('Tracy\Debugger::setLogger(?);', [$logger]));
-		}
-
 		if ($this->debugMode) {
 			foreach ((array) $this->config['bar'] as $item) {
 				$initialize->addBody($builder->formatPhp(
@@ -91,7 +86,6 @@ class TracyExtension extends Nette\DI\CompilerExtension
 					])
 				));
 			}
-			$initialize->addBody('if ($tmp = $this->getByType("Nette\Http\Session", FALSE)) { $tmp->start(); Tracy\Debugger::dispatch(); };');
 		}
 
 		foreach ((array) $this->config['blueScreen'] as $item) {

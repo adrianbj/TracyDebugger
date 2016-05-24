@@ -117,6 +117,9 @@ class Debugger
 	/** @var ILogger */
 	private static $fireLogger;
 
+	/** @var Session */
+	private static $session;
+
 
 	/**
 	 * Static class - cannot be instantiated.
@@ -184,32 +187,12 @@ class Debugger
 		array_map('class_exists', ['Tracy\Bar', 'Tracy\BlueScreen', 'Tracy\DefaultBarPanel', 'Tracy\Dumper',
 			'Tracy\FireLogger', 'Tracy\Helpers', 'Tracy\Logger']);
 
-		if (!self::$productionMode && self::getBar()->dispatchAssets()) {
-			exit;
-		} elseif (session_status() === PHP_SESSION_ACTIVE) {
-			self::dispatch();
-		}
-	}
-
-
-	/**
-	 * @return void
-	 */
-	public static function dispatch()
-	{
-		if (self::$productionMode) {
-			return;
-
-		} elseif (session_status() !== PHP_SESSION_ACTIVE) {
-			ini_set('session.use_cookies', '1');
-			ini_set('session.use_only_cookies', '1');
-			ini_set('session.use_trans_sid', '0');
-			ini_set('session.cookie_path', '/');
-			ini_set('session.cookie_httponly', '1');
-			session_start();
-		}
-		if (self::getBar()->dispatchContent()) {
-			exit;
+		if (!self::$productionMode) {
+			self::getSession()->open(session_save_path() ?: ini_get('upload_tmp_dir') ?: self::$logDirectory);
+			if (self::getBar()->dispatch()) {
+				self::$showBar = FALSE;
+				exit;
+			}
 		}
 	}
 
@@ -289,7 +272,7 @@ class Debugger
 					. (isset($e) ? "Unable to log error.\n" : "Error was logged.\n"));
 			}
 
-		} elseif (!connection_aborted() && (Helpers::isHtmlMode() || Helpers::isAjax())) {
+		} elseif (!connection_aborted() && Helpers::isHtmlMode()) {
 			self::getBlueScreen()->render($exception);
 			if (self::$showBar) {
 				self::getBar()->render();
@@ -446,7 +429,7 @@ class Debugger
 	public static function getBar()
 	{
 		if (!self::$bar) {
-			self::$bar = new Bar;
+			self::$bar = new Bar(self::getSession());
 			self::$bar->addPanel($info = new DefaultBarPanel('info'), 'Tracy:info');
 			$info->cpuUsage = self::$cpuUsage;
 			self::$bar->addPanel(new DefaultBarPanel('errors'), 'Tracy:errors'); // filled by errorHandler()
@@ -487,6 +470,19 @@ class Debugger
 			self::$fireLogger = new FireLogger;
 		}
 		return self::$fireLogger;
+	}
+
+
+	/**
+	 * @return Session
+	 * @internal
+	 */
+	public static function getSession()
+	{
+		if (!self::$session) {
+			self::$session = new Session;
+		}
+		return self::$session;
 	}
 
 
@@ -550,7 +546,7 @@ class Debugger
 		if (!self::$productionMode) {
 			static $panel;
 			if (!$panel) {
-				self::getBar()->addPanel($panel = new DefaultBarPanel('dumps'), 'Tracy:dumps');
+				self::getBar()->addPanel($panel = new DefaultBarPanel('dumps'));
 			}
 			$panel->data[] = ['title' => $title, 'dump' => Dumper::toHtml($var, (array) $options + [
 				Dumper::DEPTH => self::$maxDepth,
