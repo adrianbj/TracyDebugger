@@ -318,6 +318,9 @@ class ProcesswireInfoPanel implements IBarPanel {
                     }
                     if(isset($fieldArray['value'])) $value = Dumper::toHtml($fieldArray['value'], array(Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
                 }
+                elseif(is_array(wire('page')->$f)) {
+                    $value = Dumper::toHtml(wire('page')->$f, array(Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
+                }
                 else {
                     $value = wire('page')->$f;
                 }
