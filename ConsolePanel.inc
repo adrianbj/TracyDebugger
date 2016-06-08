@@ -100,11 +100,14 @@ class ConsolePanel implements IBarPanel {
         </style>
 ';
 
-
+        $code = '';
         $openPHP = '<' . '?php';
         $firstLine = 'if(!defined("PROCESSWIRE")) die("no direct access");';
-        $code = file_get_contents(wire('config')->paths->cache . 'TracyDebugger/consoleCode.php');
-        $code = str_replace("$openPHP\n$firstLine\n", "", $code);
+        $file = wire('config')->paths->cache . 'TracyDebugger/consoleCode.php';
+        if(file_exists($file)) {
+            $code = file_get_contents(wire('config')->paths->cache . 'TracyDebugger/consoleCode.php');
+            $code = str_replace("$openPHP\n$firstLine\n", "", $code);
+        }
 
         $out .= '<h1>'.$this->icon.' Console</h1>
         <div class="tracy-inner">
