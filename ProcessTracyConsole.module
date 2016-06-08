@@ -1,0 +1,158 @@
+<?php
+
+/**
+ * ProcessWire Tracy Console
+ * by Adrian Jones
+ *
+ * Helper process module for processing Tracy Console code
+ *
+ * ProcessWire 2.x
+ * Copyright (C) 2011 by Ryan Cramer
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ *
+ * http://www.processwire.com
+ * http://www.ryancramer.com
+ *
+ */
+
+class ProcessTracyConsole extends Process implements Module {
+
+    /**
+     * getModuleInfo is a module required by all modules to tell ProcessWire about them
+     *
+     * @return array
+     *
+     */
+    public static function getModuleInfo() {
+        return array(
+            'title' => __('Process Tracy Console'),
+            'version' => 1,
+            'summary' => __('Helper process module for processing Tracy Console code'),
+            'author' => 'Adrian Jones',
+            'singular' => true,
+            'autoload' => false,
+            'requires' => 'TracyDebugger'
+            );
+    }
+
+    /**
+     * Name used for the page created in the admin
+     *
+     */
+    const adminPageName = 'tracy-console';
+
+    /**
+     * Path where we cache console code file
+     *
+     */
+    protected $cachePath = '';
+
+
+
+    /**
+     * Initialize the module
+     *
+     */
+    public function init() {
+        parent::init();
+    }
+
+    /**
+     * Executed when root url for module is accessed
+     *
+     */
+    public function ___execute() {
+        $pwVars = function_exists('wire') ? $this->fuel : \ProcessWire\wire('all');
+        extract($pwVars->getArray());
+        if($user->isSuperuser()) {
+            $page = $pages->get((int)$_GET['pid']);
+            $code = base64_decode(str_pad(strtr($_GET['code'], '-_', '+/'), strlen($_GET['code']) % 4, '=', STR_PAD_RIGHT));
+            //eval($code);
+
+            $this->cachePath = $config->paths->cache . 'TracyDebugger/';
+            if(!is_dir($this->cachePath)) if(!wireMkdir($this->cachePath)) {
+                throw new WireException("Unable to create cache path: $this->cachePath");
+            }
+
+            $file = $this->cachePath.'consoleCode.php';
+            $code = trim($code);
+            $openPHP = '<' . '?php';
+            $firstLine = 'if(!defined("PROCESSWIRE")) die("no direct access");';
+
+            if(substr($code, 0, strlen($openPHP)) !== $openPHP) {
+                // prepend open PHP tag to code if not already present
+                $code = "$openPHP\n$firstLine\n$code";
+            } else {
+                // otherwise insert our $firstLine security check
+                $code = str_replace($openPHP, "$openPHP\n$firstLine\n", $code);
+            }
+            if(!file_put_contents($file, $code, LOCK_EX)) throw new WireException("Unable to write file: $file");
+            if(wire('config')->chmodFile) chmod($file, octdec(wire('config')->chmodFile));
+
+            $t = new TemplateFile($file);
+
+            // populate API variables
+            foreach($pwVars->getArray() as $key => $value) {
+                if($key != 'page') $t->set($key, $value);
+            }
+            $t->set('page', $page);
+
+            // output rendered result of code
+            echo $t->render();
+        }
+        exit;
+    }
+
+   /**
+     * Install the module and create the page where it lives
+     *
+     */
+    public function ___install() {
+
+        $page = $this->getInstalledPage();
+        $this->message("Installed to {$page->path}");
+
+    }
+
+    /**
+     * Return the page that this Process is installed on
+     *
+     */
+    protected function getInstalledPage() {
+
+        $parent = $this->pages->get("name=page,parent=".$this->config->adminRootPageID);
+        $page = $parent->child("name=" . self::adminPageName);
+
+        if(!$page->id) {
+            $page = new Page();
+            $page->template = 'admin';
+            $page->parent = $this->pages->get($this->config->adminRootPageID)->child('name=page');
+            $page->title = 'Tracy Console';
+            $page->name = self::adminPageName;
+            $page->process = $this;
+            $page->status = Page::statusHidden;
+            $page->save();
+        }
+
+        return $page;
+    }
+
+    /**
+     * Uninstall the module
+     *
+     */
+    public function ___uninstall() {
+        $moduleID = $this->modules->getModuleID($this);
+        $page = $this->pages->get("template=admin, process=$moduleID, name=" . self::adminPageName);
+        if($page->id) {
+            $this->message("Removed {$page->path}");
+            $this->pages->delete($page);
+        }
+        $this->cachePath = wire('config')->paths->cache . 'TracyDebugger/';
+        if($this->cachePath && is_dir($this->cachePath)) {
+            $this->message("Removing cache path: $this->cachePath");
+            wireRmdir($this->cachePath, true);
+        }
+    }
+
+}
