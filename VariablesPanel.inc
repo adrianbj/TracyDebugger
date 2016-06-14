@@ -64,38 +64,41 @@ class VariablesPanel implements IBarPanel {
             <br >
             ';
 
-            $templateFilename = wire('page')->template->filename;
-            $targetData = file_get_contents($templateFilename);
-            //check to see if template can be compiled because we need that to get the variables
-            //the missing "F" in "ileCompiler=0" is an intentional hack - otherwise it prevents this file from being compiled and creates
-            //missing wire function errors
-            if(wire('page')->template->compile != 0 && wire('config')->templateCompile !== false && stripos($targetData, "ileCompiler=0") === false) {
-                //$out .= TD::dump(TracyDebugger::$templateVars, array(Dumper::COLLAPSE => false));
-                $out .= $this->sectionHeader(array('Name', 'Returns', 'Value'));
-                foreach(TracyDebugger::$templateVars as $var => $value) {
+        $templateFilename = wire('page')->template->filename;
+        $targetData = file_get_contents($templateFilename);
+        //check to see if template can be compiled because we need that to get the variables
+        //the missing "F" in "ileCompiler=0" is an intentional hack - otherwise it prevents this file from being compiled and creates
+        //missing wire function errors
+        if(wire('page')->template->compile != 0 && wire('config')->templateCompile !== false && stripos($targetData, "ileCompiler=0") === false) {
+            //$out .= TD::dump(TracyDebugger::$templateVars, array(Dumper::COLLAPSE => false));
+            $out .= $this->sectionHeader(array('Name', 'Returns', 'Value'));
+            foreach(TracyDebugger::$templateVars as $var => $value) {
 
-                    if(is_object($var) || is_array($var)) {
-                        $varArray = array();
-                        foreach($var as $key => $value) {
-                            $varArray[$key] = $value;
-                        }
-                        $value = $varArray;
+                if(is_object($var) || is_array($var)) {
+                    $varArray = array();
+                    foreach($var as $key => $value) {
+                        $varArray[$key] = $value;
                     }
-
-                    $out .= "\n<tr>" .
-                        '<td>'.$var.'</td>' .
-                        "<td>".gettype($value)."</td>" .
-                        "<td>".Dumper::toHtml($value, array(Dumper::COLLAPSE => (is_object($value) ? true : false)))."</td>" .
-                        "</tr>";
+                    $value = $varArray;
                 }
-                $out .= $sectionEnd;
 
+                $out .= "\n<tr>" .
+                    '<td>'.$var.'</td>' .
+                    "<td>".gettype($value)."</td>" .
+                    "<td>".Dumper::toHtml($value, array(Dumper::COLLAPSE => (is_object($value) ? true : false)))."</td>" .
+                    "</tr>";
             }
-            else {
-                $out .= '<strong>Template compiling is disabled for this template, so the variables could not be determined.</strong>';
-            }
-        $out .= \TracyDebugger::generatedTime(\Tracy\Debugger::timer('variables')) . '
-        </div>';
+            $out .= $sectionEnd;
+
+        }
+        else {
+            $out .= '<strong>Template compiling is disabled for this template, so the variables could not be determined.</strong>';
+        }
+
+        \TracyDebugger::$panelGenerationTime['variables'] = \Tracy\Debugger::timer('variables');
+        $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['variables']);
+
+        $out .= '</div>';
 
         return $out;
     }

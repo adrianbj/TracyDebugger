@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 180,
+            'version' => 181,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -177,8 +177,20 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         Debugger::$editor = $this->data['editor'];
-        Debugger::$editorMapping = array('/site/assets/cache/FileCompiler' => '');
-        if($this->data['localRootPath'] != '') Debugger::$editorMapping = array_merge(Debugger::$editorMapping, array(wire('config')->paths->root => $this->data['localRootPath']));
+
+        // build up array of replacements to pass to Debugger::$editorMapping
+        // they have to be completely separate replacements because Tracy uses strtr()
+        // which won't replace the same substring more than once
+        $mappingReplacements = array();
+        if($this->data['localRootPath'] != '') {
+            $mappingReplacements[wire('config')->paths->cache . 'FileCompiler/'] = $this->data['localRootPath'];
+            $mappingReplacements[wire('config')->paths->root] = $this->data['localRootPath'];
+        }
+        else {
+            $mappingReplacements[wire('config')->paths->cache . 'FileCompiler/'] = wire('config')->paths->root;
+        }
+
+        Debugger::$editorMapping = $mappingReplacements;
 
         $logFolder = $this->wire('config')->paths->logs.'tracy';
         if(!is_dir($logFolder)) wireMkdir($logFolder);
@@ -217,11 +229,26 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
 
+        //determine which panels to display
+        static::$oncePanels = array_filter(explode(',', $this->input->cookie->tracyPanelsOnce));
+        static::$stickyPanels = array_filter(explode(',', $this->input->cookie->tracyPanelsSticky));
+        if(isset($this->input->cookie->tracyPanelsOnce)) {
+            static::$showPanels = static::$oncePanels;
+            unset($this->input->cookie->tracyPanelsOnce);
+            setcookie("tracyPanelsOnce", "", time()-3600, '/');
+        }
+        elseif(isset($this->input->cookie->tracyPanelsSticky)) {
+            static::$showPanels = static::$stickyPanels;
+        }
+        else {
+            static::$showPanels = $this->data['showPanels'];
+        }
+
         if(wire('page')->template != "admin") {
             if(in_array('frontend', $this->data['showDebugBar'])) {
                 Debugger::$showBar = true;
                 // hook to add code to template file to grab template variables
-                if(wire('config')->version >= 3 && wire('config')->templateCompile !== false && in_array('variables', $this->data['showPanels'])) {
+                if(wire('config')->version >= 3 && wire('config')->templateCompile !== false && in_array('variables', static::$showPanels)) {
                     $this->addHookAfter('FileCompiler::compileData', $this, 'setTemplateVars');
                 }
             }
@@ -240,30 +267,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         require_once __DIR__ . '/CssPanel.inc';
         Debugger::getBar()->addPanel(new CssPanel);
 
-        //determine which panels to display
-        static::$oncePanels = array_filter(explode(',', $this->input->cookie->tracyPanelsOnce));
-        static::$stickyPanels = array_filter(explode(',', $this->input->cookie->tracyPanelsSticky));
-        if(isset($this->input->cookie->tracyPanelsOnce)) {
-            static::$showPanels = static::$oncePanels;
-            unset($this->input->cookie->tracyPanelsOnce);
-            setcookie("tracyPanelsOnce", "", time()-3600, '/');
-        }
-        elseif(isset($this->input->cookie->tracyPanelsSticky)) {
-            static::$showPanels = static::$stickyPanels;
-        }
-        else {
-            static::$showPanels = $this->data['showPanels'];
-        }
-
         foreach(static::$showPanels as $panel) {
             if(wire('page')->template == 'admin' && in_array($panel, static::$hideInAdmin)) continue;
             if($panel == 'console' && !wire('user')->isSuperuser()) continue;
             $panelName = ucfirst($panel).'Panel';
             switch($panel) {
                 case 'performance':
-                    require_once __DIR__ . '/PerformancePanel/Panel.php';
-                    require_once __DIR__ . '/PerformancePanel/Register.php';
-                    Debugger::getBar()->addPanel(new Zarganwar\PerformancePanel\Panel);
+                    require_once __DIR__ . '/'.$panelName.'.inc';
                     break;
                 case 'processwireInfo':
                 case 'processwireLogs':

@@ -9,12 +9,21 @@ class TD extends TracyDebugger {
 	 * don't get a undefined function error when calling these from a template file.
 	 */
 
+    protected static function tracyUnavailable() {
+        if(!\TracyDebugger::getDataValue('enabled') || !\TracyDebugger::allowedTracyUsers() || !class_exists('\Tracy\Debugger')) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
     /**
      * Tracy\Debugger::debugAll() shortcut.
      * @tracySkipLocation
      */
     public static function debugAll($var, $title = NULL, array $options = NULL) {
-        if(!TracyDebugger::allowedTracyUsers() || !class_exists('\Tracy\Debugger')) return false;
+        if(self::tracyUnavailable()) return false;
         Debugger::barDump($var, $title, $options);
         Debugger::dump($var);
         Debugger::fireLog($var);
@@ -26,7 +35,7 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     public static function barDump($var, $title = NULL, array $options = NULL) {
-        if(!TracyDebugger::allowedTracyUsers() || !class_exists('\Tracy\Debugger')) return false;
+        if(self::tracyUnavailable()) return false;
         return Debugger::barDump($var, $title, $options);
     }
 
@@ -35,7 +44,7 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     public static function dump($var, $return = FALSE) {
-        if(!TracyDebugger::allowedTracyUsers() || !class_exists('\Tracy\Debugger')) return false;
+        if(self::tracyUnavailable()) return false;
         return Debugger::dump($var, $return);
     }
 
@@ -44,7 +53,7 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     public static function log($message, $priority = Debugger::INFO) {
-        if(!TracyDebugger::allowedTracyUsers() || !class_exists('\Tracy\Debugger')) return false;
+        if(self::tracyUnavailable()) return false;
         return Debugger::log($message, $priority);
     }
 
@@ -53,7 +62,7 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     public static function timer($name = NULL) {
-        if(!TracyDebugger::allowedTracyUsers() || !class_exists('\Tracy\Debugger')) return false;
+        if(self::tracyUnavailable()) return false;
         $roundedTime = round(Debugger::timer($name),4);
         if($name) {
             return $name.' : '.$roundedTime;
@@ -68,7 +77,7 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     public static function fireLog($message = NULL) {
-        if(!TracyDebugger::allowedTracyUsers() || !class_exists('\Tracy\Debugger')) return false;
+        if(self::tracyUnavailable()) return false;
         return Debugger::fireLog($message);
     }
 
@@ -77,7 +86,7 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     public static function addBreakpoint($name = null, $enforceParent = null) {
-        if(!TracyDebugger::allowedTracyUsers() || !class_exists('\Tracy\Debugger') || !class_exists('\Zarganwar\PerformancePanel\Register')) return false;
+        if(self::tracyUnavailable() || !class_exists('\Zarganwar\PerformancePanel\Register')) return false;
         return Zarganwar\PerformancePanel\Register::add($name, $enforceParent);
     }
 
@@ -86,7 +95,7 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     public static function templateVars($vars) {
-        if(!TracyDebugger::allowedTracyUsers() || !class_exists('\Tracy\Debugger')) return false;
+        if(self::tracyUnavailable()) return false;
         return TracyDebugger::templateVars((array) $vars);
     }
 

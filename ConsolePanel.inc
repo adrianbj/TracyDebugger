@@ -13,7 +13,7 @@ class ConsolePanel implements IBarPanel {
 
     public function getTab() {
         if(\TracyDebugger::additionalBar()) return;
-        \Tracy\Debugger::timer('Console');
+        \Tracy\Debugger::timer('console');
 
         $this->icon = '
         <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 471.362 471.362" style="enable-background:new 0 0 471.362 471.362;" xml:space="preserve">
@@ -122,8 +122,8 @@ class ConsolePanel implements IBarPanel {
                     <br /><br />
                     <div id="tracyConsoleResult" style="background:#FDF5CE; border: 1px dotted #999999; padding: 3px;"></div>
             </fieldset>';
-            \TracyDebugger::$panelGenerationTime['Console'] = \Tracy\Debugger::timer('Console');
-            $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['Console']);
+            \TracyDebugger::$panelGenerationTime['console'] = \Tracy\Debugger::timer('console');
+            $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['console']);
         $out .= '</div>';
 
         return $out;

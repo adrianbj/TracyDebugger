@@ -136,8 +136,8 @@ class TemplatePathPanel implements IBarPanel {
                     <input type="submit" onclick="resetTemplatePath()" value="Reset" />&nbsp;
                     <input type="submit" onclick="resetAllTemplatePaths()" value="Reset All" />
             </fieldset>';
-            \TracyDebugger::$panelGenerationTime['TemplatePath'] = \Tracy\Debugger::timer('TemplatePath');
-            $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['TemplatePath']);
+            \TracyDebugger::$panelGenerationTime['templatePath'] = \Tracy\Debugger::timer('templatePath');
+            $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['templatePath']);
         $out .= '</div>';
 
         return $out;

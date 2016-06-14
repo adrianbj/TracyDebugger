@@ -67,7 +67,6 @@ class ProcessTracyConsole extends Process implements Module {
         if($user->isSuperuser()) {
             $page = $pages->get((int)$_POST['pid']);
             $code = base64_decode(str_pad(strtr($_POST['code'], '-_', '+/'), strlen($_POST['code']) % 4, '=', STR_PAD_RIGHT));
-            //eval($code);
 
             $this->cachePath = $config->paths->cache . 'TracyDebugger/';
             if(!is_dir($this->cachePath)) if(!wireMkdir($this->cachePath)) {
