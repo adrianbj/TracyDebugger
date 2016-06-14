@@ -59,7 +59,7 @@ class VariablesPanel implements IBarPanel {
             Non-ProcessWire Template Variables
         </h1>
         <div class="tracy-inner">
-            <p>These are all the non-PW variables that are available in the template for this page.</p>
+            <p>These are all the non-PW variables that are available in the template for this page.<br />If this is empty when variables should be displayed, you will need to make a change to the template file to call the file compiler.</p>
             <p>If you are looking for the fields and their values for this page, look in the ProcessWire Info panel under "Fields List & Values"</p>
             <br >
             ';
