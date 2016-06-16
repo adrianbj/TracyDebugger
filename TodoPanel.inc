@@ -8,7 +8,7 @@ class TodoPanel implements IBarPanel {
     protected $icon;
     protected $iconColor;
     protected $entries;
-    protected $todoTypes = array('todo ', 'fix me ', 'fix ', 'pending ', 'xxx ', 'hack ', 'bug ');
+    protected $todoTypes = array('todo ', 'fixme ', 'pending ', 'xxx ', 'hack ', 'bug ');
 
     public function getTab() {
         if(\TracyDebugger::additionalBar()) return;
