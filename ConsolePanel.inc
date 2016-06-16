@@ -23,7 +23,6 @@ class ConsolePanel implements IBarPanel {
             </g>
         </svg>';
 
-
         return '
             <span title="Console">
                 ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Console' : '') . '
@@ -36,6 +35,12 @@ class ConsolePanel implements IBarPanel {
 
         $out = '
         <script>
+            document.getElementById("tracyConsoleCode").addEventListener("keydown", function(e) {
+                if(((e.keyCode==10||e.charCode==10)||(e.keyCode==13||e.charCode==13)) && (e.metaKey || e.ctrlKey)) {
+                    processTracyCode(false);
+                }
+            });
+
             function processTracyCode(clear) {
                 if(clear) {
                     var code = document.getElementById("tracyConsoleCode").value = "";
@@ -114,7 +119,7 @@ class ConsolePanel implements IBarPanel {
         $out .= '<h1>'.$this->icon.' Console</h1>
         <div class="tracy-inner">
             <fieldset>
-                <legend>Enter PHP code</legend><br />';
+                <legend>Enter PHP code, then use CTRL+Enter or CMD+Enter to run.</legend><br />';
                     $out .= '
                     <textarea id="tracyConsoleCode" style="width:500px;height:75px" size="100" id="phpCode">'.$code.'</textarea><br />
                     <input type="submit" onclick="processTracyCode(false)" value="Run Code" />&nbsp;
