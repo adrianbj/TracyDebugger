@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 184,
+            'version' => 185,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -438,6 +438,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public static function generatedTime($seconds) {
         return '<p style="font-size:9px !important; text-align:left !important"><br />Panel generated in '.round($seconds, 4).' seconds</p>';
+    }
+
+
+    /**
+     * Helper function to convert remote path to local path.
+     */
+    public static function makePathLocal($path) {
+        if(self::getDataValue('localRootPath') != '') $path = str_replace(wire('config')->paths->root, self::getDataValue('localRootPath'), $path);
+        return $path;
     }
 
 

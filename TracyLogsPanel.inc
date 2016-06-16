@@ -135,10 +135,6 @@ class TracyLogsPanel implements IBarPanel {
         return $log->find($limit, $pageNum);
     }
 
-    public function makePathLocal($path) {
-        if(\TracyDebugger::getDataValue('localRootPath') != '') $path = str_replace(wire('config')->paths->root, \TracyDebugger::getDataValue('localRootPath'), $path);
-        return $path;
-    }
 
     public function getPanel() {
 
@@ -207,7 +203,7 @@ class TracyLogsPanel implements IBarPanel {
                 "<td>".$item['log']."</td>" .
                 "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
                 "<td>".(isset($item['url']) ? $item['url'] : '')."</td>" .
-                "<td><a title='View this line of \"".$item['log']."\" log file in your code editor' href='". $this->makePathLocal(str_replace("%file", wire('config')->paths->logs.'tracy/' . $item['log'] . '.log', str_replace("%line", ($logInstance->getTotalLines()-$item['linenumber']), \TracyDebugger::getDataValue("editor"))))."'>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</a></td>" .
+                "<td><a title='View this line of \"".$item['log']."\" log file in your code editor' href='". \TracyDebugger::makePathLocal(str_replace("%file", wire('config')->paths->logs.'tracy/' . $item['log'] . '.log', str_replace("%line", ($logInstance->getTotalLines()-$item['linenumber']), \TracyDebugger::getDataValue("editor"))))."'>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</a></td>" .
             "</tr>";
         }
         $logEntries .= $sectionEnd;

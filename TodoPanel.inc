@@ -188,7 +188,7 @@ class TodoPanel implements IBarPanel {
             'file' => $filename,
             'line' => $line,
             'comment' => nl2br(htmlentities($comment)),
-            'link' => strtr(Debugger::$editor, array('%file' => urlencode($filename), '%line' => $line))
+            'link' => \TracyDebugger::makePathLocal(str_replace("%file", $filename, str_replace("%line", $line, \TracyDebugger::getDataValue("editor"))))
         );
     }
 
