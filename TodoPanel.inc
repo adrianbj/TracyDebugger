@@ -32,7 +32,7 @@ class TodoPanel implements IBarPanel {
                 if(isset($item['file'])) {
                     $this->entries .= "
                         \n<tr>
-                            <td>".$thisPageFile . str_replace(wire('config')->paths->root, '/', $item['file'])."</td>" .
+                            <td>".$thisPageFile . str_replace(wire('config')->paths->templates, '', $item['file'])."</td>" .
                             "<td>".$item['line']."</td>" .
                             "<td><a href='".$item['link']."' />".$item['comment']."</td>" .
                         "</tr>";
