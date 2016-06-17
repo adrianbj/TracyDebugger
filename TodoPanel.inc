@@ -18,11 +18,13 @@ class TodoPanel implements IBarPanel {
         $thisPageNumEntries = 0;
         $files = $this->getTodos();
         $this->entries = $this->sectionHeader(array('File', 'Line', 'Type', 'Comment'));
+        $currentFile = '';
         foreach($files as $file => $items) {
+            $i=0;
             foreach($items as $item) {
                 $numEntries++;
                 if($item['file'] == wire('page')->template->filename) {
-                    $thisPageFile = '* ';
+                    $thisPageFile = ' style="font-weight:bold" ';
                     $thisPageNumEntries++;
                 }
                 else {
@@ -31,13 +33,18 @@ class TodoPanel implements IBarPanel {
 
                 if(isset($item['file'])) {
                     $this->entries .= "
-                        \n<tr>
-                            <td>".$thisPageFile . str_replace(wire('config')->paths->templates, '', $item['file'])."</td>" .
+                        \n<tr>";
+                            if($currentFile !== $item['file']) {
+                                $this->entries .= "<td" . ($i==0 ? " rowspan='" . count($files[$file]) . "'" : "") . $thisPageFile . ">" . str_replace(wire('config')->paths->templates, '', $item['file']) . "</td>";
+                            }
+                            $this->entries .=
                             "<td>".$item['line']."</td>" .
                             "<td>".strtoupper($item['type'])."</td>" .
                             "<td><a href='".$item['link']."' />".str_ireplace($item['type'], '<span style="text-decoration:underline">'.$item['type'].'</span>', $item['comment'])."</td>" .
                         "</tr>";
                 }
+                $currentFile = $item['file'];
+                $i++;
             }
         }
         $this->entries .= '</tbody>
@@ -77,7 +84,6 @@ class TodoPanel implements IBarPanel {
         // Load all the panel sections
         $out = '
         <h1>' . $this->icon . ' ToDo</h1>
-        <p>* Lines with an asterisk are in the template file for this page.</p>
 
         <div class="tracy-inner">';
             \TracyDebugger::$panelGenerationTime['todo'] = \Tracy\Debugger::timer('todo');
