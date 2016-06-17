@@ -8,7 +8,7 @@ class TodoPanel implements IBarPanel {
     protected $icon;
     protected $iconColor;
     protected $entries;
-    protected $todoTypes = array('todo ', 'fixme ', 'pending ', 'xxx ', 'hack ', 'bug ');
+    protected $todoTypes = array('todo', 'fixme', 'pending', 'xxx', 'hack', 'bug');
 
     public function getTab() {
         if(\TracyDebugger::additionalBar()) return;
@@ -103,9 +103,13 @@ class TodoPanel implements IBarPanel {
     }
 
 
-    protected function contains($str, array $arr) {
+    protected function containsTodoType($str, array $arr) {
         foreach($arr as $a) {
-            if (stripos($str, $a) !== false) return true;
+            // match whole words only so that "debug" won't match "bug" todoType
+            // but this still allows "//TODO" to match even though no space before word
+            $regex = '/\b'.$a.'\b/i';
+            preg_match($regex, $str, $match, PREG_OFFSET_CAPTURE);
+            if(isset($match[0][1])) return true;
         }
         return false;
     }
@@ -144,44 +148,55 @@ class TodoPanel implements IBarPanel {
     }
 
 
-    private function extractHtmlComments($comment, $fileContent) {
-        $htmlComments = array();
-        $commentLines = array();
-        $commentBlock = trim($comment);
-        $commentLines = array_merge($commentLines, preg_split('~[\r\n]{1,2}~', $commentBlock));
-        foreach ($commentLines as $key => $commentContent) {
-            if($this->contains($commentContent, $this->todoTypes)) {
-                $skip = 0;
-                foreach ($commentLines as $tkey => $line) {
-                    if ($tkey >= $key) {
-                        break;
-                    }
-                    if ($line == $commentContent) {
-                        $skip++;
-                    }
+    private function extractNonPhpComments($comment, $fileContent) {
+        $todos = array();
+        // this is for all comments that aren't in a PHP code block, eg $token[0] == T_INLINE_HTML
+        // this will return all comment types (accept html comments) by adding a <?php to the $comment
+        $tokens = token_get_all('<?php'.$comment);
+        foreach($tokens as $token) {
+            if($token[0] == T_COMMENT || $token[0] == T_DOC_COMMENT) {
+                if($this->containsTodoType($token[1], $this->todoTypes)) {
+                    $todos[] = array($token[1], $token[2]);
                 }
-
-                $line = 0;
-                // assign line number
-                foreach (preg_split('~\n~', $fileContent) as $lineNumber => $commentLine) {
-                    if ($commentContent != '' && strpos($commentLine, $commentContent) !== FALSE) {
-                        if ($skip > 0) {
-                            $skip--;
-                            continue;
-                        }
-                        $line = $lineNumber + 1;
-                        break;
-                    }
-                }
-
-                $htmlComments[] = array(
-                    'line' => $line,
-                    'comment' => $commentContent
-                );
             }
         }
-        return $htmlComments;
+        // this is just for html comment tags
+        if(strpos($comment, '<!--') !== false) {
+            $htmlComments = array();
+            $commentLines = array();
+            $commentBlock = trim($comment);
+            $commentLines = array_merge($commentLines, preg_split('~[\r\n]{1,2}~', $commentBlock));
+            foreach ($commentLines as $key => $commentContent) {
+                if($this->containsTodoType($commentContent, $this->todoTypes)) {
+                    $skip = 0;
+                    foreach ($commentLines as $tkey => $line) {
+                        if ($tkey >= $key) {
+                            break;
+                        }
+                        if ($line == $commentContent) {
+                            $skip++;
+                        }
+                    }
+                    $line = 0;
+                    // assign line number
+                    foreach (preg_split('~\n~', $fileContent) as $lineNumber => $commentLine) {
+                        if ($commentContent != '' && strpos($commentLine, $commentContent) !== FALSE) {
+                            if ($skip > 0) {
+                                $skip--;
+                                continue;
+                            }
+                            $line = $lineNumber + 1;
+                            break;
+                        }
+                    }
+                    $todos[] = array($commentContent, $line);
+                }
+            }
+        }
+
+        return $todos;
     }
+
 
     private function createTodosArray($line, $comment, $filename) {
         return array(
@@ -207,11 +222,11 @@ class TodoPanel implements IBarPanel {
         $tokens = token_get_all($fileContent);
         foreach($tokens as $token) {
             if($token[0] == T_COMMENT || $token[0] == T_DOC_COMMENT || $token[0] == T_INLINE_HTML) {
-                if($this->contains($token[1], $this->todoTypes)) {
+                if($this->containsTodoType($token[1], $this->todoTypes)) {
                     if($token[0] == T_INLINE_HTML) {
                         // extract possible multiple comments from T_INLINE_HTML block
-                        foreach($this->extractHtmlComments($token[1], $fileContent) as $htmlComment) {
-                            $todos[] = $this->createTodosArray($htmlComment['line'], $htmlComment['comment'], $filename);
+                        foreach($this->extractNonPhpComments($token[1], $fileContent) as $htmlComment) {
+                            $todos[] = $this->createTodosArray($htmlComment[1], $htmlComment[0], $filename);
                         }
                     }
                     else {
