@@ -271,7 +271,7 @@ class ProcesswireInfoPanel implements IBarPanel {
                                 if($type === 0) break 2;
                                 if($type == 'created' || $type == 'modified' || $type == 'published') $value .= ' ('.date("Y-m-d H:i:s", $value).')';
                                 if($type == 'created_users_id' || $type == 'modified_users_id') $value .= ' ('.wire('users')->get($value)->name.')';
-                                $fieldArray['value'][$key][$type] = is_object($value) ? $value->getArray() : $value;
+                                $fieldArray['value'][$key][$type] = is_object($value) && method_exists($value, 'getArray') ? $value->getArray() : $value;
                                 if($f->type instanceof FieldtypeFile) {
                                     $fieldArray['value'][$key]['name'] = $item->name;
                                     $fieldArray['value'][$key]['filename'] = $item->filename;
