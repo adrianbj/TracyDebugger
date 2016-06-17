@@ -17,7 +17,7 @@ class TodoPanel implements IBarPanel {
         $numEntries = 0;
         $thisPageNumEntries = 0;
         $files = $this->getTodos();
-        $this->entries = $this->sectionHeader(array('File', 'Line', 'Comment'));
+        $this->entries = $this->sectionHeader(array('File', 'Line', 'Type', 'Comment'));
         foreach($files as $file => $items) {
             foreach($items as $item) {
                 $numEntries++;
@@ -34,7 +34,8 @@ class TodoPanel implements IBarPanel {
                         \n<tr>
                             <td>".$thisPageFile . str_replace(wire('config')->paths->templates, '', $item['file'])."</td>" .
                             "<td>".$item['line']."</td>" .
-                            "<td><a href='".$item['link']."' />".$item['comment']."</td>" .
+                            "<td>".strtoupper($item['type'])."</td>" .
+                            "<td><a href='".$item['link']."' />".str_ireplace($item['type'], '<span style="text-decoration:underline">'.$item['type'].'</span>', $item['comment'])."</td>" .
                         "</tr>";
                 }
             }
@@ -103,14 +104,13 @@ class TodoPanel implements IBarPanel {
     }
 
 
-    protected function containsTodoType($str, array $arr) {
-        foreach($arr as $a) {
+    protected function containsTodoType($str, array $todoTypes) {
+        foreach($todoTypes as $todoType) {
             // match whole words, without hyphens only so that "debug" won't match the "bug" todoType
             // and "micro-clearfix-hack" won't match "hack"
             // this still allows "//TODO" to match even though no space before word
-            $regex = '/(?<!-)\b'.$a.'\b(?!-)/i';
-            preg_match($regex, $str, $match, PREG_OFFSET_CAPTURE);
-            if(isset($match[0][1])) return true;
+            preg_match('/(?<!-)\b'.$todoType.'\b(?!-)/i', $str, $match, PREG_OFFSET_CAPTURE);
+            if(isset($match[0][1])) return $todoType;
         }
         return false;
     }
@@ -149,65 +149,6 @@ class TodoPanel implements IBarPanel {
     }
 
 
-    private function extractNonPhpComments($comment, $fileContent) {
-        $todos = array();
-        // this is for all comments that aren't in a PHP code block, eg $token[0] == T_INLINE_HTML
-        // this will return all comment types (accept html comments) by adding a <?php to the $comment
-        $tokens = token_get_all('<?php'.$comment);
-        foreach($tokens as $token) {
-            if($token[0] == T_COMMENT || $token[0] == T_DOC_COMMENT) {
-                if($this->containsTodoType($token[1], $this->todoTypes)) {
-                    $todos[] = array($token[1], $token[2]);
-                }
-            }
-        }
-        // this is just for html comment tags
-        if(strpos($comment, '<!--') !== false) {
-            $htmlComments = array();
-            $commentLines = array();
-            $commentBlock = trim($comment);
-            $commentLines = array_merge($commentLines, preg_split('~[\r\n]{1,2}~', $commentBlock));
-            foreach ($commentLines as $key => $commentContent) {
-                if($this->containsTodoType($commentContent, $this->todoTypes)) {
-                    $skip = 0;
-                    foreach ($commentLines as $tkey => $line) {
-                        if ($tkey >= $key) {
-                            break;
-                        }
-                        if ($line == $commentContent) {
-                            $skip++;
-                        }
-                    }
-                    $line = 0;
-                    // assign line number
-                    foreach (preg_split('~\n~', $fileContent) as $lineNumber => $commentLine) {
-                        if ($commentContent != '' && strpos($commentLine, $commentContent) !== FALSE) {
-                            if ($skip > 0) {
-                                $skip--;
-                                continue;
-                            }
-                            $line = $lineNumber + 1;
-                            break;
-                        }
-                    }
-                    $todos[] = array($commentContent, $line);
-                }
-            }
-        }
-
-        return $todos;
-    }
-
-
-    private function createTodosArray($line, $comment, $filename) {
-        return array(
-            'file' => $filename,
-            'line' => $line,
-            'comment' => nl2br(htmlentities($comment)),
-            'link' => \TracyDebugger::makePathLocal(str_replace("%file", $filename, str_replace("%line", $line, \TracyDebugger::getDataValue("editor"))))
-        );
-    }
-
     /**
      * Reads file and returns all comments found
      * @returns array
@@ -219,24 +160,35 @@ class TodoPanel implements IBarPanel {
         $fileContent = fread($stream, filesize($filename));
         fclose($stream);
 
+        // script tags break token_get_all when forcing the file to be php with <?php so remove them
+        $fileContent = preg_replace('#<script(.*?)>(.*?)</script>#is', '', $fileContent);
+        // remove any existing php tags and add one at the start
+        // change html comment tags into /* comment */ so they will be parsed by token_get_all
+        $fileContent = '<?php' . str_replace(array('<!--', '-->', '<?php', '<?', '?>'), array('/*', '*/', '', '', ''), $fileContent);
+
         $todos = array();
         $tokens = token_get_all($fileContent);
         foreach($tokens as $token) {
-            if($token[0] == T_COMMENT || $token[0] == T_DOC_COMMENT || $token[0] == T_INLINE_HTML) {
-                if($this->containsTodoType($token[1], $this->todoTypes)) {
-                    if($token[0] == T_INLINE_HTML) {
-                        // extract possible multiple comments from T_INLINE_HTML block
-                        foreach($this->extractNonPhpComments($token[1], $fileContent) as $htmlComment) {
-                            $todos[] = $this->createTodosArray($htmlComment[1], $htmlComment[0], $filename);
-                        }
-                    }
-                    else {
-                        $todos[] = $this->createTodosArray($token[2], $token[1], $filename);
-                    }
+            if($token[0] == T_COMMENT || $token[0] == T_DOC_COMMENT) {
+                $containsTodo = $this->containsTodoType($token[1], $this->todoTypes);
+                if($containsTodo !== false) {
+                    $todos[] = $this->createTodosArray($token[2], $token[1], $containsTodo, $filename);
                 }
             }
         }
 
         return $todos;
     }
+
+
+    private function createTodosArray($line, $comment, $type, $filename) {
+        return array(
+            'file' => $filename,
+            'line' => $line,
+            'type' => $type,
+            'comment' => nl2br(trim(htmlentities(str_replace(array('/*', '//', '*/', '*'), '', $comment)))),
+            'link' => \TracyDebugger::makePathLocal(str_replace("%file", $filename, str_replace("%line", $line, \TracyDebugger::getDataValue("editor"))))
+        );
+    }
+
 }
