@@ -105,9 +105,10 @@ class TodoPanel implements IBarPanel {
 
     protected function containsTodoType($str, array $arr) {
         foreach($arr as $a) {
-            // match whole words only so that "debug" won't match "bug" todoType
-            // but this still allows "//TODO" to match even though no space before word
-            $regex = '/\b'.$a.'\b/i';
+            // match whole words, without hyphens only so that "debug" won't match the "bug" todoType
+            // and "micro-clearfix-hack" won't match "hack"
+            // this still allows "//TODO" to match even though no space before word
+            $regex = '/(?<!-)\b'.$a.'\b(?!-)/i';
             preg_match($regex, $str, $match, PREG_OFFSET_CAPTURE);
             if(isset($match[0][1])) return true;
         }
