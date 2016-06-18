@@ -170,7 +170,7 @@ class TodoPanel implements IBarPanel {
         $fileContent = preg_replace('#<script(.*?)>(.*?)</script>#is', '', $fileContent);
         // remove any existing php tags and add one at the start
         // change html comment tags into /* comment */ so they will be parsed by token_get_all
-        $fileContent = '<?php' . str_replace(array('<!--', '-->', '<?php', '<?', '?>'), array('/*', '*/', '', '', ''), $fileContent);
+        $fileContent = '<?php' . PHP_EOL . str_replace(array('<!--', '-->', '<?php', '<?', '?>', '/*!'), array('/*', '*/', '', '', '', ''), $fileContent);
 
         $todos = array();
         $tokens = token_get_all($fileContent);
