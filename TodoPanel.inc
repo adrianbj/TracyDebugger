@@ -40,7 +40,7 @@ class TodoPanel implements IBarPanel {
                             $this->entries .=
                             "<td>".$item['line']."</td>" .
                             "<td>".strtoupper($item['type'])."</td>" .
-                            "<td><a href='".$item['link']."' />".str_ireplace($item['type'], '<span style="text-decoration:underline">'.$item['type'].'</span>', $item['comment'])."</td>" .
+                            "<td><a href='".$item['link']."' />".preg_replace('#'.$item['type'].'#i', '<span style="text-decoration:underline">$0</span>', $item['comment'])."</td>" .
                         "</tr>";
                 }
                 $currentFile = $item['file'];
@@ -71,7 +71,7 @@ class TodoPanel implements IBarPanel {
         ';
         return '
         <span title="Console">
-            ' . $this->icon .   (\TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Todo' : '') . '(' . $thisPageNumEntries . '/' . $numEntries . ')
+            ' . $this->icon .   (\TracyDebugger::getDataValue('showPanelLabels') ? 'Todo' : '') . ' ' . $thisPageNumEntries . '/' . $numEntries . '
         </span>
         ';
     }
@@ -81,7 +81,6 @@ class TodoPanel implements IBarPanel {
 
         \TracyDebugger::$panelGenerationTime['toDo'] = \Tracy\Debugger::timer('toDo');
 
-        // Load all the panel sections
         $out = '
         <h1>' . $this->icon . ' ToDo</h1>
 
@@ -169,8 +168,8 @@ class TodoPanel implements IBarPanel {
         // script tags break token_get_all when forcing the file to be php with <?php so remove them
         $fileContent = preg_replace('#<script(.*?)>(.*?)</script>#is', '', $fileContent);
         // remove any existing php tags and add one at the start
-        // change html comment tags into /* comment */ so they will be parsed by token_get_all
-        $fileContent = '<?php ' . str_replace(array('<!--', '-->', '<?php', '<?', '?>'), array('/*', '*/', '', '', ''), $fileContent);
+        // change html and latte comment tags into /* comment */ so they will be parsed by token_get_all
+        $fileContent = '<?php ' . str_replace(array('<?php', '<?', '?>', '<!--', '-->', '{*', '*}'), array('', '', '', '/*', '*/', '/*', '*/'), $fileContent);
 
         $todos = array();
         $tokens = token_get_all($fileContent);
