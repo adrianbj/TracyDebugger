@@ -24,7 +24,7 @@ class TodoPanel implements IBarPanel {
             foreach($items as $item) {
                 $numEntries++;
                 if($item['file'] == wire('page')->template->filename) {
-                    $thisPageFile = ' style="font-weight:bold" ';
+                    $thisPageFile = ' style="font-weight:bold !important" ';
                     $thisPageNumEntries++;
                 }
                 else {
