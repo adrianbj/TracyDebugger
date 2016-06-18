@@ -37,10 +37,16 @@ class TodoPanel implements IBarPanel {
                             if($currentFile !== $item['file']) {
                                 $this->entries .= "<td" . ($i==0 ? " rowspan='" . count($files[$file]) . "'" : "") . $thisPageFile . ">" . str_replace(wire('config')->paths->templates, '', $item['file']) . "</td>";
                             }
+                            // if "todo" or other matched tag is at start of comment then remove it
+                            // otherwise, underline it wherever it is in the comment
+
+                            // regex in preg_replace is to match whole words, without hyphens only
+                            // see containsTodoType() method comments for more notes on this
+                            $replacement = stripos($item['comment'], $item['type']) === 0 ? '' : '<span style="text-decoration:underline">$0</span>';
                             $this->entries .=
                             "<td>".$item['line']."</td>" .
                             "<td>".strtoupper($item['type'])."</td>" .
-                            "<td><a href='".$item['link']."' />".preg_replace('#'.$item['type'].'#i', '<span style="text-decoration:underline">$0</span>', $item['comment'])."</td>" .
+                            "<td><a href='".$item['link']."' />".preg_replace('/(?<!-)\b'.$item['type'].'\b(?!-)/i', $replacement, $item['comment'])."</td>" .
                         "</tr>";
                 }
                 $currentFile = $item['file'];
@@ -168,8 +174,18 @@ class TodoPanel implements IBarPanel {
         // script tags break token_get_all when forcing the file to be php with <?php so remove them
         $fileContent = preg_replace('#<script(.*?)>(.*?)</script>#is', '', $fileContent);
         // remove any existing php tags and add one at the start
-        // change html and latte comment tags into /* comment */ so they will be parsed by token_get_all
-        $fileContent = '<?php ' . str_replace(array('<?php', '<?', '?>', '<!--', '-->', '{*', '*}'), array('', '', '', '/*', '*/', '/*', '*/'), $fileContent);
+        // change html, latte, and "loud" comment tags into /* comment */ so they will be parsed by token_get_all
+        $fileContent = '<?php ' .
+        strtr($fileContent, array(
+            '<?php' => '',
+            '<?' => '',
+            '?>' => '',
+            '<!--' => '/*',
+            '-->' => '*/',
+            '{*' => '/*',
+            '*}' => '*/',
+            '/*!' => '/*'
+        ));
 
         $todos = array();
         $tokens = token_get_all($fileContent);
