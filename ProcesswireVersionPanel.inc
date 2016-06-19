@@ -61,7 +61,8 @@ class ProcesswireVersionPanel implements IBarPanel {
         <h1>' . $this->icon . ' ProcessWire Version</h1>
 
         <div class="tracy-inner">
-            <legend>Choose from available versions</legend><br />';
+            <fieldset>
+                <legend>Choose from available versions</legend><br />';
                 $out .= '
                 <form method="post" action="./">
                     <select name="tracyPwVersion">';
@@ -70,7 +71,8 @@ class ProcesswireVersionPanel implements IBarPanel {
                     }
                     $out .= '
                     </select>&nbsp;<input type="submit" value="Change" />
-                </form>';
+                </form>
+            </fieldset>';
             \TracyDebugger::$panelGenerationTime['processwireVersion'] = \Tracy\Debugger::timer('processwireVersion');
             $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['processwireVersion']);
         $out .= '

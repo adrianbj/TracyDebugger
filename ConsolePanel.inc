@@ -104,16 +104,6 @@ class ConsolePanel implements IBarPanel {
                 font: inherit;
                 color: inherit;
             }
-            #tracy-debug-panel-ConsolePanel input[type="submit"] {
-                background: #FFFFFF !important;
-                margin: 3px !important;
-                padding: 3px !important;
-                border: 1px solid #D2D2D2 !important;
-                -webkit-border-radius: 5px !important;
-                -moz-border-radius: 5px !important;
-                border-radius: 5px !important;
-                cursor: pointer !important;
-            }
         </style>
         ';
 

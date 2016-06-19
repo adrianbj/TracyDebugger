@@ -88,30 +88,7 @@ class TemplatePathPanel implements IBarPanel {
                 var parts = value.split("; " + name + "=");
                 if (parts.length == 2) return parts.pop().split(";").shift();
             }
-        </script>
-
-
-        <style type="text/css">
-            #tracy-debug-panel-TemplatePathPanel fieldset {
-                all: initial;
-                font: inherit;
-                color: inherit;
-            }
-            #tracy-debug-panel-TemplatePathPanel input[type="submit"] {
-                background: #FFFFFF !important;
-                margin: 3px !important;
-                padding: 3px !important;
-                border: 1px solid #D2D2D2 !important;
-                -webkit-border-radius: 5px !important;
-                -moz-border-radius: 5px !important;
-                border-radius: 5px !important;
-                cursor: pointer !important;
-            }
-            #tracy-debug-panel-TemplatePathPanel input[type="text"] {
-                resize: horizontal;
-                width: auto;
-            }
-        </style>';
+        </script>';
 
 
         $out .= '<h1>'.$this->icon.' Template Path</h1>
