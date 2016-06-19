@@ -85,8 +85,6 @@ class TodoPanel implements IBarPanel {
 
     public function getPanel() {
 
-        \TracyDebugger::$panelGenerationTime['toDo'] = \Tracy\Debugger::timer('toDo');
-
         $out = '
         <h1>' . $this->icon . ' ToDo</h1>
 

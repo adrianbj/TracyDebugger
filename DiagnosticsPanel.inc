@@ -214,7 +214,7 @@ class DiagnosticsPanel implements IBarPanel {
             }
             $out .= "
             <td style='background-color:".static::$color."; color:#FFFFFF'>".$statusNotes[0]."</td>
-            <td>".$statusNotes[1]."</td>
+            <td>".str_replace(' ', '&nbsp;', $statusNotes[1])."</td>
         </tr>";
 
         return $out;
@@ -226,7 +226,7 @@ class DiagnosticsPanel implements IBarPanel {
     */
     protected function getStatusNotes($attribute, $exists, $readable, $writeable, $permission) {
         if($permission == '0777') {
-            return array('Failure', '0777 is usually not a good idea.');
+            return array('Failure', '0777 is usually unsafe');
         }
         else {
             switch ($attribute) {
@@ -234,29 +234,29 @@ class DiagnosticsPanel implements IBarPanel {
                 case 'Wire Directory':
                 case 'Core Directory':
                 case 'Core Modules':
-                    if(!$readable) return array('Failure','Needs to be readable.');
-                        else return $writeable ? array('Warning', 'For added security, make read-only.') : array('OK', 'Needs to be writeable for automatic core upgrades.');
+                    if(!$readable) return array('Failure','Needs to be readable');
+                        else return $writeable ? array('Warning', 'For added security, make read-only') : array('OK', 'Needs to be writeable for automatic core upgrades');
                 case 'Site Templates':
-                    if(!$readable) return array('Failure','Needs to be readable.');
-                        else return $writeable ? array('Warning', 'For added security, make read-only.') : array('OK', '');
+                    if(!$readable) return array('Failure','Needs to be readable');
+                        else return $writeable ? array('Warning', 'For added security, make read-only') : array('OK', '');
                 case 'Site Directory':
-                    if(!$readable) return array('Failure','Needs to be readable.');
-                        else return $writeable ? array('Warning', 'For added security, make read-only.') : array('OK', '');
+                    if(!$readable) return array('Failure','Needs to be readable');
+                        else return $writeable ? array('Warning', 'For added security, make read-only') : array('OK', '');
                 case 'Config File':
-                    if($permission > 600) return array('Warning', 'Readable by more than just the owner.');
-                        else return !$readable ? array('Failure', 'Needs to be readable.') : array('OK', '');
+                    if($permission > 600) return array('Warning', 'Readable by more than just the owner');
+                        else return !$readable ? array('Failure', 'Needs to be readable') : array('OK', '');
                 case 'Installation Directory':
                 case 'Install File':
-                    return $exists ? array('Failure', 'Should be deleted for security.') : array('OK', '');
+                    return $exists ? array('Failure', 'Should be deleted for security') : array('OK', '');
                 case 'Site Modules':
-                    if(!$readable) return array('Failure','Needs to be readable.');
-                        else return $writeable ? array('Warning', 'For added security, make read-only.') : array('OK', 'Needs to be writeable for automatic installation of modules.');
+                    if(!$readable) return array('Failure','Needs to be readable');
+                        else return $writeable ? array('Warning', 'For added security, make read-only') : array('OK', 'Needs to be writeable for automatic installation of modules');
                 case 'Assets Directory':
                 case 'Cache Directory':
                 case 'Files Directory':
                 case 'Logs Directory':
                 case 'Sessions Directory':
-                    return $readable && $writeable ? array('OK', '') : array('Failure', 'Needs to be readable and writeable.');
+                    return $readable && $writeable ? array('OK', '') : array('Failure', 'Needs to be readable and writeable');
             }
         }
     }

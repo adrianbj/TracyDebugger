@@ -24,9 +24,9 @@ class ConsolePanel implements IBarPanel {
         </svg>';
 
         return '
-            <span title="Console">
-                ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Console' : '') . '
-            </span>
+        <span title="Console">
+            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Console' : '') . '
+        </span>
         ';
     }
 
@@ -41,12 +41,32 @@ class ConsolePanel implements IBarPanel {
                 }
             });
 
+            function tryParseJSON (str){
+                try {
+                    var o = JSON.parse(str);
+
+                    // Handle non-exception-throwing cases:
+                    // Neither JSON.parse(false) or JSON.parse(1234) throw errors, hence the type-checking,
+                    // but... JSON.parse(null) returns "null", and typeof null === "object",
+                    // so we must check for that, too.
+                    if (o && typeof o === "object" && o !== null) {
+                        return "Error: " + o.message;
+                    }
+                }
+                catch (e) {
+                    return str;
+                }
+
+                return false;
+            };
+
             function processTracyCode(clear) {
                 if(clear) {
-                    var code = document.getElementById("tracyConsoleCode").value = "";
+                    var code = "";
+                    editor.setValue("");
                 }
                 else {
-                    var code = document.getElementById("tracyConsoleCode").value;
+                    var code = editor.getValue();
                 }
                 callPhp(code);
             }
@@ -64,12 +84,12 @@ class ConsolePanel implements IBarPanel {
 
                 xmlhttp.onreadystatechange = function() {
                     if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
-                       if(xmlhttp.status == 200){
-                           document.getElementById("tracyConsoleResult").innerHTML = xmlhttp.responseText;
-                       }
-                       else {
-                           alert(xmlhttp.status+": "+xmlhttp.statusText);
-                       }
+                        if(xmlhttp.status == 200){
+                            document.getElementById("tracyConsoleResult").innerHTML = tryParseJSON(xmlhttp.responseText);
+                        }
+                        else {
+                            document.getElementById("tracyConsoleResult").innerHTML = xmlhttp.status+": " + xmlhttp.statusText + "<br />See the console for the actual PHP error";
+                        }
                     }
                 };
                 xmlhttp.open("POST", "'.wire("config")->urls->admin . 'page/tracy-console/", true);
@@ -94,18 +114,8 @@ class ConsolePanel implements IBarPanel {
                 border-radius: 5px !important;
                 cursor: pointer !important;
             }
-            #tracy-debug-panel-ConsolePanel textarea {
-                border: 1px solid #cccccc;
-                width:500px;
-                height:75px;
-                background: #282828;
-                font-family: Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, serif;
-                font-size: 14px;
-                color: #81a2be;
-                padding: 3px;
-            }
         </style>
-';
+        ';
 
         $code = '';
         $openPHP = '<' . '?php';
@@ -113,7 +123,7 @@ class ConsolePanel implements IBarPanel {
         $file = wire('config')->paths->cache . 'TracyDebugger/consoleCode.php';
         if(file_exists($file)) {
             $code = file_get_contents(wire('config')->paths->cache . 'TracyDebugger/consoleCode.php');
-            $code = str_replace("$openPHP\n$firstLine\n", "", $code);
+            $code = htmlspecialchars(str_replace("$openPHP\n$firstLine\n", "", $code), ENT_QUOTES, 'UTF-8');
         }
 
         $out .= '<h1>'.$this->icon.' Console</h1>
@@ -121,7 +131,7 @@ class ConsolePanel implements IBarPanel {
             <fieldset>
                 <legend>Enter PHP code, then use CTRL+Enter or CMD+Enter to run.</legend><br />';
                     $out .= '
-                    <textarea id="tracyConsoleCode" style="width:500px;height:75px" size="100" id="phpCode">'.$code.'</textarea><br />
+                    <div id="tracyConsoleCode" style="width:580px; height:150px">'.$code.'</div><br />
                     <input type="submit" onclick="processTracyCode(false)" value="Run Code" />&nbsp;
                     <input type="submit" onclick="processTracyCode(true)" value="Clear Code" />
                     <br /><br />
@@ -130,6 +140,26 @@ class ConsolePanel implements IBarPanel {
             \TracyDebugger::$panelGenerationTime['console'] = \Tracy\Debugger::timer('console');
             $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['console']);
         $out .= '</div>';
+
+        $out .= '
+        <script>
+            var editor = ace.edit("tracyConsoleCode");
+            editor.setTheme("ace/theme/tomorrow_night");
+            editor.container.style.lineHeight = 1.8;
+            editor.setOption("firstLineNumber", 3); //to account for two lines added when file is saved
+            editor.setFontSize(13);
+            session = editor.getSession();
+            session.setMode({path:"ace/mode/php", inline:true});
+            count = session.getLength();
+            editor.focus();
+            //Go to end of the last line
+            editor.gotoLine(count, session.getLine(count-1).length);
+            editor.setOptions({
+                minLines: 3,
+                maxLines: 8
+            });
+        </script>
+        ';
 
         return $out;
     }

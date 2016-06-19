@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 191,
+            'version' => 192,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -72,6 +72,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'templatePath' => 'Template Path',
         'console' => 'Console',
         'todo' => 'ToDo',
+        'processwireVersion' => 'ProcessWire Version',
         'panelSelector' => 'Panel Selector'
     );
 
@@ -138,6 +139,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         if(isset(wire('input')->get->tracyValidating) && wire('input')->get->tracyValidating == 1) return;
         if(isset(wire('input')->get->modal) && wire('input')->get->modal == 1) return;
+
+        $this->addHookAfter('ProcessPageView::execute', $this, 'addJavascript');
 
         if($this->allowedTracyUsers()) {
             if ($this->data['coreBranch'] == 'master' && version_compare(phpversion(), '5.4.4', '>=')) {
@@ -217,8 +220,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
         Debugger::getFireLogger()->maxDepth = $this->data['maxDepth'];
         Debugger::getFireLogger()->maxLength = $this->data['maxLength'];
-        Debugger:: getBlueScreen()->maxDepth = $this->data['maxDepth'];
-        Debugger:: getBlueScreen()->maxLength = $this->data['maxLength'];
+        Debugger::getBlueScreen()->maxDepth = $this->data['maxDepth'];
+        Debugger::getBlueScreen()->maxLength = $this->data['maxLength'];
 
         Debugger::$strictMode = $this->data['strictMode'] ? TRUE : FALSE;
         Debugger::$scream = $this->data['forceScream'] ? TRUE : FALSE;
@@ -304,6 +307,24 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     require_once __DIR__ . '/'.$panelName.'.inc';
                     Debugger::getBar()->addPanel(new $panelName);
                     break;
+                case 'processwireVersion':
+                    require_once __DIR__ . '/'.$panelName.'.inc';
+                    Debugger::getBar()->addPanel(new $panelName);
+                    if(isset($_POST['tracyPwVersion']) && $_POST['tracyPwVersion'] != $this->config->version) {
+                        $rootPath = $this->config->paths->root;
+                        // rename wire
+                        rename($rootPath.'wire', $rootPath.'.wire-'.$this->config->version);
+                        rename($rootPath.'.wire-'.$_POST['tracyPwVersion'], $rootPath.'wire');
+                        // rename .htaccess
+                        rename($rootPath.'.htaccess', $rootPath.'.htaccess-'.$this->config->version);
+                        rename($rootPath.'.htaccess-'.$_POST['tracyPwVersion'], $rootPath.'.htaccess');
+                        // rename index.php
+                        rename($rootPath.'index.php', $rootPath.'.index-'.$this->config->version.'.php');
+                        rename($rootPath.'.index-'.$_POST['tracyPwVersion'].'.php', $rootPath.'index.php');
+                        // reload to initialize version change
+                        $this->session->redirect(wire('page')->url);
+                    }
+                    break;
                 case 'templatePath':
                     require_once __DIR__ . '/'.$panelName.'.inc';
                     static::$templatePathOnce = $this->findInCookie($this->input->cookie->tracyTemplatePathOnce);
@@ -334,6 +355,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     break;
             }
         }
+    }
+
+    public function addJavascript(HookEvent $event) {
+        if(!in_array('console', static::$showPanels) || wire('config')->ajax) return;
+        $event->return .= '
+        <script type="text/javascript" src="'.wire('config')->urls->siteModules.'TracyDebugger/ace-editor/ace.js"></script>
+        <script type="text/javascript" src="'.wire('config')->urls->siteModules.'TracyDebugger/ace-editor/mode-php.js"></script>
+        <script type="text/javascript" src="'.wire('config')->urls->siteModules.'TracyDebugger/ace-editor/theme-tomorrow_night.js"></script>
+        ';
     }
 
     public function findInCookie($cookie) {
