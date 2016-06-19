@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 193,
+            'version' => 194,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -265,6 +265,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 Debugger::$showBar = true;
                 // hook to add code to template file to grab template variables
                 if(wire('config')->version >= 3 && wire('config')->templateCompile !== false && in_array('variables', static::$showPanels)) {
+                    unlink(str_replace('/site/','/site/assets/cache/FileCompiler/site/', wire('page')->template->filename));
                     $this->addHookAfter('FileCompiler::compileData', $this, 'setTemplateVars');
                 }
             }
