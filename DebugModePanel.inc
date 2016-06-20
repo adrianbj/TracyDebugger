@@ -110,7 +110,7 @@ class DebugModePanel implements IBarPanel {
 
         // Pages Loaded
         $pagesLoaded_oc = 0;
-        if($PwVersion >= 3) {
+        if($PwVersion >= 2.8) {
             $pagesLoaded = $this->sectionHeader(array('ID', 'Path', 'Type', 'Loader'));
             foreach(wire('pages')->getCache() as $p) {
                 $pagesLoaded_oc++;
@@ -139,7 +139,7 @@ class DebugModePanel implements IBarPanel {
         // API Variables
         $apiVars_oc = 0;
         $apiVariables = $this->sectionHeader(array('Name', 'Class'));
-        $pwVars = $PwVersion >= 3 ? wire('all') : wire()->fuel;
+        $pwVars = $PwVersion >= 2.8 ? wire('all') : wire()->fuel;
         if(is_object($pwVars)) {
             $apiVars = array();
             foreach($pwVars as $key => $value) {
@@ -249,7 +249,7 @@ class DebugModePanel implements IBarPanel {
         // Hooks
         $hooksCalled_oc = 0;
         $hooksCalled = $this->sectionHeader(array('When', 'Method::object', 'Visited by', 'Type', 'Priority'));
-        if($PwVersion >= 3) {
+        if($PwVersion >= 2.8) {
             $hooks = array_merge(wire()->getHooks('*'), wire('hooks')->getAllLocalHooks());
         }
         else {
@@ -281,7 +281,7 @@ class DebugModePanel implements IBarPanel {
         // Database Queries
         $databaseQueries_oc = 0;
         $databaseQueries = $this->sectionHeader(array('Order', 'Query'));
-        if($PwVersion >= 3) {
+        if($PwVersion >= 2.8) {
             $queryMethod = wire('database')->queryLog();
         }
         else {
@@ -369,7 +369,7 @@ class DebugModePanel implements IBarPanel {
 
         // Autoload
         $autoload_oc = 0;
-        if($PwVersion >= 3) {
+        if($PwVersion >= 2.8) {
             $autoload = $this->sectionHeader(array('Class', 'File/Details'));
             foreach(wire('classLoader')->getDebugLog() as $className => $classFile) {
                 $autoload_oc++;
@@ -438,7 +438,7 @@ class DebugModePanel implements IBarPanel {
         }
         $out .= '</div><br />';
 
-        if($PwVersion >= 3) {
+        if($PwVersion >= 2.8) {
             $out .= '
             <a href="#" rel="#autoload" class="tracy-toggle tracy-collapsed">Autoload ('.$autoload_oc.')</a>
             <div id="autoload" class="tracy-collapsed">'.$autoload.'</div><br />

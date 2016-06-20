@@ -88,7 +88,7 @@ class ConsolePanel implements IBarPanel {
                             document.getElementById("tracyConsoleResult").innerHTML = tryParseJSON(xmlhttp.responseText);
                         }
                         else {
-                            document.getElementById("tracyConsoleResult").innerHTML = xmlhttp.status+": " + xmlhttp.statusText + "<br />See the console for the actual PHP error";
+                            document.getElementById("tracyConsoleResult").innerHTML = xmlhttp.status+": " + xmlhttp.statusText + "<br />See the browser dev console for the actual error";
                         }
                     }
                 };
@@ -133,23 +133,25 @@ class ConsolePanel implements IBarPanel {
 
         $out .= '
         <script>
-            var editor = ace.edit("tracyConsoleCode");
-            editor.setTheme("ace/theme/tomorrow_night");
-            editor.container.style.lineHeight = 1.8;
-            editor.setOption("firstLineNumber", 3); //to account for two lines added when file is saved
-            editor.setFontSize(13);
-            session = editor.getSession();
-            session.setMode({path:"ace/mode/php", inline:true});
-            count = session.getLength();
-            editor.focus();
-            //Go to end of the last line
-            editor.gotoLine(count, session.getLine(count-1).length);
-            editor.setOptions({
-                enableBasicAutocompletion: true,
-                enableLiveAutocompletion: true,
-                minLines: 3,
-                maxLines: 8
-            });
+            if(typeof ace !== "undefined") {
+                var editor = ace.edit("tracyConsoleCode");
+                editor.setTheme("ace/theme/tomorrow_night");
+                editor.container.style.lineHeight = 1.8;
+                editor.setFontSize(13);
+                editor.$blockScrolling = Infinity; //fix deprecation warning
+                session = editor.getSession();
+                session.setMode({path:"ace/mode/php", inline:true});
+                count = session.getLength();
+                editor.focus();
+                //Go to end of the last line
+                editor.gotoLine(count, session.getLine(count-1).length);
+                editor.setOptions({
+                    enableBasicAutocompletion: true,
+                    enableLiveAutocompletion: true,
+                    minLines: 3,
+                    maxLines: 8
+                });
+            }
         </script>
         ';
 

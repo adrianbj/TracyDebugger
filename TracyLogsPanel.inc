@@ -138,8 +138,6 @@ class TracyLogsPanel implements IBarPanel {
 
     public function getPanel() {
 
-        $PwVersion = wire('config')->version;
-
         // end for each section
         $sectionEnd = '
                     </tbody>

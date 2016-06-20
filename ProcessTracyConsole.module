@@ -62,6 +62,9 @@ class ProcessTracyConsole extends Process implements Module {
      *
      */
     public function ___execute() {
+
+        set_error_handler(array($this, 'tracyConsoleErrorHandler'));
+
         $pwVars = function_exists('wire') ? $this->fuel : \ProcessWire\wire('all');
         extract($pwVars->getArray());
         if($user->isSuperuser()) {
@@ -98,10 +101,26 @@ class ProcessTracyConsole extends Process implements Module {
             $t->set('page', $page);
 
             // output rendered result of code
-            echo $t->render();
+            return $t->render();
         }
+
+    }
+
+
+    // error handler function
+    public function tracyConsoleErrorHandler($errno, $errstr, $errfile, $errline) {
+        $customErrStr = $errstr . ' on line: ' . ($errline - 2);
+        \TD::fireLog($customErrStr . ' in Tracy Console Panel');
+        \TD::log($customErrStr, 'error');
+
+        // echo and exit approach allows us to send error to Tracy console dump area
+        // this means that the browser will receive a 200 when it may have been a 500,
+        // but think that is ok in this case
+        echo '<br />Error: '.$customErrStr;
         exit;
     }
+
+
 
    /**
      * Install the module and create the page where it lives

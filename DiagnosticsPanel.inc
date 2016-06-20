@@ -41,9 +41,6 @@ class DiagnosticsPanel implements IBarPanel {
                 </table>
             </div>';
 
-        $PwVersion = wire('config')->version;
-
-
         /**
          * Diagnostics panel sections
          */
