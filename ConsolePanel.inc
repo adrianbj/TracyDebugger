@@ -145,6 +145,8 @@ class ConsolePanel implements IBarPanel {
             //Go to end of the last line
             editor.gotoLine(count, session.getLine(count-1).length);
             editor.setOptions({
+                enableBasicAutocompletion: true,
+                enableLiveAutocompletion: true,
                 minLines: 3,
                 maxLines: 8
             });

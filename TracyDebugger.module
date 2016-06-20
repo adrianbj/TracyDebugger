@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 194,
+            'version' => 195,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -364,6 +364,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         <script type="text/javascript" src="'.wire('config')->urls->siteModules.'TracyDebugger/ace-editor/ace.js"></script>
         <script type="text/javascript" src="'.wire('config')->urls->siteModules.'TracyDebugger/ace-editor/mode-php.js"></script>
         <script type="text/javascript" src="'.wire('config')->urls->siteModules.'TracyDebugger/ace-editor/theme-tomorrow_night.js"></script>
+        <script type="text/javascript" src="'.wire('config')->urls->siteModules.'TracyDebugger/ace-editor/ext-language_tools.js"></script>
         ';
     }
 
