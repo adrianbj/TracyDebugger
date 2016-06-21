@@ -81,7 +81,6 @@ class ConsolePanel implements IBarPanel {
 
                     // go to end of the last line
                     count = session.getLength();
-                    editor.focus();
                     editor.gotoLine(count, session.getLine(count-1).length);
 
                     // set autocomplete and other options
@@ -92,6 +91,8 @@ class ConsolePanel implements IBarPanel {
                             minLines: 3,
                             maxLines: 8
                         });
+                        document.getElementById("tracyConsoleCode").style.visibility = "visible";
+                        editor.focus();
                     });
                 }
             });
@@ -111,7 +112,13 @@ class ConsolePanel implements IBarPanel {
                     // but... JSON.parse(null) returns "null", and typeof null === "object",
                     // so we must check for that, too.
                     if (o && typeof o === "object" && o !== null) {
-                        return "Error: " + o.message;
+                        // when using clear code, getting a "Compiled File" error that we do not care about
+                        if(o.message.indexOf("Compiled file") > -1) {
+                            return "";
+                        }
+                        else {
+                            return "Error: " + o.message;
+                        }
                     }
                 }
                 catch (e) {
@@ -182,7 +189,7 @@ class ConsolePanel implements IBarPanel {
             <fieldset>
                 <legend>Enter PHP code, then use CTRL+Enter or CMD+Enter to run.</legend><br />';
                     $out .= '
-                    <div id="tracyConsoleCode" style="width:580px; height:150px">'.$code.'</div><br />
+                    <div id="tracyConsoleCode" style="visibility: hidden; width:580px; height:100px">'.$code.'</div><br />
                     <input type="submit" onclick="processTracyCode(false)" value="Run Code" />&nbsp;
                     <input type="submit" onclick="processTracyCode(true)" value="Clear Code" />
                     <br /><br />
