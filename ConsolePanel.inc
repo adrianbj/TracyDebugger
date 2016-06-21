@@ -133,25 +133,63 @@ class ConsolePanel implements IBarPanel {
 
         $out .= '
         <script>
-            if(typeof ace !== "undefined") {
-                var editor = ace.edit("tracyConsoleCode");
-                editor.setTheme("ace/theme/tomorrow_night");
-                editor.container.style.lineHeight = 1.8;
-                editor.setFontSize(13);
-                editor.$blockScrolling = Infinity; //fix deprecation warning
-                session = editor.getSession();
-                session.setMode({path:"ace/mode/php", inline:true});
-                count = session.getLength();
-                editor.focus();
-                //Go to end of the last line
-                editor.gotoLine(count, session.getLine(count-1).length);
-                editor.setOptions({
-                    enableBasicAutocompletion: true,
-                    enableLiveAutocompletion: true,
-                    minLines: 3,
-                    maxLines: 8
-                });
-            }
+            // javascript dynamic loader from https://gist.github.com/hagenburger/500716
+            // using dynamic loading because an exception error or "exit" in template file
+            // was preventing these scripts from being loaded which broke the editor
+            // if this has any problems, there is an alternate version to try here:
+            // https://www.nczonline.net/blog/2009/07/28/the-best-way-to-load-external-javascript/
+            var JavaScript = {
+                load: function(src, callback) {
+                    var script = document.createElement("script"),
+                            loaded;
+                    script.setAttribute("src", src);
+                    if (callback) {
+                        script.onreadystatechange = script.onload = function() {
+                            if (!loaded) {
+                                callback();
+                            }
+                            loaded = true;
+                        };
+                    }
+                    document.getElementsByTagName("head")[0].appendChild(script);
+                }
+            };
+
+            JavaScript.load("'.wire('config')->urls->siteModules.'TracyDebugger/ace-editor/ace.js", function() {
+                if(typeof ace !== "undefined") {
+                    var editor = ace.edit("tracyConsoleCode");
+                    editor.container.style.lineHeight = 1.8;
+                    editor.setFontSize(13);
+                    editor.$blockScrolling = Infinity; //fix deprecation warning
+
+                    // set theme
+                    JavaScript.load("'.wire('config')->urls->siteModules.'TracyDebugger/ace-editor/theme-tomorrow_night.js", function() {
+                        editor.setTheme("ace/theme/tomorrow_night");
+                    });
+
+                    session = editor.getSession();
+
+                    // set mode to php
+                    JavaScript.load("'.wire('config')->urls->siteModules.'TracyDebugger/ace-editor/mode-php.js", function() {
+                        session.setMode({path:"ace/mode/php", inline:true});
+                    });
+
+                    // go to end of the last line
+                    count = session.getLength();
+                    editor.focus();
+                    editor.gotoLine(count, session.getLine(count-1).length);
+
+                    // set autocomplete and other options
+                    JavaScript.load("'.wire('config')->urls->siteModules.'TracyDebugger/ace-editor/ext-language_tools.js", function() {
+                        editor.setOptions({
+                            enableBasicAutocompletion: true,
+                            enableLiveAutocompletion: true,
+                            minLines: 3,
+                            maxLines: 8
+                        });
+                    });
+                }
+            });
         </script>
         ';
 

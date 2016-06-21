@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 196,
+            'version' => 197,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -139,8 +139,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         if(isset(wire('input')->get->tracyValidating) && wire('input')->get->tracyValidating == 1) return;
         if(isset(wire('input')->get->modal) && wire('input')->get->modal == 1) return;
-
-        $this->addHookAfter('ProcessPageView::execute', $this, 'addJavascript');
 
         if($this->allowedTracyUsers()) {
             if ($this->data['coreBranch'] == 'master' && version_compare(phpversion(), '5.4.4', '>=')) {
@@ -358,15 +356,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
     }
 
-    public function addJavascript(HookEvent $event) {
-        if(!in_array('console', static::$showPanels) || wire('config')->ajax) return;
-        $event->return .= '
-        <script type="text/javascript" src="'.wire('config')->urls->siteModules.'TracyDebugger/ace-editor/ace.js"></script>
-        <script type="text/javascript" src="'.wire('config')->urls->siteModules.'TracyDebugger/ace-editor/mode-php.js"></script>
-        <script type="text/javascript" src="'.wire('config')->urls->siteModules.'TracyDebugger/ace-editor/theme-tomorrow_night.js"></script>
-        <script type="text/javascript" src="'.wire('config')->urls->siteModules.'TracyDebugger/ace-editor/ext-language_tools.js"></script>
-        ';
-    }
 
     public function findInCookie($cookie) {
         $templateEntries = explode(',', $cookie);
