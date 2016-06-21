@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 201,
+            'version' => 202,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -56,6 +56,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $temporaryTemplatePath;
     public static $panelGenerationTime = array();
     public static $hideInAdmin = array('validator', 'variables');
+    public static $pageHtml;
     public static $allPanels = array(
         'performance' => 'Performance',
         'processwireInfo' => 'ProcessWire Info',
@@ -260,12 +261,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         if(wire('page')->template != "admin") {
             if(in_array('frontend', $this->data['showDebugBar'])) {
+
                 Debugger::$showBar = true;
+
                 // hook to add code to template file to grab template variables
                 if(wire('config')->version >= 3 && wire('config')->templateCompile !== false && in_array('variables', static::$showPanels)) {
                     unlink(str_replace('/site/','/site/assets/cache/FileCompiler/site/', wire('page')->template->filename));
                     $this->addHookAfter('FileCompiler::compileData', $this, 'setTemplateVars');
                 }
+
+                if(in_array('validator', static::$showPanels)) {
+                    $this->addHookAfter('Page::render', $this, 'getPageHtml');
+                }
+
             }
             else {
                 Debugger::$showBar = false;
@@ -356,6 +364,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
     }
 
+    // for the validator panel
+    public function getPageHtml($event) {
+        static::$pageHtml = $event->return;
+    }
+
 
     public function findInCookie($cookie) {
         $templateEntries = explode(',', $cookie);
@@ -368,6 +381,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
         return false;
     }
+
 
     public function insertDebugStatements($event) {
 
@@ -697,24 +711,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->notes = __('An example path might be: /Users/myname/Sites/sitefolder/', __FILE__);
         $f->columnWidth = 50;
         if($data['localRootPath']) $f->attr('value', $data['localRootPath']);
-        $wrapper->add($f);
-
-        $f = wire('modules')->get("InputfieldText");
-        $f->attr('name', 'htaccessUsername');
-        $f->label = __('htaccess Username', __FILE__);
-        $f->description = __('If your site is behind an htaccess login, enter the username here.', __FILE__);
-        $f->notes = __('This is for the Validator panel.', __FILE__);
-        $f->columnWidth = 50;
-        if($data['htaccessUsername']) $f->attr('value', $data['htaccessUsername']);
-        $wrapper->add($f);
-
-        $f = wire('modules')->get("InputfieldText");
-        $f->attr('name', 'htaccessPassword');
-        $f->label = __('htaccess Password', __FILE__);
-        $f->description = __('If your site is behind an htaccess login, enter the password here.', __FILE__);
-        $f->notes = __('This is for the Validator panel.', __FILE__);
-        $f->columnWidth = 50;
-        if($data['htaccessPassword']) $f->attr('value', $data['htaccessPassword']);
         $wrapper->add($f);
 
         $f = wire('modules')->get("InputfieldCheckbox");

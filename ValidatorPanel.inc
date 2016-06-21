@@ -15,7 +15,6 @@ class ValidatorPanel implements IBarPanel {
     protected $filteredResult;
     protected $message;
     protected $resultLabel;
-    protected $pageUrl;
     protected $validationUrl;
     protected $validatorUrl;
 
@@ -24,42 +23,14 @@ class ValidatorPanel implements IBarPanel {
         if(\TracyDebugger::additionalBar()) return;
         \Tracy\Debugger::timer('validator');
 
-        // get url of current page and append tracyValidating to prevent
-        // loading of Tracy when getting the content of the page for validation
-        $this->pageUrl = wire('page')->httpUrl.'?tracyValidating=1';
-
-        $http = new WireHttp();
-        $http->setHeader('content-type', 'text/html; charset=utf-8');
-        $pageHtml = $http->get($this->pageUrl);
-        // seems like on some systems, WireHttp::get is not working, so fallback to file_get_contents
-        // maybe this (or fopen) should actually be the default?
-        if($pageHtml == '') {
-            $username = \TracyDebugger::getDataValue('htaccessUsername');
-            if($username != '') {
-                $password = \TracyDebugger::getDataValue('htaccessPassword');
-                $context = stream_context_create(array (
-                    'http' => array (
-                        'header' => 'Authorization: Basic ' . base64_encode("$username:$password")
-                    )
-                ));
-                $pageHtml = file_get_contents($this->pageUrl, false, $context);
-            }
-            else {
-                $pageHtml = file_get_contents($this->pageUrl);
-            }
-        }
-
-        // strip everything after the closing html tag
-        //if(strpos($pageHtml, '</html>') !== false) {
-        //    $pageHtml = substr($pageHtml, 0, strpos($pageHtml, "</html>")) . '</html>';
-        //}
-
         // determine which version of the validator to use
-        $this->validatorUrl = strpos($pageHtml, '<!DOCTYPE html>') !== false ? "https://html5.validator.nu/" : "https://validator.nu/";
+        $this->validatorUrl = strpos(\TracyDebugger::$pageHtml, '<!DOCTYPE html>') !== false ? "https://html5.validator.nu/" : "https://validator.nu/";
         $this->validationUrl = $this->validatorUrl . "?doc=".wire('page')->httpUrl."&out=html&showimagereport=yes&showsource=yes";
 
         // get results from validator and convert any entities to UTF-8
-        $this->rawResult = $http->post($this->validatorUrl, $pageHtml);
+        $http = new WireHttp();
+        $http->setHeader('content-type', 'text/html; charset=utf-8');
+        $this->rawResult = $http->post($this->validatorUrl, \TracyDebugger::$pageHtml);
         $this->rawResult = mb_convert_encoding($this->rawResult, 'HTML-ENTITIES', "UTF-8");
 
         $showPanelLabels = \TracyDebugger::getDataValue('showPanelLabels');
@@ -519,7 +490,7 @@ class ValidatorPanel implements IBarPanel {
             <br />';
 
         if($this->rawResult) {
-            $out .= '<div id="validatorBody" style="width:934px"><h2><a href="'.$this->validationUrl.'">Results for '.str_replace('?tracyValidating=1', '', $this->pageUrl).' at '.$this->validatorUrl.'</a></h2>'.$this->message.$this->filteredResult.'</div>';
+            $out .= '<div id="validatorBody" style="width:934px"><h2><a href="'.$this->validationUrl.'">Results for '.wire('page')->httpUrl.' at '.$this->validatorUrl.'</a></h2>'.$this->message.$this->filteredResult.'</div>';
         }
         else {
             $out .= '<div id="validatorBody" style="width:934px"><h2>Sorry, but there was a problem accessing the validation server at '.$this->validatorUrl.'</h2></div>';
