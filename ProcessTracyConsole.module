@@ -65,6 +65,9 @@ class ProcessTracyConsole extends Process implements Module {
 
         set_error_handler(array($this, 'tracyConsoleErrorHandler'));
 
+        // remove location links from dumps - not really meaningful for console
+        \Tracy\Debugger::$showLocation = FALSE;
+
         $pwVars = function_exists('wire') ? $this->fuel : \ProcessWire\wire('all');
         extract($pwVars->getArray());
         if($user->isSuperuser()) {
