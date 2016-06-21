@@ -135,7 +135,7 @@ if(!function_exists('d') && in_array('d', $this->data['enabledShortcutMethods'])
  * @tracySkipLocation
  */
 if(!function_exists('l') && in_array('l', $this->data['enabledShortcutMethods'])) {
-    function l($message, $priority = Debugger::INFO) {
+    function l($message, $priority = 'info') {
         if(tracyUnavailable()) return false;
         return TD::log($message, $priority);
     }

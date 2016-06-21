@@ -150,8 +150,9 @@ class TodoPanel implements IBarPanel {
         $templatesFolder = function_exists('\ProcessWire\wire') ? \ProcessWire\wire('config')->paths->templates : wire('config')->paths->templates;
         foreach ($iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($templatesFolder, \RecursiveDirectoryIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST) as $fileinfo){
             $filePath = $fileinfo->getPathname();
-            if($this->strpos_array($filePath, $ignore) === false) {
-                $items[] = $this->parseFile($filePath);
+            $fileSize = filesize($filePath);
+            if($fileSize > 0 && $fileinfo->isFile() && $this->strpos_array($filePath, $ignore) === false) {
+                $items[] = $this->parseFile($filePath, $fileSize);
             }
         }
         return $items;
@@ -162,11 +163,11 @@ class TodoPanel implements IBarPanel {
      * Reads file and returns all comments found
      * @returns array
      */
-    private function parseFile($file) {
+    private function parseFile($file, $fileSize) {
 
         $filename = $file;
         $stream = fopen($filename, 'r');
-        $fileContent = fread($stream, filesize($filename));
+        $fileContent = fread($stream, $fileSize);
         fclose($stream);
 
         // script tags break token_get_all when forcing the file to be php with <?php so remove them

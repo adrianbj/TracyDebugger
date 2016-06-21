@@ -15,7 +15,15 @@ class TemplatePathPanel implements IBarPanel {
         if(\TracyDebugger::additionalBar()) return;
         \Tracy\Debugger::timer('templatePath');
 
-        $iconColor = \TracyDebugger::$templatePath ? '#D51616' : '#009900';
+        if(\TracyDebugger::$templatePath) {
+            $iconColor = '#D51616';
+        }
+        elseif(wire('input')->cookie->tracyTemplatePathSticky != '') {
+            $iconColor = '#FF9933';
+        }
+        else {
+            $iconColor = '#009900';
+        }
 
         $this->icon = '
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 86.02 86.02" style="enable-background:new 0 0 86.02 86.02;" xml:space="preserve"  style="height:16px">
