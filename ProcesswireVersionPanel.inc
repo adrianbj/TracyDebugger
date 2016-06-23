@@ -58,6 +58,12 @@ class ProcesswireVersionPanel implements IBarPanel {
     public function getPanel() {
 
         $out = '
+        <style>
+            fieldset {
+                border: 0 !important;
+            }
+        </style>
+
         <h1>' . $this->icon . ' ProcessWire Version</h1>
 
         <div class="tracy-inner">

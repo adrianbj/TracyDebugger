@@ -196,15 +196,15 @@ class DebugModePanel implements IBarPanel {
                 'Field',
                 'Fieldgroup',
                 'Template',
-                //'TemplateFile',
+                'TemplateFile',
             ),
             'Additional' => array(
                 'HookEvent',
                 'InputfieldWrapper',
                 'WireHttp',
-                //'PagesType',
-                //'Selector',
-                //'Selectors',
+                'PagesType',
+                'Selector',
+                'Selectors',
                 //'WireDatabaseBackup',
             )
         );

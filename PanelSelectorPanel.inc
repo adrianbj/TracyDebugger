@@ -95,11 +95,6 @@ class PanelSelectorPanel implements IBarPanel {
 
 
         <style type="text/css">
-            #tracy-debug-panel-PanelSelectorPanel fieldset {
-                all: initial;
-                font: inherit;
-                color: inherit;
-            }
             #tracy-debug-panel-PanelSelectorPanel input[type="submit"] {
                 background: #FFFFFF !important;
                 margin: 3px !important;
@@ -109,6 +104,10 @@ class PanelSelectorPanel implements IBarPanel {
                 -moz-border-radius: 5px !important;
                 border-radius: 5px !important;
                 cursor: pointer !important;
+            }
+
+            fieldset {
+                border: 0 !important;
             }
         </style>';
 

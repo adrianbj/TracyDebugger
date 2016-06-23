@@ -36,7 +36,7 @@ class ConsolePanel implements IBarPanel {
         $out = '
         <script>
 
-            var editor;
+            var tce; //setup Tracy Console Editor
 
             // javascript dynamic loader from https://gist.github.com/hagenburger/500716
             // using dynamic loading because an exception error or "exit" in template file
@@ -60,42 +60,6 @@ class ConsolePanel implements IBarPanel {
                 }
             };
 
-            JavaScript.load("'.wire('config')->urls->siteModules.'TracyDebugger/ace-editor/ace.js", function() {
-                if(typeof ace !== "undefined") {
-                    editor = ace.edit("tracyConsoleCode");
-                    editor.container.style.lineHeight = 1.8;
-                    editor.setFontSize(13);
-                    editor.$blockScrolling = Infinity; //fix deprecation warning
-
-                    // set theme
-                    JavaScript.load("'.wire('config')->urls->siteModules.'TracyDebugger/ace-editor/theme-tomorrow_night.js", function() {
-                        editor.setTheme("ace/theme/tomorrow_night");
-                    });
-
-                    session = editor.getSession();
-
-                    // set mode to php
-                    JavaScript.load("'.wire('config')->urls->siteModules.'TracyDebugger/ace-editor/mode-php.js", function() {
-                        session.setMode({path:"ace/mode/php", inline:true});
-                    });
-
-                    // go to end of the last line
-                    count = session.getLength();
-                    editor.gotoLine(count, session.getLine(count-1).length);
-
-                    // set autocomplete and other options
-                    JavaScript.load("'.wire('config')->urls->siteModules.'TracyDebugger/ace-editor/ext-language_tools.js", function() {
-                        editor.setOptions({
-                            enableBasicAutocompletion: true,
-                            enableLiveAutocompletion: true,
-                            minLines: 3,
-                            maxLines: 8
-                        });
-                        document.getElementById("tracyConsoleCode").style.visibility = "visible";
-                        editor.focus();
-                    });
-                }
-            });
 
             document.getElementById("tracyConsoleCode").addEventListener("keydown", function(e) {
                 if(((e.keyCode==10||e.charCode==10)||(e.keyCode==13||e.charCode==13)) && (e.metaKey || e.ctrlKey)) {
@@ -131,10 +95,10 @@ class ConsolePanel implements IBarPanel {
             function processTracyCode(clear) {
                 if(clear) {
                     var code = "";
-                    editor.setValue("");
+                    tce.setValue("");
                 }
                 else {
-                    var code = editor.getValue();
+                    var code = tce.getValue();
                 }
                 callPhp(code);
             }
@@ -167,10 +131,11 @@ class ConsolePanel implements IBarPanel {
             }
         </script>
         <style type="text/css">
-            #tracy-debug-panel-ConsolePanel fieldset {
-                all: initial;
-                font: inherit;
-                color: inherit;
+            #tracy-debug-panel-ConsolePanel  {
+                width: calc(100vw - 40px) !important;
+            }
+            fieldset {
+                border: 0 !important;
             }
         </style>
         ';
@@ -181,7 +146,8 @@ class ConsolePanel implements IBarPanel {
         $file = wire('config')->paths->cache . 'TracyDebugger/consoleCode.php';
         if(file_exists($file)) {
             $code = file_get_contents(wire('config')->paths->cache . 'TracyDebugger/consoleCode.php');
-            $code = htmlspecialchars(str_replace("$openPHP\n$firstLine\n", "", $code), ENT_QUOTES, 'UTF-8');
+            $code = str_replace("$openPHP\n$firstLine\n", "", $code);
+            $code = json_encode($code); // json_encode to convert line breaks to \n - needed by setValue()
         }
 
         $out .= '<h1>'.$this->icon.' Console</h1>
@@ -189,7 +155,7 @@ class ConsolePanel implements IBarPanel {
             <fieldset>
                 <legend>Enter PHP code, then use CTRL+Enter or CMD+Enter to run.</legend><br />';
                     $out .= '
-                    <div id="tracyConsoleCode" style="visibility: hidden; width:580px; height:100px">'.$code.'</div><br />
+                    <div id="tracyConsoleCode" style="visibility:hidden; width: calc(100vw - 80px) !important; height:100px"></div><br />
                     <input type="submit" onclick="processTracyCode(false)" value="Run Code" />&nbsp;
                     <input type="submit" onclick="processTracyCode(true)" value="Clear Code" />
                     <br /><br />
@@ -198,6 +164,75 @@ class ConsolePanel implements IBarPanel {
             \TracyDebugger::$panelGenerationTime['console'] = \Tracy\Debugger::timer('console');
             $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['console']);
         $out .= '</div>';
+
+        $out .= '
+        <script>
+            JavaScript.load("'.wire('config')->urls->siteModules.'TracyDebugger/ace-editor/ace.js", function() {
+                if(typeof ace !== "undefined") {
+                    tce = ace.edit("tracyConsoleCode");
+                    tce.container.style.lineHeight = 1.8;
+                    tce.setFontSize(13);
+                    tce.setShowPrintMargin(false);
+                    tce.$blockScrolling = Infinity; //fix deprecation warning
+
+                    tce.on("beforeEndOperation", function(e) {
+                        localStorage.setItem("tracyConsole", btoa(tce.getValue()));
+                    });
+
+                    // set theme
+                    JavaScript.load("'.wire('config')->urls->siteModules.'TracyDebugger/ace-editor/theme-tomorrow_night.js", function() {
+                        tce.setTheme("ace/theme/tomorrow_night");
+                    });
+
+                    // set mode to php
+                    JavaScript.load("'.wire('config')->urls->siteModules.'TracyDebugger/ace-editor/mode-php.js", function() {
+                        tce.session.setMode({path:"ace/mode/php", inline:true});
+                    });
+
+                    // set autocomplete and other options
+                    JavaScript.load("'.wire('config')->urls->siteModules.'TracyDebugger/ace-editor/ext-language_tools.js", function() {
+                        var ml = Math.round(Math.max(document.documentElement.clientHeight, window.innerHeight || 0) / 60);
+                        tce.setOptions({
+                            enableBasicAutocompletion: true,
+                            enableLiveAutocompletion: true,
+                            minLines: 5,
+                            maxLines: ml
+                        });
+                        document.getElementById("tracyConsoleCode").style.visibility = "visible";
+                        if(!!localStorage.getItem("tracyConsole")) {
+                            tce.setValue(atob(localStorage.getItem("tracyConsole")));
+                        }
+                        else {
+                            tce.setValue('.$code.');
+                        }
+
+                        tce.focus();
+
+                        // go to end of the last line
+                        count = tce.session.getLength();
+                        tce.gotoLine(count, tce.session.getLine(count-1).length);
+
+                        function resizeAce() {
+                            var ml = Math.round(Math.max(document.documentElement.clientHeight, window.innerHeight || 0) / 60);
+                            tce.setOptions({
+                                enableBasicAutocompletion: true,
+                                enableLiveAutocompletion: true,
+                                minLines: 5,
+                                maxLines: ml
+                            });
+                        }
+
+                        resizeAce();
+
+                        window.onresize = function(event) {
+                            resizeAce();
+                        };
+
+                    });
+                }
+            });
+        </script>
+        ';
 
         return $out;
     }

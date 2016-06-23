@@ -96,7 +96,13 @@ class TemplatePathPanel implements IBarPanel {
                 var parts = value.split("; " + name + "=");
                 if (parts.length == 2) return parts.pop().split(";").shift();
             }
-        </script>';
+        </script>
+        <style>
+            fieldset {
+                border: 0 !important;
+            }
+        </style>
+        ';
 
 
         $out .= '<h1>'.$this->icon.' Template Path</h1>
