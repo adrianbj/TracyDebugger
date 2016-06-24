@@ -199,7 +199,7 @@ class ConsolePanel implements IBarPanel {
                             maxLines: ml
                         });
                         document.getElementById("tracyConsoleCode").style.visibility = "visible";
-                        if(!!localStorage.getItem("tracyConsole")) {
+                        if(!!localStorage.getItem("tracyConsole") && atob(localStorage.getItem("tracyConsole")) !== "null" && atob(localStorage.getItem("tracyConsole")) !== "undefined") {
                             tce.setValue(atob(localStorage.getItem("tracyConsole")));
                         }
                         else {
