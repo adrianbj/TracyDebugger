@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 204,
+            'version' => 205,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -142,7 +142,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if(isset(wire('input')->get->modal) && wire('input')->get->modal == 1) return;
 
         if($this->allowedTracyUsers()) {
-            if ($this->data['coreBranch'] == 'master' && version_compare(phpversion(), '5.4.4', '>=')) {
+            if ($this->data['coreBranch'] == 'latest' && version_compare(phpversion(), '5.4.4', '>=')) {
+                static::$tracyVersion = 'latest';
+                require_once __DIR__ . '/tracy-latest/src/tracy.php';
+            }
+            elseif ($this->data['coreBranch'] == 'master' && version_compare(phpversion(), '5.4.4', '>=')) {
                 static::$tracyVersion = 'master';
                 require_once __DIR__ . '/tracy-master/src/tracy.php';
             }
@@ -519,10 +523,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'coreBranch');
         $f->label = 'Core Tracy Branch';
         $f->description = __('Which version of the Tracy core to use. Master (dev) requires PHP 5.4.4+ and will be automatically selected if your PHP version is sufficient.', __FILE__);
-        $f->notes = __('Some users are experiencing a slow load time of the debugger bar with this version of the Tracy core, so you can manually select the Stable version if you wish.', __FILE__);
+        $f->notes = __('If you choose "Latest", you should disable the SessionHandlerDB module if you have it installed because it is currently causing SQL errors on some installs and it also prevents Tracy from capturing AJAX requests.', __FILE__);
         $f->columnWidth = 50;
         $f->required = true;
-        $f->addOption('master', 'Master (dev)');
+        $f->addOption('latest', 'Latest');
+        $f->addOption('master', 'Master');
         $f->addOption('stable', 'Stable');
         if($data['coreBranch']) $f->attr('value', $data['coreBranch']);
         $wrapper->add($f);
@@ -778,7 +783,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     */
     public static function additionalBar() {
         $isRedirect = preg_match('#^Location:#im', implode("\n", headers_list()));
-        if((static::$tracyVersion == 'master' && Helpers::isAjax()) || $isRedirect) {
+        if((static::$tracyVersion != 'stable' && Helpers::isAjax()) || $isRedirect) {
             return true;
         }
         else {
