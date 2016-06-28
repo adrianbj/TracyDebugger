@@ -7,6 +7,10 @@
 
 	var layer = document.getElementById('tracy-debug');
 
+	Tracy.getAjaxHeader = function() {
+		return layer.dataset.id;
+	};
+
 	var Panel = Tracy.DebugPanel = function(id) {
 		this.id = id;
 		this.elem = document.getElementById(this.id);
@@ -21,6 +25,12 @@
 
 	Panel.prototype.init = function() {
 		var _this = this, elem = this.elem;
+
+		elem.innerHTML = elem.dataset.tracyContent;
+		Tracy.Dumper.init(this.dumps, elem);
+		delete elem.dataset.tracyContent;
+		delete this.dumps;
+		evalScripts(elem);
 
 		draggable(elem, {
 			handle: elem.querySelector('h1'),
@@ -70,7 +80,6 @@
 		if (!this.is('tracy-ajax')) {
 			Tracy.Toggle.persist(elem);
 		}
-		this.restorePosition();
 	};
 
 	Panel.prototype.is = function(mode) {
@@ -128,7 +137,7 @@
 		var win = window.open('', this.id.replace(/-/g, '_'), 'left=' + offset.left + ',top=' + offset.top
 			+ ',width=' + this.elem.offsetWidth + ',height=' + this.elem.offsetHeight + ',resizable=yes,scrollbars=yes');
 		if (!win) {
-			return;
+			return false;
 		}
 
 		function escape(s) {
@@ -164,6 +173,7 @@
 		this.elem.classList.remove(Panel.PEEK);
 		this.elem.classList.add(Panel.WINDOW);
 		this.elem.Tracy.window = win;
+		return true;
 	};
 
 	Panel.prototype.reposition = function() {
@@ -189,8 +199,10 @@
 		if (!pos) {
 			this.elem.classList.add(Panel.PEEK);
 		} else if (pos.window) {
-			this.toWindow();
-		} else if (this.elem.querySelector('*')) {
+			this.init();
+			this.toWindow() || this.toFloat();
+		} else if (this.elem.dataset.tracyContent) {
+			this.init();
 			this.toFloat();
 			setPosition(this.elem, pos);
 		}
@@ -203,18 +215,18 @@
 	Bar.prototype.id = 'tracy-debug-bar';
 
 	Bar.prototype.init = function() {
-		var elem = document.getElementById(this.id);
+		this.elem = document.getElementById(this.id);
 
-		draggable(elem, {
+		draggable(this.elem, {
 			draggedClass: 'tracy-dragged'
 		});
 
-		this.initTabs(elem);
+		this.initTabs();
 		this.restorePosition();
 	};
 
-	Bar.prototype.initTabs = function(elem) {
-		var elem = document.getElementById(this.id), _this = this;
+	Bar.prototype.initTabs = function() {
+		var _this = this, elem = this.elem;
 
 		forEach(elem.getElementsByTagName('a'), function(a) {
 			a.addEventListener('click', function(e) {
@@ -246,6 +258,10 @@
 					var panel = Debug.panels[this.rel], link = this;
 					panel.focus(function() {
 						if (panel.is(Panel.PEEK)) {
+							if (panel.elem.dataset.tracyContent) {
+								panel.init();
+							}
+
 							var pos = getPosition(panel.elem);
 							setPosition(panel.elem, {
 								right: pos.right - getOffset(link).left + pos.width - getPosition(link).width - 4 + getOffset(panel.elem).left,
@@ -261,6 +277,16 @@
 					Debug.panels[this.rel].blur();
 				}
 			});
+		});
+		this.autoHideLabels();
+	};
+
+	Bar.prototype.autoHideLabels = function() {
+		forEach(this.elem.children, function (ul) {
+			var labels = ul.querySelectorAll('.tracy-label');
+			for (var i = labels.length - 1; i >= 0 && ul.clientHeight >= 40; i--) { // row height = 1em (cca 20px)
+				labels.item(i).hidden = true;
+			}
 		});
 	};
 
@@ -287,28 +313,29 @@
 
 	Debug.panels = {};
 
-	Debug.init = function(content, dumpData) {
-		if (!document.documentElement.classList) {
-			console.log('Warning: Tracy requires IE 10+');
+	Debug.init = function(content, dumps) {
+		if (!document.documentElement.dataset) {
+			console.log('Warning: Tracy requires IE 11+');
 			return;
 		}
 
 		layer.innerHTML = content;
 		evalScripts(layer);
-		Tracy.Dumper.init(dumpData);
+		Tracy.Dumper.init();
 		layer.style.display = 'block';
 		Debug.bar.init();
 
 		forEach(document.querySelectorAll('.tracy-panel'), function(panel) {
 			Debug.panels[panel.id] = new Panel(panel.id);
-			Debug.panels[panel.id].init();
+			Debug.panels[panel.id].dumps = dumps;
+			Debug.panels[panel.id].restorePosition();
 		});
 
 		Debug.captureWindow();
 		Debug.captureAjax();
 	};
 
-	Debug.loadAjax = function(content, dumpData) {
+	Debug.loadAjax = function(content, dumps) {
 		forEach(layer.querySelectorAll('.tracy-panel.tracy-ajax'), function(panel) {
 			Debug.panels[panel.id].savePosition();
 			delete Debug.panels[panel.id];
@@ -328,11 +355,11 @@
 		forEach(document.querySelectorAll('.tracy-panel'), function(panel) {
 			if (!Debug.panels[panel.id]) {
 				Debug.panels[panel.id] = new Panel(panel.id);
-				Debug.panels[panel.id].init();
+				Debug.panels[panel.id].dumps = dumps;
+				Debug.panels[panel.id].restorePosition();
 			}
 		});
 
-		Tracy.Dumper.init(dumpData, layer);
 		Debug.bar.initTabs(ajaxBar);
 	};
 
@@ -354,13 +381,37 @@
 	};
 
 	Debug.captureAjax = function() {
-		var old = XMLHttpRequest.prototype.getAllResponseHeaders;
-		XMLHttpRequest.prototype.getAllResponseHeaders = function() {
-			var headers = old.call(this);
-			if (headers.match(/^X-Tracy-Ajax: 1/m)) {
-				Debug.loadScript('?_tracy_bar=content.ajax&XDEBUG_SESSION_STOP=1&v=' + Math.random());
+		var header = Tracy.getAjaxHeader();
+		if (!header) {
+			return;
+		}
+		var oldOpen = XMLHttpRequest.prototype.open,
+			oldGet = XMLHttpRequest.prototype.getResponseHeader,
+			oldGetAll = XMLHttpRequest.prototype.getAllResponseHeaders;
+
+		XMLHttpRequest.prototype.open = function() {
+			oldOpen.apply(this, arguments);
+			if (window.TracyAutoRefresh !== false && arguments[1].indexOf('//') < 0 || arguments[1].indexOf(location.origin + '/') === 0) {
+				this.setRequestHeader('X-Tracy-Ajax', header);
 			}
-			return headers;
+		};
+		XMLHttpRequest.prototype.getResponseHeader = function() {
+			process(this);
+			return oldGet.apply(this, arguments);
+		};
+		XMLHttpRequest.prototype.getAllResponseHeaders = function() {
+			process(this);
+			return oldGetAll.call(this);
+		};
+		function process(xhr) {
+			xhr.getResponseHeader = oldGet;
+			xhr.getAllResponseHeaders = oldGetAll;
+			if (xhr.getAllResponseHeaders().match(/^X-Tracy-Ajax: 1/mi)) {
+				Debug.loadScript(
+					document.getElementById('tracy-debug-script').src.split('?')[0]
+					+ '?_tracy_bar=content-ajax.' + header + '&XDEBUG_SESSION_STOP=1&XDEBUG_PROFILE=0&XDEBUG_TRACE=0&v=' + Math.random()
+				);
+			}
 		}
 	};
 
@@ -482,8 +533,10 @@
 
 	// move to new position
 	function setPosition(elem, coords) {
-		elem.style.right = Math.min(Math.max(coords.right, 0), window.innerWidth - elem.offsetWidth) + 'px';
-		elem.style.bottom = Math.min(Math.max(coords.bottom, 0), window.innerHeight - elem.offsetHeight) + 'px';
+		var dE = document.documentElement,
+			height = document.compatMode === 'BackCompat' ? window.innerHeight : dE.clientHeight;
+		elem.style.right = Math.min(Math.max(coords.right, 0), dE.clientWidth - elem.offsetWidth) + 'px';
+		elem.style.bottom = Math.min(Math.max(coords.bottom, 0), height - elem.offsetHeight) + 'px';
 	}
 
 	// returns current position

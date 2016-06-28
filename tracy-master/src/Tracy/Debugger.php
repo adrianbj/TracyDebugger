@@ -16,9 +16,9 @@ use ErrorException;
  */
 class Debugger
 {
-	const VERSION = '2.4-dev';
+	const VERSION = '2.4.0';
 
-	/** server modes {@link Debugger::enable()} */
+	/** server modes for Debugger::enable() */
 	const
 		DEVELOPMENT = FALSE,
 		PRODUCTION = TRUE,
@@ -32,7 +32,7 @@ class Debugger
 	/** @var bool whether to display debug bar in development mode */
 	public static $showBar = TRUE;
 
-	/** @var bool {@link Debugger::enable()} */
+	/** @var bool */
 	private static $enabled = FALSE;
 
 	/** @var string reserved memory; also prevents double rendering */
@@ -54,14 +54,17 @@ class Debugger
 
 	/********************* Debugger::dump() ****************d*g**/
 
-	/** @var int  how many nested levels of array/object properties display {@link Debugger::dump()} */
+	/** @var int  how many nested levels of array/object properties display by dump() */
 	public static $maxDepth = 3;
 
-	/** @var int  how long strings display {@link Debugger::dump()} */
-	public static $maxLen = 150;
+	/** @var int  how long strings display by dump() */
+	public static $maxLength = 150;
 
-	/** @var bool display location? {@link Debugger::dump()} */
+	/** @var bool display location by dump()? */
 	public static $showLocation = FALSE;
+
+	/** @deprecated */
+	public static $maxLen = 150;
 
 	/********************* logging ****************d*g**/
 
@@ -74,7 +77,7 @@ class Debugger
 	/** @var string|array email(s) to which send error notifications */
 	public static $email;
 
-	/** {@link Debugger::log()} and {@link Debugger::fireLog()} */
+	/** for Debugger::log() and Debugger::fireLog() */
 	const
 		DEBUG = ILogger::DEBUG,
 		INFO = ILogger::INFO,
@@ -117,9 +120,6 @@ class Debugger
 	/** @var ILogger */
 	private static $fireLogger;
 
-	/** @var Session */
-	private static $session;
-
 
 	/**
 	 * Static class - cannot be instantiated.
@@ -143,6 +143,7 @@ class Debugger
 			self::$productionMode = is_bool($mode) ? $mode : !self::detectDebugMode($mode);
 		}
 
+		self::$maxLen = & self::$maxLength;
 		self::$reserved = str_repeat('t', 3e5);
 		self::$time = isset($_SERVER['REQUEST_TIME_FLOAT']) ? $_SERVER['REQUEST_TIME_FLOAT'] : microtime(TRUE);
 		self::$obLevel = ob_get_level();
@@ -187,12 +188,32 @@ class Debugger
 		array_map('class_exists', ['Tracy\Bar', 'Tracy\BlueScreen', 'Tracy\DefaultBarPanel', 'Tracy\Dumper',
 			'Tracy\FireLogger', 'Tracy\Helpers', 'Tracy\Logger']);
 
-		if (!self::$productionMode) {
-			self::getSession()->open(session_save_path() ?: ini_get('upload_tmp_dir') ?: self::$logDirectory);
-			if (self::getBar()->dispatch()) {
-				self::$showBar = FALSE;
-				exit;
-			}
+		if (!self::$productionMode && self::getBar()->dispatchAssets()) {
+			exit;
+		} elseif (session_status() === PHP_SESSION_ACTIVE) {
+			self::dispatch();
+		}
+	}
+
+
+	/**
+	 * @return void
+	 */
+	public static function dispatch()
+	{
+		if (self::$productionMode) {
+			return;
+
+		} elseif (session_status() !== PHP_SESSION_ACTIVE) {
+			ini_set('session.use_cookies', '1');
+			ini_set('session.use_only_cookies', '1');
+			ini_set('session.use_trans_sid', '0');
+			ini_set('session.cookie_path', '/');
+			ini_set('session.cookie_httponly', '1');
+			session_start();
+		}
+		if (self::getBar()->dispatchContent()) {
+			exit;
 		}
 	}
 
@@ -272,7 +293,7 @@ class Debugger
 					. (isset($e) ? "Unable to log error.\n" : "Error was logged.\n"));
 			}
 
-		} elseif (!connection_aborted() && Helpers::isHtmlMode()) {
+		} elseif (!connection_aborted() && (Helpers::isHtmlMode() || Helpers::isAjax())) {
 			self::getBlueScreen()->render($exception);
 			if (self::$showBar) {
 				self::getBar()->render();
@@ -429,7 +450,7 @@ class Debugger
 	public static function getBar()
 	{
 		if (!self::$bar) {
-			self::$bar = new Bar(self::getSession());
+			self::$bar = new Bar;
 			self::$bar->addPanel($info = new DefaultBarPanel('info'), 'Tracy:info');
 			$info->cpuUsage = self::$cpuUsage;
 			self::$bar->addPanel(new DefaultBarPanel('errors'), 'Tracy:errors'); // filled by errorHandler()
@@ -473,19 +494,6 @@ class Debugger
 	}
 
 
-	/**
-	 * @return Session
-	 * @internal
-	 */
-	public static function getSession()
-	{
-		if (!self::$session) {
-			self::$session = new Session;
-		}
-		return self::$session;
-	}
-
-
 	/********************* useful tools ****************d*g**/
 
 
@@ -502,14 +510,14 @@ class Debugger
 			ob_start(function () {});
 			Dumper::dump($var, [
 				Dumper::DEPTH => self::$maxDepth,
-				Dumper::TRUNCATE => self::$maxLen,
+				Dumper::TRUNCATE => self::$maxLength,
 			]);
 			return ob_get_clean();
 
 		} elseif (!self::$productionMode) {
 			Dumper::dump($var, [
 				Dumper::DEPTH => self::$maxDepth,
-				Dumper::TRUNCATE => self::$maxLen,
+				Dumper::TRUNCATE => self::$maxLength,
 				Dumper::LOCATION => self::$showLocation,
 			]);
 		}
@@ -546,11 +554,11 @@ class Debugger
 		if (!self::$productionMode) {
 			static $panel;
 			if (!$panel) {
-				self::getBar()->addPanel($panel = new DefaultBarPanel('dumps'));
+				self::getBar()->addPanel($panel = new DefaultBarPanel('dumps'), 'Tracy:dumps');
 			}
 			$panel->data[] = ['title' => $title, 'dump' => Dumper::toHtml($var, (array) $options + [
 				Dumper::DEPTH => self::$maxDepth,
-				Dumper::TRUNCATE => self::$maxLen,
+				Dumper::TRUNCATE => self::$maxLength,
 				Dumper::LOCATION => self::$showLocation ?: Dumper::LOCATION_CLASS | Dumper::LOCATION_SOURCE,
 			])];
 		}

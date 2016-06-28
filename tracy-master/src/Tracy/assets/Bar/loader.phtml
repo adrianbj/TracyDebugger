@@ -19,13 +19,13 @@ use Tracy;
 
 
 <!-- Tracy Debug Bar -->
-<div id="tracy-debug"></div>
-<link rel="stylesheet" href="?<?=http_build_query(['_tracy_bar' => 'css', 'v' => Debugger::VERSION] + $stopXdebug, NULL, '&amp;')?>" id="tracy-debug-style" />
-<script src="?<?=http_build_query(['_tracy_bar' => 'js', 'v' => Debugger::VERSION] + $stopXdebug, NULL, '&amp;')?>" id="tracy-debug-script"></script>
-<?php if (isset($contentId)): ?>
-<script src="?<?=http_build_query(['_tracy_bar' => "content.$contentId"] + $stopXdebug, NULL, '&amp;')?>"></script>
+<div id="tracy-debug" data-id="<?= htmlspecialchars($contentId) ?>"></div>
+<link rel="stylesheet" href="<?= htmlspecialchars("$path?"), http_build_query(['_tracy_bar' => 'css', 'v' => Debugger::VERSION] + $stopXdebug, NULL, '&amp;') ?>" id="tracy-debug-style" class="tracy-debug" />
+<script src="<?= htmlspecialchars("$path?"), http_build_query(['_tracy_bar' => 'js', 'v' => Debugger::VERSION] + $stopXdebug, NULL, '&amp;') ?>" id="tracy-debug-script"></script>
+<?php if ($contentId): ?>
+<script src="<?= htmlspecialchars("$path?"), http_build_query(['_tracy_bar' => "content.$contentId"] + $stopXdebug, NULL, '&amp;') ?>"></script>
 <?php else: ?>
 <script>
-Tracy.Debug.init(<?= json_encode($content) ?>, <?= json_encode($liveData) ?>);
+Tracy.Debug.init(<?= json_encode($content) ?>, <?= json_encode($dumps) ?>);
 </script>
 <?php endif ?>

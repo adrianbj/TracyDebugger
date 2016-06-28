@@ -20,7 +20,7 @@ class Helpers
 	 */
 	public static function editorLink($file, $line = NULL)
 	{
-		$file = self::editorMapping($origFile = $file);
+		$file = strtr($origFile = $file, Debugger::$editorMapping);
 		if ($editor = self::editorUri($origFile, $line)) {
 			$file = strtr($file, '\\', '/');
 			if (preg_match('#(^[a-z]:)?/.{1,50}$#i', $file, $m) && strlen($file) > strlen($m[0])) {
@@ -47,22 +47,9 @@ class Helpers
 	public static function editorUri($file, $line = NULL)
 	{
 		if (Debugger::$editor && $file && is_file($file)) {
-			$file = self::editorMapping($file);
+			$file = strtr($file, Debugger::$editorMapping);
 			return strtr(Debugger::$editor, ['%file' => rawurlencode($file), '%line' => $line ? (int) $line : 1]);
 		}
-	}
-
-
-	/**
-	 * Modifies link to returned to editor.
-	 * @return string
-	 */
-	public static function editorMapping($file)
-	{
-		foreach (Debugger::$editorMapping as $k => $v) {
-			$file = str_replace($k, $v, $file);
-		}
-		return $file;
 	}
 
 

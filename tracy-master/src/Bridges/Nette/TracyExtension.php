@@ -35,10 +35,14 @@ class TracyExtension extends Nette\DI\CompilerExtension
 	/** @var bool */
 	private $debugMode;
 
+	/** @var bool */
+	private $cliMode;
 
-	public function __construct($debugMode = FALSE)
+
+	public function __construct($debugMode = FALSE, $cliMode = FALSE)
 	{
 		$this->debugMode = $debugMode;
+		$this->cliMode = $cliMode;
 	}
 
 
@@ -66,6 +70,13 @@ class TracyExtension extends Nette\DI\CompilerExtension
 
 		$options = $this->config;
 		unset($options['bar'], $options['blueScreen']);
+		if (isset($options['logSeverity'])) {
+			$res = 0;
+			foreach ((array) $options['logSeverity'] as $level) {
+				$res |= is_int($level) ? $level : constant($level);
+			}
+			$options['logSeverity'] = $res;
+		}
 		foreach ($options as $key => $value) {
 			if ($value !== NULL) {
 				$key = ($key === 'fromEmail' ? 'getLogger()->' : '$') . $key;
@@ -74,6 +85,11 @@ class TracyExtension extends Nette\DI\CompilerExtension
 					Nette\DI\Compiler::filterArguments([$value])
 				));
 			}
+		}
+
+		$logger = $builder->getDefinition($this->prefix('logger'));
+		if ($logger->getFactory()->getEntity() !== 'Tracy\Debugger::getLogger') {
+			$initialize->addBody($builder->formatPhp('Tracy\Debugger::setLogger(?);', [$logger]));
 		}
 
 		if ($this->debugMode) {
@@ -85,6 +101,10 @@ class TracyExtension extends Nette\DI\CompilerExtension
 						is_string($item) ? new Nette\DI\Statement($item) : $item,
 					])
 				));
+			}
+
+			if (!$this->cliMode) {
+				$initialize->addBody('if ($tmp = $this->getByType("Nette\Http\Session", FALSE)) { $tmp->start(); Tracy\Debugger::dispatch(); };');
 			}
 		}
 
