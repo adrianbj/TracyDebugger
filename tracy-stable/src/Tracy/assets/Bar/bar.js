@@ -144,7 +144,7 @@
 		var winPanel = win.Tracy.Debug.getPanel(this.id);
 		win.Tracy.Dumper.init();
 		if (this.elem.querySelector('h1')) {
-			doc.title = this.elem.querySelector('h1').innerHTML.replace(/<[^>]+>/ig,"");
+			doc.title = this.elem.querySelector('h1').textContent;
 		}
 
 		var _this = this;
