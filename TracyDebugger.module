@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 208,
+            'version' => 209,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -271,7 +271,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
                 // hook to add code to template file to grab template variables
                 if(wire('config')->version >= 3 && wire('config')->templateCompile !== false && in_array('variables', static::$showPanels)) {
-                    unlink(str_replace('/site/','/site/assets/cache/FileCompiler/site/', wire('page')->template->filename));
+                    $compiledFilePath = str_replace('/site/','/site/assets/cache/FileCompiler/site/', wire('page')->template->filename);
+                    if(file_exists($compiledFilePath)) unlink($compiledFilePath);
                     $this->addHookAfter('FileCompiler::compileData', $this, 'setTemplateVars');
                 }
 
@@ -285,7 +286,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
 
             if(wire('config')->version >= 3 && wire('config')->templateCompile !== false && $this->data['debugStatements']) {
-                unlink(str_replace('/site/','/site/assets/cache/FileCompiler/site/', wire('page')->template->filename));
+                $compiledFilePath = str_replace('/site/','/site/assets/cache/FileCompiler/site/', wire('page')->template->filename);
+                if(file_exists($compiledFilePath)) unlink($compiledFilePath);
                 $this->addHookAfter('FileCompiler::compileData', $this, 'insertDebugStatements');
             }
         }
@@ -323,18 +325,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     require_once __DIR__ . '/'.$panelName.'.inc';
                     Debugger::getBar()->addPanel(new $panelName);
                     if(isset($_POST['tracyPwVersion']) && $_POST['tracyPwVersion'] != $this->config->version) {
-                        $rootPath = $this->config->paths->root;
-                        // rename wire
-                        rename($rootPath.'wire', $rootPath.'.wire-'.$this->config->version);
-                        rename($rootPath.'.wire-'.$_POST['tracyPwVersion'], $rootPath.'wire');
-                        // rename .htaccess
-                        rename($rootPath.'.htaccess', $rootPath.'.htaccess-'.$this->config->version);
-                        rename($rootPath.'.htaccess-'.$_POST['tracyPwVersion'], $rootPath.'.htaccess');
-                        // rename index.php
-                        rename($rootPath.'index.php', $rootPath.'.index-'.$this->config->version.'.php');
-                        rename($rootPath.'.index-'.$_POST['tracyPwVersion'].'.php', $rootPath.'index.php');
                         // reload to initialize version change
-                        $this->session->redirect('./');
+                        wire('session')->redirect('./');
                     }
                     break;
                 case 'templatePath':
@@ -855,6 +847,26 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
         return false;
+    }
+
+
+    public function __destruct() {
+        if(isset($_POST['tracyPwVersion']) && $_POST['tracyPwVersion'] != $this->config->version) {
+            $rootPath = $this->config->paths->root;
+            // rename wire
+            rename($rootPath.'wire', $rootPath.'.wire-'.$this->config->version);
+            rename($rootPath.'.wire-'.$_POST['tracyPwVersion'], $rootPath.'wire');
+            // rename .htaccess if previously replaced
+            if(file_exists($rootPath.'.htaccess-'.$_POST['tracyPwVersion'])) {
+                rename($rootPath.'.htaccess', $rootPath.'.htaccess-'.$this->config->version);
+                rename($rootPath.'.htaccess-'.$_POST['tracyPwVersion'], $rootPath.'.htaccess');
+            }
+            // rename index.php if previously replaced
+            if(file_exists($rootPath.'.index-'.$_POST['tracyPwVersion'].'.php')) {
+                rename($rootPath.'index.php', $rootPath.'.index-'.$this->config->version.'.php');
+                rename($rootPath.'.index-'.$_POST['tracyPwVersion'].'.php', $rootPath.'index.php');
+            }
+        }
     }
 
 
