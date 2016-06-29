@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 209,
+            'version' => 210,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -144,6 +144,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // if SessionHandlerDB module installed and max_allowed_packet too small, change and reload page
         if($this->setMaxAllowedPacket()) $this->session->redirect('./');
+
+        // if PW version changed, reload to initialize new version
+        if(isset($_POST['tracyPwVersion']) && $_POST['tracyPwVersion'] != $this->config->version) {
+            wire('session')->redirect('./');
+        }
 
         // ensure Tracy is shutdown before PW
         $this->addHookBefore('ProcessWire::finished', $this, 'shutdownTracy');
@@ -318,16 +323,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 case 'validator':
                 case 'console':
                 case 'todo':
-                    require_once __DIR__ . '/'.$panelName.'.inc';
-                    Debugger::getBar()->addPanel(new $panelName);
-                    break;
                 case 'processwireVersion':
                     require_once __DIR__ . '/'.$panelName.'.inc';
                     Debugger::getBar()->addPanel(new $panelName);
-                    if(isset($_POST['tracyPwVersion']) && $_POST['tracyPwVersion'] != $this->config->version) {
-                        // reload to initialize version change
-                        wire('session')->redirect('./');
-                    }
                     break;
                 case 'templatePath':
                     require_once __DIR__ . '/'.$panelName.'.inc';
