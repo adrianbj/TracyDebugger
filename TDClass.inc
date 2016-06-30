@@ -96,7 +96,7 @@ class TD extends TracyDebugger {
      */
     public static function templateVars($vars) {
         if(self::tracyUnavailable()) return false;
-        return TracyDebugger::templateVars((array) $vars);
+        return \TracyDebugger::templateVars((array) $vars);
     }
 
 }

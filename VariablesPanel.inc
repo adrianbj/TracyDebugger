@@ -66,13 +66,12 @@ class VariablesPanel implements IBarPanel {
 
         $templateFilename = wire('page')->template->filename;
         $targetData = file_get_contents($templateFilename);
-        //check to see if template can be compiled because we need that to get the variables
-        //the missing "F" in "ileCompiler=0" is an intentional hack - otherwise it prevents this file from being compiled and creates
-        //missing wire function errors
+        // check to see if template can be compiled because we need that to get the variables
+        // the missing "F" in "ileCompiler=0" is an intentional hack -
+        // otherwise it prevents this file from being compiled and creates missing wire function errors
         if(wire('page')->template->compile != 0 && wire('config')->templateCompile !== false && stripos($targetData, "ileCompiler=0") === false) {
-            //$out .= TD::dump(TracyDebugger::$templateVars, array(Dumper::COLLAPSE => false));
             $out .= $this->sectionHeader(array('Name', 'Returns', 'Value'));
-            foreach(TracyDebugger::$templateVars as $var => $value) {
+            foreach(\TracyDebugger::$templateVars as $var => $value) {
 
                 if(is_object($var) || is_array($var)) {
                     $varArray = array();
@@ -83,7 +82,7 @@ class VariablesPanel implements IBarPanel {
                 }
 
                 $out .= "\n<tr>" .
-                    '<td>'.$var.'</td>' .
+                    '<td>$'.$var.'</td>' .
                     "<td>".gettype($value)."</td>" .
                     "<td>".Dumper::toHtml($value, array(Dumper::COLLAPSE => (is_object($value) ? true : false)))."</td>" .
                     "</tr>";

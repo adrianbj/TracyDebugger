@@ -26,7 +26,7 @@ class ProcessTracyConsole extends Process implements Module {
     public static function getModuleInfo() {
         return array(
             'title' => __('Process Tracy Console'),
-            'version' => 1,
+            'version' => 2,
             'summary' => __('Helper process module for processing Tracy Console code'),
             'author' => 'Adrian Jones',
             'singular' => true,
@@ -69,7 +69,12 @@ class ProcessTracyConsole extends Process implements Module {
         \Tracy\Debugger::$showLocation = FALSE;
 
         $pwVars = function_exists('wire') ? $this->fuel : \ProcessWire\wire('all');
-        extract($pwVars->getArray());
+
+        $user = wire('user');
+        $page = wire('page');
+        $pages = wire('pages');
+        $config = wire('config');
+
         if($user->isSuperuser()) {
             $page = $pages->get((int)$_POST['pid']);
             // convert from URL-safe base64 encoded
@@ -97,7 +102,7 @@ class ProcessTracyConsole extends Process implements Module {
 
             $t = new TemplateFile($file);
 
-            // populate API variables
+            // populate API variables ensuring $page refers to the page calling it, not this Process page
             foreach($pwVars->getArray() as $key => $value) {
                 if($key != 'page') $t->set($key, $value);
             }
@@ -112,8 +117,8 @@ class ProcessTracyConsole extends Process implements Module {
 
     // error handler function
     public function tracyConsoleErrorHandler($errno, $errstr, $errfile, $errline) {
-        $customErrStr = $errstr . ' on line: ' . ($errline - 2);
-        \TD::fireLog($customErrStr . ' in Tracy Console Panel');
+        $customErrStr = $errstr . ' on line: ' . (strpos($errfile, 'cache/TracyDebugger') !== false ? $errline - 2 : $errline) . (strpos($errfile, 'cache/TracyDebugger') !== false ? '' : ' in ' . str_replace(wire('config')->paths->cache . 'FileCompiler/', '../', $errfile));
+        \TD::fireLog($customErrStr . (strpos($errfile, 'cache/TracyDebugger') !== false ? ' in Tracy Console Panel' : ''));
         \TD::log($customErrStr, 'error');
 
         // echo and exit approach allows us to send error to Tracy console dump area

@@ -148,7 +148,7 @@ class UsersPanel implements IBarPanel {
                 <h2>IP Address Restriction</h2>
                 ';
 
-                $checkIpAddress = TracyDebugger::checkIpAddress();
+                $checkIpAddress = \TracyDebugger::checkIpAddress();
 
                 if($checkIpAddress['ipAddress'] != '') {
                     $out .= '<p>Access for Non-Superusers is currently restricted to: ' . $checkIpAddress['ipAddress'] . '</p>';

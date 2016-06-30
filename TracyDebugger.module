@@ -31,12 +31,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 210,
+            'version' => 211,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
-            'installs' => 'ProcessTracyConsole',
-            'requires' => 'ProcessTracyConsole'
+            'installs' => 'ProcessTracyConsole'
         );
     }
 
@@ -141,9 +140,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         if(isset(wire('input')->get->tracyValidating) && wire('input')->get->tracyValidating == 1) return;
         if(isset(wire('input')->get->modal) && wire('input')->get->modal == 1) return;
-
-        // if SessionHandlerDB module installed and max_allowed_packet too small, change and reload page
-        if($this->setMaxAllowedPacket()) $this->session->redirect('./');
 
         // if PW version changed, reload to initialize new version
         if(isset($_POST['tracyPwVersion']) && $_POST['tracyPwVersion'] != $this->config->version) {
@@ -827,27 +823,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     }
 
 
-    /**
-     * If SessionHandlerDatabase is installed, then we need to make sure
-     * max_allowed_packet setting is large enough - 50MB seems to be enough
-     */
-    public function setMaxAllowedPacket() {
-        if(wire('modules')->isInstalled('SessionHandlerDB')) {
-            $sql = "SHOW VARIABLES LIKE 'max_allowed_packet'";
-            $query = $this->wire('database')->prepare($sql);
-            $query->execute();
-            $max_allowed_packet = $query->fetch();
-            if($max_allowed_packet['Value'] < (1024 * 1024 * 50)) {
-                $sql = "SET GLOBAL max_allowed_packet = " . 1024 * 1024 * 50;
-                $query = $this->wire('database')->prepare($sql);
-                $query->execute();
-                return true;
-            }
-        }
-        return false;
-    }
-
-
     public function __destruct() {
         if(isset($_POST['tracyPwVersion']) && $_POST['tracyPwVersion'] != $this->config->version) {
             $rootPath = $this->config->paths->root;
@@ -868,13 +843,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     }
 
 
-    public function ___install() {
-        $this->setMaxAllowedPacket();
-    }
-
-
     public function ___upgrade() {
-        $this->setMaxAllowedPacket();
         if(!wire('modules')->isInstalled('ProcessTracyConsole')) wire('modules')->get('ProcessTracyConsole');
     }
 
