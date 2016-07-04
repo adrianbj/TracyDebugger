@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 211,
+            'version' => 212,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -138,7 +138,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public function init() {
 
-        if(isset(wire('input')->get->tracyValidating) && wire('input')->get->tracyValidating == 1) return;
         if(isset(wire('input')->get->modal) && wire('input')->get->modal == 1) return;
 
         // if PW version changed, reload to initialize new version
@@ -146,15 +145,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             wire('session')->redirect('./');
         }
 
-        // ensure Tracy is shutdown before PW
-        $this->addHookBefore('ProcessWire::finished', $this, 'shutdownTracy');
-
         if($this->allowedTracyUsers()) {
             static::$tracyVersion = $this->data['coreBranch'];
             if(!file_exists(__DIR__ . '/tracy-'.static::$tracyVersion.'/src/tracy.php')) {
                 static::$tracyVersion = version_compare(phpversion(), '5.4.4', '>=') ? 'master' : 'legacy';
             }
             require_once __DIR__ . '/tracy-'.static::$tracyVersion.'/src/tracy.php';
+            // ensure Tracy is shutdown before PW
+            $this->addHookBefore('ProcessWire::finished', $this, 'shutdownTracy');
         }
 
         // if user not allowed then load dummy class to prevent "class not found" errors when
@@ -235,7 +233,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     public function ready() {
 
-        if(isset(wire('input')->get->tracyValidating) && wire('input')->get->tracyValidating == 1) return;
         if(isset(wire('input')->get->modal) && wire('input')->get->modal == 1) return;
 
         // if enabled unchecked, or user not allowed
