@@ -48,8 +48,8 @@ class TemplateEditorPanel implements IBarPanel {
 
         $out = '
         <script>
-
-            var tte; //setup Tracy templateEditor Editor
+            var confirmed = false;
+            var tte; //setup Tracy TemplateEditor Editor
 
             // javascript dynamic loader from https://gist.github.com/hagenburger/500716
             // using dynamic loading because an exception error or "exit" in template file
@@ -73,20 +73,32 @@ class TemplateEditorPanel implements IBarPanel {
                 }
             };
 
-            function tracyGetRawCode() {
+            function tracyGetRawCode(type) {
+                var tracyTemplateEditor = {
+                    "scrollTop": tte.session.getScrollTop(),
+                    "scrollLeft": tte.session.getScrollLeft(),
+                    "row": Number(tte.selection.getCursor()["row"]) + 1,
+                    "column": tte.selection.getCursor()["column"]
+                };
+                localStorage.setItem("tracyTemplateEditor-'.wire('page')->template->name.'", JSON.stringify(tracyTemplateEditor));
+
+                if(type === "live" && !confirm("Are you sure you want to make these changes live? This can\'t be undone!")) {
+                    confirmed = false;
+                }
+                else {
+                    confirmed = true;
+                }
+
                 document.getElementById("tracyTemplateEditorRawCode").innerHTML = tte.getValue();
+            }
+
+            document.getElementById("tracyEditorSubmission").onsubmit = function(e){
+                if(!confirmed) e.preventDefault();
             }
 
             document.getElementById("tracyTemplateEditorCode").addEventListener("keydown", function(e) {
                 if(((e.keyCode==10||e.charCode==10)||(e.keyCode==13||e.charCode==13)) && (e.metaKey || e.ctrlKey)) {
                     document.getElementById("testTemplateCode").click();
-                    var tracyTemplateEditor = {
-                        "scrollTop": tte.session.getScrollTop(),
-                        "scrollLeft": tte.session.getScrollLeft(),
-                        "row": Number(tte.selection.getCursor()["row"]) + 1,
-                        "column": tte.selection.getCursor()["column"]
-                    };
-                    localStorage.setItem("tracyTemplateEditor-'.wire('page')->template->name.'", JSON.stringify(tracyTemplateEditor));
                 }
             });
         </script>
@@ -103,15 +115,15 @@ class TemplateEditorPanel implements IBarPanel {
 
         $out .= '<h1>'.$this->icon.' Template Editor</h1>
         <div class="tracy-inner">
-            <form method="post" action="./">
+            <form id="tracyEditorSubmission" method="post" action="./">
                 <fieldset>
                     <legend>Enter PHP code, then use CTRL+Enter or CMD+Enter to test.</legend><br />';
                     $out .= '
                     <div id="tracyTemplateEditorCode" style="visibility:hidden; width: calc(100vw - 80px) !important; height:100px"></div><br />
                     <textarea id="tracyTemplateEditorRawCode" name="tracyTemplateEditorRawCode" style="display:none"></textarea>
-                    <input type="submit" id="testTemplateCode" name="testTemplateCode" onclick="tracyGetRawCode()" value="Test" />&nbsp;
-                    <input type="submit" name="changeTemplateCode" onclick="tracyGetRawCode()" value="Push Live" />&nbsp;
-                    <input type="submit" name="resetTemplateCode" value="Reset" />
+                    <input type="submit" id="testTemplateCode" name="testTemplateCode" onclick="tracyGetRawCode(\'test\')" value="Test" />&nbsp;
+                    <input type="submit" name="changeTemplateCode" onclick="tracyGetRawCode(\'live\')" value="Push Live" />&nbsp;
+                    <input type="submit" name="resetTemplateCode" onclick="tracyGetRawCode(\'reset\')" value="Reset" />
                 </fieldset>
             </form>
         </div>';

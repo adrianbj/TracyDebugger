@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 215,
+            'version' => 216,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -55,7 +55,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $originalTemplatePath;
     public static $tempTemplateFilename;
     public static $panelGenerationTime = array();
-    public static $hideInAdmin = array('validator', 'variables');
+    public static $hideInAdmin = array('validator', 'variables', 'templatePath', 'templateEditor');
     public static $pageHtml;
     public static $allPanels = array(
         'performance' => 'Performance',
