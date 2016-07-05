@@ -109,23 +109,22 @@ class TemplatePathPanel implements IBarPanel {
         <div class="tracy-inner">
             <fieldset>
                 <legend>Temporarily use a template file with a suffix.<br />eg. '.wire('page')->template->name.'-dev.php.<br /><br />Select an alternate from the list.<br />Create the file in your templates directory first.</legend><br />';
-
-                    $out .= '
-                    <select id="tracyTemplatePath">';
-                        foreach (new \DirectoryIterator(wire('config')->paths->templates) as $file) {
-                            if($file->isFile()) {
-                                $fileName = pathinfo($file, PATHINFO_FILENAME);
-                                if(strpos($fileName, wire('page')->template->name) !== false) {
-                                    $out .= '<option value="'.$file.'"'.(pathinfo(wire('page')->template->filename, PATHINFO_BASENAME) == $file ? 'selected="selected"' : '').'>'.$file.'</option>';
-                                }
+                $out .= '
+                <select id="tracyTemplatePath">';
+                    foreach (new \DirectoryIterator(wire('config')->paths->templates) as $file) {
+                        if($file->isFile()) {
+                            $fileName = pathinfo($file, PATHINFO_FILENAME);
+                            if(strpos($fileName, wire('page')->template->name) !== false && strpos($fileName, '-tracytemp') === false) { // '-tracytemp' is extension from template editor panel
+                                $out .= '<option value="'.$file.'"'.(pathinfo(wire('page')->template->filename, PATHINFO_BASENAME) == $file ? 'selected="selected"' : '').'>'.$file.'</option>';
                             }
                         }
-                    $out .= '
-                    </select>' . $templateIcon . '<br /><br />
-                    <input type="submit" onclick="changeTemplatePath(\'Once\')" value="Once" />&nbsp;
-                    <input type="submit" onclick="changeTemplatePath(\'Sticky\')" value="Sticky" />&nbsp;
-                    <input type="submit" onclick="resetTemplatePath()" value="Reset" />&nbsp;
-                    <input type="submit" onclick="resetAllTemplatePaths()" value="Reset All" />
+                    }
+                $out .= '
+                </select>' . $templateIcon . '<br /><br />
+                <input type="submit" onclick="changeTemplatePath(\'Once\')" value="Once" />&nbsp;
+                <input type="submit" onclick="changeTemplatePath(\'Sticky\')" value="Sticky" />&nbsp;
+                <input type="submit" onclick="resetTemplatePath()" value="Reset" />&nbsp;
+                <input type="submit" onclick="resetAllTemplatePaths()" value="Reset All" />
             </fieldset>';
             \TracyDebugger::$panelGenerationTime['templatePath'] = \Tracy\Debugger::timer('templatePath');
             $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['templatePath']);

@@ -160,10 +160,8 @@ class ConsolePanel implements IBarPanel {
                     <input type="submit" onclick="processTracyCode(true)" value="Clear Code" />
                     <br /><br />
                     <div id="tracyConsoleResult" style="background:#FDF5CE; border: 1px dotted #999999; padding: 3px;"></div>
-            </fieldset>';
-            \TracyDebugger::$panelGenerationTime['console'] = \Tracy\Debugger::timer('console');
-            $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['console']);
-        $out .= '</div>';
+            </fieldset>
+        </div>';
 
         $out .= '
         <script>
@@ -233,6 +231,9 @@ class ConsolePanel implements IBarPanel {
             });
         </script>
         ';
+
+        \TracyDebugger::$panelGenerationTime['console'] = \Tracy\Debugger::timer('console');
+        $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['console']);
 
         return $out;
     }

@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 212,
+            'version' => 213,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -53,7 +53,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $templatePath;
     public static $templatePathOnce;
     public static $originalTemplatePath;
-    public static $temporaryTemplatePath;
+    public static $tempTemplateFilename;
     public static $panelGenerationTime = array();
     public static $hideInAdmin = array('validator', 'variables');
     public static $pageHtml;
@@ -72,6 +72,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'phpInfo' => 'PHP Info',
         'templatePath' => 'Template Path',
         'console' => 'Console',
+        'templateEditor' => 'Template Editor',
         'todo' => 'ToDo',
         'processwireVersion' => 'ProcessWire Version',
         'panelSelector' => 'Panel Selector'
@@ -98,7 +99,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "maxDepth" => 3,
                 "maxLength" => 150,
                 "showDebugBar" => array('frontend'),
-                "showPanels" => array('performance', 'processwireInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'templatePath', 'console', 'panelSelector'),
+                "showPanels" => array('performance', 'processwireInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'templatePath', 'console', 'templateEditor', 'panelSelector'),
                 "showPanelLabels" => 1,
                 "email" => '',
                 "clearEmailSent" => null,
@@ -278,6 +279,20 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     $this->addHookAfter('Page::render', $this, 'getPageHtml');
                 }
 
+                // if template editor changes submitted
+                if(isset($_POST['tracyTemplateEditorRawCode'])) {
+                    $this->tempTemplateFilename = str_replace('.php', '-tracytemp.php', wire('page')->template->filename);
+                    if(isset($_POST['testTemplateCode'])) {
+                        if(!file_put_contents($this->tempTemplateFilename, $_POST['tracyTemplateEditorRawCode'], LOCK_EX)) throw new WireException("Unable to write file: " . $this->tempTemplateFilename);
+                        if(wire('config')->chmodFile) chmod($this->tempTemplateFilename, octdec(wire('config')->chmodFile));
+                        wire('page')->template->filename = $this->tempTemplateFilename;
+                    }
+                    if(isset($_POST['changeTemplateCode'])) {
+                        if(!file_put_contents(wire('page')->template->filename, $_POST['tracyTemplateEditorRawCode'], LOCK_EX)) throw new WireException("Unable to write file: " . $this->tempTemplateFilename);
+                        if(wire('config')->chmodFile) chmod(wire('page')->template->filename, octdec(wire('config')->chmodFile));
+                    }
+                }
+
             }
             else {
                 Debugger::$showBar = false;
@@ -297,7 +312,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         foreach(static::$showPanels as $panel) {
             if(wire('page')->template == 'admin' && in_array($panel, static::$hideInAdmin)) continue;
-            if($panel == 'console' && !wire('user')->isSuperuser()) continue;
+            if(($panel == 'console' || $panel == 'templateEditor') && !wire('user')->isSuperuser()) continue;
             $panelName = ucfirst($panel).'Panel';
             switch($panel) {
                 case 'performance':
@@ -317,6 +332,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 case 'console':
                 case 'todo':
                 case 'processwireVersion':
+                case 'templateEditor':
                     require_once __DIR__ . '/'.$panelName.'.inc';
                     Debugger::getBar()->addPanel(new $panelName);
                     break;
@@ -335,7 +351,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     else {
                         static::$templatePath = '';
                     }
-                    $tempFileName = pathinfo(static::$templatePath, PATHINFO_FILENAME);
                     static::$originalTemplatePath = wire('page')->template->filename;
                     if(static::$templatePath != '') {
                         wire('page')->template->filename = static::$templatePath;
@@ -837,6 +852,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 rename($rootPath.'.index-'.$_POST['tracyPwVersion'].'.php', $rootPath.'index.php');
             }
         }
+
+        // delete temporary template file after it's been rendered
+        // this is from the Template Editor panel
+        if(isset($this->tempTemplateFilename) && file_exists($this->tempTemplateFilename)) unlink($this->tempTemplateFilename);
     }
 
 
