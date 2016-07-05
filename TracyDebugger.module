@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 213,
+            'version' => 214,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -280,7 +280,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 }
 
                 // if template editor changes submitted
-                if(isset($_POST['tracyTemplateEditorRawCode'])) {
+                if(isset($_POST['tracyTemplateEditorRawCode']) && wire('user')->isSuperuser()) {
                     $this->tempTemplateFilename = str_replace('.php', '-tracytemp.php', wire('page')->template->filename);
                     if(isset($_POST['testTemplateCode'])) {
                         if(!file_put_contents($this->tempTemplateFilename, $_POST['tracyTemplateEditorRawCode'], LOCK_EX)) throw new WireException("Unable to write file: " . $this->tempTemplateFilename);
