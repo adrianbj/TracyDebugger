@@ -64,6 +64,13 @@ class ConsolePanel implements IBarPanel {
             document.getElementById("tracyConsoleCode").addEventListener("keydown", function(e) {
                 if(((e.keyCode==10||e.charCode==10)||(e.keyCode==13||e.charCode==13)) && (e.metaKey || e.ctrlKey)) {
                     processTracyCode(false);
+                    var tracyConsoleEditor = {
+                        "scrollTop": tce.session.getScrollTop(),
+                        "scrollLeft": tce.session.getScrollLeft(),
+                        "row": Number(tce.selection.getCursor()["row"]) + 1,
+                        "column": tce.selection.getCursor()["column"]
+                    };
+                    localStorage.setItem("tracyConsoleEditor", JSON.stringify(tracyConsoleEditor));
                 }
             });
 
@@ -206,9 +213,18 @@ class ConsolePanel implements IBarPanel {
 
                         tce.focus();
 
-                        // go to end of the last line
-                        count = tce.session.getLength();
-                        tce.gotoLine(count, tce.session.getLine(count-1).length);
+                        // go to last cursor position
+                        var tracyConsoleEditor = JSON.parse(localStorage.getItem("tracyConsoleEditor"));
+                        if(!!tracyConsoleEditor) {
+                            tce.gotoLine(tracyConsoleEditor.row, tracyConsoleEditor.column);
+                            tce.session.setScrollTop(tracyConsoleEditor.scrollTop);
+                            tce.session.setScrollLeft(tracyConsoleEditor.scrollLeft);
+                        }
+                        else {
+                            // go to end of the last line
+                            count = tce.session.getLength();
+                            tce.gotoLine(count, tce.session.getLine(count-1).length);
+                        }
 
                         function resizeAce() {
                             var ml = Math.round(Math.max(document.documentElement.clientHeight, window.innerHeight || 0) / 60);

@@ -80,6 +80,13 @@ class TemplateEditorPanel implements IBarPanel {
             document.getElementById("tracyTemplateEditorCode").addEventListener("keydown", function(e) {
                 if(((e.keyCode==10||e.charCode==10)||(e.keyCode==13||e.charCode==13)) && (e.metaKey || e.ctrlKey)) {
                     document.getElementById("testTemplateCode").click();
+                    var tracyTemplateEditor = {
+                        "scrollTop": tte.session.getScrollTop(),
+                        "scrollLeft": tte.session.getScrollLeft(),
+                        "row": Number(tte.selection.getCursor()["row"]) + 1,
+                        "column": tte.selection.getCursor()["column"]
+                    };
+                    localStorage.setItem("tracyTemplateEditor-'.wire('page')->template->name.'", JSON.stringify(tracyTemplateEditor));
                 }
             });
         </script>
@@ -142,9 +149,16 @@ class TemplateEditorPanel implements IBarPanel {
                         tte.setValue('.json_encode(file_get_contents(wire('page')->template->filename)).');
                         tte.focus();
 
-                        // go to end of the last line
-                        count = tte.session.getLength();
-                        tte.gotoLine(count, tte.session.getLine(count-1).length);
+                        // go to last cursor position
+                        var tracyTemplateEditor = JSON.parse(localStorage.getItem("tracyTemplateEditor-'.wire('page')->template->name.'"));
+                        if(!!tracyTemplateEditor) {
+                            tte.gotoLine(tracyTemplateEditor.row, tracyTemplateEditor.column);
+                            tte.session.setScrollTop(tracyTemplateEditor.scrollTop);
+                            tte.session.setScrollLeft(tracyTemplateEditor.scrollLeft);
+                        }
+                        else {
+                            tte.gotoLine(1, 0);
+                        }
 
                         function resizeAce() {
                             var ml = Math.round(Math.max(document.documentElement.clientHeight, window.innerHeight || 0) / 60);

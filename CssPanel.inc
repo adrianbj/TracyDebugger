@@ -58,7 +58,7 @@ class CssPanel implements IBarPanel {
                 .tracy-inner {
                     max-height: calc(100vh - 85px) !important;
                     max-width: calc(100vw - 40px) !important;
-                    padding-right: 30px !important;
+                    padding-right: 10px !important;
                 }
 
                 .tracy-inner fieldset label {
