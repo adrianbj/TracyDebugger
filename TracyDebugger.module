@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 216,
+            'version' => 217,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -139,7 +139,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public function init() {
 
-        if(isset(wire('input')->get->modal) && wire('input')->get->modal == 1) return;
+        if($this->input->get->modal) return;
 
         // if PW version changed, reload to initialize new version
         if(isset($_POST['tracyPwVersion']) && $_POST['tracyPwVersion'] != $this->config->version) {
@@ -234,7 +234,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     public function ready() {
 
-        if(isset(wire('input')->get->modal) && wire('input')->get->modal == 1) return;
+        if($this->input->get->modal) return;
 
         // if enabled unchecked, or user not allowed
         if(!$this->data['enabled'] || !$this->allowedTracyUsers()) return;
