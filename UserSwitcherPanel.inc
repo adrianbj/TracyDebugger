@@ -27,18 +27,6 @@ class UserSwitcherPanel implements IBarPanel {
             $iconColor = '#CD1818';
         }
 
-        if(\TracyDebugger::getDataValue('showPanelLabels')) {
-            $iconColor = '#FFFFFF';
-            $background = $iconColor;
-            $label = '&nbsp;Users';
-            $tabPadding = '5px';
-        }
-        else {
-            $background = 'none';
-            $label = '';
-            $tabPadding = '0';
-        }
-
         $this->icon = '
         <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 612 612" style="enable-background:new 0 0 612 612;" xml:space="preserve" width="16px" height="16px">
             <g>
@@ -49,10 +37,8 @@ class UserSwitcherPanel implements IBarPanel {
         ';
 
         return '
-        <span title="User Swicther">
-            <span style="display:inline-block;background:'.$background.'; color:#FFFFFF; padding: 0 '.$tabPadding.';">
-                ' . $label . $this->icon . '
-            </span>
+        <span title="User Switcher">
+            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? wire('user')->name : '') . '
         </span>
         ';
     }
@@ -65,7 +51,7 @@ class UserSwitcherPanel implements IBarPanel {
 
         $userRoles = array();
         foreach(wire('user')->roles as $r) {
-            $userRoles[] = $r->name;
+            $userRoles[] = '<a href="'.wire('config')->urls->admin.'access/roles/edit/?id='.$r->id.'">'.$r->name.'</a>';
         }
 
         $out = '

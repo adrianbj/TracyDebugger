@@ -27,18 +27,7 @@ class OutputModePanel implements IBarPanel {
             $this->outputMode = \Tracy\Debugger::detectDebugMode() ? 'development' : 'production';
         }
 
-        if(\TracyDebugger::getDataValue('showPanelLabels')) {
-            $iconColor = '#FFFFFF';
-            $background = $this->outputMode == 'development' ? $this->developmentColor : $this->productionColor;
-            $label = '&nbsp;' . ucfirst($this->outputMode);
-            $tabPadding = '5px';
-        }
-        else {
-            $iconColor = $this->outputMode == 'development' ? $this->developmentColor : $this->productionColor;
-            $background = 'none';
-            $label = '';
-            $tabPadding = '0';
-        }
+        $iconColor = $this->outputMode == 'development' ? $this->developmentColor : $this->productionColor;
 
         $this->developmentIcon = '
         <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 16.539 16.539" style="enable-background:new 0 0 16.539 16.539;" xml:space="preserve" width="16px" height="16px">
@@ -61,13 +50,11 @@ class OutputModePanel implements IBarPanel {
         </svg>
         ';
 
+        $label = \TracyDebugger::getDataValue('showPanelLabels') ? ucfirst($this->outputMode) : '';
 
         return '
         <span title="Output Mode: '.$label.'">
-            <span style="display:inline-block;background:'.$background.'; color:#FFFFFF; padding: 0 '.$tabPadding.';">
-                ' . $this->{$this->outputMode.'Icon'} . '
-                ' . $label . '
-            </span>
+            ' . $this->{$this->outputMode.'Icon'} . $label . '
         </span>
         ';
     }
