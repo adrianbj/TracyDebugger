@@ -118,13 +118,19 @@ class PanelSelectorPanel implements IBarPanel {
                     </span>';
 
         $out .= '<h1>'.$this->icon.' Panel Selector</h1>
-        <div class="tracy-inner">
+        <div class="tracy-inner" style="padding-right: 30px !important;">
             <fieldset>
                 <legend>Temporarily enable/disable panels<br />*Panels with asterisk are on by default</legend><br />';
                     $defaultPanels = \TracyDebugger::getDataValue('showPanels');
                     $showPanels = \TracyDebugger::$showPanels;
                     $out .= '<label><input type="checkbox" onchange="toggleAllTracyPanels(this)" ' . (count($showPanels) == count(\TracyDebugger::$allPanels) ? 'checked="checked"' : '') . ' /> Toggle All</label><br />';
                     foreach(\TracyDebugger::$allPanels as $name => $label) {
+
+                        if($name == 'userSwitcher') {
+                            if(\TracyDebugger::getDataValue('userSwitchSession') != '') $userSwitchSession = \TracyDebugger::getDataValue('userSwitchSession');
+                            if(\TracyDebugger::getDataValue('outputMode') != 'development' || (!wire('user')->isSuperuser() && (!wire('session')->tracyUserSwitcherId || (isset($userSwitchSession[wire('session')->tracyUserSwitcherId]) && $userSwitchSession[wire('session')->tracyUserSwitcherId] <= time())))) continue;
+                        }
+
                         $seconds = isset(\TracyDebugger::$panelGenerationTime[$name]) ? \TracyDebugger::$panelGenerationTime[$name] : '';
                         $out .= '
                             <label style="white-space: nowrap;'.(wire('page')->template == 'admin' && in_array($name, \TracyDebugger::$hideInAdmin) ? ' visibility:hidden;position: absolute; left: -999em;' : '').'"> ' .

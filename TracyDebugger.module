@@ -31,11 +31,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 217,
+            'version' => 218,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
-            'installs' => 'ProcessTracyConsole'
         );
     }
 
@@ -68,6 +67,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'debugMode' => 'Debug Mode',
         'validator' => 'Validator',
         'users' => 'Users',
+        'userSwitcher' => 'User Switcher',
         'outputMode' => 'Output Mode',
         'phpInfo' => 'PHP Info',
         'templatePath' => 'Template Path',
@@ -107,7 +107,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "localRootPath" => '',
                 "htaccessUsername" => '',
                 "htaccessPassword" => '',
-                "debugStatements" => null,
                 "enableShortcutMethods" => 1,
                 "enabledShortcutMethods" => array('debugAll', 'da', 'dump', 'd', 'barDump', 'bd', 'l', 'timer', 't', 'fireLog', 'fl', 'addBreakpoint', 'bp', 'templateVars', 'tv')
             );
@@ -128,7 +127,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         self::$_data = $this;
 
         //if not PW 3 or template compilation is disabled, then remove variables panel from available list
-        if(wire('config')->version < 3 || (wire('config')->version >= 3 && wire('config')->templateCompile === false)) {
+        if($this->config->version < 3 || ($this->config->version >= 3 && $this->config->templateCompile === false)) {
             unset(static::$allPanels['variables']);
         }
     }
@@ -137,13 +136,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     /**
      * Initialize the module and setup hooks
      */
-    public function init() {
+    public function init() {}
+
+
+    public function ready() {
 
         if($this->input->get->modal) return;
 
         // if PW version changed, reload to initialize new version
-        if(isset($_POST['tracyPwVersion']) && $_POST['tracyPwVersion'] != $this->config->version) {
-            wire('session')->redirect('./');
+        if($this->input->post->tracyPwVersion && $this->input->post->tracyPwVersion != $this->config->version) {
+            $this->session->redirect('./');
         }
 
         if($this->allowedTracyUsers()) {
@@ -155,10 +157,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             // ensure Tracy is shutdown before PW
             $this->addHookBefore('ProcessWire::finished', $this, 'shutdownTracy');
         }
-
-        // if user not allowed then load dummy class to prevent "class not found" errors when
-        // calling \Tracy\Debugger::method() directly
         else {
+            // if user not allowed then load dummy class to prevent "class not found" errors when
+            // calling \Tracy\Debugger::method() directly
             require_once __DIR__ . '/DummyTracyDebuggerClass.inc';
         }
 
@@ -170,8 +171,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             require_once __DIR__ . '/ShortcutMethods.inc';
         }
 
-        // now that required classes above have been loaded if requested, we exit now
-        // if enabled unchecked, or user not allowed
+        // now that required classes above have been loaded if requested,
+        // we can now exit if enabled unchecked, or user not allowed
         if(!$this->data['enabled'] || !$this->allowedTracyUsers()) return;
 
         if($this->data['outputMode'] == 'development' || ($this->user->isSuperuser() && $this->data['superuserForceDevelopment'])) {
@@ -191,16 +192,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // which won't replace the same substring more than once
         $mappingReplacements = array();
         if($this->data['localRootPath'] != '') {
-            $mappingReplacements[wire('config')->paths->cache . 'FileCompiler/'] = $this->data['localRootPath'];
-            $mappingReplacements[wire('config')->paths->root] = $this->data['localRootPath'];
+            $mappingReplacements[$this->config->paths->cache . 'FileCompiler/'] = $this->data['localRootPath'];
+            $mappingReplacements[$this->config->paths->root] = $this->data['localRootPath'];
         }
         else {
-            $mappingReplacements[wire('config')->paths->cache . 'FileCompiler/'] = wire('config')->paths->root;
+            $mappingReplacements[$this->config->paths->cache . 'FileCompiler/'] = $this->config->paths->root;
         }
 
         Debugger::$editorMapping = $mappingReplacements;
 
-        $logFolder = $this->wire('config')->paths->logs.'tracy';
+        $logFolder = $this->config->paths->logs.'tracy';
         if(!is_dir($logFolder)) wireMkdir($logFolder);
 
         Debugger::enable($outputMode, $logFolder, $this->data['email'] != '' ? $this->data['email'] : null);
@@ -230,16 +231,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         Debugger::$strictMode = $this->data['strictMode'] ? TRUE : FALSE;
         Debugger::$scream = $this->data['forceScream'] ? TRUE : FALSE;
 
-    }
+        // if it's an ajax request from the Tracy Console panel, then process and return
+        if($this->config->ajax && $this->input->post->tracyconsole == 1) {
+            require_once($this->config->paths->siteModules.'TracyDebugger/ConsoleProcessor.inc');
+            return;
+        }
 
-    public function ready() {
-
-        if($this->input->get->modal) return;
-
-        // if enabled unchecked, or user not allowed
-        if(!$this->data['enabled'] || !$this->allowedTracyUsers()) return;
-
-        if(wire('page')->template == "admin") {
+        if($this->page->template == "admin") {
             if(in_array('backend', $this->data['showDebugBar'])) {
                 Debugger::$showBar = true;
             }
@@ -263,14 +261,69 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             static::$showPanels = $this->data['showPanels'];
         }
 
-        if(wire('page')->template != "admin") {
+        // user switcher panel logic
+        if(in_array('userSwitcher', static::$showPanels) && $this->data['outputMode'] == 'development') {
+            // if logout button clicked
+            if($this->input->post->logoutUserSwitcher) {
+                if($this->session->tracyUserSwitcherId) {
+                    // if session variable exists, grab it and add to the new session after logging out
+                    $tracyUserSwitcherId = $this->session->tracyUserSwitcherId;
+                    $this->session->logout();
+                    $this->session->tracyUserSwitcherId = $tracyUserSwitcherId;
+                }
+                else {
+                    $this->session->logout();
+                }
+                $this->session->redirect('./');
+            }
+            elseif($this->input->post->endSessionUserSwitcher) {
+                // if end session clicked, remove session variable and config settings entry
+                $this->session->remove("tracyUserSwitcherId");
+                unset($this->data['userSwitchSession'][$this->session->tracyUserSwitcherId]);
+                $this->modules->saveModuleConfigData($this->modules->get("TracyDebugger"), $this->data);
+                $this->session->redirect('./');
+            }
+            elseif($this->input->post->userSwitcher && $this->session->CSRF->validate()) {
+                // if user is superuser and session length is set, save to config settings
+                if($this->user->isSuperuser() && $this->input->post->userSwitchSessionLength) {
+                    // cleanup expired sessions
+                    if(isset($this->data['userSwitchSession'])) {
+                        foreach($this->data['userSwitchSession'] as $id => $expireTime) {
+                            if($expireTime < time()) unset($this->data['userSwitchSession'][$id]);
+                        }
+                    }
+                    // if no existing session ID, start a new session
+                    if(!$this->session->tracyUserSwitcherId) {
+                        $pass = new Password();
+                        $challenge = $pass->randomBase64String(32);
+                        $this->session->tracyUserSwitcherId = $challenge;
+                    }
+                    // save session ID and expiry time in module config settings
+                    $this->data['userSwitchSession'][$this->session->tracyUserSwitcherId] = time() + ($this->input->post->userSwitchSessionLength * 60);
+                    $this->modules->saveModuleConfigData($this->modules->get("TracyDebugger"), $this->data);
+                }
+                // if session not expired, switch to requested user
+                if(isset($this->data['userSwitchSession'][$this->session->tracyUserSwitcherId]) && $this->data['userSwitchSession'][$this->session->tracyUserSwitcherId] > time() && $this->session->tracyUserSwitcherId) {
+                    // if session variable exists, grab it and add to the new session after logging out
+                    // and forceLogin the new switched user
+                    $tracyUserSwitcherId = $this->session->tracyUserSwitcherId;
+                    if($this->user->isLoggedin()) $this->session->logout();
+                    $user = $this->session->forceLogin($this->input->post->userSwitcher);
+                    $this->session->tracyUserSwitcherId = $tracyUserSwitcherId;
+                }
+                $this->session->redirect('./');
+            }
+        }
+
+        // some front-end only rules
+        if($this->page->template != "admin") {
             if(in_array('frontend', $this->data['showDebugBar'])) {
 
                 Debugger::$showBar = true;
 
                 // hook to add code to template file to grab template variables
-                if(wire('config')->version >= 3 && wire('config')->templateCompile !== false && in_array('variables', static::$showPanels)) {
-                    $compiledFilePath = str_replace('/site/','/site/assets/cache/FileCompiler/site/', wire('page')->template->filename);
+                if($this->config->version >= 3 && $this->config->templateCompile !== false && in_array('variables', static::$showPanels)) {
+                    $compiledFilePath = str_replace('/site/','/site/assets/cache/FileCompiler/site/', $this->page->template->filename);
                     if(file_exists($compiledFilePath)) unlink($compiledFilePath);
                     $this->addHookAfter('FileCompiler::compileData', $this, 'setTemplateVars');
                 }
@@ -280,16 +333,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 }
 
                 // if template editor changes submitted
-                if(isset($_POST['tracyTemplateEditorRawCode']) && wire('user')->isSuperuser()) {
-                    $this->tempTemplateFilename = str_replace('.php', '-tracytemp.php', wire('page')->template->filename);
-                    if(isset($_POST['testTemplateCode'])) {
-                        if(!file_put_contents($this->tempTemplateFilename, $_POST['tracyTemplateEditorRawCode'], LOCK_EX)) throw new WireException("Unable to write file: " . $this->tempTemplateFilename);
-                        if(wire('config')->chmodFile) chmod($this->tempTemplateFilename, octdec(wire('config')->chmodFile));
-                        wire('page')->template->filename = $this->tempTemplateFilename;
+                if($this->input->post->tracyTemplateEditorRawCode && $this->user->isSuperuser()) {
+                    $this->tempTemplateFilename = str_replace('.php', '-tracytemp.php', $this->page->template->filename);
+                    if($this->input->post->testTemplateCode) {
+                        if(!file_put_contents($this->tempTemplateFilename, $this->input->post->tracyTemplateEditorRawCode, LOCK_EX)) throw new WireException("Unable to write file: " . $this->tempTemplateFilename);
+                        if($this->config->chmodFile) chmod($this->tempTemplateFilename, octdec($this->config->chmodFile));
+                        $this->page->template->filename = $this->tempTemplateFilename;
                     }
-                    if(isset($_POST['changeTemplateCode'])) {
-                        if(!file_put_contents(wire('page')->template->filename, $_POST['tracyTemplateEditorRawCode'], LOCK_EX)) throw new WireException("Unable to write file: " . $this->tempTemplateFilename);
-                        if(wire('config')->chmodFile) chmod(wire('page')->template->filename, octdec(wire('config')->chmodFile));
+                    if($this->input->post->changeTemplateCode) {
+                        if(!file_put_contents($this->page->template->filename, $this->input->post->tracyTemplateEditorRawCode, LOCK_EX)) throw new WireException("Unable to write file: " . $this->tempTemplateFilename);
+                        if($this->config->chmodFile) chmod($this->page->template->filename, octdec($this->config->chmodFile));
                     }
                 }
 
@@ -298,11 +351,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 Debugger::$showBar = false;
             }
 
-            if(wire('config')->version >= 3 && wire('config')->templateCompile !== false && $this->data['debugStatements']) {
-                $compiledFilePath = str_replace('/site/','/site/assets/cache/FileCompiler/site/', wire('page')->template->filename);
-                if(file_exists($compiledFilePath)) unlink($compiledFilePath);
-                $this->addHookAfter('FileCompiler::compileData', $this, 'insertDebugStatements');
-            }
         }
 
         if(Debugger::$showBar == false) return;
@@ -311,9 +359,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         Debugger::getBar()->addPanel(new CssPanel);
 
         foreach(static::$showPanels as $panel) {
-            if(wire('page')->template == 'admin' && in_array($panel, static::$hideInAdmin)) continue;
-            if(($panel == 'console' || $panel == 'templateEditor') && !wire('user')->isSuperuser()) continue;
+            if($this->page->template == 'admin' && in_array($panel, static::$hideInAdmin)) continue;
+            if(($panel == 'console' || $panel == 'templateEditor') && !$this->user->isSuperuser()) continue;
+            if($panel == 'userSwitcher') {
+                if(isset($this->data['userSwitchSession'])) $userSwitchSession = $this->data['userSwitchSession'];
+                if($this->data['outputMode'] != 'development' || (!$this->user->isSuperuser() && (!$this->session->tracyUserSwitcherId || (isset($userSwitchSession[$this->session->tracyUserSwitcherId]) && $userSwitchSession[$this->session->tracyUserSwitcherId] <= time())))) continue;
+            }
+
             $panelName = ucfirst($panel).'Panel';
+
             switch($panel) {
                 case 'performance':
                     require_once __DIR__ . '/'.$panelName.'.inc';
@@ -325,6 +379,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 case 'diagnostics':
                 case 'debugMode':
                 case 'users':
+                case 'userSwitcher':
                 case 'phpInfo':
                 case 'outputMode':
                 case 'panelSelector':
@@ -351,14 +406,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     else {
                         static::$templatePath = '';
                     }
-                    static::$originalTemplatePath = wire('page')->template->filename;
+                    static::$originalTemplatePath = $this->page->template->filename;
                     if(static::$templatePath != '') {
-                        wire('page')->template->filename = static::$templatePath;
+                        $this->page->template->filename = static::$templatePath;
                     }
                     Debugger::getBar()->addPanel(new $panelName);
                     break;
                 case 'variables':
-                    if(wire('config')->version >= 3 && wire('config')->templateCompile !== false) {
+                    if($this->config->version >= 3 && $this->config->templateCompile !== false) {
                             require_once __DIR__ . '/'.$panelName.'.inc';
                             Debugger::getBar()->addPanel(new $panelName);
                     }
@@ -391,35 +446,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
         return false;
-    }
-
-
-    public function insertDebugStatements($event) {
-
-        if(wire('config')->version < 3) return false;
-
-        // only for filename which matches the name of the template for this page
-        if ($event['arguments'][1] == wire('page')->template->filename) {
-            if($this->data['debugStatements']) {
-                $out = rtrim($event->return);
-                $lines = explode("\n", $out);
-
-                $i=-1;
-                foreach(explode("\n", $this->data['debugStatements']) as $debugStatement) {
-                    // get template name, line number, and code to insert from the line
-                    $statements = explode("|", $debugStatement);
-                    //if this is not the template specified on the line of debugStatement, then skip
-                    if(wire('page')->template->name != $statements[0]) continue;
-                    // add conditional to make sure debug statements left in compiled templates are not
-                    // executed if Tracy is uninstalled or the debugStatements field in the config settings is blank
-                    $code = "if(class_exists('\TracyDebugger') && wire('user')->isSuperuser() && \TracyDebugger::getDataValue('debugStatements')) {" . $statements[2] . "}";
-                    if(isset($statements[3]) && $statements[3]=='true') $code = "<?php "  . $code . " ?>";
-                    array_splice($lines, ($statements[1]+$i), 0, $code);
-                    $i++;
-                }
-                $event->return = implode("\n", $lines);
-            }
-        }
     }
 
 
@@ -757,16 +783,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($data['enabledShortcutMethods']) $f->attr('value', $data['enabledShortcutMethods']);
         $wrapper->add($f);
 
-        if(wire('config')->version >= 3 && wire('config')->templateCompile !== false) {
-            $f = wire('modules')->get("InputfieldTextarea");
-            $f->attr('name', 'debugStatements');
-            $f->label = __('Debug Statements', __FILE__);
-            $f->description = __('These statements will be inserted into the compiled version of template files at runtime. Empty this field to remove debug statements.'."\n".'Format one statement per line with: template_name|line_number|debug_statement|php_tags(bool). Note the last element is optional and determines whether the statement should start and end with open (<?php) and close (?>) tags.'."\n\n".'eg. basic_page|23|bd($testVariable);|true', __FILE__);
-            $f->notes = __('This is useful for quickly debugging a live site without needing to edit the remote files.', __FILE__);
-            if($data['debugStatements']) $f->attr('value', $data['debugStatements']);
-            $wrapper->add($f);
-        }
-
         return $wrapper;
     }
 
@@ -811,6 +827,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     public static function allowedTracyUsers($u = null) {
 
+        if(static::getDataValue('userSwitchSession') !== null) $userSwitchSession = static::getDataValue('userSwitchSession');
+
         $u = $u ? $u : wire('user');
 
         //allow Tracy to log to file for guest users when in production mode (not in development mode)
@@ -818,6 +836,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             return true;
         }
         elseif($u->isSuperuser()) {
+            return true;
+        }
+        elseif(static::getDataValue('outputMode') == 'development' && wire('session')->tracyUserSwitcherId && (isset($userSwitchSession[wire('session')->tracyUserSwitcherId]) && $userSwitchSession[wire('session')->tracyUserSwitcherId] > time())) {
             return true;
         }
         else {
@@ -836,20 +857,20 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     public function __destruct() {
-        if(isset($_POST['tracyPwVersion']) && $_POST['tracyPwVersion'] != $this->config->version) {
+        if($this->input->post->tracyPwVersion && $this->input->post->tracyPwVersion != $this->config->version) {
             $rootPath = $this->config->paths->root;
             // rename wire
             rename($rootPath.'wire', $rootPath.'.wire-'.$this->config->version);
-            rename($rootPath.'.wire-'.$_POST['tracyPwVersion'], $rootPath.'wire');
+            rename($rootPath.'.wire-'.$this->input->post->tracyPwVersion, $rootPath.'wire');
             // rename .htaccess if previously replaced
-            if(file_exists($rootPath.'.htaccess-'.$_POST['tracyPwVersion'])) {
+            if(file_exists($rootPath.'.htaccess-'.$this->input->post->tracyPwVersion)) {
                 rename($rootPath.'.htaccess', $rootPath.'.htaccess-'.$this->config->version);
-                rename($rootPath.'.htaccess-'.$_POST['tracyPwVersion'], $rootPath.'.htaccess');
+                rename($rootPath.'.htaccess-'.$this->input->post->tracyPwVersion, $rootPath.'.htaccess');
             }
             // rename index.php if previously replaced
-            if(file_exists($rootPath.'.index-'.$_POST['tracyPwVersion'].'.php')) {
+            if(file_exists($rootPath.'.index-'.$this->input->post->tracyPwVersion.'.php')) {
                 rename($rootPath.'index.php', $rootPath.'.index-'.$this->config->version.'.php');
-                rename($rootPath.'.index-'.$_POST['tracyPwVersion'].'.php', $rootPath.'index.php');
+                rename($rootPath.'.index-'.$this->input->post->tracyPwVersion.'.php', $rootPath.'index.php');
             }
         }
 
@@ -860,7 +881,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     public function ___upgrade() {
-        if(!wire('modules')->isInstalled('ProcessTracyConsole')) wire('modules')->get('ProcessTracyConsole');
+        // old helper Processs module no longer needed
+        if(wire('modules')->isInstalled('ProcessTracyConsole')) wire('modules')->uninstall('ProcessTracyConsole');
     }
 
 }

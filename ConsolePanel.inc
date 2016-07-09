@@ -131,10 +131,10 @@ class ConsolePanel implements IBarPanel {
                         }
                     }
                 };
-                xmlhttp.open("POST", "'.wire("config")->urls->admin . 'page/tracy-console/", true);
+                xmlhttp.open("POST", "./", true);
                 xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-                xmlhttp.send("pid='.wire('page')->id.'&code="+btoa(code).replace(/\+/g, "-").replace(/\//g, "_").replace(/\=+$/, ""));
+                xmlhttp.send("tracyconsole=1&pid='.wire('page')->id.'&code="+btoa(code).replace(/\+/g, "-").replace(/\//g, "_").replace(/\=+$/, ""));
             }
         </script>
         <style type="text/css">
