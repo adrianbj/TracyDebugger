@@ -145,13 +145,14 @@ class TodoPanel implements IBarPanel {
 
 
     private function getTodos() {
-        $ignore = array('.git', '.svn', '.jpg', '.gif', '.png', '.svg', 'images', 'img', 'errors');
         $items = array();
+        $ignoreDirs = array_map('trim', explode(',', \TracyDebugger::getDataValue('todoIgnoreDirs')));
+        $allowedExtensions = array_map('trim', explode(',', \TracyDebugger::getDataValue('todoAllowedExtensions')));
         $templatesFolder = function_exists('\ProcessWire\wire') ? \ProcessWire\wire('config')->paths->templates : wire('config')->paths->templates;
         foreach ($iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($templatesFolder, \RecursiveDirectoryIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST) as $fileinfo){
             $filePath = $fileinfo->getPathname();
             $fileSize = filesize($filePath);
-            if($fileSize > 0 && $fileinfo->isFile() && $this->strpos_array($filePath, $ignore) === false) {
+            if($fileSize > 0 && $fileinfo->isFile() && $this->strpos_array($filePath, $ignoreDirs) === false && in_array($fileinfo->getExtension(), $allowedExtensions) === true) {
                 $items[] = $this->parseFile($filePath, $fileSize);
             }
         }
