@@ -113,8 +113,8 @@ class TodoPanel implements IBarPanel {
     }
 
 
-    protected function containsTodoType($str, array $todoTypes) {
-        foreach($todoTypes as $todoType) {
+    protected function containsTodoType($str) {
+        foreach($this->todoTypes as $todoType) {
             // match whole words, without hyphens only so that "debug" won't match the "bug" todoType
             // and "micro-clearfix-hack" won't match "hack"
             // this still allows "//TODO" to match even though no space before word
@@ -191,13 +191,15 @@ class TodoPanel implements IBarPanel {
         $tokens = token_get_all($fileContent);
         foreach($tokens as $token) {
             if($token[0] == T_COMMENT || $token[0] == T_DOC_COMMENT) {
-                $containsTodo = $this->containsTodoType($token[1], $this->todoTypes);
+                // exclude comments starting with # unless it's a php file
+                // because # in js, css, etc are not comments
+                if(pathinfo($filename, PATHINFO_EXTENSION) !== 'php' && substr($token[1], 0, 1) === '#') continue;
+                $containsTodo = $this->containsTodoType($token[1]);
                 if($containsTodo !== false) {
                     $todos[] = $this->createTodosArray($token[2], $token[1], $containsTodo, $filename);
                 }
             }
         }
-
         return $todos;
     }
 
