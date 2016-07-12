@@ -14,6 +14,8 @@ class TodoPanel implements IBarPanel {
         if(\TracyDebugger::additionalBar()) return;
         \Tracy\Debugger::timer('todo');
 
+        $pathReplace = \TracyDebugger::getDataValue('todoScanModules') == 1 ? wire('config')->paths->root : wire('config')->paths->templates;
+
         $numEntries = 0;
         $thisPageNumEntries = 0;
         $files = $this->getTodos();
@@ -35,7 +37,7 @@ class TodoPanel implements IBarPanel {
                     $this->entries .= "
                         \n<tr>";
                             if($currentFile !== $item['file']) {
-                                $this->entries .= "<td" . ($i==0 ? " rowspan='" . count($files[$file]) . "'" : "") . $thisPageFile . ">" . str_replace(wire('config')->paths->templates, '', $item['file']) . "</td>";
+                                $this->entries .= "<td" . ($i==0 ? " rowspan='" . count($files[$file]) . "'" : "") . $thisPageFile . ">" . str_replace($pathReplace, '', $item['file']) . "</td>";
                             }
                             // if "todo" or other matched tag is at start of comment then remove it
                             // otherwise, underline it wherever it is in the comment
@@ -98,6 +100,7 @@ class TodoPanel implements IBarPanel {
 
 
     protected function strpos_array($haystack, $needles, $offset = 0) {
+        if($needles == '') return false;
         if (is_array($needles)) {
             foreach ($needles as $needle) {
                 $pos = $this->strpos_array($haystack, $needle);
@@ -118,7 +121,7 @@ class TodoPanel implements IBarPanel {
             // match whole words, without hyphens only so that "debug" won't match the "bug" todoType
             // and "micro-clearfix-hack" won't match "hack"
             // this still allows "//TODO" to match even though no space before word
-            preg_match('/(?<!-)\b'.$todoType.'\b(?!-)/i', $str, $match, PREG_OFFSET_CAPTURE);
+            preg_match('/(?<!-)(?<![\'"])\b'.$todoType.'\b(?!-)(?![\'"])/i', $str, $match, PREG_OFFSET_CAPTURE);
             if(isset($match[0][1])) return $todoType;
         }
         return false;
@@ -146,10 +149,18 @@ class TodoPanel implements IBarPanel {
 
     private function getTodos() {
         $items = array();
+        $items = $this->scanDirectories(wire('config')->paths->templates);
+        if(\TracyDebugger::getDataValue('todoScanModules') == 1) $moduleItems = $this->scanDirectories(wire('config')->paths->siteModules);
+        if(isset($moduleItems)) $items = array_merge($items, $moduleItems);
+        return $items;
+    }
+
+    private function scanDirectories($dir) {
+        $items = array();
         $ignoreDirs = array_map('trim', explode(',', \TracyDebugger::getDataValue('todoIgnoreDirs')));
+        array_push($ignoreDirs, 'TracyDebugger');
         $allowedExtensions = array_map('trim', explode(',', \TracyDebugger::getDataValue('todoAllowedExtensions')));
-        $templatesFolder = function_exists('\ProcessWire\wire') ? \ProcessWire\wire('config')->paths->templates : wire('config')->paths->templates;
-        foreach ($iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($templatesFolder, \RecursiveDirectoryIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST) as $fileinfo){
+        foreach ($iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST) as $fileinfo){
             $filePath = $fileinfo->getPathname();
             $fileSize = filesize($filePath);
             if($fileSize > 0 && $fileinfo->isFile() && $this->strpos_array($filePath, $ignoreDirs) === false && in_array($fileinfo->getExtension(), $allowedExtensions) === true) {
@@ -194,6 +205,8 @@ class TodoPanel implements IBarPanel {
                 // exclude comments starting with # unless it's a php file
                 // because # in js, css, etc are not comments
                 if(pathinfo($filename, PATHINFO_EXTENSION) !== 'php' && substr($token[1], 0, 1) === '#') continue;
+                // ignore long entries - likely coming from a minified js file due to escaped \//
+                if(strlen($token[1]) > 500) continue;
                 $containsTodo = $this->containsTodoType($token[1]);
                 if($containsTodo !== false) {
                     $todos[] = $this->createTodosArray($token[2], $token[1], $containsTodo, $filename);
