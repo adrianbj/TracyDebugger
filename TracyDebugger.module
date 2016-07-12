@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 226,
+            'version' => 227,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -739,7 +739,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->columnWidth = 34;
         $wrapper->add($f);
 
-        $f = wire('modules')->get("InputfieldTextarea");
+        $f = wire('modules')->get("InputfieldText");
         $f->attr('name', 'todoIgnoreDirs');
         $f->label = __('ToDo Panel Ignore Directories', __FILE__);
         $f->description = __('Comma separated list of terms used to match folders to be ignored when scanning for ToDo items.', __FILE__);
@@ -748,7 +748,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($data['todoIgnoreDirs']) $f->attr('value', $data['todoIgnoreDirs']);
         $wrapper->add($f);
 
-        $f = wire('modules')->get("InputfieldTextarea");
+        $f = wire('modules')->get("InputfieldText");
         $f->attr('name', 'todoAllowedExtensions');
         $f->label = __('ToDo Panel Allowed Extensions', __FILE__);
         $f->description = __('Comma separated list file extensions to be scanned for ToDo items.', __FILE__);
