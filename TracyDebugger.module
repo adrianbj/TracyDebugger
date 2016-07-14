@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 227,
+            'version' => 228,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -56,6 +56,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $panelGenerationTime = array();
     public static $hideInAdmin = array('validator', 'variables', 'templatePath', 'templateEditor');
     public static $pageHtml;
+    public static $mailParams = array();
+    public static $eventObjects = array();
     public static $allPanels = array(
         'performance' => 'Performance',
         'processwireInfo' => 'ProcessWire Info',
@@ -74,6 +76,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'console' => 'Console',
         'templateEditor' => 'Template Editor',
         'todo' => 'ToDo',
+        'mail' => 'Mail',
+        'eventInterceptor' => 'Event Interceptor',
         'processwireVersion' => 'ProcessWire Version',
         'panelSelector' => 'Panel Selector'
     );
@@ -264,6 +268,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             static::$showPanels = $this->data['showPanels'];
         }
 
+        // mail panel intercept hook
+        if(in_array('mail', static::$showPanels)) {
+            $this->addHookBefore('WireMail::send', $this, 'interceptEmails');
+        }
+
+        // event interceptor hook
+        if(in_array('eventInterceptor', static::$showPanels) && $this->input->cookie->eventInterceptorHook) {
+            $this->addHookBefore($this->input->cookie->eventInterceptorHook, $this, 'interceptEvent');
+            $this->addHookBefore('Session::redirect', $this, 'preventRedirect');
+        }
+
         // user switcher panel logic
         if(in_array('userSwitcher', static::$showPanels) && $this->data['outputMode'] == 'development') {
             // if logout button clicked
@@ -389,6 +404,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 case 'validator':
                 case 'console':
                 case 'todo':
+                case 'mail':
+                case 'eventInterceptor':
                 case 'processwireVersion':
                 case 'templateEditor':
                     require_once __DIR__ . '/'.$panelName.'.inc';
@@ -429,6 +446,26 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     // for the validator panel
     public function getPageHtml($event) {
         static::$pageHtml = $event->return;
+    }
+
+
+    // for the mail panel
+    public function interceptEmails($event) {
+        static::$mailParams[] = $event->object;
+        $event->replace = true;
+        $event->return = false;
+    }
+
+    // for the event interceptor panel
+    public function interceptEvent($event) {
+        static::$eventObjects[] = $event;
+        $event->replace = true;
+        $event->return = false;
+    }
+
+    public function preventRedirect($event) {
+        $event->replace = true;
+        $event->return = false;
     }
 
 
