@@ -13,40 +13,45 @@ class MailPanel implements IBarPanel {
 
         \Tracy\Debugger::timer('mail');
 
-        $items = \TracyDebugger::$mailParams;
+        $items = wire('session')->tracyMailItems ? wire('session')->tracyMailItems : array();
 
         if(count($items) > 0) {
             $this->iconColor = '#CD1818';
+            $this->entries .= '
+            <div class="mail-items">
+                <p><input type="submit" onclick="clearEmails()" value="Clear Emails" /></p>';
             foreach($items as $item) {
 
                 $this->entries .= '
                 <table id="mail-item" style="margin-bottom:15px">
                     <thead>
                         <tr>
-                            <th colspan="2"><strong>'.$item->subject.'</strong></th>
+                            <th colspan="2"><strong>'.$item['subject'].'</strong></th>
                         </tr>
                     </thead>
                     <tbody>';
 
                 $this->entries .= "
-                        \n<tr><td>To</td><td>".$this->formatEmailAddress($item->to, $item->toName)."</td></tr>
-                        \n<tr><td>Cc</td><td>".$this->formatEmailAddress($item->cc, $item->ccName)."</td></tr>
-                        \n<tr><td>Bcc</td><td>".$this->formatEmailAddress($item->bcc, $item->bccName)."</td></tr>
-                        \n<tr><td>From</td><td>".$item->fromName . ' &lt;' . $item->from."&gt;</td></tr>
-                        \n<tr><td>Attachments</td><td>".$this->formatAttachments($item->attachments)."</td></tr>
+                        \n<tr><td>Sent</td><td>".date('Y-m-d H:i:s', $item['timestamp'])."</td></tr>
+                        \n<tr><td>To</td><td>".$this->formatEmailAddress($item['to'], $item['toName'])."</td></tr>
+                        \n<tr><td>Cc</td><td>".$this->formatEmailAddress($item['cc'], $item['ccName'])."</td></tr>
+                        \n<tr><td>Bcc</td><td>".$this->formatEmailAddress($item['bcc'], null)."</td></tr>
+                        \n<tr><td>From</td><td>".$item['fromName'] . ' &lt;' . $item['from']."&gt;</td></tr>
+                        \n<tr><td>Attachments</td><td>".$this->formatAttachments($item['attachments'])."</td></tr>
                         \n<tr>
                             <td colspan='2'>
                                 <a href='#' rel='#text-body' style='font-size:12px !important' class='tracy-toggle tracy-collapsed'>Text</a>&nbsp;&nbsp;
-                                \n<div id='text-body' class='tracy-collapsed'>".$item->body."</div>
+                                \n<div id='text-body' class='tracy-collapsed'>".$item['body']."</div>
                                 <a href='#' rel='#html-body' style='font-size:12px !important' class='tracy-toggle tracy-collapsed'>HTML</a>&nbsp;&nbsp;
-                                \n<div id='html-body' class='tracy-collapsed'>".$item->bodyHTML."</div>
+                                \n<div id='html-body' class='tracy-collapsed'>".$item['bodyHTML']."</div>
                                 <a href='#' rel='#source-body' style='font-size:12px !important' class='tracy-toggle tracy-collapsed'>Source</a>
-                                \n<div id='source-body' class='tracy-collapsed'><pre>".htmlentities($item->bodyHTML)."</pre></div>
+                                \n<div id='source-body' class='tracy-collapsed'><pre>".htmlentities($item['bodyHTML'])."</pre></div>
                             </td>
                         </tr>
                     </tbody>
                 </table>";
             }
+            $this->entries .= '</div>';
         }
         else {
             $this->iconColor = '#009900';
@@ -76,6 +81,16 @@ class MailPanel implements IBarPanel {
         $out = '
         <h1>' . $this->icon . ' Mail</h1>
 
+        <script>
+            function clearEmails() {
+                document.cookie = "tracyClearMailItems=true;expires=0 path=/";
+                var elements = document.getElementsByClassName("mail-items");
+                while(elements.length > 0){
+                    elements[0].parentNode.removeChild(elements[0]);
+                }
+            }
+        </script>
+
         <div class="tracy-inner">';
             \TracyDebugger::$panelGenerationTime['mail'] = \Tracy\Debugger::timer('mail');
             $out .= $this->entries . \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['mail']) . '
@@ -86,6 +101,7 @@ class MailPanel implements IBarPanel {
 
     protected function formatEmailAddress($addresses, $names) {
         $styledAddresses = '';
+        if(!is_array($addresses)) $addresses = array($addresses);
         foreach($addresses as $address) {
             $styledAddresses .= $names[$address].' &lt;'.$address.'&gt;<br />';
         }
@@ -94,6 +110,7 @@ class MailPanel implements IBarPanel {
 
     protected function formatAttachments($attachments) {
         $styledAttachments = '';
+        if(!is_array($attachments)) $attachments = array($attachments);
         foreach($attachments as $attachment) {
             $styledAttachments .= str_replace(wire('config')->paths->root, '/', $attachment) . '<br />';
         }

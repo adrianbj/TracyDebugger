@@ -31,7 +31,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 228,
+            'version' => 229,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -56,7 +56,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $panelGenerationTime = array();
     public static $hideInAdmin = array('validator', 'variables', 'templatePath', 'templateEditor');
     public static $pageHtml;
-    public static $mailParams = array();
     public static $eventObjects = array();
     public static $allPanels = array(
         'performance' => 'Performance',
@@ -154,6 +153,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($this->input->post->tracyPwVersion && $this->input->post->tracyPwVersion != $this->config->version) {
             $this->session->redirect('./');
         }
+
+        // if mail panel items were cleared, clear them from the session variable
+        if($this->input->cookie->tracyClearMailItems) $this->session->tracyMailItems = null;
 
         if($this->allowedTracyUsers()) {
             static::$tracyVersion = $this->data['coreBranch'];
@@ -451,7 +453,22 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     // for the mail panel
     public function interceptEmails($event) {
-        static::$mailParams[] = $event->object;
+        $mailItem = array();
+        $eventItems = array();
+        $eventItems[] = $event->object;
+        $existingMailItems = wire('session')->tracyMailItems ? wire('session')->tracyMailItems : array();
+        foreach($eventItems as $item) {
+            foreach(array('subject', 'from', 'fromName', 'to', 'toName', 'cc', 'ccName', 'bcc', 'body', 'bodyHTML', 'attachments') as $param) {
+                $mailItem[$param] = $item->$param;
+            }
+            $mailItem['timestamp'] = time();
+            array_unshift($existingMailItems, $mailItem);
+        }
+        wire('session')->tracyMailItems = $existingMailItems;
+        // remove a previously set tracyClearMailItems cookie
+        unset($this->input->cookie->tracyClearMailItems);
+        setcookie("tracyClearMailItems", "", time()-3600, "/");
+
         $event->replace = true;
         $event->return = false;
     }

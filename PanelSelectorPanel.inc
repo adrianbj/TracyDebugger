@@ -118,7 +118,7 @@ class PanelSelectorPanel implements IBarPanel {
                     </span>';
 
         $out .= '<h1>'.$this->icon.' Panel Selector</h1>
-        <div class="tracy-inner" style="padding-right: 30px !important;">
+        <div class="tracy-inner">
             <fieldset>
                 <legend>Temporarily enable/disable panels<br />*Panels with asterisk are on by default</legend><br />';
                     $defaultPanels = \TracyDebugger::getDataValue('showPanels');

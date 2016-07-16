@@ -162,7 +162,7 @@ class ConsolePanel implements IBarPanel {
             <fieldset>
                 <legend>Enter PHP code, then use CTRL+Enter or CMD+Enter to run.</legend><br />';
                     $out .= '
-                    <div id="tracyConsoleCode" style="visibility:hidden; width: calc(100vw - 80px) !important; height:100px"></div><br />
+                    <div id="tracyConsoleCode" style="visibility:hidden; width: calc(100vw - 100px) !important; height:100px"></div><br />
                     <input type="submit" onclick="processTracyCode(false)" value="Run Code" />&nbsp;
                     <input type="submit" onclick="processTracyCode(true)" value="Clear Code" />
                     <br /><br />
