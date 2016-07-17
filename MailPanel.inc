@@ -83,7 +83,7 @@ class MailPanel implements IBarPanel {
 
         <script>
             function clearEmails() {
-                document.cookie = "tracyClearMailItems=true;expires=0 path=/";
+                document.cookie = "tracyClearMailItems=true;expires=0;path=/";
                 var elements = document.getElementsByClassName("mail-items");
                 while(elements.length > 0){
                     elements[0].parentNode.removeChild(elements[0]);
