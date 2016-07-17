@@ -14,16 +14,21 @@ class EventInterceptorPanel implements IBarPanel {
 
         \Tracy\Debugger::timer('eventInterceptor');
 
-        $items = \TracyDebugger::$eventObjects;
+        $items = wire('session')->tracyEventItems;
 
         if(count($items) > 0) {
             $this->iconColor = '#CD1818';
+            $this->entries .= '
+            <div class="event-items">
+                <p><input type="submit" onclick="clearEvents()" value="Clear Events" /></p>';
             foreach($items as $item) {
-                $this->entries .= '<h2>Event Object</h2>';
-                $this->entries .= Dumper::toHtml($item->object, array(Dumper::COLLAPSE => false));
-                $this->entries .= '<h2>Event Arguments</h2>';
-                $this->entries .= Dumper::toHtml($item->arguments, array(Dumper::COLLAPSE => false));
+                $this->entries .= '<h2>' . date("Y-m-d H:i:s", $item['timestamp']) . '</h2>';
+                $this->entries .= '<h3>Event Object</h3>';
+                $this->entries .= $item['object'];
+                $this->entries .= '<h3>Event Arguments</h3>';
+                $this->entries .= $item['arguments'];
             }
+            $this->entries .= '</div>';
         }
         elseif(wire('input')->cookie->eventInterceptorHook) {
             $this->iconColor = '#FF9933';
@@ -55,6 +60,14 @@ class EventInterceptorPanel implements IBarPanel {
         <h1>' . $this->icon . ' Event Interceptor</h1>
 
         <script>
+            function clearEvents() {
+                document.cookie = "tracyClearEventItems=true;expires=0;path=/";
+                var elements = document.getElementsByClassName("event-items");
+                while(elements.length > 0){
+                    elements[0].parentNode.removeChild(elements[0]);
+                }
+            }
+
             function setEventInterceptorHook(reset) {
                 if(reset === true) {
                     document.cookie = "eventInterceptorHook=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";

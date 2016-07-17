@@ -19,6 +19,7 @@
 
 use Tracy\Debugger;
 use Tracy\Helpers;
+use Tracy\Dumper;
 
 class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
@@ -31,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 231,
+            'version' => 232,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -56,7 +57,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $panelGenerationTime = array();
     public static $hideInAdmin = array('validator', 'variables', 'templatePath', 'templateEditor');
     public static $pageHtml;
-    public static $eventObjects = array();
     public static $allPanels = array(
         'performance' => 'Performance',
         'processwireInfo' => 'ProcessWire Info',
@@ -159,6 +159,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $this->session->tracyMailItems = null;
             unset($this->input->cookie->tracyClearMailItems);
             setcookie("tracyClearMailItems", "", time()-3600, "/");
+        }
+
+        // if event interceptor panel items were cleared, clear them from the session variable and remove cookie
+        if($this->input->cookie->tracyClearEventItems) {
+            $this->session->tracyEventItems = null;
+            unset($this->input->cookie->tracyClearEventItems);
+            setcookie("tracyClearEventItems", "", time()-3600, "/");
         }
 
         if($this->allowedTracyUsers()) {
@@ -282,7 +289,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // event interceptor hook
         if(in_array('eventInterceptor', static::$showPanels) && $this->input->cookie->eventInterceptorHook) {
             $this->addHookBefore($this->input->cookie->eventInterceptorHook, $this, 'interceptEvent');
-            $this->addHookBefore('Session::redirect', $this, 'preventRedirect');
         }
 
         // user switcher panel logic
@@ -458,29 +464,26 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     // for the mail panel
     public function interceptEmails($event) {
         $mailItem = array();
-        $eventItems = array();
-        $eventItems[] = $event->object;
-        $existingMailItems = wire('session')->tracyMailItems ? wire('session')->tracyMailItems : array();
-        foreach($eventItems as $item) {
-            foreach(array('subject', 'from', 'fromName', 'to', 'toName', 'cc', 'ccName', 'bcc', 'body', 'bodyHTML', 'attachments') as $param) {
-                $mailItem[$param] = $item->$param;
-            }
-            $mailItem['timestamp'] = time();
-            array_unshift($existingMailItems, $mailItem);
+        $mailItems = wire('session')->tracyMailItems ? wire('session')->tracyMailItems : array();
+        foreach(array('subject', 'from', 'fromName', 'to', 'toName', 'cc', 'ccName', 'bcc', 'body', 'bodyHTML', 'attachments') as $param) {
+            $mailItem[$param] = $event->object->$param;
         }
-        wire('session')->tracyMailItems = $existingMailItems;
+        $mailItem['timestamp'] = time();
+        array_unshift($mailItems, $mailItem);
+        wire('session')->tracyMailItems = $mailItems;
         $event->replace = true;
         $event->return = false;
     }
 
     // for the event interceptor panel
     public function interceptEvent($event) {
-        static::$eventObjects[] = $event;
-        $event->replace = true;
-        $event->return = false;
-    }
-
-    public function preventRedirect($event) {
+        $eventItem = array();
+        $eventItems = wire('session')->tracyEventItems ? wire('session')->tracyEventItems : array();
+        $eventItem['timestamp'] = time();
+        $eventItem['object'] = Dumper::toHtml($event->object, array(Dumper::COLLAPSE => true));
+        $eventItem['arguments'] = Dumper::toHtml($event->arguments, array(Dumper::COLLAPSE => true));
+        array_unshift($eventItems, $eventItem);
+        wire('session')->tracyEventItems = $eventItems;
         $event->replace = true;
         $event->return = false;
     }
