@@ -22,6 +22,11 @@ class MailPanel implements IBarPanel {
                 <p><input type="submit" onclick="clearEmails()" value="Clear Emails" /></p>';
             foreach($items as $item) {
 
+                // from @tpr - for dealing with encoded fromName which is necessary for some email clients
+                if (function_exists('mb_decode_mimeheader')) {
+                    $item['fromName'] = mb_decode_mimeheader($item['fromName']);
+                }
+
                 $this->entries .= '
                 <table id="mail-item" style="margin-bottom:15px">
                     <thead>
