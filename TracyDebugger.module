@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 233,
+            'version' => 234,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -58,27 +58,27 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $hideInAdmin = array('validator', 'variables', 'templatePath', 'templateEditor');
     public static $pageHtml;
     public static $allPanels = array(
+        'console' => 'Console',
+        'debugMode' => 'Debug Mode',
+        'diagnostics' => 'Diagnostics',
+        'eventInterceptor' => 'Event Interceptor',
+        'mail' => 'Mail',
+        'methodsInfo' => 'Methods Info',
+        'outputMode' => 'Output Mode',
+        'panelSelector' => 'Panel Selector',
         'performance' => 'Performance',
+        'phpInfo' => 'PHP Info',
         'processwireInfo' => 'ProcessWire Info',
         'processwireLogs' => 'ProcessWire Logs',
+        'processwireVersion' => 'ProcessWire Version',
+        'templateEditor' => 'Template Editor',
+        'templatePath' => 'Template Path',
+        'todo' => 'ToDo',
         'tracyLogs' => 'Tracy Logs',
-        'variables' => 'Variables',
-        'methodsInfo' => 'Methods Info',
-        'diagnostics' => 'Diagnostics',
-        'debugMode' => 'Debug Mode',
-        'validator' => 'Validator',
         'users' => 'Users',
         'userSwitcher' => 'User Switcher',
-        'outputMode' => 'Output Mode',
-        'phpInfo' => 'PHP Info',
-        'templatePath' => 'Template Path',
-        'console' => 'Console',
-        'templateEditor' => 'Template Editor',
-        'todo' => 'ToDo',
-        'mail' => 'Mail',
-        'eventInterceptor' => 'Event Interceptor',
-        'processwireVersion' => 'ProcessWire Version',
-        'panelSelector' => 'Panel Selector'
+        'validator' => 'Validator',
+        'variables' => 'Variables'
     );
 
 
@@ -269,12 +269,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         //determine which panels to display
         static::$oncePanels = array_filter(explode(',', $this->input->cookie->tracyPanelsOnce));
         static::$stickyPanels = array_filter(explode(',', $this->input->cookie->tracyPanelsSticky));
-        if(isset($this->input->cookie->tracyPanelsOnce)) {
+        if($this->input->cookie->tracyPanelsOnce) {
             static::$showPanels = static::$oncePanels;
             unset($this->input->cookie->tracyPanelsOnce);
             setcookie("tracyPanelsOnce", "", time()-3600, '/');
         }
-        elseif(isset($this->input->cookie->tracyPanelsSticky)) {
+        elseif($this->input->cookie->tracyPanelsSticky) {
             static::$showPanels = static::$stickyPanels;
         }
         else {
