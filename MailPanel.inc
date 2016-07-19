@@ -38,11 +38,11 @@ class MailPanel implements IBarPanel {
 
                 $this->entries .= "
                         \n<tr><td>Sent</td><td>".date('Y-m-d H:i:s', $item['timestamp'])."</td></tr>
-                        \n<tr><td>To</td><td>".$this->formatEmailAddress($item['to'], $item['toName'])."</td></tr>
-                        \n<tr><td>Cc</td><td>".$this->formatEmailAddress($item['cc'], $item['ccName'])."</td></tr>
-                        \n<tr><td>Bcc</td><td>".$this->formatEmailAddress($item['bcc'], null)."</td></tr>
-                        \n<tr><td>From</td><td>".$item['fromName'] . ' &lt;' . $item['from']."&gt;</td></tr>
-                        \n<tr><td>Attachments</td><td>".$this->formatAttachments($item['attachments'])."</td></tr>
+                        \n<tr><td>To</td><td>".$this->formatEmailAddress($item['to'], $item['toName'])."</td></tr>" .
+                        ($item['cc'] ? "\n<tr><td>Cc</td><td>".$this->formatEmailAddress($item['cc'], $item['ccName'])."</td></tr>" : "") .
+                        ($item['bcc'] ? "\n<tr><td>Bcc</td><td>".$this->formatEmailAddress($item['bcc'], null)."</td></tr>" : "") . "
+                        \n<tr><td>From</td><td>".$item['fromName'] . ' &lt;' . $item['from']."&gt;</td></tr>" .
+                        ($item['attachments'] ? "\n<tr><td>Attachments</td><td>".$this->formatAttachments($item['attachments'])."</td></tr>" : "") . "
                         \n<tr>
                             <td colspan='2'>
                                 <a href='#' rel='#text-body' style='font-size:12px !important' class='tracy-toggle tracy-collapsed'>Text</a>&nbsp;&nbsp;

@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 234,
+            'version' => 235,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -267,19 +267,34 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         //determine which panels to display
-        static::$oncePanels = array_filter(explode(',', $this->input->cookie->tracyPanelsOnce));
-        static::$stickyPanels = array_filter(explode(',', $this->input->cookie->tracyPanelsSticky));
         if($this->input->cookie->tracyPanelsOnce) {
+            static::$oncePanels = array_filter(explode(',', $this->input->cookie->tracyPanelsOnce));
             static::$showPanels = static::$oncePanels;
             unset($this->input->cookie->tracyPanelsOnce);
             setcookie("tracyPanelsOnce", "", time()-3600, '/');
         }
         elseif($this->input->cookie->tracyPanelsSticky) {
+            static::$stickyPanels = array_filter(explode(',', $this->input->cookie->tracyPanelsSticky));
             static::$showPanels = static::$stickyPanels;
         }
         else {
             static::$showPanels = $this->data['showPanels'];
         }
+
+        // sort panels based on order defined in config settings
+        $showPanelsOrdered = array();
+        $i=0;
+        // add default panels in the defined order
+        foreach($this->data['showPanels'] as $panelName) {
+            if(in_array($panelName, static::$showPanels)) $showPanelsOrdered[$i] = $panelName;
+            $i++;
+        }
+        // add once/sticky panels to the end because dev hasn't specified order for these in config settings
+        foreach(static::$allPanels as $panelName => $panelTitle) {
+            if(in_array($panelName, static::$showPanels) && !in_array($panelName, $showPanelsOrdered)) $showPanelsOrdered[$i] = $panelName;
+            $i++;
+        }
+        static::$showPanels = $showPanelsOrdered;
 
         // mail panel intercept hook
         if(in_array('mail', static::$showPanels)) {
