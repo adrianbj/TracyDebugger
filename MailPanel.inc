@@ -36,21 +36,30 @@ class MailPanel implements IBarPanel {
                     </thead>
                     <tbody>';
 
-                $this->entries .= "
-                        \n<tr><td>Sent</td><td>".date('Y-m-d H:i:s', $item['timestamp'])."</td></tr>
-                        \n<tr><td>To</td><td>".$this->formatEmailAddress($item['to'], $item['toName'])."</td></tr>" .
-                        ($item['cc'] ? "\n<tr><td>Cc</td><td>".$this->formatEmailAddress($item['cc'], $item['ccName'])."</td></tr>" : "") .
-                        ($item['bcc'] ? "\n<tr><td>Bcc</td><td>".$this->formatEmailAddress($item['bcc'], null)."</td></tr>" : "") . "
-                        \n<tr><td>From</td><td>".$item['fromName'] . ' &lt;' . $item['from']."&gt;</td></tr>" .
-                        ($item['attachments'] ? "\n<tr><td>Attachments</td><td>".$this->formatAttachments($item['attachments'])."</td></tr>" : "") . "
-                        \n<tr>
+                        $this->entries .= "
+                        <tr><td>Sent</td><td>".date('Y-m-d H:i:s', $item['timestamp'])."</td></tr>
+                        <tr><td>To</td><td>".$this->formatEmailAddress($item['to'], $item['toName'])."</td></tr>" .
+                        ($item['cc'] ? "<tr><td>Cc</td><td>".$this->formatEmailAddress($item['cc'], $item['ccName'])."</td></tr>" : "") .
+                        ($item['bcc'] ? "<tr><td>Bcc</td><td>".$this->formatEmailAddress($item['bcc'], null)."</td></tr>" : "") . "
+                        <tr><td>From</td><td>".$item['fromName'] . ' &lt;' . $item['from']."&gt;</td></tr>" .
+                        ($item['attachments'] ? "<tr><td>Attachments</td><td>".$this->formatAttachments($item['attachments'])."</td></tr>" : "") . "
+                        <tr>
                             <td colspan='2'>
-                                <a href='#' rel='#text-body' style='font-size:12px !important' class='tracy-toggle tracy-collapsed'>Text</a>&nbsp;&nbsp;
-                                \n<div id='text-body' class='tracy-collapsed'>".$item['body']."</div>
-                                <a href='#' rel='#html-body' style='font-size:12px !important' class='tracy-toggle tracy-collapsed'>HTML</a>&nbsp;&nbsp;
-                                \n<div id='html-body' class='tracy-collapsed'>".$item['bodyHTML']."</div>
-                                <a href='#' rel='#source-body' style='font-size:12px !important' class='tracy-toggle tracy-collapsed'>Source</a>
-                                \n<div id='source-body' class='tracy-collapsed'><pre>".htmlentities($item['bodyHTML'])."</pre></div>
+                                <div style='position: relative; padding-top: 22px;'>";
+                                if($item['body']) {
+                                    $this->entries .= "
+                                    <a href='#' rel='#text-body' style='font-size:12px !important; position: absolute; left:0; top:3px;' class='tracy-toggle tracy-collapsed'>Text</a>
+                                    <div id='text-body' class='tracy-collapsed'>".($item['body'] ? $item['body'] : "Ø")."</div>";
+                                }
+                                if($item['bodyHTML']) {
+                                    $this->entries .= "
+                                    <a href='#' rel='#html-body' style='font-size:12px !important; position: absolute; left:56px; top:3px;' class='tracy-toggle tracy-collapsed'>HTML</a>
+                                    <div id='html-body' class='tracy-collapsed'>".$item['bodyHTML']."</div>
+                                    <a href='#' rel='#source-body' style='font-size:12px !important; position: absolute; left:120px; top:3px;' class='tracy-toggle tracy-collapsed'>Source</a>
+                                    <div id='source-body' class='tracy-collapsed'><pre style='max-width: 800px; white-space: normal;'>".htmlentities($item['bodyHTML'])."</pre></div>";
+                                }
+                                $this->entries .= "
+                                </div>
                             </td>
                         </tr>
                     </tbody>
