@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 236,
+            'version' => 237,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -52,7 +52,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $showPanels;
     public static $templatePath;
     public static $templatePathOnce;
-    public static $originalTemplatePath;
     public static $tempTemplateFilename;
     public static $panelGenerationTime = array();
     public static $hideInAdmin = array('validator', 'variables', 'templatePath', 'templateEditor');
@@ -75,8 +74,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'templatePath' => 'Template Path',
         'todo' => 'ToDo',
         'tracyLogs' => 'Tracy Logs',
-        'users' => 'Users',
         'userSwitcher' => 'User Switcher',
+        'users' => 'Users',
         'validator' => 'Validator',
         'variables' => 'Variables'
     );
@@ -107,6 +106,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "todoIgnoreDirs" => 'git, svn, images, img, errors',
                 "todoScanModules" => null,
                 "todoAllowedExtensions" => 'php, module, inc, txt, latte, html, htm, md, css, scss, less, js',
+                "userDevTemplate" => null,
+                "userDevTemplateSuffix" => 'dev',
                 "email" => '',
                 "clearEmailSent" => null,
                 "editor" => 'subl://open/?url=file://%file&line=%line',
@@ -166,6 +167,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $this->session->tracyEventItems = null;
             unset($this->input->cookie->tracyClearEventItems);
             setcookie("tracyClearEventItems", "", time()-3600, "/");
+        }
+
+        // if user dev template enabled check if current user has a matching role/permission
+        // for the current page's template
+        if($this->user->isLoggedin() && $this->data['userDevTemplate']) {
+            $devTemplateFilename = str_replace('.php', '-'.$this->data['userDevTemplateSuffix'].'.php', $this->page->template->filename);
+            if(file_exists($devTemplateFilename) && ($this->user->hasRole("template-".$this->data['userDevTemplateSuffix']) || $this->user->hasPermission("template-".$this->data['userDevTemplateSuffix']))) {
+                $this->page->template->filename = $devTemplateFilename;
+            }
         }
 
         if($this->allowedTracyUsers()) {
@@ -453,7 +463,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     else {
                         static::$templatePath = '';
                     }
-                    static::$originalTemplatePath = $this->page->template->filename;
+
                     if(static::$templatePath != '') {
                         $this->page->template->filename = static::$templatePath;
                     }
@@ -836,6 +846,22 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->notes = __('Not recommended unless you are a regular module developer.', __FILE__);
         $f->columnWidth = 20;
         $f->attr('checked', $data['todoScanModules'] == '1' ? 'checked' : '' );
+        $wrapper->add($f);
+
+        $f = wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'userDevTemplate');
+        $f->label = __('Enable User Dev Template', __FILE__);
+        $f->description = __('If user has a role or permission named to match the page template with the set extension the page will be rendered with that template file rather than the default.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['userDevTemplate'] == '1' ? 'checked' : '' );
+        $wrapper->add($f);
+
+        $f = wire('modules')->get("InputfieldText");
+        $f->attr('name', 'userDevTemplateSuffix');
+        $f->label = __('User Dev Template Suffix', __FILE__);
+        $f->description = __('Template file suffix. eg "dev" will render the homepage with the "home-dev.php" template file if the user has a matching role or permission, eg. "template-dev".', __FILE__);
+        $f->columnWidth = 50;
+        if($data['userDevTemplateSuffix']) $f->attr('value', $data['userDevTemplateSuffix']);
         $wrapper->add($f);
 
         $f = wire('modules')->get("InputfieldText");
