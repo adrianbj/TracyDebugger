@@ -75,6 +75,7 @@ class ConsolePanel implements IBarPanel {
             });
 
             function tryParseJSON (str){
+                if(!isNaN(str)) return str; // JSON.parse on numbers not being parsed and returning false
                 try {
                     var o = JSON.parse(str);
 

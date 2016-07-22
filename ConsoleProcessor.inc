@@ -46,7 +46,12 @@ if($user->isSuperuser()) {
     $t->set('page', $page);
 
     // output rendered result of code
-    echo $t->render();
+    try {
+        echo $t->render();
+    }
+    catch (Exception $e) {
+        tracyConsoleErrorHandler(null, $e->getMessage(), $e->getFile(), $e->getLine());
+    }
     exit;
 }
 
