@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 237,
+            'version' => 238,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -52,6 +52,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $showPanels;
     public static $templatePath;
     public static $templatePathOnce;
+    public static $templatePathSticky;
+    public static $templatePathPermission;
     public static $tempTemplateFilename;
     public static $panelGenerationTime = array();
     public static $hideInAdmin = array('validator', 'variables', 'templatePath', 'templateEditor');
@@ -169,12 +171,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             setcookie("tracyClearEventItems", "", time()-3600, "/");
         }
 
-        // if user dev template enabled check if current user has a matching role/permission
-        // for the current page's template
-        if($this->user->isLoggedin() && $this->data['userDevTemplate']) {
+        // if user dev template enabled and required permission exists in system,
+        // check if current user has a matching permission for the current page's template
+        if($this->user->isLoggedin() && $this->data['userDevTemplate'] && $this->permissions->get("template-".$this->data['userDevTemplateSuffix'])->id) {
             $devTemplateFilename = str_replace('.php', '-'.$this->data['userDevTemplateSuffix'].'.php', $this->page->template->filename);
-            if(file_exists($devTemplateFilename) && ($this->user->hasRole("template-".$this->data['userDevTemplateSuffix']) || $this->user->hasPermission("template-".$this->data['userDevTemplateSuffix']))) {
-                $this->page->template->filename = $devTemplateFilename;
+            if(file_exists($devTemplateFilename) && $this->user->hasPermission("template-".$this->data['userDevTemplateSuffix'])) {
+                $this->page->template->filename = static::$templatePath = static::$templatePathPermission = $devTemplateFilename;
             }
         }
 
@@ -451,14 +453,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 case 'templatePath':
                     require_once __DIR__ . '/'.$panelName.'.inc';
                     static::$templatePathOnce = $this->findInCookie($this->input->cookie->tracyTemplatePathOnce);
-                    $templatePathSticky = $this->findInCookie($this->input->cookie->tracyTemplatePathSticky);
+                    static::$templatePathSticky = $this->findInCookie($this->input->cookie->tracyTemplatePathSticky);
                     if(static::$templatePathOnce) {
                         static::$templatePath = static::$templatePathOnce;
                         unset($this->input->cookie->tracyTemplatePathOnce);
                         setcookie("tracyTemplatePathOnce", "", time()-3600, "/");
                     }
-                    elseif($templatePathSticky) {
-                        static::$templatePath = $templatePathSticky;
+                    elseif(static::$templatePathSticky) {
+                        static::$templatePath = static::$templatePathSticky;
+                    }
+                    elseif(static::$templatePath != '') {
+                        // don't change as already set by dev template permission functionality
                     }
                     else {
                         static::$templatePath = '';
