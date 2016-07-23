@@ -16,9 +16,42 @@ class CssPanel implements IBarPanel {
 
                 #tracy-debug input[type="checkbox"],
                 #tracy-debug input[type="radio"] {
-                    width: 12px;
-                    height: 12px;
-                    position: static;
+                    width: 12px !important;
+                    height: 12px !important;
+                    position: static !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                }
+
+                #tracy-debug input[type="text"] {
+                    height: inherit !important;
+                    width: initial !important;
+                    display: inline-block !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    border-radius: 0 !important;
+                }
+
+                #tracy-debug, #tracy-debug h2, #tracy-debug legend, #tracy-debug p {
+                    font-family: sans-serif !important;
+                    font-weight: normal !important;
+                    color: #333333 !important;
+                }
+
+                #tracy-debug, #tracy-debug legend, #tracy-debug p, #tracy-debug select {
+                    font-size: 12px !important;
+                }
+
+                #tracy-debug select {
+                    height: 26px !important;
+                    width: initial !important;
+                    border-radius: 0 !important;
+                    margin: 0 !important;
+                    display: inline-block !important;
+                }
+
+                #tracy-debug label {
+                    margin:0 !important;
                 }
 
                 #tracy-debug a {
@@ -32,8 +65,11 @@ class CssPanel implements IBarPanel {
                 }
 
                 #tracy-debug input[type="submit"] {
+                    width: initial !important;
+                    height: initial !important;
+                    display: inline-block !important;
                     background: #FFFFFF !important;
-                    margin: 3px !important;
+                    margin: 0 !important;
                     padding: 3px !important;
                     border: 1px solid #D2D2D2 !important;
                     -webkit-border-radius: 5px !important;
@@ -46,9 +82,9 @@ class CssPanel implements IBarPanel {
                 }
 
                 #tracy-debug fieldset {
-                    all: initial;
-                    font: inherit;
-                    color: inherit;
+                    all: initial !important;
+                    font: inherit !important;
+                    color: inherit !important;
                 }
 
                 .tracy-panel h2 {
@@ -70,11 +106,11 @@ class CssPanel implements IBarPanel {
                 }
 
                 #tracy-debug pre.tracy-dump {
-                    padding: .4em 2em .4em .7em;
+                    padding: .4em 2em .4em .7em !important;
                 }
 
                 .tracy-inner td {
-                    word-wrap: break-word;
+                    word-wrap: break-word !important;
                 }
 
                 .tracy-inner td.tracy-force-break {

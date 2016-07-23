@@ -149,63 +149,69 @@ class TracyLogsPanel implements IBarPanel {
          * Tracy log panel sections
          */
 
-        $logEntries = $this->sectionHeader(array('Type', 'Date', 'URL', 'Text'));
+        $logEntries = '';
         $entriesArr = array();
         $i=0;
         $logs = $this->getLogs();
-        if($logs === null) return 'Tracy logs directory is not readable.';
-        if(count($logs) == 0) return 'There are no logs in the Tracy logs directory.';
-        foreach($logs as $log) {
-            $x=99;
-            foreach($this->getLines($log['name'], array("limit" => \TracyDebugger::getDataValue("numLogEntries"))) as $entry) {
-                $logDateTime = str_replace(array('[',']'), '', substr($entry, 0 , 21)); // get the date - first 21 chars
-                $logDateParts = explode(" ", $logDateTime);
-                $logDate = $logDateParts[0];
-                $logTime = str_replace('-',':', $logDateParts[1]);
-                $logDateTime = $logDate . ' ' . $logTime;
-                $itemKey = $log['name'] . '_' . $x;
-                $entryUrlAndText = explode('@', substr($entry, 22)); // get the rest of the line after the date;
-                if(isset($entryUrlAndText[1])) {
-                    $entriesArr[$itemKey]['url'] = trim($entryUrlAndText[1]);
+        if($logs === null) {
+            $logEntries .= 'Tracy logs directory is not readable.';
+        }
+        elseif(count($logs) == 0) {
+            $logEntries .= 'There are no logs in the Tracy logs directory.';
+        }
+        else {
+            $logEntries = $this->sectionHeader(array('Type', 'Date', 'URL', 'Text'));
+            foreach($logs as $log) {
+                $x=99;
+                foreach($this->getLines($log['name'], array("limit" => \TracyDebugger::getDataValue("numLogEntries"))) as $entry) {
+                    $logDateTime = str_replace(array('[',']'), '', substr($entry, 0 , 21)); // get the date - first 21 chars
+                    $logDateParts = explode(" ", $logDateTime);
+                    $logDate = $logDateParts[0];
+                    $logTime = str_replace('-',':', $logDateParts[1]);
+                    $logDateTime = $logDate . ' ' . $logTime;
+                    $itemKey = $log['name'] . '_' . $x;
+                    $entryUrlAndText = explode('@', substr($entry, 22)); // get the rest of the line after the date;
+                    if(isset($entryUrlAndText[1])) {
+                        $entriesArr[$itemKey]['url'] = trim($entryUrlAndText[1]);
+                    }
+                    else {
+                        continue; //bit of a hack - some entries getting duplicated but with empty URL, so ignore
+                    }
+                    $trimmedText = trim($entryUrlAndText[0]);
+                    $entriesArr[$itemKey]['text'] = strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText;
+                    $entriesArr[$itemKey]['timestamp'] = strtotime($logDateTime);
+                    $entriesArr[$itemKey]['linenumber'] = 99-$x;
+                    $entriesArr[$itemKey]['order'] = $itemKey;
+                    $entriesArr[$itemKey]['date'] = $logDateTime;
+                    $entriesArr[$itemKey]['log'] = $log['name'];
+                    $x--;
+                    $i++;
                 }
-                else {
-                    continue; //bit of a hack - some entries getting duplicated but with empty URL, so ignore
-                }
-                $trimmedText = trim($entryUrlAndText[0]);
-                $entriesArr[$itemKey]['text'] = strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText;
-                $entriesArr[$itemKey]['timestamp'] = strtotime($logDateTime);
-                $entriesArr[$itemKey]['linenumber'] = 99-$x;
-                $entriesArr[$itemKey]['order'] = $itemKey;
-                $entriesArr[$itemKey]['date'] = $logDateTime;
-                $entriesArr[$itemKey]['log'] = $log['name'];
-                $x--;
-                $i++;
             }
-        }
 
-        # get a list of sort columns and their data to pass to array_multisort
-        $sort = array();
-        foreach ($entriesArr as $key => $row) {
-            $timestamp[$key] = $row['timestamp'];
-            $order[$key] = $row['order'];
-        }
-        # sort by event_type desc and then title asc
-        array_multisort($timestamp, SORT_DESC, $order, SORT_DESC, $entriesArr);
+            # get a list of sort columns and their data to pass to array_multisort
+            $sort = array();
+            foreach ($entriesArr as $key => $row) {
+                $timestamp[$key] = $row['timestamp'];
+                $order[$key] = $row['order'];
+            }
+            # sort by event_type desc and then title asc
+            array_multisort($timestamp, SORT_DESC, $order, SORT_DESC, $entriesArr);
 
-        //display most recent entries from all log files
-        foreach(array_slice($entriesArr, 0, \TracyDebugger::getDataValue("numLogEntries")) as $item) {
-            $logInstance = new TracyFileLog(wire('config')->paths->logs.'tracy/' . $item['log'].'.log');
-            $trimmedText = trim(htmlspecialchars($item['text'], ENT_QUOTES, 'UTF-8'));
-            $logEntries .= "
-            \n<tr>" .
-                "<td>".$item['log']."</td>" .
-                "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
-                "<td>".(isset($item['url']) ? $item['url'] : '')."</td>" .
-                "<td><a title='View this line of \"".$item['log']."\" log file in your code editor' href='". \TracyDebugger::makePathLocal(str_replace("%file", wire('config')->paths->logs.'tracy/' . $item['log'] . '.log', str_replace("%line", ($logInstance->getTotalLines()-$item['linenumber']), \TracyDebugger::getDataValue("editor"))))."'>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</a></td>" .
-            "</tr>";
+            //display most recent entries from all log files
+            foreach(array_slice($entriesArr, 0, \TracyDebugger::getDataValue("numLogEntries")) as $item) {
+                $logInstance = new TracyFileLog(wire('config')->paths->logs.'tracy/' . $item['log'].'.log');
+                $trimmedText = trim(htmlspecialchars($item['text'], ENT_QUOTES, 'UTF-8'));
+                $logEntries .= "
+                \n<tr>" .
+                    "<td>".$item['log']."</td>" .
+                    "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
+                    "<td>".(isset($item['url']) ? $item['url'] : '')."</td>" .
+                    "<td><a title='View this line of \"".$item['log']."\" log file in your code editor' href='". \TracyDebugger::makePathLocal(str_replace("%file", wire('config')->paths->logs.'tracy/' . $item['log'] . '.log', str_replace("%line", ($logInstance->getTotalLines()-$item['linenumber']), \TracyDebugger::getDataValue("editor"))))."'>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</a></td>" .
+                "</tr>";
+            }
+            $logEntries .= $sectionEnd;
         }
-        $logEntries .= $sectionEnd;
-
 
 
         // Load all the panel sections

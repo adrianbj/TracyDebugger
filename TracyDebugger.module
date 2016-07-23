@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 241,
+            'version' => 242,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -301,7 +301,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if(in_array($panelName, static::$showPanels)) $showPanelsOrdered[$i] = $panelName;
             $i++;
         }
-        // add once/sticky panels to the end because dev hasn't specified order for these in config settings
+        // add once/sticky panels to the end because there is no specified order for these in config settings
         foreach(static::$allPanels as $panelName => $panelTitle) {
             if(in_array($panelName, static::$showPanels) && !in_array($panelName, $showPanelsOrdered)) $showPanelsOrdered[$i] = $panelName;
             $i++;
