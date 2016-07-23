@@ -91,8 +91,10 @@ class TodoPanel implements IBarPanel {
         <h1>' . $this->icon . ' ToDo</h1>
 
         <div class="tracy-inner">';
-            \TracyDebugger::$panelGenerationTime['todo'] = \Tracy\Debugger::timer('todo');
-            $out .= $this->entries . \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['todo']) . '
+            $out .= $this->entries;
+            \TracyDebugger::$panelGenerationTime['todo']['time'] = \Tracy\Debugger::timer('todo');
+            \TracyDebugger::$panelGenerationTime['todo']['size'] = strlen($out);
+            $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['todo']['time'], \TracyDebugger::$panelGenerationTime['todo']['size']) . '
         </div>';
 
         return $out;

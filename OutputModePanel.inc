@@ -77,8 +77,9 @@ class OutputModePanel implements IBarPanel {
             }
 
             $out .= '</p>';
-            \TracyDebugger::$panelGenerationTime['outputMode'] = \Tracy\Debugger::timer('outputMode');
-            $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['outputMode']) . '
+            \TracyDebugger::$panelGenerationTime['outputMode']['time'] = \Tracy\Debugger::timer('outputMode');
+            \TracyDebugger::$panelGenerationTime['outputMode']['size'] = strlen($out);
+            $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['outputMode']['time'], \TracyDebugger::$panelGenerationTime['outputMode']['size']) . '
         </div>';
 
         return $out;

@@ -249,8 +249,10 @@ class ConsolePanel implements IBarPanel {
         </script>
         ';
 
-        \TracyDebugger::$panelGenerationTime['console'] = \Tracy\Debugger::timer('console');
-        $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['console']);
+        \TracyDebugger::$panelGenerationTime['console']['time'] = \Tracy\Debugger::timer('console');
+        \TracyDebugger::$panelGenerationTime['console']['size'] = strlen($out);
+        $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['console']['time'], \TracyDebugger::$panelGenerationTime['console']['size']);
+
 
         return $out;
     }

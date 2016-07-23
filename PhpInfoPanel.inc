@@ -103,8 +103,9 @@ class PhpInfoPanel implements IBarPanel {
             </style>
             <br />
             <div id="phpinfoBody" style="width:934px">'.$phpInfo.'</div>';
-        \TracyDebugger::$panelGenerationTime['phpInfo'] = \Tracy\Debugger::timer('phpInfo');
-        $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['phpInfo']);
+            \TracyDebugger::$panelGenerationTime['phpInfo']['time'] = \Tracy\Debugger::timer('phpInfo');
+            \TracyDebugger::$panelGenerationTime['phpInfo']['size'] = strlen($out);
+            $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['phpInfo']['time'], \TracyDebugger::$panelGenerationTime['phpInfo']['size']);
         $out .= '</div>
         ';
 

@@ -79,8 +79,9 @@ class ProcesswireVersionPanel implements IBarPanel {
                     </select>&nbsp;<input type="submit" value="Change" />
                 </form>
             </fieldset>';
-            \TracyDebugger::$panelGenerationTime['processwireVersion'] = \Tracy\Debugger::timer('processwireVersion');
-            $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['processwireVersion']);
+            \TracyDebugger::$panelGenerationTime['processwireVersion']['time'] = \Tracy\Debugger::timer('processwireVersion');
+            \TracyDebugger::$panelGenerationTime['processwireVersion']['size'] = strlen($out);
+            $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['processwireVersion']['time'], \TracyDebugger::$panelGenerationTime['processwireVersion']['size']);
         $out .= '
         </div>';
 

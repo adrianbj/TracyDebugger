@@ -353,10 +353,12 @@ class DiagnosticsPanel implements IBarPanel {
             <div id="mysqlinfo" class="tracy-collapsed">
                 '.$dbInfo.'
             </div><br />';
-        \TracyDebugger::$panelGenerationTime['diagnostics'] = \Tracy\Debugger::timer('diagnostics');
-        $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['diagnostics']);
-        $out .= '</div>
-        ';
+
+        \TracyDebugger::$panelGenerationTime['diagnostics']['time'] = \Tracy\Debugger::timer('diagnostics');
+        \TracyDebugger::$panelGenerationTime['diagnostics']['size'] = strlen($out);
+        $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['diagnostics']['time'], \TracyDebugger::$panelGenerationTime['diagnostics']['size']);
+
+        $out .= '</div>';
 
         return $out;
     }

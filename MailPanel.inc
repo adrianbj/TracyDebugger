@@ -106,8 +106,10 @@ class MailPanel implements IBarPanel {
         </script>
 
         <div class="tracy-inner">';
-            \TracyDebugger::$panelGenerationTime['mail'] = \Tracy\Debugger::timer('mail');
-            $out .= $this->entries . \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['mail']) . '
+            $out .= $this->entries;
+            \TracyDebugger::$panelGenerationTime['mail']['time'] = \Tracy\Debugger::timer('mail');
+            \TracyDebugger::$panelGenerationTime['mail']['size'] = strlen($out);
+            $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['mail']['time'], \TracyDebugger::$panelGenerationTime['mail']['size']) . '
         </div>';
 
         return $out;

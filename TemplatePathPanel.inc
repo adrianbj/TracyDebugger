@@ -158,8 +158,10 @@ class TemplatePathPanel implements IBarPanel {
                 </legend>';
             }
 
-            \TracyDebugger::$panelGenerationTime['templatePath'] = \Tracy\Debugger::timer('templatePath');
-            $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['templatePath']);
+        \TracyDebugger::$panelGenerationTime['templatePath']['time'] = \Tracy\Debugger::timer('templatePath');
+        \TracyDebugger::$panelGenerationTime['templatePath']['size'] = strlen($out);
+        $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['templatePath']['time'], \TracyDebugger::$panelGenerationTime['templatePath']['size']);
+
         $out .= '</div>';
 
         return $out;

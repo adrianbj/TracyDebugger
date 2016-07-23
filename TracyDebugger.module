@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 242,
+            'version' => 243,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -103,7 +103,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "maxDepth" => 3,
                 "maxLength" => 150,
                 "showDebugBar" => array('frontend'),
-                "showPanels" => array('performance', 'processwireInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'templatePath', 'console', 'templateEditor', 'panelSelector'),
+                "showPanels" => array('processwireInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'templatePath', 'console', 'templateEditor', 'panelSelector'),
                 "showPanelLabels" => 1,
                 "todoIgnoreDirs" => 'git, svn, images, img, errors',
                 "todoScanModules" => null,
@@ -569,7 +569,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     /**
-     * Helper function to remove PW variables from get_defined_vars() call.
+     * Helper function to remove PW variables from get_defined_vars() call
      */
     public static function templateVars($vars) {
 
@@ -601,15 +601,25 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     /**
-     * Helper function to insert generated time for a panel.
+     * Helper function to format human friendly file size
      */
-    public static function generatedTime($seconds) {
-        return '<p style="font-size:9px !important; text-align:left !important"><br />Panel generated in '.round($seconds, 4).' seconds</p>';
+    public static function human_filesize($size) {
+        if($size == 0) return("0 Bytes");
+        $filesizename = array("&nbsp;Bytes", "&nbsp;KB", "&nbsp;MB", "&nbsp;GB", "&nbsp;TB", "&nbsp;PB", "&nbsp;EB", "&nbsp;ZB", "&nbsp;YB");
+        return round($size/pow(1024, ($i = floor(log($size, 1024)))), 1) . $filesizename[$i];
     }
 
 
     /**
-     * Helper function to convert remote path to local path.
+     * Helper function to insert generated time and size for a panel
+     */
+    public static function generatedTimeSize($seconds, $kilobytes) {
+        return '<p style="font-size:9px !important; text-align:left !important"><br />Panel generated in '.round($seconds, 4).' seconds<br />Panel content size: '.static::human_filesize($kilobytes).'</p>';
+    }
+
+
+    /**
+     * Helper function to convert remote path to local path
      */
     public static function makePathLocal($path) {
         if(self::getDataValue('localRootPath') != '') $path = str_replace(wire('config')->paths->root, self::getDataValue('localRootPath'), $path);

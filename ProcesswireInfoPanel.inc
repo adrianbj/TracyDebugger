@@ -160,9 +160,6 @@ class ProcesswireInfoPanel implements IBarPanel {
                 </tr>
             </table>';
 
-            // Page Object
-            $pageObject = Dumper::toHtml(wire('page'), array(Dumper::COLLAPSE => false));
-
             // Template info
             $templateFilePath = wire('page')->template->filename;
             // posix_getpwuid doesn't exist on Windows
@@ -252,9 +249,6 @@ class ProcesswireInfoPanel implements IBarPanel {
                 </tr>
             </table>';
 
-            // Template Object
-            $pageTemplateObject = Dumper::toHtml(wire('page')->template, array(Dumper::COLLAPSE => false));
-
             // Fields List & Values
             // TODO - this is a mess - very repetitive and needs cleaning up a lot
             $pageFieldsListValues = $this->sectionHeader(array('ID', 'Name', 'Label', 'FieldType', 'InputfieldType/Class', 'Returns', 'Value', 'Settings'));
@@ -338,10 +332,6 @@ class ProcesswireInfoPanel implements IBarPanel {
             }
             $pageFieldsListValues .= $sectionEnd;
 
-
-            // Fields Object
-            $pageFieldsObject = Dumper::toHtml(wire('page')->fields, array(Dumper::COLLAPSE => false));
-
         }
 
 
@@ -381,21 +371,11 @@ class ProcesswireInfoPanel implements IBarPanel {
             <a href="#" rel="#page-summary" class="tracy-toggle">Summary</a>
             <div id="page-summary">'.$pageSummary.'</div><br />
 
-            <a href="#" rel="#page-object" class="tracy-toggle tracy-collapsed">Page Object</a>
-            <div id="page-object" class="tracy-collapsed">'.$pageObject.'</div><br />
-
             <a href="#" rel="#page-template-info" class="tracy-toggle tracy-collapsed">Template Info</a>
             <div id="page-template-info" class="tracy-collapsed">'.$pageTemplateInfo.'</div><br />
 
-            <a href="#" rel="#page-template-object" class="tracy-toggle tracy-collapsed">Template Object</a>
-            <div id="page-template-object" class="tracy-collapsed">'.$pageTemplateObject.'</div><br />
-
             <a href="#" rel="#page-fields-list-values" class="tracy-toggle tracy-collapsed">Fields List & Values</a>
-            <div id="page-fields-list-values" class="tracy-collapsed">'.$pageFieldsListValues.'</div><br />
-
-            <a href="#" rel="#page-fields-object" class="tracy-toggle tracy-collapsed">Fields Object</a>
-            <div id="page-fields-object" class="tracy-collapsed">'.$pageFieldsObject.'</div><br />';
-
+            <div id="page-fields-list-values" class="tracy-collapsed">'.$pageFieldsListValues.'</div><br />';
         }
 
 
@@ -561,8 +541,9 @@ class ProcesswireInfoPanel implements IBarPanel {
                             </g>
                         </svg>
                     </a>';
-                    \TracyDebugger::$panelGenerationTime['processwireInfo'] = \Tracy\Debugger::timer('processwireInfo');
-                    $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['processwireInfo']);
+                    \TracyDebugger::$panelGenerationTime['processwireInfo']['time'] = \Tracy\Debugger::timer('processwireInfo');
+                    \TracyDebugger::$panelGenerationTime['processwireInfo']['size'] = strlen($out);
+                    $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['processwireInfo']['time'], \TracyDebugger::$panelGenerationTime['processwireInfo']['size']);
                 $out .= '</div>
             </div>
         ';

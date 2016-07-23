@@ -224,8 +224,10 @@ class TracyLogsPanel implements IBarPanel {
         </h1>
 
         <div class="tracy-inner">';
-            \TracyDebugger::$panelGenerationTime['tracyLogs'] = \Tracy\Debugger::timer('tracyLogs');
-            $out .= $logEntries . \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['tracyLogs']) . '
+            $out .= $logEntries;
+            \TracyDebugger::$panelGenerationTime['tracyLogs']['time'] = \Tracy\Debugger::timer('tracyLogs');
+            \TracyDebugger::$panelGenerationTime['tracyLogs']['size'] = strlen($out);
+            $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['tracyLogs']['time'], \TracyDebugger::$panelGenerationTime['tracyLogs']['size']) . '
         </div>';
 
         return $out;

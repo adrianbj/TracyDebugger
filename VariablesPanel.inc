@@ -94,8 +94,9 @@ class VariablesPanel implements IBarPanel {
             $out .= '<strong>Template compiling is disabled for this template, so the variables could not be determined.</strong>';
         }
 
-        \TracyDebugger::$panelGenerationTime['variables'] = \Tracy\Debugger::timer('variables');
-        $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['variables']);
+        \TracyDebugger::$panelGenerationTime['variables']['time'] = \Tracy\Debugger::timer('variables');
+        \TracyDebugger::$panelGenerationTime['variables']['size'] = strlen($out);
+        $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['variables']['time'], \TracyDebugger::$panelGenerationTime['variables']['size']);
 
         $out .= '</div>';
 

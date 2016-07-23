@@ -494,8 +494,9 @@ class ValidatorPanel implements IBarPanel {
             $out .= '<div id="validatorBody" style="width:934px"><h2>Sorry, but there was a problem accessing the validation server at '.$this->validatorUrl.'</h2></div>';
         }
 
-        \TracyDebugger::$panelGenerationTime['validator'] = \Tracy\Debugger::timer('validator');
-        $out .= \TracyDebugger::generatedTime(\TracyDebugger::$panelGenerationTime['validator']);
+        \TracyDebugger::$panelGenerationTime['validator']['time'] = \Tracy\Debugger::timer('validator');
+        \TracyDebugger::$panelGenerationTime['validator']['size'] = strlen($out);
+        $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['validator']['time'], \TracyDebugger::$panelGenerationTime['validator']['size']);
 
         $out .= '</div>';
 
