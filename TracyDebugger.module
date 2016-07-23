@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 239,
+            'version' => 240,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -187,7 +187,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
             require_once __DIR__ . '/tracy-'.static::$tracyVersion.'/src/tracy.php';
             // ensure Tracy is shutdown before PW
-            $this->addHookBefore('ProcessWire::finished', $this, 'shutdownTracy');
+            if(static::$tracyVersion != 'legacy') $this->addHookBefore('ProcessWire::finished', $this, 'shutdownTracy');
         }
         else {
             // if user not allowed then load dummy class to prevent "class not found" errors when
