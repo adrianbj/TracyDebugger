@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 240,
+            'version' => 241,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -306,7 +306,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if(in_array($panelName, static::$showPanels) && !in_array($panelName, $showPanelsOrdered)) $showPanelsOrdered[$i] = $panelName;
             $i++;
         }
+        // move Panel Selector to the end so it has access to the generation time values for all other panels
         static::$showPanels = $showPanelsOrdered;
+        if(($key = array_search('panelSelector', static::$showPanels)) !== false) {
+            unset(static::$showPanels[$key]);
+            static::$showPanels[] = 'panelSelector';
+        }
 
         // mail panel intercept hook
         if(in_array('mail', static::$showPanels)) {
