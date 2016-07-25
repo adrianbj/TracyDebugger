@@ -81,10 +81,28 @@ class VariablesPanel implements IBarPanel {
                     $value = $varArray;
                 }
 
+                if(!\TracyDebugger::getDataValue('variablesShowPwObjects') && is_object($value)) {
+                    $outValue = $value->getArray();
+                    // run getValue() on as many levels as the Max Nesting Depth config setting
+                    for($i=0;$i<=\TracyDebugger::getDataValue('maxDepth');$i++) {
+                        if(is_array($outValue)) {
+                            array_walk_recursive($outValue, function (&$val) {
+                                $val = is_object($val) ? $val->getArray() : $val;
+                            });
+                        }
+                    }
+                }
+                else {
+                    $outValue = $value;
+                }
+
+                // if it's an object or multidimensional array, then collapse it
+                $outValue = Dumper::toHtml($outValue, array(Dumper::COLLAPSE => (count($outValue) !== count($outValue, COUNT_RECURSIVE) || is_object($outValue) ? true : false)));
+
                 $out .= "\n<tr>" .
                     '<td>$'.$var.'</td>' .
                     "<td>".gettype($value)."</td>" .
-                    "<td>".Dumper::toHtml($value, array(Dumper::COLLAPSE => (is_object($value) ? true : false)))."</td>" .
+                    "<td>".$outValue."</td>" .
                     "</tr>";
             }
             $out .= $sectionEnd;

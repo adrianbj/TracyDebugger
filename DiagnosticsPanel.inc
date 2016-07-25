@@ -210,7 +210,7 @@ class DiagnosticsPanel implements IBarPanel {
                 $out .= "<td>".(!empty($owner) ? $owner['name'].":".$group['name'] : '')."</td>";
             }
             $out .= "
-            <td style='background-color:".static::$color."; color:#FFFFFF'>".$statusNotes[0]."</td>
+            <td style='background-color:".static::$color."; color:#FFFFFF !important'>".$statusNotes[0]."</td>
             <td>".str_replace(' ', '&nbsp;', $statusNotes[1])."</td>
         </tr>";
 
@@ -294,34 +294,13 @@ class DiagnosticsPanel implements IBarPanel {
 
     public function getPanel() {
 
+        $panelSections = \TracyDebugger::getDataValue('diagnosticsPanelSections');
+
         // end for each section
         $sectionEnd = '
                     </tbody>
                 </table>
             </div>';
-
-        $attributes = array(
-            "CLIENT_VERSION",
-            "SERVER_VERSION",
-            "CONNECTION_STATUS",
-            "DRIVER_NAME",
-            "SERVER_INFO",
-            "ORACLE_NULLS",
-            "PERSISTENT",
-            "AUTOCOMMIT",
-            "ERRMODE",
-            "CASE"
-        );
-
-        $dbInfo = $this->sectionHeader(array('Attribute', 'Value'));
-
-        foreach ($attributes as $val) {
-            $dbInfo .= "\n<tr>" .
-                "<td>PDO::ATTR_$val</td>" .
-                "<td>".wire('database')->getAttribute(constant("PDO::ATTR_$val"))."</td>" .
-                "</tr>";
-        }
-        $dbInfo .= $sectionEnd;
 
 
         // Load all the panel sections
@@ -336,23 +315,65 @@ class DiagnosticsPanel implements IBarPanel {
             </svg>
             Diagnostics
         </h1>
-        <div class="tracy-inner">
-            <a href="#" rel="#filesystem" class="tracy-toggle">Filesystem</a>
-            <div id="filesystem">
+        <div class="tracy-inner">';
+
+        $i=0;
+        if(in_array('filesystemFolders', $panelSections)) {
+            $out .= '
+            <a href="#" rel="#filesystemFolders" class="tracy-toggle">Filesystem Folders</a>
+            <div id="filesystemFolders">
                 <p>Please read <a href="https://processwire.com/docs/security/file-permissions/">https://processwire.com/docs/security/file-permissions/</a> for details on how to secure these.</p>';
                 if(function_exists('posix_getpwuid')) {
                     $out .= '<p>'.$this->getApacheUser().'</p><br />';
                 }
-                $out .= '<p><strong>Folders</strong></p>'.$this->filesystem.'<br />';
-                if (substr(PHP_OS, 0, 3) != 'WIN') {
-                    $out .= '<p><strong>Files</strong> with permissions that don\'t match the '. wire('config')->chmodFile .' octal from the $config->chmodFile setting.<br />These may be fine as is - this is just meant to provide an easy means to identify any possible inconsistencies.</p>'.$this->incorrectPermissionFiles();
-                }
+                $out .= '<p>'.$this->filesystem.'
+            </div>
+            <br />';
+            $i++;
+        }
+
+        if(in_array('filesystemFiles', $panelSections) && substr(PHP_OS, 0, 3) != 'WIN') {
             $out .= '
-            </div><br />
-            <a href="#" rel="#mysqlinfo" class="tracy-toggle tracy-collapsed">MySQL Info</a>
-            <div id="mysqlinfo" class="tracy-collapsed">
+            <a href="#" rel="#filesystemFiles" class="tracy-toggle '.($i>0 ? ' tracy-collapsed' : '').'">Filesystem Files</a>
+            <div id="filesystemFiles"'.($i>0 ? ' class="tracy-collapsed"' : '').'>
+                <p><strong>Files</strong> with permissions that don\'t match the '. wire('config')->chmodFile .' octal from the $config->chmodFile setting.<br />These may be fine as is - this is just meant to provide an easy means to identify any possible inconsistencies.</p>'.$this->incorrectPermissionFiles() . '
+            </div>
+            <br />';
+            $i++;
+        }
+
+        if(in_array('mysqlInfo', $panelSections)) {
+            $attributes = array(
+                "CLIENT_VERSION",
+                "SERVER_VERSION",
+                "CONNECTION_STATUS",
+                "DRIVER_NAME",
+                "SERVER_INFO",
+                "ORACLE_NULLS",
+                "PERSISTENT",
+                "AUTOCOMMIT",
+                "ERRMODE",
+                "CASE"
+            );
+
+            $dbInfo = $this->sectionHeader(array('Attribute', 'Value'));
+
+            foreach ($attributes as $val) {
+                $dbInfo .= "\n<tr>" .
+                    "<td>PDO::ATTR_$val</td>" .
+                    "<td>".wire('database')->getAttribute(constant("PDO::ATTR_$val"))."</td>" .
+                    "</tr>";
+            }
+            $dbInfo .= $sectionEnd;
+
+            $out .= '
+            <a href="#" rel="#mysqlinfo" class="tracy-toggle '.($i>0 ? ' tracy-collapsed' : '').'">MySQL Info</a>
+            <div id="mysqlinfo"'.($i>0 ? ' class="tracy-collapsed"' : '').'>
                 '.$dbInfo.'
             </div><br />';
+            $i++;
+        }
+
 
         \TracyDebugger::$panelGenerationTime['diagnostics']['time'] = \Tracy\Debugger::timer('diagnostics');
         \TracyDebugger::$panelGenerationTime['diagnostics']['size'] = strlen($out);

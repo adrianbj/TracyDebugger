@@ -89,7 +89,7 @@ class UserSwitcherPanel implements IBarPanel {
 
             if(wire('user')->isSuperuser() || $remainingSessionLength > 0) {
                 $out .= '
-                    <select name="userSwitcher" size="5" style="width:100%">';
+                    <select name="userSwitcher" size="5" style="width:100% !important; height:90px !important">';
                         if(!wire('user')->isLoggedin()) $out .= '<option value="guest" selected="selected">guest</option>';
 
                         foreach(wire('users') as $u) {
@@ -101,7 +101,7 @@ class UserSwitcherPanel implements IBarPanel {
             }
 
             if(wire('user')->isSuperuser()) {
-                $out .= '<p style="font-size:11px !important;">Session length (mins)<br /><input type="number" max="60" style="width:100%" name="userSwitchSessionLength" value="'.round($remainingSessionLength).'" /></p>';
+                $out .= '<p style="font-size:11px !important;">Session length (mins)<br /><input type="number" max="60" style="width:100% !important" name="userSwitchSessionLength" value="'.round($remainingSessionLength).'" /></p>';
             }
             else {
                 $out .= '<p style="font-size:11px !important">Remaining session length: ' . ($remainingSessionLength < 1 ? '<1' : round($remainingSessionLength)) . ' mins</p>';

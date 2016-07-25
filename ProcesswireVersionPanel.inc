@@ -26,7 +26,7 @@ class ProcesswireVersionPanel implements IBarPanel {
             $this->versions[] = $version;
         }
         usort($this->versions, 'version_compare');
-        $latestVersion = array_pop((array_slice($this->versions, -1)));
+        $latestVersion = end($this->versions);
 
         if($latestVersion == wire('config')->version) {
             $iconColor = '#009900';
