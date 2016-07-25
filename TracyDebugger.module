@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 245,
+            'version' => 246,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -127,6 +127,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "todoScanModules" => null,
                 "todoAllowedExtensions" => 'php, module, inc, txt, latte, html, htm, md, css, scss, less, js',
                 "variablesShowPwObjects" => null,
+                "respectConfigDebugTools" => 1,
                 "userDevTemplate" => null,
                 "userDevTemplateSuffix" => 'dev',
                 "email" => '',
@@ -253,6 +254,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         Debugger::$editorMapping = $mappingReplacements;
 
         $logFolder = $this->config->paths->logs.'tracy';
+
+        // delete Tracy logs if requested
+        if($this->input->post->deleteTracyLogs) {
+            wireRmdir($logFolder, true);
+        }
+
         if(!is_dir($logFolder)) wireMkdir($logFolder);
 
         Debugger::enable($outputMode, $logFolder, $this->data['email'] != '' ? $this->data['email'] : null);
@@ -720,7 +727,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $fieldset = wire('modules')->get("InputfieldFieldset");
         $fieldset->label = __("Access Permission");
-        $fieldset->collapsed = Inputfield::collapsedYes;
         $wrapper->add($fieldset);
 
         $f = wire('modules')->get("InputfieldCheckbox");
@@ -743,7 +749,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $fieldset = wire('modules')->get("InputfieldFieldset");
         $fieldset->label = __("Miscellaneous");
-        $fieldset->collapsed = Inputfield::collapsedYes;
         $wrapper->add($fieldset);
 
         $f = wire('modules')->get("InputfieldCheckbox");
@@ -836,7 +841,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $fieldset = wire('modules')->get("InputfieldFieldset");
         $fieldset->label = __("Debug Bar and Panels");
-        $fieldset->collapsed = Inputfield::collapsedYes;
         $wrapper->add($fieldset);
 
         $f = wire('modules')->get("InputfieldCheckboxes");
@@ -871,7 +875,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $fieldset = wire('modules')->get("InputfieldFieldset");
         $fieldset->label = __("ProcessWire Info Panel Options");
-        $fieldset->collapsed = Inputfield::collapsedYes;
         $wrapper->add($fieldset);
 
         $f = wire('modules')->get("InputfieldCheckboxes");
@@ -887,7 +890,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $fieldset = wire('modules')->get("InputfieldFieldset");
         $fieldset->label = __("Diagnostics Panel Options");
-        $fieldset->collapsed = Inputfield::collapsedYes;
         $wrapper->add($fieldset);
 
         $f = wire('modules')->get("InputfieldCheckboxes");
@@ -903,7 +905,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $fieldset = wire('modules')->get("InputfieldFieldset");
         $fieldset->label = __("ToDo Panel Options");
-        $fieldset->collapsed = Inputfield::collapsedYes;
         $wrapper->add($fieldset);
 
         $f = wire('modules')->get("InputfieldText");
@@ -935,7 +936,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $fieldset = wire('modules')->get("InputfieldFieldset");
         $fieldset->label = __("ProcessWire and Tracy Log Panel Options");
-        $fieldset->collapsed = Inputfield::collapsedYes;
         $wrapper->add($fieldset);
 
         $f = wire('modules')->get("InputfieldInteger");
@@ -948,7 +948,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $fieldset = wire('modules')->get("InputfieldFieldset");
         $fieldset->label = __("Variables Panel Options");
-        $fieldset->collapsed = Inputfield::collapsedYes;
         $wrapper->add($fieldset);
 
         $f = wire('modules')->get("InputfieldCheckbox");
@@ -960,8 +959,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $fieldset->add($f);
 
         $fieldset = wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("Debug Panel Options");
+        $wrapper->add($fieldset);
+
+        $f = wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'respectConfigDebugTools');
+        $f->label = __('Respect the PW $config->debugTools config option.', __FILE__);
+        $f->description = __('If unchecked, all debug tools will be displayed regardless of your config setting.', __FILE__);
+        $f->attr('checked', $data['respectConfigDebugTools'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $fieldset = wire('modules')->get("InputfieldFieldset");
         $fieldset->label = __("User Dev Template Options");
-        $fieldset->collapsed = Inputfield::collapsedYes;
         $wrapper->add($fieldset);
 
         $f = wire('modules')->get("InputfieldCheckbox");
@@ -982,7 +991,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $fieldset = wire('modules')->get("InputfieldFieldset");
         $fieldset->label = __("Editor Protocol Handler");
-        $fieldset->collapsed = Inputfield::collapsedYes;
         $wrapper->add($fieldset);
 
         $f = wire('modules')->get("InputfieldText");
@@ -1005,7 +1013,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $fieldset = wire('modules')->get("InputfieldFieldset");
         $fieldset->label = __("Method Shortcuts");
-        $fieldset->collapsed = Inputfield::collapsedYes;
         $wrapper->add($fieldset);
 
         $f = wire('modules')->get("InputfieldCheckbox");

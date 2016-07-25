@@ -58,10 +58,15 @@ class CssPanel implements IBarPanel {
                     border: none !important;
                 }
 
+                #tracy-debug table {
+                    margin: 0 !important;
+                }
+
                 #tracy-debug .tracy-panel td,
                 #tracy-debug .tracy-panel th {
                     font: inherit !important;
                     color: inherit !important;
+                    padding: 3px !important;
                 }
 
                 #tracy-debug input[type="submit"] {

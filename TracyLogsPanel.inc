@@ -228,7 +228,11 @@ class TracyLogsPanel implements IBarPanel {
             \TracyDebugger::$panelGenerationTime['tracyLogs']['time'] = \Tracy\Debugger::timer('tracyLogs');
             \TracyDebugger::$panelGenerationTime['tracyLogs']['size'] = strlen($out);
             $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['tracyLogs']['time'], \TracyDebugger::$panelGenerationTime['tracyLogs']['size']) . '
-        </div>';
+        </div>
+
+        <form method="post" action="./">
+            <input type="submit" name="deleteTracyLogs" value="Delete Logs" />
+        </form>';
 
         return $out;
     }

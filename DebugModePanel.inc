@@ -47,6 +47,20 @@ class DebugModePanel implements IBarPanel {
         ";
     }
 
+    private function showSection($section) {
+        if(\TracyDebugger::getDataValue('respectConfigDebugTools')) {
+            if(in_array($section, wire('config')->debugTools)) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        else {
+            return true;
+        }
+    }
+
     protected function sectionHeader($columnNames = array()) {
         $out = '
         <div>
@@ -109,336 +123,389 @@ class DebugModePanel implements IBarPanel {
 
 
         // Pages Loaded
-        $pagesLoaded_oc = 0;
-        if($PwVersion >= 2.8) {
-            $pagesLoaded = $this->sectionHeader(array('ID', 'Path', 'Type', 'Loader'));
-            foreach(wire('pages')->getCache() as $p) {
-                $pagesLoaded_oc++;
-                $parts = explode('/', trim($p->path, '/'));
-                $name = array_pop($parts);
-                $path = implode('/', $parts) . "/$name/";
-                $path = '/' . ltrim($path, '/');
-                $path = str_replace("/$name/", "/<b>$name</b>/", $path);
-                $pagesLoaded .= "\n<tr>" .
-                    "<td>$p->id</td>" .
-                    "<td>$path</td>" .
-                    "<td>" . wireClassName($p) . "</td>" .
-                    "<td>$p->_debug_loader</td>" .
-                    "</tr>";
+        if($this->showSection('pages')) {
+            $pagesLoaded_oc = 0;
+            if($PwVersion >= 2.8) {
+                $pagesLoaded = $this->sectionHeader(array('ID', 'Path', 'Type', 'Loader'));
+                foreach(wire('pages')->getCache() as $p) {
+                    $pagesLoaded_oc++;
+                    $parts = explode('/', trim($p->path, '/'));
+                    $name = array_pop($parts);
+                    $path = implode('/', $parts) . "/$name/";
+                    $path = '/' . ltrim($path, '/');
+                    $path = str_replace("/$name/", "/<b>$name</b>/", $path);
+                    $pagesLoaded .= "\n<tr>" .
+                        "<td>$p->id</td>" .
+                        "<td>$path</td>" .
+                        "<td>" . wireClassName($p) . "</td>" .
+                        "<td>$p->_debug_loader</td>" .
+                        "</tr>";
+                }
             }
-        }
-        else {
-            $pagesLoaded = $this->sectionHeader(array('ID', 'Path', 'Title'));
-            foreach(wire('pages')->getCache() as $p) {
-                $pagesLoaded_oc++;
-                $pagesLoaded .= "\n<tr><td>$p->id</td><td>$p->path</td><td>$p->title</td></tr>";
+            else {
+                $pagesLoaded = $this->sectionHeader(array('ID', 'Path', 'Title'));
+                foreach(wire('pages')->getCache() as $p) {
+                    $pagesLoaded_oc++;
+                    $pagesLoaded .= "\n<tr><td>$p->id</td><td>$p->path</td><td>$p->title</td></tr>";
+                }
             }
+            $pagesLoaded .= $sectionEnd;
         }
-        $pagesLoaded .= $sectionEnd;
 
-        // API Variables
-        $apiVars_oc = 0;
-        $apiVariables = $this->sectionHeader(array('Name', 'Class'));
-        $pwVars = $PwVersion >= 2.8 ? wire('all') : wire()->fuel;
-        if(is_object($pwVars)) {
-            $apiVars = array();
-            foreach($pwVars as $key => $value) {
-                if(!is_object($value)) continue;
-                $apiVars[$key] = $value;
-                $apiVars_oc++;
+        if($this->showSection('api')) {
+            // API Variables
+            $apiVars_oc = 0;
+            $apiVariables = $this->sectionHeader(array('Name', 'Class'));
+            $pwVars = $PwVersion >= 2.8 ? wire('all') : wire()->fuel;
+            if(is_object($pwVars)) {
+                $apiVars = array();
+                foreach($pwVars as $key => $value) {
+                    if(!is_object($value)) continue;
+                    $apiVars[$key] = $value;
+                    $apiVars_oc++;
+                }
+                ksort($apiVars);
+                foreach($apiVars as $key => $value) {
+                    $apiVariables .= "\n<tr><td><a href='https://processwire.com/api/ref/$key/'>\$$key</a></td>" .
+                        "<td>" . get_class($value) . "</td></tr>";
+                }
             }
-            ksort($apiVars);
-            foreach($apiVars as $key => $value) {
-                $apiVariables .= "\n<tr><td><a href='https://processwire.com/api/ref/$key/'>\$$key</a></td>" .
-                    "<td>" . get_class($value) . "</td></tr>";
+            $apiVariables .= $sectionEnd;
+        }
+
+        if($this->showSection('classes')) {
+            // Core Classes
+            $coreClasses_oc = 0;
+            $coreClasses = $this->sectionHeader(array('Type', 'Name',));
+
+            $classTypes = array(
+                'Primary' => array(
+                    'Wire',
+                    'WireData',
+                    'WireArray',
+                ),
+                'Pages' => array(
+                    'Page',
+                    'NullPage',
+                    'User',
+                    'Role',
+                    'Permission',
+                ),
+                'Arrays' => array(
+                    'WireArray',
+                    'PageArray',
+                    'PaginatedArray',
+                ),
+                'Modules' => array(
+                    'Module',
+                    'Fieldtype',
+                    'Inputfield',
+                    'Process',
+                    'Textformatter',
+                ),
+
+                'Files & Images' => array(
+                    'Pagefile',
+                    'Pagefiles',
+                    'PagefilesManager',
+                    'Pageimage',
+                    'Pageimages',
+                ),
+                'Fields & Templates' => array(
+                    'Field',
+                    'Fieldgroup',
+                    'Template',
+                    'TemplateFile',
+                ),
+                'Additional' => array(
+                    'HookEvent',
+                    'InputfieldWrapper',
+                    'WireHttp',
+                    'PagesType',
+                    'Selector',
+                    'Selectors',
+                    //'WireDatabaseBackup',
+                )
+            );
+            foreach($classTypes as $type => $classes) {
+                foreach($classes as $class) {
+                    $coreClasses_oc++;
+                    $coreClasses .= "\n<tr><td>".$type."</td><td><a href='https://processwire.com/api/ref/".strtolower(preg_replace('/([a-z])([A-Z])/', '$1-$2', $class))."/'>".$class."</a></td></tr>";
+                }
             }
+            $coreClasses .= $sectionEnd;
         }
-        $apiVariables .= $sectionEnd;
 
-        // Core Classes
-        $coreClasses_oc = 0;
-        $coreClasses = $this->sectionHeader(array('Type', 'Name',));
-
-        $classTypes = array(
-            'Primary' => array(
-                'Wire',
-                'WireData',
-                'WireArray',
-            ),
-            'Pages' => array(
-                'Page',
-                'NullPage',
-                'User',
-                'Role',
-                'Permission',
-            ),
-            'Arrays' => array(
-                'WireArray',
-                'PageArray',
-                'PaginatedArray',
-            ),
-            'Modules' => array(
-                'Module',
-                'Fieldtype',
-                'Inputfield',
-                'Process',
-                'Textformatter',
-            ),
-
-            'Files & Images' => array(
-                'Pagefile',
-                'Pagefiles',
-                'PagefilesManager',
-                'Pageimage',
-                'Pageimages',
-            ),
-            'Fields & Templates' => array(
-                'Field',
-                'Fieldgroup',
-                'Template',
-                'TemplateFile',
-            ),
-            'Additional' => array(
-                'HookEvent',
-                'InputfieldWrapper',
-                'WireHttp',
-                'PagesType',
-                'Selector',
-                'Selectors',
-                //'WireDatabaseBackup',
-            )
-        );
-        foreach($classTypes as $type => $classes) {
-            foreach($classes as $class) {
-                $coreClasses_oc++;
-                $coreClasses .= "\n<tr><td>".$type."</td><td><a href='https://processwire.com/api/ref/".strtolower(preg_replace('/([a-z])([A-Z])/', '$1-$2', $class))."/'>".$class."</a></td></tr>";
-            }
-        }
-        $coreClasses .= $sectionEnd;
-
-        // Session
-        $sessionEntries_oc = 0;
-        $sessionEntries = $this->sectionHeader(array('Key', 'Value'));
-        foreach(wire('session') as $key => $value) {
-            $sessionEntries_oc++;
-            if(is_object($value)) $value = (string) $value;
-            if(is_array($value)) $value = print_r($value, true);
-            $sessionEntries .= "<tr><td>".wire('sanitizer')->entities($key)."</td><td><pre>" . wire('sanitizer')->entities($value) . "</pre></td></tr>";
-        }
-        $sessionEntries .= $sectionEnd;
-
-        // Modules Loaded
-        $modulesNumLoaded = 0;
-        $modulesNumSkipped = 0;
-        $modulesLoaded = $this->sectionHeader(array('Class', 'Version', 'Title'));
-        foreach(wire('modules') as $module) {
-            if($module instanceof ModulePlaceholder) {
-                $modulesNumSkipped++;
-                continue;
-            }
-            $modulesNumLoaded++;
-            $info = wire('modules')->getModuleInfo($module, array('verbose' => false));
-            $modulesLoaded .= "<tr>";
-            $modulesLoaded .= "<td>$info[name]</td>";
-            $modulesLoaded .= "<td>$info[version]</td>";
-            $modulesLoaded .= "<td>$info[title]</td>";
-            $modulesLoaded .= "</tr>";
-        }
-        $modulesLoaded .= $sectionEnd;
-
-        // Hooks
-        $hooksCalled_oc = 0;
-        $hooksCalled = $this->sectionHeader(array('When', 'Method::object', 'Visited by', 'Type', 'Priority'));
-        if($PwVersion >= 2.8) {
-            $hooks = array_merge(wire()->getHooks('*'), wire('hooks')->getAllLocalHooks());
-        }
-        else {
-            $hooks = array_merge(wire()->getHooks('*'), Wire::$allLocalHooks);
-        }
-        $hooksSorted = array();
-        foreach($hooks as $hook) {
-            $whenKey = $hook['options']['before'] ? '0' : '1';
-            $sortKey = $hook['options']['fromClass'] . ":$hook[method]:$whenKey:" . $hook['options']['priority'];
-            $hooksSorted[$sortKey] = $hook;
-            $hooksCalled_oc++;
-        }
-        ksort($hooksSorted);
-        foreach($hooksSorted as $key => $hook) {
-            $suffix = $hook['options']['type'] == 'method' ? '()' : '';
-            $toObject = !empty($hook['toObject']) ? $hook['toObject'] : '';
-            $toMethod = $hook['toMethod'];
-            if(is_callable($toMethod)) $toMethod = 'anonymous function';
-            $hooksCalled .= "<tr>";
-            $hooksCalled .= "<td>" . ($hook['options']['before'] ? 'before ' : '') . ($hook['options']['after'] ? 'after' : '') . "</td>";
-            $hooksCalled .= "<td>" . ($hook['options']['fromClass'] ? $hook['options']['fromClass'] . '::' : '') . "$hook[method]$suffix</td>";
-            $hooksCalled .= "<td>" . ($toObject ? "$toObject::$toMethod" : $toMethod) . "()</td>";
-            $hooksCalled .= "<td>" . ($hook['options']['allInstances'] || $hook['options']['fromClass'] ? "class " : "instance ") . $hook['options']['type'] . "</td>";
-            $hooksCalled .= "<td>" . $hook['options']['priority'] . "</td>";
-            $hooksCalled .= "</tr>";
-        }
-        $hooksCalled .= $sectionEnd;
-
-        // Database Queries
-        $databaseQueries_oc = 0;
-        $databaseQueries = $this->sectionHeader(array('Order', 'Query'));
-        if($PwVersion >= 2.8) {
-            $queryMethod = wire('database')->queryLog();
-        }
-        else {
-            $queryMethod = WireDatabasePDO::getQueryLog();
-        }
-        foreach($queryMethod as $n => $sql) {
-            $databaseQueries_oc++;
-            $sql = wire('sanitizer')->entities1($sql);
-            $databaseQueries .= "\n<tr><th>$n</th><td class='tracy-force-break'>".$sql."</td></tr>";
-        }
-        $databaseQueries .= $sectionEnd;
-
-        // Timers
-        $timers_oc = 0;
-        $timers = $this->sectionHeader(array('Timer', 'Seconds'));
-        $savedTimers = Debug::getSavedTimers();
-        foreach($savedTimers as $name => $timer) {
-            $timers_oc++;
-            $timers .= "\n<tr><th>$name</th><td>$timer</td></tr>";
-        }
-        $timers .= $sectionEnd;
-
-        // User
-        $userDetails = '
-        <p><strong>Username:</strong> '.wire('user')->name.'</p>
-        <p><strong>User ID:</strong> '.wire('user')->id.'</p>
-        <p><strong>Current User Roles</strong>
-        <ol>';
-        foreach(wire('user')->roles as $role) $userDetails .= "\n<li>{$role->name}</li>";
-        $userDetails .= '
-        </ol>
-        </p>
-        <p><strong>Current User Permissions</strong>
-        <ol>';
-        foreach(wire('user')->getPermissions() as $permission) $userDetails .= "\n<li>{$permission->name}</li>";
-        $userDetails .= '</ol>
-        </p>
-        <p><strong>Current User Permissions on this page</strong>
-        <ol>
-        ';
-        foreach(wire('user')->getPermissions(wire('page')) as $permission) $userDetails .= "\n<li>{$permission->name}</li>";
-        $userDetails .= '</ol>
-        </p>';
-
-        // GET, POST, & COOKIE
-        $input_oc['get'] = 0;
-        $input_oc['post'] = 0;
-        $input_oc['cookie'] = 0;
-        foreach(array('get', 'post', 'cookie') as $type) {
-            $i = wire('input')->$type;
-            if(!count($i)) continue;
-            $input[$type] = $this->sectionHeader(array('Key', 'Value'));
-            foreach($i as $key => $value) {
-                $input_oc[$type]++;
+        if($this->showSection('session')) {
+            // Session
+            $sessionEntries_oc = 0;
+            $sessionEntries = $this->sectionHeader(array('Key', 'Value'));
+            foreach(wire('session') as $key => $value) {
+                $sessionEntries_oc++;
+                if(is_object($value)) $value = (string) $value;
                 if(is_array($value)) $value = print_r($value, true);
-                $input[$type] .= "<tr><td>" . wire('sanitizer')->entities($key) . "</td><td><pre>" . wire('sanitizer')->entities($value) . "</pre></td></tr>";
+                $sessionEntries .= "<tr><td>".wire('sanitizer')->entities($key)."</td><td><pre>" . wire('sanitizer')->entities($value) . "</pre></td></tr>";
             }
-            $input[$type] .= $sectionEnd;
+            $sessionEntries .= $sectionEnd;
+
+            // Modules Loaded
+            $modulesNumLoaded = 0;
+            $modulesNumSkipped = 0;
+            $modulesLoaded = $this->sectionHeader(array('Class', 'Version', 'Title'));
+            foreach(wire('modules') as $module) {
+                if($module instanceof ModulePlaceholder) {
+                    $modulesNumSkipped++;
+                    continue;
+                }
+                $modulesNumLoaded++;
+                $info = wire('modules')->getModuleInfo($module, array('verbose' => false));
+                $modulesLoaded .= "<tr>";
+                $modulesLoaded .= "<td>$info[name]</td>";
+                $modulesLoaded .= "<td>$info[version]</td>";
+                $modulesLoaded .= "<td>$info[title]</td>";
+                $modulesLoaded .= "</tr>";
+            }
+            $modulesLoaded .= $sectionEnd;
         }
 
-
-        // Cache
-        $cacheDetails_oc = 0;
-        $cacheDetails_oc2 = 0;
-        $fileCompilerCacheQty = 0;
-        $cacheDetails = '';
-        foreach(wire('cache')->getInfo() as $info) {
-            $cacheDetails_oc++;
-            if(strpos($info['name'], 'FileCompiler') === 0) {
-                $fileCompilerCacheQty++;
-                continue;
+        if($this->showSection('hooks')) {
+            // Hooks
+            $hooksCalled_oc = 0;
+            $hooksCalled = $this->sectionHeader(array('When', 'Method::object', 'Visited by', 'Type', 'Priority'));
+            if($PwVersion >= 2.8) {
+                $hooks = array_merge(wire()->getHooks('*'), wire('hooks')->getAllLocalHooks());
             }
-            $cacheDetails_oc2++;
-            $cacheDetails .= "<table class=''><thead><tr><th colspan='2'>";
-            $cacheDetails .= wire('sanitizer')->entities($info['name']) . "</th></tr></thead><tbody>";
-            foreach($info as $key => $value) {
-                if($key == 'name') continue;
-                if($key == 'size') $value = wireBytesStr($value);
-                $key = wire('sanitizer')->entities($key);
-                $value = wire('sanitizer')->entities($value);
-                $cacheDetails .= "<tr><th width='30%'>$key</th><td>$value</td></tr>";
+            else {
+                $hooks = array_merge(wire()->getHooks('*'), Wire::$allLocalHooks);
             }
-            $cacheDetails .= "</tbody></table><br />";
+            $hooksSorted = array();
+            foreach($hooks as $hook) {
+                $whenKey = $hook['options']['before'] ? '0' : '1';
+                $sortKey = $hook['options']['fromClass'] . ":$hook[method]:$whenKey:" . $hook['options']['priority'];
+                $hooksSorted[$sortKey] = $hook;
+                $hooksCalled_oc++;
+            }
+            ksort($hooksSorted);
+            foreach($hooksSorted as $key => $hook) {
+                $suffix = $hook['options']['type'] == 'method' ? '()' : '';
+                $toObject = !empty($hook['toObject']) ? $hook['toObject'] : '';
+                $toMethod = $hook['toMethod'];
+                if(is_callable($toMethod)) $toMethod = 'anonymous function';
+                $hooksCalled .= "<tr>";
+                $hooksCalled .= "<td>" . ($hook['options']['before'] ? 'before ' : '') . ($hook['options']['after'] ? 'after' : '') . "</td>";
+                $hooksCalled .= "<td>" . ($hook['options']['fromClass'] ? $hook['options']['fromClass'] . '::' : '') . "$hook[method]$suffix</td>";
+                $hooksCalled .= "<td>" . ($toObject ? "$toObject::$toMethod" : $toMethod) . "()</td>";
+                $hooksCalled .= "<td>" . ($hook['options']['allInstances'] || $hook['options']['fromClass'] ? "class " : "instance ") . $hook['options']['type'] . "</td>";
+                $hooksCalled .= "<td>" . $hook['options']['priority'] . "</td>";
+                $hooksCalled .= "</tr>";
+            }
+            $hooksCalled .= $sectionEnd;
         }
 
-        // Autoload
-        $autoload_oc = 0;
-        if($PwVersion >= 2.8) {
-            $autoload = $this->sectionHeader(array('Class', 'File/Details'));
-            foreach(wire('classLoader')->getDebugLog() as $className => $classFile) {
-                $autoload_oc++;
-                $className = wire('sanitizer')->entities($className);
-                $classFile = wire('sanitizer')->entities($classFile);
-                $autoload .= "<tr><th width='40%'>$className</th><td>$classFile</td></tr>";
+        if($this->showSection('database')) {
+            // Database Queries
+            $databaseQueries_oc = 0;
+            $databaseQueries = $this->sectionHeader(array('Order', 'Query'));
+            if($PwVersion >= 2.8) {
+                $queryMethod = wire('database')->queryLog();
             }
-            $autoload .= $sectionEnd;
+            else {
+                $queryMethod = WireDatabasePDO::getQueryLog();
+            }
+            foreach($queryMethod as $n => $sql) {
+                $databaseQueries_oc++;
+                $sql = wire('sanitizer')->entities1($sql);
+                $databaseQueries .= "\n<tr><th>$n</th><td class='tracy-force-break'>".$sql."</td></tr>";
+            }
+            $databaseQueries .= $sectionEnd;
+        }
+
+        if($this->showSection('timers')) {
+            // Timers
+            $timers_oc = 0;
+            $timers = $this->sectionHeader(array('Timer', 'Seconds'));
+            $savedTimers = Debug::getSavedTimers();
+            foreach($savedTimers as $name => $timer) {
+                $timers_oc++;
+                $timers .= "\n<tr><th>$name</th><td>$timer</td></tr>";
+            }
+            $timers .= $sectionEnd;
+        }
+
+        if($this->showSection('user')) {
+            // User
+            $userDetails = '
+            <p><strong>Username:</strong> '.wire('user')->name.'</p>
+            <p><strong>User ID:</strong> '.wire('user')->id.'</p>
+            <p><strong>Current User Roles</strong>
+            <ol>';
+            foreach(wire('user')->roles as $role) $userDetails .= "\n<li>{$role->name}</li>";
+            $userDetails .= '
+            </ol>
+            </p>
+            <p><strong>Current User Permissions</strong>
+            <ol>';
+            foreach(wire('user')->getPermissions() as $permission) $userDetails .= "\n<li>{$permission->name}</li>";
+            $userDetails .= '</ol>
+            </p>
+            <p><strong>Current User Permissions on this page</strong>
+            <ol>
+            ';
+            foreach(wire('user')->getPermissions(wire('page')) as $permission) $userDetails .= "\n<li>{$permission->name}</li>";
+            $userDetails .= '</ol>
+            </p>';
+        }
+
+        if($this->showSection('input')) {
+            // GET, POST, & COOKIE
+            $input_oc['get'] = 0;
+            $input_oc['post'] = 0;
+            $input_oc['cookie'] = 0;
+            foreach(array('get', 'post', 'cookie') as $type) {
+                $i = wire('input')->$type;
+                if(!count($i)) continue;
+                $input[$type] = $this->sectionHeader(array('Key', 'Value'));
+                foreach($i as $key => $value) {
+                    $input_oc[$type]++;
+                    if(is_array($value)) $value = print_r($value, true);
+                    $input[$type] .= "<tr><td>" . wire('sanitizer')->entities($key) . "</td><td><pre>" . wire('sanitizer')->entities($value) . "</pre></td></tr>";
+                }
+                $input[$type] .= $sectionEnd;
+            }
+        }
+
+        if($this->showSection('cache')) {
+            // Cache
+            $cacheDetails_oc = 0;
+            $cacheDetails_oc2 = 0;
+            $fileCompilerCacheQty = 0;
+            $cacheDetails = '';
+            foreach(wire('cache')->getInfo() as $info) {
+                $cacheDetails_oc++;
+                if(strpos($info['name'], 'FileCompiler') === 0) {
+                    $fileCompilerCacheQty++;
+                    continue;
+                }
+                $cacheDetails_oc2++;
+                $cacheDetails .= "<table class=''><thead><tr><th colspan='2'>";
+                $cacheDetails .= wire('sanitizer')->entities($info['name']) . "</th></tr></thead><tbody>";
+                foreach($info as $key => $value) {
+                    if($key == 'name') continue;
+                    if($key == 'size') $value = wireBytesStr($value);
+                    $key = wire('sanitizer')->entities($key);
+                    $value = wire('sanitizer')->entities($value);
+                    $cacheDetails .= "<tr><th width='30%'>$key</th><td>$value</td></tr>";
+                }
+                $cacheDetails .= "</tbody></table><br />";
+            }
+        }
+
+        if($this->showSection('autoload')) {
+            // Autoload
+            $autoload_oc = 0;
+            if($PwVersion >= 2.8) {
+                $autoload = $this->sectionHeader(array('Class', 'File/Details'));
+                foreach(wire('classLoader')->getDebugLog() as $className => $classFile) {
+                    $autoload_oc++;
+                    $className = wire('sanitizer')->entities($className);
+                    $classFile = wire('sanitizer')->entities($classFile);
+                    $autoload .= "<tr><th width='40%'>$className</th><td>$classFile</td></tr>";
+                }
+                $autoload .= $sectionEnd;
+            }
         }
 
         // Load all the panel sections
         $out .= '
-        <br />
-        <a href="#" rel="#pages-loaded" class="tracy-toggle tracy-collapsed">Pages Loaded ('.$pagesLoaded_oc.')</a>
-        <div id="pages-loaded" class="tracy-collapsed">'.$pagesLoaded.'</div><br />
+        <br />';
 
-        <a href="#" rel="#api-variables" class="tracy-toggle tracy-collapsed">API Variables ('.$apiVars_oc.')</a>
-        <div id="api-variables" class="tracy-collapsed">'.$apiVariables.'</div><br />
-
-        <a href="#" rel="#core-classes" class="tracy-toggle tracy-collapsed">Core Classes ('.$coreClasses_oc.')</a>
-        <div id="api-variables" class="tracy-collapsed">'.$coreClasses.'</div><br />
-
-        <a href="#" rel="#session-entries" class="tracy-toggle tracy-collapsed">Session ('.$sessionEntries_oc.')</a>
-        <div id="session-entries" class="tracy-collapsed">'.$sessionEntries.'</div><br />
-
-        <a href="#" rel="#modules-loaded" class="tracy-toggle tracy-collapsed">Modules Loaded ('.$modulesNumLoaded.'/'.$modulesNumSkipped.')</a>
-        <div id="modules-loaded" class="tracy-collapsed">'.$modulesLoaded;
-        $out .= '<p>' . $modulesNumLoaded . ' modules loaded / ' . $modulesNumSkipped . ' not loaded</p>';
-        $out .= '</div><br />';
-
-        $out .= '<a href="#" rel="#hooks" class="tracy-toggle tracy-collapsed">Hooks ('.$hooksCalled_oc.')</a>
-        <div id="hooks" class="tracy-collapsed">'.$hooksCalled.'</div><br />
-
-        <a href="#" rel="#database-queries" class="tracy-toggle tracy-collapsed">PDO Queries ($database) ('.$databaseQueries_oc.')</a>
-        <div id="database-queries" class="tracy-collapsed">'.$databaseQueries.'</div><br />
-
-        <a href="#" rel="#timers" class="tracy-toggle tracy-collapsed">Timers ('.$timers_oc.')</a>
-        <div id="timers" class="tracy-collapsed">'.$timers.'</div><br />
-
-        <a href="#" rel="#user-details" class="tracy-toggle tracy-collapsed">User ('.wire('user')->name.')</a>
-        <div id="user-details" class="tracy-collapsed">'.$userDetails.'</div><br />';
-
-        if(isset($input['get'])) {
+        if($this->showSection('pages')) {
             $out .= '
-            <a href="#" rel="#input-get" class="tracy-toggle tracy-collapsed">$input->get ('.$input_oc['get'].')</a>
-            <div id="input-get" class="tracy-collapsed">'.$input['get'].'</div><br />';
+            <a href="#" rel="#pages-loaded" class="tracy-toggle tracy-collapsed">Pages Loaded ('.$pagesLoaded_oc.')</a>
+            <div id="pages-loaded" class="tracy-collapsed">'.$pagesLoaded.'</div><br />';
         }
 
-        if(isset($input['post'])) {
+        if($this->showSection('api')) {
             $out .= '
-            <a href="#" rel="#input-post" class="tracy-toggle tracy-collapsed">$input->post ('.$input_oc['post'].')</a>
-            <div id="input-post" class="tracy-collapsed">'.$input['post'].'</div><br />';
+            <a href="#" rel="#api-variables" class="tracy-toggle tracy-collapsed">API Variables ('.$apiVars_oc.')</a>
+            <div id="api-variables" class="tracy-collapsed">'.$apiVariables.'</div><br />';
         }
 
-        if(isset($input['cookie'])) {
+        if($this->showSection('classes')) {
             $out .= '
-            <a href="#" rel="#input-cookie" class="tracy-toggle tracy-collapsed">$input->cookie ('.$input_oc['cookie'].')</a>
-            <div id="input-cookie" class="tracy-collapsed">'.$input['cookie'].'</div><br />';
+            <a href="#" rel="#core-classes" class="tracy-toggle tracy-collapsed">Core Classes ('.$coreClasses_oc.')</a>
+            <div id="api-variables" class="tracy-collapsed">'.$coreClasses.'</div><br />';
         }
 
-        $out .= '
-        <a href="#" rel="#cache-details" class="tracy-toggle tracy-collapsed">Cache ('.$cacheDetails_oc.'/'.$fileCompilerCacheQty.'/'.$cacheDetails_oc2.')</a>
-        <div id="cache-details" class="tracy-collapsed">'.$cacheDetails;
-        if($fileCompilerCacheQty) {
-            $out .= "<p>Plus $fileCompilerCacheQty cached items for FileCompiler (not shown).</p>";
+        if($this->showSection('session')) {
+            $out .= '
+            <a href="#" rel="#session-entries" class="tracy-toggle tracy-collapsed">Session ('.$sessionEntries_oc.')</a>
+            <div id="session-entries" class="tracy-collapsed">'.$sessionEntries.'</div><br />';
         }
-        $out .= '</div><br />';
 
-        if($PwVersion >= 2.8) {
+        if($this->showSection('modules')) {
+            $out .= '
+            <a href="#" rel="#modules-loaded" class="tracy-toggle tracy-collapsed">Modules Loaded ('.$modulesNumLoaded.'/'.$modulesNumSkipped.')</a>
+            <div id="modules-loaded" class="tracy-collapsed">'.$modulesLoaded;
+            $out .= '<p>' . $modulesNumLoaded . ' modules loaded / ' . $modulesNumSkipped . ' not loaded</p>';
+            $out .= '</div><br />';
+        }
+
+        if($this->showSection('hooks')) {
+            $out .= '
+            <a href="#" rel="#hooks" class="tracy-toggle tracy-collapsed">Hooks ('.$hooksCalled_oc.')</a>
+            <div id="hooks" class="tracy-collapsed">'.$hooksCalled.'</div><br />';
+        }
+
+        if($this->showSection('database')) {
+            $out .= '
+            <a href="#" rel="#database-queries" class="tracy-toggle tracy-collapsed">PDO Queries ($database) ('.$databaseQueries_oc.')</a>
+            <div id="database-queries" class="tracy-collapsed">'.$databaseQueries.'</div><br />';
+        }
+
+        if($this->showSection('timers')) {
+            $out .= '
+            <a href="#" rel="#timers" class="tracy-toggle tracy-collapsed">Timers ('.$timers_oc.')</a>
+            <div id="timers" class="tracy-collapsed">'.$timers.'</div><br />';
+        }
+
+        if($this->showSection('user')) {
+            $out .= '
+            <a href="#" rel="#user-details" class="tracy-toggle tracy-collapsed">User ('.wire('user')->name.')</a>
+            <div id="user-details" class="tracy-collapsed">'.$userDetails.'</div><br />';
+        }
+
+        if($this->showSection('input')) {
+            if(isset($input['get'])) {
+                $out .= '
+                <a href="#" rel="#input-get" class="tracy-toggle tracy-collapsed">$input->get ('.$input_oc['get'].')</a>
+                <div id="input-get" class="tracy-collapsed">'.$input['get'].'</div><br />';
+            }
+
+            if(isset($input['post'])) {
+                $out .= '
+                <a href="#" rel="#input-post" class="tracy-toggle tracy-collapsed">$input->post ('.$input_oc['post'].')</a>
+                <div id="input-post" class="tracy-collapsed">'.$input['post'].'</div><br />';
+            }
+
+            if(isset($input['cookie'])) {
+                $out .= '
+                <a href="#" rel="#input-cookie" class="tracy-toggle tracy-collapsed">$input->cookie ('.$input_oc['cookie'].')</a>
+                <div id="input-cookie" class="tracy-collapsed">'.$input['cookie'].'</div><br />';
+            }
+        }
+
+        if($this->showSection('cache')) {
+            $out .= '
+            <a href="#" rel="#cache-details" class="tracy-toggle tracy-collapsed">Cache ('.$cacheDetails_oc.'/'.$fileCompilerCacheQty.'/'.$cacheDetails_oc2.')</a>
+            <div id="cache-details" class="tracy-collapsed">'.$cacheDetails;
+            if($fileCompilerCacheQty) {
+                $out .= "<p>Plus $fileCompilerCacheQty cached items for FileCompiler (not shown).</p>";
+            }
+            $out .= '</div><br />';
+        }
+
+        if($this->showSection('autoload') && $PwVersion >= 2.8) {
             $out .= '
             <a href="#" rel="#autoload" class="tracy-toggle tracy-collapsed">Autoload ('.$autoload_oc.')</a>
             <div id="autoload" class="tracy-collapsed">'.$autoload.'</div><br />
