@@ -50,7 +50,7 @@ By default, manually logged content is sent to: /site/assets/logs/tracy/info.log
 but you can specify an optional second parameter to one of the following:
 'debug', 'info', 'warning', 'error', 'exception', 'critical' files.
 
-eg. `TD::log('Log Message', 'debug');` which will put the message in the debug.info file.
+eg. `TD::log('Log Message', 'debug');` which will put the message in the debug.log file.
 
 
 #### FireLog

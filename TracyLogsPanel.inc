@@ -7,16 +7,127 @@ use Tracy\IBarPanel;
  */
 
 class TracyLogsPanel implements IBarPanel {
+
+    protected $icon;
+    protected $iconColor;
+    protected $logEntries;
+    protected $numErrors = 0;
+    protected $numOther = 0;
+
     public function getTab() {
 
         if(\TracyDebugger::additionalBar()) return;
         \Tracy\Debugger::timer('tracyLogs');
 
+        // end for each section
+        $sectionEnd = '
+                    </tbody>
+                </table>
+            </div>';
+
+        /**
+         * Tracy log panel sections
+         */
+
+        $this->logEntries = '';
+        $entriesArr = array();
+        $i=0;
+        $logs = $this->getLogs();
+        if($logs === null) {
+            $this->logEntries .= 'Tracy logs directory is not readable.';
+        }
+        elseif(count($logs) == 0) {
+            $this->logEntries .= 'There are no logs in the Tracy logs directory.';
+        }
+        else {
+            $this->logEntries = $this->sectionHeader(array('Type', 'Date', 'URL', 'Text'));
+            foreach($logs as $log) {
+                $x=99;
+                foreach($this->getLines($log['name'], array("limit" => \TracyDebugger::getDataValue("numLogEntries"))) as $entry) {
+                    $logDateTime = str_replace(array('[',']'), '', substr($entry, 0 , 21)); // get the date - first 21 chars
+                    $logDateParts = explode(" ", $logDateTime);
+                    $logDate = $logDateParts[0];
+                    $logTime = str_replace('-',':', $logDateParts[1]);
+                    $logDateTime = $logDate . ' ' . $logTime;
+                    $itemKey = $log['name'] . '_' . $x;
+                    $entryUrlAndText = explode('@', substr($entry, 22)); // get the rest of the line after the date;
+                    if(isset($entryUrlAndText[1])) {
+                        $entriesArr[$itemKey]['url'] = trim($entryUrlAndText[1]);
+                    }
+                    else {
+                        continue; //bit of a hack - some entries getting duplicated but with empty URL, so ignore
+                    }
+                    $trimmedText = trim($entryUrlAndText[0]);
+                    $entriesArr[$itemKey]['text'] = strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText;
+                    $entriesArr[$itemKey]['timestamp'] = strtotime($logDateTime);
+                    $entriesArr[$itemKey]['linenumber'] = 99-$x;
+                    $entriesArr[$itemKey]['order'] = $itemKey;
+                    $entriesArr[$itemKey]['date'] = $logDateTime;
+                    $entriesArr[$itemKey]['log'] = $log['name'];
+                    $x--;
+                    $i++;
+
+                    // if log entry was in the last 5 seconds (think this is OK for detecting the last page load),
+                    // then count the error or other entry type
+                    if(time()-5 < strtotime($logDateTime)) {
+                        if($log['name'] == 'warning' || $log['name'] == 'error' || $log['name'] == 'exception' || $log['name'] == 'critical') {
+                            $this->numErrors++;
+                        }
+                        else {
+                            $this->numOther++;
+                        }
+                    }
+
+                }
+            }
+
+            # get a list of sort columns and their data to pass to array_multisort
+            $sort = array();
+            foreach ($entriesArr as $key => $row) {
+                $timestamp[$key] = $row['timestamp'];
+                $order[$key] = $row['order'];
+            }
+            # sort by event_type desc and then title asc
+            array_multisort($timestamp, SORT_DESC, $order, SORT_DESC, $entriesArr);
+
+            //display most recent entries from all log files
+            foreach(array_slice($entriesArr, 0, \TracyDebugger::getDataValue("numLogEntries")) as $item) {
+                $logInstance = new TracyFileLog(wire('config')->paths->logs.'tracy/' . $item['log'].'.log');
+                $trimmedText = trim(htmlspecialchars($item['text'], ENT_QUOTES, 'UTF-8'));
+                $this->logEntries .= "
+                \n<tr>" .
+                    "<td>".$item['log']."</td>" .
+                    "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
+                    "<td>".(isset($item['url']) ? $item['url'] : '')."</td>" .
+                    "<td><a title='View this line of \"".$item['log']."\" log file in your code editor' href='". \TracyDebugger::makePathLocal(str_replace("%file", wire('config')->paths->logs.'tracy/' . $item['log'] . '.log', str_replace("%line", ($logInstance->getTotalLines()-$item['linenumber']), \TracyDebugger::getDataValue("editor"))))."'>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</a></td>" .
+                "</tr>";
+            }
+            $this->logEntries .= $sectionEnd;
+        }
+
+        // color icon based on errors/other log entries
+        if($this->numErrors > 0) {
+            $this->iconColor = '#CD1818';
+        }
+        elseif($this->numOther > 0) {
+            $this->iconColor = '#FF9933';
+        }
+        else {
+            $this->iconColor = '#009900';
+        }
+
+        $this->icon = '
+        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 503.924 503.924" style="enable-background:new 0 0 503.924 503.924;" xml:space="preserve">
+        <g>
+            <g>
+                <path d="M193.932,339.267c15.08,4.858,17.193-0.373,8.568-13.664c-14.736-22.721-28.104-64.069,1.473-125.872    c31.652-66.89,75.525-93.502,83.433-94.946c6.302-1.147-43.28,74.683-45.604,114.463c-1.052,17.93,27.043,31.375,43.959,20.894    c21.793-13.512,20.177-56.801,19.632-63.428c-0.641-7.717,41.291,95.616-10.06,152.254c-10.644,11.743-9.343,17.796,6.101,14.239    c30.218-6.952,74.626-27.272,81.645-86.665c6.761-83.548-69.901-201.196-118.192-250.337c-11.102-11.303-16.572-6.55-16.027,9.285    c0.812,23.801-6.618,60.808-45.594,103.667c-61.114,67.205-74.855,80.354-83.079,135.941    C120.176,284.685,119.296,315.246,193.932,339.267z" fill="'.$this->iconColor.'"/>
+                <path d="M74.85,485.497c3.481,11.016,13.579,18.427,25.121,18.427c2.687,0,5.364-0.411,7.956-1.233l144.03-45.509l144.031,45.509    c2.582,0.812,5.26,1.233,7.947,1.233c11.551,0,21.649-7.401,25.12-18.418l6.503-20.568c2.123-6.723,1.501-13.856-1.75-20.101    c-3.242-6.244-8.74-10.854-15.443-12.977l-43.127-13.636l4.284-1.358c6.713-2.122,12.201-6.731,15.452-12.976    c3.242-6.254,3.863-13.388,1.741-20.11l-6.503-20.568c-3.48-11.017-13.579-18.428-25.121-18.428c-2.687,0-5.364,0.411-7.955,1.233    l-105.179,33.239L146.77,346.018c-2.582-0.812-5.259-1.233-7.947-1.233c-11.551,0-21.649,7.401-25.121,18.418L107.2,383.78    c-4.379,13.856,3.328,28.697,17.193,33.077l4.284,1.357L85.56,431.851c-6.713,2.123-12.202,6.732-15.453,12.977    c-3.242,6.244-3.863,13.378-1.741,20.101L74.85,485.497z" fill="'.$this->iconColor.'"/>
+            </g>
+        </svg>';
+
         return '
-        <span title="Tracy logs">
-            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 433.494 433.494" style="enable-background:new 0 0 433.494 433.494;" xml:space="preserve">
-                <polygon points="353.763,379.942 279.854,234.57 322.024,250.717 253.857,116.637 276.286,127.997 216.747,0 157.209,127.997     179.64,116.636 111.471,250.717 153.642,234.569 79.731,379.942 200.872,337.52 200.872,433.494 232.624,433.494 232.624,337.518       " fill="#444444"/>
-            </svg>' . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Tracy Logs' : '') . '
+        <span title="Tracy logs">' .
+            $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Tracy Logs' : '') . '
         </span>
         ';
     }
@@ -138,101 +249,21 @@ class TracyLogsPanel implements IBarPanel {
 
     public function getPanel() {
 
-        // end for each section
-        $sectionEnd = '
-                    </tbody>
-                </table>
-            </div>';
-
-
-        /**
-         * Tracy log panel sections
-         */
-
-        $logEntries = '';
-        $entriesArr = array();
-        $i=0;
-        $logs = $this->getLogs();
-        if($logs === null) {
-            $logEntries .= 'Tracy logs directory is not readable.';
-        }
-        elseif(count($logs) == 0) {
-            $logEntries .= 'There are no logs in the Tracy logs directory.';
-        }
-        else {
-            $logEntries = $this->sectionHeader(array('Type', 'Date', 'URL', 'Text'));
-            foreach($logs as $log) {
-                $x=99;
-                foreach($this->getLines($log['name'], array("limit" => \TracyDebugger::getDataValue("numLogEntries"))) as $entry) {
-                    $logDateTime = str_replace(array('[',']'), '', substr($entry, 0 , 21)); // get the date - first 21 chars
-                    $logDateParts = explode(" ", $logDateTime);
-                    $logDate = $logDateParts[0];
-                    $logTime = str_replace('-',':', $logDateParts[1]);
-                    $logDateTime = $logDate . ' ' . $logTime;
-                    $itemKey = $log['name'] . '_' . $x;
-                    $entryUrlAndText = explode('@', substr($entry, 22)); // get the rest of the line after the date;
-                    if(isset($entryUrlAndText[1])) {
-                        $entriesArr[$itemKey]['url'] = trim($entryUrlAndText[1]);
-                    }
-                    else {
-                        continue; //bit of a hack - some entries getting duplicated but with empty URL, so ignore
-                    }
-                    $trimmedText = trim($entryUrlAndText[0]);
-                    $entriesArr[$itemKey]['text'] = strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText;
-                    $entriesArr[$itemKey]['timestamp'] = strtotime($logDateTime);
-                    $entriesArr[$itemKey]['linenumber'] = 99-$x;
-                    $entriesArr[$itemKey]['order'] = $itemKey;
-                    $entriesArr[$itemKey]['date'] = $logDateTime;
-                    $entriesArr[$itemKey]['log'] = $log['name'];
-                    $x--;
-                    $i++;
-                }
-            }
-
-            # get a list of sort columns and their data to pass to array_multisort
-            $sort = array();
-            foreach ($entriesArr as $key => $row) {
-                $timestamp[$key] = $row['timestamp'];
-                $order[$key] = $row['order'];
-            }
-            # sort by event_type desc and then title asc
-            array_multisort($timestamp, SORT_DESC, $order, SORT_DESC, $entriesArr);
-
-            //display most recent entries from all log files
-            foreach(array_slice($entriesArr, 0, \TracyDebugger::getDataValue("numLogEntries")) as $item) {
-                $logInstance = new TracyFileLog(wire('config')->paths->logs.'tracy/' . $item['log'].'.log');
-                $trimmedText = trim(htmlspecialchars($item['text'], ENT_QUOTES, 'UTF-8'));
-                $logEntries .= "
-                \n<tr>" .
-                    "<td>".$item['log']."</td>" .
-                    "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
-                    "<td>".(isset($item['url']) ? $item['url'] : '')."</td>" .
-                    "<td><a title='View this line of \"".$item['log']."\" log file in your code editor' href='". \TracyDebugger::makePathLocal(str_replace("%file", wire('config')->paths->logs.'tracy/' . $item['log'] . '.log', str_replace("%line", ($logInstance->getTotalLines()-$item['linenumber']), \TracyDebugger::getDataValue("editor"))))."'>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</a></td>" .
-                "</tr>";
-            }
-            $logEntries .= $sectionEnd;
-        }
-
-
         // Load all the panel sections
-        $out = '
-        <h1>
-            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 433.494 433.494" style="enable-background:new 0 0 433.494 433.494;" xml:space="preserve" style="height:16px">
-                <polygon points="353.763,379.942 279.854,234.57 322.024,250.717 253.857,116.637 276.286,127.997 216.747,0 157.209,127.997     179.64,116.636 111.471,250.717 153.642,234.569 79.731,379.942 200.872,337.52 200.872,433.494 232.624,433.494 232.624,337.518       " fill="#444444"/>
-            </svg>
-            Tracy Logs
-        </h1>
+        $out = '<h1>' . $this->icon . ' Tracy Logs</h1>
 
         <div class="tracy-inner">';
-            $out .= $logEntries;
+            $out .= $this->logEntries . '
+            <br />
+            <p>
+                <form method="post" action="./">
+                    <input type="submit" name="deleteTracyLogs" value="Delete Logs" />
+                </form>
+            </p>';
             \TracyDebugger::$panelGenerationTime['tracyLogs']['time'] = \Tracy\Debugger::timer('tracyLogs');
             \TracyDebugger::$panelGenerationTime['tracyLogs']['size'] = strlen($out);
             $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['tracyLogs']['time'], \TracyDebugger::$panelGenerationTime['tracyLogs']['size']) . '
-        </div>
-
-        <form method="post" action="./">
-            <input type="submit" name="deleteTracyLogs" value="Delete Logs" />
-        </form>';
+        </div>';
 
         return $out;
     }
