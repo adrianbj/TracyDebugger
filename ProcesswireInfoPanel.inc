@@ -81,92 +81,94 @@ class ProcesswireInfoPanel implements IBarPanel {
         /**
          * Custom PW panel sections
          */
-        if(wire('page')->template != 'admin') {
 
-            // Page info
-            if(in_array('summary', $panelSections)) {
-                $summary = '
-                <table>
-                    <tr>
-                        <th>Title</th>
-                        <td>'.wire('page')->title.'</td>
-                    </tr>
-                    <tr>
-                        <th>Name</th>
-                        <td>'.wire('page')->name.'</td>
-                    </tr>
-                    <tr>
-                        <th>ID</th>
-                        <td><a title="Edit Page" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->id.'">'.wire('page')->id.'</a></td>
-                    </tr>
-                    <tr>
-                    <tr>
-                        <th>Path</th>
-                        <td>'.wire('page')->path.'</td>
-                    </tr>
-                    <tr>
-                        <th>Template</th>
-                        <td><a title="Edit Template" href="'.wire('config')->urls->admin.'setup/template/edit?id='.wire('page')->template->id.'">'.wire('page')->template->name.(wire('page')->template->label ? '</a> ('.wire('page')->template->label.')' :'').'</td>
-                    </tr>
-                    ';
-                    if(wire('page')->parent && wire('page')->parent->viewable()) {
-                        $summary .= '
-                        <tr>
-                            <th>Parent</th>
-                            <td><a title="View Parent" href="'.wire('page')->parent->url.'">'.wire('page')->parent->name.'</a> (<a title="Edit Parent" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->parent->id.'">'.wire('page')->parent->id.'</a>)</td>
-                        </tr>';
-                    }
+        // Page info
+        if(in_array('summary', $panelSections)) {
+            $summary = '
+            <table>
+                <tr>
+                    <th>Title</th>
+                    <td>'.wire('page')->title.'</td>
+                </tr>
+                <tr>
+                    <th>Name</th>
+                    <td>'.wire('page')->name.'</td>
+                </tr>
+                <tr>
+                    <th>ID</th>
+                    <td><a title="Edit Page" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->id.'">'.wire('page')->id.'</a></td>
+                </tr>
+                <tr>
+                <tr>
+                    <th>Path</th>
+                    <td>'.wire('page')->path.'</td>
+                </tr>
+                <tr>
+                    <th>Template</th>
+                    <td><a title="Edit Template" href="'.wire('config')->urls->admin.'setup/template/edit?id='.wire('page')->template->id.'">'.wire('page')->template->name.(wire('page')->template->label ? '</a> ('.wire('page')->template->label.')' :'').'</td>
+                </tr>
+                <tr>
+                    <th>Process</th>
+                    <td>'.wire('page')->process.'</td>
+                </tr>
+                ';
+                if(wire('page')->parent && wire('page')->parent->viewable()) {
                     $summary .= '
                     <tr>
-                        <th>Root Parent</th>
-                        <td><a title="View Root Parent" href="'.wire('page')->rootParent->url.'">'.wire('page')->rootParent->name.'</a> (<a title="Edit Root Parent" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->rootParent->id.'">'.wire('page')->rootParent->id.'</a>)</td>
-                    </tr>
-                    ';
-                    if(wire('page')->prev->id && wire('page')->prev->viewable()) {
-                        $summary .= '
-                        <tr>
-                            <th>Prev Sibling</th>
-                            <td><a title="View Prev Sibling" href="'.wire('page')->prev->url.'">&lt; '.wire('page')->prev->name.'</a> (<a title="Edit Prev Sibling" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->prev->id.'">'.wire('page')->prev->id.'</a>)</td>
-                        </tr>';
-                    }
-                    if(wire('page')->next->id && wire('page')->next->viewable()) {
-                        $summary .= '
-                        <tr>
-                            <th>Next Sibling</th>
-                            <td><a title="View Next Sibling" href="'.wire('page')->next->url.'">'.wire('page')->next->name.' &gt;</a> (<a title="Edit Next Sibling" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->next->id.'">'.wire('page')->next->id.'</a>)</td>
-                        </tr>';
-                    }
+                        <th>Parent</th>
+                        <td><a title="View Parent" href="'.wire('page')->parent->url.'">'.wire('page')->parent->name.'</a> (<a title="Edit Parent" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->parent->id.'">'.wire('page')->parent->id.'</a>)</td>
+                    </tr>';
+                }
+                $summary .= '
+                <tr>
+                    <th>Root Parent</th>
+                    <td><a title="View Root Parent" href="'.wire('page')->rootParent->url.'">'.wire('page')->rootParent->name.'</a> (<a title="Edit Root Parent" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->rootParent->id.'">'.wire('page')->rootParent->id.'</a>)</td>
+                </tr>
+                ';
+                if(wire('page')->prev->id && wire('page')->prev->viewable()) {
                     $summary .= '
                     <tr>
-                        <th>Children</th>
-                        <td>'.wire('page')->numChildren().' <a title="Open Page Tree" href="'.wire('config')->urls->admin.'page/list/?open='.wire('page')->id.'">open tree</a> | <a title="View Children Tab" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->id.'#ProcessPageEditChildren">edit</a></td>
-                    </tr>
+                        <th>Prev Sibling</th>
+                        <td><a title="View Prev Sibling" href="'.wire('page')->prev->url.'">&lt; '.wire('page')->prev->name.'</a> (<a title="Edit Prev Sibling" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->prev->id.'">'.wire('page')->prev->id.'</a>)</td>
+                    </tr>';
+                }
+                if(wire('page')->next->id && wire('page')->next->viewable()) {
+                    $summary .= '
                     <tr>
-                        <th>Created</th>
-                        <td>'.wire('page')->createdUser->name.' ('.date("Y-m-d H:i:s", wire('page')->created).')</td>
-                    </tr>
-                    <tr>
-                        <th>Published</th>
-                        <td>'.date("Y-m-d H:i:s", wire('page')->published).'</td>
-                    </tr>
-                    <tr>
-                        <th>Modified</th>
-                        <td>'.wire('page')->modifiedUser->name.' ('.date("Y-m-d H:i:s", wire('page')->modified).')</td>
-                    </tr>
-                    <tr>
-                        <th>Hidden</th>
-                        <td>'. (wire('page')->isHidden() ? "true" : "false") .'</td>
-                    </tr>
-                    <tr>
-                        <th>Unpublished</th>
-                        <td>'. (wire('page')->isUnpublished() ? "true" : "false") .'</td>
-                    </tr>
-                    <tr>
-                        <th>Locked</th>
-                        <td>'. (wire('page')->is(Page::statusLocked) ? "true" : "false") .'</td>
-                    </tr>
-                </table>';
-            }
+                        <th>Next Sibling</th>
+                        <td><a title="View Next Sibling" href="'.wire('page')->next->url.'">'.wire('page')->next->name.' &gt;</a> (<a title="Edit Next Sibling" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->next->id.'">'.wire('page')->next->id.'</a>)</td>
+                    </tr>';
+                }
+                $summary .= '
+                <tr>
+                    <th>Children</th>
+                    <td>'.wire('page')->numChildren().' <a title="Open Page Tree" href="'.wire('config')->urls->admin.'page/list/?open='.wire('page')->id.'">open tree</a> | <a title="View Children Tab" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->id.'#ProcessPageEditChildren">edit</a></td>
+                </tr>
+                <tr>
+                    <th>Created</th>
+                    <td>'.wire('page')->createdUser->name.' ('.date("Y-m-d H:i:s", wire('page')->created).')</td>
+                </tr>
+                <tr>
+                    <th>Published</th>
+                    <td>'.date("Y-m-d H:i:s", wire('page')->published).'</td>
+                </tr>
+                <tr>
+                    <th>Modified</th>
+                    <td>'.wire('page')->modifiedUser->name.' ('.date("Y-m-d H:i:s", wire('page')->modified).')</td>
+                </tr>
+                <tr>
+                    <th>Hidden</th>
+                    <td>'. (wire('page')->isHidden() ? "true" : "false") .'</td>
+                </tr>
+                <tr>
+                    <th>Unpublished</th>
+                    <td>'. (wire('page')->isUnpublished() ? "true" : "false") .'</td>
+                </tr>
+                <tr>
+                    <th>Locked</th>
+                    <td>'. (wire('page')->is(Page::statusLocked) ? "true" : "false") .'</td>
+                </tr>
+            </table>';
 
             // Template info
             $templateFilePath = wire('page')->template->filename;
@@ -359,19 +361,17 @@ class ProcesswireInfoPanel implements IBarPanel {
         <div class="tracy-inner">
         ';
 
-        if(wire('page')->template != 'admin') {
-            $i=0;
-            foreach(\TracyDebugger::$processWireInfoSections as $name => $label) {
-                if(strpos($name, 'Links') === false && in_array($name, $panelSections)) {
-                    $out .= '
-                    <a href="#" rel="'.$name.'" class="tracy-toggle '.($i>0 ? ' tracy-collapsed' : '').'">'.$label.'</a>
-                    <div id="'.$name.'" '.($i>0 ? ' class="tracy-collapsed"' : '').'>'.${$name}.'</div><br />';
-                    $i++;
-                }
+        $i=0;
+        foreach(\TracyDebugger::$processWireInfoSections as $name => $label) {
+            if(strpos($name, 'Links') === false && in_array($name, $panelSections)) {
+                $out .= '
+                <a href="#" rel="'.$name.'" class="tracy-toggle '.($i>0 ? ' tracy-collapsed' : '').'">'.$label.'</a>
+                <div id="'.$name.'" '.($i>0 ? ' class="tracy-collapsed"' : '').'>'.${$name}.'</div><br />';
+                $i++;
             }
         }
 
-        if(in_array('adminLinks', $panelSections) && wire('page')->template != 'admin') {
+        if(in_array('adminLinks', $panelSections)) {
             $out .= '
             <div class="pw-admin-links" style="text-align: center; border-top:1px solid #CCCCCC; margin-top:10px; padding-top:10px;">
                 <a href="'.wire('config')->urls->admin.'" title="PW Admin">
@@ -508,7 +508,7 @@ class ProcesswireInfoPanel implements IBarPanel {
             </div>';
         }
 
-        if(in_array('editLinks', $panelSections) && wire('page')->template != 'admin') {
+        if(in_array('editLinks', $panelSections)) {
             $out .= '
             <div class="pw-admin-links" style="text-align: right; border-top:1px solid #CCCCCC; margin-top:10px; padding-top:10px;">
                 <a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->id.'" title="Edit this page">

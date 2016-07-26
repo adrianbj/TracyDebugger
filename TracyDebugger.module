@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 249,
+            'version' => 250,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -119,7 +119,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "maxDepth" => 3,
                 "maxLength" => 150,
                 "showDebugBar" => array('frontend'),
-                "showPanels" => array('processwireInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'templatePath', 'console', 'templateEditor', 'panelSelector'),
+                "frontendPanels" => array('processwireInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'templatePath', 'console', 'templateEditor', 'panelSelector'),
+                "backendPanels" => array('processwireInfo', 'processwireLogs', 'tracyLogs', 'debugMode', 'console', 'panelSelector'),
                 "showPanelLabels" => 1,
                 "processwireInfoPanelSections" => array('summary', 'templateInfo', 'fieldsListValues', 'adminLinks', 'documentationLinks', 'editLinks'),
                 "diagnosticsPanelSections" => array('filesystemFolders'),
@@ -305,6 +306,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         //determine which panels to display
+        $configEnabledPanels = $this->page->template == "admin" ? $this->data['backendPanels'] : $this->data['frontendPanels'];
         if($this->input->cookie->tracyPanelsOnce) {
             static::$oncePanels = array_filter(explode(',', $this->input->cookie->tracyPanelsOnce));
             static::$showPanels = static::$oncePanels;
@@ -316,14 +318,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             static::$showPanels = static::$stickyPanels;
         }
         else {
-            static::$showPanels = $this->data['showPanels'];
+            static::$showPanels = $configEnabledPanels;
         }
 
         // sort panels based on order defined in config settings
         $showPanelsOrdered = array();
         $i=0;
         // add default panels in the defined order
-        foreach($this->data['showPanels'] as $panelName) {
+        foreach($configEnabledPanels as $panelName) {
             if(in_array($panelName, static::$showPanels)) $showPanelsOrdered[$i] = $panelName;
             $i++;
         }
@@ -445,6 +447,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         require_once __DIR__ . '/CssPanel.inc';
         Debugger::getBar()->addPanel(new CssPanel);
+
 
         foreach(static::$showPanels as $panel) {
             if($this->page->template == 'admin' && in_array($panel, static::$hideInAdmin)) continue;
@@ -847,21 +850,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'showDebugBar');
         $f->label = __('Show Debug Bar', __FILE__);
         $f->description = __('Show the debug bar.', __FILE__);
-        $f->columnWidth = 33;
+        $f->columnWidth = 50;
         $f->addOption('frontend', 'Frontend');
         $f->addOption('backend', 'Backend');
         if($data['showDebugBar']) $f->attr('value', $data['showDebugBar']);
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldAsmSelect");
-        $f->attr('name', 'showPanels');
-        $f->label = __('Show Panels', __FILE__);
-        $f->description = __('Determines which panels are shown on the Debug Bar. Sort to match order of panels in Debugger Bar.', __FILE__);
-        $f->columnWidth = 34;
-        foreach(static::$allPanels as $name => $label) {
-            $f->addOption($name, $label);
-        }
-        if($data['showPanels']) $f->attr('value', $data['showPanels']);
         $fieldset->add($f);
 
         $f = wire('modules')->get("InputfieldCheckbox");
@@ -869,8 +861,33 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Show Panel Labels', __FILE__);
         $f->description = __('Show the labels next to each panel.', __FILE__);
         $f->notes = __('Unchecking this will make the debugger bar much more compact.', __FILE__);
-        $f->columnWidth = 33;
+        $f->columnWidth = 50;
         $f->attr('checked', $data['showPanelLabels'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $f = wire('modules')->get("InputfieldAsmSelect");
+        $f->attr('name', 'frontendPanels');
+        $f->label = __('Frontend Panels', __FILE__);
+        $f->description = __('Determines which panels are shown in the Debug Bar on the frontend. Sort to match order of panels in Debugger Bar.', __FILE__);
+        $f->columnWidth = 50;
+        foreach(static::$allPanels as $name => $label) {
+            $f->addOption($name, $label);
+        }
+        if($data['frontendPanels']) $f->attr('value', $data['frontendPanels']);
+        $fieldset->add($f);
+
+        $f = wire('modules')->get("InputfieldAsmSelect");
+        $f->attr('name', 'backendPanels');
+        $f->label = __('Backend Panels', __FILE__);
+        $f->description = __('Determines which panels are shown in the Debug Bar on the backend. Sort to match order of panels in Debugger Bar. Obviously only relevant if "Backend" is checked in the Show Debug Bar setting above.', __FILE__);
+        $f->notes = __('Note that '.implode(', ', static::$hideInAdmin).' are intentionally missing from this list because they have no use in the backend.', __FILE__);
+        $f->columnWidth = 50;
+        foreach(static::$allPanels as $name => $label) {
+            if(!in_array($name, static::$hideInAdmin)) {
+                $f->addOption($name, $label);
+            }
+        }
+        if($data['backendPanels']) $f->attr('value', $data['backendPanels']);
         $fieldset->add($f);
 
         $fieldset = wire('modules')->get("InputfieldFieldset");

@@ -121,7 +121,7 @@ class PanelSelectorPanel implements IBarPanel {
         <div class="tracy-inner">
             <fieldset>
                 <legend>Temporarily enable/disable panels<br />*Panels with asterisk are on by default</legend><br />';
-                    $defaultPanels = \TracyDebugger::getDataValue('showPanels');
+                    $defaultPanels = wire('page')->template == "admin" ? \TracyDebugger::getDataValue('backendPanels') : \TracyDebugger::getDataValue('frontendPanels');
                     $showPanels = \TracyDebugger::$showPanels;
                     $out .= '<label><input type="checkbox" onchange="toggleAllTracyPanels(this)" ' . (count($showPanels) == count(\TracyDebugger::$allPanels) ? 'checked="checked"' : '') . ' /> Toggle All</label><br />';
                     foreach(\TracyDebugger::$allPanels as $name => $label) {
