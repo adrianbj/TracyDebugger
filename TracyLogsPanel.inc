@@ -70,7 +70,7 @@ class TracyLogsPanel implements IBarPanel {
                     // if log entry was in the last 5 seconds (think this is OK for detecting the last page load),
                     // then count the error or other entry type
                     if(time()-5 < strtotime($logDateTime)) {
-                        if($log['name'] == 'warning' || $log['name'] == 'error' || $log['name'] == 'exception' || $log['name'] == 'critical') {
+                        if($log['name'] == 'error' || $log['name'] == 'exception' || $log['name'] == 'critical') {
                             $this->numErrors++;
                         }
                         else {
