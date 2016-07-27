@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 251,
+            'version' => 252,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -76,6 +76,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     );
     public static $allPanels = array(
         'console' => 'Console',
+        'customPhp' => 'Custom PHP',
         'debugMode' => 'Debug Mode',
         'diagnostics' => 'Diagnostics',
         'eventInterceptor' => 'Event Interceptor',
@@ -131,6 +132,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "respectConfigDebugTools" => 1,
                 "userDevTemplate" => null,
                 "userDevTemplateSuffix" => 'dev',
+                "customPhpCode" => '',
                 "email" => '',
                 "clearEmailSent" => null,
                 "editor" => 'subl://open/?url=file://%file&line=%line',
@@ -481,6 +483,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 case 'eventInterceptor':
                 case 'processwireVersion':
                 case 'templateEditor':
+                case 'customPhp':
                     require_once __DIR__ . '/'.$panelName.'.inc';
                     Debugger::getBar()->addPanel(new $panelName);
                     break;
@@ -1004,6 +1007,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->description = __('Template file suffix. eg "dev" will render the homepage with the "home-dev.php" template file if the user has a matching role or permission, eg. "template-dev".', __FILE__);
         $f->columnWidth = 50;
         if($data['userDevTemplateSuffix']) $f->attr('value', $data['userDevTemplateSuffix']);
+        $fieldset->add($f);
+
+        $fieldset = wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("Custom PHP");
+        $wrapper->add($fieldset);
+
+        $f = wire('modules')->get("InputfieldTextarea");
+        $f->attr('name', 'customPhpCode');
+        $f->label = __('Custom PHP Code', __FILE__);
+        $f->description = __('Use this PHP code block to return any output you want.', __FILE__);
+        $f->notes = __('eg. return \'<a href="https://developers.google.com/speed/pagespeed/insights/?url=\'.$page->httpUrl.\'">Google Speedtest</a>\';', __FILE__);
+        if($data['customPhpCode']) $f->attr('value', $data['customPhpCode']);
         $fieldset->add($f);
 
         $fieldset = wire('modules')->get("InputfieldFieldset");
