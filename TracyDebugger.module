@@ -83,6 +83,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'mail' => 'Mail',
         'methodsInfo' => 'Methods Info',
         'outputMode' => 'Output Mode',
+        'pageRecorder' => 'Page Recorder',
         'panelSelector' => 'Panel Selector',
         'performance' => 'Performance',
         'phpInfo' => 'PHP Info',
@@ -263,6 +264,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             wireRmdir($logFolder, true);
         }
 
+        // trash recorded pages if requested
+        if($this->input->post->trashRecordedPages) {
+            foreach($this->data['recordedPages'] as $pid) {
+                $this->pages->trash($this->pages->get($pid));
+            }
+            unset($this->data['recordedPages']);
+            $this->modules->saveModuleConfigData($this->modules->get("TracyDebugger"), $this->data);
+        }
+
         if(!is_dir($logFolder)) wireMkdir($logFolder);
 
         Debugger::enable($outputMode, $logFolder, $this->data['email'] != '' ? $this->data['email'] : null);
@@ -351,6 +361,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // event interceptor hook
         if(in_array('eventInterceptor', static::$showPanels) && $this->input->cookie->eventInterceptorHook) {
             $this->addHookBefore($this->input->cookie->eventInterceptorHook, $this, 'interceptEvent');
+        }
+
+        // page recorder hook
+        if(in_array('pageRecorder', static::$showPanels)) {
+            $this->addHookAfter('Pages::added', $this, 'recordPage');
         }
 
         // user switcher panel logic
@@ -484,6 +499,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 case 'processwireVersion':
                 case 'templateEditor':
                 case 'customPhp':
+                case 'pageRecorder':
                     require_once __DIR__ . '/'.$panelName.'.inc';
                     Debugger::getBar()->addPanel(new $panelName);
                     break;
@@ -553,6 +569,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         wire('session')->tracyEventItems = $eventItems;
         $event->replace = true;
         $event->return = false;
+    }
+
+    // for the page recorder panel
+    public function recordPage($event) {
+        $this->data['recordedPages'][] = $event->arguments(0)->id;
+        $this->modules->saveModuleConfigData($this->modules->get("TracyDebugger"), $this->data);
     }
 
 
