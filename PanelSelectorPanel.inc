@@ -137,7 +137,7 @@ class PanelSelectorPanel implements IBarPanel {
                             <label style="width: 280px !important; white-space: nowrap;'.(wire('page')->template == 'admin' && in_array($name, \TracyDebugger::$hideInAdmin) ? ' visibility:hidden;position: absolute; left: -999em;' : '').'"> ' .
                                 ($this->isOnce($name, $defaultPanels) ? $onceIcon .'&nbsp;' : '<span style="display:inline-block;width:18px">&nbsp;</span>') . '
                                 <input type="checkbox" name="selectedPanels[]" ' . ($name == 'panelSelector' ? 'disabled="disabled"' : '') . ' value="'.$name.'" ' . (in_array($name, $showPanels) ? 'checked="checked"' : '') . ' />
-                                ' . $label . (in_array($name, $defaultPanels) ? '&nbsp;<strong>*</strong>' : '') . ($seconds ? '<span style="color:#999999; font-size:11px; float:right; margin-left:20px">&nbsp;' . round($seconds, 4) . 's'.($size ? ', '.$size : '') . '</span>' : '') . '
+                                ' . $label . (in_array($name, $defaultPanels) ? '&nbsp;<strong>*</strong>' : '') . ($seconds ? '<span style="color:#999999; font-size:11px; float:right; margin-left:20px">&nbsp;' . \TracyDebugger::formatTime($seconds) . ($size ? ', '.$size : '') . '</span>' : '') . '
                             </label>';
                     }
                     $out .= '<br />

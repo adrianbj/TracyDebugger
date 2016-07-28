@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 252,
+            'version' => 253,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -658,9 +658,34 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * Helper function to format human friendly file size
      */
     public static function human_filesize($size) {
+        if($size >= 500000) {
+            $color = '#CD1818';
+        }
+        elseif($size < 500000 && $size > 100000) {
+            $color = '#FF9933';
+        }
+        else {
+            $color = '#999999';
+        }
+
         if($size == 0) return("0 Bytes");
         $filesizename = array("&nbsp;Bytes", "&nbsp;KB", "&nbsp;MB", "&nbsp;GB", "&nbsp;TB", "&nbsp;PB", "&nbsp;EB", "&nbsp;ZB", "&nbsp;YB");
-        return round($size/pow(1024, ($i = floor(log($size, 1024)))), 1) . $filesizename[$i];
+        return '<span style="color:'.$color.'">' . round($size/pow(1024, ($i = floor(log($size, 1024)))), 1) . $filesizename[$i] . '</span>';
+    }
+
+
+    public static function formatTime($seconds) {
+        if($seconds >= 1) {
+            $color = '#CD1818';
+        }
+        elseif($seconds < 1 && $seconds > 0.1) {
+            $color = '#FF9933';
+        }
+        else {
+            $color = '#999999';
+        }
+
+        return '<span style="color:'.$color.'">'.round(($seconds*1000), 2) . ' ms</span>';
     }
 
 
@@ -668,7 +693,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * Helper function to insert generated time and size for a panel
      */
     public static function generatedTimeSize($seconds, $kilobytes) {
-        return '<p style="font-size:9px !important; text-align:left !important"><br />Panel generated in '.round($seconds, 4).' seconds<br />Panel content size: '.static::human_filesize($kilobytes).'</p>';
+        return '<p style="font-size:9px !important; text-align:left !important"><br />Panel generated in '.static::formatTime($seconds).'<br />Panel content size: '.static::human_filesize($kilobytes).'</p>';
     }
 
 
