@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 253,
+            'version' => 254,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -182,10 +182,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         // if mail panel items were cleared, clear them from the session variable and remove cookie
-        if($this->input->cookie->tracyClearMailItems) {
+        if($this->input->post->tracyClearMailItems) {
             $this->session->tracyMailItems = null;
-            unset($this->input->cookie->tracyClearMailItems);
-            setcookie("tracyClearMailItems", "", time()-3600, "/");
+            $this->session->redirect('./');
         }
 
         // if event interceptor panel items were cleared, clear them from the session variable and remove cookie
@@ -271,6 +270,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
             unset($this->data['recordedPages']);
             $this->modules->saveModuleConfigData($this->modules->get("TracyDebugger"), $this->data);
+            $this->session->redirect('./');
         }
 
         if(!is_dir($logFolder)) wireMkdir($logFolder);

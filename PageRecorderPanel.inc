@@ -9,23 +9,24 @@ class PageRecorderPanel implements IBarPanel {
     protected $icon;
     protected $iconColor;
     protected $recordedPages;
+    protected $pageCount = 0;
 
     public function getTab() {
 
-        if(\TracyDebugger::additionalBar()) return;
         \Tracy\Debugger::timer('pageRecorder');
 
         if(\TracyDebugger::getDataValue('recordedPages') != '') {
-            foreach(\TracyDebugger::getDataValue('recordedPages') as $pid) {
-                $this->recordedPages .= '<a href="'.wire('config')->urls->admin.'page/edit/?id='.$pid.'">'.wire('pages')->get($pid)->path . '</a><br />';
-            }
             $this->recordedPages .= '
             <p>
                 <form method="post" action="./" onsubmit="return confirm(\'Do you really want to trash all these pages?\');">
                     <input type="submit" name="trashRecordedPages" value="Trash Recorded Pages" />
                 </form>
             </p>';
-            $this->iconColor = '#FF9933';
+            foreach(\TracyDebugger::getDataValue('recordedPages') as $pid) {
+                $this->recordedPages .= '<a href="'.wire('config')->urls->admin.'page/edit/?id='.$pid.'">'.wire('pages')->get($pid)->path . '</a><br />';
+                $this->pageCount++;
+            }
+            $this->iconColor = '#CD1818';
         }
         else {
             $this->recordedPages .= '<p>There are currently no recorded pages</p>';
@@ -49,7 +50,7 @@ class PageRecorderPanel implements IBarPanel {
     public function getPanel() {
 
         $out = '
-        <h1>' . $this->icon . ' Page Recorder</h1>
+        <h1>' . $this->icon . ' Page Recorder ' . ($this->pageCount > 0 ? '(' . $this->pageCount . ')' : '') . '</h1>
 
         <div class="tracy-inner">';
 

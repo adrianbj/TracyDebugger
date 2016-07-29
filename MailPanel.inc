@@ -8,18 +8,24 @@ class MailPanel implements IBarPanel {
     protected $icon;
     protected $iconColor;
     protected $entries;
+    protected $mailCount;
 
     public function getTab() {
 
         \Tracy\Debugger::timer('mail');
 
         $items = wire('session')->tracyMailItems ? wire('session')->tracyMailItems : array();
-
-        if(count($items) > 0) {
+        $this->mailCount = count($items);
+        if($this->mailCount > 0) {
             $this->iconColor = '#CD1818';
             $this->entries .= '
             <div class="mail-items">
-                <p><input type="submit" onclick="clearEmails()" value="Clear Emails" /></p>';
+                <p>
+                    <form method="post" action="./">
+                        <input type="submit" name="tracyClearMailItems" value="Clear Emails" />
+                    </form>
+                </p><br />';
+
             foreach($items as $item) {
 
                 // from @tpr - for dealing with encoded fromName which is necessary for some email clients
@@ -63,7 +69,8 @@ class MailPanel implements IBarPanel {
                             </td>
                         </tr>
                     </tbody>
-                </table>";
+                </table>
+                <br />";
             }
             $this->entries .= '</div>';
         }
@@ -93,17 +100,7 @@ class MailPanel implements IBarPanel {
     public function getPanel() {
 
         $out = '
-        <h1>' . $this->icon . ' Mail</h1>
-
-        <script>
-            function clearEmails() {
-                document.cookie = "tracyClearMailItems=true;expires=0;path=/";
-                var elements = document.getElementsByClassName("mail-items");
-                while(elements.length > 0){
-                    elements[0].parentNode.removeChild(elements[0]);
-                }
-            }
-        </script>
+        <h1>' . $this->icon . ' Mail ' . ($this->mailCount > 0 ? '(' . $this->mailCount . ')' : '') . '</h1>
 
         <div class="tracy-inner">';
             $out .= $this->entries;

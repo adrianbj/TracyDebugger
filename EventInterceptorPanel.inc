@@ -9,14 +9,15 @@ class EventInterceptorPanel implements IBarPanel {
     protected $icon;
     protected $iconColor;
     protected $entries;
+    protected $eventCount;
 
     public function getTab() {
 
         \Tracy\Debugger::timer('eventInterceptor');
 
         $items = wire('session')->tracyEventItems;
-
-        if(count($items) > 0) {
+        $this->eventCount = count($items);
+        if($this->eventCount > 0) {
             $this->iconColor = '#CD1818';
             $this->entries .= '
             <div class="event-items">
@@ -32,6 +33,7 @@ class EventInterceptorPanel implements IBarPanel {
         }
         elseif(wire('input')->cookie->eventInterceptorHook) {
             $this->iconColor = '#FF9933';
+            $this->entries = 'No Events Intercepted';
         }
         else {
             $this->iconColor = '#009900';
@@ -40,7 +42,7 @@ class EventInterceptorPanel implements IBarPanel {
 
         $this->icon = '
         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="248 248 16 16" enable-background="new 248 248 16 16" xml:space="preserve" width="16px" height="16px">
-            <path d="M248,256c0,4.4,3.6,8,8,8c4.4,0,8-3.6,8-8s-3.6-8-8-8C251.6,248,248,251.6,248,256z M262,256
+            <path id="interceptorIconPath" d="M248,256c0,4.4,3.6,8,8,8c4.4,0,8-3.6,8-8s-3.6-8-8-8C251.6,248,248,251.6,248,256z M262,256
                 c0,1.1-0.3,2.2-0.9,3.1l-8.2-8.2c0.9-0.6,2-0.9,3.1-0.9C259.3,250,262,252.7,262,256z M250,256c0-1.1,0.3-2.2,0.9-3.1l8.2,8.2
                 c-0.9,0.6-2,0.9-3.1,0.9C252.7,262,250,259.3,250,256z" fill="'.$this->iconColor.'"/>
         </svg>
@@ -57,27 +59,42 @@ class EventInterceptorPanel implements IBarPanel {
     public function getPanel() {
 
         $out = '
-        <h1>' . $this->icon . ' Event Interceptor</h1>
+        <h1>' . $this->icon . ' Event Interceptor ' . ($this->eventCount > 0 ? '(' . $this->eventCount . ')' : '') . '</h1>
 
         <script>
             function clearEvents() {
                 document.cookie = "tracyClearEventItems=true;expires=0;path=/";
+                if(document.getElementById("eventInterceptorHook").value == "") {
+                    var fillColor = "#009900";
+                }
+                else {
+                    var fillColor = "#FF9933";
+                }
                 var elements = document.getElementsByClassName("event-items");
                 while(elements.length > 0){
                     elements[0].parentNode.removeChild(elements[0]);
                 }
+                document.getElementById("interceptorIconPath").style.fill=fillColor;
             }
 
             function setEventInterceptorHook(reset) {
+                if((document.getElementById("tracyEventEntries").innerHTML == "No Events Intercepted" || document.getElementById("tracyEventEntries").innerHTML.trim() == "") && reset === true) {
+                    var fillColor = "#009900";
+                }
+                else {
+                    var fillColor = "#FF9933";
+                }
+
                 if(reset === true) {
                     document.cookie = "eventInterceptorHook=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
                     document.getElementById("eventInterceptorHook").value = "";
                     document.getElementById("eventHookLegend").innerHTML = "Enter an Event Hook";
                 }
-                else {
+                else if(document.getElementById("eventInterceptorHook").value != "") {
                     document.cookie = "eventInterceptorHook="+document.getElementById("eventInterceptorHook").value+"; expires=0; path=/";
                     document.getElementById("eventHookLegend").innerHTML = "<strong>" + document.getElementById("eventInterceptorHook").value + "</strong> hook is set";
                 }
+                document.getElementById("interceptorIconPath").style.fill=fillColor;
             }
         </script>
 
@@ -98,11 +115,10 @@ class EventInterceptorPanel implements IBarPanel {
                 $out .= '
                 <input type="text" id="eventInterceptorHook" name="eventInterceptorHook" value="'.wire('input')->cookie->eventInterceptorHook.'">
                 <input type="submit" onclick="setEventInterceptorHook()" value="Set Hook" />&nbsp;
-                <input type="submit" onclick="setEventInterceptorHook(true)" value="Remove Hook" />
+                <input type="submit" onclick="setEventInterceptorHook(true)" value="Remove Hook" />&nbsp;
             </fieldset>
-            <br /><br />';
-
-            $out .= $this->entries;
+            <br /><br />
+            <div id="tracyEventEntries">'.$this->entries.'</div>';
 
             \TracyDebugger::$panelGenerationTime['eventInterceptor']['time'] = \Tracy\Debugger::timer('eventInterceptor');
             \TracyDebugger::$panelGenerationTime['eventInterceptor']['size'] = strlen($out);
