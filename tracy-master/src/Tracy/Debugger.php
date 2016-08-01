@@ -16,7 +16,7 @@ use ErrorException;
  */
 class Debugger
 {
-	const VERSION = '2.4.1';
+	const VERSION = '2.4.2';
 
 	/** server modes for Debugger::enable() */
 	const
@@ -191,8 +191,8 @@ class Debugger
 		if (self::$productionMode) {
 
 		} elseif (headers_sent($file, $line) || ob_get_length()) {
-			throw new \RuntimeException(
-				'Tracy was enabled after some output has been sent. '
+			throw new \LogicException(
+				__METHOD__ . '() called after some output has been sent. '
 				. ($file ? "Output started at $file:$line." : 'Try Tracy\OutputDebugger to find where output started.')
 			);
 
@@ -212,6 +212,12 @@ class Debugger
 	{
 		if (self::$productionMode) {
 			return;
+
+		} elseif (headers_sent($file, $line) || ob_get_length()) {
+			throw new \LogicException(
+				__METHOD__ . '() called after some output has been sent. '
+				. ($file ? "Output started at $file:$line." : 'Try Tracy\OutputDebugger to find where output started.')
+			);
 
 		} elseif (session_status() !== PHP_SESSION_ACTIVE) {
 			ini_set('session.use_cookies', '1');

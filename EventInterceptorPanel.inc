@@ -50,7 +50,7 @@ class EventInterceptorPanel implements IBarPanel {
 
         return '
         <span title="Event Interceptor">
-            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Event Interceptor' : '') . ' ' . '
+            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Event Interceptor' : '') . ' ' . ($this->eventCount > 0 ? $this->eventCount : '') . '
         </span>
         ';
     }
@@ -59,7 +59,7 @@ class EventInterceptorPanel implements IBarPanel {
     public function getPanel() {
 
         $out = '
-        <h1>' . $this->icon . ' Event Interceptor ' . ($this->eventCount > 0 ? '(' . $this->eventCount . ')' : '') . '</h1>
+        <h1>' . $this->icon . ' Event Interceptor</h1>
 
         <script>
             function clearEvents() {
@@ -108,7 +108,7 @@ class EventInterceptorPanel implements IBarPanel {
             }
         </style>
 
-        <div class="tracy-inner tracy-DumpPanel">
+        <div class="tracy-inner tracy-DumpPanel" style="width:350px !important">
 
             <fieldset>
                 <legend><span id="eventHookLegend">'.(wire('input')->cookie->eventInterceptorHook ? '<strong>' . wire('input')->cookie->eventInterceptorHook . '</strong> hook is set' : 'Enter an Event Hook') .'</span></legend><br />';

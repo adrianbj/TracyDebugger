@@ -130,6 +130,7 @@ class ConsolePanel implements IBarPanel {
                         else {
                             document.getElementById("tracyConsoleResult").innerHTML = xmlhttp.status+": " + xmlhttp.statusText + "<br />See the browser dev console for the actual error";
                         }
+                        xmlhttp.getAllResponseHeaders();
                     }
                 };
                 xmlhttp.open("POST", "./", true);

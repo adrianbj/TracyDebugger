@@ -41,7 +41,7 @@ class PageRecorderPanel implements IBarPanel {
 
         return '
         <span title="Page Recorder">
-            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Page Recorder' : '') . ' ' . '
+            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Page Recorder' : '') . ' ' . ($this->pageCount > 0 ? $this->pageCount : '') . '
         </span>
         ';
     }
@@ -50,7 +50,7 @@ class PageRecorderPanel implements IBarPanel {
     public function getPanel() {
 
         $out = '
-        <h1>' . $this->icon . ' Page Recorder ' . ($this->pageCount > 0 ? '(' . $this->pageCount . ')' : '') . '</h1>
+        <h1>' . $this->icon . ' Page Recorder</h1>
 
         <div class="tracy-inner">';
 

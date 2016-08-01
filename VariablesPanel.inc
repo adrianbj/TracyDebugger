@@ -82,12 +82,12 @@ class VariablesPanel implements IBarPanel {
                 }
 
                 if(!\TracyDebugger::getDataValue('variablesShowPwObjects') && is_object($value)) {
-                    $outValue = $value->getArray();
+                    $outValue = method_exists($value,'getArray') ? $value->getArray() : $value;
                     // run getValue() on as many levels as the Max Nesting Depth config setting
                     for($i=0;$i<=\TracyDebugger::getDataValue('maxDepth');$i++) {
                         if(is_array($outValue)) {
                             array_walk_recursive($outValue, function (&$val) {
-                                $val = is_object($val) ? $val->getArray() : $val;
+                                $val = is_object($val) && method_exists($val,'getArray') ? $val->getArray() : $val;
                             });
                         }
                     }

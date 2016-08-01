@@ -91,7 +91,7 @@ class MailPanel implements IBarPanel {
         ';
         return '
         <span title="Mail">
-            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Mail' : '') . ' ' . '
+            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Mail' : '') . ' ' . ($this->mailCount > 0 ? $this->mailCount : '') . '
         </span>
         ';
     }
@@ -100,7 +100,7 @@ class MailPanel implements IBarPanel {
     public function getPanel() {
 
         $out = '
-        <h1>' . $this->icon . ' Mail ' . ($this->mailCount > 0 ? '(' . $this->mailCount . ')' : '') . '</h1>
+        <h1>' . $this->icon . ' Mail</h1>
 
         <div class="tracy-inner">';
             $out .= $this->entries;
