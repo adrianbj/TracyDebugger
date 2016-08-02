@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 255,
+            'version' => 256,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -158,11 +158,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
         //populate for later static access to data
         self::$_data = $this;
-
-        //if not PW 3 or template compilation is disabled, then remove variables panel from available list
-        if($this->config->version < 3 || ($this->config->version >= 3 && $this->config->templateCompile === false)) {
-            unset(static::$allPanels['variables']);
-        }
     }
 
 
@@ -302,11 +297,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         Debugger::$strictMode = $this->data['strictMode'] ? TRUE : FALSE;
         Debugger::$scream = $this->data['forceScream'] ? TRUE : FALSE;
 
-        // if it's an ajax request from the Tracy Console panel, then process and return
-        if($this->config->ajax && $this->input->post->tracyconsole == 1) {
-            require_once($this->config->paths->siteModules.'TracyDebugger/ConsoleProcessor.inc');
-            return;
-        }
 
         if($this->page->template == "admin") {
             if(in_array('backend', $this->data['showDebugBar'])) {
@@ -500,6 +490,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 case 'templateEditor':
                 case 'customPhp':
                 case 'pageRecorder':
+                case 'variables':
                     require_once __DIR__ . '/'.$panelName.'.inc';
                     Debugger::getBar()->addPanel(new $panelName);
                     break;
@@ -527,14 +518,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     }
                     Debugger::getBar()->addPanel(new $panelName);
                     break;
-                case 'variables':
-                    if($this->config->version >= 3 && $this->config->templateCompile !== false) {
-                            require_once __DIR__ . '/'.$panelName.'.inc';
-                            Debugger::getBar()->addPanel(new $panelName);
-                    }
-                    break;
             }
         }
+
+        // if it's an ajax request from the Tracy Console panel, then process and return
+        if($this->config->ajax && $this->input->post->tracyconsole == 1) {
+            require_once($this->config->paths->siteModules.'TracyDebugger/ConsoleProcessor.inc');
+            return;
+        }
+
     }
 
 

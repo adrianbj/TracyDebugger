@@ -16,7 +16,6 @@ class TracyLogsPanel implements IBarPanel {
 
     public function getTab() {
 
-        if(\TracyDebugger::additionalBar()) return;
         \Tracy\Debugger::timer('tracyLogs');
 
         // end for each section

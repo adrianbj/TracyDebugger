@@ -69,47 +69,52 @@ class VariablesPanel implements IBarPanel {
         // check to see if template can be compiled because we need that to get the variables
         // the missing "F" in "ileCompiler=0" is an intentional hack -
         // otherwise it prevents this file from being compiled and creates missing wire function errors
-        if(wire('page')->template->compile != 0 && wire('config')->templateCompile !== false && stripos($targetData, "ileCompiler=0") === false) {
-            $out .= $this->sectionHeader(array('Name', 'Returns', 'Value'));
-            foreach(\TracyDebugger::$templateVars as $var => $value) {
+        if(wire('config')->version >= 3 && wire('page')->template->compile != 0 && wire('config')->templateCompile !== false && stripos($targetData, "ileCompiler=0") === false && ((wire('page')->template->ns && wire('page')->template->ns == "ProcessWire" && wire('page')->template->compile !== 3)
+         || (wire('page')->template->ns && wire('page')->template->ns != "ProcessWire"))) {
+            if(count(\TracyDebugger::$templateVars) > 0) {
+                $out .= $this->sectionHeader(array('Name', 'Returns', 'Value'));
+                foreach(\TracyDebugger::$templateVars as $var => $value) {
 
-                if(is_object($var) || is_array($var)) {
-                    $varArray = array();
-                    foreach($var as $key => $value) {
-                        $varArray[$key] = $value;
+                    if(is_object($var) || is_array($var)) {
+                        $varArray = array();
+                        foreach($var as $key => $value) {
+                            $varArray[$key] = $value;
+                        }
+                        $value = $varArray;
                     }
-                    $value = $varArray;
-                }
 
-                if(!\TracyDebugger::getDataValue('variablesShowPwObjects') && is_object($value)) {
-                    $outValue = method_exists($value,'getArray') ? $value->getArray() : $value;
-                    // run getValue() on as many levels as the Max Nesting Depth config setting
-                    for($i=0;$i<=\TracyDebugger::getDataValue('maxDepth');$i++) {
-                        if(is_array($outValue)) {
-                            array_walk_recursive($outValue, function (&$val) {
-                                $val = is_object($val) && method_exists($val,'getArray') ? $val->getArray() : $val;
-                            });
+                    if(!\TracyDebugger::getDataValue('variablesShowPwObjects') && is_object($value)) {
+                        $outValue = method_exists($value,'getArray') ? $value->getArray() : $value;
+                        // run getValue() on as many levels as the Max Nesting Depth config setting
+                        for($i=0;$i<=\TracyDebugger::getDataValue('maxDepth');$i++) {
+                            if(is_array($outValue)) {
+                                array_walk_recursive($outValue, function (&$val) {
+                                    $val = is_object($val) && method_exists($val,'getArray') ? $val->getArray() : $val;
+                                });
+                            }
                         }
                     }
-                }
-                else {
-                    $outValue = $value;
-                }
+                    else {
+                        $outValue = $value;
+                    }
 
-                // if it's an object or multidimensional array, then collapse it
-                $outValue = Dumper::toHtml($outValue, array(Dumper::COLLAPSE => (count($outValue) !== count($outValue, COUNT_RECURSIVE) || is_object($outValue) ? true : false)));
+                    // if it's an object or multidimensional array, then collapse it
+                    $outValue = Dumper::toHtml($outValue, array(Dumper::COLLAPSE => (count($outValue) !== count($outValue, COUNT_RECURSIVE) || is_object($outValue) ? true : false)));
 
-                $out .= "\n<tr>" .
-                    '<td>$'.$var.'</td>' .
-                    "<td>".gettype($value)."</td>" .
-                    "<td>".$outValue."</td>" .
-                    "</tr>";
+                    $out .= "\n<tr>" .
+                        '<td>$'.$var.'</td>' .
+                        "<td>".gettype($value)."</td>" .
+                        "<td>".$outValue."</td>" .
+                        "</tr>";
+                }
+                $out .= $sectionEnd;
             }
-            $out .= $sectionEnd;
-
+        }
+        elseif(wire('config')->version < 3) {
+            $out .= '<strong>The variables could not be determined because this feature requires the template compiling features of PW 3.</strong>';
         }
         else {
-            $out .= '<strong>Template compiling is disabled for this template, so the variables could not be determined.</strong>';
+            $out .= '<strong>Template compiling is disabled, so the variables could not be determined.</strong>';
         }
 
         \TracyDebugger::$panelGenerationTime['variables']['time'] = \Tracy\Debugger::timer('variables');

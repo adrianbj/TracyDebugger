@@ -15,7 +15,7 @@ class ProcesswireLogsPanel implements IBarPanel {
     protected $numOther = 0;
 
     public function getTab() {
-        if(\TracyDebugger::additionalBar()) return;
+
         \Tracy\Debugger::timer('processwireLogs');
 
         // end for each section
