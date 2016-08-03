@@ -252,13 +252,15 @@ class TracyLogsPanel implements IBarPanel {
         $out = '<h1>' . $this->icon . ' Tracy Logs</h1>
 
         <div class="tracy-inner">';
-            $out .= $this->logEntries . '
-            <br />
-            <p>
-                <form method="post" action="./">
-                    <input type="submit" name="deleteTracyLogs" value="Delete Logs" />
-                </form>
-            </p>';
+            $out .= $this->logEntries . '<br />';
+            if($this->numErrors > 0 || $this->numOther > 0) {
+                $out .= '
+                <p>
+                    <form method="post" action="./">
+                        <input type="submit" name="deleteTracyLogs" value="Delete Logs" />
+                    </form>
+                </p>';
+            }
             \TracyDebugger::$panelGenerationTime['tracyLogs']['time'] = \Tracy\Debugger::timer('tracyLogs');
             \TracyDebugger::$panelGenerationTime['tracyLogs']['size'] = strlen($out);
             $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['tracyLogs']['time'], \TracyDebugger::$panelGenerationTime['tracyLogs']['size']) . '

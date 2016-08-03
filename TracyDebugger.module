@@ -206,6 +206,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             require_once __DIR__ . '/tracy-'.static::$tracyVersion.'/src/tracy.php';
             // ensure Tracy is shutdown before PW
             if(static::$tracyVersion != 'legacy') $this->addHookBefore('ProcessWire::finished', $this, 'shutdownTracy');
+            if(static::$tracyVersion != 'legacy' && $this->modules->isInstalled('SessionHandlerDB')) $this->addHookBefore('ProcessWire::finished', $this, 'shutdownTracy');
         }
         else {
             // if user not allowed then load dummy class to prevent "class not found" errors when
@@ -640,6 +641,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         unset($nonPwVars['value']);
         unset($nonPwVars['p']);
         unset($nonPwVars['ps']);
+        unset($nonPwVars['_filename']);
 
         return $nonPwVars;
 

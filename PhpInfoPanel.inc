@@ -86,7 +86,7 @@ class PhpInfoPanel implements IBarPanel {
                 #phpinfoBody a:hover {text-decoration: underline;}
                 #phpinfoBody table {border-collapse: collapse; border: 0; width: 934px; box-shadow: 1px 2px 3px #ccc;}
                 #phpinfoBody .center {text-align: center;}
-                #phpinfoBody .center table {margin: 1em auto; text-align: left;}
+                #phpinfoBody .center table {margin: 1em auto; text-align: left; width:100% !important;}
                 #phpinfoBody .center th {text-align: center !important;}
                 #phpinfoBody td, th {border: 1px solid #666; font-size: 100%; vertical-align: baseline; padding: 4px 5px;}
                 #phpinfoBody h1 {font-size: 175%;}

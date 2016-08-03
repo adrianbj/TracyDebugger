@@ -10,6 +10,16 @@ class CssPanel implements IBarPanel {
     public function getTab() {
         return '
             <style>
+
+                .tracy-panel a:link {
+                    color:#125EAE !important;
+                    background-color:transparent !important;
+                }
+                .tracy-panel a:hover {
+                    color:#FFFFFF !important;
+                    background-color:#125EAE !important;
+                }
+
                 #tracy-debug h1 {
                     max-width: calc(100vw - 40px) !important;
                     padding-right: 35px !important;
@@ -61,13 +71,17 @@ class CssPanel implements IBarPanel {
                 }
 
                 #tracy-debug table {
+                    width: initial !important;
                     margin: 0 !important;
+                    box-shadow: none !important;
                 }
 
                 #tracy-debug .tracy-panel td,
                 #tracy-debug .tracy-panel th {
-                    font: inherit !important;
-                    color: inherit !important;
+                    font-family: sans-serif !important;
+                    font-weight: normal !important;
+                    font-size: 12px !important;
+                    color: #444444 !important;
                     padding: 3px !important;
                 }
 
