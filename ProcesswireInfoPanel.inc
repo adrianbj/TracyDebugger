@@ -103,6 +103,21 @@ class ProcesswireInfoPanel implements IBarPanel {
                     <th>Path</th>
                     <td>'.wire('page')->path.'</td>
                 </tr>
+                ';
+                if(wire('page')->template->urlSegments) {
+                    $i=1;
+                    while($i <= wire('config')->maxUrlSegments) {
+                        if(wire('input')->urlSegment($i)) {
+                            $summary .= '
+                            <tr>
+                                <th>URL Segment '.$i.'</th>
+                                <td>'.wire('input')->urlSegment($i).'</td>
+                            </tr>';
+                        }
+                        $i++;
+                    }
+                }
+                $summary .= '
                 <tr>
                     <th>Template</th>
                     <td><a title="Edit Template" href="'.wire('config')->urls->admin.'setup/template/edit?id='.wire('page')->template->id.'">'.wire('page')->template->name.(wire('page')->template->label ? '</a> ('.wire('page')->template->label.')' :'').'</td>
