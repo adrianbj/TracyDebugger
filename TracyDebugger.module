@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 258,
+            'version' => 260,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -572,7 +572,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     // ensure Tracy is shutdown before PW
     // this ensures Tracy will be able to detect AJAX requests when SessionHandlerDB module is installed
-    public function shutdownTracy($event) {
+    public function shutdownTracy() {
         Debugger::shutdownHandler();
     }
 
@@ -622,7 +622,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if(wire('config')->version < 3) return false;
 
         $pwVars = array('fuel','options');
-        foreach(wire('fuel') as $key => $value) {
+        foreach(wire('config')->version >= 2.8 ? wire('fuel') : wire()->fuel as $key => $value) {
             if(!is_object($value)) continue;
             $pwVars[] = $key;
         }

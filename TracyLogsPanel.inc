@@ -11,6 +11,7 @@ class TracyLogsPanel implements IBarPanel {
     protected $icon;
     protected $iconColor;
     protected $logEntries;
+    protected $numLogEntries = 0;
     protected $numErrors = 0;
     protected $numOther = 0;
 
@@ -36,6 +37,7 @@ class TracyLogsPanel implements IBarPanel {
             $this->logEntries .= 'Tracy logs directory is not readable.';
         }
         elseif(count($logs) == 0) {
+            $this->numLogEntries = 0;
             $this->logEntries .= 'There are no logs in the Tracy logs directory.';
         }
         else {
@@ -76,7 +78,7 @@ class TracyLogsPanel implements IBarPanel {
                             $this->numOther++;
                         }
                     }
-
+                    $this->numLogEntries++;
                 }
             }
 
@@ -253,11 +255,11 @@ class TracyLogsPanel implements IBarPanel {
 
         <div class="tracy-inner">';
             $out .= $this->logEntries . '<br />';
-            if($this->numErrors > 0 || $this->numOther > 0) {
+            if($this->numLogEntries > 0) {
                 $out .= '
                 <p>
                     <form method="post" action="./">
-                        <input type="submit" name="deleteTracyLogs" value="Delete Logs" />
+                        <input type="submit" name="deleteTracyLogs" value="Delete All Logs" />
                     </form>
                 </p>';
             }
