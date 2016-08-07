@@ -52,19 +52,31 @@ class MailPanel implements IBarPanel {
                         <tr>
                             <td colspan='2'>
                                 <div style='position: relative; padding-top: 22px;'>";
-                                if($item['body']) {
+                                    if($item['body']) {
+                                        $this->entries .= "
+                                        <a href='#' rel='#text-body' style='font-size:12px !important; position: absolute; left:0; top:3px;' class='tracy-toggle tracy-collapsed'>Text</a>
+                                        <div id='text-body' class='tracy-collapsed'>".($item['body'] ? $item['body'] : "Ø")."</div>";
+                                    }
+                                    if($item['bodyHTML']) {
+                                        $this->entries .= "
+                                        <a href='#' rel='#html-body' style='font-size:12px !important; position: absolute; left:56px; top:3px;' class='tracy-toggle tracy-collapsed'>HTML</a>
+                                        <div id='html-body' class='tracy-collapsed'>".$item['bodyHTML']."</div>
+                                        <a href='#' rel='#source-body' style='font-size:12px !important; position: absolute; left:120px; top:3px;' class='tracy-toggle tracy-collapsed'>Source</a>
+                                        <div id='source-body' class='tracy-collapsed'><pre style='max-width: 800px; white-space: normal;'>".htmlentities($item['bodyHTML'])."</pre></div>";
+                                    }
                                     $this->entries .= "
-                                    <a href='#' rel='#text-body' style='font-size:12px !important; position: absolute; left:0; top:3px;' class='tracy-toggle tracy-collapsed'>Text</a>
-                                    <div id='text-body' class='tracy-collapsed'>".($item['body'] ? $item['body'] : "Ø")."</div>";
-                                }
-                                if($item['bodyHTML']) {
-                                    $this->entries .= "
-                                    <a href='#' rel='#html-body' style='font-size:12px !important; position: absolute; left:56px; top:3px;' class='tracy-toggle tracy-collapsed'>HTML</a>
-                                    <div id='html-body' class='tracy-collapsed'>".$item['bodyHTML']."</div>
-                                    <a href='#' rel='#source-body' style='font-size:12px !important; position: absolute; left:120px; top:3px;' class='tracy-toggle tracy-collapsed'>Source</a>
-                                    <div id='source-body' class='tracy-collapsed'><pre style='max-width: 800px; white-space: normal;'>".htmlentities($item['bodyHTML'])."</pre></div>";
-                                }
-                                $this->entries .= "
+                                    <a href='#' rel='#metadata' style='font-size:12px !important; position: absolute; left:190px; top:3px;' class='tracy-toggle tracy-collapsed'>Metadata</a>
+                                    <div id='metadata' class='tracy-collapsed'>
+                                        <table id='metadata-table' style='margin-bottom:15px; width:100%'>
+                                            <tbody>";
+                                                if(isset($item['header']['X-Mailer'])) $this->entries .= "<tr><td>X-Mailer</td><td>".$item['header']['X-Mailer']."</td></tr>";
+                                                foreach(array('priority' => 'Priority', 'default_charset' => 'Default Charset', 'dispositionNotification' => 'Disposition Notification', 'addSignature' => 'Add Signature', 'sendSingle' => 'Send Single', 'sendBulk' => 'Send Bulk', 'useSentLog' => 'Use Sent Log', 'wrapText' => 'Wrap Text', 'sender_signature' => 'Sender Signature', 'sender_signature_html' => 'Sender Signature HTML') as $param => $label) {
+                                                    if(isset($item[$param])) $this->entries .= "<tr><td>".$label."</td><td>".(is_bool($item[$param]) ? ($item[$param] ? 'true' : 'false') : $item[$param])."</td></tr>";
+                                                }
+                                            $this->entries .= "
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -125,7 +137,7 @@ class MailPanel implements IBarPanel {
         $styledAttachments = '';
         if(!is_array($attachments)) $attachments = array($attachments);
         foreach($attachments as $attachment) {
-            $styledAttachments .= str_replace(wire('config')->paths->root, '/', $attachment) . '<br />';
+            $styledAttachments .= '<a href="'.str_replace(wire('config')->paths->root, wire('config')->urls->root, $attachment).'">'.str_replace(wire('config')->paths->root, '/', $attachment) . '</a><br />';
         }
         return $styledAttachments;
     }

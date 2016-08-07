@@ -12,12 +12,15 @@ class CssPanel implements IBarPanel {
             <style>
 
                 .tracy-panel a:link {
-                    color:#125EAE !important;
-                    background-color:transparent !important;
+                    color: #125EAE !important;
+                    background-color: transparent !important;
+                }
+                .tracy-panel a:focus {
+                    color: #125EAE !important;
                 }
                 .tracy-panel a:hover {
-                    color:#FFFFFF !important;
-                    background-color:#125EAE !important;
+                    color: #FFFFFF !important;
+                    background-color: #125EAE !important;
                 }
 
                 #tracy-debug h1 {

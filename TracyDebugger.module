@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 260,
+            'version' => 261,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -540,7 +540,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public function interceptEmails($event) {
         $mailItem = array();
         $mailItems = wire('session')->tracyMailItems ? wire('session')->tracyMailItems : array();
-        foreach(array('subject', 'from', 'fromName', 'to', 'toName', 'cc', 'ccName', 'bcc', 'body', 'bodyHTML', 'attachments') as $param) {
+        foreach(array('subject', 'from', 'fromName', 'to', 'toName', 'cc', 'ccName', 'bcc', 'body', 'bodyHTML', 'attachments', 'header', 'priority', 'dispositionNotification', 'addSignature', 'sendSingle', 'sendBulk', 'useSentLog', 'wrapText', 'default_charset', 'sender_signature', 'sender_signature_html') as $param) {
             $mailItem[$param] = $event->object->$param;
         }
         $mailItem['timestamp'] = time();
