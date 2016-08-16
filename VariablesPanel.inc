@@ -72,7 +72,7 @@ class VariablesPanel implements IBarPanel {
         if(wire('config')->version >= 3 && wire('page')->template->compile != 0 && wire('config')->templateCompile !== false && stripos($targetData, "ileCompiler=0") === false && ((wire('page')->template->ns && wire('page')->template->ns == "ProcessWire" && wire('page')->template->compile !== 3)
          || (wire('page')->template->ns && wire('page')->template->ns != "ProcessWire"))) {
             if(count(\TracyDebugger::$templateVars) > 0) {
-                $out .= $this->sectionHeader(array('Name', 'Returns', 'Value'));
+                $out .= $this->sectionHeader(array('Name', 'Returns', 'Class', 'Value'));
                 foreach(\TracyDebugger::$templateVars as $var => $value) {
 
                     if(is_object($var) || is_array($var)) {
@@ -104,6 +104,7 @@ class VariablesPanel implements IBarPanel {
                     $out .= "\n<tr>" .
                         '<td>$'.$var.'</td>' .
                         "<td>".gettype($value)."</td>" .
+                        "<td>".(gettype($value) == "object" ? get_class($value) : "")."</td>" .
                         "<td>".$outValue."</td>" .
                         "</tr>";
                 }
