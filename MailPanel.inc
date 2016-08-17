@@ -21,7 +21,7 @@ class MailPanel implements IBarPanel {
             $this->entries .= '
             <div class="mail-items">
                 <p>
-                    <form method="post" action="./">
+                    <form method="post" action="'.$_SERVER['REQUEST_URI'].'">
                         <input type="submit" name="tracyClearMailItems" value="Clear Emails" />
                     </form>
                 </p><br />';
@@ -34,7 +34,7 @@ class MailPanel implements IBarPanel {
                 }
 
                 $this->entries .= '
-                <table id="mail-item" style="margin-bottom:15px">
+                <table id="mail-item" style="margin-bottom:15px !important; min-width:300px !important">
                     <thead>
                         <tr>
                             <th colspan="2"><strong>'.$item['subject'].'</strong></th>

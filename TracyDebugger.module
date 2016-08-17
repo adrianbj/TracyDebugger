@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 262,
+            'version' => 263,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -45,6 +45,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     protected $data = array();
+    protected $httpReferer;
     public static $templateVars = array();
     protected static $tracyVersion;
     public static $oncePanels;
@@ -171,15 +172,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         if($this->input->get->modal) return;
 
+        $this->httpReferer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : $_SERVER['REQUEST_URI'];
+
         // if PW version changed, reload to initialize new version
         if($this->input->post->tracyPwVersion && $this->input->post->tracyPwVersion != $this->config->version) {
-            $this->session->redirect('./');
+            $this->session->redirect($this->httpReferer);
         }
 
-        // if mail panel items were cleared, clear them from the session variable and remove cookie
+        // if mail panel items were cleared, clear them from the session variable
         if($this->input->post->tracyClearMailItems) {
             $this->session->tracyMailItems = null;
-            $this->session->redirect('./');
+            $this->session->redirect($this->httpReferer);
         }
 
         // if event interceptor panel items were cleared, clear them from the session variable and remove cookie
@@ -265,7 +268,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
             unset($this->data['recordedPages']);
             $this->modules->saveModuleConfigData($this->modules->get("TracyDebugger"), $this->data);
-            $this->session->redirect('./');
+            $this->session->redirect($this->httpReferer);
         }
 
         if(!is_dir($logFolder)) wireMkdir($logFolder);
@@ -298,7 +301,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         Debugger::$scream = $this->data['forceScream'] ? TRUE : FALSE;
 
 
-        if($this->page->template == "admin") {
+        if($this->inAdmin($this->page)) {
             if(in_array('backend', $this->data['showDebugBar'])) {
                 Debugger::$showBar = true;
             }
@@ -308,7 +311,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         //determine which panels to display
-        $configEnabledPanels = $this->page->template == "admin" ? $this->data['backendPanels'] : $this->data['frontendPanels'];
+        $configEnabledPanels = $this->inAdmin($this->page) ? $this->data['backendPanels'] : $this->data['frontendPanels'];
         if($this->input->cookie->tracyPanelsOnce) {
             static::$oncePanels = array_filter(explode(',', $this->input->cookie->tracyPanelsOnce));
             static::$showPanels = static::$oncePanels;
@@ -389,14 +392,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 else {
                     $this->session->logout();
                 }
-                $this->session->redirect('./');
+                $this->session->redirect($this->httpReferer);
             }
             elseif($this->input->post->endSessionUserSwitcher && $this->session->CSRF->validate()) {
                 // if end session clicked, remove session variable and config settings entry
                 $this->session->remove("tracyUserSwitcherId");
                 unset($this->data['userSwitchSession'][$this->session->tracyUserSwitcherId]);
                 $this->modules->saveModuleConfigData($this->modules->get("TracyDebugger"), $this->data);
-                $this->session->redirect('./');
+                $this->session->redirect($this->httpReferer);
             }
             elseif($this->input->post->userSwitcher && $this->session->CSRF->validate()) {
                 // if session not expired, switch to requested user
@@ -408,12 +411,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     $user = $this->session->forceLogin($this->input->post->userSwitcher);
                     $this->session->tracyUserSwitcherId = $tracyUserSwitcherId;
                 }
-                $this->session->redirect('./');
+                $this->session->redirect($this->httpReferer);
             }
         }
 
         // some front-end only rules
-        if($this->page->template != "admin") {
+        if(!$this->inAdmin($this->page)) {
             if(in_array('frontend', $this->data['showDebugBar'])) {
 
                 Debugger::$showBar = true;
@@ -457,7 +460,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         foreach(static::$showPanels as $panel) {
-            if($this->page->template == 'admin' && in_array($panel, static::$hideInAdmin)) continue;
+            if($this->inAdmin($this->page) && in_array($panel, static::$hideInAdmin)) continue;
             if(($panel == 'console' || $panel == 'templateEditor') && !$this->user->isSuperuser()) continue;
             if($panel == 'userSwitcher') {
                 if(isset($this->data['userSwitchSession'])) $userSwitchSession = $this->data['userSwitchSession'];
@@ -574,6 +577,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     // this ensures Tracy will be able to detect AJAX requests when SessionHandlerDB module is installed
     public function shutdownTracy() {
         Debugger::shutdownHandler();
+    }
+
+
+    protected function inAdmin($page) {
+        if($page->template == "admin" || (wire('config')->ajax && strpos($this->httpReferer, wire('config')->urls->admin) !== false)) {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
 
