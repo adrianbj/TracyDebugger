@@ -293,7 +293,46 @@ class ProcesswireInfoPanel implements IBarPanel {
                                     if($type === 0) break 2;
                                     if($type == 'created' || $type == 'modified' || $type == 'published') $value .= ' ('.date("Y-m-d H:i:s", $value).')';
                                     if($type == 'created_users_id' || $type == 'modified_users_id') $value .= ' ('.wire('users')->get($value)->name.')';
-                                    $fieldArray['value'][$key][$type] = is_object($value) && method_exists($value, 'getArray') ? $value->getArray() : $value;
+
+                                    if(is_object($value)) {
+                                        $outValue = method_exists($value,'getArray') ? $value->getArray() : $value;
+                                        // run getValue() on as many levels as the Max Nesting Depth config setting
+                                        for($i=0;$i<=\TracyDebugger::getDataValue('maxDepth');$i++) {
+                                            if(is_array($outValue)) {
+                                                array_walk_recursive($outValue, function (&$val) {
+                                                    $val = is_object($val) && method_exists($val,'getArray') ? $val->getArray() : $val;
+                                                });
+                                            }
+                                        }
+                                    }
+                                    else {
+                                        $outValue = $value;
+                                    }
+
+                                    if(is_array($outValue)) {
+                                        $n=0;
+                                        foreach($outValue as &$val) {
+                                            if(isset($val['created'])) $val['created'] .= ' ('.date("Y-m-d H:i:s", $val['created']).')';
+                                            if(isset($val['modified'])) $val['modified'] .= ' ('.date("Y-m-d H:i:s", $val['modified']).')';
+                                            if($value instanceof PageFiles) {
+                                                $val['name'] = $value->eq($n)->name;
+                                                $val['filename'] = $value->eq($n)->filename;
+                                                $val['ext'] = $value->eq($n)->ext;
+                                                $val['url'] = $value->eq($n)->url;
+                                                $val['httpUrl'] = $value->eq($n)->httpUrl;
+                                                $val['filesize'] = $value->eq($n)->filesize;
+                                                $val['filesizeStr'] = $value->eq($n)->filesizeStr;
+                                            }
+                                            if($value instanceof PageImages) {
+                                                $val['width'] = $value->eq($n)->width;
+                                                $val['height'] = $value->eq($n)->height;
+                                            }
+                                            $n++;
+                                        }
+                                    }
+
+                                    $fieldArray['value'][$key][$type] = $outValue;
+
                                     if($f->type instanceof FieldtypeFile) {
                                         $fieldArray['value'][$key]['name'] = $item->name;
                                         $fieldArray['value'][$key]['filename'] = $item->filename;
