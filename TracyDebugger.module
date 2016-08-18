@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 264,
+            'version' => 265,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -80,6 +80,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'customPhp' => 'Custom PHP',
         'debugMode' => 'Debug Mode',
         'diagnostics' => 'Diagnostics',
+        'dumpsRecorder' => 'Dumps Recorder',
         'eventInterceptor' => 'Event Interceptor',
         'mail' => 'Mail',
         'methodsInfo' => 'Methods Info',
@@ -190,6 +191,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $this->session->tracyEventItems = null;
             unset($this->input->cookie->tracyClearEventItems);
             setcookie("tracyClearEventItems", "", time()-3600, "/");
+        }
+
+        // if dump recorder panel items were cleared, clear them from the session variable and remove cookie
+        if($this->input->cookie->tracyClearDumpItems) {
+            $this->session->tracyDumpItems = null;
+            unset($this->input->cookie->tracyClearDumpItems);
+            setcookie("tracyClearDumpItems", "", time()-3600, "/");
         }
 
         // if user dev template enabled and required permission exists in system,
@@ -479,6 +487,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 case 'methodsInfo':
                 case 'diagnostics':
                 case 'debugMode':
+                case 'dumpsRecorder':
                 case 'users':
                 case 'userSwitcher':
                 case 'phpInfo':

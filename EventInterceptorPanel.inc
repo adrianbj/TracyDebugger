@@ -42,7 +42,7 @@ class EventInterceptorPanel implements IBarPanel {
 
         $this->icon = '
         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="248 248 16 16" enable-background="new 248 248 16 16" xml:space="preserve" width="16px" height="16px">
-            <path id="interceptorIconPath" d="M248,256c0,4.4,3.6,8,8,8c4.4,0,8-3.6,8-8s-3.6-8-8-8C251.6,248,248,251.6,248,256z M262,256
+            <path class="interceptorIconPath" d="M248,256c0,4.4,3.6,8,8,8c4.4,0,8-3.6,8-8s-3.6-8-8-8C251.6,248,248,251.6,248,256z M262,256
                 c0,1.1-0.3,2.2-0.9,3.1l-8.2-8.2c0.9-0.6,2-0.9,3.1-0.9C259.3,250,262,252.7,262,256z M250,256c0-1.1,0.3-2.2,0.9-3.1l8.2,8.2
                 c-0.9,0.6-2,0.9-3.1,0.9C252.7,262,250,259.3,250,256z" fill="'.$this->iconColor.'"/>
         </svg>
@@ -50,7 +50,7 @@ class EventInterceptorPanel implements IBarPanel {
 
         return '
         <span title="Event Interceptor">
-            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Event Interceptor' : '') . ' ' . ($this->eventCount > 0 ? $this->eventCount : '') . '
+            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Event Interceptor' : '') . ' ' . ($this->eventCount > 0 ? '<span class="eventCount">' . $this->eventCount . '</span>' : '') . '
         </span>
         ';
     }
@@ -74,7 +74,21 @@ class EventInterceptorPanel implements IBarPanel {
                 while(elements.length > 0){
                     elements[0].parentNode.removeChild(elements[0]);
                 }
-                document.getElementById("interceptorIconPath").style.fill=fillColor;
+
+                var icons = document.getElementsByClassName("interceptorIconPath");
+                i=0;
+                while(i < icons.length) {
+                    icons[i].style.fill="#009900";
+                    i++;
+                }
+
+                var iconCounts = document.getElementsByClassName("eventCount");
+                i=0;
+                while(i < iconCounts.length) {
+                    iconCounts[i].innerHTML="";
+                    i++;
+                }
+
             }
 
             function setEventInterceptorHook(reset) {
@@ -108,7 +122,7 @@ class EventInterceptorPanel implements IBarPanel {
             }
         </style>
 
-        <div class="tracy-inner tracy-DumpPanel" style="width:350px !important">
+        <div class="tracy-inner tracy-DumpPanel" style="min-width:350px !important">
 
             <fieldset>
                 <legend><span id="eventHookLegend">'.(wire('input')->cookie->eventInterceptorHook ? '<strong>' . wire('input')->cookie->eventInterceptorHook . '</strong> hook is set' : 'Enter an Event Hook') .'</span></legend><br />';

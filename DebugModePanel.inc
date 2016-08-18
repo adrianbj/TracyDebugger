@@ -241,6 +241,7 @@ class DebugModePanel implements IBarPanel {
             $sessionEntries_oc = 0;
             $sessionEntries = $this->sectionHeader(array('Key', 'Value'));
             foreach(wire('session') as $key => $value) {
+                if($key == 'tracyDumpItems' || $key == 'tracyEventItems' || $key == 'tracyMailItems') continue;
                 $sessionEntries_oc++;
                 if(is_object($value)) $value = (string) $value;
                 if(is_array($value)) $value = print_r($value, true);

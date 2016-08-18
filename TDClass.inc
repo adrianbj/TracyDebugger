@@ -1,6 +1,7 @@
 <?php
 
 use Tracy\Debugger;
+use Tracy\Dumper;
 
 class TD extends TracyDebugger {
 
@@ -36,6 +37,14 @@ class TD extends TracyDebugger {
      */
     public static function barDump($var, $title = NULL, array $options = NULL) {
         if(self::tracyUnavailable()) return false;
+        if(in_array('dumpsRecorder', static::$showPanels)) {
+            $dumpItem = array();
+            $dumpItems = wire('session')->tracyDumpItems ? wire('session')->tracyDumpItems : array();
+            $dumpItem['title'] = $title;
+            $dumpItem['dump'] = Dumper::toHtml($var, array(Dumper::COLLAPSE => true));
+            array_push($dumpItems, $dumpItem);
+            wire('session')->tracyDumpItems = $dumpItems;
+        }
         return Debugger::barDump($var, $title, $options);
     }
 
