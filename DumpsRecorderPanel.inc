@@ -47,7 +47,7 @@ class DumpsRecorderPanel implements IBarPanel {
 
         return '
         <span title="Dumps">
-            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Dumps' : '') . ' ' . ($this->dumpCount > 0 ? '<span class="dumpCount">' . $this->dumpCount . '</span>' : '') . '
+            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Dumps Recorder' : '') . ' ' . ($this->dumpCount > 0 ? '<span class="dumpCount">' . $this->dumpCount . '</span>' : '') . '
         </span>
         ';
     }
@@ -56,7 +56,7 @@ class DumpsRecorderPanel implements IBarPanel {
     public function getPanel() {
 
         $out = '
-        <h1>' . $this->icon . ' Dumps</h1>
+        <h1>' . $this->icon . ' Dumps Recorder</h1>
 
         <script>
             function clearDumps() {

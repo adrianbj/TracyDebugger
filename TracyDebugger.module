@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 265,
+            'version' => 266,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -429,16 +429,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
                 Debugger::$showBar = true;
 
-                // hook to add code to template file to grab template variables
-                if($this->config->version >= 3 && $this->config->templateCompile !== false && in_array('variables', static::$showPanels)) {
-                    $compiledFilePath = str_replace('/site/','/site/assets/cache/FileCompiler/site/', $this->page->template->filename);
-                    if(file_exists($compiledFilePath)) unlink($compiledFilePath);
-                    $this->addHookAfter('FileCompiler::compileData', $this, 'setTemplateVars');
-                }
-
                 if(in_array('validator', static::$showPanels)) {
                     $this->addHookAfter('Page::render', $this, 'getPageHtml');
                 }
+
+                $this->addHookBefore('TemplateFile::render', function($event) {
+                    $event->object->setAppendFilename($this->config->paths->siteModules.'TracyDebugger/GetTemplateVars.inc');
+                });
 
                 // if template editor changes submitted
                 if($this->input->post->tracyTemplateEditorRawCode && $this->user->isSuperuser()) {
@@ -612,36 +609,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     }
 
 
-    public function setTemplateVars($event) {
-
-        if(wire('config')->version < 3) return false;
-
-        //remove trailing whitespace and any existing closing php tag
-        //add call to populate wire("templateVars")
-        //only for filename which matches the name of the template for this page
-        if ($event['arguments'][1] == wire('page')->template->filename) {
-            $out = rtrim($event->return);
-            $pos = strrpos($out, '<?');
-            $lastPhpTag = $pos === false ? $out : substr($out, $pos + 1);
-
-            if (strpos($lastPhpTag, '?>') !== false) {
-                $closeTag = '';
-            }
-            else {
-                $closeTag = '?>';
-            }
-
-            $event->return = $out . $closeTag . "\n<?php\nif(class_exists('\TracyDebugger')) {\n\t\TracyDebugger::".'$templateVars'." = \TracyDebugger::templateVars(get_defined_vars());\n}";
-        }
-    }
-
-
     /**
      * Helper function to remove PW variables from get_defined_vars() call
      */
     public static function templateVars($vars) {
-
-        if(wire('config')->version < 3) return false;
 
         $pwVars = array('fuel','options');
         foreach(wire('config')->version >= 2.8 ? wire('fuel') : wire()->fuel as $key => $value) {
