@@ -45,7 +45,9 @@ class TD extends TracyDebugger {
             array_unshift($dumpItems, $dumpItem);
             wire('session')->tracyDumpItems = $dumpItems;
         }
-        return Debugger::barDump($var, $title, $options);
+        else {
+            return Debugger::barDump($var, $title, $options);
+        }
     }
 
     /**

@@ -1,9 +1,6 @@
 <?php
 
 $functions = get_defined_functions();
-$userFuncKeys = array_keys($functions['user']);
-\TracyDebugger::$lastInitialFunc = array_pop($userFuncKeys);
+\TracyDebugger::$initialFuncs = $functions['user'];
 
-$constants = get_defined_constants();
-$constKeys = array_keys($constants);
-\TracyDebugger::$lastInitialConst = array_pop($constKeys);
+\TracyDebugger::$initialConsts = get_defined_constants();

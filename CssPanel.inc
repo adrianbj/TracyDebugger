@@ -23,6 +23,15 @@ class CssPanel implements IBarPanel {
                     background-color: #125EAE !important;
                 }
 
+                .tracy-panel h3 {
+                    display: block !important;
+                    font-size: 1.17em !important;
+                    font-weight: bold !important;
+                    border: none !important;
+                    padding-top: 1em !important;
+                    color: #444444 !important;
+                }
+
                 #tracy-debug h1 {
                     max-width: calc(100vw - 40px) !important;
                     padding-right: 35px !important;

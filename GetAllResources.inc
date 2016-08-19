@@ -3,11 +3,10 @@
 \TracyDebugger::$templateVars = \TracyDebugger::templateVars(get_defined_vars());
 unset(\TracyDebugger::$templateVars['returnValue']);
 
-$constants = get_defined_constants();
-\TracyDebugger::$templateConsts = array_slice($constants, \TracyDebugger::$lastInitialConst-1);
+\TracyDebugger::$templateConsts = array_diff_assoc(get_defined_constants(), \TracyDebugger::$initialConsts);
 
 $functions = get_defined_functions();
-\TracyDebugger::$templateFuncs = array_slice($functions['user'], \TracyDebugger::$lastInitialFunc-1);
+\TracyDebugger::$templateFuncs = array_diff($functions['user'], \TracyDebugger::$initialFuncs);
 
 $includedFiles = get_included_files();
 foreach($includedFiles as $includedFile) {
