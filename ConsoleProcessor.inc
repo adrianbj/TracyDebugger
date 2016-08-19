@@ -37,7 +37,33 @@ if($user->isSuperuser()) {
     if(!file_put_contents($file, $code, LOCK_EX)) throw new WireException("Unable to write file: $file");
     if(wire('config')->chmodFile) chmod($file, octdec(wire('config')->chmodFile));
 
-    $t = new TemplateFile($file);
+    if($page->template != 'admin' && wire('input')->post->accessTemplateVars === "true") {
+        // make vars from the page template available to the console code
+        // get all current vars
+        $currentVars = get_defined_vars();
+        // get vars from the page's template file
+        ob_start();
+        require_once($page->template->filename);
+        $templateVars = get_defined_vars();
+        ob_end_clean();
+        // remove the current vars from the list
+        foreach($currentVars as $key => $value) {
+            unset($templateVars[$key]);
+        }
+        unset($templateVars['currentVars']);
+
+        // this needs to be here, not before the template != 'admin' conditional
+        // because it is converted to an integer during output buffering
+        $t = new TemplateFile($file);
+
+        // populate template with all $templateVars
+        foreach($templateVars as $key => $value) {
+            $t->set($key, $value);
+        }
+    }
+
+    // if in admin then $t won't have been instantiated above so do it now
+    if(!isset($t) || !$t instanceof TemplateFile) $t = new TemplateFile($file);
 
     // populate API variables ensuring $page refers to the page calling it, not this Process page
     foreach($pwVars->getArray() as $key => $value) {
