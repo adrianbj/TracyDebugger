@@ -43,7 +43,10 @@ if($user->isSuperuser()) {
         $currentVars = get_defined_vars();
         // get vars from the page's template file
         ob_start();
-        require_once($page->template->filename);
+        //require_once($page->template->filename);
+        foreach(wire('session')->tracyIncludedFiles as $key => $path) {
+            require_once($path);
+        }
         $templateVars = get_defined_vars();
         ob_end_clean();
         // remove the current vars from the list

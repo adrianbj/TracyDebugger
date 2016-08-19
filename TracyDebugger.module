@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 268,
+            'version' => 269,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -47,6 +47,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     protected $data = array();
     protected $httpReferer;
     public static $templateVars = array();
+    public static $templateConsts = array();
+    public static $lastInitialFunc = array();
+    public static $lastInitialConst = array();
+    public static $templateFuncs = array();
+    public static $includedFiles = array();
     protected static $tracyVersion;
     public static $oncePanels;
     public static $stickyPanels;
@@ -57,7 +62,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $templatePathPermission;
     public static $tempTemplateFilename;
     public static $panelGenerationTime = array();
-    public static $hideInAdmin = array('validator', 'variables', 'templatePath', 'templateEditor');
+    public static $hideInAdmin = array('validator', 'templateResources', 'templatePath', 'templateEditor');
     public static $pageHtml;
     public static $processWireInfoSections = array(
         'summary' => 'Summary',
@@ -94,12 +99,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'processwireVersion' => 'ProcessWire Version',
         'templateEditor' => 'Template Editor',
         'templatePath' => 'Template Path',
+        'templateResources' => 'Template Resources',
         'todo' => 'ToDo',
         'tracyLogs' => 'Tracy Logs',
         'userSwitcher' => 'User Switcher',
         'users' => 'Users',
-        'validator' => 'Validator',
-        'variables' => 'Variables'
+        'validator' => 'Validator'
     );
 
 
@@ -433,9 +438,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     $this->addHookAfter('Page::render', $this, 'getPageHtml');
                 }
 
-                $this->addHookBefore('TemplateFile::render', function($event) {
-                    $event->object->setAppendFilename($this->config->paths->siteModules.'TracyDebugger/GetTemplateVars.inc');
-                });
+                if(in_array('console', static::$showPanels) || in_array('templateResources', static::$showPanels)) {
+                    $this->addHookBefore('TemplateFile::render', function($event) {
+                        $event->object->setPrependFilename($this->config->paths->siteModules.'TracyDebugger/GetInitialResources.inc');
+                        $event->object->setAppendFilename($this->config->paths->siteModules.'TracyDebugger/GetAllResources.inc');
+                    });
+                }
 
                 // if template editor changes submitted
                 if($this->input->post->tracyTemplateEditorRawCode && $this->user->isSuperuser()) {
@@ -499,7 +507,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 case 'templateEditor':
                 case 'customPhp':
                 case 'pageRecorder':
-                case 'variables':
+                case 'templateResources':
                     require_once __DIR__ . '/'.$panelName.'.inc';
                     Debugger::getBar()->addPanel(new $panelName);
                     break;
@@ -634,6 +642,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         unset($nonPwVars['p']);
         unset($nonPwVars['ps']);
         unset($nonPwVars['_filename']);
+        unset($nonPwVars['functions']);
+        unset($nonPwVars['userFuncKeys']);
+        unset($nonPwVars['constants']);
+        unset($nonPwVars['constKeys']);
 
         return $nonPwVars;
 
@@ -1000,7 +1012,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $fieldset->add($f);
 
         $fieldset = wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("Variables Panel Options");
+        $fieldset->label = __("Template Resources Panel Options");
         $wrapper->add($fieldset);
 
         $f = wire('modules')->get("InputfieldCheckbox");
