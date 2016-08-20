@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 270,
+            'version' => 271,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -441,9 +441,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 }
 
                 if(in_array('console', static::$showPanels) || in_array('templateResources', static::$showPanels)) {
+                    $functions = get_defined_functions();
+                    \TracyDebugger::$initialFuncs = $functions['user'];
+                    \TracyDebugger::$initialConsts = get_defined_constants();
                     $this->addHookBefore('TemplateFile::render', function($event) {
-                        $event->object->setPrependFilename($this->config->paths->siteModules.'TracyDebugger/GetInitialResources.inc');
-                        $event->object->setAppendFilename($this->config->paths->siteModules.'TracyDebugger/GetAllResources.inc');
+                        $event->object->setAppendFilename($this->config->paths->siteModules.'TracyDebugger/GetTemplateResources.inc');
                     });
                 }
 
@@ -645,9 +647,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         unset($nonPwVars['ps']);
         unset($nonPwVars['_filename']);
         unset($nonPwVars['functions']);
-        unset($nonPwVars['userFuncKeys']);
-        unset($nonPwVars['constants']);
-        unset($nonPwVars['constKeys']);
 
         return $nonPwVars;
 
