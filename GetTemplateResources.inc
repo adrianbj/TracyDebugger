@@ -8,13 +8,14 @@ unset(\TracyDebugger::$templateVars['returnValue']);
 $functions = get_defined_functions();
 \TracyDebugger::$templateFuncs = array_diff($functions['user'], \TracyDebugger::$initialFuncs);
 
-$includedFiles = get_included_files();
-foreach($includedFiles as $includedFile) {
+$includedFiles = array();
+foreach(get_included_files() as $includedFile) {
 	if(strpos($includedFile, $this->wire('config')->paths->site) !== false &&
 		strpos($includedFile, '/site/modules/') === false &&
 		strpos($includedFile, 'config.php') === false) {
-		\TracyDebugger::$includedFiles[] = $includedFile;
+		if(!in_array($includedFile, $includedFiles)) $includedFiles[] = $includedFile;
 	}
 }
+\TracyDebugger::$includedFiles = $includedFiles;
 // store in session for use by console panel
 $this->wire('session')->tracyIncludedFiles = \TracyDebugger::$includedFiles;
