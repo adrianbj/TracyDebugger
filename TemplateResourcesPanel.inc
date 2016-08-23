@@ -92,6 +92,55 @@ class TemplateResourcesPanel implements IBarPanel {
     }
 
 
+    protected function get_defined_functions_in_file($file) {
+        $source = file_get_contents($file);
+        $tokens = token_get_all($source);
+
+        $functions = array();
+        $nextStringIsFunc = false;
+        $inClass = false;
+        $bracesCount = 0;
+
+        foreach($tokens as $token) {
+            switch($token[0]) {
+                case T_CLASS:
+                    $inClass = true;
+                    break;
+                case T_FUNCTION:
+                    if(!$inClass) $nextStringIsFunc = true;
+                    break;
+
+                case T_STRING:
+                    if($nextStringIsFunc) {
+                        $nextStringIsFunc = false;
+                        $functions[$token[1]]['file'] = $file;
+                        $functions[$token[1]]['line'] = $token[2];
+                    }
+                    break;
+
+                // Anonymous functions
+                case '(':
+                case ';':
+                    $nextStringIsFunc = false;
+                    break;
+
+                // Exclude Classes
+                case '{':
+                    if($inClass) $bracesCount++;
+                    break;
+
+                case '}':
+                    if($inClass) {
+                        $bracesCount--;
+                        if($bracesCount === 0) $inClass = false;
+                    }
+                    break;
+            }
+        }
+        return $functions;
+    }
+
+
     public function getPanel() {
 
         // panel title
@@ -125,15 +174,55 @@ class TemplateResourcesPanel implements IBarPanel {
             $out .= 'There are no defined template constants.';
         }
 
+        // Included Files
+        $functions = array();
+        $includedFilesOut = '<h3>Included Files</h3>';
+        if(count(\TracyDebugger::$includedFiles) > 0) {
+            $includedFilesOut .= $this->sectionHeader(array('Path'));
+            foreach(\TracyDebugger::$includedFiles as $key => $path) {
+                $path = str_replace(wire('config')->paths->cache . 'FileCompiler/', wire('config')->paths->root, $path);
+                $functions[] = $this->get_defined_functions_in_file($path);
+                $fileEditorPath = str_replace('%file', $path, str_replace('%line', '1', \TracyDebugger::getDataValue('editor')));
+                if(\TracyDebugger::getDataValue('localRootPath') != '') $fileEditorPath = str_replace(wire('config')->paths->root, \TracyDebugger::getDataValue('localRootPath'), $fileEditorPath);
+
+                $includedFilesOut .= "\n<tr>" .
+                    '<td><a title="Edit File" href="'.$fileEditorPath.'">'.str_replace(wire('config')->paths->root, '/', $path).'</a></td>' .
+                    "</tr>";
+            }
+            $includedFilesOut .= $this->sectionEnd;
+        }
+        else {
+            $includedFilesOut .= 'There are no included files.';
+        }
+
         // Functions
         $out .= '<h3>Functions</h3>';
         if(count(\TracyDebugger::$templateFuncs) > 0) {
-            $out .= $this->sectionHeader(array('Name'));
+            $out .= $this->sectionHeader(array('Name', 'File', 'Line'));
+            $funcNames = array();
+            foreach($functions as $func) {
+                foreach($func as $name => $details) {
+                    $funcNames[] = strtolower($name);
+                    if(in_array(strtolower($name), array_map('strtolower', array_values(\TracyDebugger::$templateFuncs)))) {
+                        if(isset($details['file'])) {
+                            $path = str_replace(wire('config')->paths->cache . 'FileCompiler/', wire('config')->paths->root, $details['file']);
+                            $fileEditorPath = str_replace('%file', $path, str_replace('%line', $details['line'], \TracyDebugger::getDataValue('editor')));
+                            if(\TracyDebugger::getDataValue('localRootPath') != '') $fileEditorPath = str_replace(wire('config')->paths->root, \TracyDebugger::getDataValue('localRootPath'), $fileEditorPath);
+                            $out .= "\n<tr>" .
+                                '<td><a href="'.$fileEditorPath.'">'.$name.'</a></td>' .
+                                '<td>'.str_replace(wire('config')->paths->root, '/', $path).'</td>' .
+                                '<td>'.$details['line'].'</td>' .
+                                "</tr>";
+                        }
+                    }
+                }
+            }
             foreach(\TracyDebugger::$templateFuncs as $key => $name) {
-
-                $out .= "\n<tr>" .
-                    '<td>'.$name.'</td>' .
-                    "</tr>";
+                if(!in_array($name, $funcNames)) {
+                    $out .= "\n<tr>" .
+                        '<td>'.$name.'</td>' .
+                        "</tr>";
+                }
             }
             $out .= $this->sectionEnd;
         }
@@ -141,24 +230,7 @@ class TemplateResourcesPanel implements IBarPanel {
             $out .= 'There are no defined template file functions.';
         }
 
-        // Included Files
-        $out .= '<h3>Included Files</h3>';
-        if(count(\TracyDebugger::$includedFiles) > 0) {
-            $out .= $this->sectionHeader(array('Path'));
-            foreach(\TracyDebugger::$includedFiles as $key => $path) {
-                $path = str_replace(wire('config')->paths->cache . 'FileCompiler/', wire('config')->paths->root, $path);
-                $fileEditorPath = str_replace('%file', $path, str_replace('%line', '1', \TracyDebugger::getDataValue('editor')));
-                if(\TracyDebugger::getDataValue('localRootPath') != '') $fileEditorPath = str_replace(wire('config')->paths->root, \TracyDebugger::getDataValue('localRootPath'), $fileEditorPath);
-
-                $out .= "\n<tr>" .
-                    '<td><a title="Edit File" href="'.$fileEditorPath.'">'.str_replace(wire('config')->paths->root, '/', $path).'</a></td>' .
-                    "</tr>";
-            }
-            $out .= $this->sectionEnd;
-        }
-        else {
-            $out .= 'There are no included files.';
-        }
+        $out .= $includedFilesOut;
 
         \TracyDebugger::$panelGenerationTime['templateResources']['time'] = \Tracy\Debugger::timer('templateResources');
         \TracyDebugger::$panelGenerationTime['templateResources']['size'] = strlen($out);

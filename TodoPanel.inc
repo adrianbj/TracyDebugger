@@ -79,7 +79,7 @@ class TodoPanel implements IBarPanel {
         ';
         return '
         <span title="Console">
-            ' . $this->icon .   (\TracyDebugger::getDataValue('showPanelLabels') ? 'Todo' : '') . ' ' . $thisPageNumEntries . '/' . $numEntries . '
+            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Todo' : '') . ' ' . $thisPageNumEntries . '/' . $numEntries . '
         </span>
         ';
     }
