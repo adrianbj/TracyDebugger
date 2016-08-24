@@ -21,7 +21,7 @@ class DumpsRecorderPanel implements IBarPanel {
             $this->iconColor = '#CD1818';
             $this->entries .= '
             <div class="dump-items">
-                <p><label><input type="checkbox" id="preserveDumps" ' . (wire('input')->cookie('tracyPreserveDumpItems') ? 'checked="checked"' : '') . ' /> Preserve Dumps<label> <span style="float:right"><input type="submit" onclick="clearDumps()" value="Clear Dumps" /></span></p>';
+                <div><span style="display:inline-block;float:left"><label><input type="checkbox" id="preserveDumps" ' . (wire('input')->cookie('tracyPreserveDumpItems') ? 'checked="checked"' : '') . ' /> Preserve Dumps<label></span><span style="display:inline-block;float:right"><input type="submit" onclick="clearDumps()" value="Clear Dumps" /></span></div><div style="clear:both; margin-bottom:5px"></div>';
             foreach ($items as $item) {
                 if ($item['title'] != '') {
                     $this->entries .= '<h2>' . $item['title'] . '</h2>';
