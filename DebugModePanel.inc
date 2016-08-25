@@ -261,9 +261,9 @@ class DebugModePanel implements IBarPanel {
                 $modulesNumLoaded++;
                 $info = wire('modules')->getModuleInfo($module, array('verbose' => false));
                 $modulesLoaded .= "<tr>";
-                $modulesLoaded .= "<td>$info[name]</td>";
-                $modulesLoaded .= "<td>$info[version]</td>";
-                $modulesLoaded .= "<td>$info[title]</td>";
+                $modulesLoaded .= "<td><a href='".wire('config')->urls->admin."module/edit?name=".$info['name']."'>".$info['name']."</a></td>";
+                $modulesLoaded .= "<td>".$info['version']."</td>";
+                $modulesLoaded .= "<td>".$info['title']."</td>";
                 $modulesLoaded .= "</tr>";
             }
             $modulesLoaded .= $sectionEnd;

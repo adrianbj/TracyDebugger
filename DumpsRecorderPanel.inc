@@ -17,11 +17,11 @@ class DumpsRecorderPanel implements IBarPanel {
 
         $items = wire('session')->tracyDumpItems;
         $this->dumpCount = count($items);
+        $this->entries .= '<div><span style="display:inline-block;float:left"><label><input type="checkbox" id="preserveDumps" ' . (wire('input')->cookie->tracyPreserveDumpItems ? 'checked="checked"' : '') . ' /> Preserve Dumps<label></span><span style="display:inline-block;float:right"><input type="submit" onclick="clearDumps()" value="Clear Dumps" /></span></div><div style="clear:both; margin-bottom:5px"></div>';
         if ($this->dumpCount > 0) {
             $this->iconColor = '#CD1818';
             $this->entries .= '
-            <div class="dump-items">
-                <div><span style="display:inline-block;float:left"><label><input type="checkbox" id="preserveDumps" ' . (wire('input')->cookie('tracyPreserveDumpItems') ? 'checked="checked"' : '') . ' /> Preserve Dumps<label></span><span style="display:inline-block;float:right"><input type="submit" onclick="clearDumps()" value="Clear Dumps" /></span></div><div style="clear:both; margin-bottom:5px"></div>';
+            <div class="dump-items">';
             foreach ($items as $item) {
                 if ($item['title'] != '') {
                     $this->entries .= '<h2>' . $item['title'] . '</h2>';
@@ -49,7 +49,7 @@ class DumpsRecorderPanel implements IBarPanel {
 
         return '
         <script>
-            preserveDumps = ' . (wire('input')->cookie('tracyPreserveDumpItems') ? 'true' : 'false') . ';
+            preserveDumps = ' . (wire('input')->cookie->tracyPreserveDumpItems ? 'true' : 'false') . ';
             window.addEventListener("beforeunload", function (e) {
                 if(!preserveDumps) {
                     document.cookie = "tracyClearDumpItems=true;expires=0;path=/";

@@ -81,7 +81,7 @@ class TemplateResourcesPanel implements IBarPanel {
             }
 
             // if it's an object or multidimensional array, then collapse it
-            $outValue = Dumper::toHtml($outValue, array(Dumper::COLLAPSE => (count($outValue) !== count($outValue, COUNT_RECURSIVE) || is_object($outValue) ? true : false)));
+            $outValue = Dumper::toHtml($outValue, array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => (count($outValue) !== count($outValue, COUNT_RECURSIVE) || is_object($outValue) ? true : false)));
             $out .= "\n<tr>" .
                 '<td>'.($type == 'var' ? '$' : '').$var.'</td>' .
                 "<td>".gettype($value)."</td>" .

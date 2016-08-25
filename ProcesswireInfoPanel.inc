@@ -377,16 +377,16 @@ class ProcesswireInfoPanel implements IBarPanel {
                                 $fieldArray['value'][$key] = $item;
                             }
                         }
-                        if(isset($fieldArray['value'])) $value = Dumper::toHtml($fieldArray['value'], array(Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
+                        if(isset($fieldArray['value'])) $value = Dumper::toHtml($fieldArray['value'], array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
                     }
                     elseif(is_array(wire('page')->$f)) {
-                        $value = Dumper::toHtml(wire('page')->$f, array(Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
+                        $value = Dumper::toHtml(wire('page')->$f, array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
                     }
                     else {
                         $value = wire('page')->$f;
                     }
                     $fieldArray['settings'] = $f->getArray();
-                    $settings = Dumper::toHtml($fieldArray['settings'], array(Dumper::COLLAPSE => true));
+                    $settings = Dumper::toHtml($fieldArray['settings'], array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
 
                     $fieldsListValues .= "\n<tr>" .
                         "<td>$f->id</td>" .
@@ -403,9 +403,9 @@ class ProcesswireInfoPanel implements IBarPanel {
             }
 
             //Objects
-            $pageObject = Dumper::toHtml(wire('page'), array(Dumper::COLLAPSE => false));
-            $templateObject = Dumper::toHtml(wire('page')->template, array(Dumper::COLLAPSE => false));
-            $fieldsObject = Dumper::toHtml(wire('page')->fields, array(Dumper::COLLAPSE => false));
+            $pageObject = Dumper::toHtml(wire('page'), array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false));
+            $templateObject = Dumper::toHtml(wire('page')->template, array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false));
+            $fieldsObject = Dumper::toHtml(wire('page')->fields, array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false));
 
         }
 
