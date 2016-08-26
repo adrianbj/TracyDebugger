@@ -37,14 +37,14 @@ class TD extends TracyDebugger {
      */
     public static function barDump($var, $title = NULL, array $options = NULL) {
         if(self::tracyUnavailable()) return false;
+        $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
+        $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
+        $options[Dumper::LOCATION] = Debugger::$showLocation;
+        $options[Dumper::COLLAPSE] = true;
         if(in_array('dumpsRecorder', static::$showPanels)) {
             $dumpItem = array();
             $dumpItems = wire('session')->tracyDumpItems ? wire('session')->tracyDumpItems : array();
             $dumpItem['title'] = $title;
-            $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
-            $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
-            $options[Dumper::LOCATION] = Debugger::$showLocation;
-            $options[Dumper::COLLAPSE] = true;
             $dumpItem['dump'] = Dumper::toHtml($var, $options);
             array_unshift($dumpItems, $dumpItem);
             wire('session')->tracyDumpItems = $dumpItems;
