@@ -41,7 +41,11 @@ class TD extends TracyDebugger {
             $dumpItem = array();
             $dumpItems = wire('session')->tracyDumpItems ? wire('session')->tracyDumpItems : array();
             $dumpItem['title'] = $title;
-            $dumpItem['dump'] = Dumper::toHtml($var, array(Dumper::LOCATION => Debugger::$showLocation, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
+            $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
+            $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
+            $options[Dumper::LOCATION] = Debugger::$showLocation;
+            $options[Dumper::COLLAPSE] = true;
+            $dumpItem['dump'] = Dumper::toHtml($var, $options);
             array_unshift($dumpItems, $dumpItem);
             wire('session')->tracyDumpItems = $dumpItems;
         }

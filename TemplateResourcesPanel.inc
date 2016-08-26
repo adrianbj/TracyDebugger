@@ -55,7 +55,9 @@ class TemplateResourcesPanel implements IBarPanel {
         $headings = array('Name', 'Returns', 'Class', 'Value');
         if($type == 'var') $headings[] = 'Files/Lines';
         $out = $this->sectionHeader($headings);
+
         foreach($vars as $var => $value) {
+            $currentVarCount = 0;
 
             if(is_object($var) || is_array($var)) {
                 $varArray = array();
@@ -82,33 +84,35 @@ class TemplateResourcesPanel implements IBarPanel {
 
             // if it's an object or multidimensional array, then collapse it
             $outValue = Dumper::toHtml($outValue, array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => (count($outValue) !== count($outValue, COUNT_RECURSIVE) || is_object($outValue) ? true : false)));
+            if(isset($this->variables['$'.$var])) {
+                $fileLines = array();
+                $currentVar = null;
+                $varOut = "<td>";
+                $i=1;
+                foreach($this->variables['$'.$var] as $item) {
+                    $path = str_replace(wire('config')->paths->cache . 'FileCompiler/', wire('config')->paths->root, $item['file']);
+                    $fileEditorPath = str_replace('%file', $path, str_replace('%line', $item['line'], \TracyDebugger::getDataValue('editor')));
+                    if(\TracyDebugger::getDataValue('localRootPath') != '') $fileEditorPath = str_replace(wire('config')->paths->root, \TracyDebugger::getDataValue('localRootPath'), $fileEditorPath);
+                    $fileLines[$var][str_replace(wire('config')->paths->root, '/', $path)]['lines'][] = '<a href="'.$fileEditorPath.'">' . $item['line'] . '</a>';
+                    $i++;
+                }
+                $currentFile = null;
+                foreach($fileLines[$var] as $file => $details) {
+                    if($currentVar == $var && $currentFile != $item['file']) $varOut .= '<br />';
+                    $varOut .= $file . ': ';
+                    $varOut .= implode(', ', $details['lines']);
+                    $currentVar = $var;
+                    $currentFile = $file;
+                    $currentVarCount = $currentVarCount + count($details['lines']);
+                }
+                $varOut .= "</td>";
+            }
             $out .= "\n<tr>" .
-                '<td>'.($type == 'var' ? '$' : '').$var.'</td>' .
+                '<td'.($currentVarCount == 1 ? ' style="background:#FF9933"' : '').'>'.($type == 'var' ? '$' : '').$var.'</td>' .
                 "<td>".gettype($value)."</td>" .
                 "<td>".(gettype($value) == "object" ? get_class($value) : "")."</td>" .
                 "<td>".$outValue."</td>";
-                if(isset($this->variables['$'.$var])) {
-                    $fileLines = array();
-                    $currentVar = null;
-                    $out .= "<td>";
-                    $i=1;
-                    foreach($this->variables['$'.$var] as $item) {
-                        $path = str_replace(wire('config')->paths->cache . 'FileCompiler/', wire('config')->paths->root, $item['file']);
-                        $fileEditorPath = str_replace('%file', $path, str_replace('%line', $item['line'], \TracyDebugger::getDataValue('editor')));
-                        if(\TracyDebugger::getDataValue('localRootPath') != '') $fileEditorPath = str_replace(wire('config')->paths->root, \TracyDebugger::getDataValue('localRootPath'), $fileEditorPath);
-                        $fileLines[$var][str_replace(wire('config')->paths->root, '/', $path)]['lines'][] = '<a href="'.$fileEditorPath.'">' . $item['line'] . '</a>';
-                        $i++;
-                    }
-                    $currentFile = null;
-                    foreach($fileLines[$var] as $file => $details) {
-                        if($currentVar == $var && $currentFile != $item['file']) $out .= '<br />';
-                        $out .= $file . ': ';
-                        $out .= implode(', ', $details['lines']);
-                        $currentVar = $var;
-                        $currentFile = $file;
-                    }
-                    $out .= "</td>";
-                }
+                if(isset($varOut)) $out .= $varOut;
                 $out .= "</tr>";
         }
         $out .= $this->sectionEnd;
@@ -190,8 +194,7 @@ class TemplateResourcesPanel implements IBarPanel {
             Template Resources
         </h1>
         <div class="tracy-inner">
-            <p>These are all the non-PW resources that are available in the template for this page.</p>
-            <p>If you are looking for the fields and their values for this page, look in the ProcessWire Info panel under "Fields List & Values"</p>
+            <p>These are all the non-PW resources that are available in the template for this page. If you are looking for the fields and their values for this page, look in the ProcessWire Info panel under "Fields List & Values"</p>
             ';
 
         // Included Files
