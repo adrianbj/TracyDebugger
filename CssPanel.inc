@@ -67,15 +67,18 @@ class CssPanel implements IBarPanel {
                 }
 
                 #tracy-debug select {
-                    height: 26px !important;
+                    height: 18px !important;
                     width: initial !important;
-                    border-radius: 0 !important;
+                    border-radius: 5px !important;
                     margin: 0 !important;
                     display: inline-block !important;
+                    padding: 3px 3px 3px 10px !important;
                 }
 
                 #tracy-debug label {
                     margin:0 !important;
+                    font-size: 12px !important;
+                    color: #444444 !important;
                 }
 
                 #tracy-debug a {

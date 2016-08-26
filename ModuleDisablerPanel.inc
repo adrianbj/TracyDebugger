@@ -110,7 +110,7 @@ class ModuleDisablerPanel implements IBarPanel {
         $out .= '<h1>'.$this->icon.' Module Disabler</h1>
         <div class="tracy-inner">
             <fieldset>';
-                if(count(\TracyDebugger::$disabableModules) > 0 && wire('config')->advanced) {
+                if(count(\TracyDebugger::$disabableModules) > 0 && wire('config')->advanced && wire('config')->debug) {
                     $out .= '<legend>Temporarily disable autoload modules. <strong>Check to disable!</strong></legend><br />';
                     $out .= '<label><input type="checkbox" onchange="toggleAllModules(this)" ' . (count($this->disabledModules) == count(\TracyDebugger::$disabableModules) ? 'checked="checked"' : '') . ' /> Toggle All</label><br />';
                     foreach(\TracyDebugger::$disabableModules as $name) {
@@ -126,8 +126,8 @@ class ModuleDisablerPanel implements IBarPanel {
                     <input type="submit" onclick="resetTracyModules()" value="Reset" />';
                 }
                 else {
-                    if(!wire('config')->advanced) {
-                        $out .= '<legend>This panel only works if ProcessWire\'s Advanced Mode is turned on: $config->advanced = true;</legend>';
+                    if(!wire('config')->advanced || !wire('config')->debug) {
+                        $out .= '<legend>This panel only works if ProcessWire\'s Advanced and Debug modes are turned on:<br />$config->debug = true;<br />$config->advanced = true;</legend>';
                     }
                     else {
                         $out .= '<legend>There are no modules installed that can be disabled.</legend>';

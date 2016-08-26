@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 276,
+            'version' => 277,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -140,6 +140,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "todoScanModules" => null,
                 "todoAllowedExtensions" => 'php, module, inc, txt, latte, html, htm, md, css, scss, less, js',
                 "variablesShowPwObjects" => null,
+                "alwaysShowDebugTools" => 1,
                 "respectConfigDebugTools" => 1,
                 "userDevTemplate" => null,
                 "userDevTemplateSuffix" => 'dev',
@@ -345,13 +346,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // Modules Disabler
         // disable autoload modules if requested
-        if(in_array('moduleDisabler', static::$showPanels)) {
+        if(in_array('moduleDisabler', static::$showPanels) && wire('config')->debug && wire('config')->advanced) {
             foreach($this->modules as $name => $label) {
                 $flags = $this->modules->getFlags($name);
                 $info = $this->modules->getModuleInfoVerbose($name);
                 if($info['core']) continue;
                 if($name == 'TracyDebugger') continue;
-                if((wire('config')->debug && ($flags & Modules::flagsAutoload)) || ($flags & Modules::flagsDisabled)) {
+                if(($flags & Modules::flagsAutoload) || ($flags & Modules::flagsDisabled)) {
                     static::$disabableModules[] = $name;
                 }
             }
@@ -1070,9 +1071,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $wrapper->add($fieldset);
 
         $f = wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'alwaysShowDebugTools');
+        $f->label = __('Show debug mode tools even if $config->debug = false.', __FILE__);
+        $f->description = __('If checked, the debug tools will be displayed regardless of whether debug mode is enabled.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['alwaysShowDebugTools'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $f = wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'respectConfigDebugTools');
         $f->label = __('Respect the PW $config->debugTools config option.', __FILE__);
         $f->description = __('If unchecked, all debug tools will be displayed regardless of your config setting.', __FILE__);
+        $f->columnWidth = 50;
         $f->attr('checked', $data['respectConfigDebugTools'] == '1' ? 'checked' : '' );
         $fieldset->add($f);
 
