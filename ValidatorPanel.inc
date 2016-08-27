@@ -35,6 +35,7 @@ class ValidatorPanel implements IBarPanel {
         $http = new WireHttpTracy();
         //
         $http->setHeader('content-type', 'text/html; charset=utf-8');
+        $http->setUserAgent('ProcessWireTracyDebugger');
         $this->rawResult = $http->post($this->validatorUrl, \TracyDebugger::$pageHtml);
         $this->rawResult = mb_convert_encoding($this->rawResult, 'HTML-ENTITIES', "UTF-8");
 

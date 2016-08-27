@@ -47,6 +47,14 @@ class WireHttpTracy extends Wire {
 	protected $headers = array();
 
 	/**
+	 * User Agent to include in the request
+	 *
+	 * @var string
+	 *
+	 */
+	protected $userAgent;
+
+	/**
 	 * HTTP error codes
 	 *
 	 * @var array
@@ -326,6 +334,18 @@ class WireHttpTracy extends Wire {
 	}
 
 	/**
+	 * Set a User Agent to send
+	 *
+	 * @param string $value UserAgent value
+	 * @return $this
+	 *
+	 */
+	public function setUserAgent($value) {
+		$this->userAgent = $value;
+		return $this;
+	}
+
+	/**
 	 * Set an array of data, removes any existing data
 	 *
 	 * @param array $data Associative array of data
@@ -421,9 +441,10 @@ class WireHttpTracy extends Wire {
 				'timeout' => $this->getTimeout(),
 				'content' => $content,
 				'header' => $header,
-				'user_agent' => 'PWTracyDebugger',
 				)
 			);
+
+		if($this->userAgent) $options['http']['user_agent'] = $this->userAgent;
 
 		set_error_handler(array($this, '_errorHandler'));
 		$context = stream_context_create($options);
@@ -480,6 +501,8 @@ class WireHttpTracy extends Wire {
 		if(isset($options['http']) && isset($options['http']['proxy']) && !is_null($options['http']['proxy'])) {
 			curl_setopt($curl, CURLOPT_PROXY, $options['http']['proxy']);
 		}
+
+		if($this->userAgent) curl_setopt($curl, CURLOPT_USERAGENT, $this->userAgent);
 
 		$result = curl_exec($curl);
 		if($result) $this->httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
@@ -540,6 +563,8 @@ class WireHttpTracy extends Wire {
 		foreach($this->headers as $key => $value) {
 			$request .= "$key: $value\r\n";
 		}
+
+		if($this->userAgent) $request .= "User-Agent: $this->userAgent\r\n";
 
 		$response = '';
 		$errno = '';
