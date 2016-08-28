@@ -28,14 +28,10 @@ class ValidatorPanel implements IBarPanel {
         $this->validationUrl = $this->validatorUrl . "?doc=".wire('page')->httpUrl."&out=html&showimagereport=yes&showsource=yes";
 
         // get results from validator and convert any entities to UTF-8
-        // TODO - remove this require_once, delete the wireHttp.inc file and instiate the standard wireHttp() class
-        // once https://github.com/ryancramerdesign/ProcessWire/issues/1996 has been fixed.
-        // user_agent is required because of this commit: https://github.com/validator/validator/commit/a6afb4f34402bce421df5102de313ec76295a55f#diff-5f739a043bdc345584b06cb39a7679aaR259
-        require_once __DIR__ . '/wireHttpTracy.inc';
-        $http = new WireHttpTracy();
-        //
-        $http->setHeader('content-type', 'text/html; charset=utf-8');
-        $http->setUserAgent('ProcessWireTracyDebugger');
+        $http = new WireHttp();
+        $http->setHeader('Content-Type', 'text/html; charset=utf-8');
+        $http->setHeader('User-Agent', 'ProcessWireTracyDebugger');
+
         $this->rawResult = $http->post($this->validatorUrl, \TracyDebugger::$pageHtml);
         $this->rawResult = mb_convert_encoding($this->rawResult, 'HTML-ENTITIES', "UTF-8");
 
