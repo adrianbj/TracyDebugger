@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 282,
+            'version' => 283,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -46,6 +46,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     protected $data = array();
     protected $httpReferer;
+    protected $tracyEnabled = false;
     public static $templateVars = array();
     public static $templateConsts = array();
     public static $initialFuncs = array();
@@ -177,7 +178,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public function init() {
 
-        if($this->input->get->modal) return;
+        if($this->input->get->modal == 'inline') return;
 
         $this->httpReferer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : $_SERVER['REQUEST_URI'];
 
@@ -482,13 +483,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
 
+        $this->tracyEnabled = true;
+
     }
 
 
     public function ready() {
 
-        // exit if enabled unchecked, or user not allowed
-        if(!$this->data['enabled'] || !$this->allowedTracyUsers()) return;
+        // exit if enabled not true from init()
+        if(!$this->tracyEnabled) return;
 
         // if user dev template enabled and required permission exists in system,
         // check if current user has a matching permission for the current page's template
