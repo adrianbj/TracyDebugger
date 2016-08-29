@@ -103,13 +103,20 @@ class TemplatePathPanel implements IBarPanel {
             }
 
             function removeCurrentTemplateFromCookie(existingCookie) {
-                var templateArr = existingCookie.split(",");
-                for (var i = 0; i < templateArr.length; i++) {
-                    if(templateArr[i].indexOf("'.wire("page")->template->name.'") > -1) {
-                        templateArr.splice(i, 1);
+                if(existingCookie) {
+                    var templateArr = existingCookie.split(",");
+                    for (var i = 0; i < templateArr.length; i++) {
+                        if(templateArr[i].indexOf("'.wire("page")->template->name.'") > -1) {
+                            templateArr.splice(i, 1);
+                        }
                     }
+                    if(templateArr.length > 0)
+                        return templateArr.join(",");
+                        return "";
                 }
-                return templateArr.join(",");
+                else {
+                    return "";
+                }
             }
 
             function resetAllTemplatePaths() {

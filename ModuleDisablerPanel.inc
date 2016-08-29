@@ -116,8 +116,8 @@ class ModuleDisablerPanel implements IBarPanel {
                     foreach(\TracyDebugger::$disabableModules as $name) {
                         $flags = wire('modules')->getFlags($name);
                         $out .= '
-                            <label style="width: 280px !important; white-space: nowrap;'.(wire('page')->template == 'admin' && in_array($name, \TracyDebugger::$hideInAdmin) ? ' visibility:hidden;position: absolute; left: -999em;' : '').'">
-                                <input type="checkbox" name="selectedModules[]" ' . ($name == 'Moduleselector' ? 'disabled="disabled"' : '') . ' value="'.$name.'" ' . (in_array($name, $this->disabledModules) || ($flags & Modules::flagsDisabled) ? 'checked="checked"' : '') . ' />
+                            <label style="width: 280px !important; white-space: nowrap;">
+                                <input type="checkbox" name="selectedModules[]" value="'.$name.'" ' . (in_array($name, $this->disabledModules) || ($flags & Modules::flagsDisabled) ? 'checked="checked"' : '') . ' />
                                 <a href="'.wire('config')->urls->admin.'module/edit?name='.$name.'">' . $name . '</a>
                             </label>';
                     }
