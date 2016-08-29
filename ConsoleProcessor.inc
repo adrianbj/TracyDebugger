@@ -45,7 +45,7 @@ if($user->isSuperuser()) {
         ob_start();
         //require_once($page->template->filename);
         foreach(wire('session')->tracyIncludedFiles as $key => $path) {
-            require_once($path);
+            if($path != wire('config')->paths->cache . 'TracyDebugger/consoleCode.php') require_once($path);
         }
         $templateVars = get_defined_vars();
         ob_end_clean();
