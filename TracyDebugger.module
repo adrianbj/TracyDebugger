@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 281,
+            'version' => 282,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -175,10 +175,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     /**
      * Initialize the module and setup hooks
      */
-    public function init() {}
-
-
-    public function ready() {
+    public function init() {
 
         if($this->input->get->modal) return;
 
@@ -189,15 +186,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $this->session->redirect($this->httpReferer);
         }
 
-        // if user dev template enabled and required permission exists in system,
-        // check if current user has a matching permission for the current page's template
-        if($this->user->isLoggedin() && $this->data['userDevTemplate'] && $this->permissions->get("template-".$this->data['userDevTemplateSuffix'])->id) {
-            $devTemplateFilename = str_replace('.php', '-'.$this->data['userDevTemplateSuffix'].'.php', $this->page->template->filename);
-            if(file_exists($devTemplateFilename) && $this->user->hasPermission("template-".$this->data['userDevTemplateSuffix'])) {
-                $this->page->template->filename = static::$templatePath = static::$templatePathPermission = $devTemplateFilename;
+        // trash recorded pages if requested
+        if($this->input->post->trashRecordedPages) {
+            foreach($this->data['recordedPages'] as $pid) {
+                $this->pages->trash($this->pages->get($pid));
             }
+            unset($this->data['recordedPages']);
+            $this->modules->saveModuleConfigData($this->modules->get("TracyDebugger"), $this->data);
+            $this->session->redirect($this->httpReferer);
         }
 
+        // load core tracy library
         if($this->allowedTracyUsers()) {
             static::$tracyVersion = $this->data['coreBranch'];
             if(!file_exists(__DIR__ . '/tracy-'.static::$tracyVersion.'/src/tracy.php')) {
@@ -258,16 +257,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             wireRmdir($logFolder, true);
         }
 
-        // trash recorded pages if requested
-        if($this->input->post->trashRecordedPages) {
-            foreach($this->data['recordedPages'] as $pid) {
-                $this->pages->trash($this->pages->get($pid));
-            }
-            unset($this->data['recordedPages']);
-            $this->modules->saveModuleConfigData($this->modules->get("TracyDebugger"), $this->data);
-            $this->session->redirect($this->httpReferer);
-        }
-
         if(!is_dir($logFolder)) wireMkdir($logFolder);
 
         Debugger::enable($outputMode, $logFolder, $this->data['email'] != '' ? $this->data['email'] : null);
@@ -297,8 +286,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         Debugger::$strictMode = $this->data['strictMode'] ? TRUE : FALSE;
         Debugger::$scream = $this->data['forceScream'] ? TRUE : FALSE;
 
-
-        if($this->inAdmin($this->page)) {
+        // back-end
+        if($this->inAdmin()) {
+            // should we show debug bar in admin?
             if(in_array('backend', $this->data['showDebugBar'])) {
                 Debugger::$showBar = true;
             }
@@ -306,10 +296,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 Debugger::$showBar = false;
             }
         }
-
+        // front-end
+        else {
+            if(in_array('frontend', $this->data['showDebugBar'])) {
+                Debugger::$showBar = true;
+            }
+            else {
+                Debugger::$showBar = false;
+            }
+        }
 
         //determine which panels to display
-        $configEnabledPanels = $this->inAdmin($this->page) ? $this->data['backendPanels'] : $this->data['frontendPanels'];
+        $configEnabledPanels = $this->inAdmin() ? $this->data['backendPanels'] : $this->data['frontendPanels'];
         if($this->input->cookie->tracyPanelsOnce) {
             static::$oncePanels = array_filter(explode(',', $this->input->cookie->tracyPanelsOnce));
             static::$showPanels = static::$oncePanels;
@@ -387,6 +385,21 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // mail panel intercept hook
         if(in_array('mail', static::$showPanels)) {
             $this->addHookBefore('WireMail::send', $this, 'interceptEmails');
+        }
+
+        if(!$this->inAdmin()) {
+            if(in_array('validator', static::$showPanels)) {
+                $this->addHookAfter('Page::render', $this, 'getPageHtml');
+            }
+
+            if(in_array('console', static::$showPanels) || in_array('templateResources', static::$showPanels)) {
+                $functions = get_defined_functions();
+                \TracyDebugger::$initialFuncs = $functions['user'];
+                \TracyDebugger::$initialConsts = get_defined_constants();
+                $this->addHookBefore('TemplateFile::render', function($event) {
+                    $event->object->setAppendFilename($this->config->paths->siteModules.'TracyDebugger/GetTemplateResources.inc');
+                });
+            }
         }
 
         // Event Interceptor
@@ -469,54 +482,49 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
 
-        // some front-end only rules
-        if(!$this->inAdmin($this->page)) {
-            if(in_array('frontend', $this->data['showDebugBar'])) {
+    }
 
-                Debugger::$showBar = true;
 
-                if(in_array('validator', static::$showPanels)) {
-                    $this->addHookAfter('Page::render', $this, 'getPageHtml');
-                }
+    public function ready() {
 
-                if(in_array('console', static::$showPanels) || in_array('templateResources', static::$showPanels)) {
-                    $functions = get_defined_functions();
-                    \TracyDebugger::$initialFuncs = $functions['user'];
-                    \TracyDebugger::$initialConsts = get_defined_constants();
-                    $this->addHookBefore('TemplateFile::render', function($event) {
-                        $event->object->setAppendFilename($this->config->paths->siteModules.'TracyDebugger/GetTemplateResources.inc');
-                    });
-                }
+        // exit if enabled unchecked, or user not allowed
+        if(!$this->data['enabled'] || !$this->allowedTracyUsers()) return;
 
-                // if template editor changes submitted
-                if($this->input->post->tracyTemplateEditorRawCode && $this->user->isSuperuser()) {
-                    $this->tempTemplateFilename = str_replace('.php', '-tracytemp.php', $this->page->template->filename);
-                    if($this->input->post->testTemplateCode) {
-                        if(!file_put_contents($this->tempTemplateFilename, $this->input->post->tracyTemplateEditorRawCode, LOCK_EX)) throw new WireException("Unable to write file: " . $this->tempTemplateFilename);
-                        if($this->config->chmodFile) chmod($this->tempTemplateFilename, octdec($this->config->chmodFile));
-                        $this->page->template->filename = $this->tempTemplateFilename;
-                    }
-                    if($this->input->post->changeTemplateCode) {
-                        if(!file_put_contents($this->page->template->filename, $this->input->post->tracyTemplateEditorRawCode, LOCK_EX)) throw new WireException("Unable to write file: " . $this->tempTemplateFilename);
-                        if($this->config->chmodFile) chmod($this->page->template->filename, octdec($this->config->chmodFile));
-                    }
-                }
-
+        // if user dev template enabled and required permission exists in system,
+        // check if current user has a matching permission for the current page's template
+        if($this->user->isLoggedin() && $this->data['userDevTemplate'] && $this->permissions->get("template-".$this->data['userDevTemplateSuffix'])->id) {
+            $devTemplateFilename = str_replace('.php', '-'.$this->data['userDevTemplateSuffix'].'.php', $this->page->template->filename);
+            if(file_exists($devTemplateFilename) && $this->user->hasPermission("template-".$this->data['userDevTemplateSuffix'])) {
+                $this->page->template->filename = static::$templatePath = static::$templatePathPermission = $devTemplateFilename;
             }
-            else {
-                Debugger::$showBar = false;
-            }
-
         }
 
+        // if template editor changes submitted
+        if($this->input->post->tracyTemplateEditorRawCode && $this->user->isSuperuser()) {
+            $this->tempTemplateFilename = str_replace('.php', '-tracytemp.php', $this->page->template->filename);
+            if($this->input->post->testTemplateCode) {
+                if(!file_put_contents($this->tempTemplateFilename, $this->input->post->tracyTemplateEditorRawCode, LOCK_EX)) throw new WireException("Unable to write file: " . $this->tempTemplateFilename);
+                if($this->config->chmodFile) chmod($this->tempTemplateFilename, octdec($this->config->chmodFile));
+                $this->page->template->filename = $this->tempTemplateFilename;
+            }
+            if($this->input->post->changeTemplateCode) {
+                if(!file_put_contents($this->page->template->filename, $this->input->post->tracyTemplateEditorRawCode, LOCK_EX)) throw new WireException("Unable to write file: " . $this->tempTemplateFilename);
+                if($this->config->chmodFile) chmod($this->page->template->filename, octdec($this->config->chmodFile));
+                $this->session->redirect($this->httpReferer);
+            }
+        }
+
+
+        // exit now if not showing debug bar
         if(Debugger::$showBar == false) return;
 
+        // load css definitions
         require_once __DIR__ . '/CssPanel.inc';
         Debugger::getBar()->addPanel(new CssPanel);
 
-
+        // load specified panels
         foreach(static::$showPanels as $panel) {
-            if($this->inAdmin($this->page) && in_array($panel, static::$hideInAdmin)) continue;
+            if($this->inAdmin() && in_array($panel, static::$hideInAdmin)) continue;
             if(($panel == 'console' || $panel == 'templateEditor') && !$this->user->isSuperuser()) continue;
             if($panel == 'userSwitcher') {
                 if(isset($this->data['userSwitchSession'])) $userSwitchSession = $this->data['userSwitchSession'];
@@ -638,8 +646,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     }
 
 
-    protected function inAdmin($page) {
-        if($page->template == "admin" || (wire('config')->ajax && strpos($this->httpReferer, wire('config')->urls->admin) !== false)) {
+    protected function inAdmin() {
+        if(strpos($_SERVER['REQUEST_URI'], wire('config')->urls->admin) === 0 || (wire('config')->ajax && strpos($this->httpReferer, wire('config')->urls->admin) !== false)) {
             return true;
         }
         else {
