@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 284,
+            'version' => 285,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -132,6 +132,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "maxDepth" => 3,
                 "maxLength" => 150,
                 "showDebugBar" => array('frontend'),
+                "hideDebugBarModals" => array('regularModal', 'inlineModal'),
                 "frontendPanels" => array('processwireInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'templatePath', 'console', 'templateEditor', 'panelSelector'),
                 "backendPanels" => array('processwireInfo', 'processwireLogs', 'tracyLogs', 'debugMode', 'console', 'panelSelector'),
                 "showPanelLabels" => 1,
@@ -178,7 +179,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public function init() {
 
-        if($this->input->get->modal == 'inline') return;
+        if(in_array('regularModal', $this->data['hideDebugBarModals']) && $this->input->get->modal == '1') return;
+        if(in_array('inlineModal', $this->data['hideDebugBarModals']) && $this->input->get->modal == 'inline') return;
 
         $this->httpReferer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : $_SERVER['REQUEST_URI'];
 
@@ -952,10 +954,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'showDebugBar');
         $f->label = __('Show Debug Bar', __FILE__);
         $f->description = __('Show the debug bar.', __FILE__);
-        $f->columnWidth = 50;
+        $f->columnWidth = 33;
         $f->addOption('frontend', 'Frontend');
         $f->addOption('backend', 'Backend');
         if($data['showDebugBar']) $f->attr('value', $data['showDebugBar']);
+        $fieldset->add($f);
+
+        $f = wire('modules')->get("InputfieldCheckboxes");
+        $f->attr('name', 'hideDebugBarModals');
+        $f->label = __('Hide Debug Bar in Modals', __FILE__);
+        $f->columnWidth = 34;
+        $f->addOption('regularModal', 'Regular Modal');
+        $f->addOption('inlineModal', 'Inline Modal');
+        if($data['hideDebugBarModals']) $f->attr('value', $data['hideDebugBarModals']);
         $fieldset->add($f);
 
         $f = wire('modules')->get("InputfieldCheckbox");
@@ -963,7 +974,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Show Panel Labels', __FILE__);
         $f->description = __('Show the labels next to each panel.', __FILE__);
         $f->notes = __('Unchecking this will make the debugger bar much more compact.', __FILE__);
-        $f->columnWidth = 50;
+        $f->columnWidth = 33;
         $f->attr('checked', $data['showPanelLabels'] == '1' ? 'checked' : '' );
         $fieldset->add($f);
 
