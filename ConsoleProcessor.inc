@@ -14,8 +14,7 @@ $config = wire('config');
 
 if($user->isSuperuser()) {
     $page = $pages->get((int)$_POST['pid']);
-    // convert from URL-safe base64 encoded
-    $code = base64_decode(str_pad(strtr($_POST['code'], '-_', '+/'), strlen($_POST['code']) % 4, '=', STR_PAD_RIGHT));
+    $code = $_POST['code'];
 
     $cachePath = $config->paths->cache . 'TracyDebugger/';
     if(!is_dir($cachePath)) if(!wireMkdir($cachePath)) {

@@ -145,7 +145,7 @@ class ConsolePanel implements IBarPanel {
                 xmlhttp.open("POST", "./", true);
                 xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-                xmlhttp.send("tracyconsole=1&accessTemplateVars="+accessTemplateVars+"&pid='.wire('page')->id.'&code="+btoa(code).replace(/\+/g, "-").replace(/\//g, "_").replace(/\=+$/, ""));
+                xmlhttp.send("tracyconsole=1&accessTemplateVars="+accessTemplateVars+"&pid='.wire('page')->id.'&code="+code);
             }
         </script>
         <style type="text/css">
@@ -194,7 +194,7 @@ class ConsolePanel implements IBarPanel {
                     tce.$blockScrolling = Infinity; //fix deprecation warning
 
                     tce.on("beforeEndOperation", function(e) {
-                        localStorage.setItem("tracyConsole", btoa(tce.getValue()));
+                        localStorage.setItem("tracyConsole", tce.getValue());
                     });
 
                     // set theme
@@ -217,8 +217,8 @@ class ConsolePanel implements IBarPanel {
                             maxLines: ml
                         });
                         document.getElementById("tracyConsoleCode").style.visibility = "visible";
-                        if(!!localStorage.getItem("tracyConsole") && atob(localStorage.getItem("tracyConsole")) !== "null" && atob(localStorage.getItem("tracyConsole")) !== "undefined") {
-                            tce.setValue(atob(localStorage.getItem("tracyConsole")));
+                        if(!!localStorage.getItem("tracyConsole") && localStorage.getItem("tracyConsole") !== "null" && localStorage.getItem("tracyConsole") !== "undefined") {
+                            tce.setValue(localStorage.getItem("tracyConsole"));
                         }
                         else {
                             tce.setValue('.$code.');
