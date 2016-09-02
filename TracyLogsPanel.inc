@@ -60,7 +60,7 @@ class TracyLogsPanel implements IBarPanel {
                     }
                     $trimmedText = trim($entryUrlAndText[0]);
                     $entriesArr[$itemKey]['text'] = strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText;
-                    $entriesArr[$itemKey]['timestamp'] = strtotime($logDateTime);
+                    $entriesArr[$itemKey]['timestamp'] = @strtotime($logDateTime); // silenced in case timezone is not set
                     $entriesArr[$itemKey]['linenumber'] = 99-$x;
                     $entriesArr[$itemKey]['order'] = $itemKey;
                     $entriesArr[$itemKey]['date'] = $logDateTime;
@@ -70,7 +70,7 @@ class TracyLogsPanel implements IBarPanel {
 
                     // if log entry was in the last 5 seconds (think this is OK for detecting the last page load),
                     // then count the error or other entry type
-                    if(time()-5 < strtotime($logDateTime)) {
+                    if(time()-5 < @strtotime($logDateTime)) { // silenced in case timezone is not set
                         if($log['name'] == 'error' || $log['name'] == 'exception' || $log['name'] == 'critical') {
                             $this->numErrors++;
                         }

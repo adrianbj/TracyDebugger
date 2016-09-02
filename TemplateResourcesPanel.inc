@@ -11,6 +11,9 @@ class TemplateResourcesPanel implements IBarPanel {
 
     protected $sectionEnd;
     protected $variables = array();
+    protected $allResources = array();
+    protected $resourceCounts = array();
+    protected $searchedFiles = array();
 
     public function getTab() {
         if(\TracyDebugger::additionalBar()) return;
@@ -57,7 +60,6 @@ class TemplateResourcesPanel implements IBarPanel {
         $out = $this->sectionHeader($headings);
 
         foreach($vars as $var => $value) {
-            $currentVarCount = 0;
 
             if(is_object($var) || is_array($var)) {
                 $varArray = array();
@@ -90,10 +92,8 @@ class TemplateResourcesPanel implements IBarPanel {
                 $varOut = "<td>";
                 $i=1;
                 foreach($this->variables['$'.$var] as $item) {
-                    $path = str_replace(wire('config')->paths->cache . 'FileCompiler/', wire('config')->paths->root, $item['file']);
-                    $fileEditorPath = str_replace('%file', $path, str_replace('%line', $item['line'], \TracyDebugger::getDataValue('editor')));
-                    if(\TracyDebugger::getDataValue('localRootPath') != '') $fileEditorPath = str_replace(wire('config')->paths->root, \TracyDebugger::getDataValue('localRootPath'), $fileEditorPath);
-                    $fileLines[$var][str_replace(wire('config')->paths->root, '/', $path)]['lines'][] = '<a href="'.$fileEditorPath.'">' . $item['line'] . '</a>';
+                    $path = $this->removeCompilerFromPath($item['file']);
+                    $fileLines[$var][str_replace(wire('config')->paths->root, '/', $path)]['lines'][] = '<a href="'.$this->getFileEditorPath($path, $item['line']).'">' . $item['line'] . '</a>';
                     $i++;
                 }
                 $currentFile = null;
@@ -103,12 +103,11 @@ class TemplateResourcesPanel implements IBarPanel {
                     $varOut .= implode(', ', $details['lines']);
                     $currentVar = $var;
                     $currentFile = $file;
-                    $currentVarCount = $currentVarCount + count($details['lines']);
                 }
                 $varOut .= "</td>";
             }
             $out .= "\n<tr>" .
-                '<td'.($currentVarCount == 1 ? ' style="background:#FF9933"' : '').'>'.($type == 'var' ? '$' : '').$var.'</td>' .
+                '<td'.(isset($this->resourceCounts[$var]) && $this->resourceCounts[$var] === 1 ? ' style="background:#FF9933"' : '').'>'.($type == 'var' ? '$' : '').$var.'</td>' .
                 "<td>".gettype($value)."</td>" .
                 "<td>".(gettype($value) == "object" ? get_class($value) : "")."</td>" .
                 "<td>".$outValue."</td>";
@@ -145,6 +144,7 @@ class TemplateResourcesPanel implements IBarPanel {
                         $nextStringIsFunc = false;
                         $functions[$token[1]]['file'] = $file;
                         $functions[$token[1]]['line'] = $token[2];
+                        $this->allResources[] = $token[1]; // add functions to all resources
                     }
                     break;
 
@@ -182,6 +182,32 @@ class TemplateResourcesPanel implements IBarPanel {
         return $functions;
     }
 
+    protected function countInTemplateFiles($resources) {
+        $resourceCounts = array();
+        $dir = new RecursiveDirectoryIterator(wire('config')->paths->templates);
+        foreach (new RecursiveIteratorIterator($dir) as $file) {
+            if($file->isFile() && ($file->getExtension() == 'php' || $file->getExtension() == 'inc') && $file->getFilename() != 'admin.php') {
+                $this->searchedFiles[] = $file->getPathname();
+                $content = file_get_contents($file->getPathname());
+                foreach($resources as $resource) {
+                    $fileCount = substr_count($content, $resource);
+                    if($fileCount !== 0) $resourceCounts[$resource] = isset($resourceCounts[$resource]) ? $resourceCounts[$resource] + $fileCount : $fileCount;
+                }
+            }
+        }
+        return $resourceCounts;
+    }
+
+    protected function removeCompilerFromPath($path) {
+        return str_replace(wire('config')->paths->cache . 'FileCompiler/', wire('config')->paths->root, $path);
+    }
+
+    protected function getFileEditorPath($path, $line) {
+        $fileEditorPath = str_replace('%file', $path, str_replace('%line', $line, \TracyDebugger::getDataValue('editor')));
+        if(\TracyDebugger::getDataValue('localRootPath') != '') $fileEditorPath = str_replace(wire('config')->paths->root, \TracyDebugger::getDataValue('localRootPath'), $fileEditorPath);
+
+        return $fileEditorPath;
+    }
 
     public function getPanel() {
 
@@ -194,7 +220,7 @@ class TemplateResourcesPanel implements IBarPanel {
             Template Resources
         </h1>
         <div class="tracy-inner">
-            <p>These are all the non-PW resources that are available in the template for this page. If you are looking for the fields and their values for this page, look in the ProcessWire Info panel under "Fields List & Values"</p>
+            <p>These are all the non-PW resources that are available in the template for this page. If you are looking for the fields and their values for this page, look in the ProcessWire Info panel under "Fields List & Values".<br />An orange warning background indicates that the variable/constant/function only occurs once in the files included for this page as well as all other files in the /site/templates directory.</p>
             ';
 
         // Included Files
@@ -204,12 +230,9 @@ class TemplateResourcesPanel implements IBarPanel {
             $includedFilesOut .= $this->sectionHeader(array('Path'));
             foreach(\TracyDebugger::$includedFiles as $key => $path) {
                 $functions[] = $this->get_defined_resources_in_file($path);
-                $path = str_replace(wire('config')->paths->cache . 'FileCompiler/', wire('config')->paths->root, $path);
-                $fileEditorPath = str_replace('%file', $path, str_replace('%line', '1', \TracyDebugger::getDataValue('editor')));
-                if(\TracyDebugger::getDataValue('localRootPath') != '') $fileEditorPath = str_replace(wire('config')->paths->root, \TracyDebugger::getDataValue('localRootPath'), $fileEditorPath);
-
+                $path = $this->removeCompilerFromPath($path);
                 $includedFilesOut .= "\n<tr>" .
-                    '<td><a title="Edit File" href="'.$fileEditorPath.'">'.str_replace(wire('config')->paths->root, '/', $path).'</a></td>' .
+                    '<td><a title="Edit File" href="'.$this->getFileEditorPath($path, 1).'">'.str_replace(wire('config')->paths->root, '/', $path).'</a></td>' .
                     "</tr>";
             }
             $includedFilesOut .= $this->sectionEnd;
@@ -217,6 +240,12 @@ class TemplateResourcesPanel implements IBarPanel {
         else {
             $includedFilesOut .= 'There are no included files.';
         }
+
+        // add variables and constants to all resources
+        if(count(\TracyDebugger::$templateVars) > 0) foreach(\TracyDebugger::$templateVars as $key => $value) $this->allResources[] = $key;
+        if(count(\TracyDebugger::$templateConsts) > 0) foreach(\TracyDebugger::$templateConsts as $key => $value) $this->allResources[] = $key;
+        $this->resourceCounts = $this->countInTemplateFiles(array_unique($this->allResources));
+
 
         // Variables
         $out .= '<h3>Variables</h3>';
@@ -247,11 +276,9 @@ class TemplateResourcesPanel implements IBarPanel {
                     $funcNames[] = strtolower($name);
                     if(in_array(strtolower($name), array_map('strtolower', array_values(\TracyDebugger::$templateFuncs)))) {
                         if(isset($details['file'])) {
-                            $path = str_replace(wire('config')->paths->cache . 'FileCompiler/', wire('config')->paths->root, $details['file']);
-                            $fileEditorPath = str_replace('%file', $path, str_replace('%line', $details['line'], \TracyDebugger::getDataValue('editor')));
-                            if(\TracyDebugger::getDataValue('localRootPath') != '') $fileEditorPath = str_replace(wire('config')->paths->root, \TracyDebugger::getDataValue('localRootPath'), $fileEditorPath);
+                            $path = $this->removeCompilerFromPath($details['file']);
                             $out .= "\n<tr>" .
-                                '<td><a href="'.$fileEditorPath.'">'.$name.'</a></td>' .
+                                '<td'.(isset($this->resourceCounts[$name]) && $this->resourceCounts[$name] === 1 ? ' style="background:#FF9933"' : '').'><a href="'.$this->getFileEditorPath($path, $details['line']).'">'.$name.'</a></td>' .
                                 '<td>'.str_replace(wire('config')->paths->root, '/', $path).'</td>' .
                                 '<td>'.$details['line'].'</td>' .
                                 "</tr>";
@@ -273,6 +300,19 @@ class TemplateResourcesPanel implements IBarPanel {
         }
 
         $out .= $includedFilesOut;
+
+
+        $out .= '<h3>Other Searched Files</h3><p>When checking for more than one occurrence of a resource</p>';
+        $out .= $this->sectionHeader(array('Path'));
+        foreach($this->searchedFiles as $path) {
+            if(!in_array($path, array_map(array($this, 'removeCompilerFromPath'), \TracyDebugger::$includedFiles))) {
+                $out .= "\n<tr>" .
+                    '<td><a title="Edit File" href="'.$this->getFileEditorPath($path, 1).'">'.str_replace(wire('config')->paths->root, '/', $path).'</a></td>' .
+                    "</tr>";
+            }
+        }
+        $out .= $this->sectionEnd;
+
 
         \TracyDebugger::$panelGenerationTime['templateResources']['time'] = \Tracy\Debugger::timer('templateResources');
         \TracyDebugger::$panelGenerationTime['templateResources']['size'] = strlen($out);

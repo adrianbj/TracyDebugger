@@ -34,7 +34,7 @@ class ProcesswireLogsPanel implements IBarPanel {
             $x=99;
             foreach(wire('log')->getEntries($log['name'], array("limit" => \TracyDebugger::getDataValue("numLogEntries"))) as $entry) {
                 $itemKey = $log['name'] . '_' . $x;
-                $entriesArr[$itemKey]['timestamp'] = strtotime($entry['date']);
+                $entriesArr[$itemKey]['timestamp'] = @strtotime($entry['date']); // silenced in case timezone is not set
                 $entriesArr[$itemKey]['linenumber'] = 99-$x;
                 $entriesArr[$itemKey]['order'] = $itemKey;
                 $entriesArr[$itemKey]['date'] = $entry['date'];
@@ -47,7 +47,7 @@ class ProcesswireLogsPanel implements IBarPanel {
 
                 // if log entry was in the last 5 seconds (think this is OK for detecting the last page load),
                 // then count the error or other entry type
-                if(time()-5 < strtotime($entry['date'])) {
+                if(time()-5 < @strtotime($entry['date'])) { // silenced in case timezone is not set
                     if($log['name'] == 'errors' || $log['name'] == 'exceptions') {
                         $this->numErrors++;
                     }
