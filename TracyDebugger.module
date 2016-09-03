@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 288,
+            'version' => 289,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -47,6 +47,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     protected $data = array();
     protected $httpReferer;
     protected $tracyEnabled = false;
+    protected $tracyCacheDir;
+    protected $modulesDbBackupFilename;
     public static $templateVars = array();
     public static $templateConsts = array();
     public static $initialFuncs = array();
@@ -346,6 +348,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         // Modules Disabler
+        //set up backup directory/file - outside conditional so they are available for cleanup when panel is disabled
+        $this->tracyCacheDir = $this->config->paths->cache . 'TracyDebugger/';
+        $this->modulesDbBackupFilename = 'modulesBackup.sql';
         if(in_array('moduleDisabler', static::$showPanels) && wire('config')->debug && wire('config')->advanced) {
             // if modules DB was just restored, clear the cookie
             if($this->inAdmin() && $this->session->modulesRestored == 1) {
@@ -354,10 +359,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 setcookie("tracyModulesDisabled", "", time()-3600, "/");
                 $this->session->message("Modules successfully restored");
             }
-
-            //set up backup directory/file
-            $backupDir = $this->config->paths->cache . 'TracyDebugger/';
-            $backupFilename = 'modulesBackup.sql';
 
             // get array of disabable modules
             foreach($this->modules as $name => $label) {
@@ -372,24 +373,24 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             // if modules have been checked to disable
             if($this->input->cookie->tracyModulesDisabled) {
-                if (!file_exists($backupDir)) wireMkdir($backupDir);
+                if (!file_exists($this->tracyCacheDir)) wireMkdir($this->tracyCacheDir);
 
                 // if it doesn't already exist, backup existing modules database
-                if(!file_exists($backupDir . $backupFilename)) {
-                    $backup = new WireDatabaseBackup($backupDir);
+                if(!file_exists($this->tracyCacheDir . $this->modulesDbBackupFilename)) {
+                    $backup = new WireDatabaseBackup($this->tracyCacheDir);
                     $backup->setDatabase($this->database);
                     $backup->setDatabaseConfig($this->config);
-                    $file = $backup->backup(array('tables' => array('modules'), 'filename' => $backupFilename));
+                    $file = $backup->backup(array('tables' => array('modules'), 'filename' => $this->modulesDbBackupFilename));
 
                     $restoreModulesCode =
                     "<?php\n" .
                     "include './index.php';\n" .
                     "sleep(1);\n" .
-                    "\$backup = new WireDatabaseBackup('".$backupDir."');\n" .
+                    "\$backup = new WireDatabaseBackup('".$this->tracyCacheDir."');\n" .
                     "\$backup->setDatabase(\$database);\n" .
                     "\$backup->setDatabaseConfig(\$config);\n" .
-                    "if(file_exists('".$backupDir.$backupFilename."')) {\n" .
-                    "\t\$success = \$backup->restore('".$backupDir.$backupFilename."');\n" .
+                    "if(file_exists('".$this->tracyCacheDir.$this->modulesDbBackupFilename."')) {\n" .
+                    "\t\$success = \$backup->restore('".$this->tracyCacheDir.$this->modulesDbBackupFilename."');\n" .
                     "}\n" .
                     "if(isset(\$success)) {\n" .
                     "\t\$session->modulesRestored = 1;\n" .
@@ -399,16 +400,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     "\techo 'Sorry, there was a problem and the database could not be restored.';\n" .
                     "}";
 
-                    if(!file_put_contents($backupDir . 'restoremodules.php', $restoreModulesCode, LOCK_EX)) throw new WireException("Unable to write file: " . $backupDir . 'restoremodules.php');
+                    if(!file_put_contents($this->tracyCacheDir . 'restoremodules.php', $restoreModulesCode, LOCK_EX)) throw new WireException("Unable to write file: " . $this->tracyCacheDir . 'restoremodules.php');
                 }
 
                 // get array of modules that have been checked to disable
                 static::$disabledModules = array_filter(explode(',', $this->input->cookie->tracyModulesDisabled));
             }
             else {
-                if(file_exists($backupDir . $backupFilename)) unlink($backupDir . $backupFilename);
-                if(file_exists($backupDir . 'restoremodules.php')) unlink($backupDir . 'restoremodules.php');
-                if(file_exists($this->config->paths->root . 'restoremodules.php')) unlink($this->config->paths->root . 'restoremodules.php');
+                $this->deleteFile($this->tracyCacheDir . $this->modulesDbBackupFilename);
+                $this->deleteFile($this->tracyCacheDir . 'restoremodules.php');
+                $this->deleteFile($this->config->paths->root . 'restoremodules.php');
             }
 
             // add disabled flag to requested modules
@@ -427,6 +428,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 }
             }
             if($i > 0) $this->session->redirect($this->httpReferer);
+        }
+        else {
+            $this->deleteFile($this->tracyCacheDir . $this->modulesDbBackupFilename);
+            $this->deleteFile($this->tracyCacheDir . 'restoremodules.php');
+            $this->deleteFile($this->config->paths->root . 'restoremodules.php');
         }
 
         // Mail
@@ -653,6 +659,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     }
 
+    protected function deleteFile($path) {
+        if(file_exists($path)) unlink($path);
+    }
 
     // for the validator panel
     public function getPageHtml($event) {
