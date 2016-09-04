@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 291,
+            'version' => 292,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -404,7 +404,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             else {
                 $this->deleteFile($this->tracyCacheDir . $this->modulesDbBackupFilename);
                 $this->deleteFile($this->tracyCacheDir . 'restoremodules.php');
-                $this->deleteFile($this->config->paths->root . 'restoremodules.php');
             }
 
             // add disabled flag to requested modules
@@ -427,7 +426,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         else {
             $this->deleteFile($this->tracyCacheDir . $this->modulesDbBackupFilename);
             $this->deleteFile($this->tracyCacheDir . 'restoremodules.php');
-            $this->deleteFile($this->config->paths->root . 'restoremodules.php');
+        }
+        // try to delete modules restore file from root
+        $rootRestoreFile = $this->config->paths->root . 'restoremodules.php';
+        if(file_exists($rootRestoreFile)) {
+            @unlink($rootRestoreFile);
+            if(is_file($rootRestoreFile)) {
+               $this->session->error('Please delete ' . $rootRestoreFile . ' from your system.');
+            }
         }
 
         // Mail
