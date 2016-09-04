@@ -71,7 +71,7 @@ class ModuleDisablerPanel implements IBarPanel {
                     alert("No modules selected");
                 }
                 else {
-                    if(confirm("This has the potential to break your site. Be sure to open the Restore Instructons before proceeding.")) {
+                    if(confirm("This has the potential to break your site. Be sure to carefully read the Restore Instructons before proceeding.")) {
                         document.cookie = "tracyModulesDisabled="+getSelectedTracyModuleCheckboxes()+"; expires=0; path=/";
                         location.reload();
                     }
@@ -128,7 +128,7 @@ class ModuleDisablerPanel implements IBarPanel {
         <div class="tracy-inner">
             <fieldset>';
                 if(count(\TracyDebugger::$disabableModules) > 0 && wire('config')->advanced && wire('config')->debug) {
-                    $out .= '<legend><p>Temporarily disable autoload modules. Check to disable.</p><p><strong>Restore Instructions</strong><br />If your site is broken after disabling you can restore your modules by following <a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#module-disabler-panel" target="_blank">these instructions</a>.</p></legend><br />';
+                    $out .= '<legend><p>Temporarily disable autoload modules. Check to disable.</p><p><strong>Restore Instructions</strong><br />If your site is broken after disabling modules you can restore your modules by <strong>either one</strong> of the following methods:<ul><li>Copy "/site/assets/cache/TracyDebugger/restoremodules.php" to the root of your site and load it in your browser<br /><strong>OR</strong></li><li>Execute "/site/assets/cache/TracyDebugger/modulesBackup.sql" manually (via PHPMyAdmin, the command line, etc)</li></ul></p></legend><br />';
                     $out .= '<label><input type="checkbox" onchange="toggleAllModules(this)" ' . (count($this->disabledModules) == count(\TracyDebugger::$disabableModules) ? 'checked="checked"' : '') . ' /> Toggle All</label><br />';
                     foreach(\TracyDebugger::$disabableModules as $name) {
                         $flags = wire('modules')->getFlags($name);
