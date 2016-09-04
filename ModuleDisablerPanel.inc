@@ -60,8 +60,25 @@ class ModuleDisablerPanel implements IBarPanel {
             }
 
             function disableTracyModules() {
-                document.cookie = "tracyModulesDisabled="+getSelectedTracyModuleCheckboxes()+"; expires=0; path=/";
-                location.reload();
+                var moduleCheckboxes = document.getElementsByName("selectedModules[]");
+                count = 0;
+                for (var i=0; i<moduleCheckboxes.length; i++) {
+                   if (moduleCheckboxes[i].checked === true){
+                      count++;
+                   }
+                }
+                if(count === 0) {
+                    alert("No modules selected");
+                }
+                else {
+                    if(confirm("This has the potential to break your site. Be sure to open the Restore Instructons before proceeding.")) {
+                        document.cookie = "tracyModulesDisabled="+getSelectedTracyModuleCheckboxes()+"; expires=0; path=/";
+                        location.reload();
+                    }
+                    else {
+                        return false;
+                    }
+                }
             }
 
             function resetTracyModules() {
@@ -111,7 +128,7 @@ class ModuleDisablerPanel implements IBarPanel {
         <div class="tracy-inner">
             <fieldset>';
                 if(count(\TracyDebugger::$disabableModules) > 0 && wire('config')->advanced && wire('config')->debug) {
-                    $out .= '<legend>Temporarily disable autoload modules. <strong>Check to disable!</strong></legend><br />';
+                    $out .= '<legend><p>Temporarily disable autoload modules. Check to disable.</p><p><strong>Restore Instructions</strong><br />If your site is broken after disabling you can restore your modules by following <a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#module-disabler-panel" target="_blank">these instructions</a>.</p></legend><br />';
                     $out .= '<label><input type="checkbox" onchange="toggleAllModules(this)" ' . (count($this->disabledModules) == count(\TracyDebugger::$disabableModules) ? 'checked="checked"' : '') . ' /> Toggle All</label><br />';
                     foreach(\TracyDebugger::$disabableModules as $name) {
                         $flags = wire('modules')->getFlags($name);

@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 289,
+            'version' => 290,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -353,8 +353,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $this->modulesDbBackupFilename = 'modulesBackup.sql';
         if(in_array('moduleDisabler', static::$showPanels) && wire('config')->debug && wire('config')->advanced) {
             // if modules DB was just restored, clear the cookie
-            if($this->inAdmin() && $this->session->modulesRestored == 1) {
-                $this->session->remove('modulesRestored');
+            if($this->inAdmin() && $this->input->get->modulesRestored == 1) {
                 unset($this->input->cookie->tracyModulesDisabled);
                 setcookie("tracyModulesDisabled", "", time()-3600, "/");
                 $this->session->message("Modules successfully restored");
@@ -384,17 +383,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
                     $restoreModulesCode =
                     "<?php\n" .
-                    "include './index.php';\n" .
-                    "sleep(1);\n" .
-                    "\$backup = new WireDatabaseBackup('".$this->tracyCacheDir."');\n" .
-                    "\$backup->setDatabase(\$database);\n" .
-                    "\$backup->setDatabaseConfig(\$config);\n" .
                     "if(file_exists('".$this->tracyCacheDir.$this->modulesDbBackupFilename."')) {\n" .
-                    "\t\$success = \$backup->restore('".$this->tracyCacheDir.$this->modulesDbBackupFilename."');\n" .
+                        "\t\$db = new PDO('mysql:host={$this->config->dbHost};dbname={$this->config->dbName}', '{$this->config->dbUser}', '{$this->config->dbPass}');\n" .
+                        "\t\$sql = file_get_contents('" . $this->tracyCacheDir . $this->modulesDbBackupFilename . "');\n" .
+                        "\t\$qr = \$db->query(\$sql);\n" .
                     "}\n" .
-                    "if(isset(\$success)) {\n" .
-                    "\t\$session->modulesRestored = 1;\n" .
-                    "\t\$session->redirect('".$this->config->urls->admin."');\n" .
+                    "if(isset(\$qr) && \$qr) {\n" .
+                        "\theader('Location: {$this->config->urls->admin}?modulesRestored=1');\n" .
                     "}\n" .
                     "else {\n" .
                     "\techo 'Sorry, there was a problem and the database could not be restored.';\n" .
