@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 292,
+            'version' => 293,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -353,7 +353,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $this->modulesDbBackupFilename = 'modulesBackup.sql';
         if(in_array('moduleDisabler', static::$showPanels) && wire('config')->debug && wire('config')->advanced) {
             // if modules DB was just restored, clear the cookie
-            if($this->inAdmin() && $this->input->get->modulesRestored == 1) {
+            if($this->input->cookie->modulesRestored == 1) {
+                unset($this->input->cookie->modulesRestored);
+                setcookie("modulesRestored", "", time()-3600, "/");
                 unset($this->input->cookie->tracyModulesDisabled);
                 setcookie("tracyModulesDisabled", "", time()-3600, "/");
                 $this->session->message("Modules successfully restored");
@@ -389,7 +391,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                         "\t\$qr = \$db->query(\$sql);\n" .
                     "}\n" .
                     "if(isset(\$qr) && \$qr) {\n" .
-                        "\theader('Location: {$this->config->urls->admin}?modulesRestored=1');\n" .
+                        "\tsetcookie('modulesRestored', 1, time() + (24 * 60 * 60));\n" .
+                        "\theader('Location: ".$_SERVER['REQUEST_URI']."');\n" .
                     "}\n" .
                     "else {\n" .
                     "\techo 'Sorry, there was a problem and the database could not be restored.';\n" .
