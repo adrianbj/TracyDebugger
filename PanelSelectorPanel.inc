@@ -73,6 +73,11 @@ class PanelSelectorPanel implements IBarPanel {
                 location.reload();
             }
 
+            function disableTracy() {
+                document.cookie = "tracyDisabled=1; expires=0; path=/";
+                location.reload();
+            }
+
             function toggleAllTracyPanels(ele) {
                 var checkboxes = document.getElementsByName("selectedPanels[]");
                 if (ele.checked) {
@@ -143,7 +148,9 @@ class PanelSelectorPanel implements IBarPanel {
                     $out .= '<br />
                     <input type="submit" onclick="changeTracyPanels(\'Once\')" value="Once" />&nbsp;
                     <input type="submit" onclick="changeTracyPanels(\'Sticky\')" value="Sticky" />&nbsp;
-                    <input type="submit" onclick="resetTracyPanels()" value="Reset" />
+                    <input type="submit" onclick="resetTracyPanels()" value="Reset" /><br /><br />
+                    <input type="submit" onclick="disableTracy()" value="Disable TracyDebugger" />
+
             </fieldset>' . \TracyDebugger::generatedTimeSize(\Tracy\Debugger::timer('panelSelector'), strlen($out)) . '
         </div>';
 
