@@ -149,7 +149,7 @@ class PanelSelectorPanel implements IBarPanel {
                     <input type="submit" onclick="changeTracyPanels(\'Once\')" value="Once" />&nbsp;
                     <input type="submit" onclick="changeTracyPanels(\'Sticky\')" value="Sticky" />&nbsp;
                     <input type="submit" onclick="resetTracyPanels()" value="Reset" /><br /><br />
-                    <input type="submit" onclick="disableTracy()" value="Disable TracyDebugger" />
+                    <input type="submit" onclick="disableTracy()" value="Disable Tracy" />
 
             </fieldset>' . \TracyDebugger::generatedTimeSize(\Tracy\Debugger::timer('panelSelector'), strlen($out)) . '
         </div>';
