@@ -42,10 +42,15 @@ if($user->isSuperuser()) {
         $currentVars = get_defined_vars();
         // get vars from the page's template file
         ob_start();
-        //require_once($page->template->filename);
         foreach(wire('session')->tracyIncludedFiles as $key => $path) {
-            if($path != wire('config')->paths->cache . 'TracyDebugger/consoleCode.php') require_once($path);
+            if($path != wire('config')->paths->cache . 'TracyDebugger/consoleCode.php' && $path != $page->template->filename) {
+                include_once($path);
+            }
         }
+        // template file is excluded above and included now, after all others, to prevent include errors to
+        // relative file paths preventing access to all variables/functions - happens especially when filecompiler is off
+        require_once($page->template->filename);
+
         $templateVars = get_defined_vars();
         ob_end_clean();
         // remove the current vars from the list
@@ -80,14 +85,21 @@ if($user->isSuperuser()) {
 
 // error handler function
 function tracyConsoleErrorHandler($errno, $errstr, $errfile, $errline) {
-    $customErrStr = $errstr . ' on line: ' . (strpos($errfile, 'cache/TracyDebugger') !== false ? $errline - 2 : $errline) . (strpos($errfile, 'cache/TracyDebugger') !== false ? '' : ' in ' . str_replace(wire('config')->paths->cache . 'FileCompiler/', '../', $errfile));
-    $customErrStrLog = $customErrStr . (strpos($errfile, 'cache/TracyDebugger') !== false ? ' in Tracy Console Panel' : '');
-    \TD::fireLog($customErrStrLog);
-    \TD::log($customErrStrLog, 'error');
+    // ignore any include/require errors - we are including all files by their full path via
+    // wire('session')->tracyIncludedFiles anyway, so the errors caused by relative paths won't matter
+    if (strpos($errstr, 'include') !== false || strpos($errstr, 'require') !== false) {
+        return;
+    }
+    else {
+        $customErrStr = $errstr . ' on line: ' . (strpos($errfile, 'cache/TracyDebugger') !== false ? $errline - 2 : $errline) . (strpos($errfile, 'cache/TracyDebugger') !== false ? '' : ' in ' . str_replace(wire('config')->paths->cache . 'FileCompiler/', '../', $errfile));
+        $customErrStrLog = $customErrStr . (strpos($errfile, 'cache/TracyDebugger') !== false ? ' in Tracy Console Panel' : '');
+        \TD::fireLog($customErrStrLog);
+        \TD::log($customErrStrLog, 'error');
 
-    // echo and exit approach allows us to send error to Tracy console dump area
-    // this means that the browser will receive a 200 when it may have been a 500,
-    // but think that is ok in this case
-    echo '<br />Error: '.$customErrStr;
-    exit;
+        // echo and exit approach allows us to send error to Tracy console dump area
+        // this means that the browser will receive a 200 when it may have been a 500,
+        // but think that is ok in this case
+        echo '<br />Error: '.$customErrStr;
+        exit;
+    }
 }
