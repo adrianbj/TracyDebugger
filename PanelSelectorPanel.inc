@@ -129,6 +129,7 @@ class PanelSelectorPanel implements IBarPanel {
                     $defaultPanels = wire('page')->template == "admin" ? \TracyDebugger::getDataValue('backendPanels') : \TracyDebugger::getDataValue('frontendPanels');
                     $showPanels = \TracyDebugger::$showPanels;
                     $out .= '<label><input type="checkbox" onchange="toggleAllTracyPanels(this)" ' . (count($showPanels) == count(\TracyDebugger::$allPanels) ? 'checked="checked"' : '') . ' /> Toggle All</label><br />';
+                    $out .= '<div style="-webkit-column-count: 2; -moz-column-count: 2; column-count: 2; -webkit-column-gap: 40px; -moz-column-gap: 40px; column-gap: 40px;">';
                     foreach(\TracyDebugger::$allPanels as $name => $label) {
 
                         if($name == 'userSwitcher') {
@@ -145,7 +146,9 @@ class PanelSelectorPanel implements IBarPanel {
                                 ' . $label . (in_array($name, $defaultPanels) ? '&nbsp;<strong>*</strong>' : '') . ($seconds ? '<span style="color:#999999; font-size:11px; float:right; margin-left:20px">&nbsp;' . \TracyDebugger::formatTime($seconds) . ($size ? ', '.$size : '') . '</span>' : '') . '
                             </label>';
                     }
-                    $out .= '<br />
+                    $out .= '
+                    </div>
+                    <br />
                     <input type="submit" onclick="changeTracyPanels(\'Once\')" value="Once" />&nbsp;
                     <input type="submit" onclick="changeTracyPanels(\'Sticky\')" value="Sticky" />&nbsp;
                     <input type="submit" onclick="resetTracyPanels()" value="Reset" /><br /><br />
