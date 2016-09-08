@@ -11,6 +11,26 @@ class CssPanel implements IBarPanel {
         return '
             <style>
 
+                #tracy-debug-bar {
+                    background: #FFFFFF !important;
+                    border: 1px solid #DDDDDD !important;
+                    border-radius: 0 !important;
+                    box-shadow: none !important;
+                    opacity: 1 !important;
+                }
+
+                #tracy-debug-bar li > a:hover {
+                    color: black !important;
+                    background: #FFFFFF !important;
+                }
+
+                #tracy-debug-bar li > a {
+                    transition: transform 0.12s;
+                }
+                #tracy-debug-bar li > a:hover svg {
+                    transform: scale(1.2);
+                }
+
                 .tracy-panel a:link {
                     color: #125EAE !important;
                     background-color: transparent !important;
