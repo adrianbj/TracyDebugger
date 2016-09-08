@@ -7,10 +7,10 @@ set_error_handler('tracyConsoleErrorHandler');
 
 $pwVars = function_exists('wire') ? $this->fuel : \ProcessWire\wire('all');
 
-$user = wire('user');
-$page = wire('page');
-$pages = wire('pages');
-$config = wire('config');
+// populate API variables, eg so $page equals wire('page')
+foreach($pwVars->getArray() as $key => $value) {
+    $$key = $value;
+}
 
 if($user->isSuperuser()) {
     $page = $pages->get((int)$_POST['pid']);
@@ -66,12 +66,6 @@ if($user->isSuperuser()) {
 
     // if in admin then $t won't have been instantiated above so do it now
     if(!isset($t) || !$t instanceof TemplateFile) $t = new TemplateFile($file);
-
-    // populate API variables ensuring $page refers to the page calling it, not this Process page
-    foreach($pwVars->getArray() as $key => $value) {
-        if($key != 'page') $t->set($key, $value);
-    }
-    $t->set('page', $page);
 
     // output rendered result of code
     try {
