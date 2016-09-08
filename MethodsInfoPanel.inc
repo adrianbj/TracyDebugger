@@ -94,9 +94,7 @@ class MethodsInfoPanel implements IBarPanel {
             templateVars();<br />
             tv();<br />
             </p>';
-            \TracyDebugger::$panelGenerationTime['methodsInfo']['time'] = \Tracy\Debugger::timer('methodsInfo');
-            \TracyDebugger::$panelGenerationTime['methodsInfo']['size'] = strlen($out);
-            $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['methodsInfo']['time'], \TracyDebugger::$panelGenerationTime['methodsInfo']['size']) . '
+            $out .= \TracyDebugger::generatedTimeSize('methodsInfo', \Tracy\Debugger::timer('methodsInfo'), strlen($out)) . '
         </div>
         ';
 

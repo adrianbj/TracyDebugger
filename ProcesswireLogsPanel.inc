@@ -136,9 +136,8 @@ class ProcesswireLogsPanel implements IBarPanel {
 
         <div class="tracy-inner">';
             $out .= $this->logEntries;
-            \TracyDebugger::$panelGenerationTime['processwireLogs']['time'] = \Tracy\Debugger::timer('processwireLogs');
-            \TracyDebugger::$panelGenerationTime['processwireLogs']['size'] = strlen($out);
-            $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['processwireLogs']['time'], \TracyDebugger::$panelGenerationTime['processwireLogs']['size']) . '
+
+            $out .= \TracyDebugger::generatedTimeSize('processwireLogs', \Tracy\Debugger::timer('processwireLogs'), strlen($out)) . '
         </div>';
 
         return $out;

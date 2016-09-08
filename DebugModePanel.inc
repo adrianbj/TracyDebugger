@@ -516,9 +516,7 @@ class DebugModePanel implements IBarPanel {
 
         }
 
-        \TracyDebugger::$panelGenerationTime['debugMode']['time'] = \Tracy\Debugger::timer('debugMode');
-        \TracyDebugger::$panelGenerationTime['debugMode']['size'] = strlen($out);
-        $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['debugMode']['time'], \TracyDebugger::$panelGenerationTime['debugMode']['size']);
+        $out .= \TracyDebugger::generatedTimeSize('debugMode', \Tracy\Debugger::timer('debugMode'), strlen($out));
 
         $out .= '</div>';
 

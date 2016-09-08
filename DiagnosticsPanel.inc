@@ -374,10 +374,7 @@ class DiagnosticsPanel implements IBarPanel {
             $i++;
         }
 
-
-        \TracyDebugger::$panelGenerationTime['diagnostics']['time'] = \Tracy\Debugger::timer('diagnostics');
-        \TracyDebugger::$panelGenerationTime['diagnostics']['size'] = strlen($out);
-        $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['diagnostics']['time'], \TracyDebugger::$panelGenerationTime['diagnostics']['size']);
+        $out .= \TracyDebugger::generatedTimeSize('diagnostics', \Tracy\Debugger::timer('diagnostics'), strlen($out));
 
         $out .= '</div>';
 

@@ -313,10 +313,7 @@ class TemplateResourcesPanel implements IBarPanel {
         }
         $out .= $this->sectionEnd;
 
-
-        \TracyDebugger::$panelGenerationTime['templateResources']['time'] = \Tracy\Debugger::timer('templateResources');
-        \TracyDebugger::$panelGenerationTime['templateResources']['size'] = strlen($out);
-        $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['templateResources']['time'], \TracyDebugger::$panelGenerationTime['templateResources']['size']);
+        $out .= \TracyDebugger::generatedTimeSize('templateResources', \Tracy\Debugger::timer('templateResources'), strlen($out));
 
         $out .= '</div>';
 

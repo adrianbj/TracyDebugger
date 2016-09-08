@@ -42,9 +42,7 @@ class CustomPhpPanel implements IBarPanel {
         $config = wire('config');
         $out .= eval(\TracyDebugger::getDataValue('customPhpCode'));
 
-        \TracyDebugger::$panelGenerationTime['customPhp']['time'] = \Tracy\Debugger::timer('customPhp');
-        \TracyDebugger::$panelGenerationTime['customPhp']['size'] = strlen($out);
-        $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['customPhp']['time'], \TracyDebugger::$panelGenerationTime['customPhp']['size']);
+        $out .= \TracyDebugger::generatedTimeSize('customPhp', \Tracy\Debugger::timer('customPhp'), strlen($out));
 
         $out .= '
         </div>';

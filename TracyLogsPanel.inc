@@ -263,9 +263,7 @@ class TracyLogsPanel implements IBarPanel {
                     </form>
                 </p>';
             }
-            \TracyDebugger::$panelGenerationTime['tracyLogs']['time'] = \Tracy\Debugger::timer('tracyLogs');
-            \TracyDebugger::$panelGenerationTime['tracyLogs']['size'] = strlen($out);
-            $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['tracyLogs']['time'], \TracyDebugger::$panelGenerationTime['tracyLogs']['size']) . '
+            $out .= \TracyDebugger::generatedTimeSize('tracyLogs', \Tracy\Debugger::timer('tracyLogs'), strlen($out)) . '
         </div>';
 
         return $out;

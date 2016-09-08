@@ -134,9 +134,7 @@ class EventInterceptorPanel implements IBarPanel {
             <br /><br />
             <div id="tracyEventEntries">'.$this->entries.'</div>';
 
-            \TracyDebugger::$panelGenerationTime['eventInterceptor']['time'] = \Tracy\Debugger::timer('eventInterceptor');
-            \TracyDebugger::$panelGenerationTime['eventInterceptor']['size'] = strlen($out);
-            $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['eventInterceptor']['time'], \TracyDebugger::$panelGenerationTime['eventInterceptor']['size']);
+            $out .= \TracyDebugger::generatedTimeSize('eventInterceptor', \Tracy\Debugger::timer('eventInterceptor'), strlen($out));
 
             $out .= '
         </div>';

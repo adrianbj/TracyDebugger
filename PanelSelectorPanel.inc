@@ -125,7 +125,7 @@ class PanelSelectorPanel implements IBarPanel {
         $out .= '<h1>'.$this->icon.' Panel Selector</h1>
         <div class="tracy-inner">
             <fieldset>
-                <legend>Temporarily enable/disable panels<br />*Panels with asterisk are on by default</legend><br />';
+                <legend>*Panels with asterisk are on by default</legend><br />';
                     $defaultPanels = wire('page')->template == "admin" ? \TracyDebugger::getDataValue('backendPanels') : \TracyDebugger::getDataValue('frontendPanels');
                     $showPanels = \TracyDebugger::$showPanels;
                     $out .= '<label><input type="checkbox" onchange="toggleAllTracyPanels(this)" ' . (count($showPanels) == count(\TracyDebugger::$allPanels) ? 'checked="checked"' : '') . ' /> Toggle All</label><br />';
@@ -149,12 +149,14 @@ class PanelSelectorPanel implements IBarPanel {
                     $out .= '
                     </div>
                     <br />
-                    <input type="submit" onclick="changeTracyPanels(\'Once\')" value="Once" />&nbsp;
-                    <input type="submit" onclick="changeTracyPanels(\'Sticky\')" value="Sticky" />&nbsp;
-                    <input type="submit" onclick="resetTracyPanels()" value="Reset" /><br /><br />
-                    <input type="submit" onclick="disableTracy()" value="Disable Tracy" />
+                    <span style="float:left">
+                        <input type="submit" onclick="changeTracyPanels(\'Once\')" value="Once" />&nbsp;
+                        <input type="submit" onclick="changeTracyPanels(\'Sticky\')" value="Sticky" />&nbsp;
+                        <input type="submit" onclick="resetTracyPanels()" value="Reset" /><br /><br />
+                    </span>
+                    <span style="float:right"><input type="submit" onclick="disableTracy()" value="Disable Tracy" /></span>
 
-            </fieldset>' . \TracyDebugger::generatedTimeSize(\Tracy\Debugger::timer('panelSelector'), strlen($out)) . '
+            </fieldset>' . \TracyDebugger::generatedTimeSize('panelSelector', \Tracy\Debugger::timer('panelSelector'), strlen($out)) . '
         </div>';
 
         return $out;

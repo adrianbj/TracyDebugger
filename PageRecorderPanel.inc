@@ -56,9 +56,7 @@ class PageRecorderPanel implements IBarPanel {
 
             $out .= $this->recordedPages;
 
-            \TracyDebugger::$panelGenerationTime['pageRecorder']['time'] = \Tracy\Debugger::timer('pageRecorder');
-            \TracyDebugger::$panelGenerationTime['pageRecorder']['size'] = strlen($out);
-            $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['pageRecorder']['time'], \TracyDebugger::$panelGenerationTime['pageRecorder']['size']);
+            $out .= \TracyDebugger::generatedTimeSize('pageRecorder', \Tracy\Debugger::timer('pageRecorder'), strlen($out));
 
             $out .= '
         </div>';

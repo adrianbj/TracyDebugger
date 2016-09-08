@@ -118,9 +118,7 @@ class DumpsRecorderPanel implements IBarPanel {
 
             <div id="tracyDumpEntries">' . $this->entries . '</div>';
 
-            \TracyDebugger::$panelGenerationTime['dumpsRecorder']['time'] = \Tracy\Debugger::timer('dumpsRecorder');
-            \TracyDebugger::$panelGenerationTime['dumpsRecorder']['size'] = strlen($out);
-            $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['dumpsRecorder']['time'], \TracyDebugger::$panelGenerationTime['dumpsRecorder']['size']);
+            $out .= \TracyDebugger::generatedTimeSize('dumpsRecorder', \Tracy\Debugger::timer('dumpsRecorder'), strlen($out));
 
         $out .= '
         </div>';

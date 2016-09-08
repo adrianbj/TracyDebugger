@@ -171,9 +171,7 @@ class UsersPanel implements IBarPanel {
                 $out .= '<p><strong>All allowed users are Superusers</strong></p>';
             }
 
-        \TracyDebugger::$panelGenerationTime['users']['time'] = \Tracy\Debugger::timer('users');
-        \TracyDebugger::$panelGenerationTime['users']['size'] = strlen($out);
-        $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['users']['time'], \TracyDebugger::$panelGenerationTime['users']['size']);
+        $out .= \TracyDebugger::generatedTimeSize('users', \Tracy\Debugger::timer('outputMode'), strlen($out));
 
         $out .= '</div>';
 

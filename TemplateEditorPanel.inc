@@ -194,9 +194,7 @@ class TemplateEditorPanel implements IBarPanel {
         </script>
         ';
 
-        \TracyDebugger::$panelGenerationTime['templateEditor']['time'] = \Tracy\Debugger::timer('templateEditor');
-        \TracyDebugger::$panelGenerationTime['templateEditor']['size'] = strlen($out);
-        $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['templateEditor']['time'], \TracyDebugger::$panelGenerationTime['templateEditor']['size']);
+        $out .= \TracyDebugger::generatedTimeSize('templateEditor', \Tracy\Debugger::timer('templateEditor'), strlen($out));
 
         return $out;
     }

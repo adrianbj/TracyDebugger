@@ -150,7 +150,7 @@ class ModuleDisablerPanel implements IBarPanel {
                         $out .= '<legend>There are no modules installed that can be disabled.</legend>';
                     }
                 }
-            $out .= '</fieldset>' . \TracyDebugger::generatedTimeSize(\Tracy\Debugger::timer('moduleDisabler'), strlen($out)) . '
+            $out .= '</fieldset>' . \TracyDebugger::generatedTimeSize('moduleDisabler', \Tracy\Debugger::timer('moduleDisabler'), strlen($out)) . '
         </div>';
 
         return $out;

@@ -119,9 +119,7 @@ class UserSwitcherPanel implements IBarPanel {
             </form>
         </div>';
 
-        \TracyDebugger::$panelGenerationTime['userSwitcher']['time'] = \Tracy\Debugger::timer('userSwitcher');
-        \TracyDebugger::$panelGenerationTime['userSwitcher']['size'] = strlen($out);
-        $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['userSwitcher']['time'], \TracyDebugger::$panelGenerationTime['userSwitcher']['size']);
+        $out .= \TracyDebugger::generatedTimeSize('userSwitcher', \Tracy\Debugger::timer('userSwitcher'), strlen($out));
 
         $out .= '</div>';
 

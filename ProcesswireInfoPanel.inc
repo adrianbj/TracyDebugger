@@ -588,9 +588,7 @@ class ProcesswireInfoPanel implements IBarPanel {
             </div>';
         }
 
-        \TracyDebugger::$panelGenerationTime['processwireInfo']['time'] = \Tracy\Debugger::timer('processwireInfo');
-        \TracyDebugger::$panelGenerationTime['processwireInfo']['size'] = strlen($out);
-        $out .= \TracyDebugger::generatedTimeSize(\TracyDebugger::$panelGenerationTime['processwireInfo']['time'], \TracyDebugger::$panelGenerationTime['processwireInfo']['size']);
+        $out .= \TracyDebugger::generatedTimeSize('processwireInfo', \Tracy\Debugger::timer('processwireInfo'), strlen($out));
         $out .= '</div>';
 
         return $out;
