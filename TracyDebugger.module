@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 302,
+            'version' => 303,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -714,7 +714,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     protected function addUserBar($event) {
         $userBar = '';
-        require_once __DIR__ . '/userBar.inc';
+        require_once __DIR__ . '/UserBar.inc';
         $event->return = str_replace("</body>", $userBar.'</body>', $event->return);
     }
 
@@ -1174,6 +1174,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'userBarFeatures');
         $f->label = __('User Bar Features', __FILE__);
         $f->description = __('Determines which features are shown on the User Bar.', __FILE__);
+        $f->notes = __('The Page Versions function requires that the user has the "tracy-page-versions" permission.', __FILE__);
         $f->columnWidth = 50;
         foreach(static::$userBarFeatures as $name => $label) {
             $f->addOption($name, $label);
