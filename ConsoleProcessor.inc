@@ -49,7 +49,7 @@ if($user->isSuperuser()) {
         }
         // template file is excluded above and included now, after all others, to prevent include errors to
         // relative file paths preventing access to all variables/functions - happens especially when filecompiler is off
-        require_once($page->template->filename);
+        include_once($page->template->filename);
 
         $templateVars = get_defined_vars();
         ob_end_clean();

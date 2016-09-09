@@ -312,22 +312,24 @@ class ProcesswireInfoPanel implements IBarPanel {
                                     if(is_array($outValue)) {
                                         $n=0;
                                         foreach($outValue as &$val) {
-                                            if(isset($val['created'])) $val['created'] .= ' ('.date("Y-m-d H:i:s", $val['created']).')';
-                                            if(isset($val['modified'])) $val['modified'] .= ' ('.date("Y-m-d H:i:s", $val['modified']).')';
-                                            if($value instanceof PageFiles) {
-                                                $val['name'] = $value->eq($n)->name;
-                                                $val['filename'] = $value->eq($n)->filename;
-                                                $val['ext'] = $value->eq($n)->ext;
-                                                $val['url'] = $value->eq($n)->url;
-                                                $val['httpUrl'] = $value->eq($n)->httpUrl;
-                                                $val['filesize'] = $value->eq($n)->filesize;
-                                                $val['filesizeStr'] = $value->eq($n)->filesizeStr;
+                                            if(is_array($val)) {
+                                                if(isset($val['created'])) $val['created'] .= ' ('.date("Y-m-d H:i:s", $val['created']).')';
+                                                if(isset($val['modified'])) $val['modified'] .= ' ('.date("Y-m-d H:i:s", $val['modified']).')';
+                                                if($value instanceof PageFiles) {
+                                                    $val['name'] = $value->eq($n)->name;
+                                                    $val['filename'] = $value->eq($n)->filename;
+                                                    $val['ext'] = $value->eq($n)->ext;
+                                                    $val['url'] = $value->eq($n)->url;
+                                                    $val['httpUrl'] = $value->eq($n)->httpUrl;
+                                                    $val['filesize'] = $value->eq($n)->filesize;
+                                                    $val['filesizeStr'] = $value->eq($n)->filesizeStr;
+                                                }
+                                                if($value instanceof PageImages) {
+                                                    $val['width'] = $value->eq($n)->width;
+                                                    $val['height'] = $value->eq($n)->height;
+                                                }
+                                                $n++;
                                             }
-                                            if($value instanceof PageImages) {
-                                                $val['width'] = $value->eq($n)->width;
-                                                $val['height'] = $value->eq($n)->height;
-                                            }
-                                            $n++;
                                         }
                                     }
 
