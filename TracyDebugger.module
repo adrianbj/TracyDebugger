@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 301,
+            'version' => 302,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -62,6 +62,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $disabableModules;
     public static $disabledModules = array();
     public static $templatePath;
+    public static $pageVersion;
     public static $templatePathOnce;
     public static $templatePathSticky;
     public static $templatePathPermission;
@@ -113,7 +114,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'users' => 'Users',
         'validator' => 'Validator'
     );
-
+    public static $userBarFeatures = array(
+        'admin' => 'Admin',
+        'editPage' => 'Edit Page',
+        'pageVersions' => 'Page Versions'
+    );
 
    /**
      * Default configuration for module
@@ -138,6 +143,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "hideDebugBarModals" => array('regularModal', 'inlineModal'),
                 "frontendPanels" => array('processwireInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'templatePath', 'console', 'templateEditor', 'panelSelector', 'tracyToggler'),
                 "backendPanels" => array('processwireInfo', 'processwireLogs', 'tracyLogs', 'debugMode', 'console', 'panelSelector', 'tracyToggler'),
+                "showUserBar" => null,
+                "userBarFeatures" => array('admin', 'editPage'),
                 "showPanelLabels" => 1,
                 "processwireInfoPanelSections" => array('summary', 'templateInfo', 'fieldsListValues', 'adminLinks', 'documentationLinks', 'editLinks'),
                 "diagnosticsPanelSections" => array('filesystemFolders'),
@@ -226,10 +233,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             require_once __DIR__ . '/ShortcutMethods.inc';
         }
 
-        // now that required classes above have been loaded if requested,
-        // we can now exit if enabled unchecked, or user not allowed
-        if(!$this->data['enabled'] || !$this->allowedTracyUsers()) return;
-
         // back-end
         if($this->inAdmin()) {
             // should we show debug bar in admin?
@@ -250,6 +253,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
 
+        // show user bar - this is for users who are not allowed access to the debug bar
+        if(!$this->inAdmin() && $this->data['showUserBar'] && count($this->data['userBarFeatures'])>0 && !$this->config->ajax && !$this->allowedTracyUsers() && $this->user->isLoggedin()) {
+            $this->addHookAfter('Page::render', $this, 'addUserBar');
+        }
+
+        // now that required classes above have been loaded if requested,
+        // we can now exit if enabled unchecked, or user not allowed
+        if(!$this->data['enabled'] || !$this->allowedTracyUsers()) return;
+
+        // if Tracy has been toggled "disabled" add enable button and then exit
         if($this->input->cookie->tracyDisabled == 1) {
             if($showDebugBar && !$this->config->ajax) {
                 $this->addHookAfter('Page::render', $this, 'addEnableButton');
@@ -258,6 +271,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             return;
         }
 
+        // Got this far so start enabling Tracy and debug bar
+        // what mode?
         if($this->data['outputMode'] == 'development' || ($this->user->isSuperuser() && $this->data['superuserForceDevelopment'])) {
             $outputMode = Debugger::DEVELOPMENT;
         }
@@ -268,6 +283,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $outputMode = Debugger::DETECT;
         }
 
+        // code editor string
         Debugger::$editor = $this->data['editor'];
 
         // build up array of replacements to pass to Debugger::$editorMapping
@@ -281,9 +297,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         else {
             $mappingReplacements[$this->config->paths->cache . 'FileCompiler/'] = $this->config->paths->root;
         }
-
         Debugger::$editorMapping = $mappingReplacements;
 
+        // Tracy log folder path
         $logFolder = $this->config->paths->logs.'tracy';
 
         // delete Tracy logs if requested
@@ -564,6 +580,26 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     public function ready() {
 
+        // for PageVersion User Bar feature
+        if(!$this->inAdmin() && wire('user')->hasPermission('tracy-page-versions') && $this->data['showUserBar'] && in_array('pageVersions', $this->data['userBarFeatures']) && !$this->config->ajax && !$this->allowedTracyUsers() && $this->user->isLoggedin()) {
+            static::$pageVersion = $this->findInCookie($this->input->cookie->tracyPageVersion);
+            if(static::$pageVersion && static::$pageVersion != pathinfo(wire('page')->template->filename, PATHINFO_BASENAME)) {
+                static::$templatePath = static::$pageVersion;
+                unset($this->input->cookie->tracyPageVersion);
+                setcookie("tracyPageVersion", "", time()-3600, "/");
+            }
+            elseif(static::$pageVersion != '') {
+                // don't change as already set by dev template permission functionality
+            }
+            else {
+                static::$templatePath = '';
+            }
+
+            if(static::$templatePath != '') {
+                $this->page->template->filename = static::$templatePath;
+            }
+        }
+
         // exit if enabled not true from init()
         if(!$this->tracyEnabled) return;
 
@@ -676,10 +712,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     }
 
+    protected function addUserBar($event) {
+        $userBar = '';
+        require_once __DIR__ . '/userBar.inc';
+        $event->return = str_replace("</body>", $userBar.'</body>', $event->return);
+    }
+
     protected function addEnableButton($event) {
         $enableButton = '
         <style>
-            div#TracyEnableContainer {
+            div#TracyEnableButton {
                 bottom: 0px;
                 right: 10px;
                 z-index: 99999;
@@ -696,7 +738,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 location.reload();
             }
         </script>
-        <div id="TracyEnableContainer" title="Enable Tracy" onclick="enableTracy()">
+        <div id="TracyEnableButton" title="Enable Tracy" onclick="enableTracy()">
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 44.816 44.816" style="enable-background:new 0 0 44.816 44.816;" xml:space="preserve">
                 <g>
                     <path d="M22.404,21.173c2.126,0,3.895-1.724,3.895-3.85V3.849C26.299,1.724,24.53,0,22.404,0c-2.126,0-3.895,1.724-3.895,3.849    v13.475C18.51,19.449,20.278,21.173,22.404,21.173z" fill="#CD1818"/>
@@ -1117,6 +1159,29 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $fieldset->add($f);
 
         $fieldset = wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("User Bar");
+        $wrapper->add($fieldset);
+
+        $f = wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'showUserBar');
+        $f->label = __('Show User Bar', __FILE__);
+        $f->description = __('This bar is shown to logged in users without permission for the Tracy debug bar (typically all non-superusers).', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['showUserBar'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $f = wire('modules')->get("InputfieldAsmSelect");
+        $f->attr('name', 'userBarFeatures');
+        $f->label = __('User Bar Features', __FILE__);
+        $f->description = __('Determines which features are shown on the User Bar.', __FILE__);
+        $f->columnWidth = 50;
+        foreach(static::$userBarFeatures as $name => $label) {
+            $f->addOption($name, $label);
+        }
+        if($data['userBarFeatures']) $f->attr('value', $data['userBarFeatures']);
+        $fieldset->add($f);
+
+        $fieldset = wire('modules')->get("InputfieldFieldset");
         $fieldset->label = __("ProcessWire Info Panel Options");
         $wrapper->add($fieldset);
 
@@ -1228,7 +1293,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'userDevTemplate');
         $f->label = __('Enable User Dev Template', __FILE__);
-        $f->description = __('If user has a role or permission named to match the page template with the set extension the page will be rendered with that template file rather than the default.', __FILE__);
+        $f->description = __('If user has a role or permission named to match the page template with the set suffix, the page will be rendered with that template file rather than the default.', __FILE__);
         $f->columnWidth = 50;
         $f->attr('checked', $data['userDevTemplate'] == '1' ? 'checked' : '' );
         $fieldset->add($f);
