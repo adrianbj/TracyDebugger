@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 303,
+            'version' => 304,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -145,6 +145,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "backendPanels" => array('processwireInfo', 'processwireLogs', 'tracyLogs', 'debugMode', 'console', 'panelSelector', 'tracyToggler'),
                 "showUserBar" => null,
                 "userBarFeatures" => array('admin', 'editPage'),
+                "userBarBackgroundColor" => '',
+                "userBarBackgroundOpacity" => 1,
+                "userBarIconColor" => '#666666',
                 "showPanelLabels" => 1,
                 "processwireInfoPanelSections" => array('summary', 'templateInfo', 'fieldsListValues', 'adminLinks', 'documentationLinks', 'editLinks'),
                 "diagnosticsPanelSections" => array('filesystemFolders'),
@@ -1180,6 +1183,31 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $f->addOption($name, $label);
         }
         if($data['userBarFeatures']) $f->attr('value', $data['userBarFeatures']);
+        $fieldset->add($f);
+
+        $f = wire('modules')->get("InputfieldText");
+        $f->attr('name', 'userBarBackgroundColor');
+        $f->label = __('Background Color', __FILE__);
+        $f->description = __('Leave blank for transparent/none', __FILE__);
+        $f->notes = __('eg. #FFFFFF', __FILE__);
+        $f->columnWidth = 33;
+        if($data['userBarBackgroundColor']) $f->attr('value', $data['userBarBackgroundColor']);
+        $fieldset->add($f);
+
+        $f = wire('modules')->get("InputfieldText");
+        $f->attr('name', 'userBarBackgroundOpacity');
+        $f->label = __('Background Opacity', __FILE__);
+        $f->notes = __('0 to 1', __FILE__);
+        $f->columnWidth = 34;
+        if($data['userBarBackgroundOpacity']) $f->attr('value', $data['userBarBackgroundOpacity']);
+        $fieldset->add($f);
+
+        $f = wire('modules')->get("InputfieldText");
+        $f->attr('name', 'userBarIconColor');
+        $f->label = __('Icon Color', __FILE__);
+        $f->notes = __('eg. #666666', __FILE__);
+        $f->columnWidth = 33;
+        if($data['userBarIconColor']) $f->attr('value', $data['userBarIconColor']);
         $fieldset->add($f);
 
         $fieldset = wire('modules')->get("InputfieldFieldset");

@@ -8,8 +8,9 @@ $userBar = '
         z-index: 99999;
         position: fixed;
         margin: 0px !important;
-        background: #FFFFFF;
-        padding: 0 3px;
+        background: '.\TracyDebugger::getDataValue("userBarBackgroundColor").';
+        padding: 3px 3px 0 6px;
+        opacity: '.\TracyDebugger::getDataValue("userBarBackgroundOpacity").';
     }
     div#TracyUserBar a {
         border:none !important;
