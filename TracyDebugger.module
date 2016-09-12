@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 305,
+            'version' => 306,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -145,6 +145,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "backendPanels" => array('processwireInfo', 'processwireLogs', 'tracyLogs', 'debugMode', 'console', 'panelSelector', 'tracyToggler'),
                 "showUserBar" => null,
                 "userBarFeatures" => array('admin', 'editPage'),
+                "userBarCustomFeatures" => '',
                 "userBarBackgroundColor" => '',
                 "userBarBackgroundOpacity" => 1,
                 "userBarIconColor" => '#666666',
@@ -1183,6 +1184,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $f->addOption($name, $label);
         }
         if($data['userBarFeatures']) $f->attr('value', $data['userBarFeatures']);
+        $fieldset->add($f);
+
+        $f = wire('modules')->get("InputfieldTextarea");
+        $f->attr('name', 'userBarCustomFeatures');
+        $f->label = __('Custom Features', __FILE__);
+        $f->description = __('Use this PHP code block to return any output you want.', __FILE__);
+        $f->notes = __('eg. return \'<a href="https://developers.google.com/speed/pagespeed/insights/?url=\'.$page->httpUrl.\'" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 452.555 452.555" style="enable-background:new 0 0 452.555 452.555;" xml:space="preserve" width="16px" height="16px"><path d="M404.927,209.431h47.175c-3.581-49.699-23.038-94.933-53.539-130.611l-33.715,33.715l-23.275-23.296l33.758-33.78     C339.826,24.353,294.527,4.206,244.591,0.194v48.923h-32.917V0C161.22,3.236,115.296,22.8,79.165,53.668l35.57,35.549     l-23.296,23.296L55.804,76.878C24.332,112.858,4.12,158.804,0.475,209.452h50.864v32.917H0.453     C8.93,359.801,106.646,452.555,226.256,452.555s217.347-92.754,225.846-210.186h-47.197L404.927,209.431L404.927,209.431z      M228.133,362.217c-24.116,0-43.659-19.522-43.659-43.681c0-17.839,10.742-33.176,26.144-39.928l16.394-151.707l4.034,0.043     l14.927,151.729c15.229,6.881,25.863,22.045,25.863,39.863C271.857,342.695,252.27,362.217,228.133,362.217z" fill="\'.$iconColor.\'"/></svg></a>\';', __FILE__);
+        if($data['userBarCustomFeatures']) $f->attr('value', $data['userBarCustomFeatures']);
         $fieldset->add($f);
 
         $f = wire('modules')->get("InputfieldText");

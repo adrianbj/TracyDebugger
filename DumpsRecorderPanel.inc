@@ -17,7 +17,7 @@ class DumpsRecorderPanel implements IBarPanel {
 
         $items = wire('session')->tracyDumpItems;
         $this->dumpCount = count($items);
-        $this->entries .= '<div><span style="display:inline-block;float:left"><label><input type="checkbox" id="preserveDumps" ' . (wire('input')->cookie->tracyPreserveDumpItems ? 'checked="checked"' : '') . ' /> Preserve Dumps<label></span><span style="display:inline-block;float:right"><input type="submit" onclick="clearDumps()" value="Clear Dumps" /></span></div><div style="clear:both; margin-bottom:5px"></div>';
+        $this->entries .= '<div><span style="display:inline-block;float:left"><label><input type="checkbox" id="preserveDumps" ' . (wire('input')->cookie->tracyPreserveDumpItems ? 'checked="checked"' : '') . ' /> Preserve Dumps<label></span>'.($this->dumpCount > 0 ? '<span id="clearDumpsButton" style="display:inline-block;float:right"><input type="submit" onclick="clearDumps()" value="Clear Dumps" /></span>' : '') . '</div><div style="clear:both; margin-bottom:5px"></div>';
         if ($this->dumpCount > 0) {
             $this->iconColor = '#CD1818';
             $this->entries .= '
@@ -82,6 +82,7 @@ class DumpsRecorderPanel implements IBarPanel {
 
             function clearDumps() {
                 document.cookie = "tracyClearDumpItems=true;expires=0;path=/";
+                document.getElementById("clearDumpsButton").innerHTML="";
                 var elements = document.getElementsByClassName("dump-items");
                 while(elements.length > 0) {
                     elements[0].parentNode.removeChild(elements[0]);
