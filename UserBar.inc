@@ -3,8 +3,8 @@
 $userBar = '
 <style>
     div#TracyUserBar {
-        bottom: 0px;
-        right: 0px;
+        '.\TracyDebugger::getDataValue("userBarTopBottom").': 0px;
+        '.\TracyDebugger::getDataValue("userBarLeftRight").': 0px;
         z-index: 99999;
         position: fixed;
         margin: 0px !important;
