@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 307,
+            'version' => 308,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -60,6 +60,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $stickyPanels;
     public static $showPanels;
     public static $disabableModules;
+    public static $restrictedUserDisabledPanels = array();
     public static $disabledModules = array();
     public static $templatePath;
     public static $pageVersion;
@@ -143,6 +144,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "hideDebugBarModals" => array('regularModal', 'inlineModal'),
                 "frontendPanels" => array('processwireInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'templatePath', 'console', 'templateEditor', 'panelSelector', 'tracyToggler'),
                 "backendPanels" => array('processwireInfo', 'processwireLogs', 'tracyLogs', 'debugMode', 'console', 'panelSelector', 'tracyToggler'),
+                "restrictedUserDisabledPanels" => array(),
                 "showUserBar" => null,
                 "showUserBarTracyUsers" => null,
                 "userBarFeatures" => array('admin', 'editPage'),
@@ -373,6 +375,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // add once/sticky panels to the end because there is no specified order for these in config settings
         foreach(static::$allPanels as $panelName => $panelTitle) {
             if(in_array($panelName, static::$showPanels) && !in_array($panelName, $showPanelsOrdered)) $showPanelsOrdered[$i] = $panelName;
+            // define disabled panels for restricted users
+            if($this->superuserHasPermission(null, "tracy-restricted-panels") && in_array($panelName, $this->data['restrictedUserDisabledPanels'])) {
+                static::$restrictedUserDisabledPanels[] = $panelName;
+            }
             $i++;
         }
         // move Panel Selector to the end so it has access to the generation time values for all other panels
@@ -650,6 +656,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 if(isset($this->data['userSwitchSession'])) $userSwitchSession = $this->data['userSwitchSession'];
                 if($this->data['outputMode'] != 'development' || (!$this->user->isSuperuser() && (!$this->session->tracyUserSwitcherId || (isset($userSwitchSession[$this->session->tracyUserSwitcherId]) && $userSwitchSession[$this->session->tracyUserSwitcherId] <= time())))) continue;
             }
+            // ignore disabled panels for restricted users
+            if(!empty(static::$restrictedUserDisabledPanels) && in_array($panel, static::$restrictedUserDisabledPanels)) continue;
 
             $panelName = ucfirst($panel).'Panel';
 
@@ -760,6 +768,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     protected function deleteFile($path) {
         if(file_exists($path)) unlink($path);
+    }
+
+    protected function superuserHasPermission($u = null, $permission) {
+        $u = $u ? $u : wire('user');
+        foreach($u->roles as $role) {
+            foreach($role->permissions as $perm) {
+                if($perm->name == $permission) return true;
+            }
+        }
+        return false;
     }
 
     // for the validator panel
@@ -1163,6 +1181,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
         if($data['backendPanels']) $f->attr('value', $data['backendPanels']);
+        $fieldset->add($f);
+
+        $f = wire('modules')->get("InputfieldCheckboxes");
+        $f->attr('name', 'restrictedUserDisabledPanels');
+        $f->label = __('Restricted User Disabled Panels', __FILE__);
+        $f->description = __('Check the panels that should NOT be shown to users with the "tracy-restricted-panels" user permission.', __FILE__);
+        $f->notes = __('Unchecked panels will still only be shown to restricted users if they are selected in the Front/Back-end options above.', __FILE__);
+        $f->optionColumns = 3;
+        foreach(static::$allPanels as $name => $label) {
+            $f->addOption($name, $label);
+        }
+        if($data['restrictedUserDisabledPanels']) $f->attr('value', $data['restrictedUserDisabledPanels']);
         $fieldset->add($f);
 
         $fieldset = wire('modules')->get("InputfieldFieldset");

@@ -132,6 +132,8 @@ class PanelSelectorPanel implements IBarPanel {
                     $out .= '<div style="-webkit-column-count: 2; -moz-column-count: 2; column-count: 2; -webkit-column-gap: 40px; -moz-column-gap: 40px; column-gap: 40px;">';
                     foreach(\TracyDebugger::$allPanels as $name => $label) {
 
+                        if(in_array($name, \TracyDebugger::$restrictedUserDisabledPanels)) continue;
+
                         if($name == 'userSwitcher') {
                             if(\TracyDebugger::getDataValue('userSwitchSession') != '') $userSwitchSession = \TracyDebugger::getDataValue('userSwitchSession');
                             if(\TracyDebugger::getDataValue('outputMode') != 'development' || (!wire('user')->isSuperuser() && (!wire('session')->tracyUserSwitcherId || (isset($userSwitchSession[wire('session')->tracyUserSwitcherId]) && $userSwitchSession[wire('session')->tracyUserSwitcherId] <= time())))) continue;
