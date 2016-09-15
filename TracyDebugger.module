@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 308,
+            'version' => 309,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -1185,7 +1185,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = wire('modules')->get("InputfieldCheckboxes");
         $f->attr('name', 'restrictedUserDisabledPanels');
-        $f->label = __('Restricted User Disabled Panels', __FILE__);
+        $f->label = __('Disabled Panels for Restricted Users', __FILE__);
         $f->description = __('Check the panels that should NOT be shown to users with the "tracy-restricted-panels" user permission.', __FILE__);
         $f->notes = __('Unchecked panels will still only be shown to restricted users if they are selected in the Front/Back-end options above.', __FILE__);
         $f->optionColumns = 3;

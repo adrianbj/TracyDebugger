@@ -121,14 +121,11 @@ class ProcesswireInfoPanel implements IBarPanel {
                 <tr>
                     <th>Template</th>
                     <td><a title="Edit Template" href="'.wire('config')->urls->admin.'setup/template/edit?id='.wire('page')->template->id.'">'.wire('page')->template->name.(wire('page')->template->label ? '</a> ('.wire('page')->template->label.')' :'').'</td>
+                </tr>
+                <tr>
+                    <th>Process</th>
+                    <td>'.wire('process').'</td>
                 </tr>';
-                if(wire('page')->template == 'admin') {
-                    $summary .= '
-                    <tr>
-                        <th>Process</th>
-                        <td>'.wire('page')->process.'</td>
-                    </tr>';
-                }
                 if(wire('page')->parent && wire('page')->parent->viewable()) {
                     $summary .= '
                     <tr>
