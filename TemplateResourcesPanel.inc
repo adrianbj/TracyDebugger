@@ -199,7 +199,8 @@ class TemplateResourcesPanel implements IBarPanel {
     }
 
     protected function removeCompilerFromPath($path) {
-        return str_replace(wire('config')->paths->cache . 'FileCompiler/', wire('config')->paths->root, $path);
+        $compilerCachePath = isset(wire('config')->fileCompilerOptions['cachePath']) ? wire('config')->fileCompilerOptions['cachePath'] : wire('config')->paths->cache . 'FileCompiler/';
+        return str_replace($compilerCachePath, wire('config')->paths->root, $path);
     }
 
     protected function getFileEditorPath($path, $line) {
