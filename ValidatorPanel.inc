@@ -24,7 +24,8 @@ class ValidatorPanel implements IBarPanel {
         \Tracy\Debugger::timer('validator');
 
         // determine which version of the validator to use
-        $this->validatorUrl = strpos(\TracyDebugger::$pageHtml, '<!DOCTYPE html>') !== false ? "https://html5.validator.nu/" : "https://validator.nu/";
+        //$this->validatorUrl = strpos(\TracyDebugger::$pageHtml, '<!DOCTYPE html>') !== false ? "https://html5.validator.nu/" : "https://validator.nu/";
+        $this->validatorUrl = 'https://validator.w3.org/nu/';
         $this->validationUrl = $this->validatorUrl . "?doc=".wire('page')->httpUrl."&out=html&showimagereport=yes&showsource=yes";
 
         // get results from validator and convert any entities to UTF-8
@@ -39,7 +40,9 @@ class ValidatorPanel implements IBarPanel {
 
         if($this->rawResult) {
             $doc = new DOMDocument();
+            libxml_use_internal_errors(true);
             $doc->loadHTML($this->rawResult);
+            libxml_use_internal_errors(false);
 
             $xpath = new DOMXPath($doc);
             $success = $xpath->query("//*[@class='success']");
