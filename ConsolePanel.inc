@@ -145,7 +145,7 @@ class ConsolePanel implements IBarPanel {
                 xmlhttp.open("POST", "./", true);
                 xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-                xmlhttp.send("tracyconsole=1&accessTemplateVars="+accessTemplateVars+"&pid='.wire('page')->id.'&code="+code);
+                xmlhttp.send("tracyconsole=1&accessTemplateVars="+accessTemplateVars+"&pid='.wire('page')->id.'&code="+encodeURIComponent(code));
             }
         </script>
         <style type="text/css">
