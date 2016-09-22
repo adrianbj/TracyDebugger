@@ -401,6 +401,20 @@ class ProcesswireInfoPanel implements IBarPanel {
                 $fieldsListValues .= $sectionEnd;
             }
 
+            // Versions Info
+            if(in_array('fieldsListValues', $panelSections)) {
+                $versionsList = "ProcessWire (" . wire('config')->version . ")\n";
+                $versionsList .= "PHP (" . phpversion() . ")\n";
+                $versionsList .= "MySQL (" . wire('database')->query('select version()')->fetchColumn() . ")\n\n";
+                foreach(wire('modules') as $name => $label) {
+                    $flags = wire('modules')->getFlags($name);
+                    $info = wire('modules')->getModuleInfoVerbose($name);
+                    if($info['core']) continue;
+                    $versionsList .= $name . " (" . wire('modules')->formatVersion($info['version']) . ")\n";
+                }
+                $versionsList = '<p><textarea rows="5">'.$versionsList.'</textarea></p>';
+            }
+
             //Objects
             $pageObject = Dumper::toHtml(wire('page'), array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false));
             $templateObject = Dumper::toHtml(wire('page')->template, array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false));
