@@ -413,7 +413,7 @@ class ProcesswireInfoPanel implements IBarPanel {
                     if($info['core']) continue;
                     $versionsList .= $name . " (" . wire('modules')->formatVersion($info['version']) . ")\n";
                 }
-                $versionsList = '<p><textarea rows="5" style="font-size:12px">'.$versionsList.'</textarea></p>';
+                $versionsList = '<p><textarea rows="5" style="font-size:12px; width:100%">'.$versionsList.'</textarea></p>';
             }
 
             //Objects
