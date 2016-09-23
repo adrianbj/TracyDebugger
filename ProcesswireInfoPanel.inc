@@ -402,7 +402,7 @@ class ProcesswireInfoPanel implements IBarPanel {
             }
 
             // Versions Info
-            if(in_array('fieldsListValues', $panelSections)) {
+            if(in_array('versionsList', $panelSections)) {
                 $versionsList = "ProcessWire (" . wire('config')->version . ")\n";
                 $versionsList .= "PHP (" . phpversion() . ")\n";
                 if(function_exists('apache_get_version')) $versionsList .= "Apache (" . str_replace('Apache/', '', current(explode("PHP", apache_get_version()))) . ")\n";
