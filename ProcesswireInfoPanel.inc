@@ -431,8 +431,10 @@ class ProcesswireInfoPanel implements IBarPanel {
         <div class="tracy-inner">
         ';
 
+        // all the "non" icon links sections
         $i=0;
         foreach(\TracyDebugger::$processWireInfoSections as $name => $label) {
+            // get all sections excluding those that are admin "links"
             if(strpos($name, 'Links') === false && in_array($name, $panelSections)) {
                 $out .= '
                 <a href="#" rel="'.$name.'" class="tracy-toggle '.($i>0 ? ' tracy-collapsed' : '').'">'.$label.'</a>
@@ -441,6 +443,7 @@ class ProcesswireInfoPanel implements IBarPanel {
             }
         }
 
+        // all the icon links sections
         if(in_array('adminLinks', $panelSections)) {
             $out .= '
             <div class="pw-admin-links" style="text-align: center; border-top:1px solid #CCCCCC; margin-top:10px; padding-top:10px;">
