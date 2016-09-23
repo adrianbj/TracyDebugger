@@ -405,7 +405,7 @@ class ProcesswireInfoPanel implements IBarPanel {
             if(in_array('fieldsListValues', $panelSections)) {
                 $versionsList = "ProcessWire (" . wire('config')->version . ")\n";
                 $versionsList .= "PHP (" . phpversion() . ")\n";
-                $versionsList .= "Apache (" . current(explode("PHP", apache_get_version())) . ")\n";
+                if(function_exists('apache_get_version')) $versionsList .= "Apache (" . str_replace('Apache/', '', current(explode("PHP", apache_get_version()))) . ")\n";
                 $versionsList .= "MySQL (" . wire('database')->query('select version()')->fetchColumn() . ")\n\n";
                 foreach(wire('modules') as $name => $label) {
                     $flags = wire('modules')->getFlags($name);
