@@ -440,12 +440,23 @@ class ProcesswireInfoPanel implements IBarPanel {
                 $serverInfo .= "MySQL (" . wire('database')->query('select version()')->fetchColumn() . ")\n\n";
 
                 $serverSettings = "";
+                //php settings
                 foreach(array('allow_url_fopen', 'max_execution_time', 'post_max_size', 'upload_max_filesize', 'max_input_time', 'max_input_vars', 'memory_limit') as $setting) {
                     $serverSettings .= $setting . " (" . ini_get($setting) . ")\n";
                 }
-                $apacheModules = apache_get_modules();
+                // apache modules
+                if(function_exists('apache_get_modules')) $apacheModules = apache_get_modules();
                 foreach(array('mod_rewrite', 'mod_security') as $apacheModule) {
-                    $serverSettings .= $apacheModule . " (" . (in_array($apacheModule, $apacheModules) ? 'On' : 'Off') . ")\n";
+                    if(isset($apacheModules)) {
+                        $serverSettings .= $apacheModule . " (" . (in_array($apacheModule, $apacheModules) ? 'On' : 'Off') . ")\n";
+                    }
+                    // fallback if apache_get_modules() is not available
+                    else {
+                        ob_start();
+                        phpinfo(INFO_MODULES);
+                        $contents = ob_get_clean();
+                        $serverSettings .= $apacheModule . " (" . (strpos($contents, $apacheModule) ? 'On' : 'Off') . ")\n";
+                    }
                 }
                 $serverSettings .= "\n";
 
