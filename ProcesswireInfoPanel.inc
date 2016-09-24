@@ -427,7 +427,10 @@ class ProcesswireInfoPanel implements IBarPanel {
                         }
                     };
                     JavaScript.load("'.wire('config')->urls->siteModules.'TracyDebugger/clipboardjs/clipboard.min.js", function() {
-                        new Clipboard(".btn");
+                        JavaScript.load("'.wire('config')->urls->siteModules.'TracyDebugger/clipboardjs/tooltips.js", function() {
+                            var versionsClipboard=new Clipboard(".btn");
+                            versionsClipboard.on("success",function(e){e.clearSelection();showTooltip(e.trigger,"Copied!");});versionsClipboard.on("error",function(e){showTooltip(e.trigger,fallbackMessage(e.action));});
+                        });
                     });
                 </script>
                 ';
@@ -448,8 +451,11 @@ class ProcesswireInfoPanel implements IBarPanel {
                     <button class="btn" data-clipboard-text="'.$githubVersionsList.'">
                         Copy for Github
                     </button>
+                    <button class="btn" data-clipboard-target="#versionsListTextarea">
+                        Copy plain text
+                    </button>
                 </p>
-                <p><textarea rows="5" style="font-size:12px; width:100%">'.$serverInfo . $moduleInfo.'</textarea></p>';
+                <p><textarea id="versionsListTextarea" rows="5" style="font-size:12px; width:100%">'.$serverInfo . $moduleInfo.'</textarea></p>';
             }
 
             //Objects
