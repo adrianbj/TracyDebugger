@@ -438,6 +438,17 @@ class ProcesswireInfoPanel implements IBarPanel {
                 $serverInfo .= "PHP (" . phpversion() . ")\n";
                 if(isset($_SERVER['SERVER_SOFTWARE'])) $serverInfo .= "Apache (" . str_replace('Apache/', '', current(explode("PHP", $_SERVER['SERVER_SOFTWARE']))) . ")\n";
                 $serverInfo .= "MySQL (" . wire('database')->query('select version()')->fetchColumn() . ")\n\n";
+
+                $serverSettings = "";
+                foreach(array('allow_url_fopen', 'max_execution_time', 'post_max_size', 'upload_max_filesize', 'max_input_time', 'max_input_vars', 'memory_limit') as $setting) {
+                    $serverSettings .= $setting . " (" . ini_get($setting) . ")\n";
+                }
+                $apacheModules = apache_get_modules();
+                foreach(array('mod_rewrite', 'mod_security') as $apacheModule) {
+                    $serverSettings .= $apacheModule . " (" . (in_array($apacheModule, $apacheModules) ? 'On' : 'Off') . ")\n";
+                }
+                $serverSettings .= "\n";
+
                 $moduleInfo = '';
                 foreach(wire('modules') as $name => $label) {
                     $flags = wire('modules')->getFlags($name);
@@ -445,7 +456,7 @@ class ProcesswireInfoPanel implements IBarPanel {
                     if($info['core']) continue;
                     $moduleInfo .= $name . " (" . wire('modules')->formatVersion($info['version']) . ")\n";
                 }
-                $githubVersionsList = '<details><summary><strong>Server Details</strong></summary>' . $serverInfo . '<details><summary><strong>Module Details</strong></summary> ' . $moduleInfo . '</details></details>';
+                $githubVersionsList = '<details><summary><strong>Server Details</strong></summary>' . $serverInfo . '<details><summary><strong>Server Settings</strong></summary> ' . $serverSettings . '</details><details><summary><strong>Module Details</strong></summary> ' . $moduleInfo . '</details></details>';
                 $versionsList .= '
                 <p>
                     <button class="btn" data-clipboard-text="'.$githubVersionsList.'">
@@ -455,7 +466,7 @@ class ProcesswireInfoPanel implements IBarPanel {
                         Copy plain text
                     </button>
                 </p>
-                <p><textarea id="versionsListTextarea" rows="5" style="font-size:12px; width:100%">'.$serverInfo . $moduleInfo.'</textarea></p>';
+                <p><textarea id="versionsListTextarea" rows="5" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="font-size:12px; width:100%">'.$serverInfo . $serverSettings . $moduleInfo.'</textarea></p>';
             }
 
             //Objects
