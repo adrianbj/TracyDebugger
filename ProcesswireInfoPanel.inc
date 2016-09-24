@@ -505,7 +505,7 @@ class ProcesswireInfoPanel implements IBarPanel {
                         Copy plain text
                     </button>
                 </p>
-                <p><textarea id="versionsListTextarea" rows="5" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="font-size:12px; width:100%">'.$serverInfo . $serverSettings . $moduleInfo.'</textarea></p>';
+                <p><textarea id="versionsListTextarea" rows="5" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="font-size:12px; width:100%; resize:vertical;">'.$serverInfo . $serverSettings . $moduleInfo.'</textarea></p>';
             }
 
             //Objects
