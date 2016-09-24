@@ -452,10 +452,17 @@ class ProcesswireInfoPanel implements IBarPanel {
                     }
                     // fallback if apache_get_modules() is not available
                     else {
-                        ob_start();
-                        phpinfo(INFO_MODULES);
-                        $contents = ob_get_clean();
-                        $serverSettings .= $apacheModule . " (" . (strpos($contents, $apacheModule) ? 'On' : 'Off') . ")\n";
+                        // this is a more reliable fallback for mod_rewrite
+                        if($apacheModule == 'mod_rewrite') {
+                            $serverSettings .= $apacheModule . " (" . ($_SERVER["HTTP_MOD_REWRITE"] ? 'On' : 'Off') . ")\n";
+                        }
+                        // this is for mod_security and any others specified, although it's still not very reliable for mod_security
+                        else {
+                            ob_start();
+                            phpinfo(INFO_MODULES);
+                            $contents = ob_get_clean();
+                            $serverSettings .= $apacheModule . " (" . (strpos($contents, $apacheModule) ? 'On' : 'Off') . ")\n";
+                        }
                     }
                 }
                 $serverSettings .= "\n";
