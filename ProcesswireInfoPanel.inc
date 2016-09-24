@@ -403,17 +403,53 @@ class ProcesswireInfoPanel implements IBarPanel {
 
             // Versions Info
             if(in_array('versionsList', $panelSections)) {
-                $versionsList = "ProcessWire (" . wire('config')->version . ")\n";
-                $versionsList .= "PHP (" . phpversion() . ")\n";
-                if(isset($_SERVER['SERVER_SOFTWARE'])) $versionsList .= "Apache (" . str_replace('Apache/', '', current(explode("PHP", $_SERVER['SERVER_SOFTWARE']))) . ")\n";
-                $versionsList .= "MySQL (" . wire('database')->query('select version()')->fetchColumn() . ")\n\n";
+                $versionsList = '
+                <script>
+                    // javascript dynamic loader from https://gist.github.com/hagenburger/500716
+                    // using dynamic loading because an exception error or "exit" in template file
+                    // was preventing these scripts from being loaded which broke the editor
+                    // if this has any problems, there is an alternate version to try here:
+                    // https://www.nczonline.net/blog/2009/07/28/the-best-way-to-load-external-javascript/
+                    var JavaScript = {
+                        load: function(src, callback) {
+                            var script = document.createElement("script"),
+                                    loaded;
+                            script.setAttribute("src", src);
+                            if (callback) {
+                                script.onreadystatechange = script.onload = function() {
+                                    if (!loaded) {
+                                        callback();
+                                    }
+                                    loaded = true;
+                                };
+                            }
+                            document.getElementsByTagName("head")[0].appendChild(script);
+                        }
+                    };
+                    JavaScript.load("'.wire('config')->urls->siteModules.'TracyDebugger/clipboardjs/clipboard.min.js", function() {
+                        new Clipboard(".btn");
+                    });
+                </script>
+                ';
+                $serverInfo = "ProcessWire (" . wire('config')->version . ")\n";
+                $serverInfo .= "PHP (" . phpversion() . ")\n";
+                if(isset($_SERVER['SERVER_SOFTWARE'])) $serverInfo .= "Apache (" . str_replace('Apache/', '', current(explode("PHP", $_SERVER['SERVER_SOFTWARE']))) . ")\n";
+                $serverInfo .= "MySQL (" . wire('database')->query('select version()')->fetchColumn() . ")\n\n";
+                $moduleInfo = '';
                 foreach(wire('modules') as $name => $label) {
                     $flags = wire('modules')->getFlags($name);
                     $info = wire('modules')->getModuleInfoVerbose($name);
                     if($info['core']) continue;
-                    $versionsList .= $name . " (" . wire('modules')->formatVersion($info['version']) . ")\n";
+                    $moduleInfo .= $name . " (" . wire('modules')->formatVersion($info['version']) . ")\n";
                 }
-                $versionsList = '<p><textarea rows="5" style="font-size:12px; width:100%">'.$versionsList.'</textarea></p>';
+                $githubVersionsList = '<details><summary><strong>Server Details</strong></summary>' . $serverInfo . '<details><summary><strong>Module Details</strong></summary> ' . $moduleInfo . '</details></details>';
+                $versionsList .= '
+                <p>
+                    <button class="btn" data-clipboard-text="'.$githubVersionsList.'">
+                        Copy for Github
+                    </button>
+                </p>
+                <p><textarea rows="5" style="font-size:12px; width:100%">'.$serverInfo . $moduleInfo.'</textarea></p>';
             }
 
             //Objects
