@@ -434,37 +434,58 @@ class ProcesswireInfoPanel implements IBarPanel {
                     });
                 </script>
                 ';
-                $serverInfo = "ProcessWire (" . wire('config')->version . ")\n";
-                $serverInfo .= "PHP (" . phpversion() . ")\n";
-                if(isset($_SERVER['SERVER_SOFTWARE'])) $serverInfo .= "Apache (" . str_replace('Apache/', '', current(explode("PHP", $_SERVER['SERVER_SOFTWARE']))) . ")\n";
-                $serverInfo .= "MySQL (" . wire('database')->query('select version()')->fetchColumn() . ")\n\n";
+                $serverInfo = "ProcessWire: " . wire('config')->version . "\n";
+                $serverInfo .= "PHP: " . phpversion() . "\n";
+                if(isset($_SERVER['SERVER_SOFTWARE'])) $serverInfo .= "Apache: " . str_replace('Apache/', '', current(explode("PHP", $_SERVER['SERVER_SOFTWARE']))) . "\n";
+                $serverInfo .= "MySQL: " . wire('database')->query('select version()')->fetchColumn() . "\n\n";
 
                 $serverSettings = "";
                 //php settings
-                foreach(array('allow_url_fopen', 'max_execution_time', 'post_max_size', 'upload_max_filesize', 'max_input_time', 'max_input_vars', 'memory_limit') as $setting) {
-                    $serverSettings .= $setting . " (" . ini_get($setting) . ")\n";
+                foreach(array('allow_url_fopen', 'max_input_nesting_level', 'xdebug', 'xdebug.max_nesting_level', 'max_execution_time', 'post_max_size', 'upload_max_filesize', 'max_input_time', 'max_input_vars', 'memory_limit') as $setting) {
+                    if($setting == 'max_execution_time') {
+                        $max_execution_time = trim(ini_get('max_execution_time'));
+                        $can_change = set_time_limit($max_execution_time);
+                    }
+                    $serverSettings .= $setting . ": " . ini_get($setting);
+                    if($setting == 'max_execution_time') {
+                        $serverSettings .= isset($can_change) ? ' (changeable)' : ' (not changeable)';
+                    }
+                    $serverSettings .= "\n";
                 }
                 // apache modules
                 if(function_exists('apache_get_modules')) $apacheModules = apache_get_modules();
                 foreach(array('mod_rewrite', 'mod_security') as $apacheModule) {
                     if(isset($apacheModules)) {
-                        $serverSettings .= $apacheModule . " (" . (in_array($apacheModule, $apacheModules) ? 'On' : 'Off') . ")\n";
+                        $serverSettings .= $apacheModule . ": " . (in_array($apacheModule, $apacheModules) ? '1' : false) . "\n";
                     }
                     // fallback if apache_get_modules() is not available
                     else {
                         // this is a more reliable fallback for mod_rewrite
                         if($apacheModule == 'mod_rewrite') {
-                            $serverSettings .= $apacheModule . " (" . ($_SERVER["HTTP_MOD_REWRITE"] ? 'On' : 'Off') . ")\n";
+                            $serverSettings .= $apacheModule . ": " . ($_SERVER["HTTP_MOD_REWRITE"] ? '1' : false) . "\n";
                         }
                         // this is for mod_security and any others specified, although it's still not very reliable for mod_security
                         else {
                             ob_start();
                             phpinfo(INFO_MODULES);
                             $contents = ob_get_clean();
-                            $serverSettings .= $apacheModule . " (" . (strpos($contents, $apacheModule) ? 'On' : 'Off') . ")\n";
+                            $serverSettings .= $apacheModule . ": " . (strpos($contents, $apacheModule) ? '1' : false) . "\n";
                         }
                     }
                 }
+                $serverSettings .= "\n";
+                // image settings
+                if(function_exists('gd_info')) {
+                    $gd  = gd_info();
+                    $serverSettings .= "GD: " . (isset($gd['GD Version']) ? $gd['GD Version'] : $this->_('Version-Info not available')) . "\n";
+                    $serverSettings .= "JPG: " . (isset($gd['JPEG Support']) ? $gd['JPEG Support'] : false) . "\n";
+                    $serverSettings .= "PNG: " . (isset($gd['PNG Support']) ? $gd['PNG Support'] : false) . "\n";
+                    $serverSettings .= "GIF: " . (isset($gd['GIF Read Support']) && isset($gd['GIF Create Support']) ? $gd['GIF Create Support'] : false) . "\n";
+                    $serverSettings .= "FreeType: " . (isset($gd['FreeType Support']) ? $gd['FreeType Support'] : false) . "\n";
+                }
+                $serverSettings .= "EXIF Support: " . (function_exists('exif_read_data') ? '1' : false) . "\n";
+                $serverSettings .= "Imagick Extension: " . (class_exists('Imagick') ? '1' : false) . "\n";
+
                 $serverSettings .= "\n";
 
                 $moduleInfo = '';
@@ -472,7 +493,7 @@ class ProcesswireInfoPanel implements IBarPanel {
                     $flags = wire('modules')->getFlags($name);
                     $info = wire('modules')->getModuleInfoVerbose($name);
                     if($info['core']) continue;
-                    $moduleInfo .= $name . " (" . wire('modules')->formatVersion($info['version']) . ")\n";
+                    $moduleInfo .= $name . ": " . wire('modules')->formatVersion($info['version']) . "\n";
                 }
                 $githubVersionsList = '<details><summary><strong>Server Details</strong></summary>' . $serverInfo . '<details><summary><strong>Server Settings</strong></summary> ' . $serverSettings . '</details><details><summary><strong>Module Details</strong></summary> ' . $moduleInfo . '</details></details>';
                 $versionsList .= '
