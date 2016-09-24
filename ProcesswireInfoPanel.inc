@@ -441,7 +441,7 @@ class ProcesswireInfoPanel implements IBarPanel {
 
                 $serverSettings = "";
                 //php settings
-                foreach(array('allow_url_fopen', 'max_input_nesting_level', 'xdebug', 'xdebug.max_nesting_level', 'max_execution_time', 'post_max_size', 'upload_max_filesize', 'max_input_time', 'max_input_vars', 'memory_limit') as $setting) {
+                foreach(array('allow_url_fopen', 'max_execution_time', 'max_input_nesting_level', 'max_input_time', 'max_input_vars', 'memory_limit', 'post_max_size', 'upload_max_filesize', 'xdebug', 'xdebug.max_nesting_level') as $setting) {
                     if($setting == 'max_execution_time') {
                         $max_execution_time = trim(ini_get('max_execution_time'));
                         $can_change = set_time_limit($max_execution_time);
@@ -452,6 +452,8 @@ class ProcesswireInfoPanel implements IBarPanel {
                     }
                     $serverSettings .= "\n";
                 }
+                $serverSettings .= "\n";
+
                 // apache modules
                 if(function_exists('apache_get_modules')) $apacheModules = apache_get_modules();
                 foreach(array('mod_rewrite', 'mod_security') as $apacheModule) {
@@ -478,18 +480,20 @@ class ProcesswireInfoPanel implements IBarPanel {
                 if(function_exists('gd_info')) {
                     $gd  = gd_info();
                     $serverSettings .= "GD: " . (isset($gd['GD Version']) ? $gd['GD Version'] : $this->_('Version-Info not available')) . "\n";
+                    $serverSettings .= "GIF: " . (isset($gd['GIF Read Support']) && isset($gd['GIF Create Support']) ? $gd['GIF Create Support'] : false) . "\n";
                     $serverSettings .= "JPG: " . (isset($gd['JPEG Support']) ? $gd['JPEG Support'] : false) . "\n";
                     $serverSettings .= "PNG: " . (isset($gd['PNG Support']) ? $gd['PNG Support'] : false) . "\n";
-                    $serverSettings .= "GIF: " . (isset($gd['GIF Read Support']) && isset($gd['GIF Create Support']) ? $gd['GIF Create Support'] : false) . "\n";
-                    $serverSettings .= "FreeType: " . (isset($gd['FreeType Support']) ? $gd['FreeType Support'] : false) . "\n";
+
                 }
+                $serverSettings .= "\n";
                 $serverSettings .= "EXIF Support: " . (function_exists('exif_read_data') ? '1' : false) . "\n";
+                $serverSettings .= "FreeType: " . (isset($gd['FreeType Support']) ? $gd['FreeType Support'] : false) . "\n";
                 $serverSettings .= "Imagick Extension: " . (class_exists('Imagick') ? '1' : false) . "\n";
 
                 $serverSettings .= "\n";
 
                 $moduleInfo = '';
-                foreach(wire('modules') as $name => $label) {
+                foreach(wire('modules')->find("sort=className") as $name => $label) {
                     $flags = wire('modules')->getFlags($name);
                     $info = wire('modules')->getModuleInfoVerbose($name);
                     if($info['core']) continue;
