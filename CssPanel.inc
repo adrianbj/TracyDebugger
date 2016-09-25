@@ -120,7 +120,7 @@ class CssPanel implements IBarPanel {
                     padding: 3px !important;
                 }
 
-                #tracy-debug input[type="submit"], .btn {
+                #tracy-debug input[type="submit"], .tracyCopyBtn {
                     width: initial !important;
                     height: initial !important;
                     display: inline-block !important;

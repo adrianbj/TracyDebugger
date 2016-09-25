@@ -428,7 +428,7 @@ class ProcesswireInfoPanel implements IBarPanel {
                     };
                     JavaScript.load("'.wire('config')->urls->siteModules.'TracyDebugger/clipboardjs/clipboard.min.js", function() {
                         JavaScript.load("'.wire('config')->urls->siteModules.'TracyDebugger/clipboardjs/tooltips.js", function() {
-                            var versionsClipboard=new Clipboard(".btn");
+                            var versionsClipboard=new Clipboard(".tracyCopyBtn");
                             versionsClipboard.on("success",function(e){e.clearSelection();showTooltip(e.trigger,"Copied!");});versionsClipboard.on("error",function(e){showTooltip(e.trigger,fallbackMessage(e.action));});
                         });
                     });
@@ -502,10 +502,10 @@ class ProcesswireInfoPanel implements IBarPanel {
                 $githubVersionsList = '<details><summary><strong>Server Details</strong></summary>' . $serverInfo . '<details><summary><strong>Server Settings</strong></summary> ' . $serverSettings . '</details><details><summary><strong>Module Details</strong></summary> ' . $moduleInfo . '</details></details>';
                 $versionsList .= '
                 <p>
-                    <button class="btn" data-clipboard-text="'.$githubVersionsList.'">
+                    <button class="tracyCopyBtn" data-clipboard-text="'.$githubVersionsList.'">
                         Copy for Github
                     </button>
-                    <button class="btn" data-clipboard-target="#versionsListTextarea">
+                    <button class="tracyCopyBtn" data-clipboard-target="#versionsListTextarea">
                         Copy plain text
                     </button>
                 </p>
