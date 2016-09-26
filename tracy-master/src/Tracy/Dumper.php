@@ -415,29 +415,31 @@ class Dumper
 			$table["\t"] = '\t';
 		}
 
-		if (preg_match('#[^\x09\x0A\x0D\x20-\x7E\xA0-\x{10FFFF}]#u', $s) || preg_last_error()) {
-			if ($shortened = ($maxLength && strlen($s) > $maxLength)) {
+		if ($maxLength && $s !== '') {
+			$tmp = $s;
+			if (!preg_match('##u', $s)) {
 				$s = substr($s, 0, $maxLength);
-			}
-			$s = strtr($s, $table);
-
-		} elseif ($maxLength && $s !== '') {
-			if (function_exists('mb_substr')) {
-				$s = mb_substr($tmp = $s, 0, $maxLength, 'UTF-8');
-				$shortened = $s !== $tmp;
+			} elseif (function_exists('mb_substr')) {
+				$s = mb_substr($s, 0, $maxLength, 'UTF-8');
 			} else {
 				$i = $len = 0;
 				do {
 					if (($s[$i] < "\x80" || $s[$i] >= "\xC0") && (++$len > $maxLength)) {
 						$s = substr($s, 0, $i);
-						$shortened = TRUE;
 						break;
 					}
 				} while (isset($s[++$i]));
 			}
+			if ($s !== $tmp) {
+				$s .= ' ... ';
+			}
 		}
 
-		return $s . (empty($shortened) ? '' : ' ... ');
+		if (preg_match('#[^\x09\x0A\x0D\x20-\x7E\xA0-\x{10FFFF}]#u', $s) || preg_last_error()) {
+			$s = strtr($s, $table);
+		}
+
+		return $s;
 	}
 
 
