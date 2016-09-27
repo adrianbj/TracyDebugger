@@ -41,6 +41,7 @@ class TD extends TracyDebugger {
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
         $options[Dumper::LOCATION] = Debugger::$showLocation;
         $options[Dumper::COLLAPSE] = true;
+        $options[Dumper::LIVE] = true;
         if(in_array('dumpsRecorder', static::$showPanels)) {
             $dumpItem = array();
             $dumpItems = wire('session')->tracyDumpItems ? wire('session')->tracyDumpItems : array();
