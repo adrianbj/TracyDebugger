@@ -493,7 +493,7 @@ class ProcesswireInfoPanel implements IBarPanel {
                 $serverSettings .= "\n";
 
                 $moduleInfo = '';
-                foreach(wire('modules')->find("sort=className") as $name => $label) {
+                foreach(wire('modules')->sort("className") as $name => $label) {
                     $flags = wire('modules')->getFlags($name);
                     $info = wire('modules')->getModuleInfoVerbose($name);
                     if($info['core']) continue;
