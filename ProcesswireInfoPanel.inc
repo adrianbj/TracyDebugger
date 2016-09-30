@@ -458,12 +458,12 @@ class ProcesswireInfoPanel implements IBarPanel {
                 if(function_exists('apache_get_modules')) $apacheModules = apache_get_modules();
                 foreach(array('mod_rewrite', 'mod_security') as $apacheModule) {
                     if(isset($apacheModules)) {
-                        $serverSettings .= $apacheModule . ": " . (in_array($apacheModule, $apacheModules) ? '1' : false) . "\n";
+                        $serverSettings .= $apacheModule . ": " . (in_array($apacheModule, $apacheModules) ? '1' : false . ($apacheModule == 'mod_security' ? '*confirmed off' : '')) . "\n";
                     }
                     // fallback if apache_get_modules() is not available
                     else {
                         // this is a more reliable fallback for mod_rewrite
-                        if($apacheModule == 'mod_rewrite') {
+                        if($apacheModule == 'mod_rewrite' && isset($_SERVER["HTTP_MOD_REWRITE"])) {
                             $serverSettings .= $apacheModule . ": " . ($_SERVER["HTTP_MOD_REWRITE"] ? '1' : false) . "\n";
                         }
                         // this is for mod_security and any others specified, although it's still not very reliable for mod_security
