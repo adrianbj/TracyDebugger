@@ -85,6 +85,13 @@ if($user->isSuperuser()) {
 
 // error handler function
 function tracyConsoleErrorHandler($errno, $errstr, $errfile, $errline) {
+
+    // this prevents silenced(@) errors from being captured by this custom error handler
+    if (error_reporting() === 0) {
+        // continue script execution, skipping standard PHP error handler
+        return true;
+    }  
+
     // ignore any include/require errors - we are including all files by their full path via
     // wire('session')->tracyIncludedFiles anyway, so the errors caused by relative paths won't matter
     if (strpos($errstr, 'include') !== false || strpos($errstr, 'require') !== false) {
@@ -100,6 +107,7 @@ function tracyConsoleErrorHandler($errno, $errstr, $errfile, $errline) {
         // this means that the browser will receive a 200 when it may have been a 500,
         // but think that is ok in this case
         echo '<br />Error: '.$customErrStr;
-        exit;
+        // exit obviously causing scripts to halt even for notices/warnings which we don't want, so get rid of for now
+        //exit;
     }
 }

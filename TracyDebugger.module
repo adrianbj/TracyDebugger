@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 334,
+            'version' => 335,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -201,6 +201,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         if(in_array('regularModal', $this->data['hideDebugBarModals']) && $this->input->get->modal == '1') return;
         if(in_array('inlineModal', $this->data['hideDebugBarModals']) && $this->input->get->modal == 'inline') return;
+
+        // don't init Tracy for @soma's PageEditSoftLock polling on Page Edit
+        if(strpos($_SERVER['REQUEST_URI'], 'checkpagelock') !== false) return;
+        // don't init Tracy for the PW Notifications module polling
+        if(strpos($_SERVER['QUERY_STRING'], 'Notifications=update') !== false) return;
 
         $this->httpReferer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : $_SERVER['REQUEST_URI'];
 

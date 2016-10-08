@@ -42,7 +42,7 @@ class TD extends TracyDebugger {
         $options[Dumper::LOCATION] = Debugger::$showLocation;
         $options[Dumper::COLLAPSE] = true;
         $options[Dumper::LIVE] = true;
-        if(in_array('dumpsRecorder', static::$showPanels)) {
+        if(is_array(static::$showPanels) && in_array('dumpsRecorder', static::$showPanels)) {
             $dumpItem = array();
             $dumpItems = wire('session')->tracyDumpItems ? wire('session')->tracyDumpItems : array();
             $dumpItem['title'] = $title;
