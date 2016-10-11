@@ -76,13 +76,16 @@ class CssPanel implements IBarPanel {
                     border-radius: 0 !important;
                 }
 
-                #tracy-debug, #tracy-debug h2, #tracy-debug legend, #tracy-debug p {
+                #tracy-debug, #tracy-debug h2, #tracy-debug legend {
                     font-family: sans-serif !important;
                     font-weight: normal !important;
                     color: #333333 !important;
                 }
 
-                #tracy-debug, #tracy-debug legend, #tracy-debug p, #tracy-debug select {
+                #tracy-debug, #tracy-debug legend, #tracy-debug p, #tracy-debug legend li, #tracy-debug select {
+                    font-family: sans-serif !important;
+                    font-weight: normal !important;
+                    color: #333333 !important;                    
                     font-size: 12px !important;
                 }
 

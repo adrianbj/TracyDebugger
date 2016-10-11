@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 335,
+            'version' => 338,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -306,6 +306,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // which won't replace the same substring more than once
         $mappingReplacements = array();
         $compilerCachePath = isset($this->config->fileCompilerOptions['cachePath']) ? $this->config->fileCompilerOptions['cachePath'] : $this->config->paths->cache . 'FileCompiler/';
+        $compilerCachePath = str_replace('/', DIRECTORY_SEPARATOR, $compilerCachePath);
         if($this->data['localRootPath'] != '') {
             $mappingReplacements[$compilerCachePath] = $this->data['localRootPath'];
             $mappingReplacements[$this->config->paths->root] = $this->data['localRootPath'];

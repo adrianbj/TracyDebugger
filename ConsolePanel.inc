@@ -107,11 +107,14 @@ class ConsolePanel implements IBarPanel {
                 }
                 else {
                     var code = tce.getValue();
+                    document.getElementById("tracyConsoleStatus").innerHTML = "Processing";                    
                 }
-                callPhp(code);
+                document.getElementById("tracyConsoleResult").innerHTML = "";                
+                callPhp(code, clear);
             }
 
-            function callPhp(code) {
+            function callPhp(code, clear) {
+                console.log(clear);
                 var xmlhttp;
 
                 if (window.XMLHttpRequest) {
@@ -126,6 +129,12 @@ class ConsolePanel implements IBarPanel {
                     if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
                         if(xmlhttp.status == 200){
                             document.getElementById("tracyConsoleResult").innerHTML = tryParseJSON(xmlhttp.responseText);
+                            if(clear) {
+                                document.getElementById("tracyConsoleStatus").innerHTML = "";
+                            }
+                            else {
+                                document.getElementById("tracyConsoleStatus").innerHTML = "Completed!";
+                            }
                         }
                         else {
                             document.getElementById("tracyConsoleResult").innerHTML = xmlhttp.status+": " + xmlhttp.statusText + "<br />See the browser dev console for the actual error";
@@ -178,7 +187,8 @@ class ConsolePanel implements IBarPanel {
                     <div id="tracyConsoleCode" style="visibility:hidden; width: calc(100vw - 100px) !important; height:100px"></div><br />
                     <input type="submit" onclick="processTracyCode(false)" value="Run Code" />&nbsp;
                     <input type="submit" onclick="processTracyCode(true)" value="Clear Code" />
-                    <br /><br />
+                    <br />
+                    <div id="tracyConsoleStatus" style="padding: 10px 0 10px 0;"></div>
                     <div id="tracyConsoleResult" style="background:#FDF5CE; border: 1px dotted #999999; padding: 3px;"></div>
             </fieldset>
         </div>';
