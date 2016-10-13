@@ -114,7 +114,7 @@ class ConsolePanel implements IBarPanel {
             }
 
             function callPhp(code, clear) {
-                console.log(clear);
+
                 var xmlhttp;
 
                 if (window.XMLHttpRequest) {
