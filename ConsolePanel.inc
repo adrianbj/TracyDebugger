@@ -181,7 +181,7 @@ class ConsolePanel implements IBarPanel {
         <div class="tracy-inner">
             <fieldset>
                 <legend>Enter PHP code, then use CTRL+Enter or CMD+Enter to run.</legend>';
-                    if(wire('page')->template != "admin") $out .= '<p><input type="checkbox" id="accessTemplateVars"> Allow access to template variables and functions (this loads template and included files a second time, so be careful)</input></p>';
+                    if(wire('page')->template != "admin") $out .= '<p><input type="checkbox" id="accessTemplateVars"> Allow access to template variables and functions (this loads template and included files, so be careful)</input></p>';
                     $out .= '
                     <br />
                     <div id="tracyConsoleCode" style="visibility:hidden; width: calc(100vw - 100px) !important; height:100px"></div><br />

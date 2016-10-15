@@ -55,6 +55,10 @@ class CssPanel implements IBarPanel {
                 #tracy-debug h1 {
                     max-width: calc(100vw - 40px) !important;
                     padding-right: 35px !important;
+                    text-transform: none !important;
+                    color: #444444 !important;
+                    font-size: 18px !important;
+
                 }
 
                 #tracy-debug input[type="checkbox"],
@@ -137,6 +141,7 @@ class CssPanel implements IBarPanel {
                     cursor: pointer !important;
                     text-transform: none !important;
                     font: normal normal 12px/1.5 sans-serif;
+                    font-size: 12px !important;
                     color: #444444;
                 }
 
