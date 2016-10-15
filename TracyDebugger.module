@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 339,
+            'version' => 340,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -141,6 +141,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "numLogEntries" => 10,
                 "maxDepth" => 3,
                 "maxLength" => 150,
+                "ignoreMaxBarDump" => null,
                 "showDebugBar" => array('frontend'),
                 "hideDebugBarModals" => array('regularModal', 'inlineModal'),
                 "frontendPanels" => array('processwireInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'templatePath', 'console', 'templateEditor', 'panelSelector', 'tracyToggler'),
@@ -1110,7 +1111,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Maximum Nesting Depth', __FILE__);
         $f->description = __('Set the maximum nesting depth of dumped arrays and objects.', __FILE__);
         $f->notes = __('Default: 3. Warning: making this too large can slow your page load down or even crash your browser.', __FILE__);
-        $f->columnWidth = 50;
+        $f->columnWidth = 33;
         $f->attr('value', $data['maxDepth']);
         $fieldset->add($f);
 
@@ -1119,8 +1120,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Maximum String Length', __FILE__);
         $f->description = __('Set the maximum displayed strings length.', __FILE__);
         $f->notes = __('Default: 150.', __FILE__);
-        $f->columnWidth = 50;
+        $f->columnWidth = 33;
         $f->attr('value', $data['maxLength']);
+        $fieldset->add($f);
+
+        $f = wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'ignoreMaxBarDump');
+        $f->label = __('Ignore Max Depth and Max Length with barDump() calls.', __FILE__);
+        $f->label2 = __('Ignore defined limits', __FILE__);        
+        $f->description = __('Check this to have no limits on nesting depth or string length in the results on barDump() and bd() calls.', __FILE__);
+        $f->notes = __('Note: this does not affect any other output, just from those barDump() / bd() calls.', __FILE__);        
+        $f->columnWidth = 34;
+        $f->attr('checked', $data['ignoreMaxBarDump'] == '1' ? 'checked' : '' );        
         $fieldset->add($f);
 
         $f = wire('modules')->get("InputfieldEmail");

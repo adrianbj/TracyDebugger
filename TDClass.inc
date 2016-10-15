@@ -37,6 +37,10 @@ class TD extends TracyDebugger {
      */
     public static function barDump($var, $title = NULL, array $options = NULL) {
         if(self::tracyUnavailable()) return false;
+        if(!$options && \TracyDebugger::getDataValue('ignoreMaxBarDump')) {
+            $options['maxDepth'] = 99;
+            $options['maxLength'] = 999999;
+        }
         $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
         $options[Dumper::LOCATION] = Debugger::$showLocation;
