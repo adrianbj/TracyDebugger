@@ -115,7 +115,7 @@ class TemplateEditorPanel implements IBarPanel {
 
         $out .= '<h1>'.$this->icon.' Template Editor</h1>
         <div class="tracy-inner">
-            <form id="tracyEditorSubmission" method="post" action="./">
+            <form id="tracyEditorSubmission" method="post" action="'.htmlspecialchars($_SERVER['REQUEST_URI']).'">
                 <fieldset>
                     <legend>Enter PHP code, then use CTRL+Enter or CMD+Enter to test.</legend><br />';
                     $out .= '

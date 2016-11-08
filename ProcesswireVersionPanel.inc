@@ -70,7 +70,7 @@ class ProcesswireVersionPanel implements IBarPanel {
             <fieldset>
                 <legend>Choose from available versions</legend><br />';
                 $out .= '
-                <form method="post" action="'.$_SERVER['REQUEST_URI'].'">
+                <form method="post" action="'.htmlspecialchars($_SERVER['REQUEST_URI']).'">
                     <select name="tracyPwVersion">';
                     foreach($this->versions as $version) {
                         $out .= '<option value="'.$version.'"'.($version == wire('config')->version ? 'selected="selected"' : '').'>'.$version.'</option>';

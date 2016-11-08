@@ -50,15 +50,14 @@ class CssPanel implements IBarPanel {
                     border: none !important;
                     padding-top: 1em !important;
                     color: #444444 !important;
+                    text-transform: none !important;
                 }
 
                 #tracy-debug h1 {
                     max-width: calc(100vw - 40px) !important;
                     padding-right: 35px !important;
-                    text-transform: none !important;
                     color: #444444 !important;
-                    font-size: 18px !important;
-
+                    text-transform: none !important;
                 }
 
                 #tracy-debug input[type="checkbox"],
@@ -84,6 +83,7 @@ class CssPanel implements IBarPanel {
                     font-family: sans-serif !important;
                     font-weight: normal !important;
                     color: #333333 !important;
+                    text-transform: none !important;
                 }
 
                 #tracy-debug, #tracy-debug legend, #tracy-debug p, #tracy-debug legend li, #tracy-debug select {
@@ -93,13 +93,31 @@ class CssPanel implements IBarPanel {
                     font-size: 12px !important;
                 }
 
+                #tracy-debug textarea:focus, #tracy-debug input:focus, #tracy-debug select:focus {
+                    border-color: #EEEEEE !important;
+                }
+
                 #tracy-debug select {
-                    height: 18px !important;
+                    height: initial !important;
                     width: initial !important;
                     border-radius: 5px !important;
                     margin: 0 !important;
                     display: inline-block !important;
                     padding: 3px 3px 3px 10px !important;
+                   
+                }
+
+                #tracy-debug select:not([multiple]):not([size]) {
+                    -webkit-appearance: menulist !important;
+                    -moz-appearance: menulist !important;
+                    appearance: menulist !important; 
+                }
+
+                #tracy-debug textarea, #tracy-debug input, #tracy-debug select {
+                    background-color: #FFFFFF !importantt;
+                    border: 1px solid #D2D2D2 !important;
+                    padding: initial !important;
+                    font-size: 12px !important;
                 }
 
                 #tracy-debug label {
@@ -141,7 +159,6 @@ class CssPanel implements IBarPanel {
                     cursor: pointer !important;
                     text-transform: none !important;
                     font: normal normal 12px/1.5 sans-serif;
-                    font-size: 12px !important;
                     color: #444444;
                 }
 
@@ -166,7 +183,7 @@ class CssPanel implements IBarPanel {
                 }
 
                 .tracy-inner p {
-                    font-size:15px !important;
+                    font-size:12px !important;
                 }
 
                 #tracy-debug pre.tracy-dump {
@@ -195,7 +212,7 @@ class CssPanel implements IBarPanel {
                 }
 
                 .tracy-toggle {
-                    font-size: 15px !important;
+                    font-size: 12px !important;
                 }
 
                 .pw-admin-links a {

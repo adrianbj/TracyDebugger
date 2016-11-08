@@ -18,10 +18,10 @@ class PageRecorderPanel implements IBarPanel {
         if(\TracyDebugger::getDataValue('recordedPages') != '') {
             $this->recordedPages .= '
             <p>
-                <form style="display:inline" method="post" action="'.$_SERVER['REQUEST_URI'].'" onsubmit="return confirm(\'Do you really want to trash all these pages?\');">
+                <form style="display:inline" method="post" action="'.htmlspecialchars($_SERVER['REQUEST_URI']).'" onsubmit="return confirm(\'Do you really want to trash all these pages?\');">
                     <input type="submit" name="trashRecordedPages" value="Trash Recorded Pages" />
                 </form>
-                <form style="display:inline" method="post" action="'.$_SERVER['REQUEST_URI'].'" onsubmit="return confirm(\'Do you really want to remove all these pages from the list?\');">
+                <form style="display:inline" method="post" action="'.htmlspecialchars($_SERVER['REQUEST_URI']).'" onsubmit="return confirm(\'Do you really want to remove all these pages from the list?\');">
                     <input type="submit" name="clearRecordedPages" value="Clear Recorded Pages List" />
                 </form>                
             </p>';

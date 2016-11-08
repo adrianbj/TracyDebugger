@@ -90,7 +90,7 @@ function tracyConsoleErrorHandler($errno, $errstr, $errfile, $errline) {
     if (error_reporting() === 0) {
         // continue script execution, skipping standard PHP error handler
         return true;
-    }  
+    }
 
     // ignore any include/require errors - we are including all files by their full path via
     // wire('session')->tracyIncludedFiles anyway, so the errors caused by relative paths won't matter
