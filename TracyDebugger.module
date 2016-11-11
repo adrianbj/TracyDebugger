@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 342,
+            'version' => 343,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -141,11 +141,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "numLogEntries" => 10,
                 "maxDepth" => 3,
                 "maxLength" => 150,
-                "ignoreMaxBarDump" => null,
                 "showDebugBar" => array('frontend'),
                 "hideDebugBarModals" => array('regularModal', 'inlineModal'),
-                "frontendPanels" => array('processwireInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'templatePath', 'console', 'templateEditor', 'panelSelector', 'tracyToggler'),
-                "backendPanels" => array('processwireInfo', 'processwireLogs', 'tracyLogs', 'debugMode', 'console', 'panelSelector', 'tracyToggler'),
+                "frontendPanels" => array('processwireInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'templatePath', 'console', 'templateEditor', 'dumpsRecorder', 'panelSelector', 'tracyToggler'),
+                "backendPanels" => array('processwireInfo', 'processwireLogs', 'tracyLogs', 'debugMode', 'console', 'dumpsRecorder', 'panelSelector', 'tracyToggler'),
                 "restrictedUserDisabledPanels" => array(),
                 "showUserBar" => null,
                 "showUserBarTracyUsers" => null,
@@ -175,7 +174,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "htaccessUsername" => '',
                 "htaccessPassword" => '',
                 "enableShortcutMethods" => 1,
-                "enabledShortcutMethods" => array('debugAll', 'da', 'dump', 'd', 'barDump', 'bd', 'l', 'timer', 't', 'fireLog', 'fl', 'addBreakpoint', 'bp', 'templateVars', 'tv')
+                "enabledShortcutMethods" => array('debugAll', 'da', 'dump', 'd', 'barDump', 'bd', 'barDumpLive', 'bdl', 'l', 'timer', 't', 'fireLog', 'fl', 'addBreakpoint', 'bp', 'templateVars', 'tv')
             );
     }
 
@@ -1124,16 +1123,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('value', $data['maxLength']);
         $fieldset->add($f);
 
-        $f = wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'ignoreMaxBarDump');
-        $f->label = __('Ignore Max Depth and Max Length with barDump() calls.', __FILE__);
-        $f->label2 = __('Ignore defined limits', __FILE__);
-        $f->description = __('Check this to have no limits on nesting depth or string length in the results on barDump() and bd() calls.', __FILE__);
-        $f->notes = __('Note: this does not affect any other output, just from those barDump() / bd() calls.', __FILE__);
-        $f->columnWidth = 34;
-        $f->attr('checked', $data['ignoreMaxBarDump'] == '1' ? 'checked' : '' );
-        $fieldset->add($f);
-
         $f = wire('modules')->get("InputfieldEmail");
         $f->attr('name', 'email');
         $f->label = __('Email for production errors', __FILE__);
@@ -1488,6 +1477,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->addOption('d', 'd() for TD::dump()');
         $f->addOption('barDump', 'barDump() for TD::barDump()');
         $f->addOption('bd', 'bd() for TD::barDump()');
+        $f->addOption('barDumpLive', 'barDumpLive() for TD::barDumpLive()');
+        $f->addOption('bdl', 'bdl() for TD::barDumpLive()');        
         $f->addOption('l', 'l() for TD::log()');
         $f->addOption('timer', 'timer() for TD::timer()');
         $f->addOption('t', 't() for TD::timer()');

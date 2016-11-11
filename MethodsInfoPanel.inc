@@ -60,6 +60,13 @@ class MethodsInfoPanel implements IBarPanel {
             bd();<br />
             </p>
 
+            <p><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#bardumpLive" target="_blank">barDumpLive($var, $title = NULL, array $options = NULL)</a></strong></p>
+            <p>
+            TD::barDumpLive();<br />
+            barDumpLive();<br />
+            bdl();<br />
+            </p>            
+
             <p><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#log" target="_blank">log($message, $priority = ILogger::INFO)</a></strong></p>
             @priority: "debug", "info", "warning", "error", "exception", "critical"
             <p>

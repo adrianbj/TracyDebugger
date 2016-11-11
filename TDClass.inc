@@ -32,20 +32,37 @@ class TD extends TracyDebugger {
     }
 
     /**
+     * Tracy\Debugger::barDump() shortcut with live dumping.
+     * @tracySkipLocation
+     */
+    public static function barDumpLive($var, $title = NULL, array $options = NULL) {
+        if(self::tracyUnavailable()) return false;
+        $options[Dumper::DEPTH] = 99;
+        $options[Dumper::TRUNCATE] = 999999;
+        $options[Dumper::LOCATION] = Debugger::$showLocation;
+        $options[Dumper::COLLAPSE] = true;
+        $options[Dumper::LIVE] = true;
+        static::dumpToBar($var, $title, $options);
+    }
+
+    /**
      * Tracy\Debugger::barDump() shortcut.
      * @tracySkipLocation
      */
     public static function barDump($var, $title = NULL, array $options = NULL) {
         if(self::tracyUnavailable()) return false;
-        if(!$options && \TracyDebugger::getDataValue('ignoreMaxBarDump')) {
-            $options['maxDepth'] = 99;
-            $options['maxLength'] = 999999;
-        }
         $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
         $options[Dumper::LOCATION] = Debugger::$showLocation;
         $options[Dumper::COLLAPSE] = true;
-        $options[Dumper::LIVE] = true;
+        static::dumpToBar($var, $title, $options);
+    }
+
+    /**
+     * Send content to dump bar
+     * @tracySkipLocation
+     */
+    private static function dumpToBar($var, $title = NULL, array $options = NULL) {
         if(is_array(static::$showPanels) && in_array('dumpsRecorder', static::$showPanels)) {
             $dumpItem = array();
             $dumpItems = wire('session')->tracyDumpItems ? wire('session')->tracyDumpItems : array();
