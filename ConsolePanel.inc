@@ -33,6 +33,13 @@ class ConsolePanel implements IBarPanel {
 
     public function getPanel() {
 
+        if(\TracyDebugger::getDataValue('referencePageEdited') && wire('page')->process == 'ProcessPageEdit') {
+            $p = wire('pages')->get((int)wire('input')->get->id);
+        }
+        else {
+            $p = wire('page');
+        }
+
         $out = '
         <script>
 
@@ -107,9 +114,9 @@ class ConsolePanel implements IBarPanel {
                 }
                 else {
                     var code = tce.getValue();
-                    document.getElementById("tracyConsoleStatus").innerHTML = "Processing";                    
+                    document.getElementById("tracyConsoleStatus").innerHTML = "Processing";
                 }
-                document.getElementById("tracyConsoleResult").innerHTML = "";                
+                document.getElementById("tracyConsoleResult").innerHTML = "";
                 callPhp(code, clear);
             }
 
@@ -143,7 +150,7 @@ class ConsolePanel implements IBarPanel {
                     }
                 };';
 
-                if(wire('page')->template != "admin") {
+                if($p->template != "admin") {
                     $out .= 'var accessTemplateVars = document.getElementById("accessTemplateVars").checked;';
                 }
                 else {
@@ -154,7 +161,7 @@ class ConsolePanel implements IBarPanel {
                 xmlhttp.open("POST", "./", true);
                 xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-                xmlhttp.send("tracyconsole=1&accessTemplateVars="+accessTemplateVars+"&pid='.wire('page')->id.'&code="+encodeURIComponent(code));
+                xmlhttp.send("tracyconsole=1&accessTemplateVars="+accessTemplateVars+"&pid='.$p->id.'&code="+encodeURIComponent(code));
             }
         </script>
         <style type="text/css">
@@ -181,7 +188,7 @@ class ConsolePanel implements IBarPanel {
         <div class="tracy-inner">
             <fieldset>
                 <legend>Enter PHP code, then use CTRL+Enter or CMD+Enter to run.</legend>';
-                    if(wire('page')->template != "admin") $out .= '<p><input type="checkbox" id="accessTemplateVars"> Allow access to template variables and functions (this loads template and included files a second time, so be careful)</input></p>';
+                    if($p->template != "admin") $out .= '<p><input type="checkbox" id="accessTemplateVars"> Allow access to template variables and functions (this loads template and included files a second time, so be careful)</input></p>';
                     $out .= '
                     <br />
                     <div id="tracyConsoleCode" style="visibility:hidden; width: calc(100vw - 100px) !important; height:100px"></div><br />

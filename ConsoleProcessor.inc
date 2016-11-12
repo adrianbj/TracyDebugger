@@ -24,14 +24,15 @@ if($user->isSuperuser()) {
     $file = $cachePath.'consoleCode.php';
     $code = trim($code);
     $openPHP = '<' . '?php';
-    $firstLine = 'if(!defined("PROCESSWIRE")) die("no direct access");';
+    $inPwCheck = 'if(!defined("PROCESSWIRE")) die("no direct access");';
+    $getPage = '$page = $pages->get('.$page->id.');';
 
     if(substr($code, 0, strlen($openPHP)) !== $openPHP) {
         // prepend open PHP tag to code if not already present
-        $code = "$openPHP\n$firstLine\n$code";
+        $code = "$openPHP\n$inPwCheck\n$getPage\n$code";
     } else {
-        // otherwise insert our $firstLine security check
-        $code = str_replace($openPHP, "$openPHP\n$firstLine\n", $code);
+        // otherwise insert our $inPwCheck security check and $getPage code
+        $code = str_replace($openPHP, "$openPHP\n$inPwCheck\n$getPage\n", $code);
     }
     if(!file_put_contents($file, $code, LOCK_EX)) throw new WireException("Unable to write file: $file");
     if(wire('config')->chmodFile) chmod($file, octdec(wire('config')->chmodFile));

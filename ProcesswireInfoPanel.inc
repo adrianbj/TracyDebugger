@@ -69,6 +69,13 @@ class ProcesswireInfoPanel implements IBarPanel {
 
     public function getPanel() {
 
+        if(\TracyDebugger::getDataValue('referencePageEdited') && wire('page')->process == 'ProcessPageEdit') {
+            $p = wire('pages')->get((int)wire('input')->get->id);
+        }
+        else {
+            $p = wire('page');
+        }
+
         $panelSections = \TracyDebugger::getDataValue('processwireInfoPanelSections');
 
         // end for each section
@@ -88,23 +95,23 @@ class ProcesswireInfoPanel implements IBarPanel {
             <table>
                 <tr>
                     <th>Title</th>
-                    <td>'.wire('page')->title.'</td>
+                    <td>'.$p->title.'</td>
                 </tr>
                 <tr>
                     <th>Name</th>
-                    <td>'.wire('page')->name.'</td>
+                    <td>'.$p->name.'</td>
                 </tr>
                 <tr>
                     <th>ID</th>
-                    <td><a title="Edit Page" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->id.'">'.wire('page')->id.'</a></td>
+                    <td><a title="Edit Page" href="'.wire('config')->urls->admin.'page/edit/?id='.$p->id.'">'.$p->id.'</a></td>
                 </tr>
                 <tr>
                 <tr>
                     <th>Path</th>
-                    <td>'.wire('page')->path.'</td>
+                    <td>'.$p->path.'</td>
                 </tr>
                 ';
-                if(wire('page')->template->urlSegments) {
+                if($p->template->urlSegments) {
                     $i=1;
                     while($i <= wire('config')->maxUrlSegments) {
                         if(wire('input')->urlSegment($i)) {
@@ -120,120 +127,127 @@ class ProcesswireInfoPanel implements IBarPanel {
                 $summary .= '
                 <tr>
                     <th>Template</th>
-                    <td><a title="Edit Template" href="'.wire('config')->urls->admin.'setup/template/edit?id='.wire('page')->template->id.'">'.wire('page')->template->name.(wire('page')->template->label ? '</a> ('.wire('page')->template->label.')' :'').'</td>
+                    <td><a title="Edit Template" href="'.wire('config')->urls->admin.'setup/template/edit?id='.$p->template->id.'">'.$p->template->name.($p->template->label ? '</a> ('.$p->template->label.')' :'').'</td>
                 </tr>
                 <tr>
                     <th>Process</th>
                     <td>'.wire('process').'</td>
                 </tr>';
-                if(wire('page')->parent && wire('page')->parent->viewable()) {
+                if($p->parent && $p->parent->viewable()) {
                     $summary .= '
                     <tr>
                         <th>Parent</th>
-                        <td><a title="View Parent" href="'.wire('page')->parent->url.'">'.wire('page')->parent->name.'</a> (<a title="Edit Parent" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->parent->id.'">'.wire('page')->parent->id.'</a>)</td>
+                        <td><a title="View Parent" href="'.$p->parent->url.'">'.$p->parent->name.'</a> (<a title="Edit Parent" href="'.wire('config')->urls->admin.'page/edit/?id='.$p->parent->id.'">'.$p->parent->id.'</a>)</td>
                     </tr>';
                 }
                 $summary .= '
                 <tr>
                     <th>Root Parent</th>
-                    <td><a title="View Root Parent" href="'.wire('page')->rootParent->url.'">'.wire('page')->rootParent->name.'</a> (<a title="Edit Root Parent" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->rootParent->id.'">'.wire('page')->rootParent->id.'</a>)</td>
+                    <td><a title="View Root Parent" href="'.$p->rootParent->url.'">'.$p->rootParent->name.'</a> (<a title="Edit Root Parent" href="'.wire('config')->urls->admin.'page/edit/?id='.$p->rootParent->id.'">'.$p->rootParent->id.'</a>)</td>
                 </tr>
                 ';
-                if(wire('page')->prev->id && wire('page')->prev->viewable()) {
+                if($p->prev->id && $p->prev->viewable()) {
                     $summary .= '
                     <tr>
                         <th>Prev Sibling</th>
-                        <td><a title="View Prev Sibling" href="'.wire('page')->prev->url.'">&lt; '.wire('page')->prev->name.'</a> (<a title="Edit Prev Sibling" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->prev->id.'">'.wire('page')->prev->id.'</a>)</td>
+                        <td><a title="View Prev Sibling" href="'.$p->prev->url.'">&lt; '.$p->prev->name.'</a> (<a title="Edit Prev Sibling" href="'.wire('config')->urls->admin.'page/edit/?id='.$p->prev->id.'">'.$p->prev->id.'</a>)</td>
                     </tr>';
                 }
-                if(wire('page')->next->id && wire('page')->next->viewable()) {
+                if($p->next->id && $p->next->viewable()) {
                     $summary .= '
                     <tr>
                         <th>Next Sibling</th>
-                        <td><a title="View Next Sibling" href="'.wire('page')->next->url.'">'.wire('page')->next->name.' &gt;</a> (<a title="Edit Next Sibling" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->next->id.'">'.wire('page')->next->id.'</a>)</td>
+                        <td><a title="View Next Sibling" href="'.$p->next->url.'">'.$p->next->name.' &gt;</a> (<a title="Edit Next Sibling" href="'.wire('config')->urls->admin.'page/edit/?id='.$p->next->id.'">'.$p->next->id.'</a>)</td>
                     </tr>';
                 }
                 $summary .= '
                 <tr>
                     <th>Children</th>
-                    <td>'.wire('page')->numChildren().' <a title="Open Page Tree" href="'.wire('config')->urls->admin.'page/list/?open='.wire('page')->id.'">open tree</a> | <a title="View Children Tab" href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->id.'#ProcessPageEditChildren">edit</a></td>
+                    <td>'.$p->numChildren().' <a title="Open Page Tree" href="'.wire('config')->urls->admin.'page/list/?open='.$p->id.'">open tree</a> | <a title="View Children Tab" href="'.wire('config')->urls->admin.'page/edit/?id='.$p->id.'#ProcessPageEditChildren">edit</a></td>
                 </tr>
                 <tr>
                     <th>Created</th>
-                    <td>'.wire('page')->createdUser->name.' ('.date("Y-m-d H:i:s", wire('page')->created).')</td>
+                    <td>'.$p->createdUser->name.' ('.date("Y-m-d H:i:s", $p->created).')</td>
                 </tr>
                 <tr>
                     <th>Published</th>
-                    <td>'.date("Y-m-d H:i:s", wire('page')->published).'</td>
+                    <td>'.date("Y-m-d H:i:s", $p->published).'</td>
                 </tr>
                 <tr>
                     <th>Modified</th>
-                    <td>'.wire('page')->modifiedUser->name.' ('.date("Y-m-d H:i:s", wire('page')->modified).')</td>
+                    <td>'.$p->modifiedUser->name.' ('.date("Y-m-d H:i:s", $p->modified).')</td>
                 </tr>
                 <tr>
                     <th>Hidden</th>
-                    <td>'. (wire('page')->isHidden() ? "true" : "false") .'</td>
+                    <td>'. ($p->isHidden() ? "true" : "false") .'</td>
                 </tr>
                 <tr>
                     <th>Unpublished</th>
-                    <td>'. (wire('page')->isUnpublished() ? "true" : "false") .'</td>
+                    <td>'. ($p->isUnpublished() ? "true" : "false") .'</td>
                 </tr>
                 <tr>
                     <th>Locked</th>
-                    <td>'. (wire('page')->is(Page::statusLocked) ? "true" : "false") .'</td>
+                    <td>'. ($p->is(Page::statusLocked) ? "true" : "false") .'</td>
                 </tr>
             </table>';
 
             // Template info
-            $templateFilePath = wire('page')->template->filename;
-            $templateFileEditorPath = str_replace('%file', $templateFilePath, str_replace('%line', '1', \TracyDebugger::getDataValue('editor')));
+            if(file_exists($p->template->filename)) $templateFilePath = $p->template->filename;
+            $templateFileEditorPath = isset($templateFilePath) ? str_replace('%file', $templateFilePath, str_replace('%line', '1', \TracyDebugger::getDataValue('editor'))) : '';
             if(\TracyDebugger::getDataValue('localRootPath') != '') $templateFileEditorPath = str_replace(wire('config')->paths->root, \TracyDebugger::getDataValue('localRootPath'), $templateFileEditorPath);
 
             if(in_array('templateInfo', $panelSections)) {
                 // posix_getpwuid doesn't exist on Windows
                 if(function_exists('posix_getpwuid')) {
-                    $owner = posix_getpwuid(fileowner($templateFilePath));
-                    $group = posix_getgrgid($owner['gid']);
+                    if(isset($templateFilePath)) {
+                        $owner = posix_getpwuid(fileowner($templateFilePath));
+                        $group = posix_getgrgid($owner['gid']);
+                    }
                 }
-                $permission = !file_exists($templateFilePath) ? '' : substr(sprintf('%o', fileperms($templateFilePath)), -4);
+                $permission = !isset($templateFilePath) ? '' : substr(sprintf('%o', fileperms($templateFilePath)), -4);
 
                 $templateInfo = '
                 <table>
                     <tr>
                         <th>Label</th>
-                        <td>'.wire('page')->template->label.'</td>
+                        <td>'.$p->template->label.'</td>
                     </tr>
                     <tr>
                         <th>Name</th>
-                        <td><a title="Edit Template" href="'.wire('config')->urls->admin.'setup/template/edit?id='.wire('page')->template->id.'">'.wire('page')->template->name.'</a></td>
+                        <td><a title="Edit Template" href="'.wire('config')->urls->admin.'setup/template/edit?id='.$p->template->id.'">'.$p->template->name.'</a></td>
                     </tr>
                     <tr>
                         <th>ID</th>
-                        <td>'.wire('page')->template->id.'</td>
+                        <td>'.$p->template->id.'</td>
                     </tr>
                     <tr>
                         <th>Modified</th>
-                        <td>'.date("Y-m-d H:i:s", wire('page')->template->modified).'</td>
+                        <td>'.date("Y-m-d H:i:s", $p->template->modified).'</td>
                     </tr>
                     <tr>
                         <th>Fieldgroup</th>
-                        <td>'.wire('page')->template->fieldgroup.'</td>
+                        <td>'.$p->template->fieldgroup.'</td>
                     </tr>
                     <tr>
                         <th>Filename</th>
-                        <td><a title="Edit Template File" href="'.$templateFileEditorPath.'">'.str_replace(wire('config')->paths->root, '/', $templateFilePath).'</a></td>
+                        <td>'.(isset($templateFilePath) ? '<a title="Edit Template File" href="'.$templateFileEditorPath.'">'.str_replace(wire('config')->paths->root, '/', $templateFilePath).'</a>' : 'No file').'</td>
                     </tr>
-                    <tr>
-                        <th>File Last Modified</th>
-                        <td>'.date("Y-m-d H:i:s", filemtime($templateFilePath)).'</td>
-                    </tr>
+                    ';
+                    if(isset($templateFilePath)) {
+                        $templateInfo .= '
+                        <tr>
+                            <th>File Last Modified</th>
+                            <td>'.date("Y-m-d H:i:s", filemtime($templateFilePath)).'</td>
+                        </tr>';
+                    }
+                    $templateInfo .= '
                     <tr>
                         <th>Compile</th>
-                        <td>'.(wire('page')->template->compile == 0 ? 'No' : (wire('page')->template->compile == 1 ? 'Yes (template file only)' : 'Yes (and included files)')).'</td>
+                        <td>'.($p->template->compile == 0 ? 'No' : ($p->template->compile == 1 ? 'Yes (template file only)' : 'Yes (and included files)')).'</td>
                     </tr>
                     <tr>
                         <th>Content Type</th>
-                        <td>'.wire('page')->template->contentType.'</td>
+                        <td>'.$p->template->contentType.'</td>
                     </tr>
                     ';
                     if(isset($owner)) {
@@ -250,27 +264,27 @@ class ProcesswireInfoPanel implements IBarPanel {
                     </tr>
                     <tr>
                         <th>Page Numbers</th>
-                        <td>'.(wire('page')->template->allowPageNum ? 'Enabled' : 'Disabled').'</td>
+                        <td>'.($p->template->allowPageNum ? 'Enabled' : 'Disabled').'</td>
                     </tr>
                     <tr>
                         <th>URL Segments</th>
-                        <td>'.(wire('page')->template->urlSegments ? 'Enabled' : 'Disabled').'</td>
+                        <td>'.($p->template->urlSegments ? 'Enabled' : 'Disabled').'</td>
                     </tr>
                     <tr>
                         <th>Children Allowed</th>
-                        <td>'.(wire('page')->template->noChildren ? 'No' : 'Yes').'</td>
+                        <td>'.($p->template->noChildren ? 'No' : 'Yes').'</td>
                     </tr>
                     <tr>
                         <th>Allow for New Page</th>
-                        <td>'.(wire('page')->template->noParents < 0 ? 'Only One' : (wire('page')->template->noParents == 1 ? 'No' : 'Yes')).'</td>
+                        <td>'.($p->template->noParents < 0 ? 'Only One' : ($p->template->noParents == 1 ? 'No' : 'Yes')).'</td>
                     </tr>
                     <tr>
                         <th>Children Sorted By</th>
-                        <td>'.wire('page')->template->sortfield.'</td>
+                        <td>'.$p->template->sortfield.'</td>
                     </tr>
                     <tr>
                         <th>Cache Time</th>
-                        <td>'.wire('page')->template->cache_time.'</td>
+                        <td>'.$p->template->cache_time.'</td>
                     </tr>
                 </table>';
             }
@@ -279,10 +293,10 @@ class ProcesswireInfoPanel implements IBarPanel {
             if(in_array('fieldsListValues', $panelSections)) {
                 // TODO - this is a mess - very repetitive and needs cleaning up a lot
                 $fieldsListValues = $this->sectionHeader(array('ID', 'Name', 'Label', 'FieldType', 'InputfieldType/Class', 'Returns', 'Value', 'Settings'));
-                foreach(wire('page')->fields as $f) {
-                    if(is_object(wire('page')->$f)) {
+                foreach($p->fields as $f) {
+                    if(is_object($p->$f)) {
                         $fieldArray = array();
-                        foreach(wire('page')->$f as $key => $item) {
+                        foreach($p->$f as $key => $item) {
                             if(is_object($item)) {
                                 foreach($item as $type => $value) {
                                     // TODO this is a temp fix for situations where the type is: 0
@@ -351,22 +365,22 @@ class ProcesswireInfoPanel implements IBarPanel {
                             }
                             elseif($f->type instanceof FieldtypeFile || $f->type instanceof FieldtypeImage) {
                                 if($f->type instanceof FieldtypeFile) {
-                                    $fieldArray['value']['basename'] = wire('page')->$f->name;
-                                    $fieldArray['value']['name'] = wire('page')->$f->name;
-                                    $fieldArray['value']['filename'] = wire('page')->$f->filename;
-                                    $fieldArray['value']['ext'] = wire('page')->$f->ext;
-                                    $fieldArray['value']['url'] = wire('page')->$f->url;
-                                    $fieldArray['value']['httpUrl'] = wire('page')->$f->httpUrl;
-                                    $fieldArray['value']['filesize'] = wire('page')->$f->filesize;
-                                    $fieldArray['value']['filesizeStr'] = wire('page')->$f->filesizeStr;
+                                    $fieldArray['value']['basename'] = $p->$f->name;
+                                    $fieldArray['value']['name'] = $p->$f->name;
+                                    $fieldArray['value']['filename'] = $p->$f->filename;
+                                    $fieldArray['value']['ext'] = $p->$f->ext;
+                                    $fieldArray['value']['url'] = $p->$f->url;
+                                    $fieldArray['value']['httpUrl'] = $p->$f->httpUrl;
+                                    $fieldArray['value']['filesize'] = $p->$f->filesize;
+                                    $fieldArray['value']['filesizeStr'] = $p->$f->filesizeStr;
                                 }
                                 if($f->type instanceof FieldtypeImage) {
-                                    $fieldArray['value']['width'] = wire('page')->$f->width;
-                                    $fieldArray['value']['height'] = wire('page')->$f->height;
+                                    $fieldArray['value']['width'] = $p->$f->width;
+                                    $fieldArray['value']['height'] = $p->$f->height;
                                     //just don't think there is any point showing the variations so remove to clean up
                                     unset($fieldArray['value']['imageVariations']);
                                 }
-                                foreach(wire('page')->$f->getArray() as $type => $value) {
+                                foreach($p->$f->getArray() as $type => $value) {
                                     if($type == 'created' || $type == 'modified' || $type == 'published') $value .= ' ('.date("Y-m-d H:i:s", $value).')';
                                     if($type == 'created_users_id' || $type == 'modified_users_id') $value .= ' ('.wire('users')->get($value)->name.')';
                                     $fieldArray['value'][$type] = $value;
@@ -378,11 +392,11 @@ class ProcesswireInfoPanel implements IBarPanel {
                         }
                         if(isset($fieldArray['value'])) $value = Dumper::toHtml($fieldArray['value'], array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
                     }
-                    elseif(is_array(wire('page')->$f)) {
-                        $value = Dumper::toHtml(wire('page')->$f, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
+                    elseif(is_array($p->$f)) {
+                        $value = Dumper::toHtml($p->$f, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
                     }
                     else {
-                        $value = wire('page')->$f;
+                        $value = $p->$f;
                     }
                     $fieldArray['settings'] = $f->getArray();
                     $settings = Dumper::toHtml($fieldArray['settings'], array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
@@ -393,7 +407,7 @@ class ProcesswireInfoPanel implements IBarPanel {
                         "<td>$f->label</td>" .
                         "<td>".str_replace('Fieldtype', '', $f->type)."</td>" .
                         "<td>".str_replace('Inputfield', '', ($f->inputfield ? $f->inputfield : $f->inputfieldClass))."</td>" .
-                        "<td>".gettype(wire('page')->$f)."</td>" .
+                        "<td>".gettype($p->$f)."</td>" .
                         "<td>".$value."</td>" .
                         "<td>$settings</td>" .
                         "</tr>";
@@ -513,9 +527,9 @@ class ProcesswireInfoPanel implements IBarPanel {
             }
 
             //Objects
-            $pageObject = Dumper::toHtml(wire('page'), array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false));
-            $templateObject = Dumper::toHtml(wire('page')->template, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false));
-            $fieldsObject = Dumper::toHtml(wire('page')->fields, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false));
+            $pageObject = Dumper::toHtml($p, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false));
+            $templateObject = Dumper::toHtml($p->template, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false));
+            $fieldsObject = Dumper::toHtml($p->fields, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false));
 
         }
 
@@ -680,7 +694,7 @@ class ProcesswireInfoPanel implements IBarPanel {
         if(in_array('editLinks', $panelSections)) {
             $out .= '
             <div class="pw-admin-links" style="text-align: right; border-top:1px solid #CCCCCC; margin-top:10px; padding-top:10px;">
-                <a href="'.wire('config')->urls->admin.'page/edit/?id='.wire('page')->id.'" title="Edit this page">
+                <a href="'.wire('config')->urls->admin.'page/edit/?id='.$p->id.'" title="Edit this page">
                     <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 528.899 528.899" style="enable-background:new 0 0 528.899 528.899;" xml:space="preserve">
                         <path d="M328.883,89.125l107.59,107.589l-272.34,272.34L56.604,361.465L328.883,89.125z M518.113,63.177l-47.981-47.981   c-18.543-18.543-48.653-18.543-67.259,0l-45.961,45.961l107.59,107.59l53.611-53.611   C532.495,100.753,532.495,77.559,518.113,63.177z M0.3,512.69c-1.958,8.812,5.998,16.708,14.811,14.565l119.891-29.069   L27.473,390.597L0.3,512.69z" fill="#ee1d62"/>
                     </svg>
