@@ -70,7 +70,7 @@ class ProcesswireInfoPanel implements IBarPanel {
     public function getPanel() {
 
         if(\TracyDebugger::getDataValue('referencePageEdited') && wire('page')->process == 'ProcessPageEdit') {
-            $p = wire('pages')->get((int)wire('input')->get->id);
+            $p = wire('process')->getPage();
         }
         else {
             $p = wire('page');
