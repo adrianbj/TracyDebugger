@@ -59,6 +59,14 @@ class Bar
 		$useSession = $this->dispatched && session_status() === PHP_SESSION_ACTIVE;
 		$redirectQueue = & $_SESSION['_tracy']['redirect'];
 
+		foreach (['bar', 'redirect', 'bluescreen'] as $key) {
+			$queue = & $_SESSION['_tracy'][$key];
+			$queue = array_slice((array) $queue, -10, NULL, TRUE);
+			$queue = array_filter($queue, function ($item) {
+				return isset($item['time']) && $item['time'] > time() - 60;
+			});
+		}
+
 		if (!Helpers::isHtmlMode() && !Helpers::isAjax()) {
 			return;
 
@@ -68,12 +76,12 @@ class Bar
 			$contentId = $useSession ? $_SERVER['HTTP_X_TRACY_AJAX'] . '-ajax' : NULL;
 
 		} elseif (preg_match('#^Location:#im', implode("\n", headers_list()))) { // redirect
-			$redirectQueue = array_slice((array) $redirectQueue, -10);
 			Dumper::fetchLiveData();
 			Dumper::$livePrefix = count($redirectQueue) . 'p';
 			$redirectQueue[] = [
 				'panels' => $this->renderPanels('-r' . count($redirectQueue)),
 				'dumps' => Dumper::fetchLiveData(),
+				'time' => time(),
 			];
 			return;
 
@@ -94,13 +102,10 @@ class Bar
 		$content = Helpers::fixEncoding(ob_get_clean());
 
 		if ($contentId) {
-			$queue = & $_SESSION['_tracy']['bar'];
-			$queue = array_slice(array_filter((array) $queue), -5, NULL, TRUE);
-			$queue[$contentId] = ['content' => $content, 'dumps' => $dumps];
+			$_SESSION['_tracy']['bar'][$contentId] = ['content' => $content, 'dumps' => $dumps, 'time' => time()];
 		}
 
 		if (Helpers::isHtmlMode()) {
-			$stopXdebug = extension_loaded('xdebug') ? ['XDEBUG_SESSION_STOP' => 1] : [];
 			require __DIR__ . '/assets/Bar/loader.phtml';
 		}
 	}
@@ -155,27 +160,12 @@ class Bar
 	 */
 	public function dispatchAssets()
 	{
-		$asset = isset($_GET['_tracy_bar']) ? $_GET['_tracy_bar'] : NULL;
-		if ($asset === 'css') {
-			header('Content-Type: text/css; charset=utf-8');
-			header('Cache-Control: max-age=864000');
-			header_remove('Pragma');
-			header_remove('Set-Cookie');
-			readfile(__DIR__ . '/assets/Bar/bar.css');
-			readfile(__DIR__ . '/assets/Toggle/toggle.css');
-			readfile(__DIR__ . '/assets/Dumper/dumper.css');
-			readfile(__DIR__ . '/assets/BlueScreen/bluescreen.css');
-			return TRUE;
-
-		} elseif ($asset === 'js') {
+		if (isset($_GET['_tracy_bar']) && $_GET['_tracy_bar'] === 'js') {
 			header('Content-Type: text/javascript');
 			header('Cache-Control: max-age=864000');
 			header_remove('Pragma');
 			header_remove('Set-Cookie');
-			readfile(__DIR__ . '/assets/Bar/bar.js');
-			readfile(__DIR__ . '/assets/Toggle/toggle.js');
-			readfile(__DIR__ . '/assets/Dumper/dumper.js');
-			readfile(__DIR__ . '/assets/BlueScreen/bluescreen.js');
+			$this->renderAssets();
 			return TRUE;
 		}
 	}
@@ -191,11 +181,14 @@ class Bar
 		if (Helpers::isAjax()) {
 			header('X-Tracy-Ajax: 1'); // session must be already locked
 		}
-		if (preg_match('#^content(-ajax)?.(\w+)$#', isset($_GET['_tracy_bar']) ? $_GET['_tracy_bar'] : '', $m)) {
+		if (isset($_GET['_tracy_bar']) && preg_match('#^content(-ajax)?.(\w+)$#', $_GET['_tracy_bar'], $m)) {
 			$session = & $_SESSION['_tracy']['bar'][$m[2] . $m[1]];
 			header('Content-Type: text/javascript');
 			header('Cache-Control: max-age=60');
 			header_remove('Set-Cookie');
+			if (!$m[1]) {
+				$this->renderAssets();
+			}
 			if ($session) {
 				$method = $m[1] ? 'loadAjax' : 'init';
 				echo "Tracy.Debug.$method(", json_encode($session['content']), ', ', json_encode($session['dumps']), ');';
@@ -208,6 +201,26 @@ class Bar
 			}
 			return TRUE;
 		}
+	}
+
+
+	private function renderAssets()
+	{
+		$css = array_map('file_get_contents', [
+			__DIR__ . '/assets/Bar/bar.css',
+			__DIR__ . '/assets/Toggle/toggle.css',
+			__DIR__ . '/assets/Dumper/dumper.css',
+			__DIR__ . '/assets/BlueScreen/bluescreen.css',
+		]);
+		$css = json_encode(preg_replace('#\s+#u', ' ', implode($css)));
+		echo "(function(){var el = document.createElement('style'); el.className='tracy-debug'; el.textContent=$css; document.head.appendChild(el);})();\n";
+
+		array_map('readfile', [
+			__DIR__ . '/assets/Bar/bar.js',
+			__DIR__ . '/assets/Toggle/toggle.js',
+			__DIR__ . '/assets/Dumper/dumper.js',
+			__DIR__ . '/assets/BlueScreen/bluescreen.js',
+		]);
 	}
 
 }
