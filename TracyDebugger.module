@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 349,
+            'version' => 350,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -808,7 +808,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         array_unshift($mailItems, $mailItem);
         wire('session')->tracyMailItems = $mailItems;
         $event->replace = true;
-        $event->return = false;
+        $event->return = true;
     }
 
     // for the event interceptor panel
