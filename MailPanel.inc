@@ -55,7 +55,7 @@ class MailPanel implements IBarPanel {
                                     if($item['body']) {
                                         $this->entries .= "
                                         <a href='#' rel='#text-body' style='font-size:12px !important; position: absolute; left:0; top:3px;' class='tracy-toggle tracy-collapsed'>Text</a>
-                                        <div id='text-body' class='tracy-collapsed'>".($item['body'] ? $item['body'] : "Ø")."</div>";
+                                        <div id='text-body' class='tracy-collapsed'>".($item['body'] ? nl2br($item['body']) : "Ø")."</div>";
                                     }
                                     if($item['bodyHTML']) {
                                         $this->entries .= "
