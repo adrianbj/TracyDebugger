@@ -84,7 +84,7 @@ class UserSwitcherPanel implements IBarPanel {
                             <input type="submit" value="Login">';
             }
             else {
-                $out .= '<form name="userSwitcherPanel" action="'.htmlspecialchars($_SERVER['REQUEST_URI']).'" method="post">';
+                $out .= '<form name="userSwitcherPanel" action="'.\TracyDebugger::inputUrl(true).'" method="post">';
             }
 
             if(wire('user')->isSuperuser() || $remainingSessionLength > 0) {

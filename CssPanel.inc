@@ -60,6 +60,10 @@ class CssPanel implements IBarPanel {
                     text-transform: none !important;
                 }
 
+                #tracy-debug input {
+                    height: 18px !important;
+                }
+
                 #tracy-debug input[type="checkbox"],
                 #tracy-debug input[type="radio"] {
                     width: 12px !important;
@@ -89,7 +93,7 @@ class CssPanel implements IBarPanel {
                 #tracy-debug, #tracy-debug legend, #tracy-debug p, #tracy-debug legend li, #tracy-debug select {
                     font-family: sans-serif !important;
                     font-weight: normal !important;
-                    color: #333333 !important;                    
+                    color: #333333 !important;
                     font-size: 12px !important;
                 }
 
@@ -104,13 +108,14 @@ class CssPanel implements IBarPanel {
                     margin: 0 !important;
                     display: inline-block !important;
                     padding: 3px 3px 3px 10px !important;
-                   
+
                 }
 
                 #tracy-debug select:not([multiple]):not([size]) {
                     -webkit-appearance: menulist !important;
                     -moz-appearance: menulist !important;
-                    appearance: menulist !important; 
+                    appearance: menulist !important;
+                    background: none !important;
                 }
 
                 #tracy-debug textarea, #tracy-debug input, #tracy-debug select {
@@ -124,6 +129,10 @@ class CssPanel implements IBarPanel {
                     margin:0 !important;
                     font-size: 12px !important;
                     color: #444444 !important;
+                }
+
+                #tracy-debug small {
+                    font-size:80% !important;
                 }
 
                 #tracy-debug a {

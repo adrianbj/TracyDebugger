@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 350,
+            'version' => 351,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -204,11 +204,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if(in_array('inlineModal', $this->data['hideDebugBarModals']) && $this->input->get->modal == 'inline') return;
 
         // don't init Tracy for @soma's PageEditSoftLock polling on Page Edit
-        if(strpos($_SERVER['REQUEST_URI'], 'checkpagelock') !== false) return;
+        if(strpos(self::inputUrl(), 'checkpagelock') !== false) return;
         // don't init Tracy for the PW Notifications module polling
-        if(isset($_SERVER['QUERY_STRING']) && strpos($_SERVER['QUERY_STRING'], 'Notifications=update') !== false) return;
+        if(strpos($this->input->queryString(), 'Notifications=update') !== false) return;
 
-        $this->httpReferer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : $_SERVER['REQUEST_URI'];
+        $this->httpReferer = isset($_SERVER['HTTP_REFERER']) ? $this->sanitizer->text($_SERVER['HTTP_REFERER']) : self::inputHttpUrl(true);
 
         // if PW version changed, reload to initialize new version
         if($this->input->post->tracyPwVersion && $this->input->post->tracyPwVersion != $this->config->version) {
@@ -444,7 +444,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     "}\n" .
                     "if(isset(\$qr) && \$qr) {\n" .
                         "\tsetcookie('modulesRestored', 1, time() + (24 * 60 * 60));\n" .
-                        "\theader('Location: ".$_SERVER['REQUEST_URI']."');\n" .
+                        "\theader('Location: ".self::inputHttpUrl(true)."');\n" .
                     "}\n" .
                     "else {\n" .
                     "\techo 'Sorry, there was a problem and the database could not be restored.';\n" .
@@ -598,7 +598,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         $this->tracyEnabled = true;
-
     }
 
 
@@ -841,7 +840,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     protected function inAdmin() {
-        if(strpos($_SERVER['REQUEST_URI'], wire('config')->urls->admin) === 0 || (wire('config')->ajax && strpos($this->httpReferer, wire('config')->urls->admin) !== false)) {
+        if(strpos(self::inputHttpUrl(true), wire('config')->urls->admin) === 0 || (wire('config')->ajax && strpos($this->httpReferer, wire('config')->urls->admin) !== false)) {
             return true;
         }
         else {
@@ -1571,6 +1570,80 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
     }
 
+
+    /*
+    * This is a temporary replacement for the url method from WireInput until 
+    * this PR (https://github.com/processwire/processwire/pull/46) is accepted
+    */
+    public static function inputUrl($withQueryString = false) {
+
+        $url = '';
+        /** @var Page $page */
+        $page = wire('page'); 
+        $config = wire('config');
+        $sanitizer = wire('sanitizer');
+        $input = wire('input');
+        
+        if($page && $page->id) {
+            // pull URL from page
+            $url = $page->url();
+            $segmentStr = $input->urlSegmentStr();
+            $pageNum = $input->pageNum();
+            if(strlen($segmentStr) || $pageNum > 1) {
+                if($segmentStr) $url = rtrim($url, '/') . '/' . $segmentStr;
+                if($pageNum > 1) $url = rtrim($url, '/') . '/' . $config->pageNumUrlPrefix . $pageNum;
+                if(isset($_SERVER['REQUEST_URI'])) {
+                    $info = parse_url($_SERVER['REQUEST_URI']);
+                    if(!empty($info['path']) && substr($info['path'], -1) == '/') $url .= '/'; // trailing slash
+                }
+                if($pageNum > 1) {
+                    if($page->template->slashPageNum == 1) {
+                        if(substr($url, -1) != '/') $url .= '/';
+                    } else if($page->template->slashPageNum == -1) {
+                        if(substr($url, -1) == '/') $url = rtrim($url, '/');
+                    }
+                } else if(strlen($segmentStr)) {
+                    if($page->template->slashUrlSegments == 1) {
+                        if(substr($url, -1) != '/') $url .= '/';
+                    } else if($page->template->slashUrlSegments == -1) {
+                        if(substr($url, -1) == '/') $url = rtrim($url, '/');
+                    }
+                }
+            }
+            
+        } else if(isset($_SERVER['REQUEST_URI'])) {
+            // page not yet available, attempt to pull URL from request uri
+            $info = parse_url($_SERVER['REQUEST_URI']);
+            $parts = explode('/', $info['path']);
+            $charset = $config->pageNameCharset;
+            $i = 0;
+            foreach($parts as $part) {
+                if($i > 0) $url .= "/";
+                $url .= ($charset === 'UTF8' ? $sanitizer->pageNameUTF8($part) : $sanitizer->pageName($part, false));
+                $i++;
+            }
+            if(!empty($info['path']) && substr($info['path'], -1) == '/') {
+                $url = rtrim($url, '/') . '/'; // trailing slash
+            }
+        }
+        
+        if($withQueryString) {
+            $queryString = $input->queryString();
+            if(strlen($queryString)) {
+                $url .= "?$queryString";
+            }
+        }
+        
+        return $url;
+    }
+
+    /*
+    * This is a temporary replacement for the httpUrl method from WireInput until 
+    * this PR (https://github.com/processwire/processwire/pull/46) is accepted
+    */
+    public static function inputHttpUrl($withQueryString = false) {
+        return wire('input')->scheme() . '://' . wire('config')->httpHost . self::inputUrl($withQueryString);
+    }
 
     public function __destruct() {
         if($this->input->post->tracyPwVersion && $this->input->post->tracyPwVersion != $this->config->version) {

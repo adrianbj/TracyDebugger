@@ -258,7 +258,7 @@ class TracyLogsPanel implements IBarPanel {
             if($this->numLogEntries > 0) {
                 $out .= '
                 <p>
-                    <form method="post" action="'.htmlspecialchars($_SERVER['REQUEST_URI']).'">
+                    <form method="post" action="'.\TracyDebugger::inputUrl(true).'">
                         <input type="submit" name="deleteTracyLogs" value="Delete All Logs" />
                     </form>
                 </p>';
