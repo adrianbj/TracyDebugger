@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 352,
+            'version' => 353,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -234,8 +234,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 static::$tracyVersion = version_compare(phpversion(), '5.4.4', '>=') ? 'master' : 'legacy';
             }
             require_once __DIR__ . '/tracy-'.static::$tracyVersion.'/src/tracy.php';
-            // ensure Tracy is shutdown before PW when SessionHandlerDB module is installed
-            if(static::$tracyVersion != 'legacy' && $this->modules->isInstalled('SessionHandlerDB')) $this->addHookBefore('ProcessWire::finished', $this, 'shutdownTracy');
+            
+            // ensure Tracy can show AJAX bar when SessionHandlerDB module is installed
+            if(static::$tracyVersion != 'legacy' && $this->modules->isInstalled('SessionHandlerDB')) $this->addHookBefore('ProcessWire::finished', $this, 'sessionHanlderDBAjaxFix');
         }
         else {
             // if user not allowed then load dummy class to prevent "class not found" errors when
@@ -831,11 +832,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $this->modules->saveModuleConfigData($this->modules->get("TracyDebugger"), $this->data);
     }
 
-
-    // ensure Tracy is shutdown before PW
-    // this ensures Tracy will be able to detect AJAX requests when SessionHandlerDB module is installed
-    public function shutdownTracy() {
-        Debugger::shutdownHandler();
+    // this ensures Tracy will be able to show the AJAX bar when SessionHandlerDB module is installed
+    public function sessionHanlderDBAjaxFix() {
+        Debugger::getBar()->render();
+        Debugger::$showBar = FALSE;
     }
 
 
