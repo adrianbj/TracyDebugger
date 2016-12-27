@@ -80,6 +80,11 @@ if($user->isSuperuser()) {
     catch (Exception $e) {
         tracyConsoleErrorHandler(null, $e->getMessage(), $e->getFile(), $e->getLine());
     }
+    // fix for updating AJAX bar when SessionHandlerDB is installed
+    if(\TracyDebugger::$tracyVersion != 'legacy' && wire('modules')->isInstalled('SessionHandlerDB')) {
+        \Tracy\Debugger::getBar()->render();
+        \Tracy\Debugger::$showBar = FALSE;
+    }
     exit;
 }
 
