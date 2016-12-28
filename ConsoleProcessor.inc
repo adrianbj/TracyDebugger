@@ -73,13 +73,21 @@ if($user->isSuperuser()) {
     // if in admin then $t won't have been instantiated above so do it now
     if(!isset($t) || !$t instanceof TemplateFile) $t = new TemplateFile($file);
 
+    \Tracy\Debugger::timer('consoleCode');
+    $initialMemory = memory_get_usage();
     // output rendered result of code
-    try {
+    try {        
         echo $t->render();
     }
     catch (Exception $e) {
         tracyConsoleErrorHandler(null, $e->getMessage(), $e->getFile(), $e->getLine());
     }
+    echo '
+    <div style="border-top: 1px dotted #cccccc; color:#A9ABAB; font-size: 10px; padding: 3px; margin-top:5px;">' .
+        round((\Tracy\Debugger::timer('consoleCode')*1000), 2) . 'ms, ' . 
+        number_format((memory_get_usage() - $initialMemory) / 1000000, 2, '.', ' ') . ' MB 
+    </div>';
+
     // fix for updating AJAX bar when SessionHandlerDB is installed
     if(\TracyDebugger::$tracyVersion != 'legacy' && wire('modules')->isInstalled('SessionHandlerDB')) {
         \Tracy\Debugger::getBar()->render();
