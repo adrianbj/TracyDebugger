@@ -73,6 +73,17 @@ class PanelSelectorPanel implements IBarPanel {
                 location.reload();
             }
 
+            function toggleStrictMode() {
+                if(getCookie("tracyStrictMode")) {
+                    document.cookie = "tracyStrictMode=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
+                    location.reload();
+                }
+                else {
+                    document.cookie = "tracyStrictMode=1; expires=0; path=/";
+                    location.reload();
+                }
+            }
+
             function disableTracy() {
                 document.cookie = "tracyDisabled=1; expires=0; path=/";
                 location.reload();
@@ -94,6 +105,12 @@ class PanelSelectorPanel implements IBarPanel {
                         }
                     }
                 }
+            }
+
+            function getCookie(name) {
+                var value = "; " + document.cookie;
+                var parts = value.split("; " + name + "=");
+                if (parts.length == 2) return parts.pop().split(";").shift();
             }
 
         </script>
@@ -156,7 +173,12 @@ class PanelSelectorPanel implements IBarPanel {
                         <input type="submit" onclick="changeTracyPanels(\'Sticky\')" value="Sticky" />&nbsp;
                         <input type="submit" onclick="resetTracyPanels()" value="Reset" /><br /><br />
                     </span>
-                    <span style="float:right"><input type="submit" onclick="disableTracy()" value="Disable Tracy" /></span>
+                    <span style="float:right">';
+                    if(!\TracyDebugger::getDataValue('strictMode')) {
+                        $out .= '<input type="submit" onclick="toggleStrictMode()" value="' . (wire('input')->cookie->tracyStrictMode ? 'Disable' : 'Enable') .' Strict Mode" />&nbsp;&nbsp;';
+                    }
+                        $out .= '<input type="submit" onclick="disableTracy()" value="Disable Tracy" />
+                    </span>
 
             </fieldset>' . \TracyDebugger::generatedTimeSize('panelSelector', \Tracy\Debugger::timer('panelSelector'), strlen($out)) . '
         </div>';

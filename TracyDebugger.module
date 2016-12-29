@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 355,
+            'version' => 356,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -354,7 +354,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         Debugger::getBlueScreen()->maxDepth = $this->data['maxDepth'];
         Debugger::getBlueScreen()->maxLength = $this->data['maxLength'];
 
-        Debugger::$strictMode = $this->data['strictMode'] ? TRUE : FALSE;
+        Debugger::$strictMode = $this->data['strictMode'] || $this->input->cookie->tracyStrictMode ? TRUE : FALSE;
         Debugger::$scream = $this->data['forceScream'] ? TRUE : FALSE;
 
         // display debug bar if allowed
