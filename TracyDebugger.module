@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 356,
+            'version' => 357,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -289,6 +289,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             // Tracy not enabled so exit now
             return;
         }
+
+        $this->addHookAfter('Page::render', $this, 'addSettingsLink');
 
         // Got this far so start enabling Tracy and debug bar
         // what mode?
@@ -730,9 +732,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
 
-        // if it's an ajax request from the Tracy Console panel, then process and return
+        // if it's an ajax request from the Tracy Console panel code execution, then process and return
         if($this->config->ajax && $this->input->post->tracyconsole == 1) {
             require_once($this->config->paths->siteModules.'TracyDebugger/ConsoleProcessor.inc');
+            return;
+        }
+
+        // if it's an ajax request from the Tracy Console panel snippets, then process and return
+        if($this->config->ajax && $this->input->post->tracysnippets == 1) {
+            require_once($this->config->paths->siteModules.'TracyDebugger/ConsoleSnippets.inc');
             return;
         }
 
@@ -775,6 +783,25 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $event->return = str_replace("</body>", $enableButton.'</body>', $event->return);
 
+    }
+
+    protected function addSettingsLink($event) {
+        $settingsLink = '
+        <script>
+            function addSettingsLink() {
+                if(!document.getElementById("tracy-debug-logo")) {
+                    window.requestAnimationFrame(addSettingsLink);
+                } else {
+                    var tracyLogo = document.getElementById("tracy-debug-logo");
+                    tracyLogo.setAttribute("title", tracyLogo.getAttribute("title") + "\n\nDouble-click to visit module settings");
+                    tracyLogo.addEventListener("dblclick", function(){
+                        window.open("'.$this->config->urls->admin.'/module/edit?name=TracyDebugger","_blank");
+                    }, false);
+                }
+            };
+            addSettingsLink();
+        </script>';
+        $event->return = str_replace("</body>", $settingsLink.'</body>', $event->return);
     }
 
     protected function deleteFile($path) {
@@ -1572,18 +1599,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     /*
-    * This is a temporary replacement for the url method from WireInput until 
+    * This is a temporary replacement for the url method from WireInput until
     * this PR (https://github.com/processwire/processwire/pull/46) is accepted
     */
     public static function inputUrl($withQueryString = false) {
 
         $url = '';
         /** @var Page $page */
-        $page = wire('page'); 
+        $page = wire('page');
         $config = wire('config');
         $sanitizer = wire('sanitizer');
         $input = wire('input');
-        
+
         if($page && $page->id) {
             // pull URL from page
             $url = $page->url();
@@ -1610,7 +1637,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     }
                 }
             }
-            
+
         } else if(isset($_SERVER['REQUEST_URI'])) {
             // page not yet available, attempt to pull URL from request uri
             $info = parse_url($_SERVER['REQUEST_URI']);
@@ -1626,19 +1653,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $url = rtrim($url, '/') . '/'; // trailing slash
             }
         }
-        
+
         if($withQueryString) {
             $queryString = $input->queryString();
             if(strlen($queryString)) {
                 $url .= "?$queryString";
             }
         }
-        
+
         return $url;
     }
 
     /*
-    * This is a temporary replacement for the httpUrl method from WireInput until 
+    * This is a temporary replacement for the httpUrl method from WireInput until
     * this PR (https://github.com/processwire/processwire/pull/46) is accepted
     */
     public static function inputHttpUrl($withQueryString = false) {
