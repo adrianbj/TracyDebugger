@@ -94,8 +94,8 @@ HTML;
 
             document.getElementById("tracyConsoleCode").addEventListener("keydown", function(e) {
                 if(((e.keyCode==10||e.charCode==10)||(e.keyCode==13||e.charCode==13)) && (e.metaKey || e.ctrlKey || e.altKey)) {
-                    if(e.altKey) processTracyCode(true);
-                    processTracyCode(false);
+                    if(e.altKey) clearResults();
+                    processTracyCode();
                     var tracyConsoleEditor = {
                         "scrollTop": tce.session.getScrollTop(),
                         "scrollLeft": tce.session.getScrollLeft(),
@@ -132,18 +132,19 @@ HTML;
                 return false;
             };
 
-            function processTracyCode(clear) {
-                if(clear) {
-                    document.getElementById("tracyConsoleResult").innerHTML = "";
-                }
-                else {
-                    var code = tce.getValue();
-                    document.getElementById("tracyConsoleStatus").innerHTML = "Processing";
-                    callPhp(code);
-                    saveHistory(code);
-                    disableButton("historyForward");
-                    enableButton("historyBack");
-                }
+            function clearResults() {
+                document.getElementById("tracyConsoleResult").innerHTML = "";
+                document.getElementById("tracyConsoleStatus").innerHTML = "";
+                tce.focus();
+            }
+
+            function processTracyCode() {
+                var code = tce.getValue();
+                document.getElementById("tracyConsoleStatus").innerHTML = "Processing";
+                callPhp(code);
+                saveHistory(code);
+                disableButton("historyForward");
+                enableButton("historyBack");
                 tce.focus();
             }
 
@@ -227,21 +228,22 @@ HTML;
                     <div style="float: left; width: calc(100vw - 370px) !important">
                         <div id="tracyConsoleCode" style="visibility:hidden; height:100px"></div>
                         <div style="padding:10px 0">
-                            <input title="Run Code" type="submit" onclick="processTracyCode(false)" value="Run" />&nbsp;
-                            <input title="Go Back" id="historyBack" type="submit" onclick="loadHistory(\'back\')" value="⬅" />&nbsp;
-                            <input title="Go Forward" class="arrowRight" id="historyForward" type="submit" onclick="loadHistory(\'forward\')" value="⬅" />
-                            <input title="Clear Results" type="submit" onclick="processTracyCode(true)" value="Clear" />
+                            <input title="Run code" type="submit" id="runCode" onclick="processTracyCode()" value="Run" />&nbsp;
+                            <input title="Go back" id="historyBack" type="submit" onclick="loadHistory(\'back\')" value="⬅" />&nbsp;
+                            <input title="Go forward" class="arrowRight" id="historyForward" type="submit" onclick="loadHistory(\'forward\')" value="⬅" />
+                            <input title="Clear results" type="submit" id="clearResults" onclick="clearResults()" value="✖ Clear results" />
                             <span id="tracyConsoleStatus" style="padding: 10px"></span>
                         </div>
                         <div id="tracyConsoleResult" style="background:#FDF5CE; border: 1px dotted #999999; padding: 3px;max-height: 300px; overflow:auto"></div>
                     </div>
-                    <div style="float: left; margin-left: 10px; width: 250px;">
+                    <div style="float: left; margin-left: 10px; width: 250px; margin-top: -23px;">
                         <div style="padding-bottom:5px">
-                            <a href="#" onclick="sortList(\'alphabetical\')">↕ Sort Alphabetical</a>&nbsp;&nbsp;&nbsp;<a href="#" onclick="sortList(\'chronological\')">↕ Sort Chronological</a>
+                            Sort: <a href="#" onclick="sortList(\'alphabetical\')">alphabetical</a>&nbsp;|&nbsp;<a href="#" onclick="sortList(\'chronological\')">chronological</a>
                         </div>
-                        <input type="text" id="tracySnippetName" placeholder="Snippet Name" style="width: 154px !important;" />&nbsp;
-                        <input id="saveSnippet" type="submit" onclick="saveSnippet()" value="Save Snippet" />
-                        <br />
+                         <div style="position: relative;">
+	                        <input type="text" id="tracySnippetName" placeholder="Snippet name..." />
+	                        <input id="saveSnippet" type="submit" onclick="saveSnippet()" value="💾" title="Save snippet" />
+                        </div>
                         <div id="tracySnippets" style="margin-top: 5px; padding:8px; min-height: 115px; max-height: 187px; overflow:auto"></div>
                     </div>
             </fieldset>
@@ -294,7 +296,7 @@ HTML;
                     if (!existingSnippets.hasOwnProperty(key)) continue;
                     var obj = existingSnippets[key];
                     if(deleteSnippet === true && obj.name === name) continue;
-                    snippetList += "<li data-modified='"+obj.modified+"'><span class='trashIcon' title='Delete this snippet' onclick='modifyConsoleSnippets(\""+obj.name+"\", null)'>✖</span><span style='color: #125EAE; cursor: pointer' onclick='loadSnippet(\""+obj.name+"\");setActiveSnippet(this);'>" + obj.name + "</span></li>";
+                    snippetList += "<li id='"+makeIdFromTitle(obj.name)+"' data-modified='"+obj.modified+"'><span class='trashIcon' title='Delete this snippet' onclick='modifyConsoleSnippets(\""+obj.name+"\", null)'>✖</span><span style='color: #125EAE; cursor: pointer' onclick='loadSnippet(\""+obj.name+"\");setActiveSnippet(this);'>" + obj.name + "</span></li>";
                 }
                 snippetList += "</ul>";
                 document.getElementById("tracySnippets").innerHTML = snippetList;
@@ -366,6 +368,7 @@ HTML;
                     if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
                         if(xmlhttp.status == 200){
                             modifySnippetList(tracySnippetName, tracyConsoleSnippets, deleteSnippet);
+                            setActiveSnippet(document.getElementById(makeIdFromTitle(tracySnippetName)));
                         }
                         else {
                             //
@@ -460,6 +463,10 @@ HTML;
                     localStorage.setItem("tracyConsoleHistoryItem", historyItem = id);
                     localStorage.setItem("tracyConsoleHistory", JSON.stringify(tracyConsoleHistory));
                 }
+            }
+
+            function makeIdFromTitle(title) {
+                return title.replace(/^[^a-z]+|[^\w:.-]+/gi, "");
             }
 
             function saveSnippet() {

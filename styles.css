@@ -222,8 +222,9 @@
 }
 
 #tracy-debug input[type="text"]#tracySnippetName {
-    padding: 4px 7px !important;
+    padding: 4px 34px 4px 8px !important;
     height: 29px !important;
+    width: 100% !important;
 }
 
 #snippetTrash {
@@ -247,6 +248,10 @@
     line-height: 18px !important;
     font-size: 12px !important;
     position:relative !important;
+}
+
+#tracySnippets li:first-child {
+    border-top: none;
 }
 
 #tracySnippets li svg {
@@ -281,11 +286,8 @@
     position: absolute !important;
     padding: 5px !important;
     top: 1px;
-    right: 0 !important;
-    width:30px !important;
-    height:30px !important;
+    right: 5px !important;
     cursor: pointer;
-    font-size: 18px;
 }
 
 #tracySnippets .trashIcon:active {
@@ -304,11 +306,62 @@
     visibility: visible;
 }
 
+#tracy-debug #saveSnippet {
+	padding: 2px 6px !important;
+	position: absolute;
+	font-size: 15px !important;
+	right: 3px;
+	top: 2px;
+	border-color: transparent !important;
+	background: transparent !important;
+}
+
+#tracy-debug #runCode,
+#tracy-debug #clearResults,
+#tracy-debug #historyBack,
+#tracy-debug #historyForward {
+	padding: 3px 10px !important;
+	margin-right: 5px !important;
+}
+
+#tracy-debug #runCode:hover,
+/*#tracy-debug #clearResults:hover,*/
+#tracy-debug #historyBack:hover,
+#tracy-debug #historyForward:hover {
+	background: #F5F8F9 !important;
+}
+
+#tracy-debug #historyForward {
+	margin-left: -11px !important;
+	border-right-color: transparent !important;
+}
+
+#tracy-debug #historyBack,
+#tracy-debug #historyForward {
+	border-top-right-radius: 0 !important;
+	border-bottom-right-radius: 0 !important;
+}
+
+#tracy-debug #clearResults {
+	border-color: transparent !important;
+	/*float: right !important;*/
+	/*padding-right: 0 !important;*/
+	/*margin-left: 8px !important;*/
+}
+
+#clearResults:hover {
+	text-decoration: underline;
+}
 .arrowRight {
-    transform: scale(-1);
+    transform: scaleX(-1);
     filter: flipH;
     -ms-filter: flipH;
     display: inline-block;
+}
+
+#tracyConsoleStatus {
+	font-style: italic;
+	opacity: 0.8;
 }
 
 .disabledButton {
