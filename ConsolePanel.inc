@@ -93,7 +93,8 @@ HTML;
 
 
             document.getElementById("tracyConsoleCode").addEventListener("keydown", function(e) {
-                if(((e.keyCode==10||e.charCode==10)||(e.keyCode==13||e.charCode==13)) && (e.metaKey || e.ctrlKey)) {
+                if(((e.keyCode==10||e.charCode==10)||(e.keyCode==13||e.charCode==13)) && (e.metaKey || e.ctrlKey || e.altKey)) {
+                    if(e.altKey) processTracyCode(true);
                     processTracyCode(false);
                     var tracyConsoleEditor = {
                         "scrollTop": tce.session.getScrollTop(),
@@ -217,7 +218,7 @@ HTML;
         $out .= '<h1>' . $this->icon . ' Console</h1>
         <div class="tracy-inner">
             <fieldset>
-                <legend>Enter PHP code, then use CTRL+Enter or CMD+Enter to run.</legend>';
+                <legend>Enter PHP code, then use CTRL/CMD+Enter to Run, or ALT/OPT+Enter to Clear & Run.</legend>';
         if ($p->template != "admin") {
             $out .= '<p><input type="checkbox" id="accessTemplateVars"> Allow access to template variables and functions (this loads template and included files a second time, so be careful)</input></p>';
         }
