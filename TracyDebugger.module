@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 358,
+            'version' => 359,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -134,6 +134,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "superuserForceDevelopment" => null,
                 "ipAddress" => null,
                 "strictMode" => null,
+                "strictModeAjax" => null,
                 "forceScream" => null,
                 "outputMode" => 'detect',
                 "showLocation" => array('Tracy\Dumper::LOCATION_SOURCE', 'Tracy\Dumper::LOCATION_LINK', 'Tracy\Dumper::LOCATION_CLASS'),
@@ -356,7 +357,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         Debugger::getBlueScreen()->maxDepth = $this->data['maxDepth'];
         Debugger::getBlueScreen()->maxLength = $this->data['maxLength'];
 
-        Debugger::$strictMode = $this->data['strictMode'] || $this->input->cookie->tracyStrictMode ? TRUE : FALSE;
+        Debugger::$strictMode = $this->data['strictMode'] || ($this->data['strictModeAjax'] && $this->config->ajax) || $this->input->cookie->tracyStrictMode ? TRUE : FALSE;
         Debugger::$scream = $this->data['forceScream'] ? TRUE : FALSE;
 
         // display debug bar if allowed
@@ -1081,8 +1082,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'strictMode');
         $f->label = __('Strict Mode', __FILE__);
         $f->description = __('Check to enable strict mode which displays notices and warnings like errors.', __FILE__);
-        $f->columnWidth = 50;
+        $f->columnWidth = 33;
         $f->attr('checked', $data['strictMode'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $f = wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'strictModeAjax');
+        $f->label = __('Strict Mode AJAX Only', __FILE__);
+        $f->description = __('Check to enable strict mode only for AJAX calls.', __FILE__);
+        $f->notes = __('Because Tracy intercepts notices and warnings, these will no longer be returned with the AJAX response which may result in a "success" reponse, rather than "failure". Notices and warnings from an AJAX call will be displayed in the AJAX bar\'s Errors panel, but you still might prefer this option as it provides a more prominent indication of failure.', __FILE__);
+        $f->showIf="strictMode!='1'";
+        $f->columnWidth = 34;
+        $f->attr('checked', $data['strictModeAjax'] == '1' ? 'checked' : '' );
         $fieldset->add($f);
 
         $f = wire('modules')->get("InputfieldCheckbox");
@@ -1090,8 +1101,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Force Scream', __FILE__);
         $f->description = __('Check to force "scream" of mode which disables the @ (silence/shut-up) operator so that notices and warnings are no longer hidden.', __FILE__);
         $f->notes = __('This is disabled when Strict Mode is enabled because of a bug? [https://forum.nette.org/en/25569-strict-and-scream-modes-together](https://forum.nette.org/en/25569-strict-and-scream-modes-together) in the core Tracy package.', __FILE__);
-        $f->showIf="strictMode!='1'";
-        $f->columnWidth = 50;
+        $f->showIf="strictMode!='1', strictModeAjax!='1'";
+        $f->columnWidth = 33;
         $f->attr('checked', $data['forceScream'] == '1' ? 'checked' : '' );
         $fieldset->add($f);
 
