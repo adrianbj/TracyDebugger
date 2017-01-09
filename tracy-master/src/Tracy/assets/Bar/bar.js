@@ -216,18 +216,14 @@
 			draggedClass: 'tracy-dragged'
 		});
 
-		this.initTabs();
+		this.initTabs(this.elem);
 		this.restorePosition();
 	};
 
-	Bar.prototype.initTabs = function() {
-		var _this = this, elem = this.elem;
+	Bar.prototype.initTabs = function(elem) {
+		var _this = this;
 
 		forEach(elem.getElementsByTagName('a'), function(a) {
-
-			if (a.hasAttribute('data-initialized')) return true;
-			a.setAttribute('data-initialized', '');
-
 			a.addEventListener('click', function(e) {
 				if (this.rel === 'close') {
 					_this.close();
@@ -411,7 +407,7 @@
 	function evalScripts(elem) {
 		forEach(elem.getElementsByTagName('script'), function(script) {
 			if ((!script.hasAttribute('type') || script.type === 'text/javascript' || script.type === 'application/javascript') && !script.tracyEvaluated) {
-				var dolly = document.createElement('script');
+				var dolly = script.ownerDocument.createElement('script');
 				dolly.textContent = script.textContent;
 				dolly.setAttribute('nonce', layer.dataset.nonce);
 				script.ownerDocument.body.appendChild(dolly);
