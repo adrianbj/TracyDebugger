@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 363,
+            'version' => 364,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -235,9 +235,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 static::$tracyVersion = version_compare(phpversion(), '5.4.4', '>=') ? 'master' : 'legacy';
             }
             require_once __DIR__ . '/tracy-'.static::$tracyVersion.'/src/tracy.php';
-
-            // ensure Tracy can show AJAX bar when SessionHandlerDB module is installed
-            if(static::$tracyVersion != 'legacy' && $this->modules->isInstalled('SessionHandlerDB')) $this->addHookBefore('ProcessWire::finished', $this, 'sessionHanlderDBAjaxFix');
         }
         else {
             // if user not allowed then load dummy class to prevent "class not found" errors when
@@ -281,6 +278,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // now that required classes above have been loaded if requested,
         // we can now exit if enabled unchecked, or user not allowed
         if(!$this->data['enabled'] || !$this->allowedTracyUsers()) return;
+
+        // ensure Tracy can show AJAX bar when SessionHandlerDB module is installed
+        if(static::$tracyVersion != 'legacy' && $this->modules->isInstalled('SessionHandlerDB')) $this->addHookBefore('ProcessWire::finished', $this, 'sessionHanlderDBAjaxFix');
 
         // if Tracy has been toggled "disabled" add enable button and then exit
         if($this->input->cookie->tracyDisabled == 1) {
