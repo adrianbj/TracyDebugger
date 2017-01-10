@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 364,
+            'version' => 365,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -279,9 +279,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // we can now exit if enabled unchecked, or user not allowed
         if(!$this->data['enabled'] || !$this->allowedTracyUsers()) return;
 
-        // ensure Tracy can show AJAX bar when SessionHandlerDB module is installed
-        if(static::$tracyVersion != 'legacy' && $this->modules->isInstalled('SessionHandlerDB')) $this->addHookBefore('ProcessWire::finished', $this, 'sessionHanlderDBAjaxFix');
-
         // if Tracy has been toggled "disabled" add enable button and then exit
         if($this->input->cookie->tracyDisabled == 1) {
             if($showDebugBar && !$this->config->ajax) {
@@ -334,6 +331,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if(!is_dir($logFolder)) wireMkdir($logFolder);
 
         Debugger::enable($outputMode, $logFolder, $this->data['email'] != '' ? $this->data['email'] : null);
+
+        // ensure Tracy can show AJAX bar when SessionHandlerDB module is installed
+        // also restrict this to when in $productionMode === false and debugbar is showing
+        if($this->modules->isInstalled('SessionHandlerDB') && static::$tracyVersion != 'legacy' && !Debugger::$productionMode && $showDebugBar) {
+            $this->addHookBefore('ProcessWire::finished', $this, 'sessionHanlderDBAjaxFix');
+        }
 
         //convert checked location strings to constants and array_reduce to bitwise OR (|) line
         $locations = array_map('constant', $this->data['showLocation']);
