@@ -46,14 +46,14 @@ HTML;
             var siteModulesUrl = "$siteModulesUrl";
             var maxHistoryItems = 25;
             var storedHistoryItem = localStorage.getItem("tracyConsoleHistoryItem");
-            var historyItem = storedHistoryItem ? storedHistoryItem : 0;
+            var historyItem = storedHistoryItem ? storedHistoryItem : 1;
             var historyCount = localStorage.getItem("tracyConsoleHistoryCount");
             var loadedSnippetCode;
             var desc = false;
             if(historyCount == historyItem || !historyItem || !historyCount) {
                 disableButton("historyForward");
             }
-            if(!historyItem || !historyCount) {
+            if(!historyItem || historyItem == 1 || historyCount < 2) {
                 disableButton("historyBack");
             }
 
@@ -144,7 +144,7 @@ HTML;
                 callPhp(code);
                 saveHistory(code);
                 disableButton("historyForward");
-                enableButton("historyBack");
+                if(historyCount > 1) enableButton("historyBack");
                 tce.focus();
             }
 
