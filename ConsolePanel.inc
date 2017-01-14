@@ -178,7 +178,7 @@ HTML;
 
 HTML;
 
-                if ($p->template != "admin") {
+                if (wire('page')->template != "admin") {
                     $out .= <<< HTML
                         var accessTemplateVars = document.getElementById("accessTemplateVars").checked;
 HTML;
@@ -220,8 +220,8 @@ HTML;
         <div class="tracy-inner">
             <fieldset>
                 <legend>Enter PHP code, then use CTRL/CMD+Enter to Run, or ALT/OPT+Enter to Clear & Run.</legend>';
-        if ($p->template != "admin") {
-            $out .= '<p><input type="checkbox" id="accessTemplateVars"> Allow access to template variables and functions (this loads template and included files a second time, so be careful)</input></p>';
+        if (wire('page')->template != "admin") {
+            $out .= '<p><label><input type="checkbox" id="accessTemplateVars" /> Allow access to template variables and functions (this loads template and included files a second time, so be careful)</label></p>';
         }
         $out .= '
                     <br />

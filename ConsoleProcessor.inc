@@ -76,7 +76,7 @@ if($user->isSuperuser()) {
     \Tracy\Debugger::timer('consoleCode');
     $initialMemory = memory_get_usage();
     // output rendered result of code
-    try {        
+    try {
         echo $t->render();
     }
     catch (Exception $e) {
@@ -84,8 +84,8 @@ if($user->isSuperuser()) {
     }
     echo '
     <div style="border-top: 1px dotted #cccccc; color:#A9ABAB; font-size: 10px; padding: 3px; margin-top:5px;">' .
-        round((\Tracy\Debugger::timer('consoleCode')*1000), 2) . 'ms, ' . 
-        number_format((memory_get_usage() - $initialMemory) / 1000000, 2, '.', ' ') . ' MB 
+        round((\Tracy\Debugger::timer('consoleCode')*1000), 2) . 'ms, ' .
+        number_format((memory_get_usage() - $initialMemory) / 1000000, 2, '.', ' ') . ' MB
     </div>';
 
     // fix for updating AJAX bar when SessionHandlerDB is installed
