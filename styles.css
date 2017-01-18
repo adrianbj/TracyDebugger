@@ -369,6 +369,21 @@
     cursor: default !important;
 }
 
+#hide-button {
+    cursor: pointer !important;
+}
+
+#show-button {
+    bottom: 0px;
+    right: 0px;
+    z-index: 99999;
+    position: fixed;
+    width: 16px;
+    margin: 0px !important;
+    padding: 0px !important;
+    cursor:pointer;
+}
+
 #tracy-debug input[type="submit"][disabled] {
     cursor: default !important;
 }

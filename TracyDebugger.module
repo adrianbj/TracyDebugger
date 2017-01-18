@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 367,
+            'version' => 368,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -143,6 +143,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "maxDepth" => 3,
                 "maxLength" => 150,
                 "showDebugBar" => array('frontend'),
+                "hideDebugBar" => null,
                 "hideDebugBarModals" => array('regularModal', 'inlineModal'),
                 "frontendPanels" => array('processwireInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'templatePath', 'console', 'templateEditor', 'dumpsRecorder', 'panelSelector', 'tracyToggler'),
                 "backendPanels" => array('processwireInfo', 'processwireLogs', 'tracyLogs', 'debugMode', 'console', 'dumpsRecorder', 'panelSelector', 'tracyToggler'),
@@ -200,6 +201,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * Initialize the module and setup hooks
      */
     public function init() {
+
+        //$this->config->styles->add($this->config->urls->TracyDebugger . "styles.css");
 
         if(in_array('regularModal', $this->data['hideDebugBarModals']) && $this->input->get->modal == '1') return;
         if(in_array('inlineModal', $this->data['hideDebugBarModals']) && $this->input->get->modal == 'inline') return;
@@ -288,7 +291,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             return;
         }
 
-        $this->addHookAfter('Page::render', $this, 'addSettingsLink');
+        $this->addHookAfter('Page::render', $this, 'addCustomStuff');
 
         // Got this far so start enabling Tracy and debug bar
         // what mode?
@@ -789,8 +792,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     }
 
-    protected function addSettingsLink($event) {
-        $settingsLink = '
+    protected function addCustomStuff($event) {
+        $customStuff = '
         <script>
             function addSettingsLink() {
                 if(!document.getElementById("tracy-debug-logo")) {
@@ -804,8 +807,57 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 }
             };
             addSettingsLink();
-        </script>';
-        $event->return = str_replace("</body>", $settingsLink.'</body>', $event->return);
+
+            function addHideLink() {
+                if(!document.getElementById("tracy-debug-bar")) {
+                    window.requestAnimationFrame(addHideLink);
+                } else {
+                    var debugBar = document.getElementById("tracy-debug-bar");
+                    var barul = debugBar.getElementsByTagName("ul")[0];
+                    var toggleli = document.createElement("li");
+                    toggleli.appendChild(document.createTextNode("⇲"));
+                    toggleli.setAttribute("id", "hide-button");
+                    toggleli.setAttribute("title", "Hide Tracy");
+                    toggleli.addEventListener("click", function(){
+                        document.getElementById("tracy-debug").style.display = "none";
+                        document.getElementById("show-button").style.display = "block";
+                        document.cookie = "tracyHidden=1; path=/";
+                        document.cookie = "tracyShow=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
+                    });
+                    barul.appendChild(toggleli);
+                    // remove Tracy core close debug bar x button
+                    barul.removeChild(barul.lastChild.previousElementSibling);
+                }
+            };
+            addHideLink();
+
+            function unhideBar() {
+                document.getElementById("tracy-debug").style.display = "block";
+                document.getElementById("show-button").style.display = "none";
+                document.cookie = "tracyHidden=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
+                document.cookie = "tracyShow=1; path=/";
+            }
+        ';
+
+        if(($this->data['hideDebugBar'] && !$this->input->cookie->tracyShow) || $this->input->cookie->tracyHidden == 1) {
+            $customStuff .= '
+            function hideDebugBar() {
+                if(!document.getElementById("tracy-debug-bar")) {
+                    window.requestAnimationFrame(hideDebugBar);
+                } else {
+                    document.getElementById("tracy-debug").style.display = "none";
+                }
+            }
+            hideDebugBar();
+            ';
+        }
+
+        $customStuff .= '
+        </script>
+
+        <div id="show-button" title="Show Tracy" style="display:'.(($this->data['hideDebugBar'] || $this->input->cookie->tracyHidden == 1) && !$this->input->cookie->tracyShow ? 'block' : 'none' ).'" onclick="unhideBar()">&#8689;</div>
+        ';
+        $event->return = str_replace("</body>", $customStuff.'</body>', $event->return);
     }
 
     protected function deleteFile($path) {
@@ -1194,16 +1246,24 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'showDebugBar');
         $f->label = __('Show Debug Bar', __FILE__);
         $f->description = __('Show the debug bar.', __FILE__);
-        $f->columnWidth = 33;
+        $f->columnWidth = 25;
         $f->addOption('frontend', 'Frontend');
         $f->addOption('backend', 'Backend');
         if($data['showDebugBar']) $f->attr('value', $data['showDebugBar']);
         $fieldset->add($f);
 
+        $f = wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'hideDebugBar');
+        $f->label = __('Hide Debug Bar By Default', __FILE__);
+        $f->description = __('Hide the debug bar by default on page load.', __FILE__);
+        $f->columnWidth = 25;
+        $f->attr('checked', $data['hideDebugBar'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
         $f = wire('modules')->get("InputfieldCheckboxes");
         $f->attr('name', 'hideDebugBarModals');
         $f->label = __('Hide Debug Bar in Modals', __FILE__);
-        $f->columnWidth = 34;
+        $f->columnWidth = 25;
         $f->addOption('regularModal', 'Regular Modal');
         $f->addOption('inlineModal', 'Inline Modal');
         if($data['hideDebugBarModals']) $f->attr('value', $data['hideDebugBarModals']);
@@ -1214,7 +1274,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Show Panel Labels', __FILE__);
         $f->description = __('Show the labels next to each panel.', __FILE__);
         $f->notes = __('Unchecking this will make the debugger bar much more compact.', __FILE__);
-        $f->columnWidth = 33;
+        $f->columnWidth = 25;
         $f->attr('checked', $data['showPanelLabels'] == '1' ? 'checked' : '' );
         $fieldset->add($f);
 
