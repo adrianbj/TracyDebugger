@@ -116,6 +116,7 @@
     margin:0 !important;
     font-size: 12px !important;
     color: #444444 !important;
+    font-weight: normal !important;
 }
 
 #tracy-debug small {
@@ -371,6 +372,7 @@
 
 #hide-button {
     cursor: pointer !important;
+    padding: 0 5px 0 3px;
 }
 
 #show-button {

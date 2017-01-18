@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 369,
+            'version' => 370,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -202,8 +202,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public function init() {
 
-        //$this->config->styles->add($this->config->urls->TracyDebugger . "styles.css");
-
         if(in_array('regularModal', $this->data['hideDebugBarModals']) && $this->input->get->modal == '1') return;
         if(in_array('inlineModal', $this->data['hideDebugBarModals']) && $this->input->get->modal == 'inline') return;
 
@@ -275,7 +273,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // show user bar - this is for users who are not allowed access to the debug bar
         if(!$this->inAdmin() && $this->data['showUserBar'] && count($this->data['userBarFeatures'])>0 && !$this->config->ajax && (!$this->allowedTracyUsers(null, true) || $this->data['showUserBarTracyUsers']) && $this->user->isLoggedin()) {
-            $this->addHookAfter('Page::render', $this, 'addUserBar');
+            $this->addHookAfter('Page::render', $this, 'addUserBar', array('priority'=>1000));
         }
 
         // now that required classes above have been loaded if requested,
@@ -285,13 +283,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // if Tracy has been toggled "disabled" add enable button and then exit
         if($this->input->cookie->tracyDisabled == 1) {
             if($showDebugBar && !$this->config->ajax) {
-                $this->addHookAfter('Page::render', $this, 'addEnableButton');
+                $this->addHookAfter('Page::render', $this, 'addEnableButton', array('priority'=>1000));
             }
             // Tracy not enabled so exit now
             return;
         }
 
-        $this->addHookAfter('Page::render', $this, 'addCustomStuff');
+        $this->addHookAfter('Page::render', $this, 'addCustomStuff', array('priority'=>1000));
 
         // Got this far so start enabling Tracy and debug bar
         // what mode?
@@ -514,7 +512,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         if(!$this->inAdmin()) {
             if(in_array('validator', static::$showPanels)) {
-                $this->addHookAfter('Page::render', $this, 'getPageHtml');
+                $this->addHookAfter('Page::render', $this, 'getPageHtml', array('priority'=>1000));
             }
 
             if(in_array('console', static::$showPanels) || in_array('templateResources', static::$showPanels)) {
