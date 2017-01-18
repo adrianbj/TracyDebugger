@@ -1,6 +1,7 @@
 <?php
 
 set_error_handler('tracyConsoleErrorHandler');
+set_exception_handler('tracyConsoleExceptionHandler');
 
 // remove location links from dumps - not really meaningful for console
 \Tracy\Debugger::$showLocation = FALSE;
@@ -79,8 +80,8 @@ if($user->isSuperuser()) {
     try {
         echo $t->render();
     }
-    catch (Exception $e) {
-        tracyConsoleErrorHandler(null, $e->getMessage(), $e->getFile(), $e->getLine());
+    catch (\Exception $e) {
+        tracyConsoleExceptionHandler($e);
     }
     echo '
     <div style="border-top: 1px dotted #cccccc; color:#A9ABAB; font-size: 10px; padding: 3px; margin-top:5px;">' .
@@ -124,4 +125,20 @@ function tracyConsoleErrorHandler($errno, $errstr, $errfile, $errline) {
         // exit obviously causing scripts to halt even for notices/warnings which we don't want, so get rid of for now
         //exit;
     }
+}
+
+
+// exception handler function
+function tracyConsoleExceptionHandler($err) {
+
+    $errstr = $err->getMessage();
+    $errfile = $err->getFile();
+    $errline = $err->getLine();
+
+    $customErrStr = $errstr . ' on line: ' . (strpos($errfile, 'cache/TracyDebugger') !== false ? $errline - 3 : $errline) . (strpos($errfile, 'cache/TracyDebugger') !== false ? '' : ' in ' . str_replace(wire('config')->paths->cache . 'FileCompiler/', '../', $errfile));
+    $customErrStrLog = $customErrStr . (strpos($errfile, 'cache/TracyDebugger') !== false ? ' in Tracy Console Panel' : '');
+    \TD::fireLog($customErrStrLog);
+    \TD::log($customErrStrLog, 'error');
+
+    echo '<br />Exception: '.$customErrStr;
 }
