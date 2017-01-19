@@ -134,7 +134,8 @@ class MailPanel implements IBarPanel {
     protected function formatAttachments($attachments) {
         $styledAttachments = '';
         if(!is_array($attachments)) $attachments = array($attachments);
-        foreach($attachments as $attachment) {
+        foreach($attachments as $key => $val) {
+            $attachment = is_numeric($key) ? $value : $key;
             $styledAttachments .= '<a href="'.str_replace(wire('config')->paths->root, wire('config')->urls->root, $attachment).'">'.str_replace(wire('config')->paths->root, '/', $attachment) . '</a><br />';
         }
         return $styledAttachments;
