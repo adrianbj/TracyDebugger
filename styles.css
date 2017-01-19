@@ -208,6 +208,11 @@
     word-wrap: break-word;      /* IE 5+ */
 }
 
+.tracy-section {
+    padding: 10px 0;
+    border-top: 1px dotted #CCCCCC;
+}
+
 .tracy-toggle {
     font-size: 12px !important;
 }

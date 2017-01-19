@@ -55,18 +55,18 @@ class MailPanel implements IBarPanel {
                                     if($item['body']) {
                                         $this->entries .= "
                                         <a href='#' rel='#text-body' style='font-size:12px !important; position: absolute; left:0; top:3px;' class='tracy-toggle tracy-collapsed'>Text</a>
-                                        <div id='text-body' class='tracy-collapsed'>".($item['body'] ? nl2br($item['body']) : "Ø")."</div>";
+                                        <div id='text-body' class='tracy-section tracy-collapsed'>".($item['body'] ? nl2br($item['body']) : "Ø")."</div>";
                                     }
                                     if($item['bodyHTML']) {
                                         $this->entries .= "
                                         <a href='#' rel='#html-body' style='font-size:12px !important; position: absolute; left:56px; top:3px;' class='tracy-toggle tracy-collapsed'>HTML</a>
-                                        <div id='html-body' class='tracy-collapsed'>".$item['bodyHTML']."</div>
+                                        <div id='html-body' class='tracy-section tracy-collapsed'>".$item['bodyHTML']."</div>
                                         <a href='#' rel='#source-body' style='font-size:12px !important; position: absolute; left:120px; top:3px;' class='tracy-toggle tracy-collapsed'>Source</a>
-                                        <div id='source-body' class='tracy-collapsed'><pre style='max-width: 800px; white-space: normal;'>".htmlentities($item['bodyHTML'])."</pre></div>";
+                                        <div id='source-body' class='tracy-section tracy-collapsed'><pre style='max-width: 800px; white-space: normal;'>".htmlentities($item['bodyHTML'])."</pre></div>";
                                     }
                                     $this->entries .= "
                                     <a href='#' rel='#metadata' style='font-size:12px !important; position: absolute; left:190px; top:3px;' class='tracy-toggle tracy-collapsed'>Metadata</a>
-                                    <div id='metadata' class='tracy-collapsed'>
+                                    <div id='metadata' class='tracy-section tracy-collapsed'>
                                         <table id='metadata-table' style='margin-bottom:15px; width:100%'>
                                             <tbody>";
                                                 if(isset($item['header']['X-Mailer'])) $this->entries .= "<tr><td>X-Mailer</td><td>".$item['header']['X-Mailer']."</td></tr>";

@@ -2,4 +2,3 @@ define("ace/snippets",["require","exports","module","ace/lib/oop","ace/lib/event
                 (function() {
                     window.require(["ace/ext/language_tools"], function() {});
                 })();
-            
