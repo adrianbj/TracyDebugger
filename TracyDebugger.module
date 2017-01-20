@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 373,
+            'version' => 374,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -837,23 +837,26 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         ';
 
-        if(($this->data['hideDebugBar'] && !$this->input->cookie->tracyShow) || $this->input->cookie->tracyHidden == 1) {
-            $customStuff .= '
-            function hideDebugBar() {
-                if(!document.getElementById("tracy-debug-bar")) {
-                    window.requestAnimationFrame(hideDebugBar);
-                } else {
-                    document.getElementById("tracy-debug").style.display = "none";
+        $tracyErrors = Debugger::getBar()->getPanel('Tracy:errors');
+        if(count($tracyErrors->data) === 0) {
+            if(($this->data['hideDebugBar'] && !$this->input->cookie->tracyShow) || $this->input->cookie->tracyHidden == 1) {
+                $customStuff .= '
+                function hideDebugBar() {
+                    if(!document.getElementById("tracy-debug-bar")) {
+                        window.requestAnimationFrame(hideDebugBar);
+                    } else {
+                        document.getElementById("tracy-debug").style.display = "none";
+                    }
                 }
+                hideDebugBar();
+                ';
             }
-            hideDebugBar();
-            ';
         }
 
         $customStuff .= '
         </script>
 
-        <div id="show-button" title="Show Tracy" style="display:'.(($this->data['hideDebugBar'] || $this->input->cookie->tracyHidden == 1) && !$this->input->cookie->tracyShow ? 'block' : 'none' ).'" onclick="unhideBar()">&#8689;</div>
+        <div id="show-button" title="Show Tracy" style="display:'.(($this->data['hideDebugBar'] || $this->input->cookie->tracyHidden == 1) && !$this->input->cookie->tracyShow && count($tracyErrors->data) === 0 ? 'block' : 'none' ).'" onclick="unhideBar()">&#8689;</div>
         ';
         $event->return = str_replace("</body>", $customStuff.'</body>', $event->return);
     }
