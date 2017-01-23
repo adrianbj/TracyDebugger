@@ -381,19 +381,20 @@
 }
 
 #show-button {
-  bottom: 0;
-  right: 0;
-  z-index: 99999;
-  position: fixed;
-  width: 16px !important;
-  margin: 0 !important;
-  padding: 4px 15px 2px 6px !important;
-  background: #FFFFFF !important;
-  border: 1px solid #DDDDDD !important;
-  font-size: 12px !important;
-  cursor: pointer;
-  box-sizing: border-box;
-  line-height: normal;
+    bottom: 0 !important;
+    right: 0 !important;
+    z-index: 99999 !important;
+    position: fixed !important;
+    width: 16px !important;
+    margin: 0 !important;
+    padding: 4px 15px 2px 6px !important;
+    background: #FFFFFF !important;
+    border: 1px solid #DDDDDD !important;
+    font-size: 12px !important;
+    cursor: pointer;
+    box-sizing: border-box !important;
+    line-height: normal !important;
+    height: 22px !important;
 }
 
 #tracy-debug input[type="submit"][disabled] {
