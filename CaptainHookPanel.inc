@@ -59,7 +59,7 @@ class CaptainHookPanel implements IBarPanel {
             $configData['hooksPwVersion'] = wire('config')->version;
             wire('modules')->saveModuleConfigData(wire('modules')->get("TracyDebugger"), $configData);
 
-            require_once './CaptainHook/generate-html.php';
+            require_once wire('config')->paths->TracyDebugger . 'CaptainHook/generate-html.php';
 
             if(!is_dir($cachePath)) if(!wireMkdir($cachePath)) {
                 throw new WireException("Unable to create cache path: $cachePath");
