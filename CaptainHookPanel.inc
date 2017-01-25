@@ -50,35 +50,25 @@ class CaptainHookPanel implements IBarPanel {
         <div class="tracy-inner">
         ';
 
-
-        $cachePath = wire('config')->paths->cache . 'TracyDebugger/';
-        $hooksFile = $cachePath.'hooks.txt';
-
+        $cacheName = 'TracyCaptainHook';
+        $cachedHooks = wire('cache')->get($cacheName);
         $configData = wire('modules')->getModuleConfigData("TracyDebugger");
-        if(!file_exists($hooksFile) || !isset($configData['hooksPwVersion']) || wire('config')->version != $configData['hooksPwVersion']) {
+
+        if(!$cachedHooks || !isset($configData['hooksPwVersion']) || wire('config')->version != $configData['hooksPwVersion']) {
             $configData['hooksPwVersion'] = wire('config')->version;
             wire('modules')->saveModuleConfigData(wire('modules')->get("TracyDebugger"), $configData);
-
             require_once wire('config')->paths->TracyDebugger . 'CaptainHook/generate-html.php';
-
-            if(!is_dir($cachePath)) if(!wireMkdir($cachePath)) {
-                throw new WireException("Unable to create cache path: $cachePath");
-            }
-
-            if(!file_put_contents($hooksFile, serialize($this->hooks), LOCK_EX)) throw new WireException("Unable to write file: $hooksFile");
-            if(wire('config')->chmodFile) chmod($hooksFile, octdec(wire('config')->chmodFile));
-
+            $cachedHooks = serialize($this->hooks);
+            wire('cache')->save($cacheName, $cachedHooks);
         }
 
-        $cachedHooks = unserialize(file_get_contents($hooksFile));
-        foreach($cachedHooks as $file => $info) {
+        foreach(unserialize($cachedHooks) as $file => $info) {
             $name = pathinfo($info['filename'], PATHINFO_FILENAME);
             $label = str_replace(wire('config')->paths->root, '/', $info['filename']);
             $out .= '
             <a href="#" rel="'.$name.'" class="tracy-toggle tracy-collapsed">'.$label.'</a>
             <div id="'.$name.'" class="tracy-collapsed">'.$this->buildHookTable($info).'</div><br />';
         }
-
 
         $out .= \TracyDebugger::generatedTimeSize('captainHook', \Tracy\Debugger::timer('captainHook'), strlen($out));
         $out .= '</div>';
@@ -93,7 +83,8 @@ class CaptainHookPanel implements IBarPanel {
         foreach($info['hooks'] as $hook) {
             $out .= '
                 <tr>
-                    <th><a href="'. \TracyDebugger::makePathLocal(str_replace("%file", $info['filename'], str_replace("%line", $hook['lineNumber'], \TracyDebugger::getDataValue("editor")))).'">'.$hook['lineNumber'].'</a></th>
+                    <th>'.pathinfo($info['filename'], PATHINFO_FILENAME).'::'.$hook['name'].'</th>
+                    <td><a href="'. \TracyDebugger::makePathLocal(str_replace("%file", $info['filename'], str_replace("%line", $hook['lineNumber'], \TracyDebugger::getDataValue("editor")))).'">'.$hook['lineNumber'].'</a></td>
                     <td>' . $hook['line'] . '</td>
                 </tr>';
         }

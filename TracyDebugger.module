@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 377,
+            'version' => 379,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -511,6 +511,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $this->addHookBefore('WireMail::send', $this, 'interceptEmails');
         }
 
+        // captain hook update on module install
+        if(in_array('captainHook', static::$showPanels)) {
+            $this->addHookAfter('Module::install', $this, 'deleteHookCache');
+        }
+
         if(!$this->inAdmin()) {
             if(in_array('validator', static::$showPanels)) {
                 $this->addHookAfter('Page::render', $this, 'getPageHtml', array('priority'=>1000));
@@ -895,6 +900,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         wire('session')->tracyMailItems = $mailItems;
         $event->replace = true;
         $event->return = true;
+    }
+
+    // for the Captain Hook panel
+    public function deleteHookCache($event) {
+        wire('cache')->delete('TracyCaptainHook');
     }
 
     // for the event interceptor panel

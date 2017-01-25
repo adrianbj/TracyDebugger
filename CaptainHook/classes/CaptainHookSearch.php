@@ -28,8 +28,6 @@ class CaptainHookSearch {
 			RecursiveIteratorIterator::CATCH_GET_CHILD // Ignore "Permission denied"
 		);
 
-		//$paths = array($root);
-
 		foreach ($iter as $path => $dir) {
 			// '/.' check is for site module backups - SKIP_DOTS above is not excluding these
 			if (!$dir->isDir() && strpos($path, '/.') === false && preg_match($fileNamePattern, $path) && !in_array(basename($path), $excludeFilenames) ) {
@@ -40,6 +38,40 @@ class CaptainHookSearch {
 		return $paths;
 	}
 
+
+    public static function getHooksInFile($file) {
+        $lines = file($file);
+        $source = implode('', $lines);
+        $tokens = token_get_all($source);
+        $nextStringIsFunc = false;
+
+        $i=0;
+        $files = array();
+        foreach($tokens as $token) {
+            switch($token[0]) {
+                case T_FUNCTION:
+                    $nextStringIsFunc = true;
+                    break;
+
+                case T_STRING:
+                    if($nextStringIsFunc) {
+                        $nextStringIsFunc = false;
+                        if(strpos($token[1], '___') !== false) {
+    	                    $files['filename'] = $file;
+    	                    $files['hooks'][$i]['name'] = str_replace('___', '', $token[1]);
+    	                    $files['hooks'][$i]['lineNumber'] = $token[2];
+	                        $files['hooks'][$i]['line'] = trim(str_replace('{', '', $lines[($token[2]-1)]));
+    	                }
+                    }
+                    break;
+            }
+            $i++;
+        }
+
+        return $files;
+    }
+
+/*
 	public static function getHooksInFile($filename) {
 
 		$fileContents = file_get_contents($filename);
@@ -70,7 +102,6 @@ class CaptainHookSearch {
 		}
 
 	}
-
-
+*/
 
 }
