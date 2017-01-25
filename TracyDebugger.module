@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 375,
+            'version' => 376,
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -89,6 +89,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'mysqlInfo' => 'MySQL Info'
     );
     public static $allPanels = array(
+        'captainHook' => 'Captain Hook',
         'console' => 'Console',
         'customPhp' => 'Custom PHP',
         'debugMode' => 'Debug Mode',
@@ -683,6 +684,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 case 'performance':
                     require_once __DIR__ . '/'.$panelName.'.inc';
                     break;
+                case 'captainHook':
                 case 'processwireInfo':
                 case 'processwireLogs':
                 case 'tracyLogs':
