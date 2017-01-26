@@ -105,7 +105,7 @@ class CaptainHookPanel implements IBarPanel {
         }
 
         $sortedHooks = unserialize($cachedHooks);
-        ksort($sortedHooks);
+        asort($sortedHooks);
         foreach($sortedHooks as $file => $info) {
             $name = pathinfo($info['filename'], PATHINFO_FILENAME);
             $label = str_replace(wire('config')->paths->root, '/', $info['filename']);
