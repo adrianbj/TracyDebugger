@@ -104,7 +104,9 @@ class CaptainHookPanel implements IBarPanel {
             wire('cache')->save($cacheName, $cachedHooks);
         }
 
-        foreach(unserialize($cachedHooks) as $file => $info) {
+        $sortedHooks = unserialize($cachedHooks);
+        ksort($sortedHooks);
+        foreach($sortedHooks as $file => $info) {
             $name = pathinfo($info['filename'], PATHINFO_FILENAME);
             $label = str_replace(wire('config')->paths->root, '/', $info['filename']);
             $out .= '
