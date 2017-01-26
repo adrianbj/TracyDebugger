@@ -38,6 +38,47 @@ class CaptainHookPanel implements IBarPanel {
             </svg>';
 
         return '
+        <script>
+            function removeA(arr) {
+                var what, a = arguments, L = a.length, ax;
+                while (L > 1 && arr.length) {
+                    what = a[--L];
+                    while ((ax= arr.indexOf(what)) !== -1) {
+                        arr.splice(ax, 1);
+                    }
+                }
+                return arr;
+            }
+
+            var groupShow = true;
+            var manuallyOpened = [];
+            function toggleHooks() {
+
+                var panel = document.getElementById("tracy-debug-panel-CaptainHookPanel");
+                var innerPanel = document.getElementsByClassName("tracy-inner")[0];
+                var sections = innerPanel.getElementsByTagName("div");
+                Array.prototype.forEach.call(sections, function(el) {
+                    elId = el.getAttribute("id");
+                    if(groupShow) {
+                        if(el.classList.contains("tracy-collapsed")) {
+                            el.classList.toggle("tracy-collapsed", !groupShow);
+                            //manuallyOpened.remove(elId);
+                            removeA(manuallyOpened, elId);
+                        }
+                        else {
+                            if(manuallyOpened.indexOf(elId) === -1) manuallyOpened.push(elId);
+                        }
+                    }
+                    else {
+                        if(manuallyOpened.indexOf(elId) === -1) {
+                            el.classList.toggle("tracy-collapsed", !groupShow);
+                        }
+                    }
+                });
+                groupShow = !groupShow;
+            }
+        </script>
+
         <span title="Captain Hook">' .
             $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Captain Hook' : '') . '
         </span>';
@@ -48,6 +89,7 @@ class CaptainHookPanel implements IBarPanel {
         $out = '
         <h1>' . $this->icon . ' Captain Hook</h1>
         <div class="tracy-inner">
+            <p><input type="submit" id="toggleAll" onclick="toggleHooks()" value="Toggle All" /></p><br />
         ';
 
         $cacheName = 'TracyCaptainHook';
@@ -78,7 +120,6 @@ class CaptainHookPanel implements IBarPanel {
 
     private function buildHookTable($info) {
         $out = '
-        <div>
             <table>';
         foreach($info['hooks'] as $hook) {
             $out .= '
@@ -90,7 +131,7 @@ class CaptainHookPanel implements IBarPanel {
         }
         $out .= '
             </table>
-        </div>';
+        ';
         return $out;
     }
 

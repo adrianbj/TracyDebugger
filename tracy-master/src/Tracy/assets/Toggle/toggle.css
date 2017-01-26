@@ -15,10 +15,10 @@
 }
 
 .tracy-toggle:after {
-	content: " ▼";
-	opacity: .4;
+	content: " ▼" !important;
+	opacity: .4 !important;
 }
 
 .tracy-toggle.tracy-collapsed:after {
-	content: " ►";
+	content: " ►" !important;
 }

@@ -42,7 +42,7 @@ body #tracy-debug {
 	clear: none;
 }
 
-#tracy-debug *:before
+#tracy-debug *:before,
 #tracy-debug *:after {
 	all: unset;
 }
