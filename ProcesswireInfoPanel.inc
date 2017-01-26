@@ -103,7 +103,7 @@ class ProcesswireInfoPanel implements IBarPanel {
                 </tr>
                 <tr>
                     <th>ID</th>
-                    <td><a title="Edit Page" href="'.wire('config')->urls->admin.'page/edit/?id='.$p->id.'">'.$p->id.'</a></td>
+                    <td><a title="Edit Page" href="'.$p->editUrl().'">'.$p->id.'</a></td>
                 </tr>
                 <tr>
                 <tr>
@@ -133,37 +133,39 @@ class ProcesswireInfoPanel implements IBarPanel {
                     <th>Process</th>
                     <td>'.wire('process').'</td>
                 </tr>';
-                if($p->parent && $p->parent->viewable()) {
+                if($p->parent->id) {
                     $summary .= '
                     <tr>
                         <th>Parent</th>
-                        <td><a title="View Parent" href="'.$p->parent->url.'">'.$p->parent->name.'</a> (<a title="Edit Parent" href="'.wire('config')->urls->admin.'page/edit/?id='.$p->parent->id.'">'.$p->parent->id.'</a>)</td>
+                        <td>' . ($p->parent->viewable() ? '<a title="View Parent" href="'.$p->parent->url.'">'.$p->parent->name.'</a>' : '<span title="Not Viewable">'.$p->parent->name.'</span>') . ' (<a title="Edit Parent" href="'.$p->parent->editUrl().'">'.$p->parent->id.'</a>)</td>
                     </tr>';
                 }
                 $summary .= '
                 <tr>
                     <th>Root Parent</th>
-                    <td><a title="View Root Parent" href="'.$p->rootParent->url.'">'.$p->rootParent->name.'</a> (<a title="Edit Root Parent" href="'.wire('config')->urls->admin.'page/edit/?id='.$p->rootParent->id.'">'.$p->rootParent->id.'</a>)</td>
+                    <td>' . ($p->rootParent->viewable() ? '<a title="View Root Parent" href="'.$p->rootParent->url.'">'.$p->rootParent->name.'</a>' : '<span title="Not Viewable">'.$p->rootParent->name.'</span>') . ' (<a title="Edit Root Parent" href="'.$p->rootParent->editUrl().'">'.$p->rootParent->id.'</a>)</td>
                 </tr>
                 ';
-                if($p->prev->id && $p->prev->viewable()) {
+                $prevPage = $p->prevAll("include=all")->first();
+                if($prevPage) {
                     $summary .= '
                     <tr>
                         <th>Prev Sibling</th>
-                        <td><a title="View Prev Sibling" href="'.$p->prev->url.'">&lt; '.$p->prev->name.'</a> (<a title="Edit Prev Sibling" href="'.wire('config')->urls->admin.'page/edit/?id='.$p->prev->id.'">'.$p->prev->id.'</a>)</td>
+                        <td>' . ($prevPage->viewable() ? '<a title="View Prev Sibling" href="'.$prevPage->url.'">'.$prevPage->name.'</a>' : '<span title="Not Viewable">'.$prevPage->name.'</span>') . ' (<a title="Edit Prev Sibling" href="'.$prevPage->editUrl().'">'.$prevPage->id.'</a>)</td>
                     </tr>';
                 }
-                if($p->next->id && $p->next->viewable()) {
+                $nextPage = $p->nextAll("include=all")->first();
+                if($nextPage) {
                     $summary .= '
                     <tr>
                         <th>Next Sibling</th>
-                        <td><a title="View Next Sibling" href="'.$p->next->url.'">'.$p->next->name.' &gt;</a> (<a title="Edit Next Sibling" href="'.wire('config')->urls->admin.'page/edit/?id='.$p->next->id.'">'.$p->next->id.'</a>)</td>
+                        <td>' . ($nextPage->viewable() ? '<a title="View Next Sibling" href="'.$nextPage->url.'">'.$nextPage->name.'</a>' : '<span title="Not Viewable">'.$nextPage->name.'</span>') . ' (<a title="Edit Next Sibling" href="'.$nextPage->editUrl().'">'.$nextPage->id.'</a>)</td>
                     </tr>';
                 }
                 $summary .= '
                 <tr>
                     <th>Children</th>
-                    <td>'.$p->numChildren().' <a title="Open Page Tree" href="'.wire('config')->urls->admin.'page/list/?open='.$p->id.'">open tree</a> | <a title="View Children Tab" href="'.wire('config')->urls->admin.'page/edit/?id='.$p->id.'#ProcessPageEditChildren">edit</a></td>
+                    <td>'.$p->numChildren().' <a title="Open Page Tree" href="'.wire('config')->urls->admin.'page/list/?open='.$p->id.'">open tree</a> | <a title="View Children Tab" href="'.$p->editUrl().'#ProcessPageEditChildren">edit</a></td>
                 </tr>
                 <tr>
                     <th>Created</th>

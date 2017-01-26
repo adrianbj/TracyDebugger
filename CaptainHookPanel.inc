@@ -55,7 +55,7 @@ class CaptainHookPanel implements IBarPanel {
             function toggleHooks() {
 
                 var panel = document.getElementById("tracy-debug-panel-CaptainHookPanel");
-                var innerPanel = document.getElementsByClassName("tracy-inner")[0];
+                var innerPanel = panel.getElementsByClassName("tracy-inner")[0];
                 var sections = innerPanel.getElementsByTagName("div");
                 Array.prototype.forEach.call(sections, function(el) {
                     elId = el.getAttribute("id");
