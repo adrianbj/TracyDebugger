@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => 382,
+            'version' => '4.0.0',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -40,10 +40,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     }
 
 
-    /**
-     * Data as used by the get/set functions
-     *
-     */
+    const COOKIE_SECRET = 'tracy-debug';
+
     protected $data = array();
     protected $httpReferer;
     protected $tracyEnabled = false;
@@ -96,7 +94,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'diagnostics' => 'Diagnostics',
         'dumpsRecorder' => 'Dumps Recorder',
         'eventInterceptor' => 'Event Interceptor',
-        'mail' => 'Mail',
+        'mailInterceptor' => 'Mail Interceptor',
         'methodsInfo' => 'Methods Info',
         'moduleDisabler' => 'Module Disabler',
         'outputMode' => 'Output Mode',
@@ -157,8 +155,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "userBarBackgroundOpacity" => 1,
                 "userBarIconColor" => '#666666',
                 "userBarTopBottom" => 'bottom',
-                "userBarLeftRight" => 'right',
-                "showPanelLabels" => 1,
+                "userBarLeftRight" => 'left',
+                "showPanelLabels" => null,
                 "processwireInfoPanelSections" => array('summary', 'templateInfo', 'fieldsListValues', 'versionsList', 'adminLinks', 'documentationLinks', 'editLinks'),
                 "diagnosticsPanelSections" => array('filesystemFolders'),
                 "todoIgnoreDirs" => 'git, svn, images, img, errors',
@@ -199,39 +197,270 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     /**
-     * Initialize the module and setup hooks
+     * Initialize the module
      */
     public function init() {
 
-        if(in_array('regularModal', $this->data['hideDebugBarModals']) && $this->input->get->modal == '1') return;
-        if(in_array('inlineModal', $this->data['hideDebugBarModals']) && $this->input->get->modal == 'inline') return;
+        // USER BAR
+        if(!$this->inAdmin() && $this->data['showUserBar'] && count($this->data['userBarFeatures'])>0 && !$this->wire('config')->ajax && (!$this->allowedTracyUsers(null, true) || $this->data['showUserBarTracyUsers']) && $this->wire('user')->isLoggedin()) {
+            $this->addHookAfter('Page::render', $this, 'addUserBar', array('priority'=>1000));
+        }
+
+
+        // EARLY EXITS
+        // modals
+        if(in_array('regularModal', $this->data['hideDebugBarModals']) && $this->wire('input')->get->modal == '1') return;
+        if(in_array('inlineModal', $this->data['hideDebugBarModals']) && $this->wire('input')->get->modal == 'inline') return;
 
         // don't init Tracy for @soma's PageEditSoftLock polling on Page Edit
         if(strpos(self::inputUrl(), 'checkpagelock') !== false) return;
         // don't init Tracy for the PW Notifications module polling
-        if(strpos($this->input->queryString(), 'Notifications=update') !== false) return;
+        if(strpos($this->wire('input')->queryString(), 'Notifications=update') !== false) return;
 
-        $this->httpReferer = isset($_SERVER['HTTP_REFERER']) ? $this->sanitizer->text($_SERVER['HTTP_REFERER']) : self::inputHttpUrl(true);
 
-        // if PW version changed, reload to initialize new version
-        if($this->input->post->tracyPwVersion && $this->input->post->tracyPwVersion != $this->config->version) {
-            $this->session->redirect($this->httpReferer);
-        }
+        if($this->data['enabled'] && $this->allowedTracyUsers() === 'full') {
 
-        // trash / clear recorded pages if requested
-        if($this->input->post->trashRecordedPages || $this->input->post->clearRecordedPages) {
-            if($this->input->post->trashRecordedPages) {
-                foreach($this->data['recordedPages'] as $pid) {
-                    $this->pages->trash($this->pages->get($pid));
+            // url for $session->redirects
+            $this->httpReferer = isset($_SERVER['HTTP_REFERER']) ? $this->wire('sanitizer')->text($_SERVER['HTTP_REFERER']) : self::inputHttpUrl(true);
+
+
+            // PANELS TO DISPLAY
+            $configEnabledPanels = $this->inAdmin() ? $this->data['backendPanels'] : $this->data['frontendPanels'];
+            if($this->wire('input')->cookie->tracyPanelsOnce) {
+                static::$oncePanels = array_filter(explode(',', $this->wire('input')->cookie->tracyPanelsOnce));
+                static::$showPanels = static::$oncePanels;
+                unset($this->wire('input')->cookie->tracyPanelsOnce);
+                setcookie("tracyPanelsOnce", "", time()-3600, '/');
+            }
+            elseif($this->wire('input')->cookie->tracyPanelsSticky) {
+                static::$stickyPanels = array_filter(explode(',', $this->wire('input')->cookie->tracyPanelsSticky));
+                static::$showPanels = static::$stickyPanels;
+            }
+            else {
+                static::$showPanels = $configEnabledPanels;
+            }
+
+            // sort panels based on order defined in config settings
+            $showPanelsOrdered = array();
+            $i=0;
+            // add default panels in the defined order
+            foreach($configEnabledPanels as $panelName) {
+                if(in_array($panelName, static::$showPanels)) $showPanelsOrdered[$i] = $panelName;
+                $i++;
+            }
+            // add once/sticky panels to the end because there is no specified order for these in config settings
+            foreach(static::$allPanels as $panelName => $panelTitle) {
+                if(in_array($panelName, static::$showPanels) && !in_array($panelName, $showPanelsOrdered)) $showPanelsOrdered[$i] = $panelName;
+                // define disabled panels for restricted users
+                if($this->superuserHasPermission(null, "tracy-restricted-panels") && in_array($panelName, $this->data['restrictedUserDisabledPanels'])) {
+                    static::$restrictedUserDisabledPanels[] = $panelName;
+                }
+                $i++;
+            }
+            // move Panel Selector to the end so it has access to the generation time values for all other panels
+            static::$showPanels = $showPanelsOrdered;
+            if(($key = array_search('panelSelector', static::$showPanels)) !== false) {
+                unset(static::$showPanels[$key]);
+                static::$showPanels[] = 'panelSelector';
+            }
+
+
+            // PW VERSION SWITCHER
+            // if PW version changed, reload to initialize new version
+            if($this->wire('input')->post->tracyPwVersion && $this->wire('input')->post->tracyPwVersion != $this->wire('config')->version) {
+                $this->wire('session')->redirect($this->httpReferer);
+            }
+
+
+            // USER SWITCHER
+            // process userSwitcher if panel open and switch initiated
+            if(in_array('userSwitcher', static::$showPanels) && $this->wire('input')->post->userSwitcher && $this->data['outputMode'] == 'development') {
+                // if user is superuser and session length is set, save to config settings
+                if($this->wire('user')->isSuperuser() && $this->wire('input')->post->userSwitchSessionLength && $this->wire('session')->CSRF->validate()) {
+                    // cleanup expired sessions
+                    if(isset($this->data['userSwitchSession'])) {
+                        foreach($this->data['userSwitchSession'] as $id => $expireTime) {
+                            if($expireTime < time()) unset($this->data['userSwitchSession'][$id]);
+                        }
+                    }
+                    // if no existing session ID, start a new session
+                    if(!$this->wire('session')->tracyUserSwitcherId) {
+                        $pass = new Password();
+                        $challenge = $pass->randomBase64String(32);
+                        $this->wire('session')->tracyUserSwitcherId = $challenge;
+                    }
+                    // save session ID and expiry time in module config settings
+                    $this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId] = time() + ($this->wire('input')->post->userSwitchSessionLength * 60);
+                    $this->wire('modules')->saveModuleConfigData($this->wire('modules')->get("TracyDebugger"), $this->data);
+                }
+                // if logout button clicked
+                if($this->wire('input')->post->logoutUserSwitcher && $this->wire('session')->CSRF->validate()) {
+                    if($this->wire('session')->tracyUserSwitcherId) {
+                        // if session variable exists, grab it and add to the new session after logging out
+                        $tracyUserSwitcherId = $this->wire('session')->tracyUserSwitcherId;
+                        $this->wire('session')->logout();
+                        $this->wire('session')->tracyUserSwitcherId = $tracyUserSwitcherId;
+                    }
+                    else {
+                        $this->wire('session')->logout();
+                    }
+                    $this->wire('session')->redirect($this->httpReferer);
+                }
+                elseif($this->wire('input')->post->endSessionUserSwitcher && $this->wire('session')->CSRF->validate()) {
+                    // if end session clicked, remove session variable and config settings entry
+                    $this->wire('session')->remove("tracyUserSwitcherId");
+                    unset($this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId]);
+                    $this->wire('modules')->saveModuleConfigData($this->wire('modules')->get("TracyDebugger"), $this->data);
+                    $this->wire('session')->redirect($this->httpReferer);
+                }
+                elseif($this->wire('input')->post->userSwitcher && $this->wire('session')->CSRF->validate()) {
+                    // if session not expired, switch to requested user
+                    if(isset($this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId]) && $this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId] > time() && $this->wire('session')->tracyUserSwitcherId) {
+                        // if session variable exists, grab it and add to the new session after logging out
+                        // and forceLogin the new switched user
+                        $tracyUserSwitcherId = $this->wire('session')->tracyUserSwitcherId;
+                        if($this->wire('user')->isLoggedin()) $this->wire('session')->logout();
+                        $user = $this->wire('session')->forceLogin($this->wire('input')->post->userSwitcher);
+                        $this->wire('session')->tracyUserSwitcherId = $tracyUserSwitcherId;
+                    }
+                    $this->wire('session')->redirect($this->httpReferer);
                 }
             }
-            unset($this->data['recordedPages']);
-            $this->modules->saveModuleConfigData($this->modules->get("TracyDebugger"), $this->data);
-            $this->session->redirect($this->httpReferer);
+
+
+            // TEMPLATE EDITOR
+            // if template editor changes submitted
+            if($this->wire('input')->post->tracyTemplateEditorRawCode && $this->wire('user')->isSuperuser()) {
+
+                // get page from URL - this is required because we are in init() and this had to be in init() and not ready()
+                // because it needs to be before Tracy is instantiated because of SessionHandlerDB conflicts - arrrrggh!
+                $p = $this->wire('pages')->get($this->inputUrl());
+
+                $this->tempTemplateFilename = str_replace('.php', '-tracytemp.php', $p->template->filename);
+                if($this->wire('input')->post->testTemplateCode) {
+                    if(!file_put_contents($this->tempTemplateFilename, $this->wire('input')->post->tracyTemplateEditorRawCode, LOCK_EX)) throw new WireException("Unable to write file: " . $this->tempTemplateFilename);
+                    if($this->wire('config')->chmodFile) chmod($this->tempTemplateFilename, octdec($this->wire('config')->chmodFile));
+                    $p->template->filename = $this->tempTemplateFilename;
+                }
+                if($this->wire('input')->post->changeTemplateCode) {
+                    if(!file_put_contents($p->template->filename, $this->wire('input')->post->tracyTemplateEditorRawCode, LOCK_EX)) throw new WireException("Unable to write file: " . $this->tempTemplateFilename);
+                    if($this->wire('config')->chmodFile) chmod($p->template->filename, octdec($this->wire('config')->chmodFile));
+                    $this->wire('session')->redirect($this->httpReferer);
+                }
+            }
+
+
+            // MODULES DISABLER
+            //set up backup directory/file - outside conditional so they are available for cleanup when panel is disabled
+            $this->tracyCacheDir = $this->wire('config')->paths->cache . 'TracyDebugger/';
+            $this->modulesDbBackupFilename = 'modulesBackup.sql';
+            if(in_array('moduleDisabler', static::$showPanels) && $this->wire('config')->debug && $this->wire('config')->advanced) {
+                // if modules DB was just restored, clear the cookie
+                if($this->wire('input')->cookie->modulesRestored == 1) {
+                    unset($this->wire('input')->cookie->modulesRestored);
+                    setcookie("modulesRestored", "", time()-3600, "/");
+                    unset($this->wire('input')->cookie->tracyModulesDisabled);
+                    setcookie("tracyModulesDisabled", "", time()-3600, "/");
+                    $this->wire('session')->message("Modules successfully restored");
+                }
+
+                // get array of disabable modules
+                foreach($this->wire('modules') as $name => $label) {
+                    $flags = $this->wire('modules')->getFlags($name);
+                    $info = $this->wire('modules')->getModuleInfoVerbose($name);
+                    if($info['core']) continue;
+                    if($name == 'TracyDebugger') continue;
+                    if(($flags & Modules::flagsAutoload) || ($flags & Modules::flagsDisabled)) {
+                        static::$disabableModules[] = $name;
+                    }
+                }
+
+                // if modules have been checked to disable
+                if($this->wire('input')->cookie->tracyModulesDisabled) {
+                    if (!file_exists($this->tracyCacheDir)) wireMkdir($this->tracyCacheDir);
+
+                    // if it doesn't already exist, backup existing modules database
+                    if(!file_exists($this->tracyCacheDir . $this->modulesDbBackupFilename)) {
+                        $backup = new WireDatabaseBackup($this->tracyCacheDir);
+                        $backup->setDatabase($this->wire('database'));
+                        $backup->setDatabaseConfig($this->wire('config'));
+                        $file = $backup->backup(array('tables' => array('modules'), 'filename' => $this->modulesDbBackupFilename));
+
+                        $restoreModulesCode =
+                        "<?php\n" .
+                        "if(file_exists('".$this->tracyCacheDir.$this->modulesDbBackupFilename."')) {\n" .
+                            "\t\$db = new PDO('mysql:host={$this->wire('config')->dbHost};dbname={$this->wire('config')->dbName}', '{$this->wire('config')->dbUser}', '{$this->wire('config')->dbPass}');\n" .
+                            "\t\$sql = file_get_contents('" . $this->tracyCacheDir . $this->modulesDbBackupFilename . "');\n" .
+                            "\t\$qr = \$db->query(\$sql);\n" .
+                        "}\n" .
+                        "if(isset(\$qr) && \$qr) {\n" .
+                            "\tsetcookie('modulesRestored', 1, time() + (24 * 60 * 60));\n" .
+                            "\theader('Location: ".self::inputHttpUrl(true)."');\n" .
+                        "}\n" .
+                        "else {\n" .
+                        "\techo 'Sorry, there was a problem and the database could not be restored.';\n" .
+                        "}";
+
+                        if(!file_put_contents($this->tracyCacheDir . 'restoremodules.php', $restoreModulesCode, LOCK_EX)) throw new WireException("Unable to write file: " . $this->tracyCacheDir . 'restoremodules.php');
+                    }
+
+                    // get array of modules that have been checked to disable
+                    static::$disabledModules = array_filter(explode(',', $this->wire('input')->cookie->tracyModulesDisabled));
+                }
+                else {
+                    $this->deleteFile($this->tracyCacheDir . $this->modulesDbBackupFilename);
+                    $this->deleteFile($this->tracyCacheDir . 'restoremodules.php');
+                }
+
+                // add disabled flag to requested modules
+                $i=0;
+                foreach(static::$disabableModules as $name) {
+                    $flags = $this->wire('modules')->getFlags($name);
+                    if(in_array($name, static::$disabledModules)) {
+                        if(!($flags & Modules::flagsDisabled)) {
+                            $this->wire('modules')->setFlag($name, Modules::flagsDisabled, true);
+                            $i++;
+                        }
+                    }
+                    elseif($flags & Modules::flagsDisabled) {
+                        $this->wire('modules')->setFlag($name, Modules::flagsDisabled, false);
+                        $i++;
+                    }
+                }
+                if($i > 0) $this->wire('session')->redirect($this->httpReferer);
+            }
+            else {
+                $this->deleteFile($this->tracyCacheDir . $this->modulesDbBackupFilename);
+                $this->deleteFile($this->tracyCacheDir . 'restoremodules.php');
+            }
+            // try to delete modules restore file from root
+            $rootRestoreFile = $this->wire('config')->paths->root . 'restoremodules.php';
+            if(file_exists($rootRestoreFile)) {
+                @unlink($rootRestoreFile);
+                if(is_file($rootRestoreFile)) {
+                   $this->wire('session')->error('Please delete ' . $rootRestoreFile . ' from your system.');
+                }
+            }
+
+
+            // PAGE RECORDER
+            // trash / clear recorded pages if requested
+            if($this->wire('input')->post->trashRecordedPages || $this->wire('input')->post->clearRecordedPages) {
+                if($this->wire('input')->post->trashRecordedPages) {
+                    foreach($this->data['recordedPages'] as $pid) {
+                        $this->wire('pages')->trash($this->wire('pages')->get($pid));
+                    }
+                }
+                unset($this->data['recordedPages']);
+                $this->wire('modules')->saveModuleConfigData($this->wire('modules')->get("TracyDebugger"), $this->data);
+                $this->wire('session')->redirect($this->httpReferer);
+            }
+
         }
 
+        // TRACY SETUP
         // load core tracy library
-        if($this->allowedTracyUsers()) {
+        if($this->allowedTracyUsers() !== false) {
             static::$tracyVersion = $this->data['coreBranch'];
             if(!file_exists(__DIR__ . '/tracy-'.static::$tracyVersion.'/src/tracy.php')) {
                 static::$tracyVersion = version_compare(phpversion(), '5.4.4', '>=') ? 'master' : 'legacy';
@@ -241,60 +470,31 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         else {
             // if user not allowed then load dummy class to prevent "class not found" errors when
             // calling \Tracy\Debugger::method() directly
-            require_once __DIR__ . '/DummyTracyDebuggerClass.inc';
+            require_once __DIR__ . '/includes/DummyTracyDebuggerClass.php';
         }
 
         // always needs to be loaded to prevent function not defined errors when user not allowed to use Tracy
-        require_once __DIR__ . '/TDClass.inc';
+        require_once __DIR__ . '/includes/TD.php';
 
         // always needs to be loaded to prevent function not defined errors when user not allowed to use Tracy
         if($this->data['enableShortcutMethods']) {
-            require_once __DIR__ . '/ShortcutMethods.inc';
+            require_once __DIR__ . '/includes/ShortcutMethods.php';
         }
 
-        // back-end
-        if($this->inAdmin()) {
-            // should we show debug bar in admin?
-            if(in_array('backend', $this->data['showDebugBar'])) {
-                $showDebugBar = true;
-            }
-            else {
-                $showDebugBar = false;
-            }
-        }
-        // front-end
-        else {
-            if(in_array('frontend', $this->data['showDebugBar'])) {
-                $showDebugBar = true;
-            }
-            else {
-                $showDebugBar = false;
-            }
-        }
 
-        // show user bar - this is for users who are not allowed access to the debug bar
-        if(!$this->inAdmin() && $this->data['showUserBar'] && count($this->data['userBarFeatures'])>0 && !$this->config->ajax && (!$this->allowedTracyUsers(null, true) || $this->data['showUserBarTracyUsers']) && $this->user->isLoggedin()) {
-            $this->addHookAfter('Page::render', $this, 'addUserBar', array('priority'=>1000));
-        }
-
+        // START ENABLING TRACY
         // now that required classes above have been loaded if requested,
         // we can now exit if enabled unchecked, or user not allowed
         if(!$this->data['enabled'] || !$this->allowedTracyUsers()) return;
 
-        // if Tracy has been toggled "disabled" add enable button and then exit
-        if($this->input->cookie->tracyDisabled == 1) {
-            if($showDebugBar && !$this->config->ajax) {
-                $this->addHookAfter('Page::render', $this, 'addEnableButton', array('priority'=>1000));
-            }
-            // Tracy not enabled so exit now
-            return;
-        }
 
-        $this->addHookAfter('Page::render', $this, 'addCustomStuff', array('priority'=>1000));
+        // SET TRACY AS ENBALED
+        // if we get this far, Tracy is fully enabled, so set this for checking in ready()
+        $this->tracyEnabled = true;
 
-        // Got this far so start enabling Tracy and debug bar
-        // what mode?
-        if($this->data['outputMode'] == 'development' || ($this->user->isSuperuser() && $this->data['superuserForceDevelopment'])) {
+
+        // TRACY MODE
+        if($this->data['outputMode'] == 'development' || ($this->wire('user')->isSuperuser() && $this->data['superuserForceDevelopment'] == 1)) {
             $outputMode = Debugger::DEVELOPMENT;
         }
         elseif($this->data['outputMode'] == 'production') {
@@ -304,42 +504,80 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $outputMode = Debugger::DETECT;
         }
 
-        // code editor string
+        // back-end
+        if($this->inAdmin()) {
+            // should we show debug bar in admin?
+            if(in_array('backend', $this->data['showDebugBar']) && $outputMode != Debugger::PRODUCTION) {
+                $showDebugBar = true;
+            }
+            else {
+                $showDebugBar = false;
+            }
+        }
+        // front-end
+        else {
+            if(in_array('frontend', $this->data['showDebugBar']) && $outputMode != Debugger::PRODUCTION) {
+                $showDebugBar = true;
+            }
+            else {
+                $showDebugBar = false;
+            }
+        }
+
+
+        if($this->allowedTracyUsers() === 'full') {
+            // TRACY TOGGLER
+            // if Tracy has been toggled "disabled" add enable button and then exit
+            if($this->wire('input')->cookie->tracyDisabled == 1) {
+                if($showDebugBar && !$this->wire('config')->ajax) {
+                    $this->addHookAfter('Page::render', $this, 'addEnableButton', array('priority'=>1000));
+                }
+                // Tracy not enabled so exit now
+                return;
+            }
+        }
+
+
+        // EDITOR PROTOCOL HANDLER
         Debugger::$editor = $this->data['editor'];
 
         // build up array of replacements to pass to Debugger::$editorMapping
         // they have to be completely separate replacements because Tracy uses strtr()
         // which won't replace the same substring more than once
         $mappingReplacements = array();
-        $compilerCachePath = isset($this->config->fileCompilerOptions['cachePath']) ? $this->config->fileCompilerOptions['cachePath'] : $this->config->paths->cache . 'FileCompiler/';
+        $compilerCachePath = isset($this->wire('config')->fileCompilerOptions['cachePath']) ? $this->wire('config')->fileCompilerOptions['cachePath'] : $this->wire('config')->paths->cache . 'FileCompiler/';
         $compilerCachePath = str_replace('/', DIRECTORY_SEPARATOR, $compilerCachePath);
         if($this->data['localRootPath'] != '') {
             $mappingReplacements[$compilerCachePath] = $this->data['localRootPath'];
-            $mappingReplacements[$this->config->paths->root] = $this->data['localRootPath'];
+            $mappingReplacements[$this->wire('config')->paths->root] = $this->data['localRootPath'];
         }
         else {
-            $mappingReplacements[$compilerCachePath] = $this->config->paths->root;
+            $mappingReplacements[$compilerCachePath] = $this->wire('config')->paths->root;
         }
         Debugger::$editorMapping = $mappingReplacements;
 
+
+        // TRACY LOGS
         // Tracy log folder path
-        $logFolder = $this->config->paths->logs.'tracy';
+        $logFolder = $this->wire('config')->paths->logs.'tracy';
 
         // delete Tracy logs if requested
-        if($this->input->post->deleteTracyLogs) {
+        if($this->wire('input')->post->deleteTracyLogs) {
             wireRmdir($logFolder, true);
         }
 
         if(!is_dir($logFolder)) wireMkdir($logFolder);
 
+
+        // ENABLE TRACY
         Debugger::enable($outputMode, $logFolder, $this->data['email'] != '' ? $this->data['email'] : null);
 
-        // ensure Tracy can show AJAX bar when SessionHandlerDB module is installed
-        // also restrict this to when in $productionMode === false and debugbar is showing
-        if($this->modules->isInstalled('SessionHandlerDB') && static::$tracyVersion != 'legacy' && !Debugger::$productionMode && $showDebugBar) {
+        // ensure Tracy can show AJAX bar when SessionHandlerDB module is installed and debugbar is showing
+        if($this->wire('modules')->isInstalled('SessionHandlerDB') && static::$tracyVersion != 'legacy' && $showDebugBar) {
             $this->addHookBefore('ProcessWire::finished', $this, 'sessionHanlderDBAjaxFix');
         }
 
+        // TRACY SETTINGS
         //convert checked location strings to constants and array_reduce to bitwise OR (|) line
         $locations = array_map('constant', $this->data['showLocation']);
         Debugger::$showLocation = array_reduce($locations, function($a, $b) { return $a | $b; }, 0);
@@ -362,267 +600,95 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         Debugger::getBlueScreen()->maxDepth = $this->data['maxDepth'];
         Debugger::getBlueScreen()->maxLength = $this->data['maxLength'];
 
-        Debugger::$strictMode = $this->data['strictMode'] || ($this->data['strictModeAjax'] && $this->config->ajax) || $this->input->cookie->tracyStrictMode ? TRUE : FALSE;
+        Debugger::$strictMode = $this->data['strictMode'] || ($this->data['strictModeAjax'] && $this->wire('config')->ajax) || $this->wire('input')->cookie->tracyStrictMode ? TRUE : FALSE;
         Debugger::$scream = $this->data['forceScream'] ? TRUE : FALSE;
 
         // display debug bar if allowed
         Debugger::$showBar = $showDebugBar;
 
-        // determine which panels to display
-        $configEnabledPanels = $this->inAdmin() ? $this->data['backendPanels'] : $this->data['frontendPanels'];
-        if($this->input->cookie->tracyPanelsOnce) {
-            static::$oncePanels = array_filter(explode(',', $this->input->cookie->tracyPanelsOnce));
-            static::$showPanels = static::$oncePanels;
-            unset($this->input->cookie->tracyPanelsOnce);
-            setcookie("tracyPanelsOnce", "", time()-3600, '/');
-        }
-        elseif($this->input->cookie->tracyPanelsSticky) {
-            static::$stickyPanels = array_filter(explode(',', $this->input->cookie->tracyPanelsSticky));
-            static::$showPanels = static::$stickyPanels;
-        }
-        else {
-            static::$showPanels = $configEnabledPanels;
-        }
 
-        // sort panels based on order defined in config settings
-        $showPanelsOrdered = array();
-        $i=0;
-        // add default panels in the defined order
-        foreach($configEnabledPanels as $panelName) {
-            if(in_array($panelName, static::$showPanels)) $showPanelsOrdered[$i] = $panelName;
-            $i++;
-        }
-        // add once/sticky panels to the end because there is no specified order for these in config settings
-        foreach(static::$allPanels as $panelName => $panelTitle) {
-            if(in_array($panelName, static::$showPanels) && !in_array($panelName, $showPanelsOrdered)) $showPanelsOrdered[$i] = $panelName;
-            // define disabled panels for restricted users
-            if($this->superuserHasPermission(null, "tracy-restricted-panels") && in_array($panelName, $this->data['restrictedUserDisabledPanels'])) {
-                static::$restrictedUserDisabledPanels[] = $panelName;
+        if($this->allowedTracyUsers() === 'full') {
+
+            // MAIL INTERCEPTOR
+            // if mail panel items were cleared, clear them from the session variable
+            if($this->wire('input')->post->tracyClearMailItems || (!in_array('mailInterceptor', static::$showPanels) && $this->wire('session')->tracyMailItems)) {
+                $this->wire('session')->tracyMailItems = null;
+                $this->wire('session')->redirect($this->httpReferer);
             }
-            $i++;
-        }
-        // move Panel Selector to the end so it has access to the generation time values for all other panels
-        static::$showPanels = $showPanelsOrdered;
-        if(($key = array_search('panelSelector', static::$showPanels)) !== false) {
-            unset(static::$showPanels[$key]);
-            static::$showPanels[] = 'panelSelector';
-        }
-
-        // Modules Disabler
-        //set up backup directory/file - outside conditional so they are available for cleanup when panel is disabled
-        $this->tracyCacheDir = $this->config->paths->cache . 'TracyDebugger/';
-        $this->modulesDbBackupFilename = 'modulesBackup.sql';
-        if(in_array('moduleDisabler', static::$showPanels) && wire('config')->debug && wire('config')->advanced) {
-            // if modules DB was just restored, clear the cookie
-            if($this->input->cookie->modulesRestored == 1) {
-                unset($this->input->cookie->modulesRestored);
-                setcookie("modulesRestored", "", time()-3600, "/");
-                unset($this->input->cookie->tracyModulesDisabled);
-                setcookie("tracyModulesDisabled", "", time()-3600, "/");
-                $this->session->message("Modules successfully restored");
+            // mail panel intercept hook
+            if(in_array('mailInterceptor', static::$showPanels)) {
+                $this->addHookBefore('WireMail::send', $this, 'interceptEmails');
             }
 
-            // get array of disabable modules
-            foreach($this->modules as $name => $label) {
-                $flags = $this->modules->getFlags($name);
-                $info = $this->modules->getModuleInfoVerbose($name);
-                if($info['core']) continue;
-                if($name == 'TracyDebugger') continue;
-                if(($flags & Modules::flagsAutoload) || ($flags & Modules::flagsDisabled)) {
-                    static::$disabableModules[] = $name;
+            // CAPTAIN HOOK
+            // update cache on module install
+            if(in_array('captainHook', static::$showPanels)) {
+                $this->addHookAfter('Module::install', $this, 'deleteHookCache');
+            }
+
+
+            if(!$this->inAdmin()) {
+                // VALIDATOR
+                if(in_array('validator', static::$showPanels)) {
+                    $this->addHookAfter('Page::render', $this, 'getPageHtml', array('priority'=>1000));
+                }
+
+                // TEMPLATE RESOURCES
+                if(!$this->wire('config')->ajax && (in_array('console', static::$showPanels) || in_array('templateResources', static::$showPanels))) {
+                    $functions = get_defined_functions();
+                    \TracyDebugger::$initialFuncs = $functions['user'];
+                    \TracyDebugger::$initialConsts = get_defined_constants();
+                    $this->addHookBefore('TemplateFile::render', function($event) {
+                        $event->object->setAppendFilename(__DIR__ . '/includes/GetTemplateResources.php');
+                    });
                 }
             }
 
-            // if modules have been checked to disable
-            if($this->input->cookie->tracyModulesDisabled) {
-                if (!file_exists($this->tracyCacheDir)) wireMkdir($this->tracyCacheDir);
 
-                // if it doesn't already exist, backup existing modules database
-                if(!file_exists($this->tracyCacheDir . $this->modulesDbBackupFilename)) {
-                    $backup = new WireDatabaseBackup($this->tracyCacheDir);
-                    $backup->setDatabase($this->database);
-                    $backup->setDatabaseConfig($this->config);
-                    $file = $backup->backup(array('tables' => array('modules'), 'filename' => $this->modulesDbBackupFilename));
-
-                    $restoreModulesCode =
-                    "<?php\n" .
-                    "if(file_exists('".$this->tracyCacheDir.$this->modulesDbBackupFilename."')) {\n" .
-                        "\t\$db = new PDO('mysql:host={$this->config->dbHost};dbname={$this->config->dbName}', '{$this->config->dbUser}', '{$this->config->dbPass}');\n" .
-                        "\t\$sql = file_get_contents('" . $this->tracyCacheDir . $this->modulesDbBackupFilename . "');\n" .
-                        "\t\$qr = \$db->query(\$sql);\n" .
-                    "}\n" .
-                    "if(isset(\$qr) && \$qr) {\n" .
-                        "\tsetcookie('modulesRestored', 1, time() + (24 * 60 * 60));\n" .
-                        "\theader('Location: ".self::inputHttpUrl(true)."');\n" .
-                    "}\n" .
-                    "else {\n" .
-                    "\techo 'Sorry, there was a problem and the database could not be restored.';\n" .
-                    "}";
-
-                    if(!file_put_contents($this->tracyCacheDir . 'restoremodules.php', $restoreModulesCode, LOCK_EX)) throw new WireException("Unable to write file: " . $this->tracyCacheDir . 'restoremodules.php');
-                }
-
-                // get array of modules that have been checked to disable
-                static::$disabledModules = array_filter(explode(',', $this->input->cookie->tracyModulesDisabled));
+            // EVENT INTERCEPTOR
+            // if event interceptor panel items were cleared, clear them from the session variable and remove cookie
+            if($this->wire('input')->cookie->tracyClearEventItems || (!in_array('eventInterceptor', static::$showPanels) && $this->wire('session')->tracyEventItems)) {
+                $this->wire('session')->tracyEventItems = null;
+                unset($this->wire('input')->cookie->tracyClearEventItems);
+                setcookie("tracyClearEventItems", "", time()-3600, "/");
             }
-            else {
-                $this->deleteFile($this->tracyCacheDir . $this->modulesDbBackupFilename);
-                $this->deleteFile($this->tracyCacheDir . 'restoremodules.php');
+            // event interceptor hook
+            if(in_array('eventInterceptor', static::$showPanels) && $this->wire('input')->cookie->eventInterceptorHook) {
+                $this->addHookBefore($this->wire('input')->cookie->eventInterceptorHook, $this, 'interceptEvent');
             }
 
-            // add disabled flag to requested modules
-            $i=0;
-            foreach(static::$disabableModules as $name) {
-                $flags = $this->modules->getFlags($name);
-                if(in_array($name, static::$disabledModules)) {
-                    if(!($flags & Modules::flagsDisabled)) {
-                        $this->modules->setFlag($name, Modules::flagsDisabled, true);
-                        $i++;
-                    }
-                }
-                elseif($flags & Modules::flagsDisabled) {
-                    $this->modules->setFlag($name, Modules::flagsDisabled, false);
-                    $i++;
-                }
-            }
-            if($i > 0) $this->session->redirect($this->httpReferer);
-        }
-        else {
-            $this->deleteFile($this->tracyCacheDir . $this->modulesDbBackupFilename);
-            $this->deleteFile($this->tracyCacheDir . 'restoremodules.php');
-        }
-        // try to delete modules restore file from root
-        $rootRestoreFile = $this->config->paths->root . 'restoremodules.php';
-        if(file_exists($rootRestoreFile)) {
-            @unlink($rootRestoreFile);
-            if(is_file($rootRestoreFile)) {
-               $this->session->error('Please delete ' . $rootRestoreFile . ' from your system.');
-            }
-        }
 
-        // Mail
-        // if mail panel items were cleared, clear them from the session variable
-        if($this->input->post->tracyClearMailItems || (!in_array('mail', static::$showPanels) && $this->session->tracyMailItems)) {
-            $this->session->tracyMailItems = null;
-            $this->session->redirect($this->httpReferer);
-        }
-        // mail panel intercept hook
-        if(in_array('mail', static::$showPanels)) {
-            $this->addHookBefore('WireMail::send', $this, 'interceptEmails');
-        }
-
-        // captain hook update on module install
-        if(in_array('captainHook', static::$showPanels)) {
-            $this->addHookAfter('Module::install', $this, 'deleteHookCache');
-        }
-
-        if(!$this->inAdmin()) {
-            if(in_array('validator', static::$showPanels)) {
-                $this->addHookAfter('Page::render', $this, 'getPageHtml', array('priority'=>1000));
+            // DUMPS RECORDER
+            // if dump recorder panel items were cleared, clear them from the session variable and remove cookie
+            if($this->wire('input')->cookie->tracyClearDumpItems || (!in_array('dumpsRecorder', static::$showPanels) && $this->wire('session')->tracyDumpItems)) {
+                $this->wire('session')->tracyDumpItems = null;
+                unset($this->wire('input')->cookie->tracyClearDumpItems);
+                setcookie("tracyClearDumpItems", "", time()-3600, "/");
             }
 
-            if(in_array('console', static::$showPanels) || in_array('templateResources', static::$showPanels)) {
-                $functions = get_defined_functions();
-                \TracyDebugger::$initialFuncs = $functions['user'];
-                \TracyDebugger::$initialConsts = get_defined_constants();
-                $this->addHookBefore('TemplateFile::render', function($event) {
-                    $event->object->setAppendFilename($this->config->paths->siteModules.'TracyDebugger/GetTemplateResources.inc');
-                });
+
+            // PAGE RECORDER
+            // page recorder hook
+            if(in_array('pageRecorder', static::$showPanels)) {
+                $this->addHookAfter('Pages::added', $this, 'recordPage');
             }
+
         }
 
-        // Event Interceptor
-        // if event interceptor panel items were cleared, clear them from the session variable and remove cookie
-        if($this->input->cookie->tracyClearEventItems || (!in_array('eventInterceptor', static::$showPanels) && $this->session->tracyEventItems)) {
-            $this->session->tracyEventItems = null;
-            unset($this->input->cookie->tracyClearEventItems);
-            setcookie("tracyClearEventItems", "", time()-3600, "/");
-        }
-        // event interceptor hook
-        if(in_array('eventInterceptor', static::$showPanels) && $this->input->cookie->eventInterceptorHook) {
-            $this->addHookBefore($this->input->cookie->eventInterceptorHook, $this, 'interceptEvent');
-        }
-
-        // Dumps Recorder
-        // if dump recorder panel items were cleared, clear them from the session variable and remove cookie
-        if($this->input->cookie->tracyClearDumpItems || (!in_array('dumpsRecorder', static::$showPanels) && $this->session->tracyDumpItems)) {
-            $this->session->tracyDumpItems = null;
-            unset($this->input->cookie->tracyClearDumpItems);
-            setcookie("tracyClearDumpItems", "", time()-3600, "/");
-        }
-
-        // Page Recorder
-        // page recorder hook
-        if(in_array('pageRecorder', static::$showPanels)) {
-            $this->addHookAfter('Pages::added', $this, 'recordPage');
-        }
-
-        // user switcher panel logic
-        if(in_array('userSwitcher', static::$showPanels) && $this->data['outputMode'] == 'development') {
-            // if user is superuser and session length is set, save to config settings
-            if($this->user->isSuperuser() && $this->input->post->userSwitchSessionLength && $this->session->CSRF->validate()) {
-                // cleanup expired sessions
-                if(isset($this->data['userSwitchSession'])) {
-                    foreach($this->data['userSwitchSession'] as $id => $expireTime) {
-                        if($expireTime < time()) unset($this->data['userSwitchSession'][$id]);
-                    }
-                }
-                // if no existing session ID, start a new session
-                if(!$this->session->tracyUserSwitcherId) {
-                    $pass = new Password();
-                    $challenge = $pass->randomBase64String(32);
-                    $this->session->tracyUserSwitcherId = $challenge;
-                }
-                // save session ID and expiry time in module config settings
-                $this->data['userSwitchSession'][$this->session->tracyUserSwitcherId] = time() + ($this->input->post->userSwitchSessionLength * 60);
-                $this->modules->saveModuleConfigData($this->modules->get("TracyDebugger"), $this->data);
-            }
-            // if logout button clicked
-            if($this->input->post->logoutUserSwitcher && $this->session->CSRF->validate()) {
-                if($this->session->tracyUserSwitcherId) {
-                    // if session variable exists, grab it and add to the new session after logging out
-                    $tracyUserSwitcherId = $this->session->tracyUserSwitcherId;
-                    $this->session->logout();
-                    $this->session->tracyUserSwitcherId = $tracyUserSwitcherId;
-                }
-                else {
-                    $this->session->logout();
-                }
-                $this->session->redirect($this->httpReferer);
-            }
-            elseif($this->input->post->endSessionUserSwitcher && $this->session->CSRF->validate()) {
-                // if end session clicked, remove session variable and config settings entry
-                $this->session->remove("tracyUserSwitcherId");
-                unset($this->data['userSwitchSession'][$this->session->tracyUserSwitcherId]);
-                $this->modules->saveModuleConfigData($this->modules->get("TracyDebugger"), $this->data);
-                $this->session->redirect($this->httpReferer);
-            }
-            elseif($this->input->post->userSwitcher && $this->session->CSRF->validate()) {
-                // if session not expired, switch to requested user
-                if(isset($this->data['userSwitchSession'][$this->session->tracyUserSwitcherId]) && $this->data['userSwitchSession'][$this->session->tracyUserSwitcherId] > time() && $this->session->tracyUserSwitcherId) {
-                    // if session variable exists, grab it and add to the new session after logging out
-                    // and forceLogin the new switched user
-                    $tracyUserSwitcherId = $this->session->tracyUserSwitcherId;
-                    if($this->user->isLoggedin()) $this->session->logout();
-                    $user = $this->session->forceLogin($this->input->post->userSwitcher);
-                    $this->session->tracyUserSwitcherId = $tracyUserSwitcherId;
-                }
-                $this->session->redirect($this->httpReferer);
-            }
-        }
-
-        $this->tracyEnabled = true;
     }
 
 
+    /**
+     * Called when ProcessWire's API is ready
+     */
     public function ready() {
 
-        // for PageVersion User Bar feature
-        if(!$this->inAdmin() && wire('user')->hasPermission('tracy-page-versions') && $this->data['showUserBar'] && in_array('pageVersions', $this->data['userBarFeatures']) && !$this->config->ajax && !$this->allowedTracyUsers() && $this->user->isLoggedin()) {
-            static::$pageVersion = $this->findInCookie($this->input->cookie->tracyPageVersion);
-            if(static::$pageVersion && static::$pageVersion != pathinfo(wire('page')->template->filename, PATHINFO_BASENAME)) {
+        // USER BAR PAGE VERSIONS
+        if(!$this->inAdmin() && $this->wire('user')->hasPermission('tracy-page-versions') && $this->data['showUserBar'] && in_array('pageVersions', $this->data['userBarFeatures']) && !$this->wire('config')->ajax && $this->wire('user')->isLoggedin()) {
+            static::$pageVersion = $this->findPageTemplateInCookie($this->wire('input')->cookie->tracyPageVersion);
+            if(static::$pageVersion && static::$pageVersion != pathinfo($this->wire('page')->template->filename, PATHINFO_BASENAME)) {
                 static::$templatePath = static::$pageVersion;
-                unset($this->input->cookie->tracyPageVersion);
+                unset($this->wire('input')->cookie->tracyPageVersion);
                 setcookie("tracyPageVersion", "", time()-3600, "/");
             }
             elseif(static::$pageVersion != '') {
@@ -633,52 +699,44 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
 
             if(static::$templatePath != '') {
-                $this->page->template->filename = static::$templatePath;
+                $this->wire('page')->template->filename = static::$templatePath;
             }
         }
 
-        // exit if enabled not true from init()
-        if(!$this->tracyEnabled) return;
 
+        // USER DEV TEMPLATES
         // if user dev template enabled and required permission exists in system,
         // check if current user has a matching permission for the current page's template
-        if($this->user->isLoggedin() && $this->data['userDevTemplate'] && $this->permissions->get("template-".$this->data['userDevTemplateSuffix'])->id) {
-            $devTemplateFilename = str_replace('.php', '-'.$this->data['userDevTemplateSuffix'].'.php', $this->page->template->filename);
-            if(file_exists($devTemplateFilename) && $this->user->hasPermission("template-".$this->data['userDevTemplateSuffix'])) {
-                $this->page->template->filename = static::$templatePath = static::$templatePathPermission = $devTemplateFilename;
-            }
-        }
-
-        // if template editor changes submitted
-        if($this->input->post->tracyTemplateEditorRawCode && $this->user->isSuperuser()) {
-            $this->tempTemplateFilename = str_replace('.php', '-tracytemp.php', $this->page->template->filename);
-            if($this->input->post->testTemplateCode) {
-                if(!file_put_contents($this->tempTemplateFilename, $this->input->post->tracyTemplateEditorRawCode, LOCK_EX)) throw new WireException("Unable to write file: " . $this->tempTemplateFilename);
-                if($this->config->chmodFile) chmod($this->tempTemplateFilename, octdec($this->config->chmodFile));
-                $this->page->template->filename = $this->tempTemplateFilename;
-            }
-            if($this->input->post->changeTemplateCode) {
-                if(!file_put_contents($this->page->template->filename, $this->input->post->tracyTemplateEditorRawCode, LOCK_EX)) throw new WireException("Unable to write file: " . $this->tempTemplateFilename);
-                if($this->config->chmodFile) chmod($this->page->template->filename, octdec($this->config->chmodFile));
-                $this->session->redirect($this->httpReferer);
+        if($this->data['userDevTemplate'] && $this->wire('permissions')->get("tracy-".$this->wire('page')->template->name."-".$this->data['userDevTemplateSuffix'])->id) {
+            $devTemplateFilename = str_replace('.php', '-'.$this->data['userDevTemplateSuffix'].'.php', $this->wire('page')->template->filename);
+            if(file_exists($devTemplateFilename) && $this->superuserHasPermission(null, "tracy-".$this->wire('page')->template->name."-".$this->data['userDevTemplateSuffix'])) {
+                $this->wire('page')->template->filename = static::$templatePath = static::$templatePathPermission = $devTemplateFilename;
             }
         }
 
 
-        // exit now if not showing debug bar
-        if(Debugger::$showBar == false) return;
+        // EXIT NOW if "enabled" not true from init()
+        if(!$this->tracyEnabled) return;
 
-        // load css definitions
-        require_once __DIR__ . '/CssPanel.inc';
-        Debugger::getBar()->addPanel(new CssPanel);
 
-        // load specified panels
+        // DEBUG BAR & PANELS
+        // exit now if not showing debug bar or user doesn't have 'full' access
+        if(Debugger::$showBar == false || $this->allowedTracyUsers() !== 'full') return;
+
+        // add custom css / js
+        $this->addHookAfter('Page::render', $this, 'addCustomStuff', array('priority'=>1000));
+
+        // load base panel class
+        require_once __DIR__ . '/includes/BasePanel.php';
+
+
+        // LOAD SPECIFIED PANELS
         foreach(static::$showPanels as $panel) {
             if($this->inAdmin() && in_array($panel, static::$hideInAdmin)) continue;
-            if(($panel == 'console' || $panel == 'templateEditor') && !$this->user->isSuperuser()) continue;
+            if(($panel == 'console' || $panel == 'templateEditor') && !$this->wire('user')->isSuperuser()) continue;
             if($panel == 'userSwitcher') {
                 if(isset($this->data['userSwitchSession'])) $userSwitchSession = $this->data['userSwitchSession'];
-                if($this->data['outputMode'] != 'development' || (!$this->user->isSuperuser() && (!$this->session->tracyUserSwitcherId || (isset($userSwitchSession[$this->session->tracyUserSwitcherId]) && $userSwitchSession[$this->session->tracyUserSwitcherId] <= time())))) continue;
+                if($this->data['outputMode'] != 'development' || (!$this->wire('user')->isSuperuser() && (!$this->wire('session')->tracyUserSwitcherId || (isset($userSwitchSession[$this->wire('session')->tracyUserSwitcherId]) && $userSwitchSession[$this->wire('session')->tracyUserSwitcherId] <= time())))) continue;
             }
             // ignore disabled panels for restricted users
             if(!empty(static::$restrictedUserDisabledPanels) && in_array($panel, static::$restrictedUserDisabledPanels)) continue;
@@ -687,7 +745,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             switch($panel) {
                 case 'performance':
-                    require_once __DIR__ . '/'.$panelName.'.inc';
+                    require_once __DIR__ . '/panels/'.$panelName.'.php';
                     break;
                 case 'captainHook':
                 case 'processwireInfo':
@@ -705,7 +763,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 case 'validator':
                 case 'console':
                 case 'todo':
-                case 'mail':
+                case 'mailInterceptor':
                 case 'eventInterceptor':
                 case 'processwireVersion':
                 case 'templateEditor':
@@ -714,16 +772,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 case 'templateResources':
                 case 'tracyToggler':
                 case 'moduleDisabler':
-                    require_once __DIR__ . '/'.$panelName.'.inc';
+                    require_once __DIR__ . '/panels/'.$panelName.'.php';
                     Debugger::getBar()->addPanel(new $panelName);
                     break;
                 case 'templatePath':
-                    require_once __DIR__ . '/'.$panelName.'.inc';
-                    static::$templatePathOnce = $this->findInCookie($this->input->cookie->tracyTemplatePathOnce);
-                    static::$templatePathSticky = $this->findInCookie($this->input->cookie->tracyTemplatePathSticky);
+                    require_once __DIR__ . '/panels/'.$panelName.'.php';
+                    static::$templatePathOnce = $this->findPageTemplateInCookie($this->wire('input')->cookie->tracyTemplatePathOnce);
+                    static::$templatePathSticky = $this->findPageTemplateInCookie($this->wire('input')->cookie->tracyTemplatePathSticky);
                     if(static::$templatePathOnce) {
                         static::$templatePath = static::$templatePathOnce;
-                        unset($this->input->cookie->tracyTemplatePathOnce);
+                        unset($this->wire('input')->cookie->tracyTemplatePathOnce);
                         setcookie("tracyTemplatePathOnce", "", time()-3600, "/");
                     }
                     elseif(static::$templatePathSticky) {
@@ -737,39 +795,63 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     }
 
                     if(static::$templatePath != '') {
-                        $this->page->template->filename = static::$templatePath;
+                        $this->wire('page')->template->filename = static::$templatePath;
                     }
                     Debugger::getBar()->addPanel(new $panelName);
                     break;
             }
         }
 
+
+        // CONSOLE PANEL
         // if it's an ajax request from the Tracy Console panel code execution, then process and return
-        if($this->config->ajax && $this->input->post->tracyconsole == 1) {
-            require_once($this->config->paths->siteModules.'TracyDebugger/ConsoleProcessor.inc');
+        if($this->wire('config')->ajax && $this->wire('input')->post->tracyconsole == 1) {
+            require_once(__DIR__ . '/includes/ConsoleProcessor.php');
             return;
         }
 
         // if it's an ajax request from the Tracy Console panel snippets, then process and return
-        if($this->config->ajax && $this->input->post->tracysnippets == 1) {
-            require_once($this->config->paths->siteModules.'TracyDebugger/ConsoleSnippets.inc');
+        if($this->wire('config')->ajax && $this->wire('input')->post->tracysnippets == 1) {
+            require_once(__DIR__ . '/includes/ConsoleSnippets.php');
             return;
         }
 
     }
 
+
+    /**
+     * FUNCTIONS CALLED FROM HOOKS
+     */
+
+
+    /**
+     * Hook after Page::render()
+     *
+     * Add the User bar
+     *
+     * @param HookEvent $event
+     *
+     */
     protected function addUserBar($event) {
         $userBar = '';
-        require_once __DIR__ . '/UserBar.inc';
+        require_once __DIR__ . '/user-bar/UserBar.php';
         $event->return = str_replace("</body>", $userBar.'</body>', $event->return);
     }
 
+    /**
+     * Hook after Page::render()
+     *
+     * Adds Enable button to page if the Tracy Toggler has currently disabled it
+     *
+     * @param HookEvent $event
+     *
+     */
     protected function addEnableButton($event) {
         $enableButton = '
         <style>
             div#TracyEnableButton {
-                bottom: 0px;
-                right: 10px;
+                bottom: 5px;
+                right: 5px;
                 z-index: 99999;
                 position: fixed;
                 width: 16px;
@@ -797,8 +879,25 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     }
 
+    /**
+     * Hook after Page::render()
+     *
+     * Loads various CSS and JS to the head and body as defined
+     *
+     * @param HookEvent $event
+     *
+     */
     protected function addCustomStuff($event) {
-        $customStuff = '
+
+        $customEndHead = '
+            <script>
+                // remove local storage entry for Panel Selector panel so it does not open after page reload from selecting a panel change
+                localStorage.removeItem("tracy-debug-panel-PanelSelectorPanel");
+            </script>
+            <link id="tracyStyles" type="text/css" href="'.$this->wire('config')->urls->TracyDebugger.'styles.css" rel="stylesheet" />
+        ';
+
+        $customEndBody = '
         <script>
             function addSettingsLink() {
                 if(!document.getElementById("tracy-debug-logo")) {
@@ -807,7 +906,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     var tracyLogo = document.getElementById("tracy-debug-logo");
                     tracyLogo.setAttribute("title", tracyLogo.getAttribute("title") + "\n\nDouble-click to visit module settings");
                     tracyLogo.addEventListener("dblclick", function(){
-                        window.open("'.$this->config->urls->admin.'/module/edit?name=TracyDebugger","_blank");
+                        window.open("'.$this->wire('config')->urls->admin.'/module/edit?name=TracyDebugger","_blank");
                     }, false);
                 }
             };
@@ -846,8 +945,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $tracyErrors = Debugger::getBar()->getPanel('Tracy:errors');
         if(count($tracyErrors->data) === 0) {
-            if(($this->data['hideDebugBar'] && !$this->input->cookie->tracyShow) || $this->input->cookie->tracyHidden == 1) {
-                $customStuff .= '
+            if(($this->data['hideDebugBar'] && !$this->wire('input')->cookie->tracyShow) || $this->wire('input')->cookie->tracyHidden == 1) {
+                $customEndBody .= '
                 function hideDebugBar() {
                     if(!document.getElementById("tracy-debug-bar")) {
                         window.requestAnimationFrame(hideDebugBar);
@@ -860,20 +959,147 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
 
-        $customStuff .= '
+        $customEndBody .= '
         </script>
 
-        <div id="show-button" title="Show Tracy" style="display:'.(($this->data['hideDebugBar'] || $this->input->cookie->tracyHidden == 1) && !$this->input->cookie->tracyShow && count($tracyErrors->data) === 0 ? 'block' : 'none' ).'" onclick="unhideBar()">&#8689;</div>
+        <div id="show-button" title="Show Tracy" style="display:'.(($this->data['hideDebugBar'] || $this->wire('input')->cookie->tracyHidden == 1) && !$this->wire('input')->cookie->tracyShow && count($tracyErrors->data) === 0 ? 'block' : 'none' ).'" onclick="unhideBar()">&#8689;</div>
         ';
-        $event->return = str_replace("</body>", $customStuff.'</body>', $event->return);
+        $event->return = str_replace("</body>", $customEndBody.'</body>', str_replace('</head>', $customEndHead.'</head>', $event->return));
     }
 
-    protected function deleteFile($path) {
+
+    /**
+     * Hook after Page::render()
+     *
+     * Gets the HTML of the page for the Validator Panel
+     *
+     * @param HookEvent $event
+     *
+     */
+    protected function getPageHtml($event) {
+        static::$pageHtml = $event->return;
+    }
+
+
+    /**
+     * Hook before WireMail::send
+     *
+     * Intercepts outgoing emails for the Mail Interceptor Panel
+     *
+     * @param HookEvent $event
+     *
+     */
+    protected function interceptEmails($event) {
+        $mailItem = array();
+        $mailItems = $this->wire('session')->tracyMailItems ? $this->wire('session')->tracyMailItems : array();
+        foreach(array('subject', 'from', 'fromName', 'to', 'toName', 'cc', 'ccName', 'bcc', 'body', 'bodyHTML', 'attachments', 'header', 'priority', 'dispositionNotification', 'addSignature', 'sendSingle', 'sendBulk', 'useSentLog', 'wrapText', 'default_charset', 'sender_signature', 'sender_signature_html') as $param) {
+            $mailItem[$param] = $event->object->$param;
+        }
+        $mailItem['timestamp'] = time();
+        array_unshift($mailItems, $mailItem);
+        $this->wire('session')->tracyMailItems = $mailItems;
+        $event->replace = true;
+        $event->return = true;
+    }
+
+
+    /**
+     * Hook after Module::install
+     *
+     * Delete the existing Captain Hook cache when installing a module
+     *
+     * @param HookEvent $event
+     *
+     */
+    protected function deleteHookCache($event) {
+        $this->wire('cache')->delete('TracyCaptainHook');
+    }
+
+
+    /**
+     * Hook before various
+     *
+     * Intercepts calls to defined hook and dumps result to Dumps Panel
+     *
+     * @param HookEvent $event
+     *
+     */
+    // for the event interceptor panel
+    protected function interceptEvent($event) {
+        $eventItem = array();
+        $eventItems = $this->wire('session')->tracyEventItems ? $this->wire('session')->tracyEventItems : array();
+        $eventItem['timestamp'] = time();
+        $eventItem['object'] = Dumper::toHtml($event->object, array(Dumper::COLLAPSE => true));
+        $eventItem['arguments'] = Dumper::toHtml($event->arguments, array(Dumper::COLLAPSE => true));
+        array_unshift($eventItems, $eventItem);
+        $this->wire('session')->tracyEventItems = $eventItems;
+        $event->replace = true;
+        $event->return = false;
+    }
+
+
+    /**
+     * Hook after Pages::added
+     *
+     * Record the id of all added pages for the Page Recorder Panel
+     *
+     * @param HookEvent $event
+     *
+     */
+    // for the page recorder panel
+    protected function recordPage($event) {
+        $p = $event->arguments(0);
+        if($p->is("has_parent=".$this->wire('config')->adminRootPageID)) return;
+        $this->data['recordedPages'][] = $p->id;
+        $this->wire('modules')->saveModuleConfigData($this->wire('modules')->get("TracyDebugger"), $this->data);
+    }
+
+
+    /**
+     * Hook before ProcessWire::finished
+     *
+     * This ensures Tracy will be able to show the AJAX bar when SessionHandlerDB module is installed
+     *
+     * @param HookEvent $event
+     *
+     */
+    protected function sessionHanlderDBAjaxFix() {
+        Debugger::getBar()->render();
+        Debugger::$showBar = FALSE;
+    }
+
+
+    /**
+     * LOCAL HELPER FUNCTIONS
+     */
+
+
+    /**
+     * Delete File
+     *
+     * Check if file exists before unlink
+     *
+     * @param string $path Full path to file
+     *
+     */
+    private function deleteFile($path) {
         if(file_exists($path)) unlink($path);
     }
 
-    protected function superuserHasPermission($u = null, $permission) {
-        $u = $u ? $u : wire('user');
+
+    /**
+     * Superuser permission check
+     *
+     * Actually checks if a user really has the permission
+     * This works for superusers as well whereas normally they return true for any permission
+     *
+     * @param string|int|User Maybe User name, object, or ID. Optional user to check
+     * @param string $permission Permission name
+     * @return bool
+     *
+     */
+    private function superuserHasPermission($u = null, $permission) {
+        $u = $u ? $u : $this->wire('user');
         foreach($u->roles as $role) {
             foreach($role->permissions as $perm) {
                 if($perm->name == $permission) return true;
@@ -882,61 +1108,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         return false;
     }
 
-    // for the validator panel
-    public function getPageHtml($event) {
-        static::$pageHtml = $event->return;
-    }
 
-
-    // for the mail panel
-    public function interceptEmails($event) {
-        $mailItem = array();
-        $mailItems = wire('session')->tracyMailItems ? wire('session')->tracyMailItems : array();
-        foreach(array('subject', 'from', 'fromName', 'to', 'toName', 'cc', 'ccName', 'bcc', 'body', 'bodyHTML', 'attachments', 'header', 'priority', 'dispositionNotification', 'addSignature', 'sendSingle', 'sendBulk', 'useSentLog', 'wrapText', 'default_charset', 'sender_signature', 'sender_signature_html') as $param) {
-            $mailItem[$param] = $event->object->$param;
-        }
-        $mailItem['timestamp'] = time();
-        array_unshift($mailItems, $mailItem);
-        wire('session')->tracyMailItems = $mailItems;
-        $event->replace = true;
-        $event->return = true;
-    }
-
-    // for the Captain Hook panel
-    public function deleteHookCache($event) {
-        wire('cache')->delete('TracyCaptainHook');
-    }
-
-    // for the event interceptor panel
-    public function interceptEvent($event) {
-        $eventItem = array();
-        $eventItems = wire('session')->tracyEventItems ? wire('session')->tracyEventItems : array();
-        $eventItem['timestamp'] = time();
-        $eventItem['object'] = Dumper::toHtml($event->object, array(Dumper::COLLAPSE => true));
-        $eventItem['arguments'] = Dumper::toHtml($event->arguments, array(Dumper::COLLAPSE => true));
-        array_unshift($eventItems, $eventItem);
-        wire('session')->tracyEventItems = $eventItems;
-        $event->replace = true;
-        $event->return = false;
-    }
-
-    // for the page recorder panel
-    public function recordPage($event) {
-        $p = $event->arguments(0);
-        if($p->is("has_parent=".wire('config')->adminRootPageID)) return;
-        $this->data['recordedPages'][] = $p->id;
-        $this->modules->saveModuleConfigData($this->modules->get("TracyDebugger"), $this->data);
-    }
-
-    // this ensures Tracy will be able to show the AJAX bar when SessionHandlerDB module is installed
-    public function sessionHanlderDBAjaxFix() {
-        Debugger::getBar()->render();
-        Debugger::$showBar = FALSE;
-    }
-
-
-    protected function inAdmin() {
-        if(strpos(self::inputUrl(true), wire('config')->urls->admin) === 0 || (wire('config')->ajax && strpos($this->httpReferer, wire('config')->urls->admin) !== false)) {
+    /**
+     * Are we in the Admin (or frontend)
+     *
+     * Checks based on URL, so it works before ready()
+     *
+     * @return bool
+     *
+     */
+    private function inAdmin() {
+        if(strpos(self::inputUrl(true), $this->wire('config')->urls->admin) === 0 || ($this->wire('config')->ajax && strpos($this->httpReferer, $this->wire('config')->urls->admin) !== false)) {
             return true;
         }
         else {
@@ -945,11 +1127,21 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     }
 
 
-    public function findInCookie($cookie) {
+    /**
+     * Find current page template name in cookie
+     *
+     * Actually checks if a user really has the permission
+     * This works for superusers as well whereas normally they return true for any permission
+     *
+     * @param string $cookie Cookie content
+     * @return string|bool Name of Template or false
+     *
+     */
+    private function findPageTemplateInCookie($cookie) {
         $templateEntries = explode(',', $cookie);
         foreach($templateEntries as $templateEntry) {
             $arr = explode("|", $templateEntry, 2);
-            if($arr[0] == wire('page')->template->name) {
+            if($arr[0] == $this->wire('page')->template->name) {
                 return $arr[1];
                 break;
             }
@@ -959,7 +1151,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     /**
-     * Helper function to remove PW variables from get_defined_vars() call
+     * PUBLIC STATIC HELPER FUNCTIONS
+     */
+
+
+    /**
+     * Remove ProcessWire variables from get_defined_vars() call
+     *
+     * @param array $vars Variables
+     * @return array Variables with PW vars removed
+     *
      */
     public static function templateVars($vars) {
 
@@ -991,25 +1192,36 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     /**
-     * Helper function to format human friendly file size
+     * Format human friendly file size and color based on thresholds
+     *
+     * @param string $bytes File size in bytes
+     * @return string Formatted size with units and colored font
+     *
      */
-    public static function human_filesize($size) {
-        if($size >= 500000) {
+    public static function human_filesize($bytes) {
+        if($bytes >= 500000) {
             $color = '#CD1818';
         }
-        elseif($size < 500000 && $size > 100000) {
+        elseif($bytes < 500000 && $bytes > 100000) {
             $color = '#FF9933';
         }
         else {
             $color = '#999999';
         }
 
-        if($size == 0) return("0 Bytes");
+        if($bytes == 0) return("0 Bytes");
         $filesizename = array("&nbsp;Bytes", "&nbsp;KB", "&nbsp;MB", "&nbsp;GB", "&nbsp;TB", "&nbsp;PB", "&nbsp;EB", "&nbsp;ZB", "&nbsp;YB");
-        return '<span style="color:'.$color.'">' . round($size/pow(1024, ($i = floor(log($size, 1024)))), 1) . $filesizename[$i] . '</span>';
+        return '<span style="color:'.$color.'">' . round($bytes/pow(1024, ($i = floor(log($bytes, 1024)))), 1) . $filesizename[$i] . '</span>';
     }
 
 
+    /**
+     * Format human friendly time and color based on thresholds
+     *
+     * @param string $seconds Time in seconds
+     * @return string Formatted time in milliseconds with units and colored font
+     *
+     */
     public static function formatTime($seconds) {
         if($seconds >= 1) {
             $color = '#CD1818';
@@ -1026,17 +1238,29 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     /**
-     * Helper function to insert generated time and size for a panel
+     * Insert generated time and size for a panel
+     *
+     * @param string $panel Panel name
+     * @param $seconds Time in seconds
+     * @param $bytes Size in bytes
+     * @return string Formatted panel dom size and generation time with units and colored font
+     *
      */
-    public static function generatedTimeSize($panel, $seconds, $kilobytes) {
+    public static function generatedTimeSize($panel, $seconds, $bytes) {
         \TracyDebugger::$panelGenerationTime[$panel]['time'] = $seconds;
-        \TracyDebugger::$panelGenerationTime[$panel]['size'] = $kilobytes;
-        return '<p style="font-size:9px !important; text-align:left !important"><br />'.static::formatTime($seconds).'<span style="color: #999999;">,</span> '.static::human_filesize($kilobytes).'</p>';
+        \TracyDebugger::$panelGenerationTime[$panel]['size'] = $bytes;
+        return '<div style="font-size:9px !important; text-align:left !important"><br />'.static::formatTime($seconds).'<span style="color: #999999;">,</span> '.static::human_filesize($bytes).'</div>';
     }
 
 
     /**
-     * Helper function to convert remote path to local path
+     * Convert remote path to local path
+     *
+     * If editor is opening a link to a remote version of a file, convert to a local dev path
+     *
+     * @param string $path Full path to remote version of file
+     * @return string Full path to local version of file
+     *
      */
     public static function makePathLocal($path) {
         if(self::getDataValue('localRootPath') != '') $path = str_replace(wire('config')->paths->root, self::getDataValue('localRootPath'), $path);
@@ -1045,578 +1269,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     /**
-     * Return an InputfieldWrapper of Inputfields used to configure the class
+     * Getter function to get a $data index value from module settings
      *
-     * @param array $data Array of config values indexed by field name
-     * @return InputfieldsWrapper
+     * @param string $property Property name
+     * @return mixed Value of property
      *
-     */
-    public static function getModuleConfigInputfields(array $data) {
-
-        if(wire('input')->post->submit_save_module) {
-            unset(wire('input')->cookie->tracyPanelsSticky);
-            setcookie("tracyPanelsSticky", "", time()-3600, '/');
-            unset(wire('input')->cookie->tracyModulesDisabled);
-            setcookie("tracyModulesDisabled", "", time()-3600, '/');
-            unset(wire('input')->cookie->tracyDisabled);
-            setcookie("tracyDisabled", "", time()-3600, '/');
-        }
-
-        if(wire('input')->post->clearEmailSent) {
-            $emailSentPath = wire('config')->paths->logs.'tracy/email-sent';
-            if(file_exists($emailSentPath)) {
-                $removed = unlink($emailSentPath);
-            }
-            if (!isset($removed) || !$removed) wire()->error( __('No file to remove'));
-            else wire()->message(__("email-sent file deleted successfully"));
-        }
-
-        $data = array_merge(self::getDefaultData(), $data);
-
-        $wrapper = new InputfieldWrapper();
-
-        $fieldset = wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("Main Setup");
-        $wrapper->add($fieldset);
-
-        $f = wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'enabled');
-        $f->label = __('Enable Tracy Debugger', __FILE__);
-        $f->description = __('Uncheck to disable the Tracy Debugger.'."\n".'For more details on the settings below:'."\n".'[TracyDebugger Blog: Docs and Tutorial](https://processwire.com/blog/posts/introducing-tracy-debugger/)'."\n".'[Tracy Docs](https://tracy.nette.org/)', __FILE__);
-        $f->columnWidth = 50;
-        $f->attr('checked', $data['enabled'] == '1' ? 'checked' : '' );
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldSelect");
-        $f->attr('name', 'coreBranch');
-        $f->label = 'Core Tracy Branch';
-        $f->description = __('Which version of the Tracy core to use. Master (dev) requires PHP 5.4.4+ and will be automatically selected if your PHP version is sufficient.', __FILE__);
-        $f->columnWidth = 50;
-        $f->required = true;
-        $f->addOption('master', 'Master');
-        $f->addOption('legacy', 'Legacy (for PHP < 5.4.4)');
-        if($data['coreBranch']) $f->attr('value', $data['coreBranch']);
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldSelect");
-        $f->attr('name', 'outputMode');
-        $f->label = 'Output Mode';
-        $f->description = __('The DETECT option automatically switches from DEVELOPMENT to PRODUCTION mode based on whether the IP of the site is publicly accessible or not.', __FILE__);
-        $f->notes = __('In PRODUCTION mode, all errors and dumps etc are logged to file. Nothing is displayed in the browser.', __FILE__);
-        $f->columnWidth = 50;
-        $f->required = true;
-        $f->addOption('detect', 'DETECT');
-        $f->addOption('development', 'DEVELOPMENT');
-        $f->addOption('production', 'PRODUCTION');
-        if($data['outputMode']) $f->attr('value', $data['outputMode']);
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'allowLogProduction');
-        $f->label = __('Allow Logging in Production Mode', __FILE__);
-        $f->description = __('Allows logging for all users in PRODUCTION mode, regardless of any other settings (ie "tracy-debugger" permission and IP Address restriction).', __FILE__);
-        $f->notes = __('The DebugBar will be hidden, and all errors/warnings, and dumps etc will be sent to log files. The is safe for production and is the best option if you want Tracy to handle capturing and logging everything. RECOMMENDED!', __FILE__);
-        $f->columnWidth = 50;
-        $f->attr('checked', $data['allowLogProduction'] == '1' ? 'checked' : '' );
-        $fieldset->add($f);
-
-        $fieldset = wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("Access Permission");
-        $wrapper->add($fieldset);
-
-        $f = wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'superuserForceDevelopment');
-        $f->label = __('Superuser Force Development Mode', __FILE__);
-        $f->description = __('Check to force DEVELOPMENT mode for superusers even on live sites.', __FILE__);
-        $f->notes = __('By default, the Output Mode setting\'s DETECT option will force a site into PRODUCTION mode when it is live, which hides the DebugBar and sends errors and dumps to log files. However, with this checked, Superusers will always be in DEVELOPMENT mode.', __FILE__);
-        $f->columnWidth = 50;
-        $f->attr('checked', $data['superuserForceDevelopment'] == '1' ? 'checked' : '' );
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldText");
-        $f->attr('name', 'ipAddress');
-        $f->label = __('Restrict Non-superusers', __FILE__);
-        $f->description = __('IP Address that non-superusers need to use TracyDebugger. Enter IP address or a PCRE regular expression to match IP address of user, eg. /^123\.456\.789\./ would match all IP addresses that started with 123.456.789.', __FILE__);
-        $f->columnWidth = 50;
-        $f->notes = __('Non-superusers are already blocked unless they have the "tracy-debugger" permission. But once a user has been given the permission, this option restricts access to the listed IP address. Highly recommended for debugging live sites that you have manually set into DEVELOPMENT mode.', __FILE__);
-        if($data['ipAddress']) $f->attr('value', $data['ipAddress']);
-        $fieldset->add($f);
-
-        $fieldset = wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("Miscellaneous");
-        $wrapper->add($fieldset);
-
-        $f = wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'strictMode');
-        $f->label = __('Strict Mode', __FILE__);
-        $f->description = __('Check to enable strict mode which displays notices and warnings like errors.', __FILE__);
-        $f->columnWidth = 33;
-        $f->attr('checked', $data['strictMode'] == '1' ? 'checked' : '' );
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'strictModeAjax');
-        $f->label = __('Strict Mode AJAX Only', __FILE__);
-        $f->description = __('Check to enable strict mode only for AJAX calls.', __FILE__);
-        $f->notes = __('Because Tracy intercepts notices and warnings, these will no longer be returned with the AJAX response which may result in a "success" reponse, rather than "failure". Notices and warnings from an AJAX call will be displayed in the AJAX bar\'s Errors panel, but you still might prefer this option as it provides a more prominent indication of failure.', __FILE__);
-        $f->showIf="strictMode!='1'";
-        $f->columnWidth = 34;
-        $f->attr('checked', $data['strictModeAjax'] == '1' ? 'checked' : '' );
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'forceScream');
-        $f->label = __('Force Scream', __FILE__);
-        $f->description = __('Check to force "scream" of mode which disables the @ (silence/shut-up) operator so that notices and warnings are no longer hidden.', __FILE__);
-        $f->notes = __('This is disabled when Strict Mode is enabled because of a bug? [https://forum.nette.org/en/25569-strict-and-scream-modes-together](https://forum.nette.org/en/25569-strict-and-scream-modes-together) in the core Tracy package.', __FILE__);
-        $f->showIf="strictMode!='1', strictModeAjax!='1'";
-        $f->columnWidth = 33;
-        $f->attr('checked', $data['forceScream'] == '1' ? 'checked' : '' );
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldCheckboxes");
-        $f->attr('name', 'showLocation');
-        $f->label = 'Show Location';
-        $f->description = __('Shows the location of dump() and barDump() calls.', __FILE__);
-        $f->notes = __('LOCATION_SOURCE adds tooltip with path to the file, where the function was called.'."\n".'LOCATION_LINK adds a link to the file.'."\n".'LOCATION_CLASS adds a tooltip to every dumped object containing path to the file, in which the object\'s class is defined.');
-        $f->columnWidth = 50;
-        $f->addOption('Tracy\Dumper::LOCATION_SOURCE', 'LOCATION_SOURCE');
-        $f->addOption('Tracy\Dumper::LOCATION_LINK', 'LOCATION_LINK');
-        $f->addOption('Tracy\Dumper::LOCATION_CLASS', 'LOCATION_CLASS');
-        if($data['showLocation']) $f->attr('value', $data['showLocation']);
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldCheckboxes");
-        $f->attr('name', 'logSeverity');
-        $f->label = 'Log Severity';
-        $f->description = __('If you want Tracy to log PHP errors like E_NOTICE or E_WARNING with detailed information (HTML report), set them here.', __FILE__);
-        $f->notes = __('These only affect log file content, not onscreen debug info.');
-        $f->columnWidth = 50;
-        $f->addOption('E_ERROR', 'E_ERROR');
-        $f->addOption('E_WARNING', 'E_WARNING');
-        $f->addOption('E_PARSE', 'E_PARSE');
-        $f->addOption('E_NOTICE', 'E_NOTICE');
-        $f->addOption('E_CORE_ERROR', 'E_CORE_ERROR');
-        $f->addOption('E_CORE_WARNING', 'E_CORE_WARNING');
-        $f->addOption('E_COMPILE_ERROR', 'E_COMPILE_ERROR');
-        $f->addOption('E_COMPILE_WARNING', 'E_COMPILE_WARNING');
-        $f->addOption('E_USER_ERROR', 'E_USER_ERROR');
-        $f->addOption('E_USER_WARNING', 'E_USER_WARNING');
-        $f->addOption('E_USER_NOTICE', 'E_USER_NOTICE');
-        $f->addOption('E_STRICT', 'E_STRICT');
-        $f->addOption('E_RECOVERABLE_ERROR', 'E_RECOVERABLE_ERROR');
-        $f->addOption('E_DEPRECATED', 'E_DEPRECATED');
-        $f->addOption('E_USER_DEPRECATED', 'E_USER_DEPRECATED');
-        $f->addOption('E_ALL', 'E_ALL');
-        if($data['logSeverity']) $f->attr('value', $data['logSeverity']);
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldInteger");
-        $f->attr('name', 'maxDepth');
-        $f->label = __('Maximum Nesting Depth', __FILE__);
-        $f->description = __('Set the maximum nesting depth of dumped arrays and objects.', __FILE__);
-        $f->notes = __('Default: 3. Warning: making this too large can slow your page load down or even crash your browser.', __FILE__);
-        $f->columnWidth = 50;
-        $f->attr('value', $data['maxDepth']);
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldInteger");
-        $f->attr('name', 'maxLength');
-        $f->label = __('Maximum String Length', __FILE__);
-        $f->description = __('Set the maximum displayed strings length.', __FILE__);
-        $f->notes = __('Default: 150.', __FILE__);
-        $f->columnWidth = 50;
-        $f->attr('value', $data['maxLength']);
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldEmail");
-        $f->attr('name', 'email');
-        $f->label = __('Email for production errors', __FILE__);
-        $f->description = __('Receive emails at this address when an error occurs in production mode.', __FILE__);
-        $f->columnWidth = 66;
-        if($data['email']) $f->attr('value', $data['email']);
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'clearEmailSent');
-        $f->label = __('Clear Email Sent Flag', __FILE__);
-        $f->description = __('Check and save settings to remove the "email-sent" file so that you will start receiving new error emails.', __FILE__);
-        $f->columnWidth = 34;
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'referencePageEdited');
-        $f->label = __('Reference page being edited', __FILE__);
-        $f->description = __('When editing a page in the admin, the ProcessWire Info Panel will show details of the page being edited, and the Consol Panel will assign the $page variable to the page being edited.', __FILE__);
-        $f->attr('checked', $data['referencePageEdited'] == '1' ? 'checked' : '' );
-        $fieldset->add($f);
-
-        $fieldset = wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("Debug Bar and Panels");
-        $wrapper->add($fieldset);
-
-        $f = wire('modules')->get("InputfieldCheckboxes");
-        $f->attr('name', 'showDebugBar');
-        $f->label = __('Show Debug Bar', __FILE__);
-        $f->description = __('Show the debug bar.', __FILE__);
-        $f->columnWidth = 25;
-        $f->addOption('frontend', 'Frontend');
-        $f->addOption('backend', 'Backend');
-        if($data['showDebugBar']) $f->attr('value', $data['showDebugBar']);
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'hideDebugBar');
-        $f->label = __('Hide Debug Bar By Default', __FILE__);
-        $f->description = __('Hide the debug bar by default on page load.', __FILE__);
-        $f->columnWidth = 25;
-        $f->attr('checked', $data['hideDebugBar'] == '1' ? 'checked' : '' );
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldCheckboxes");
-        $f->attr('name', 'hideDebugBarModals');
-        $f->label = __('Hide Debug Bar in Modals', __FILE__);
-        $f->columnWidth = 25;
-        $f->addOption('regularModal', 'Regular Modal');
-        $f->addOption('inlineModal', 'Inline Modal');
-        if($data['hideDebugBarModals']) $f->attr('value', $data['hideDebugBarModals']);
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'showPanelLabels');
-        $f->label = __('Show Panel Labels', __FILE__);
-        $f->description = __('Show the labels next to each panel.', __FILE__);
-        $f->notes = __('Unchecking this will make the debugger bar much more compact.', __FILE__);
-        $f->columnWidth = 25;
-        $f->attr('checked', $data['showPanelLabels'] == '1' ? 'checked' : '' );
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldAsmSelect");
-        $f->attr('name', 'frontendPanels');
-        $f->label = __('Frontend Panels', __FILE__);
-        $f->description = __('Determines which panels are shown in the Debug Bar on the frontend. Sort to match order of panels in Debugger Bar.', __FILE__);
-        $f->columnWidth = 50;
-        foreach(static::$allPanels as $name => $label) {
-            $f->addOption($name, $label);
-        }
-        if($data['frontendPanels']) $f->attr('value', $data['frontendPanels']);
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldAsmSelect");
-        $f->attr('name', 'backendPanels');
-        $f->label = __('Backend Panels', __FILE__);
-        $f->description = __('Determines which panels are shown in the Debug Bar on the backend. Sort to match order of panels in Debugger Bar. Obviously only relevant if "Backend" is checked in the Show Debug Bar setting above.', __FILE__);
-        $f->notes = __('Note that '.implode(', ', static::$hideInAdmin).' are intentionally missing from this list because they have no use in the backend.', __FILE__);
-        $f->columnWidth = 50;
-        foreach(static::$allPanels as $name => $label) {
-            if(!in_array($name, static::$hideInAdmin)) {
-                $f->addOption($name, $label);
-            }
-        }
-        if($data['backendPanels']) $f->attr('value', $data['backendPanels']);
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldCheckboxes");
-        $f->attr('name', 'restrictedUserDisabledPanels');
-        $f->label = __('Disabled Panels for Restricted Users', __FILE__);
-        $f->description = __('Check the panels that should NOT be shown to users with the "tracy-restricted-panels" user permission.', __FILE__);
-        $f->notes = __('Unchecked panels will still only be shown to restricted users if they are selected in the Front/Back-end options above.', __FILE__);
-        $f->optionColumns = 3;
-        foreach(static::$allPanels as $name => $label) {
-            $f->addOption($name, $label);
-        }
-        if($data['restrictedUserDisabledPanels']) $f->attr('value', $data['restrictedUserDisabledPanels']);
-        $fieldset->add($f);
-
-        $fieldset = wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("User Bar");
-        $wrapper->add($fieldset);
-
-        $f = wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'showUserBar');
-        $f->label = __('Show User Bar', __FILE__);
-        $f->description = __('This bar is shown to logged in users without permission for the Tracy debug bar (typically all non-superusers).', __FILE__);
-        $f->columnWidth = 33;
-        $f->attr('checked', $data['showUserBar'] == '1' ? 'checked' : '' );
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'showUserBarTracyUsers');
-        $f->label = __('Show User Bar for Tracy Users', __FILE__);
-        $f->description = __('Also show the bar to users with Tracy debug bar permission.', __FILE__);
-        $f->notes = __('Only recommended if you position this bar somewhere other than bottom right so it doesn\'t conflict with the Debug bar.', __FILE__);
-        $f->columnWidth = 34;
-        $f->showIf = "showUserBar=1";
-        $f->attr('checked', $data['showUserBarTracyUsers'] == '1' ? 'checked' : '' );
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldAsmSelect");
-        $f->attr('name', 'userBarFeatures');
-        $f->label = __('Features', __FILE__);
-        $f->description = __('Determines which features are shown on the User Bar.', __FILE__);
-        $f->notes = __('The Page Versions function requires that the user has the "tracy-page-versions" permission.', __FILE__);
-        $f->columnWidth = 33;
-        foreach(static::$userBarFeatures as $name => $label) {
-            $f->addOption($name, $label);
-        }
-        if($data['userBarFeatures']) $f->attr('value', $data['userBarFeatures']);
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldTextarea");
-        $f->attr('name', 'userBarCustomFeatures');
-        $f->label = __('Custom Features', __FILE__);
-        $f->description = __('Use this PHP code block to return any output you want.', __FILE__);
-        $f->notes = __('eg. return \'<a href="https://developers.google.com/speed/pagespeed/insights/?url=\'.$page->httpUrl.\'" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 452.555 452.555" style="enable-background:new 0 0 452.555 452.555;" xml:space="preserve" width="16px" height="16px"><path d="M404.927,209.431h47.175c-3.581-49.699-23.038-94.933-53.539-130.611l-33.715,33.715l-23.275-23.296l33.758-33.78     C339.826,24.353,294.527,4.206,244.591,0.194v48.923h-32.917V0C161.22,3.236,115.296,22.8,79.165,53.668l35.57,35.549     l-23.296,23.296L55.804,76.878C24.332,112.858,4.12,158.804,0.475,209.452h50.864v32.917H0.453     C8.93,359.801,106.646,452.555,226.256,452.555s217.347-92.754,225.846-210.186h-47.197L404.927,209.431L404.927,209.431z      M228.133,362.217c-24.116,0-43.659-19.522-43.659-43.681c0-17.839,10.742-33.176,26.144-39.928l16.394-151.707l4.034,0.043     l14.927,151.729c15.229,6.881,25.863,22.045,25.863,39.863C271.857,342.695,252.27,362.217,228.133,362.217z" fill="\'.$iconColor.\'"/></svg></a>\';', __FILE__);
-        if($data['userBarCustomFeatures']) $f->attr('value', $data['userBarCustomFeatures']);
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldSelect");
-        $f->attr('name', 'userBarTopBottom');
-        $f->label = __('Top / Bottom', __FILE__);
-        $f->columnWidth = 50;
-        $f->addOption('top', 'Top');
-        $f->addOption('bottom', 'Bottom');
-        if($data['userBarTopBottom']) $f->attr('value', $data['userBarTopBottom']);
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldSelect");
-        $f->attr('name', 'userBarLeftRight');
-        $f->label = __('Left / Right', __FILE__);
-        $f->columnWidth = 50;
-        $f->addOption('left', 'Left');
-        $f->addOption('right', 'Right');
-        if($data['userBarLeftRight']) $f->attr('value', $data['userBarLeftRight']);
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldText");
-        $f->attr('name', 'userBarBackgroundColor');
-        $f->label = __('Background Color', __FILE__);
-        $f->description = __('Leave blank for transparent/none', __FILE__);
-        $f->notes = __('eg. #FFFFFF', __FILE__);
-        $f->columnWidth = 33;
-        if($data['userBarBackgroundColor']) $f->attr('value', $data['userBarBackgroundColor']);
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldText");
-        $f->attr('name', 'userBarBackgroundOpacity');
-        $f->label = __('Background Opacity', __FILE__);
-        $f->notes = __('0 to 1', __FILE__);
-        $f->columnWidth = 34;
-        if($data['userBarBackgroundOpacity']) $f->attr('value', $data['userBarBackgroundOpacity']);
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldText");
-        $f->attr('name', 'userBarIconColor');
-        $f->label = __('Icon Color', __FILE__);
-        $f->notes = __('eg. #666666', __FILE__);
-        $f->columnWidth = 33;
-        if($data['userBarIconColor']) $f->attr('value', $data['userBarIconColor']);
-        $fieldset->add($f);
-
-        $fieldset = wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("ProcessWire Info Panel Options");
-        $wrapper->add($fieldset);
-
-        $f = wire('modules')->get("InputfieldCheckboxes");
-        $f->attr('name', 'processwireInfoPanelSections');
-        $f->label = __('Panel Sections', __FILE__);
-        $f->description = __('Which sections to include in the ProcessWire Info panel.', __FILE__);
-        $f->notes = __('The three "Object" options will significantly increase the size of this panel.', __FILE__);
-        foreach(static::$processWireInfoSections as $name => $label) {
-            $f->addOption($name, $label);
-        }
-        if($data['processwireInfoPanelSections']) $f->attr('value', $data['processwireInfoPanelSections']);
-        $fieldset->add($f);
-
-        $fieldset = wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("Diagnostics Panel Options");
-        $wrapper->add($fieldset);
-
-        $f = wire('modules')->get("InputfieldCheckboxes");
-        $f->attr('name', 'diagnosticsPanelSections');
-        $f->label = __('Panel Sections', __FILE__);
-        $f->description = __('Which sections to include in the Diagnostics panel.', __FILE__);
-        $f->notes = __('The "Filesystem Files" option may significantly increase the generation time for this panel.', __FILE__);
-        foreach(static::$diagnosticsSections as $name => $label) {
-            $f->addOption($name, $label);
-        }
-        if($data['diagnosticsPanelSections']) $f->attr('value', $data['diagnosticsPanelSections']);
-        $fieldset->add($f);
-
-        $fieldset = wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("ToDo Panel Options");
-        $wrapper->add($fieldset);
-
-        $f = wire('modules')->get("InputfieldText");
-        $f->attr('name', 'todoIgnoreDirs');
-        $f->label = __('Ignore Directories', __FILE__);
-        $f->description = __('Comma separated list of terms used to match folders to be ignored when scanning for ToDo items.', __FILE__);
-        $f->notes = __('Default: git, svn, images, img, errors', __FILE__);
-        $f->columnWidth = 40;
-        if($data['todoIgnoreDirs']) $f->attr('value', $data['todoIgnoreDirs']);
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldText");
-        $f->attr('name', 'todoAllowedExtensions');
-        $f->label = __('Allowed Extensions', __FILE__);
-        $f->description = __('Comma separated list file extensions to be scanned for ToDo items.', __FILE__);
-        $f->notes = __('Default: php, module, inc, txt, latte, html, htm, md, css, scss, less, js', __FILE__);
-        $f->columnWidth = 40;
-        if($data['todoAllowedExtensions']) $f->attr('value', $data['todoAllowedExtensions']);
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'todoScanModules');
-        $f->label = __('Scan Site Modules', __FILE__);
-        $f->description = __('Check to allow the ToDo to scan the /site/modules directory. Otherwise it will only scan /site/templates.', __FILE__);
-        $f->notes = __('Not recommended unless you are a regular module developer.', __FILE__);
-        $f->columnWidth = 20;
-        $f->attr('checked', $data['todoScanModules'] == '1' ? 'checked' : '' );
-        $fieldset->add($f);
-
-        $fieldset = wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("ProcessWire and Tracy Log Panel Options");
-        $wrapper->add($fieldset);
-
-        $f = wire('modules')->get("InputfieldInteger");
-        $f->attr('name', 'numLogEntries');
-        $f->label = __('Number of Log Entries', __FILE__);
-        $f->description = __('Set the number of log entries to be displayed for the Tracy and ProcessWire log viewer panels.', __FILE__);
-        $f->notes = __('Default: 10', __FILE__);
-        $f->attr('value', $data['numLogEntries']);
-        $fieldset->add($f);
-
-        $fieldset = wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("Template Resources Panel Options");
-        $wrapper->add($fieldset);
-
-        $f = wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'variablesShowPwObjects');
-        $f->label = __('Show content of ProcessWire Objects', __FILE__);
-        $f->description = __('Shows the full ProcessWire object contents, rather than arrays of values. Only recommended for specific debugging purposes.', __FILE__);
-        $f->notes = __('Checking this will significantly increase the size of this panel if you have any variables set to ProcessWire objects.', __FILE__);
-        $f->attr('checked', $data['variablesShowPwObjects'] == '1' ? 'checked' : '' );
-        $fieldset->add($f);
-
-        $fieldset = wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("Debug Panel Options");
-        $wrapper->add($fieldset);
-
-        $f = wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'alwaysShowDebugTools');
-        $f->label = __('Show debug mode tools even if $config->debug = false.', __FILE__);
-        $f->description = __('If checked, the debug tools will be displayed regardless of whether debug mode is enabled.', __FILE__);
-        $f->columnWidth = 50;
-        $f->attr('checked', $data['alwaysShowDebugTools'] == '1' ? 'checked' : '' );
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'respectConfigDebugTools');
-        $f->label = __('Respect the PW $config->debugTools config option.', __FILE__);
-        $f->description = __('If unchecked, all debug tools will be displayed regardless of your config setting.', __FILE__);
-        $f->columnWidth = 50;
-        $f->attr('checked', $data['respectConfigDebugTools'] == '1' ? 'checked' : '' );
-        $fieldset->add($f);
-
-        $fieldset = wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("User Dev Template Options");
-        $wrapper->add($fieldset);
-
-        $f = wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'userDevTemplate');
-        $f->label = __('Enable User Dev Template', __FILE__);
-        $f->description = __('If user has a role or permission named to match the page template with the set suffix, the page will be rendered with that template file rather than the default.', __FILE__);
-        $f->columnWidth = 50;
-        $f->attr('checked', $data['userDevTemplate'] == '1' ? 'checked' : '' );
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldText");
-        $f->attr('name', 'userDevTemplateSuffix');
-        $f->label = __('User Dev Template Suffix', __FILE__);
-        $f->description = __('Template file suffix. eg "dev" will render the homepage with the "home-dev.php" template file if the user has a matching role or permission, eg. "template-dev".', __FILE__);
-        $f->columnWidth = 50;
-        if($data['userDevTemplateSuffix']) $f->attr('value', $data['userDevTemplateSuffix']);
-        $fieldset->add($f);
-
-        $fieldset = wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("Custom PHP");
-        $wrapper->add($fieldset);
-
-        $f = wire('modules')->get("InputfieldTextarea");
-        $f->attr('name', 'customPhpCode');
-        $f->label = __('Custom PHP Code', __FILE__);
-        $f->description = __('Use this PHP code block to return any output you want.', __FILE__);
-        $f->notes = __('eg. return \'<a href="https://developers.google.com/speed/pagespeed/insights/?url=\'.$page->httpUrl.\'">Google Speedtest</a>\';', __FILE__);
-        if($data['customPhpCode']) $f->attr('value', $data['customPhpCode']);
-        $fieldset->add($f);
-
-        $fieldset = wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("Editor Protocol Handler");
-        $wrapper->add($fieldset);
-
-        $f = wire('modules')->get("InputfieldText");
-        $f->attr('name', 'editor');
-        $f->label = __('Editor Protocol Handler', __FILE__);
-        $f->description = __('Sets the Tracy `Debugger::$editor` variable. Enter the appropriate address to open your code editor of choice.'."\n".'This approach only works for OSX. For more instructions on Windows and Linux alternatives, [read here](https://pla.nette.org/en/how-open-files-in-ide-from-debugger).'."\n".'For easily adding the SublimeText "subl://" protocol handler to your Mac, use this free [tool](https://github.com/saetia/sublime-url-protocol-mac).', __FILE__);
-        $f->notes = __('Initially configured for SublimeText (`subl://open/?url=file://%file&line=%line`). Change to work with your favorite editor.', __FILE__);
-        $f->columnWidth = 50;
-        if($data['editor']) $f->attr('value', $data['editor']);
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldText");
-        $f->attr('name', 'localRootPath');
-        $f->label = __('Local Root Path', __FILE__);
-        $f->description = __('This will map editor links from a production site to your local dev files.', __FILE__);
-        $f->notes = __('An example path might be: /Users/myname/Sites/sitefolder/', __FILE__);
-        $f->columnWidth = 50;
-        if($data['localRootPath']) $f->attr('value', $data['localRootPath']);
-        $fieldset->add($f);
-
-        $fieldset = wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("Method Shortcuts");
-        $wrapper->add($fieldset);
-
-        $f = wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'enableShortcutMethods');
-        $f->label = __('Enable Shortcut Methods', __FILE__);
-        $f->description = __('Uncheck to not define any of the shortcut methods. If you are not going to use these in your templates, unchecking means that they will not be defined which may reduce possible future name clashes. If in doubt, uncheck and use the full methods:'."\n".'TD::debugAll()'."\n".'TD::dump()'."\n".'TD::barDump()'."\n".'TD::barDumpLive()'."\n".'TD::log()'."\n".'TD::timer()'."\n".'TD::fireLog()'."\n".'TD::addBreakpoint()'."\n".'TD::templateVars()', __FILE__);
-        $f->notes = __('If this, or one of the shortcut methods is not enabled, but is called in your templates, all users will get a "call to undefined function" fatal error, so please be aware when using the shortcut methods in your templates if they are not enabled here.', __FILE__);
-        $f->columnWidth = 50;
-        $f->attr('checked', $data['enableShortcutMethods'] == '1' ? 'checked' : '' );
-        $fieldset->add($f);
-
-        $f = wire('modules')->get("InputfieldCheckboxes");
-        $f->attr('name', 'enabledShortcutMethods');
-        $f->label = __('Enabled Shortcut Methods', __FILE__);
-        $f->description = __('Uncheck any shortcuts/aliases to methods that you do not want available.', __FILE__);
-        $f->notes = __('Useful if any of these functions/methods are defined elswhere in your site and you are getting a "previously declared" fatal error.', __FILE__);
-        $f->showIf = "enableShortcutMethods=1";
-        $f->columnWidth = 50;
-        $f->addOption('debugAll', 'debugAll() for TD::debugAll()');
-        $f->addOption('da', 'da() for TD::debugAll()');
-        $f->addOption('dump', 'dump() for TD::dump()');
-        $f->addOption('d', 'd() for TD::dump()');
-        $f->addOption('barDump', 'barDump() for TD::barDump()');
-        $f->addOption('bd', 'bd() for TD::barDump()');
-        $f->addOption('barDumpLive', 'barDumpLive() for TD::barDumpLive()');
-        $f->addOption('bdl', 'bdl() for TD::barDumpLive()');
-        $f->addOption('l', 'l() for TD::log()');
-        $f->addOption('timer', 'timer() for TD::timer()');
-        $f->addOption('t', 't() for TD::timer()');
-        $f->addOption('fireLog', 'fireLog() for TD::fireLog()');
-        $f->addOption('fl', 'fl() for TD::fireLog()');
-        $f->addOption('addBreakpoint', 'addBreakpoint() for TD::addBreakpoint()');
-        $f->addOption('bp', 'bp() for TD::addBreakpoint()');
-        $f->addOption('templateVars', 'templateVars() for TD::templateVars()');
-        $f->addOption('tv', 'tv() for TD::templateVars()');
-        if($data['enabledShortcutMethods']) $f->attr('value', $data['enabledShortcutMethods']);
-        $fieldset->add($f);
-
-        return $wrapper;
-    }
-
-    /**
-     * Getter function to get a $data index value
      */
     public static function getDataValue($property) {
         if(is_array(self::$_data->$property)) {
@@ -1627,11 +1284,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
     }
 
+
     /**
-    * Determine if Tracy is loading an additional panel - via AJAX, or a redirect panel
-    * In this case we don't want to add most of our custom panels to the new bar because they don't change
-    */
-    public static function additionalBar() {
+     * Is the current debug bar standard or one of the additional (AJAX, redirect) ones
+     *
+     * Determine if Tracy is loading an additional panel - via AJAX, or a redirect panel
+     * In this case we don't want to add most of our custom panels to the new bar because they don't change
+     *
+     * @return bool
+     *
+     */
+    public static function isAdditionalBar() {
         $isRedirect = preg_match('#^Location:#im', implode("\n", headers_list()));
         if((static::$tracyVersion != 'legacy' && Helpers::isAjax()) || $isRedirect) {
             return true;
@@ -1641,6 +1304,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
     }
 
+    /**
+     * Check IP Address again allowed address / pattern
+     *
+     * @return array Single key/value with module settings defined IP address and whether the user's address is allowed
+     *
+     */
     public static function checkIpAddress() {
 
         $ipAddress = static::getDataValue('ipAddress');
@@ -1654,34 +1323,73 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     }
 
 
+    /**
+     * Is User allowed and what access do they have
+     *
+     * This considers the Tracy output mode, the user's "tracy-debugger" permissions,
+     * superuser status, and IP address if relevant
+     *
+     * @param string|int|User Maybe User name, object, or ID. Optional user to check
+     * @param string $userBar Whether to check User Bar access
+     * @return string|bool String is 'full' or 'production'. Bool is only for false
+     *
+     */
     public static function allowedTracyUsers($u = null, $userBar = false) {
+
+        $outputMode = static::getDataValue('outputMode');
+        if($outputMode == 'detect') {
+            $outputMode = static::detectDebugMode() ? 'development' : 'production';
+        }
 
         if(static::getDataValue('userSwitchSession') !== null) $userSwitchSession = static::getDataValue('userSwitchSession');
 
         $u = $u ? $u : wire('user');
 
-        //allow Tracy to log to file for guest users when in production mode (not in development mode)
-        if(static::getDataValue('allowLogProduction') == 1 && $userBar === false && static::getDataValue('outputMode') != 'development') {
-            return true;
+        if($u->isSuperuser() && static::getDataValue('superuserForceDevelopment') == 1) {
+            return 'full';
         }
-        elseif($u->isSuperuser()) {
-            return true;
+        elseif(static::getDataValue('allowLogProduction') == 1 && $userBar === false && $outputMode == 'production') {
+            return 'production';
         }
-        elseif(static::getDataValue('outputMode') == 'development' && wire('session')->tracyUserSwitcherId && (isset($userSwitchSession[wire('session')->tracyUserSwitcherId]) && $userSwitchSession[wire('session')->tracyUserSwitcherId] > time())) {
-            return true;
+        elseif($outputMode == 'development' && wire('session')->tracyUserSwitcherId && (isset($userSwitchSession[wire('session')->tracyUserSwitcherId]) && $userSwitchSession[wire('session')->tracyUserSwitcherId] > time())) {
+            return 'full';
         }
         else {
             $checkIpAddress = static::checkIpAddress();
             if($checkIpAddress['ipAddress'] != '' && $u->hasPermission('tracy-debugger')) {
-                return $checkIpAddress['ipAddressAllowed'];
+                return $checkIpAddress['ipAddressAllowed'] ? 'full' : false;
             }
             elseif($u->hasPermission('tracy-debugger')) {
-                return true;
+                return 'full';
             }
             else {
                 return false;
             }
         }
+    }
+
+
+    /**
+     * Detects debug mode by IP address.
+     * @param  string|array  IP addresses or computer names whitelist detection
+     * @return bool
+     */
+    public static function detectDebugMode($list = NULL)
+    {
+        $addr = isset($_SERVER['REMOTE_ADDR'])
+            ? $_SERVER['REMOTE_ADDR']
+            : php_uname('n');
+        $secret = isset($_COOKIE[self::COOKIE_SECRET]) && is_string($_COOKIE[self::COOKIE_SECRET])
+            ? $_COOKIE[self::COOKIE_SECRET]
+            : NULL;
+        $list = is_string($list)
+            ? preg_split('#[,\s]+#', $list)
+            : (array) $list;
+        if (!isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $list[] = '127.0.0.1';
+            $list[] = '::1';
+        }
+        return in_array($addr, $list, TRUE) || in_array("$secret@$addr", $list, TRUE);
     }
 
 
@@ -1753,27 +1461,30 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     /*
     * This is a temporary replacement for the httpUrl method from WireInput until
-    * this PR (https://github.com/processwire/processwire/pull/46) is accepted
+    * this PR (https://github.com/processwire/processwire/pull/46) is in version used by most
     */
     public static function inputHttpUrl($withQueryString = false) {
         return wire('input')->scheme() . '://' . wire('config')->httpHost . self::inputUrl($withQueryString);
     }
 
+
     public function __destruct() {
-        if($this->input->post->tracyPwVersion && $this->input->post->tracyPwVersion != $this->config->version) {
-            $rootPath = $this->config->paths->root;
+
+        // modify paths to /wire/, index.php, and .htaccess when using PW Version Switcher
+        if($this->wire('input')->post->tracyPwVersion && $this->wire('input')->post->tracyPwVersion != $this->wire('config')->version) {
+            $rootPath = $this->wire('config')->paths->root;
             // rename wire
-            rename($rootPath.'wire', $rootPath.'.wire-'.$this->config->version);
-            rename($rootPath.'.wire-'.$this->input->post->tracyPwVersion, $rootPath.'wire');
+            rename($rootPath.'wire', $rootPath.'.wire-'.$this->wire('config')->version);
+            rename($rootPath.'.wire-'.$this->wire('input')->post->tracyPwVersion, $rootPath.'wire');
             // rename .htaccess if previously replaced
-            if(file_exists($rootPath.'.htaccess-'.$this->input->post->tracyPwVersion)) {
-                rename($rootPath.'.htaccess', $rootPath.'.htaccess-'.$this->config->version);
-                rename($rootPath.'.htaccess-'.$this->input->post->tracyPwVersion, $rootPath.'.htaccess');
+            if(file_exists($rootPath.'.htaccess-'.$this->wire('input')->post->tracyPwVersion)) {
+                rename($rootPath.'.htaccess', $rootPath.'.htaccess-'.$this->wire('config')->version);
+                rename($rootPath.'.htaccess-'.$this->wire('input')->post->tracyPwVersion, $rootPath.'.htaccess');
             }
             // rename index.php if previously replaced
-            if(file_exists($rootPath.'.index-'.$this->input->post->tracyPwVersion.'.php')) {
-                rename($rootPath.'index.php', $rootPath.'.index-'.$this->config->version.'.php');
-                rename($rootPath.'.index-'.$this->input->post->tracyPwVersion.'.php', $rootPath.'index.php');
+            if(file_exists($rootPath.'.index-'.$this->wire('input')->post->tracyPwVersion.'.php')) {
+                rename($rootPath.'index.php', $rootPath.'.index-'.$this->wire('config')->version.'.php');
+                rename($rootPath.'.index-'.$this->wire('input')->post->tracyPwVersion.'.php', $rootPath.'index.php');
             }
         }
 
@@ -1783,9 +1494,575 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     }
 
 
-    public function ___upgrade() {
-        // old helper Processs module no longer needed
-        if(wire('modules')->isInstalled('ProcessTracyConsole')) wire('modules')->uninstall('ProcessTracyConsole');
+    /**
+     * Return an InputfieldWrapper of Inputfields used to configure the class
+     *
+     * @param array $data Array of config values indexed by field name
+     * @return InputfieldsWrapper
+     *
+     */
+    public function getModuleConfigInputfields(array $data) {
+
+        if($this->wire('input')->post->submit_save_module) {
+            unset($this->wire('input')->cookie->tracyPanelsSticky);
+            setcookie("tracyPanelsSticky", "", time()-3600, '/');
+            unset($this->wire('input')->cookie->tracyModulesDisabled);
+            setcookie("tracyModulesDisabled", "", time()-3600, '/');
+            unset($this->wire('input')->cookie->tracyDisabled);
+            setcookie("tracyDisabled", "", time()-3600, '/');
+        }
+
+        if($this->wire('input')->post->clearEmailSent) {
+            $emailSentPath = $this->wire('config')->paths->logs.'tracy/email-sent';
+            if(file_exists($emailSentPath)) {
+                $removed = unlink($emailSentPath);
+            }
+            if (!isset($removed) || !$removed) wire()->error( __('No file to remove'));
+            else wire()->message(__("email-sent file deleted successfully"));
+        }
+
+        $data = array_merge(self::getDefaultData(), $data);
+
+        $wrapper = new InputfieldWrapper();
+
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("Main Setup");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'enabled');
+        $f->label = __('Enable Tracy Debugger', __FILE__);
+        $f->description = __('Uncheck to disable the Tracy Debugger.'."\n".'For more details on the settings below:'."\n".'[TracyDebugger Blog: Docs and Tutorial](https://processwire.com/blog/posts/introducing-tracy-debugger/)'."\n".'[Tracy Docs](https://tracy.nette.org/)', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['enabled'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldSelect");
+        $f->attr('name', 'coreBranch');
+        $f->label = 'Core Tracy Branch';
+        $f->description = __('Which version of the Tracy core to use. Master (dev) requires PHP 5.4.4+ and will be automatically selected if your PHP version is sufficient.', __FILE__);
+        $f->columnWidth = 50;
+        $f->required = true;
+        $f->addOption('master', 'Master');
+        $f->addOption('legacy', 'Legacy (for PHP < 5.4.4)');
+        if($data['coreBranch']) $f->attr('value', $data['coreBranch']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldSelect");
+        $f->attr('name', 'outputMode');
+        $f->label = 'Output Mode';
+        $f->description = __('The DETECT option automatically switches from DEVELOPMENT to PRODUCTION mode based on whether the IP of the site is publicly accessible or not.', __FILE__);
+        $f->notes = __('In PRODUCTION mode, all errors and dumps etc are logged to file. Nothing is displayed in the browser.', __FILE__);
+        $f->columnWidth = 50;
+        $f->required = true;
+        $f->addOption('detect', 'DETECT');
+        $f->addOption('development', 'DEVELOPMENT');
+        $f->addOption('production', 'PRODUCTION');
+        if($data['outputMode']) $f->attr('value', $data['outputMode']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'allowLogProduction');
+        $f->label = __('Allow Logging in Production Mode', __FILE__);
+        $f->description = __('Allows logging for all users in PRODUCTION mode, regardless of any other settings (ie "tracy-debugger" permission and IP Address restriction).', __FILE__);
+        $f->notes = __('The DebugBar will be hidden, and all errors/warnings, and dumps etc will be sent to log files. The is safe for production and is the best option if you want Tracy to handle capturing and logging everything. RECOMMENDED!', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['allowLogProduction'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("Access Permission");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'superuserForceDevelopment');
+        $f->label = __('Superuser Force Development Mode', __FILE__);
+        $f->description = __('Check to force DEVELOPMENT mode for superusers even on live sites.', __FILE__);
+        $f->notes = __('By default, the Output Mode setting\'s DETECT option will force a site into PRODUCTION mode when it is live, which hides the DebugBar and sends errors and dumps to log files. However, with this checked, Superusers will always be in DEVELOPMENT mode.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['superuserForceDevelopment'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'ipAddress');
+        $f->label = __('Restrict Non-superusers', __FILE__);
+        $f->description = __('IP Address that non-superusers need to use TracyDebugger. Enter IP address or a PCRE regular expression to match IP address of user, eg. /^123\.456\.789\./ would match all IP addresses that started with 123.456.789.', __FILE__);
+        $f->columnWidth = 50;
+        $f->notes = __('Non-superusers are already blocked unless they have the "tracy-debugger" permission. But once a user has been given the permission, this option restricts access to the listed IP address. Highly recommended for debugging live sites that you have manually set into DEVELOPMENT mode.', __FILE__);
+        if($data['ipAddress']) $f->attr('value', $data['ipAddress']);
+        $fieldset->add($f);
+
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("Miscellaneous");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'strictMode');
+        $f->label = __('Strict Mode', __FILE__);
+        $f->description = __('Check to enable strict mode which displays notices and warnings like errors.', __FILE__);
+        $f->columnWidth = 33;
+        $f->attr('checked', $data['strictMode'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'strictModeAjax');
+        $f->label = __('Strict Mode AJAX Only', __FILE__);
+        $f->description = __('Check to enable strict mode only for AJAX calls.', __FILE__);
+        $f->notes = __('Because Tracy intercepts notices and warnings, these will no longer be returned with the AJAX response which may result in a "success" reponse, rather than "failure". Notices and warnings from an AJAX call will be displayed in the AJAX bar\'s Errors panel, but you still might prefer this option as it provides a more prominent indication of failure.', __FILE__);
+        $f->showIf="strictMode!='1'";
+        $f->columnWidth = 34;
+        $f->attr('checked', $data['strictModeAjax'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'forceScream');
+        $f->label = __('Force Scream', __FILE__);
+        $f->description = __('Check to force "scream" of mode which disables the @ (silence/shut-up) operator so that notices and warnings are no longer hidden.', __FILE__);
+        $f->notes = __('This is disabled when Strict Mode is enabled because of a bug? [https://forum.nette.org/en/25569-strict-and-scream-modes-together](https://forum.nette.org/en/25569-strict-and-scream-modes-together) in the core Tracy package.', __FILE__);
+        $f->showIf="strictMode!='1', strictModeAjax!='1'";
+        $f->columnWidth = 33;
+        $f->attr('checked', $data['forceScream'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckboxes");
+        $f->attr('name', 'showLocation');
+        $f->label = 'Show Location';
+        $f->description = __('Shows the location of dump() and barDump() calls.', __FILE__);
+        $f->notes = __('LOCATION_SOURCE adds tooltip with path to the file, where the function was called.'."\n".'LOCATION_LINK adds a link to the file.'."\n".'LOCATION_CLASS adds a tooltip to every dumped object containing path to the file, in which the object\'s class is defined.');
+        $f->columnWidth = 50;
+        $f->addOption('Tracy\Dumper::LOCATION_SOURCE', 'LOCATION_SOURCE');
+        $f->addOption('Tracy\Dumper::LOCATION_LINK', 'LOCATION_LINK');
+        $f->addOption('Tracy\Dumper::LOCATION_CLASS', 'LOCATION_CLASS');
+        if($data['showLocation']) $f->attr('value', $data['showLocation']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckboxes");
+        $f->attr('name', 'logSeverity');
+        $f->label = 'Log Severity';
+        $f->description = __('If you want Tracy to log PHP errors like E_NOTICE or E_WARNING with detailed information (HTML report), set them here.', __FILE__);
+        $f->notes = __('These only affect log file content, not onscreen debug info.');
+        $f->columnWidth = 50;
+        $f->addOption('E_ERROR', 'E_ERROR');
+        $f->addOption('E_WARNING', 'E_WARNING');
+        $f->addOption('E_PARSE', 'E_PARSE');
+        $f->addOption('E_NOTICE', 'E_NOTICE');
+        $f->addOption('E_CORE_ERROR', 'E_CORE_ERROR');
+        $f->addOption('E_CORE_WARNING', 'E_CORE_WARNING');
+        $f->addOption('E_COMPILE_ERROR', 'E_COMPILE_ERROR');
+        $f->addOption('E_COMPILE_WARNING', 'E_COMPILE_WARNING');
+        $f->addOption('E_USER_ERROR', 'E_USER_ERROR');
+        $f->addOption('E_USER_WARNING', 'E_USER_WARNING');
+        $f->addOption('E_USER_NOTICE', 'E_USER_NOTICE');
+        $f->addOption('E_STRICT', 'E_STRICT');
+        $f->addOption('E_RECOVERABLE_ERROR', 'E_RECOVERABLE_ERROR');
+        $f->addOption('E_DEPRECATED', 'E_DEPRECATED');
+        $f->addOption('E_USER_DEPRECATED', 'E_USER_DEPRECATED');
+        $f->addOption('E_ALL', 'E_ALL');
+        if($data['logSeverity']) $f->attr('value', $data['logSeverity']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldInteger");
+        $f->attr('name', 'maxDepth');
+        $f->label = __('Maximum Nesting Depth', __FILE__);
+        $f->description = __('Set the maximum nesting depth of dumped arrays and objects.', __FILE__);
+        $f->notes = __('Default: 3. Warning: making this too large can slow your page load down or even crash your browser.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('value', $data['maxDepth']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldInteger");
+        $f->attr('name', 'maxLength');
+        $f->label = __('Maximum String Length', __FILE__);
+        $f->description = __('Set the maximum displayed strings length.', __FILE__);
+        $f->notes = __('Default: 150.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('value', $data['maxLength']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldEmail");
+        $f->attr('name', 'email');
+        $f->label = __('Email for production errors', __FILE__);
+        $f->description = __('Receive emails at this address when an error occurs in production mode.', __FILE__);
+        $f->columnWidth = 66;
+        if($data['email']) $f->attr('value', $data['email']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'clearEmailSent');
+        $f->label = __('Clear Email Sent Flag', __FILE__);
+        $f->description = __('Check and save settings to remove the "email-sent" file so that you will start receiving new error emails.', __FILE__);
+        $f->columnWidth = 34;
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'referencePageEdited');
+        $f->label = __('Reference page being edited', __FILE__);
+        $f->description = __('When editing a page in the admin, the ProcessWire Info Panel will show details of the page being edited, and the Consol Panel will assign the $page variable to the page being edited.', __FILE__);
+        $f->attr('checked', $data['referencePageEdited'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("Debug Bar and Panels");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldCheckboxes");
+        $f->attr('name', 'showDebugBar');
+        $f->label = __('Show Debug Bar', __FILE__);
+        $f->description = __('Show the debug bar.', __FILE__);
+        $f->columnWidth = 25;
+        $f->addOption('frontend', 'Frontend');
+        $f->addOption('backend', 'Backend');
+        if($data['showDebugBar']) $f->attr('value', $data['showDebugBar']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'hideDebugBar');
+        $f->label = __('Hide Debug Bar By Default', __FILE__);
+        $f->description = __('Hide the debug bar by default on page load.', __FILE__);
+        $f->columnWidth = 25;
+        $f->attr('checked', $data['hideDebugBar'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckboxes");
+        $f->attr('name', 'hideDebugBarModals');
+        $f->label = __('Hide Debug Bar in Modals', __FILE__);
+        $f->columnWidth = 25;
+        $f->addOption('regularModal', 'Regular Modal');
+        $f->addOption('inlineModal', 'Inline Modal');
+        if($data['hideDebugBarModals']) $f->attr('value', $data['hideDebugBarModals']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'showPanelLabels');
+        $f->label = __('Show Panel Labels', __FILE__);
+        $f->description = __('Show the labels next to each panel.', __FILE__);
+        $f->notes = __('Unchecking this will make the debugger bar much more compact.', __FILE__);
+        $f->columnWidth = 25;
+        $f->attr('checked', $data['showPanelLabels'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldAsmSelect");
+        $f->attr('name', 'frontendPanels');
+        $f->label = __('Frontend Panels', __FILE__);
+        $f->description = __('Determines which panels are shown in the Debug Bar on the frontend. Sort to match order of panels in Debugger Bar.', __FILE__);
+        $f->columnWidth = 50;
+        foreach(static::$allPanels as $name => $label) {
+            $f->addOption($name, $label);
+        }
+        if($data['frontendPanels']) $f->attr('value', $data['frontendPanels']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldAsmSelect");
+        $f->attr('name', 'backendPanels');
+        $f->label = __('Backend Panels', __FILE__);
+        $f->description = __('Determines which panels are shown in the Debug Bar on the backend. Sort to match order of panels in Debugger Bar. Obviously only relevant if "Backend" is checked in the Show Debug Bar setting above.', __FILE__);
+        $f->notes = __('Note that '.implode(', ', static::$hideInAdmin).' are intentionally missing from this list because they have no use in the backend.', __FILE__);
+        $f->columnWidth = 50;
+        foreach(static::$allPanels as $name => $label) {
+            if(!in_array($name, static::$hideInAdmin)) {
+                $f->addOption($name, $label);
+            }
+        }
+        if($data['backendPanels']) $f->attr('value', $data['backendPanels']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckboxes");
+        $f->attr('name', 'restrictedUserDisabledPanels');
+        $f->label = __('Disabled Panels for Restricted Users', __FILE__);
+        $f->description = __('Check the panels that should NOT be shown to users with the "tracy-restricted-panels" user permission.', __FILE__);
+        $f->notes = __('Unchecked panels will still only be shown to restricted users if they are selected in the Front/Back-end options above.', __FILE__);
+        $f->optionColumns = 3;
+        foreach(static::$allPanels as $name => $label) {
+            $f->addOption($name, $label);
+        }
+        if($data['restrictedUserDisabledPanels']) $f->attr('value', $data['restrictedUserDisabledPanels']);
+        $fieldset->add($f);
+
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("User Bar");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'showUserBar');
+        $f->label = __('Show User Bar', __FILE__);
+        $f->description = __('This bar is shown to logged in users without permission for the Tracy debug bar (typically all non-superusers).', __FILE__);
+        $f->columnWidth = 33;
+        $f->attr('checked', $data['showUserBar'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'showUserBarTracyUsers');
+        $f->label = __('Show User Bar for Tracy Users', __FILE__);
+        $f->description = __('Also show the bar to users with Tracy debug bar permission.', __FILE__);
+        $f->notes = __('Only recommended if you position this bar somewhere other than bottom right so it doesn\'t conflict with the Debug bar.', __FILE__);
+        $f->columnWidth = 34;
+        $f->showIf = "showUserBar=1";
+        $f->attr('checked', $data['showUserBarTracyUsers'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldAsmSelect");
+        $f->attr('name', 'userBarFeatures');
+        $f->label = __('Features', __FILE__);
+        $f->description = __('Determines which features are shown on the User Bar.', __FILE__);
+        $f->notes = __('The Page Versions function requires that the user has the "tracy-page-versions" permission.', __FILE__);
+        $f->columnWidth = 33;
+        foreach(static::$userBarFeatures as $name => $label) {
+            $f->addOption($name, $label);
+        }
+        if($data['userBarFeatures']) $f->attr('value', $data['userBarFeatures']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldTextarea");
+        $f->attr('name', 'userBarCustomFeatures');
+        $f->label = __('Custom Features', __FILE__);
+        $f->description = __('Use this PHP code block to return any output you want.', __FILE__);
+        $f->notes = __('eg. return \'<a href="https://developers.google.com/speed/pagespeed/insights/?url=\'.$page->httpUrl.\'" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 452.555 452.555" style="enable-background:new 0 0 452.555 452.555;" xml:space="preserve" width="16px" height="16px"><path d="M404.927,209.431h47.175c-3.581-49.699-23.038-94.933-53.539-130.611l-33.715,33.715l-23.275-23.296l33.758-33.78     C339.826,24.353,294.527,4.206,244.591,0.194v48.923h-32.917V0C161.22,3.236,115.296,22.8,79.165,53.668l35.57,35.549     l-23.296,23.296L55.804,76.878C24.332,112.858,4.12,158.804,0.475,209.452h50.864v32.917H0.453     C8.93,359.801,106.646,452.555,226.256,452.555s217.347-92.754,225.846-210.186h-47.197L404.927,209.431L404.927,209.431z      M228.133,362.217c-24.116,0-43.659-19.522-43.659-43.681c0-17.839,10.742-33.176,26.144-39.928l16.394-151.707l4.034,0.043     l14.927,151.729c15.229,6.881,25.863,22.045,25.863,39.863C271.857,342.695,252.27,362.217,228.133,362.217z" fill="\'.$iconColor.\'"/></svg></a>\';', __FILE__);
+        if($data['userBarCustomFeatures']) $f->attr('value', $data['userBarCustomFeatures']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldSelect");
+        $f->attr('name', 'userBarTopBottom');
+        $f->label = __('Top / Bottom', __FILE__);
+        $f->columnWidth = 50;
+        $f->addOption('top', 'Top');
+        $f->addOption('bottom', 'Bottom');
+        if($data['userBarTopBottom']) $f->attr('value', $data['userBarTopBottom']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldSelect");
+        $f->attr('name', 'userBarLeftRight');
+        $f->label = __('Left / Right', __FILE__);
+        $f->columnWidth = 50;
+        $f->addOption('left', 'Left');
+        $f->addOption('right', 'Right');
+        if($data['userBarLeftRight']) $f->attr('value', $data['userBarLeftRight']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'userBarBackgroundColor');
+        $f->label = __('Background Color', __FILE__);
+        $f->description = __('Leave blank for transparent/none', __FILE__);
+        $f->notes = __('eg. #FFFFFF', __FILE__);
+        $f->columnWidth = 33;
+        if($data['userBarBackgroundColor']) $f->attr('value', $data['userBarBackgroundColor']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'userBarBackgroundOpacity');
+        $f->label = __('Background Opacity', __FILE__);
+        $f->notes = __('0 to 1', __FILE__);
+        $f->columnWidth = 34;
+        if($data['userBarBackgroundOpacity']) $f->attr('value', $data['userBarBackgroundOpacity']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'userBarIconColor');
+        $f->label = __('Icon Color', __FILE__);
+        $f->notes = __('eg. #666666', __FILE__);
+        $f->columnWidth = 33;
+        if($data['userBarIconColor']) $f->attr('value', $data['userBarIconColor']);
+        $fieldset->add($f);
+
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("ProcessWire Info Panel Options");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldCheckboxes");
+        $f->attr('name', 'processwireInfoPanelSections');
+        $f->label = __('Panel Sections', __FILE__);
+        $f->description = __('Which sections to include in the ProcessWire Info panel.', __FILE__);
+        $f->notes = __('The three "Object" options will significantly increase the size of this panel.', __FILE__);
+        foreach(static::$processWireInfoSections as $name => $label) {
+            $f->addOption($name, $label);
+        }
+        if($data['processwireInfoPanelSections']) $f->attr('value', $data['processwireInfoPanelSections']);
+        $fieldset->add($f);
+
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("Diagnostics Panel Options");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldCheckboxes");
+        $f->attr('name', 'diagnosticsPanelSections');
+        $f->label = __('Panel Sections', __FILE__);
+        $f->description = __('Which sections to include in the Diagnostics panel.', __FILE__);
+        $f->notes = __('The "Filesystem Files" option may significantly increase the generation time for this panel.', __FILE__);
+        foreach(static::$diagnosticsSections as $name => $label) {
+            $f->addOption($name, $label);
+        }
+        if($data['diagnosticsPanelSections']) $f->attr('value', $data['diagnosticsPanelSections']);
+        $fieldset->add($f);
+
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("ToDo Panel Options");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'todoIgnoreDirs');
+        $f->label = __('Ignore Directories', __FILE__);
+        $f->description = __('Comma separated list of terms used to match folders to be ignored when scanning for ToDo items.', __FILE__);
+        $f->notes = __('Default: git, svn, images, img, errors', __FILE__);
+        $f->columnWidth = 40;
+        if($data['todoIgnoreDirs']) $f->attr('value', $data['todoIgnoreDirs']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'todoAllowedExtensions');
+        $f->label = __('Allowed Extensions', __FILE__);
+        $f->description = __('Comma separated list file extensions to be scanned for ToDo items.', __FILE__);
+        $f->notes = __('Default: php, module, inc, txt, latte, html, htm, md, css, scss, less, js', __FILE__);
+        $f->columnWidth = 40;
+        if($data['todoAllowedExtensions']) $f->attr('value', $data['todoAllowedExtensions']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'todoScanModules');
+        $f->label = __('Scan Site Modules', __FILE__);
+        $f->description = __('Check to allow the ToDo to scan the /site/modules directory. Otherwise it will only scan /site/templates.', __FILE__);
+        $f->notes = __('Not recommended unless you are a regular module developer.', __FILE__);
+        $f->columnWidth = 20;
+        $f->attr('checked', $data['todoScanModules'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("ProcessWire and Tracy Log Panel Options");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldInteger");
+        $f->attr('name', 'numLogEntries');
+        $f->label = __('Number of Log Entries', __FILE__);
+        $f->description = __('Set the number of log entries to be displayed for the Tracy and ProcessWire log viewer panels.', __FILE__);
+        $f->notes = __('Default: 10', __FILE__);
+        $f->attr('value', $data['numLogEntries']);
+        $fieldset->add($f);
+
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("Template Resources Panel Options");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'variablesShowPwObjects');
+        $f->label = __('Show content of ProcessWire Objects', __FILE__);
+        $f->description = __('Shows the full ProcessWire object contents, rather than arrays of values. Only recommended for specific debugging purposes.', __FILE__);
+        $f->notes = __('Checking this will significantly increase the size of this panel if you have any variables set to ProcessWire objects.', __FILE__);
+        $f->attr('checked', $data['variablesShowPwObjects'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("Debug Panel Options");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'alwaysShowDebugTools');
+        $f->label = __('Show debug mode tools even if $config->debug = false.', __FILE__);
+        $f->description = __('If checked, the debug tools will be displayed regardless of whether debug mode is enabled.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['alwaysShowDebugTools'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'respectConfigDebugTools');
+        $f->label = __('Respect the PW $config->debugTools config option.', __FILE__);
+        $f->description = __('If unchecked, all debug tools will be displayed regardless of your config setting.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['respectConfigDebugTools'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("User Dev Template Options");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'userDevTemplate');
+        $f->label = __('Enable User Dev Template', __FILE__);
+        $f->description = __('If user has a permission named to match the page template with the set suffix, the page will be rendered with that template file rather than the default.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['userDevTemplate'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'userDevTemplateSuffix');
+        $f->label = __('User Dev Template Suffix', __FILE__);
+        $f->description = __('Template file suffix. eg "dev" will render the homepage with the "home-dev.php" template file if the user has a matching permission (prefixed with "tracy"), eg. "tracy-home-dev".', __FILE__);
+        $f->columnWidth = 50;
+        if($data['userDevTemplateSuffix']) $f->attr('value', $data['userDevTemplateSuffix']);
+        $fieldset->add($f);
+
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("Custom PHP");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldTextarea");
+        $f->attr('name', 'customPhpCode');
+        $f->label = __('Custom PHP Code', __FILE__);
+        $f->description = __('Use this PHP code block to return any output you want.', __FILE__);
+        $f->notes = __('eg. return \'<a href="https://developers.google.com/speed/pagespeed/insights/?url=\'.$page->httpUrl.\'">Google Speedtest</a>\';', __FILE__);
+        if($data['customPhpCode']) $f->attr('value', $data['customPhpCode']);
+        $fieldset->add($f);
+
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("Editor Protocol Handler");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'editor');
+        $f->label = __('Editor Protocol Handler', __FILE__);
+        $f->description = __('Sets the Tracy `Debugger::$editor` variable. Enter the appropriate address to open your code editor of choice.'."\n".'This approach only works for OSX. For more instructions on Windows and Linux alternatives, [read here](https://pla.nette.org/en/how-open-files-in-ide-from-debugger).'."\n".'For easily adding the SublimeText "subl://" protocol handler to your Mac, use this free [tool](https://github.com/saetia/sublime-url-protocol-mac).', __FILE__);
+        $f->notes = __('Initially configured for SublimeText (`subl://open/?url=file://%file&line=%line`). Change to work with your favorite editor.', __FILE__);
+        $f->columnWidth = 50;
+        if($data['editor']) $f->attr('value', $data['editor']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'localRootPath');
+        $f->label = __('Local Root Path', __FILE__);
+        $f->description = __('This will map editor links from a production site to your local dev files.', __FILE__);
+        $f->notes = __('An example path might be: /Users/myname/Sites/sitefolder/', __FILE__);
+        $f->columnWidth = 50;
+        if($data['localRootPath']) $f->attr('value', $data['localRootPath']);
+        $fieldset->add($f);
+
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("Method Shortcuts");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'enableShortcutMethods');
+        $f->label = __('Enable Shortcut Methods', __FILE__);
+        $f->description = __('Uncheck to not define any of the shortcut methods. If you are not going to use these in your templates, unchecking means that they will not be defined which may reduce possible future name clashes. If in doubt, uncheck and use the full methods:'."\n".'TD::debugAll()'."\n".'TD::dump()'."\n".'TD::barDump()'."\n".'TD::barDumpLive()'."\n".'TD::log()'."\n".'TD::timer()'."\n".'TD::fireLog()'."\n".'TD::addBreakpoint()'."\n".'TD::templateVars()', __FILE__);
+        $f->notes = __('If this, or one of the shortcut methods is not enabled, but is called in your templates, all users will get a "call to undefined function" fatal error, so please be aware when using the shortcut methods in your templates if they are not enabled here.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['enableShortcutMethods'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckboxes");
+        $f->attr('name', 'enabledShortcutMethods');
+        $f->label = __('Enabled Shortcut Methods', __FILE__);
+        $f->description = __('Uncheck any shortcuts/aliases to methods that you do not want available.', __FILE__);
+        $f->notes = __('Useful if any of these functions/methods are defined elswhere in your site and you are getting a "previously declared" fatal error.', __FILE__);
+        $f->showIf = "enableShortcutMethods=1";
+        $f->columnWidth = 50;
+        $f->addOption('debugAll', 'debugAll() for TD::debugAll()');
+        $f->addOption('da', 'da() for TD::debugAll()');
+        $f->addOption('dump', 'dump() for TD::dump()');
+        $f->addOption('d', 'd() for TD::dump()');
+        $f->addOption('barDump', 'barDump() for TD::barDump()');
+        $f->addOption('bd', 'bd() for TD::barDump()');
+        $f->addOption('barDumpLive', 'barDumpLive() for TD::barDumpLive()');
+        $f->addOption('bdl', 'bdl() for TD::barDumpLive()');
+        $f->addOption('l', 'l() for TD::log()');
+        $f->addOption('timer', 'timer() for TD::timer()');
+        $f->addOption('t', 't() for TD::timer()');
+        $f->addOption('fireLog', 'fireLog() for TD::fireLog()');
+        $f->addOption('fl', 'fl() for TD::fireLog()');
+        $f->addOption('addBreakpoint', 'addBreakpoint() for TD::addBreakpoint()');
+        $f->addOption('bp', 'bp() for TD::addBreakpoint()');
+        $f->addOption('templateVars', 'templateVars() for TD::templateVars()');
+        $f->addOption('tv', 'tv() for TD::templateVars()');
+        if($data['enabledShortcutMethods']) $f->attr('value', $data['enabledShortcutMethods']);
+        $fieldset->add($f);
+
+        return $wrapper;
     }
 
 }

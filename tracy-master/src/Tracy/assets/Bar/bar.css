@@ -345,6 +345,17 @@ body#tracy-debug .tracy-panel { /* in popup window */
 }
 
 
+/* toggle */
+#tracy-debug .tracy-toggle:after {
+	content: "\A0\25BC";
+	opacity: .4;
+}
+
+#tracy-debug .tracy-toggle.tracy-collapsed:after {
+	content: "\A0\25BA";
+}
+
+
 @media print {
 	#tracy-debug * {
 		display: none;
