@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.0.2',
+            'version' => '4.0.3',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -43,6 +43,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     const COOKIE_SECRET = 'tracy-debug';
 
     protected $data = array();
+    protected $inAdmin;
     protected $httpReferer;
     protected $tracyEnabled = false;
     protected $tracyCacheDir;
@@ -204,8 +205,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // url for $session->redirects
         $this->httpReferer = isset($_SERVER['HTTP_REFERER']) ? $this->wire('sanitizer')->text($_SERVER['HTTP_REFERER']) : self::inputHttpUrl(true);
 
+        // determine if we are in the admin / backend
+        $this->inAdmin = $this->inAdmin();
+
         // USER BAR
-        if(!$this->inAdmin() && $this->data['showUserBar'] && count($this->data['userBarFeatures'])>0 && !$this->wire('config')->ajax && (!$this->allowedTracyUsers(null, true) || $this->data['showUserBarTracyUsers']) && $this->wire('user')->isLoggedin()) {
+        if(!$this->inAdmin && $this->data['showUserBar'] && count($this->data['userBarFeatures'])>0 && !$this->wire('config')->ajax && (!$this->allowedTracyUsers(null, true) || $this->data['showUserBarTracyUsers']) && $this->wire('user')->isLoggedin()) {
             $this->addHookAfter('Page::render', $this, 'addUserBar', array('priority'=>1000));
         }
 
@@ -224,7 +228,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($this->data['enabled'] && $this->allowedTracyUsers() === 'full') {
 
             // PANELS TO DISPLAY
-            $configEnabledPanels = $this->inAdmin() ? $this->data['backendPanels'] : $this->data['frontendPanels'];
+            $configEnabledPanels = $this->inAdmin ? $this->data['backendPanels'] : $this->data['frontendPanels'];
             if($this->wire('input')->cookie->tracyPanelsOnce) {
                 static::$oncePanels = array_filter(explode(',', $this->wire('input')->cookie->tracyPanelsOnce));
                 static::$showPanels = static::$oncePanels;
@@ -504,7 +508,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         // back-end
-        if($this->inAdmin()) {
+        if($this->inAdmin) {
             // should we show debug bar in admin?
             if(in_array('backend', $this->data['showDebugBar']) && $outputMode != Debugger::PRODUCTION) {
                 $showDebugBar = true;
@@ -626,7 +630,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
 
 
-            if(!$this->inAdmin()) {
+            if(!$this->inAdmin) {
                 // VALIDATOR
                 if(in_array('validator', static::$showPanels)) {
                     $this->addHookAfter('Page::render', $this, 'getPageHtml', array('priority'=>1000));
@@ -683,7 +687,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public function ready() {
 
         // USER BAR PAGE VERSIONS
-        if(!$this->inAdmin() && $this->wire('user')->hasPermission('tracy-page-versions') && $this->data['showUserBar'] && in_array('pageVersions', $this->data['userBarFeatures']) && !$this->wire('config')->ajax && $this->wire('user')->isLoggedin()) {
+        if(!$this->inAdmin && $this->wire('user')->hasPermission('tracy-page-versions') && $this->data['showUserBar'] && in_array('pageVersions', $this->data['userBarFeatures']) && !$this->wire('config')->ajax && $this->wire('user')->isLoggedin()) {
             static::$pageVersion = $this->findPageTemplateInCookie($this->wire('input')->cookie->tracyPageVersion);
             if(static::$pageVersion && static::$pageVersion != pathinfo($this->wire('page')->template->filename, PATHINFO_BASENAME)) {
                 static::$templatePath = static::$pageVersion;
@@ -731,7 +735,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // LOAD SPECIFIED PANELS
         foreach(static::$showPanels as $panel) {
-            if($this->inAdmin() && in_array($panel, static::$hideInAdmin)) continue;
+            if($this->inAdmin && in_array($panel, static::$hideInAdmin)) continue;
             if(($panel == 'console' || $panel == 'templateEditor') && !$this->wire('user')->isSuperuser()) continue;
             if($panel == 'userSwitcher') {
                 if(isset($this->data['userSwitchSession'])) $userSwitchSession = $this->data['userSwitchSession'];
@@ -1452,7 +1456,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $queryString = $input->queryString();
             }
             else {
-                $queryString = htmlentities($_SERVER['QUERY_STRING']);
+                $info = parse_url($_SERVER['REQUEST_URI']);
+                $queryString = $info['query'];
             }
             if(strlen($queryString)) {
                 $url .= "?$queryString";
