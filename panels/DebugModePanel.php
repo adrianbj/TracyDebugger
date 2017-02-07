@@ -4,6 +4,8 @@
  * Custom PW panel
  */
 
+use \Tracy\Dumper;
+
 class DebugModePanel extends BasePanel {
 
     protected static $iconColor;
@@ -247,7 +249,9 @@ class DebugModePanel extends BasePanel {
                     $sessionEntries .= "<tr><td>".$this->wire('sanitizer')->entities($key)."</td><td><pre>" . $this->wire('sanitizer')->entities($value) . "</pre></td></tr>";
                 }
                 $sessionEntries .= $sectionEnd;
+            }
 
+            if($this->showSection('modules')) {
                 // Modules Loaded
                 $modulesNumLoaded = 0;
                 $modulesNumSkipped = 0;
@@ -410,6 +414,21 @@ class DebugModePanel extends BasePanel {
                 }
             }
 
+            if($this->showSection('config')) {
+                // Config
+                $configEntries = $this->sectionHeader(array('Key', 'Value'));
+                foreach($this->wire('config') as $key => $value) {
+                    if(is_object($value)) {
+                        $value = (array)$value->getIterator();
+                        ksort($value);
+                        if($key == 'paths') $value = array_map(array($this, 'addRoot'), $value);
+                    }
+                    $value = \Tracy\Dumper::toHtml($value, array(Dumper::LIVE => true, Dumper::DEPTH => 10, Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => (count($value) !== count($value, COUNT_RECURSIVE) || is_object($value) ? true : false)));
+                    $configEntries .= "<tr><td>".$this->wire('sanitizer')->entities($key)."</td><td>" . $value . "</td></tr>";
+                }
+                $configEntries .= $sectionEnd;
+            }
+
             // Load all the panel sections
             $out .= '
             <br />';
@@ -507,6 +526,13 @@ class DebugModePanel extends BasePanel {
                 ';
             }
 
+            if($this->showSection('config')) {
+                $out .= '
+                <a href="#" rel="#config" class="tracy-toggle tracy-collapsed">Config</a>
+                <div id="config" class="tracy-collapsed">'.$configEntries.'</div><br />
+                ';
+            }
+
         }
 
         $out .= \TracyDebugger::generatedTimeSize('debugMode', \Tracy\Debugger::timer('debugMode'), strlen($out));
@@ -516,5 +542,9 @@ class DebugModePanel extends BasePanel {
         return parent::loadResources() . $out;
     }
 
+
+    private function addRoot($value) {
+        return wire('config')->paths->root . $value;
+    }
 
 }
