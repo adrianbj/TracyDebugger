@@ -156,7 +156,7 @@ class PanelSelectorPanel extends BasePanel {
                         $seconds = isset(\TracyDebugger::$panelGenerationTime[$name]['time']) ? \TracyDebugger::$panelGenerationTime[$name]['time'] : '';
                         $size = isset(\TracyDebugger::$panelGenerationTime[$name]['size']) ? \TracyDebugger::human_filesize(\TracyDebugger::$panelGenerationTime[$name]['size']) : '';
                         $out .= '
-                            <label style="width: 300px !important; white-space: nowrap;'.($this->wire('page')->template == 'admin' && in_array($name, \TracyDebugger::$hideInAdmin) ? ' visibility:hidden;position: absolute; left: -999em;' : '').'">' .
+                            <label style="'.($this->wire('page')->template == 'admin' && in_array($name, \TracyDebugger::$hideInAdmin) ? ' visibility:hidden;position: absolute; left: -999em;' : '').'">' .
                                 ($this->isOnce($name, $defaultPanels) ? $onceIcon .'&nbsp;' : '<span style="display:inline-block;width:18px">&nbsp;</span>') . '
                                  <span style="font-size:16px; font-weight:600"><a title="Panel Info" href="https://processwire.com/blog/posts/introducing-tracy-debugger/#'.str_replace(' ', '-', strtolower($label)).'-panel" target="_blank">&#8505;</a></span>
                                 <input type="checkbox" name="selectedPanels[]" ' . ($name == 'panelSelector' ? 'disabled="disabled"' : '') . ' value="'.$name.'" ' . (in_array($name, $showPanels) ? 'checked="checked"' : '') . ' /> '
@@ -169,7 +169,7 @@ class PanelSelectorPanel extends BasePanel {
                     <span style="float:left">
                         <input type="submit" onclick="changeTracyPanels(\'Once\')" value="Once" />&nbsp;
                         <input type="submit" onclick="changeTracyPanels(\'Sticky\')" value="Sticky" />&nbsp;
-                        <input type="submit" onclick="resetTracyPanels()" value="Reset" /><br /><br />
+                        <input type="submit" onclick="resetTracyPanels()" value="Reset" />
                     </span>
                     <span style="float:right">';
                     if(!\TracyDebugger::getDataValue('strictMode')) {

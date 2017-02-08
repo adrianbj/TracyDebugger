@@ -242,6 +242,24 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
     word-wrap: break-word;      /* IE 5+ */
 }
 
+.tracy-inner a {
+    display: inline-block;
+}
+
+#tracy-debug-panel-PanelSelectorPanel fieldset div label {
+    width: 300px !important;
+    white-space: nowrap;
+    border-bottom: 1px solid #e4e4e4;
+    -webkit-column-break-inside: avoid;
+    page-break-inside: avoid;
+    break-inside: avoid-column;
+}
+
+#tracy-debug-panel-PanelSelectorPanel fieldset div label > span:last-child {
+    position: relative;
+    top: 5px;
+}
+
 #tracy-debug #tracy-debug-panel-Tracy-errors pre {
     white-space: inherit;
     margin: 0 !important;

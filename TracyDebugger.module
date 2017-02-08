@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.0.4',
+            'version' => '4.0.5',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -158,6 +158,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "userBarTopBottom" => 'bottom',
                 "userBarLeftRight" => 'left',
                 "showPanelLabels" => null,
+                "styleAdmin" => null,
+                "styleAdminElements" => "body:after {\n\tcontent: \"[type]\";\n\tbackground: [color];\n\tposition: fixed;\n\tbottom: 100%;\n\tcolor: #ffffff;\n\twidth: 100vh;\n\tpadding: 0;\n\ttext-align: center;\n\tfont-weight: 600;\n\ttext-transform: uppercase;\n\ttransform: rotate(90deg);\n\ttransform-origin: bottom left;\n\tz-index: 999999;\n\tfont-size: 13px;\n\theight: 15px;\n\tline-height: 15px;\n}\n",
+                "styleAdminColors" => "local|#ca6500\ndev.*|#990000\nstaging.*|#8b0066",
                 "processwireInfoPanelSections" => array('summary', 'templateInfo', 'fieldsListValues', 'versionsList', 'adminLinks', 'documentationLinks', 'editLinks'),
                 "diagnosticsPanelSections" => array('filesystemFolders'),
                 "todoIgnoreDirs" => 'git, svn, images, img, errors',
@@ -222,7 +225,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // don't init Tracy for @soma's PageEditSoftLock polling on Page Edit
         if(strpos(self::inputUrl(), 'checkpagelock') !== false) return;
         // don't init Tracy for the PW Notifications module polling
-        if(strpos($this->wire('input')->queryString(), 'Notifications=update') !== false) return;
+        if($this->wire('input')) {
+            $queryString = $this->wire('input')->queryString();
+        }
+        else {
+            $info = parse_url($_SERVER['REQUEST_URI']);
+            $queryString = $info['query'];
+        }
+        if(strpos($queryString, 'Notifications=update') !== false) return;
 
 
         if($this->data['enabled'] && $this->allowedTracyUsers() === 'full') {
@@ -723,11 +733,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // DEBUG BAR & PANELS
-        // exit now if not showing debug bar or user doesn't have 'full' access
-        if(Debugger::$showBar == false || $this->allowedTracyUsers() !== 'full') return;
-
         // add custom css / js
         $this->addHookAfter('Page::render', $this, 'addCustomStuff', array('priority'=>1000));
+
+        // exit now if not showing debug bar or user doesn't have 'full' access
+        if(Debugger::$showBar == false || $this->allowedTracyUsers() !== 'full') return;
 
         // load base panel class
         require_once __DIR__ . '/includes/BasePanel.php';
@@ -892,81 +902,94 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     protected function addCustomStuff($event) {
 
-        $customEndHead = '
-            <script>
-                // remove local storage entry for Panel Selector panel so it does not open after page reload from selecting a panel change
-                localStorage.removeItem("tracy-debug-panel-PanelSelectorPanel");
-            </script>
-            <link id="tracyStyles" type="text/css" href="'.$this->wire('config')->urls->TracyDebugger.'styles.css" rel="stylesheet" />
-        ';
+        $customEndHead = '';
+        $customEndBody = '';
 
-        $customEndBody = '
-        <script>
-            function addSettingsLink() {
-                if(!document.getElementById("tracy-debug-logo")) {
-                    window.requestAnimationFrame(addSettingsLink);
-                } else {
-                    var tracyLogo = document.getElementById("tracy-debug-logo");
-                    tracyLogo.setAttribute("title", tracyLogo.getAttribute("title") + "\n\nDouble-click to visit module settings");
-                    tracyLogo.addEventListener("dblclick", function(){
-                        window.open("'.$this->wire('config')->urls->admin.'/module/edit?name=TracyDebugger","_blank");
-                    }, false);
-                }
-            };
-            addSettingsLink();
+        if(Debugger::$showBar == true && $this->allowedTracyUsers() === 'full') {
+            $customEndHead .= '
+                <script>
+                    // remove local storage entry for Panel Selector panel so it does not open after page reload from selecting a panel change
+                    localStorage.removeItem("tracy-debug-panel-PanelSelectorPanel");
+                </script>
+                <link id="tracyStyles" type="text/css" href="'.$this->wire('config')->urls->TracyDebugger.'styles.css" rel="stylesheet" />';
+        }
 
-            function addHideLink() {
-                if(!document.getElementById("tracy-debug-bar")) {
-                    window.requestAnimationFrame(addHideLink);
-                } else {
-                    var debugBar = document.getElementById("tracy-debug-bar");
-                    var barul = debugBar.getElementsByTagName("ul")[0];
-                    var toggleli = document.createElement("li");
-                    toggleli.appendChild(document.createTextNode("⇲"));
-                    toggleli.setAttribute("id", "hide-button");
-                    toggleli.setAttribute("title", "Hide Tracy");
-                    toggleli.addEventListener("click", function(){
-                        document.getElementById("tracy-debug").style.display = "none";
-                        document.getElementById("show-button").style.display = "block";
-                        document.cookie = "tracyHidden=1; path=/";
-                        document.cookie = "tracyShow=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
-                    });
-                    barul.appendChild(toggleli);
-                    // remove Tracy core close debug bar x button
-                    barul.removeChild(barul.lastChild.previousElementSibling);
-                }
-            };
-            addHideLink();
-
-            function unhideBar() {
-                document.getElementById("tracy-debug").style.display = "block";
-                document.getElementById("show-button").style.display = "none";
-                document.cookie = "tracyHidden=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
-                document.cookie = "tracyShow=1; path=/";
-            }
-        ';
-
-        $tracyErrors = Debugger::getBar()->getPanel('Tracy:errors');
-        if(count($tracyErrors->data) === 0) {
-            if(($this->data['hideDebugBar'] && !$this->wire('input')->cookie->tracyShow) || $this->wire('input')->cookie->tracyHidden == 1) {
-                $customEndBody .= '
-                function hideDebugBar() {
-                    if(!document.getElementById("tracy-debug-bar")) {
-                        window.requestAnimationFrame(hideDebugBar);
-                    } else {
-                        document.getElementById("tracy-debug").style.display = "none";
-                    }
-                }
-                hideDebugBar();
-                ';
+        if($this->allowedTracyUsers() === 'full') {
+            if($this->inAdmin && $this->data['styleAdmin']) {
+                $customEndHead .= $this->setServerAdminStyleColor();
             }
         }
 
-        $customEndBody .= '
-        </script>
+        if(Debugger::$showBar == true && $this->allowedTracyUsers() === 'full') {
+            $customEndBody .= '
+            <script>
+                function addSettingsLink() {
+                    if(!document.getElementById("tracy-debug-logo")) {
+                        window.requestAnimationFrame(addSettingsLink);
+                    } else {
+                        var tracyLogo = document.getElementById("tracy-debug-logo");
+                        tracyLogo.setAttribute("title", tracyLogo.getAttribute("title") + "\n\nDouble-click to visit module settings");
+                        tracyLogo.addEventListener("dblclick", function(){
+                            window.open("'.$this->wire('config')->urls->admin.'/module/edit?name=TracyDebugger","_blank");
+                        }, false);
+                    }
+                };
+                addSettingsLink();
 
-        <div id="show-button" title="Show Tracy" style="display:'.(($this->data['hideDebugBar'] || $this->wire('input')->cookie->tracyHidden == 1) && !$this->wire('input')->cookie->tracyShow && count($tracyErrors->data) === 0 ? 'block' : 'none' ).'" onclick="unhideBar()">&#8689;</div>
-        ';
+                function addHideLink() {
+                    if(!document.getElementById("tracy-debug-bar")) {
+                        window.requestAnimationFrame(addHideLink);
+                    } else {
+                        var debugBar = document.getElementById("tracy-debug-bar");
+                        var barul = debugBar.getElementsByTagName("ul")[0];
+                        var toggleli = document.createElement("li");
+                        toggleli.appendChild(document.createTextNode("⇲"));
+                        toggleli.setAttribute("id", "hide-button");
+                        toggleli.setAttribute("title", "Hide Tracy");
+                        toggleli.addEventListener("click", function(){
+                            document.getElementById("tracy-debug").style.display = "none";
+                            document.getElementById("show-button").style.display = "block";
+                            document.cookie = "tracyHidden=1; path=/";
+                            document.cookie = "tracyShow=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
+                        });
+                        barul.appendChild(toggleli);
+                        // remove Tracy core close debug bar x button
+                        barul.removeChild(barul.lastChild.previousElementSibling);
+                    }
+                };
+                addHideLink();
+
+                function unhideBar() {
+                    document.getElementById("tracy-debug").style.display = "block";
+                    document.getElementById("show-button").style.display = "none";
+                    document.cookie = "tracyHidden=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
+                    document.cookie = "tracyShow=1; path=/";
+                }
+            ';
+
+            $tracyErrors = Debugger::getBar()->getPanel('Tracy:errors');
+            if(count($tracyErrors->data) === 0) {
+                if(($this->data['hideDebugBar'] && !$this->wire('input')->cookie->tracyShow) || $this->wire('input')->cookie->tracyHidden == 1) {
+                    $customEndBody .= '
+                    function hideDebugBar() {
+                        if(!document.getElementById("tracy-debug-bar")) {
+                            window.requestAnimationFrame(hideDebugBar);
+                        } else {
+                            document.getElementById("tracy-debug").style.display = "none";
+                        }
+                    }
+                    hideDebugBar();
+                    ';
+                }
+            }
+
+            $customEndBody .= '
+            </script>
+
+            <div id="show-button" title="Show Tracy" style="display:'.(($this->data['hideDebugBar'] || $this->wire('input')->cookie->tracyHidden == 1) && !$this->wire('input')->cookie->tracyShow && count($tracyErrors->data) === 0 ? 'block' : 'none' ).'" onclick="unhideBar()">&#8689;</div>
+            ';
+        }
+
         $event->return = str_replace("</body>", $customEndBody.'</body>', str_replace('</head>', $customEndHead.'</head>', $event->return));
     }
 
@@ -1150,6 +1173,48 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
         return false;
+    }
+
+
+    /**
+     * Determine server type and return styled color
+     *
+     * Local or Live based on IP address and dev or staging based on subdomain
+     *
+     * @return string Hex color for style
+     *
+     */
+    private function setServerAdminStyleColor() {
+
+        $serverTypeMatch = false;
+        $stylesArr = array();
+
+        foreach(explode("\n", $this->data['styleAdminColors']) as $serverType) {
+            preg_match_all("/([^\|]+)\|([^\|]+)/", $serverType, $p);
+            if(isset($p[1][0]) && isset($p[2][0])) $stylesArr[$p[1][0]] = $p[2][0];
+        }
+
+        foreach($stylesArr as $type => $color) {
+            if(strpos($this->wire('config')->urls->httpRoot, str_replace('*', '', $type)) !== false) {
+                $serverTypeMatch = true;
+                break;
+            }
+        }
+
+        if(!$serverTypeMatch && static::detectDebugMode()) {
+            $serverTypeMatch = true;
+            $type = 'local';
+        }
+
+        if($serverTypeMatch && isset($stylesArr[$type])) {
+            return '
+                <style>
+                    '. str_replace(array('[color]', '[type]'), array($stylesArr[$type], str_replace('*', '', $type)), $this->data['styleAdminElements']) . '
+                </style>
+            ';
+        }
+        else return;
+
     }
 
 
@@ -1786,6 +1851,40 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($data['restrictedUserDisabledPanels']) $f->attr('value', $data['restrictedUserDisabledPanels']);
         $fieldset->add($f);
 
+
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("Style Admin by Server Type");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'styleAdmin');
+        $f->label = __('Style Admin', __FILE__);
+        $f->description = __('Style the server based on IP address and/or subdomain', __FILE__);
+        $f->columnWidth = 20;
+        $f->attr('checked', $data['styleAdmin'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldTextarea");
+        $f->attr('name', 'styleAdminElements');
+        $f->label = __('Style Admin Elements', __FILE__);
+        $f->showIf = "styleAdmin=1";
+        $f->description = __('Use [color] and [type] shortcodes to style admin based on server type.', __FILE__);
+        $f->notes = __("**DEFAULT**\nbody:after {\n&nbsp;&nbsp;&nbsp;&nbsp;content: \"[type]\";\n&nbsp;&nbsp;&nbsp;&nbsp;background: [color];\n&nbsp;&nbsp;&nbsp;&nbsp;position: fixed;\n&nbsp;&nbsp;&nbsp;&nbsp;bottom: 100%;\n&nbsp;&nbsp;&nbsp;&nbsp;color: #ffffff;\n&nbsp;&nbsp;&nbsp;&nbsp;width: 100vh;\n&nbsp;&nbsp;&nbsp;&nbsp;padding: 0;\n&nbsp;&nbsp;&nbsp;&nbsp;text-align: center;\n&nbsp;&nbsp;&nbsp;&nbsp;font-weight: 600;\n&nbsp;&nbsp;&nbsp;&nbsp;text-transform: uppercase;\n&nbsp;&nbsp;&nbsp;&nbsp;transform: rotate(90deg);\n&nbsp;&nbsp;&nbsp;&nbsp;transform-origin: bottom left;\n&nbsp;&nbsp;&nbsp;&nbsp;z-index: 999999;\n&nbsp;&nbsp;&nbsp;&nbsp;font-size: 13px;\n&nbsp;&nbsp;&nbsp;&nbsp;height: 15px;\n&nbsp;&nbsp;&nbsp;&nbsp;line-height: 15px;\n}\n", __FILE__);
+        $f->columnWidth = 35;
+        if($data['styleAdminElements']) $f->attr('value', $data['styleAdminElements']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldTextarea");
+        $f->attr('name', 'styleAdminColors');
+        $f->label = __('Style Admin Colors', __FILE__);
+        $f->showIf = "styleAdmin=1";
+        $f->description = __('Use "type|#color" entries to define styling for each server type. "local" is determined by IP address. Other types are detected based on their existence in subdomain or TLD (eg. dev.mysite.com or mysite.dev), dependant on whether you include the period after (dev.﹡) or before (﹡.dev).', __FILE__);
+        $f->notes = __("**DEFAULT**\nlocal|#ca6500\ndev.*|#990000\nstaging.*|#8b0066", __FILE__);
+        $f->columnWidth = 45;
+        if($data['styleAdminColors']) $f->attr('value', $data['styleAdminColors']);
+        $fieldset->add($f);
+
+
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
         $fieldset->label = __("User Bar");
         $wrapper->add($fieldset);
@@ -1801,6 +1900,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'showUserBarTracyUsers');
         $f->label = __('Show User Bar for Tracy Users', __FILE__);
+        $f->showIf = "showUserBar=1";
         $f->description = __('Also show the bar to users with Tracy debug bar permission.', __FILE__);
         $f->notes = __('Only recommended if you position this bar somewhere other than bottom right so it doesn\'t conflict with the Debug bar.', __FILE__);
         $f->columnWidth = 34;
@@ -1811,6 +1911,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = $this->wire('modules')->get("InputfieldAsmSelect");
         $f->attr('name', 'userBarFeatures');
         $f->label = __('Features', __FILE__);
+        $f->showIf = "showUserBar=1";
         $f->description = __('Determines which features are shown on the User Bar.', __FILE__);
         $f->notes = __('The Page Versions function requires that the user has the "tracy-page-versions" permission.', __FILE__);
         $f->columnWidth = 33;
@@ -1823,6 +1924,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = $this->wire('modules')->get("InputfieldTextarea");
         $f->attr('name', 'userBarCustomFeatures');
         $f->label = __('Custom Features', __FILE__);
+        $f->showIf = "showUserBar=1";
         $f->description = __('Use this PHP code block to return any output you want.', __FILE__);
         $f->notes = __('eg. return \'<a href="https://developers.google.com/speed/pagespeed/insights/?url=\'.$page->httpUrl.\'" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 452.555 452.555" style="enable-background:new 0 0 452.555 452.555;" xml:space="preserve" width="16px" height="16px"><path d="M404.927,209.431h47.175c-3.581-49.699-23.038-94.933-53.539-130.611l-33.715,33.715l-23.275-23.296l33.758-33.78     C339.826,24.353,294.527,4.206,244.591,0.194v48.923h-32.917V0C161.22,3.236,115.296,22.8,79.165,53.668l35.57,35.549     l-23.296,23.296L55.804,76.878C24.332,112.858,4.12,158.804,0.475,209.452h50.864v32.917H0.453     C8.93,359.801,106.646,452.555,226.256,452.555s217.347-92.754,225.846-210.186h-47.197L404.927,209.431L404.927,209.431z      M228.133,362.217c-24.116,0-43.659-19.522-43.659-43.681c0-17.839,10.742-33.176,26.144-39.928l16.394-151.707l4.034,0.043     l14.927,151.729c15.229,6.881,25.863,22.045,25.863,39.863C271.857,342.695,252.27,362.217,228.133,362.217z" fill="\'.$iconColor.\'"/></svg></a>\';', __FILE__);
         if($data['userBarCustomFeatures']) $f->attr('value', $data['userBarCustomFeatures']);
@@ -1831,6 +1933,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = $this->wire('modules')->get("InputfieldSelect");
         $f->attr('name', 'userBarTopBottom');
         $f->label = __('Top / Bottom', __FILE__);
+        $f->showIf = "showUserBar=1";
         $f->columnWidth = 50;
         $f->addOption('top', 'Top');
         $f->addOption('bottom', 'Bottom');
@@ -1840,6 +1943,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = $this->wire('modules')->get("InputfieldSelect");
         $f->attr('name', 'userBarLeftRight');
         $f->label = __('Left / Right', __FILE__);
+        $f->showIf = "showUserBar=1";
         $f->columnWidth = 50;
         $f->addOption('left', 'Left');
         $f->addOption('right', 'Right');
@@ -1849,6 +1953,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = $this->wire('modules')->get("InputfieldText");
         $f->attr('name', 'userBarBackgroundColor');
         $f->label = __('Background Color', __FILE__);
+        $f->showIf = "showUserBar=1";
         $f->description = __('Leave blank for transparent/none', __FILE__);
         $f->notes = __('eg. #FFFFFF', __FILE__);
         $f->columnWidth = 33;
@@ -1858,6 +1963,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = $this->wire('modules')->get("InputfieldText");
         $f->attr('name', 'userBarBackgroundOpacity');
         $f->label = __('Background Opacity', __FILE__);
+        $f->showIf = "showUserBar=1";
         $f->notes = __('0 to 1', __FILE__);
         $f->columnWidth = 34;
         if($data['userBarBackgroundOpacity']) $f->attr('value', $data['userBarBackgroundOpacity']);
@@ -1866,6 +1972,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = $this->wire('modules')->get("InputfieldText");
         $f->attr('name', 'userBarIconColor');
         $f->label = __('Icon Color', __FILE__);
+        $f->showIf = "showUserBar=1";
         $f->notes = __('eg. #666666', __FILE__);
         $f->columnWidth = 33;
         if($data['userBarIconColor']) $f->attr('value', $data['userBarIconColor']);
