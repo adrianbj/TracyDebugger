@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.1.0',
+            'version' => '4.1.1',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -159,7 +159,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "userBarLeftRight" => 'left',
                 "showPanelLabels" => null,
                 "styleAdmin" => null,
-                "styleAdminElements" => "body:after {\n\tcontent: \"[type]\";\n\tbackground: [color];\n\tposition: fixed;\n\tbottom: 100%;\n\tcolor: #ffffff;\n\twidth: 100vh;\n\tpadding: 0;\n\ttext-align: center;\n\tfont-weight: 600;\n\ttext-transform: uppercase;\n\ttransform: rotate(90deg);\n\ttransform-origin: bottom left;\n\tz-index: 999999;\n\tfont-size: 13px;\n\theight: 15px;\n\tline-height: 15px;\n}\n",
+                "styleAdminElements" => "body::before {\n\tcontent: \"[type]\";\n\tbackground: [color];\n\tposition: fixed;\n\tbottom: 100%;\n\tcolor: #ffffff;\n\twidth: 100vh;\n\tpadding: 0;\n\ttext-align: center;\n\tfont-weight: 600;\n\ttext-transform: uppercase;\n\ttransform: rotate(90deg);\n\ttransform-origin: bottom left;\n\tz-index: 999999;\n\tfont-size: 13px;\n\theight: 15px;\n\tline-height: 15px;\n}\n",
                 "styleAdminColors" => "local|#ca6500\ndev.*|#990000\nstaging.*|#8b0066",
                 "processwireInfoPanelSections" => array('summary', 'templateInfo', 'fieldsListValues', 'versionsList', 'adminLinks', 'documentationLinks', 'editLinks'),
                 "diagnosticsPanelSections" => array('filesystemFolders'),
@@ -225,13 +225,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // don't init Tracy for @soma's PageEditSoftLock polling on Page Edit
         if(strpos(self::inputUrl(), 'checkpagelock') !== false) return;
         // don't init Tracy for the PW Notifications module polling
-        if($this->wire('input')) {
-            $queryString = $this->wire('input')->queryString();
-        }
-        else {
-            $info = parse_url($_SERVER['REQUEST_URI']);
-            $queryString = $info['query'];
-        }
+        $info = parse_url($_SERVER['REQUEST_URI']);
+        $queryString = isset($info['query']) ? $info['query'] : '';
         if(strpos($queryString, 'Notifications=update') !== false) return;
 
 
@@ -1462,8 +1457,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     /*
-    * This is a temporary replacement for the url method from WireInput until
-    * this PR (https://github.com/processwire/processwire/pull/46) is accepted
+    * This is a replacement for the url method from WireInput
+    * There is this issue (https://github.com/processwire/processwire/pull/46)
+    * but also the problem that $input->queryString() fails in init() because WireInput's $getVars isn't populated yet
+    *
+    * @param  bool Return with queryString or not
+    * @return string URL of page with or without query string
+    *
     */
     public static function inputUrl($withQueryString = false) {
 
@@ -1517,13 +1517,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         if($withQueryString) {
-            if($input) {
-                $queryString = $input->queryString();
-            }
-            else {
-                $info = parse_url($_SERVER['REQUEST_URI']);
-                $queryString = $info['query'];
-            }
+
+            $info = parse_url($_SERVER['REQUEST_URI']);
+            $queryString = isset($info['query']) ? $info['query'] : '';
+
             if(strlen($queryString)) {
                 $url .= "?$queryString";
             }
@@ -1533,8 +1530,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     }
 
     /*
-    * This is a temporary replacement for the httpUrl method from WireInput until
-    * this PR (https://github.com/processwire/processwire/pull/46) is in version used by most
+    * This is a replacement for the httpUrl method from WireInput
     */
     public static function inputHttpUrl($withQueryString = false) {
         return wire('input')->scheme() . '://' . wire('config')->httpHost . self::inputUrl($withQueryString);
@@ -1869,7 +1865,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Style Admin Elements', __FILE__);
         $f->showIf = "styleAdmin=1";
         $f->description = __('Use [color] and [type] shortcodes to style admin based on server type.', __FILE__);
-        $f->notes = __("**DEFAULT**\nbody:after {\n&nbsp;&nbsp;&nbsp;&nbsp;content: \"[type]\";\n&nbsp;&nbsp;&nbsp;&nbsp;background: [color];\n&nbsp;&nbsp;&nbsp;&nbsp;position: fixed;\n&nbsp;&nbsp;&nbsp;&nbsp;bottom: 100%;\n&nbsp;&nbsp;&nbsp;&nbsp;color: #ffffff;\n&nbsp;&nbsp;&nbsp;&nbsp;width: 100vh;\n&nbsp;&nbsp;&nbsp;&nbsp;padding: 0;\n&nbsp;&nbsp;&nbsp;&nbsp;text-align: center;\n&nbsp;&nbsp;&nbsp;&nbsp;font-weight: 600;\n&nbsp;&nbsp;&nbsp;&nbsp;text-transform: uppercase;\n&nbsp;&nbsp;&nbsp;&nbsp;transform: rotate(90deg);\n&nbsp;&nbsp;&nbsp;&nbsp;transform-origin: bottom left;\n&nbsp;&nbsp;&nbsp;&nbsp;z-index: 999999;\n&nbsp;&nbsp;&nbsp;&nbsp;font-size: 13px;\n&nbsp;&nbsp;&nbsp;&nbsp;height: 15px;\n&nbsp;&nbsp;&nbsp;&nbsp;line-height: 15px;\n}\n", __FILE__);
+        $f->notes = __("**DEFAULT**\nbody::before {\n&nbsp;&nbsp;&nbsp;&nbsp;content: \"[type]\";\n&nbsp;&nbsp;&nbsp;&nbsp;background: [color];\n&nbsp;&nbsp;&nbsp;&nbsp;position: fixed;\n&nbsp;&nbsp;&nbsp;&nbsp;bottom: 100%;\n&nbsp;&nbsp;&nbsp;&nbsp;color: #ffffff;\n&nbsp;&nbsp;&nbsp;&nbsp;width: 100vh;\n&nbsp;&nbsp;&nbsp;&nbsp;padding: 0;\n&nbsp;&nbsp;&nbsp;&nbsp;text-align: center;\n&nbsp;&nbsp;&nbsp;&nbsp;font-weight: 600;\n&nbsp;&nbsp;&nbsp;&nbsp;text-transform: uppercase;\n&nbsp;&nbsp;&nbsp;&nbsp;transform: rotate(90deg);\n&nbsp;&nbsp;&nbsp;&nbsp;transform-origin: bottom left;\n&nbsp;&nbsp;&nbsp;&nbsp;z-index: 999999;\n&nbsp;&nbsp;&nbsp;&nbsp;font-size: 13px;\n&nbsp;&nbsp;&nbsp;&nbsp;height: 15px;\n&nbsp;&nbsp;&nbsp;&nbsp;line-height: 15px;\n}\n", __FILE__);
         $f->columnWidth = 35;
         if($data['styleAdminElements']) $f->attr('value', $data['styleAdminElements']);
         $fieldset->add($f);
