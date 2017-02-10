@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.1.1',
+            'version' => '4.1.2',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -159,7 +159,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "userBarLeftRight" => 'left',
                 "showPanelLabels" => null,
                 "styleAdmin" => null,
-                "styleAdminElements" => "body::before {\n\tcontent: \"[type]\";\n\tbackground: [color];\n\tposition: fixed;\n\tbottom: 100%;\n\tcolor: #ffffff;\n\twidth: 100vh;\n\tpadding: 0;\n\ttext-align: center;\n\tfont-weight: 600;\n\ttext-transform: uppercase;\n\ttransform: rotate(90deg);\n\ttransform-origin: bottom left;\n\tz-index: 999999;\n\tfont-size: 13px;\n\theight: 15px;\n\tline-height: 15px;\n}\n",
+                "styleAdminElements" => "body::before {\n\tcontent: \"[type]\";\n\tbackground: [color];\n\tposition: fixed;\n\tleft: 0;\n\tbottom: 100%;\n\tcolor: #ffffff;\n\twidth: 100vh;\n\tpadding: 0;\n\ttext-align: center;\n\tfont-weight: 600;\n\ttext-transform: uppercase;\n\ttransform: rotate(90deg);\n\ttransform-origin: bottom left;\n\tz-index: 999999;\n\tfont-size: 13px;\n\theight: 15px;\n\tline-height: 15px;\npointer-events: none;\n}\n",
                 "styleAdminColors" => "local|#ca6500\ndev.*|#990000\nstaging.*|#8b0066",
                 "processwireInfoPanelSections" => array('summary', 'templateInfo', 'fieldsListValues', 'versionsList', 'adminLinks', 'documentationLinks', 'editLinks'),
                 "diagnosticsPanelSections" => array('filesystemFolders'),
@@ -1865,7 +1865,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Style Admin Elements', __FILE__);
         $f->showIf = "styleAdmin=1";
         $f->description = __('Use [color] and [type] shortcodes to style admin based on server type.', __FILE__);
-        $f->notes = __("**DEFAULT**\nbody::before {\n&nbsp;&nbsp;&nbsp;&nbsp;content: \"[type]\";\n&nbsp;&nbsp;&nbsp;&nbsp;background: [color];\n&nbsp;&nbsp;&nbsp;&nbsp;position: fixed;\n&nbsp;&nbsp;&nbsp;&nbsp;bottom: 100%;\n&nbsp;&nbsp;&nbsp;&nbsp;color: #ffffff;\n&nbsp;&nbsp;&nbsp;&nbsp;width: 100vh;\n&nbsp;&nbsp;&nbsp;&nbsp;padding: 0;\n&nbsp;&nbsp;&nbsp;&nbsp;text-align: center;\n&nbsp;&nbsp;&nbsp;&nbsp;font-weight: 600;\n&nbsp;&nbsp;&nbsp;&nbsp;text-transform: uppercase;\n&nbsp;&nbsp;&nbsp;&nbsp;transform: rotate(90deg);\n&nbsp;&nbsp;&nbsp;&nbsp;transform-origin: bottom left;\n&nbsp;&nbsp;&nbsp;&nbsp;z-index: 999999;\n&nbsp;&nbsp;&nbsp;&nbsp;font-size: 13px;\n&nbsp;&nbsp;&nbsp;&nbsp;height: 15px;\n&nbsp;&nbsp;&nbsp;&nbsp;line-height: 15px;\n}\n", __FILE__);
+        $f->notes = __("**DEFAULT**\nbody::before {\n&nbsp;&nbsp;&nbsp;&nbsp;content: \"[type]\";\n&nbsp;&nbsp;&nbsp;&nbsp;background: [color];\n&nbsp;&nbsp;&nbsp;&nbsp;position: fixed;\n&nbsp;&nbsp;&nbsp;&nbsp;left: 0;\n&nbsp;&nbsp;&nbsp;&nbsp;bottom: 100%;\n&nbsp;&nbsp;&nbsp;&nbsp;color: #ffffff;\n&nbsp;&nbsp;&nbsp;&nbsp;width: 100vh;\n&nbsp;&nbsp;&nbsp;&nbsp;padding: 0;\n&nbsp;&nbsp;&nbsp;&nbsp;text-align: center;\n&nbsp;&nbsp;&nbsp;&nbsp;font-weight: 600;\n&nbsp;&nbsp;&nbsp;&nbsp;text-transform: uppercase;\n&nbsp;&nbsp;&nbsp;&nbsp;transform: rotate(90deg);\n&nbsp;&nbsp;&nbsp;&nbsp;transform-origin: bottom left;\n&nbsp;&nbsp;&nbsp;&nbsp;z-index: 999999;\n&nbsp;&nbsp;&nbsp;&nbsp;font-size: 13px;\n&nbsp;&nbsp;&nbsp;&nbsp;height: 15px;\n&nbsp;&nbsp;&nbsp;&nbsp;line-height: 15px;\n&nbsp;&nbsp;&nbsp;&nbsp;pointer-events: none;\n}\n", __FILE__);
         $f->columnWidth = 35;
         if($data['styleAdminElements']) $f->attr('value', $data['styleAdminElements']);
         $fieldset->add($f);
