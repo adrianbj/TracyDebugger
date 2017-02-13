@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.1.2',
+            'version' => '4.1.3',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -158,8 +158,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "userBarTopBottom" => 'bottom',
                 "userBarLeftRight" => 'left',
                 "showPanelLabels" => null,
-                "styleAdmin" => null,
-                "styleAdminElements" => "body::before {\n\tcontent: \"[type]\";\n\tbackground: [color];\n\tposition: fixed;\n\tleft: 0;\n\tbottom: 100%;\n\tcolor: #ffffff;\n\twidth: 100vh;\n\tpadding: 0;\n\ttext-align: center;\n\tfont-weight: 600;\n\ttext-transform: uppercase;\n\ttransform: rotate(90deg);\n\ttransform-origin: bottom left;\n\tz-index: 999999;\n\tfont-size: 13px;\n\theight: 15px;\n\tline-height: 15px;\npointer-events: none;\n}\n",
+                "styleWhere" => array(),
+                "styleAdminElements" => "body::before {\n\tcontent: \"[type]\";\n\tbackground: [color];\n\tposition: fixed;\n\tleft: 0;\n\tbottom: 100%;\n\tcolor: #ffffff;\n\twidth: 100vh;\n\tpadding: 0;\n\ttext-align: center;\n\tfont-weight: 600;\n\ttext-transform: uppercase;\n\ttransform: rotate(90deg);\n\ttransform-origin: bottom left;\n\tz-index: 999999;\n\tfont-size: 11px;\n\theight: 13px;\n\tline-height: 13px;\npointer-events: none;\n}\n",
                 "styleAdminColors" => "local|#ca6500\ndev.*|#990000\nstaging.*|#8b0066",
                 "processwireInfoPanelSections" => array('summary', 'templateInfo', 'fieldsListValues', 'versionsList', 'adminLinks', 'documentationLinks', 'editLinks'),
                 "diagnosticsPanelSections" => array('filesystemFolders'),
@@ -331,28 +331,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                         $user = $this->wire('session')->forceLogin($this->wire('input')->post->userSwitcher);
                         $this->wire('session')->tracyUserSwitcherId = $tracyUserSwitcherId;
                     }
-                    $this->wire('session')->redirect($this->httpReferer);
-                }
-            }
-
-
-            // TEMPLATE EDITOR
-            // if template editor changes submitted
-            if($this->wire('input')->post->tracyTemplateEditorRawCode && $this->wire('user')->isSuperuser()) {
-
-                // get page from URL - this is required because we are in init() and this had to be in init() and not ready()
-                // because it needs to be before Tracy is instantiated because of SessionHandlerDB conflicts - arrrrggh!
-                $p = $this->wire('pages')->get($this->inputUrl());
-
-                $this->tempTemplateFilename = str_replace('.php', '-tracytemp.php', $p->template->filename);
-                if($this->wire('input')->post->testTemplateCode) {
-                    if(!file_put_contents($this->tempTemplateFilename, $this->wire('input')->post->tracyTemplateEditorRawCode, LOCK_EX)) throw new WireException("Unable to write file: " . $this->tempTemplateFilename);
-                    if($this->wire('config')->chmodFile) chmod($this->tempTemplateFilename, octdec($this->wire('config')->chmodFile));
-                    $p->template->filename = $this->tempTemplateFilename;
-                }
-                if($this->wire('input')->post->changeTemplateCode) {
-                    if(!file_put_contents($p->template->filename, $this->wire('input')->post->tracyTemplateEditorRawCode, LOCK_EX)) throw new WireException("Unable to write file: " . $this->tempTemplateFilename);
-                    if($this->wire('config')->chmodFile) chmod($p->template->filename, octdec($this->wire('config')->chmodFile));
                     $this->wire('session')->redirect($this->httpReferer);
                 }
             }
@@ -574,6 +552,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             wireRmdir($logFolder, true);
         }
 
+        // if Tracy log folder doesn't exist, create it now
         if(!is_dir($logFolder)) wireMkdir($logFolder);
 
 
@@ -582,8 +561,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // ensure Tracy can show AJAX bar when SessionHandlerDB module is installed and debugbar is showing
         if($this->wire('modules')->isInstalled('SessionHandlerDB') && static::$tracyVersion != 'legacy' && $showDebugBar) {
-            $this->addHookBefore('ProcessWire::finished', $this, 'sessionHanlderDBAjaxFix');
+            $this->addHookBefore('ProcessWire::finished', $this, 'sessionHandlerDBAjaxFix');
         }
+
 
         // TRACY SETTINGS
         //convert checked location strings to constants and array_reduce to bitwise OR (|) line
@@ -719,6 +699,28 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $devTemplateFilename = str_replace('.php', '-'.$this->data['userDevTemplateSuffix'].'.php', $this->wire('page')->template->filename);
             if(file_exists($devTemplateFilename) && $this->superuserHasPermission(null, "tracy-".$this->wire('page')->template->name."-".$this->data['userDevTemplateSuffix'])) {
                 $this->wire('page')->template->filename = static::$templatePath = static::$templatePathPermission = $devTemplateFilename;
+            }
+        }
+
+
+        if($this->data['enabled'] && $this->allowedTracyUsers() === 'full') {
+            // TEMPLATE EDITOR
+            // if template editor changes submitted
+            if($this->wire('input')->post->tracyTemplateEditorRawCode && $this->wire('user')->isSuperuser()) {
+
+                $p = $this->wire('page');
+
+                $this->tempTemplateFilename = str_replace('.php', '-tracytemp.php', $p->template->filename);
+                if($this->wire('input')->post->testTemplateCode) {
+                    if(!file_put_contents($this->tempTemplateFilename, $this->wire('input')->post->tracyTemplateEditorRawCode, LOCK_EX)) throw new WireException("Unable to write file: " . $this->tempTemplateFilename);
+                    if($this->wire('config')->chmodFile) chmod($this->tempTemplateFilename, octdec($this->wire('config')->chmodFile));
+                    $p->template->filename = $this->tempTemplateFilename;
+                }
+                if($this->wire('input')->post->changeTemplateCode) {
+                    if(!file_put_contents($p->template->filename, $this->wire('input')->post->tracyTemplateEditorRawCode, LOCK_EX)) throw new WireException("Unable to write file: " . $this->tempTemplateFilename);
+                    if($this->wire('config')->chmodFile) chmod($p->template->filename, octdec($this->wire('config')->chmodFile));
+                    $this->wire('session')->redirect($this->httpReferer);
+                }
             }
         }
 
@@ -910,8 +912,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         if($this->allowedTracyUsers() === 'full') {
-            if($this->inAdmin && $this->data['styleAdmin']) {
-                $customEndHead .= $this->setServerAdminStyleColor();
+            if(count($this->data['styleWhere']) > 0) {
+                if(($this->inAdmin && in_array('backend', $this->data['styleWhere'])) || (!$this->inAdmin && in_array('frontend', $this->data['styleWhere']))) {
+                    $customEndHead .= $this->setServerAdminStyleColor();
+                }
             }
         }
 
@@ -1081,10 +1085,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      * This ensures Tracy will be able to show the AJAX bar when SessionHandlerDB module is installed
      *
-     * @param HookEvent $event
-     *
      */
-    protected function sessionHanlderDBAjaxFix() {
+    protected function sessionHandlerDBAjaxFix() {
+        if(ob_get_level() == 0) ob_start();
         Debugger::getBar()->render();
         Debugger::$showBar = FALSE;
     }
@@ -1849,32 +1852,34 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("Style Admin by Server Type");
+        $fieldset->label = __("Add Server Type Indicator");
         $wrapper->add($fieldset);
 
-        $f = $this->wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'styleAdmin');
-        $f->label = __('Style Admin', __FILE__);
-        $f->description = __('Style the server based on IP address and/or subdomain', __FILE__);
+        $f = $this->wire('modules')->get("InputfieldCheckboxes");
+        $f->attr('name', 'styleWhere');
+        $f->label = __('Where', __FILE__);
+        $f->description = __('Add indicator based on server IP address and/or subdomain.', __FILE__);
         $f->columnWidth = 20;
-        $f->attr('checked', $data['styleAdmin'] == '1' ? 'checked' : '' );
+        $f->addOption('backend', 'Backend');
+        $f->addOption('frontend', 'Frontend');
+        if($data['styleWhere']) $f->attr('value', $data['styleWhere']);
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldTextarea");
         $f->attr('name', 'styleAdminElements');
-        $f->label = __('Style Admin Elements', __FILE__);
-        $f->showIf = "styleAdmin=1";
-        $f->description = __('Use [color] and [type] shortcodes to style admin based on server type.', __FILE__);
-        $f->notes = __("**DEFAULT**\nbody::before {\n&nbsp;&nbsp;&nbsp;&nbsp;content: \"[type]\";\n&nbsp;&nbsp;&nbsp;&nbsp;background: [color];\n&nbsp;&nbsp;&nbsp;&nbsp;position: fixed;\n&nbsp;&nbsp;&nbsp;&nbsp;left: 0;\n&nbsp;&nbsp;&nbsp;&nbsp;bottom: 100%;\n&nbsp;&nbsp;&nbsp;&nbsp;color: #ffffff;\n&nbsp;&nbsp;&nbsp;&nbsp;width: 100vh;\n&nbsp;&nbsp;&nbsp;&nbsp;padding: 0;\n&nbsp;&nbsp;&nbsp;&nbsp;text-align: center;\n&nbsp;&nbsp;&nbsp;&nbsp;font-weight: 600;\n&nbsp;&nbsp;&nbsp;&nbsp;text-transform: uppercase;\n&nbsp;&nbsp;&nbsp;&nbsp;transform: rotate(90deg);\n&nbsp;&nbsp;&nbsp;&nbsp;transform-origin: bottom left;\n&nbsp;&nbsp;&nbsp;&nbsp;z-index: 999999;\n&nbsp;&nbsp;&nbsp;&nbsp;font-size: 13px;\n&nbsp;&nbsp;&nbsp;&nbsp;height: 15px;\n&nbsp;&nbsp;&nbsp;&nbsp;line-height: 15px;\n&nbsp;&nbsp;&nbsp;&nbsp;pointer-events: none;\n}\n", __FILE__);
+        $f->label = __('Indicator Elements', __FILE__);
+        $f->showIf = "styleWhere.count>0";
+        $f->description = __('Use [color] and [type] shortcodes to add indicator based on server type.', __FILE__);
+        $f->notes = __("**DEFAULT**\nbody::before {\n&nbsp;&nbsp;&nbsp;&nbsp;content: \"[type]\";\n&nbsp;&nbsp;&nbsp;&nbsp;background: [color];\n&nbsp;&nbsp;&nbsp;&nbsp;position: fixed;\n&nbsp;&nbsp;&nbsp;&nbsp;left: 0;\n&nbsp;&nbsp;&nbsp;&nbsp;bottom: 100%;\n&nbsp;&nbsp;&nbsp;&nbsp;color: #ffffff;\n&nbsp;&nbsp;&nbsp;&nbsp;width: 100vh;\n&nbsp;&nbsp;&nbsp;&nbsp;padding: 0;\n&nbsp;&nbsp;&nbsp;&nbsp;text-align: center;\n&nbsp;&nbsp;&nbsp;&nbsp;font-weight: 600;\n&nbsp;&nbsp;&nbsp;&nbsp;text-transform: uppercase;\n&nbsp;&nbsp;&nbsp;&nbsp;transform: rotate(90deg);\n&nbsp;&nbsp;&nbsp;&nbsp;transform-origin: bottom left;\n&nbsp;&nbsp;&nbsp;&nbsp;z-index: 999999;\n&nbsp;&nbsp;&nbsp;&nbsp;font-size: 11px;\n&nbsp;&nbsp;&nbsp;&nbsp;height: 13px;\n&nbsp;&nbsp;&nbsp;&nbsp;line-height: 13px;\n&nbsp;&nbsp;&nbsp;&nbsp;pointer-events: none;\n}\n", __FILE__);
         $f->columnWidth = 35;
         if($data['styleAdminElements']) $f->attr('value', $data['styleAdminElements']);
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldTextarea");
         $f->attr('name', 'styleAdminColors');
-        $f->label = __('Style Admin Colors', __FILE__);
-        $f->showIf = "styleAdmin=1";
-        $f->description = __('Use "type|#color" entries to define styling for each server type. "local" is determined by IP address. Other types are detected based on their existence in subdomain or TLD (eg. dev.mysite.com or mysite.dev), dependant on whether you include the period after (dev.﹡) or before (﹡.dev).', __FILE__);
+        $f->label = __('Indicator Colors', __FILE__);
+        $f->showIf = "styleWhere.count>0";
+        $f->description = __('Use "type|#color" entries to define indicator styling for each server type. "local" is determined by IP address. Other types are detected based on their existence in subdomain or TLD (eg. dev.mysite.com or mysite.dev), dependant on whether you include the period after (dev.﹡) or before (﹡.dev).', __FILE__);
         $f->notes = __("**DEFAULT**\nlocal|#ca6500\ndev.*|#990000\nstaging.*|#8b0066", __FILE__);
         $f->columnWidth = 45;
         if($data['styleAdminColors']) $f->attr('value', $data['styleAdminColors']);
