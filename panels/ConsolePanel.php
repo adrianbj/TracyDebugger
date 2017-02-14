@@ -103,6 +103,15 @@ HTML;
                 }
             });
 
+            document.getElementById("tracyConsoleCode").addEventListener("keydown", function(e) {
+                if((e.keyCode==38||e.charCode==38) && e.ctrlKey && e.metaKey) {
+                    loadHistory('back');
+                }
+                if((e.keyCode==40||e.charCode==40) && e.ctrlKey && e.metaKey) {
+                    loadHistory('forward');
+                }
+            });
+
             function tryParseJSON (str){
                 if(!isNaN(str)) return str; // JSON.parse on numbers not being parsed and returning false
                 try {
@@ -219,8 +228,8 @@ HTML;
                         <div id="tracyConsoleCode" style="visibility:hidden; height:100px"></div>
                         <div style="padding:10px 0">
                             <input title="Run code" type="submit" id="runCode" onclick="processTracyCode()" value="Run" />&nbsp;
-                            <input title="Go back" id="historyBack" type="submit" onclick="loadHistory(\'back\')" value="&#11013;" />&nbsp;
-                            <input title="Go forward" class="arrowRight" id="historyForward" type="submit" onclick="loadHistory(\'forward\')" value="&#11013;" />
+                            <input title="Go back (CTRL+CMD+&#8593;)" id="historyBack" type="submit" onclick="loadHistory(\'back\')" value="&#11013;" />&nbsp;
+                            <input title="Go forward (CTRL+CMD+&#8595;)" class="arrowRight" id="historyForward" type="submit" onclick="loadHistory(\'forward\')" value="&#11013;" />
                             <input title="Clear results" type="submit" id="clearResults" onclick="clearResults()" value="&#10006; Clear results" />
                             <span id="tracyConsoleStatus" style="padding: 10px"></span>
                         </div>
@@ -385,14 +394,17 @@ HTML;
 
             function loadHistory(direction) {
 
-                if(direction === 'back') {
+                var noItem = false;
+
+                if(direction === 'back' && historyItem > 1) {
                     var id = --historyItem;
                 }
-                else if(historyCount > historyItem) {
+                else if(direction === 'forward' && historyCount > historyItem) {
                     var id = ++historyItem;
                 }
                 else {
-                    var id = historyCount;
+                    var id = historyItem;
+                    noItem = true;
                 }
 
                 if(id == 1) {
@@ -407,6 +419,8 @@ HTML;
                 else {
                     enableButton("historyForward");
                 }
+
+                if(noItem) return;
 
                 localStorage.setItem("tracyConsoleHistoryItem", historyItem);
 
