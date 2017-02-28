@@ -222,18 +222,6 @@ class Debugger
 
 
 	/**
-	 * Renders loading <script>
-	 * @return void
-	 */
-	public static function renderLoader()
-	{
-		if (!self::$productionMode) {
-			self::getBar()->renderLoader();
-		}
-	}
-
-
-	/**
 	 * @return bool
 	 */
 	public static function isEnabled()
