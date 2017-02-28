@@ -69,7 +69,7 @@ class CaptainHookSearch {
                                 $files['filename'] = $file;
                                 $files['hooks'][$i]['name'] = $name;
                                 $files['hooks'][$i]['lineNumber'] = $token[2];
-                                $files['hooks'][$i]['line'] = trim(substr($lines[($token[2]-1)], 0, strpos($lines[($token[2]-1)], "{")));
+                                $files['hooks'][$i]['line'] = self::getFunctionLine($lines[($token[2]-1)]);
                             }
                         }
                     }
@@ -131,6 +131,24 @@ class CaptainHookSearch {
         }
         return $newStr;
     }
+
+
+    private static function getFunctionLine($str) {
+        $functEndChar = null;
+        foreach(array('{', ';', '/*', '//') as $char) {
+            if(strpos($str, $char) !== false) {
+                $functEndChar = $char;
+                break;
+            }
+        }
+        if($functEndChar) {
+            return trim(substr($str, 0, strpos($str, $functEndChar)));
+        }
+        else {
+            return trim($str);
+        }
+    }
+
 
 }
 
