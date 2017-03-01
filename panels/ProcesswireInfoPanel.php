@@ -96,11 +96,11 @@ class ProcesswireInfoPanel extends BasePanel {
             <table>
                 <tr>
                     <td>Title</td>
-                    <td>'.$this->getLanguageVersion($p, 'title', $userLang).'</td>
+                    <td>'.$this->getLanguageVersion($p, 'title', $userLang, true).'</td>
                 </tr>
                 <tr>
                     <td>Name</td>
-                    <td>'.$this->getLanguageVersion($p, 'name', $userLang).'</td>
+                    <td>'.$this->getLanguageVersion($p, 'name', $userLang, true).'</td>
                 </tr>';
 
             if($titleMultiLanguage) {
@@ -147,13 +147,13 @@ class ProcesswireInfoPanel extends BasePanel {
                     $summary .= '
                     <tr>
                         <td>Parent</td>
-                        <td>' . ($p->parent->viewable() ? '<a title="View Parent" href="'.$p->parent->url.'">'.$this->getLanguageVersion($p->parent, 'name', $userLang).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->parent, 'name', $userLang).'</span>') . ' (<a title="Edit Parent" href="'.$p->parent->editUrl().'">'.$p->parent->id.'</a>)</td>
+                        <td>' . ($p->parent->viewable() ? '<a title="View Parent" href="'.$p->parent->url.'">'.$this->getLanguageVersion($p->parent, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->parent, 'name', $userLang, true).'</span>') . ' (<a title="Edit Parent" href="'.$p->parent->editUrl().'">'.$p->parent->id.'</a>)</td>
                     </tr>';
                 }
                 $summary .= '
                 <tr>
                     <td>Root Parent</td>
-                    <td>' . ($p->rootParent->viewable() ? '<a title="View Root Parent" href="'.$p->rootParent->url.'">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang).'</span>') . ' (<a title="Edit Root Parent" href="'.$p->rootParent->editUrl().'">'.$p->rootParent->id.'</a>)</td>
+                    <td>' . ($p->rootParent->viewable() ? '<a title="View Root Parent" href="'.$p->rootParent->url.'">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang, true).'</span>') . ' (<a title="Edit Root Parent" href="'.$p->rootParent->editUrl().'">'.$p->rootParent->id.'</a>)</td>
                 </tr>
                 ';
                 $prevPage = $p->prevAll("include=all")->first();
@@ -161,7 +161,7 @@ class ProcesswireInfoPanel extends BasePanel {
                     $summary .= '
                     <tr>
                         <td>Prev Sibling</td>
-                        <td>' . ($prevPage->viewable() ? '<a title="View Prev Sibling" href="'.$prevPage->url.'">'.$this->getLanguageVersion($prevPage, 'name', $userLang).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($prevPage, 'name', $userLang).'</span>') . ' (<a title="Edit Prev Sibling" href="'.$prevPage->editUrl().'">'.$prevPage->id.'</a>)</td>
+                        <td>' . ($prevPage->viewable() ? '<a title="View Prev Sibling" href="'.$prevPage->url.'">'.$this->getLanguageVersion($prevPage, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($prevPage, 'name', $userLang, true).'</span>') . ' (<a title="Edit Prev Sibling" href="'.$prevPage->editUrl().'">'.$prevPage->id.'</a>)</td>
                     </tr>';
                 }
                 $nextPage = $p->nextAll("include=all")->first();
@@ -169,7 +169,7 @@ class ProcesswireInfoPanel extends BasePanel {
                     $summary .= '
                     <tr>
                         <td>Next Sibling</td>
-                        <td>' . ($nextPage->viewable() ? '<a title="View Next Sibling" href="'.$nextPage->url.'">'.$this->getLanguageVersion($nextPage, 'name', $userLang).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($nextPage, 'name', $userLang).'</span>') . ' (<a title="Edit Next Sibling" href="'.$nextPage->editUrl().'">'.$nextPage->id.'</a>)</td>
+                        <td>' . ($nextPage->viewable() ? '<a title="View Next Sibling" href="'.$nextPage->url.'">'.$this->getLanguageVersion($nextPage, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($nextPage, 'name', $userLang, true).'</span>') . ' (<a title="Edit Next Sibling" href="'.$nextPage->editUrl().'">'.$nextPage->id.'</a>)</td>
                     </tr>';
                 }
                 $summary .= '
@@ -177,7 +177,16 @@ class ProcesswireInfoPanel extends BasePanel {
                     <td>Children</td>
                     <td>'.$p->numChildren().' <a title="Open Page Tree" href="'.$this->wire('config')->urls->admin.'page/list/?open='.$p->id.'">open tree</a> | <a title="View Children Tab" href="'.$p->editUrl().'#ProcessPageEditChildren">edit</a></td>
                 </tr>
-                <tr>
+                <tr>';
+                if($p->numChildren()) {
+                    $summary .= '
+                    <tr>
+                        <td>First Child</td>
+                        <td>' . ($p->child->viewable() ? '<a title="View First Child" href="'.$p->child->url.'">'.$this->getLanguageVersion($p->child, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->child, 'name', $userLang, true).'</span>') . ' (<a title="Edit First Child" href="'.$p->child->editUrl().'">'.$p->child->id.'</a>)</td>
+                    </tr>
+                    <tr>';
+                }
+                $summary .= '
                     <td>Created</td>
                     <td>'.$p->createdUser->name.' ('.date("Y-m-d H:i:s", $p->created).')</td>
                 </tr>
@@ -726,7 +735,7 @@ class ProcesswireInfoPanel extends BasePanel {
     }
 
 
-    private function getLanguageVersion($p, $fieldName, $userLang) {
+    private function getLanguageVersion($p, $fieldName, $userLang, $showDefault = false) {
         if($this->wire('languages')) {
             $p->of(false);
             if($fieldName == 'name') {
@@ -738,7 +747,7 @@ class ProcesswireInfoPanel extends BasePanel {
             else {
                 $result = $p->$fieldName;
             }
-            return $result == '' ? '<span title="No '.$fieldName.' for '.$userLang->title.'" style="color:#000000; font-weight: bold" aria-hidden="true">&#9432; </span>' . $p->$fieldName : $result;
+            return $result == '' && $showDefault ? '<span title="No '.$fieldName.' for '.$userLang->title.'" style="color:#000000; font-weight: bold" aria-hidden="true">&#9432; </span>' . $p->$fieldName : $result;
         }
         else {
             return $p->$fieldName;
