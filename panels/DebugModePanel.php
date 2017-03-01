@@ -319,7 +319,7 @@ class DebugModePanel extends BasePanel {
                 foreach($queryMethod as $n => $sql) {
                     $databaseQueries_oc++;
                     $sql = $this->wire('sanitizer')->entities1($sql);
-                    $databaseQueries .= "\n<tr><th>$n</th><td class='tracy-force-break'>".$sql."</td></tr>";
+                    $databaseQueries .= "\n<tr><td>$n</td><td class='tracy-force-break'>".$sql."</td></tr>";
                 }
                 $databaseQueries .= $sectionEnd;
             }
@@ -331,7 +331,7 @@ class DebugModePanel extends BasePanel {
                 $savedTimers = Debug::getSavedTimers();
                 foreach($savedTimers as $name => $timer) {
                     $timers_oc++;
-                    $timers .= "\n<tr><th>$name</th><td>$timer</td></tr>";
+                    $timers .= "\n<tr><td>$name</td><td>$timer</td></tr>";
                 }
                 $timers .= $sectionEnd;
             }
@@ -393,7 +393,7 @@ class DebugModePanel extends BasePanel {
                         if($key == 'size') $value = wireBytesStr($value);
                         $key = $this->wire('sanitizer')->entities($key);
                         $value = $this->wire('sanitizer')->entities($value);
-                        $cacheDetails .= "<tr><th width='30%'>$key</th><td>$value</td></tr>";
+                        $cacheDetails .= "<tr><td width='30%'>$key</td><td>$value</td></tr>";
                     }
                     $cacheDetails .= "</tbody></table><br />";
                 }
@@ -408,7 +408,7 @@ class DebugModePanel extends BasePanel {
                         $autoload_oc++;
                         $className = $this->wire('sanitizer')->entities($className);
                         $classFile = $this->wire('sanitizer')->entities($classFile);
-                        $autoload .= "<tr><th width='40%'>$className</th><td>$classFile</td></tr>";
+                        $autoload .= "<tr><td width='40%'>$className</td><td>$classFile</td></tr>";
                     }
                     $autoload .= $sectionEnd;
                 }

@@ -82,6 +82,9 @@ class ProcesswireInfoPanel extends BasePanel {
                 </table>
             </div>';
 
+        $titleMultiLanguage = $this->wire('languages') && $this->wire('modules')->isInstalled("FieldtypePageTitleLanguage") && $this->wire('fields')->get('title')->type == 'FieldtypePageTitleLanguage';
+        $nameMultiLanguage = $this->wire('languages') && $this->wire('modules')->isInstalled("LanguageSupportPageNames");
+        $userLang = $this->wire('user')->language;
 
         /**
          * Custom PW panel sections
@@ -92,20 +95,30 @@ class ProcesswireInfoPanel extends BasePanel {
             $summary = '
             <table>
                 <tr>
-                    <th>Title</th>
-                    <td>'.$p->title.'</td>
+                    <td>Title</td>
+                    <td>'.$this->getLanguageVersion($p, 'title', $userLang).'</td>
                 </tr>
                 <tr>
-                    <th>Name</th>
-                    <td>'.$p->name.'</td>
-                </tr>
+                    <td>Name</td>
+                    <td>'.$this->getLanguageVersion($p, 'name', $userLang).'</td>
+                </tr>';
+
+            if($titleMultiLanguage) {
+                $summary .= '
+                    <tr>
+                        <td>Language</td>
+                        <td>' . $userLang->title . ' ('.$userLang->name.')</td>
+                    </tr>';
+            }
+
+            $summary .= '
                 <tr>
-                    <th>ID</th>
+                    <td>ID</td>
                     <td><a title="Edit Page" href="'.$p->editUrl().'">'.$p->id.'</a></td>
                 </tr>
                 <tr>
-                    <th>Path</th>
-                    <td>'.$p->path.'</td>
+                    <td>Path</td>
+                    <td><a title="View Page" href="'.$p->url.'">'.$p->path.'</a></td>
                 </tr>
                 ';
                 if($p->template->urlSegments) {
@@ -114,7 +127,7 @@ class ProcesswireInfoPanel extends BasePanel {
                         if($this->wire('input')->urlSegment($i)) {
                             $summary .= '
                             <tr>
-                                <th>URL Segment '.$i.'</th>
+                                <td>URL Segment '.$i.'</td>
                                 <td>'.$this->wire('input')->urlSegment($i).'</td>
                             </tr>';
                         }
@@ -123,414 +136,425 @@ class ProcesswireInfoPanel extends BasePanel {
                 }
                 $summary .= '
                 <tr>
-                    <th>Template</th>
-                    <td><a title="Edit Template" href="'.$this->wire('config')->urls->admin.'setup/template/edit?id='.$p->template->id.'">'.$p->template->name.($p->template->label ? '</a> ('.$p->template->label.')' :'').'</td>
+                    <td>Template</td>
+                    <td><a title="Edit Template" href="'.$this->wire('config')->urls->admin.'setup/template/edit?id='.$p->template->id.'">'.$p->template->name.'</a>'.($p->template->label ? ' ('.($this->wire('languages') ? $p->template->getLabel($userLang) : $p->template->label).')' :'').'</td>
                 </tr>
                 <tr>
-                    <th>Process</th>
+                    <td>Process</td>
                     <td>'.$this->wire('process').'</td>
                 </tr>';
                 if($p->parent->id) {
                     $summary .= '
                     <tr>
-                        <th>Parent</th>
-                        <td>' . ($p->parent->viewable() ? '<a title="View Parent" href="'.$p->parent->url.'">'.$p->parent->name.'</a>' : '<span title="Not Viewable">'.$p->parent->name.'</span>') . ' (<a title="Edit Parent" href="'.$p->parent->editUrl().'">'.$p->parent->id.'</a>)</td>
+                        <td>Parent</td>
+                        <td>' . ($p->parent->viewable() ? '<a title="View Parent" href="'.$p->parent->url.'">'.$this->getLanguageVersion($p->parent, 'name', $userLang).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->parent, 'name', $userLang).'</span>') . ' (<a title="Edit Parent" href="'.$p->parent->editUrl().'">'.$p->parent->id.'</a>)</td>
                     </tr>';
                 }
                 $summary .= '
                 <tr>
-                    <th>Root Parent</th>
-                    <td>' . ($p->rootParent->viewable() ? '<a title="View Root Parent" href="'.$p->rootParent->url.'">'.$p->rootParent->name.'</a>' : '<span title="Not Viewable">'.$p->rootParent->name.'</span>') . ' (<a title="Edit Root Parent" href="'.$p->rootParent->editUrl().'">'.$p->rootParent->id.'</a>)</td>
+                    <td>Root Parent</td>
+                    <td>' . ($p->rootParent->viewable() ? '<a title="View Root Parent" href="'.$p->rootParent->url.'">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang).'</span>') . ' (<a title="Edit Root Parent" href="'.$p->rootParent->editUrl().'">'.$p->rootParent->id.'</a>)</td>
                 </tr>
                 ';
                 $prevPage = $p->prevAll("include=all")->first();
                 if($prevPage) {
                     $summary .= '
                     <tr>
-                        <th>Prev Sibling</th>
-                        <td>' . ($prevPage->viewable() ? '<a title="View Prev Sibling" href="'.$prevPage->url.'">'.$prevPage->name.'</a>' : '<span title="Not Viewable">'.$prevPage->name.'</span>') . ' (<a title="Edit Prev Sibling" href="'.$prevPage->editUrl().'">'.$prevPage->id.'</a>)</td>
+                        <td>Prev Sibling</td>
+                        <td>' . ($prevPage->viewable() ? '<a title="View Prev Sibling" href="'.$prevPage->url.'">'.$this->getLanguageVersion($prevPage, 'name', $userLang).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($prevPage, 'name', $userLang).'</span>') . ' (<a title="Edit Prev Sibling" href="'.$prevPage->editUrl().'">'.$prevPage->id.'</a>)</td>
                     </tr>';
                 }
                 $nextPage = $p->nextAll("include=all")->first();
                 if($nextPage) {
                     $summary .= '
                     <tr>
-                        <th>Next Sibling</th>
-                        <td>' . ($nextPage->viewable() ? '<a title="View Next Sibling" href="'.$nextPage->url.'">'.$nextPage->name.'</a>' : '<span title="Not Viewable">'.$nextPage->name.'</span>') . ' (<a title="Edit Next Sibling" href="'.$nextPage->editUrl().'">'.$nextPage->id.'</a>)</td>
+                        <td>Next Sibling</td>
+                        <td>' . ($nextPage->viewable() ? '<a title="View Next Sibling" href="'.$nextPage->url.'">'.$this->getLanguageVersion($nextPage, 'name', $userLang).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($nextPage, 'name', $userLang).'</span>') . ' (<a title="Edit Next Sibling" href="'.$nextPage->editUrl().'">'.$nextPage->id.'</a>)</td>
                     </tr>';
                 }
                 $summary .= '
                 <tr>
-                    <th>Children</th>
+                    <td>Children</td>
                     <td>'.$p->numChildren().' <a title="Open Page Tree" href="'.$this->wire('config')->urls->admin.'page/list/?open='.$p->id.'">open tree</a> | <a title="View Children Tab" href="'.$p->editUrl().'#ProcessPageEditChildren">edit</a></td>
                 </tr>
                 <tr>
-                    <th>Created</th>
+                    <td>Created</td>
                     <td>'.$p->createdUser->name.' ('.date("Y-m-d H:i:s", $p->created).')</td>
                 </tr>
                 <tr>
-                    <th>Published</th>
+                    <td>Published</td>
                     <td>'.date("Y-m-d H:i:s", $p->published).'</td>
                 </tr>
                 <tr>
-                    <th>Modified</th>
+                    <td>Modified</td>
                     <td>'.$p->modifiedUser->name.' ('.date("Y-m-d H:i:s", $p->modified).')</td>
                 </tr>
                 <tr>
-                    <th>Hidden</th>
-                    <td>'. ($p->isHidden() ? "true" : "false") .'</td>
+                    <td>Hidden</td>
+                    <td>'. ($p->isHidden() ? "&#10004;" : "&#x2718;") .'</td>
                 </tr>
                 <tr>
-                    <th>Unpublished</th>
-                    <td>'. ($p->isUnpublished() ? "true" : "false") .'</td>
+                    <td>Unpublished</td>
+                    <td>'. ($p->isUnpublished() ? "&#10004;" : "&#x2718;") .'</td>
                 </tr>
                 <tr>
-                    <th>Locked</th>
-                    <td>'. ($p->is(Page::statusLocked) ? "true" : "false") .'</td>
+                    <td>Locked</td>
+                    <td>'. ($p->is(Page::statusLocked) ? "&#10004;" : "&#x2718;") .'</td>
                 </tr>
             </table>';
+        }
 
-            // Template info
-            if(file_exists($p->template->filename)) $templateFilePath = $p->template->filename;
-            $templateFileEditorPath = isset($templateFilePath) ? str_replace('%file', $templateFilePath, str_replace('%line', '1', \TracyDebugger::getDataValue('editor'))) : '';
-            if(\TracyDebugger::getDataValue('localRootPath') != '') $templateFileEditorPath = str_replace($this->wire('config')->paths->root, \TracyDebugger::getDataValue('localRootPath'), $templateFileEditorPath);
-
-            if(in_array('templateInfo', $panelSections)) {
-                // posix_getpwuid doesn't exist on Windows
-                if(function_exists('posix_getpwuid')) {
-                    if(isset($templateFilePath)) {
-                        $owner = posix_getpwuid(fileowner($templateFilePath));
-                        $group = posix_getgrgid($owner['gid']);
-                    }
+        // Language info
+        $languageInfo = '';
+        if($this->wire('languages') && in_array('languageInfo', $panelSections)) {
+            if($this->wire('languages')) {
+                $languageInfo .= '<table><tr><th>Language</th><th>ID</th><th>Title</th><th>Name</th><th>Active</th></tr>';
+                foreach($this->wire('languages') as $language) {
+                    $languageInfo .= '<tr><td>' . $language->title . ' ('.$language->name.')</td><td><a title="Edit Language" href="'.$this->wire('config')->urls->admin.'/setup/languages/edit/?id='.$language->id.'">'.$language->id.'</a></td><td>' . $this->getLanguageVersion($p, 'title', $language) . '</td><td>' . $this->getLanguageVersion($p, 'name', $language) . '</td><td>' . ($language->isDefaultLanguage ? 'default' : ($p->get("status{$language->id}") ? "&#10004;" : "&#x2718;")) . '</td></tr>';
                 }
-                $permission = !isset($templateFilePath) ? '' : substr(sprintf('%o', fileperms($templateFilePath)), -4);
-
-                $templateInfo = '
-                <table>
-                    <tr>
-                        <th>Label</th>
-                        <td>'.$p->template->label.'</td>
-                    </tr>
-                    <tr>
-                        <th>Name</th>
-                        <td><a title="Edit Template" href="'.$this->wire('config')->urls->admin.'setup/template/edit?id='.$p->template->id.'">'.$p->template->name.'</a></td>
-                    </tr>
-                    <tr>
-                        <th>ID</th>
-                        <td>'.$p->template->id.'</td>
-                    </tr>
-                    <tr>
-                        <th>Modified</th>
-                        <td>'.date("Y-m-d H:i:s", $p->template->modified).'</td>
-                    </tr>
-                    <tr>
-                        <th>Fieldgroup</th>
-                        <td>'.$p->template->fieldgroup.'</td>
-                    </tr>
-                    <tr>
-                        <th>Filename</th>
-                        <td>'.(isset($templateFilePath) ? '<a title="Edit Template File" href="'.$templateFileEditorPath.'">'.str_replace($this->wire('config')->paths->root, '/', $templateFilePath).'</a>' : 'No file').'</td>
-                    </tr>
-                    ';
-                    if(isset($templateFilePath)) {
-                        $templateInfo .= '
-                        <tr>
-                            <th>File Last Modified</th>
-                            <td>'.date("Y-m-d H:i:s", filemtime($templateFilePath)).'</td>
-                        </tr>';
-                    }
-                    $templateInfo .= '
-                    <tr>
-                        <th>Compile</th>
-                        <td>'.($p->template->compile == 0 ? 'No' : ($p->template->compile == 1 ? 'Yes (template file only)' : 'Yes (and included files)')).'</td>
-                    </tr>
-                    <tr>
-                        <th>Content Type</th>
-                        <td>'.$p->template->contentType.'</td>
-                    </tr>
-                    ';
-                    if(isset($owner)) {
-                        $templateInfo .= '
-                        <tr>
-                            <th>Owner (User:Group)</th>
-                            <td>'.$owner['name'].":".$group['name'].'</td>
-                        </tr>';
-                    }
-                    $templateInfo .= '
-                    <tr>
-                        <th>Permission</th>
-                        <td>'.$permission .'</td>
-                    </tr>
-                    <tr>
-                        <th>Page Numbers</th>
-                        <td>'.($p->template->allowPageNum ? 'Enabled' : 'Disabled').'</td>
-                    </tr>
-                    <tr>
-                        <th>URL Segments</th>
-                        <td>'.($p->template->urlSegments ? 'Enabled' : 'Disabled').'</td>
-                    </tr>
-                    <tr>
-                        <th>Children Allowed</th>
-                        <td>'.($p->template->noChildren ? 'No' : 'Yes').'</td>
-                    </tr>
-                    <tr>
-                        <th>Allow for New Page</th>
-                        <td>'.($p->template->noParents < 0 ? 'Only One' : ($p->template->noParents == 1 ? 'No' : 'Yes')).'</td>
-                    </tr>
-                    <tr>
-                        <th>Children Sorted By</th>
-                        <td>'.$p->template->sortfield.'</td>
-                    </tr>
-                    <tr>
-                        <th>Cache Time</th>
-                        <td>'.$p->template->cache_time.'</td>
-                    </tr>
-                </table>';
+                $languageInfo .= '</table>';
             }
+        }
 
-            // Fields List & Values
-            if(in_array('fieldsListValues', $panelSections)) {
-                // TODO - this is a mess - very repetitive and needs cleaning up a lot
-                $fieldsListValues = $this->sectionHeader(array('ID', 'Name', 'Label', 'FieldType', 'InputfieldType/Class', 'Returns', 'Value', 'Settings'));
-                foreach($p->fields as $f) {
-                    if(is_object($p->$f)) {
-                        $fieldArray = array();
-                        foreach($p->$f as $key => $item) {
-                            if(is_object($item)) {
-                                foreach($item as $type => $value) {
-                                    // TODO this is a temp fix for situations where the type is: 0
-                                    // need to figure out why and deal with properly
-                                    if($type === 0) break 2;
-                                    if($type == 'created' || $type == 'modified' || $type == 'published') $value .= ' ('.date("Y-m-d H:i:s", $value).')';
-                                    if($type == 'created_users_id' || $type == 'modified_users_id') $value .= ' ('.$this->wire('users')->get($value)->name.')';
+        // Template info
+        if(file_exists($p->template->filename)) $templateFilePath = $p->template->filename;
+        $templateFileEditorPath = isset($templateFilePath) ? str_replace('%file', $templateFilePath, str_replace('%line', '1', \TracyDebugger::getDataValue('editor'))) : '';
+        if(\TracyDebugger::getDataValue('localRootPath') != '') $templateFileEditorPath = str_replace($this->wire('config')->paths->root, \TracyDebugger::getDataValue('localRootPath'), $templateFileEditorPath);
 
-                                    if(is_object($value)) {
-                                        $outValue = method_exists($value,'getArray') ? $value->getArray() : $value;
-                                        // run getValue() on as many levels as the Max Nesting Depth config setting
-                                        for($i=0;$i<=\TracyDebugger::getDataValue('maxDepth');$i++) {
-                                            if(is_array($outValue)) {
-                                                array_walk_recursive($outValue, function (&$val) {
-                                                    $val = is_object($val) && method_exists($val,'getArray') ? $val->getArray() : $val;
-                                                });
-                                            }
+        if(in_array('templateInfo', $panelSections)) {
+            // posix_getpwuid doesn't exist on Windows
+            if(function_exists('posix_getpwuid')) {
+                if(isset($templateFilePath)) {
+                    $owner = posix_getpwuid(fileowner($templateFilePath));
+                    $group = posix_getgrgid($owner['gid']);
+                }
+            }
+            $permission = !isset($templateFilePath) ? '' : substr(sprintf('%o', fileperms($templateFilePath)), -4);
+
+            $templateInfo = '
+            <table>
+                <tr>
+                    <td>Label</td>
+                    <td>'.($this->wire('languages') ? $p->template->getLabel($userLang) : $p->template->label).'</td>
+                </tr>
+                <tr>
+                    <td>Name</td>
+                    <td><a title="Edit Template" href="'.$this->wire('config')->urls->admin.'setup/template/edit?id='.$p->template->id.'">'.$p->template->name.'</a></td>
+                </tr>
+                <tr>
+                    <td>ID</td>
+                    <td>'.$p->template->id.'</td>
+                </tr>
+                <tr>
+                    <td>Modified</td>
+                    <td>'.date("Y-m-d H:i:s", $p->template->modified).'</td>
+                </tr>
+                <tr>
+                    <td>Fieldgroup</td>
+                    <td>'.$p->template->fieldgroup.'</td>
+                </tr>
+                <tr>
+                    <td>Filename</td>
+                    <td>'.(isset($templateFilePath) ? '<a title="Edit Template File" href="'.$templateFileEditorPath.'">'.str_replace($this->wire('config')->paths->root, '/', $templateFilePath).'</a>' : 'No file').'</td>
+                </tr>
+                ';
+                if(isset($templateFilePath)) {
+                    $templateInfo .= '
+                    <tr>
+                        <td>File Last Modified</td>
+                        <td>'.date("Y-m-d H:i:s", filemtime($templateFilePath)).'</td>
+                    </tr>';
+                }
+                $templateInfo .= '
+                <tr>
+                    <td>Compile</td>
+                    <td>'.($p->template->compile == 0 ? 'No' : ($p->template->compile == 1 ? 'Yes (template file only)' : 'Yes (and included files)')).'</td>
+                </tr>
+                <tr>
+                    <td>Content Type</td>
+                    <td>'.$p->template->contentType.'</td>
+                </tr>
+                ';
+                if(isset($owner)) {
+                    $templateInfo .= '
+                    <tr>
+                        <td>Owner (User:Group)</td>
+                        <td>'.$owner['name'].":".$group['name'].'</td>
+                    </tr>';
+                }
+                $templateInfo .= '
+                <tr>
+                    <td>Permission</td>
+                    <td>'.$permission .'</td>
+                </tr>
+                <tr>
+                    <td>Page Numbers</td>
+                    <td>'.($p->template->allowPageNum ? 'Enabled' : 'Disabled').'</td>
+                </tr>
+                <tr>
+                    <td>URL Segments</td>
+                    <td>'.($p->template->urlSegments ? 'Enabled' : 'Disabled').'</td>
+                </tr>
+                <tr>
+                    <td>Children Allowed</td>
+                    <td>'.($p->template->noChildren ? 'No' : 'Yes').'</td>
+                </tr>
+                <tr>
+                    <td>Allow for New Page</td>
+                    <td>'.($p->template->noParents < 0 ? 'Only One' : ($p->template->noParents == 1 ? 'No' : 'Yes')).'</td>
+                </tr>
+                <tr>
+                    <td>Children Sorted By</td>
+                    <td>'.$p->template->sortfield.'</td>
+                </tr>
+                <tr>
+                    <td>Cache Time</td>
+                    <td>'.$p->template->cache_time.'</td>
+                </tr>
+            </table>';
+        }
+
+        // Fields List & Values
+        if(in_array('fieldsListValues', $panelSections)) {
+            // TODO - this is a mess - very repetitive and needs cleaning up a lot
+            $fieldsListValues = $this->sectionHeader(array('ID', 'Name', 'Label', 'FieldType', 'InputfieldType/Class', 'Returns', 'Value', 'Settings'));
+            foreach($p->fields as $f) {
+                if(is_object($p->$f)) {
+                    $fieldArray = array();
+                    foreach($p->$f as $key => $item) {
+                        if(is_object($item)) {
+                            foreach($item as $type => $value) {
+                                // TODO this is a temp fix for situations where the type is: 0
+                                // need to figure out why and deal with properly
+                                if($type === 0) break 2;
+                                if($type == 'created' || $type == 'modified' || $type == 'published') $value .= ' ('.date("Y-m-d H:i:s", $value).')';
+                                if($type == 'created_users_id' || $type == 'modified_users_id') $value .= ' ('.$this->wire('users')->get($value)->name.')';
+
+                                if(is_object($value)) {
+                                    $outValue = method_exists($value,'getArray') ? $value->getArray() : $value;
+                                    // run getValue() on as many levels as the Max Nesting Depth config setting
+                                    for($i=0;$i<=\TracyDebugger::getDataValue('maxDepth');$i++) {
+                                        if(is_array($outValue)) {
+                                            array_walk_recursive($outValue, function (&$val) {
+                                                $val = is_object($val) && method_exists($val,'getArray') ? $val->getArray() : $val;
+                                            });
                                         }
-                                    }
-                                    else {
-                                        $outValue = $value;
-                                    }
-
-                                    if(is_array($outValue)) {
-                                        $n=0;
-                                        foreach($outValue as &$val) {
-                                            if(is_array($val)) {
-                                                if(isset($val['created'])) $val['created'] .= ' ('.date("Y-m-d H:i:s", $val['created']).')';
-                                                if(isset($val['modified'])) $val['modified'] .= ' ('.date("Y-m-d H:i:s", $val['modified']).')';
-                                                if($value instanceof PageFiles) {
-                                                    $val['name'] = $value->eq($n)->name;
-                                                    $val['filename'] = $value->eq($n)->filename;
-                                                    $val['ext'] = $value->eq($n)->ext;
-                                                    $val['url'] = $value->eq($n)->url;
-                                                    $val['httpUrl'] = $value->eq($n)->httpUrl;
-                                                    $val['filesize'] = $value->eq($n)->filesize;
-                                                    $val['filesizeStr'] = $value->eq($n)->filesizeStr;
-                                                }
-                                                if($value instanceof PageImages) {
-                                                    $val['width'] = $value->eq($n)->width;
-                                                    $val['height'] = $value->eq($n)->height;
-                                                }
-                                                $n++;
-                                            }
-                                        }
-                                    }
-
-                                    $fieldArray['value'][$key][$type] = $outValue;
-
-                                    if($f->type instanceof FieldtypeFile) {
-                                        $fieldArray['value'][$key]['name'] = $item->name;
-                                        $fieldArray['value'][$key]['filename'] = $item->filename;
-                                        $fieldArray['value'][$key]['ext'] = $item->ext;
-                                        $fieldArray['value'][$key]['url'] = $item->url;
-                                        $fieldArray['value'][$key]['httpUrl'] = $item->httpUrl;
-                                        $fieldArray['value'][$key]['filesize'] = $item->filesize;
-                                        $fieldArray['value'][$key]['filesizeStr'] = $item->filesizeStr;
-                                    }
-                                    if($f->type instanceof FieldtypeImage) {
-                                        $fieldArray['value'][$key]['width'] = $item->width;
-                                        $fieldArray['value'][$key]['height'] = $item->height;
-                                        //just don't think there is any point showing the variations so remove to clean up
-                                        unset($fieldArray['value'][$key]['imageVariations']);
                                     }
                                 }
-                            }
-                            elseif($f->type instanceof FieldtypeFile || $f->type instanceof FieldtypeImage) {
+                                else {
+                                    $outValue = $value;
+                                }
+
+                                if(is_array($outValue)) {
+                                    $n=0;
+                                    foreach($outValue as &$val) {
+                                        if(is_array($val)) {
+                                            if(isset($val['created'])) $val['created'] .= ' ('.date("Y-m-d H:i:s", $val['created']).')';
+                                            if(isset($val['modified'])) $val['modified'] .= ' ('.date("Y-m-d H:i:s", $val['modified']).')';
+                                            if($value instanceof PageFiles) {
+                                                $val['name'] = $value->eq($n)->name;
+                                                $val['filename'] = $value->eq($n)->filename;
+                                                $val['ext'] = $value->eq($n)->ext;
+                                                $val['url'] = $value->eq($n)->url;
+                                                $val['httpUrl'] = $value->eq($n)->httpUrl;
+                                                $val['filesize'] = $value->eq($n)->filesize;
+                                                $val['filesizeStr'] = $value->eq($n)->filesizeStr;
+                                            }
+                                            if($value instanceof PageImages) {
+                                                $val['width'] = $value->eq($n)->width;
+                                                $val['height'] = $value->eq($n)->height;
+                                            }
+                                            $n++;
+                                        }
+                                    }
+                                }
+
+                                $fieldArray['value'][$key][$type] = $outValue;
+
                                 if($f->type instanceof FieldtypeFile) {
-                                    $fieldArray['value']['basename'] = $p->$f->name;
-                                    $fieldArray['value']['name'] = $p->$f->name;
-                                    $fieldArray['value']['filename'] = $p->$f->filename;
-                                    $fieldArray['value']['ext'] = $p->$f->ext;
-                                    $fieldArray['value']['url'] = $p->$f->url;
-                                    $fieldArray['value']['httpUrl'] = $p->$f->httpUrl;
-                                    $fieldArray['value']['filesize'] = $p->$f->filesize;
-                                    $fieldArray['value']['filesizeStr'] = $p->$f->filesizeStr;
+                                    $fieldArray['value'][$key]['name'] = $item->name;
+                                    $fieldArray['value'][$key]['filename'] = $item->filename;
+                                    $fieldArray['value'][$key]['ext'] = $item->ext;
+                                    $fieldArray['value'][$key]['url'] = $item->url;
+                                    $fieldArray['value'][$key]['httpUrl'] = $item->httpUrl;
+                                    $fieldArray['value'][$key]['filesize'] = $item->filesize;
+                                    $fieldArray['value'][$key]['filesizeStr'] = $item->filesizeStr;
                                 }
                                 if($f->type instanceof FieldtypeImage) {
-                                    $fieldArray['value']['width'] = $p->$f->width;
-                                    $fieldArray['value']['height'] = $p->$f->height;
+                                    $fieldArray['value'][$key]['width'] = $item->width;
+                                    $fieldArray['value'][$key]['height'] = $item->height;
                                     //just don't think there is any point showing the variations so remove to clean up
-                                    unset($fieldArray['value']['imageVariations']);
-                                }
-                                foreach($p->$f->getArray() as $type => $value) {
-                                    if($type == 'created' || $type == 'modified' || $type == 'published') $value .= ' ('.date("Y-m-d H:i:s", $value).')';
-                                    if($type == 'created_users_id' || $type == 'modified_users_id') $value .= ' ('.$this->wire('users')->get($value)->name.')';
-                                    $fieldArray['value'][$type] = $value;
+                                    unset($fieldArray['value'][$key]['imageVariations']);
                                 }
                             }
-                            else {
-                                $fieldArray['value'][$key] = $item;
+                        }
+                        elseif($f->type instanceof FieldtypeFile || $f->type instanceof FieldtypeImage) {
+                            if($f->type instanceof FieldtypeFile) {
+                                $fieldArray['value']['basename'] = $p->$f->name;
+                                $fieldArray['value']['name'] = $p->$f->name;
+                                $fieldArray['value']['filename'] = $p->$f->filename;
+                                $fieldArray['value']['ext'] = $p->$f->ext;
+                                $fieldArray['value']['url'] = $p->$f->url;
+                                $fieldArray['value']['httpUrl'] = $p->$f->httpUrl;
+                                $fieldArray['value']['filesize'] = $p->$f->filesize;
+                                $fieldArray['value']['filesizeStr'] = $p->$f->filesizeStr;
+                            }
+                            if($f->type instanceof FieldtypeImage) {
+                                $fieldArray['value']['width'] = $p->$f->width;
+                                $fieldArray['value']['height'] = $p->$f->height;
+                                //just don't think there is any point showing the variations so remove to clean up
+                                unset($fieldArray['value']['imageVariations']);
+                            }
+                            foreach($p->$f->getArray() as $type => $value) {
+                                if($type == 'created' || $type == 'modified' || $type == 'published') $value .= ' ('.date("Y-m-d H:i:s", $value).')';
+                                if($type == 'created_users_id' || $type == 'modified_users_id') $value .= ' ('.$this->wire('users')->get($value)->name.')';
+                                $fieldArray['value'][$type] = $value;
                             }
                         }
-                        if(isset($fieldArray['value'])) $value = Dumper::toHtml($fieldArray['value'], array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
-                    }
-                    elseif(is_array($p->$f)) {
-                        $value = Dumper::toHtml($p->$f, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
-                    }
-                    else {
-                        $value = $p->$f;
-                    }
-                    $fieldArray['settings'] = $f->getArray();
-                    $settings = Dumper::toHtml($fieldArray['settings'], array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
-
-                    $fieldsListValues .= "\n<tr>" .
-                        "<td>$f->id</td>" .
-                        '<td><a title="Edit Field" href="'.$this->wire('config')->urls->admin.'setup/field/edit?id='.$f->id.'">'.$f->name.'</a></td>' .
-                        "<td>$f->label</td>" .
-                        "<td>".str_replace('Fieldtype', '', $f->type)."</td>" .
-                        "<td>".str_replace('Inputfield', '', ($f->inputfield ? $f->inputfield : $f->inputfieldClass))."</td>" .
-                        "<td>".gettype($p->$f)."</td>" .
-                        "<td>".$value."</td>" .
-                        "<td>$settings</td>" .
-                        "</tr>";
-                }
-                $fieldsListValues .= $sectionEnd;
-            }
-
-            // Versions Info
-            if(in_array('versionsList', $panelSections)) {
-                $versionsList = '
-                <script>
-                    // javascript dynamic loader from https://gist.github.com/hagenburger/500716
-                    // using dynamic loading because an exception error or "exit" in template file
-                    // was preventing these scripts from being loaded which broke the editor
-                    // if this has any problems, there is an alternate version to try here:
-                    // https://www.nczonline.net/blog/2009/07/28/the-best-way-to-load-external-javascript/
-                    var JavaScript = {
-                        load: function(src, callback) {
-                            var script = document.createElement("script"),
-                                    loaded;
-                            script.setAttribute("src", src);
-                            if (callback) {
-                                script.onreadystatechange = script.onload = function() {
-                                    if (!loaded) {
-                                        callback();
-                                    }
-                                    loaded = true;
-                                };
-                            }
-                            document.getElementsByTagName("head")[0].appendChild(script);
-                        }
-                    };
-                    JavaScript.load("'.$this->wire('config')->urls->siteModules.'TracyDebugger/clipboardjs/clipboard.min.js", function() {
-                        JavaScript.load("'.$this->wire('config')->urls->siteModules.'TracyDebugger/clipboardjs/tooltips.js", function() {
-                            var versionsClipboard=new Clipboard(".tracyCopyBtn");
-                            versionsClipboard.on("success",function(e){e.clearSelection();showTooltip(e.trigger,"Copied!");});versionsClipboard.on("error",function(e){showTooltip(e.trigger,fallbackMessage(e.action));});
-                        });
-                    });
-                </script>
-                ';
-                $serverInfo = "ProcessWire: " . $this->wire('config')->version . "\n";
-                $serverInfo .= "PHP: " . phpversion() . "\n";
-                if(isset($_SERVER['SERVER_SOFTWARE'])) $serverInfo .= "Apache: " . str_replace('Apache/', '', current(explode("PHP", $_SERVER['SERVER_SOFTWARE']))) . "\n";
-                $serverInfo .= "MySQL: " . $this->wire('database')->query('select version()')->fetchColumn() . "\n\n";
-
-                $serverSettings = "";
-                //php settings
-                foreach(array('allow_url_fopen', 'max_execution_time', 'max_input_nesting_level', 'max_input_time', 'max_input_vars', 'memory_limit', 'post_max_size', 'upload_max_filesize', 'xdebug', 'xdebug.max_nesting_level') as $setting) {
-                    if($setting == 'max_execution_time') {
-                        $max_execution_time = trim(ini_get('max_execution_time'));
-                        $can_change = set_time_limit($max_execution_time);
-                    }
-                    $serverSettings .= $setting . ": " . ini_get($setting);
-                    if($setting == 'max_execution_time') {
-                        $serverSettings .= isset($can_change) ? ' (changeable)' : ' (not changeable)';
-                    }
-                    $serverSettings .= "\n";
-                }
-                $serverSettings .= "\n";
-
-                // apache modules
-                if(function_exists('apache_get_modules')) $apacheModules = apache_get_modules();
-                foreach(array('mod_rewrite', 'mod_security') as $apacheModule) {
-                    if(isset($apacheModules)) {
-                        $serverSettings .= $apacheModule . ": " . (in_array($apacheModule, $apacheModules) ? '1' : false . ($apacheModule == 'mod_security' ? '*confirmed off' : '')) . "\n";
-                    }
-                    // fallback if apache_get_modules() is not available
-                    else {
-                        // this is a more reliable fallback for mod_rewrite
-                        if($apacheModule == 'mod_rewrite' && isset($_SERVER["HTTP_MOD_REWRITE"])) {
-                            $serverSettings .= $apacheModule . ": " . ($_SERVER["HTTP_MOD_REWRITE"] ? '1' : false) . "\n";
-                        }
-                        // this is for mod_security and any others specified, although it's still not very reliable for mod_security
                         else {
-                            ob_start();
-                            phpinfo(INFO_MODULES);
-                            $contents = ob_get_clean();
-                            $serverSettings .= $apacheModule . ": " . (strpos($contents, $apacheModule) ? '1' : false) . "\n";
+                            $fieldArray['value'][$key] = $item;
                         }
                     }
+                    if(isset($fieldArray['value'])) $value = Dumper::toHtml($fieldArray['value'], array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
                 }
-                $serverSettings .= "\n";
-                // image settings
-                if(function_exists('gd_info')) {
-                    $gd  = gd_info();
-                    $serverSettings .= "GD: " . (isset($gd['GD Version']) ? $gd['GD Version'] : $this->_('Version-Info not available')) . "\n";
-                    $serverSettings .= "GIF: " . (isset($gd['GIF Read Support']) && isset($gd['GIF Create Support']) ? $gd['GIF Create Support'] : false) . "\n";
-                    $serverSettings .= "JPG: " . (isset($gd['JPEG Support']) ? $gd['JPEG Support'] : false) . "\n";
-                    $serverSettings .= "PNG: " . (isset($gd['PNG Support']) ? $gd['PNG Support'] : false) . "\n";
-
+                elseif(is_array($p->$f)) {
+                    $value = Dumper::toHtml($p->$f, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
                 }
-                $serverSettings .= "\n";
-                $serverSettings .= "EXIF Support: " . (function_exists('exif_read_data') ? '1' : false) . "\n";
-                $serverSettings .= "FreeType: " . (isset($gd['FreeType Support']) ? $gd['FreeType Support'] : false) . "\n";
-                $serverSettings .= "Imagick Extension: " . (class_exists('Imagick') ? '1' : false) . "\n";
-
-                $serverSettings .= "\n";
-
-                $moduleInfo = '';
-                foreach($this->wire('modules')->sort("className") as $name => $label) {
-                    $flags = $this->wire('modules')->getFlags($name);
-                    $info = $this->wire('modules')->getModuleInfoVerbose($name);
-                    if($info['core']) continue;
-                    $moduleInfo .= $name . ": " . $this->wire('modules')->formatVersion($info['version']) . "\n";
+                else {
+                    $value = $p->$f;
                 }
-                $githubVersionsList = '<details><summary><strong>Server Details</strong></summary>' . $serverInfo . '<details><summary><strong>Server Settings</strong></summary> ' . $serverSettings . '</details><details><summary><strong>Module Details</strong></summary> ' . $moduleInfo . '</details></details>';
-                $versionsList .= '
-                <p>
-                    <button class="tracyCopyBtn" data-clipboard-text="'.$githubVersionsList.'">
-                        Copy for Github
-                    </button>
-                    <button class="tracyCopyBtn" data-clipboard-target="#versionsListTextarea">
-                        Copy plain text
-                    </button>
-                </p>
-                <p><textarea id="versionsListTextarea" rows="5" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="font-size:12px; width:100%; resize:vertical;">'.$serverInfo . $serverSettings . $moduleInfo.'</textarea></p>';
+                $fieldArray['settings'] = $f->getArray();
+                $settings = Dumper::toHtml($fieldArray['settings'], array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
+
+                $fieldsListValues .= "\n<tr>" .
+                    "<td>$f->id</td>" .
+                    '<td><a title="Edit Field" href="'.$this->wire('config')->urls->admin.'setup/field/edit?id='.$f->id.'">'.$f->name.'</a></td>' .
+                    "<td>$f->label</td>" .
+                    "<td>".str_replace('Fieldtype', '', $f->type)."</td>" .
+                    "<td>".str_replace('Inputfield', '', ($f->inputfield ? $f->inputfield : $f->inputfieldClass))."</td>" .
+                    "<td>".gettype($p->$f)."</td>" .
+                    "<td>".$value."</td>" .
+                    "<td>$settings</td>" .
+                    "</tr>";
             }
-
-            //Objects
-            $pageObject = Dumper::toHtml($p, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false));
-            $templateObject = Dumper::toHtml($p->template, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false));
-            $fieldsObject = Dumper::toHtml($p->fields, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false));
-
+            $fieldsListValues .= $sectionEnd;
         }
+
+        // Versions Info
+        if(in_array('versionsList', $panelSections)) {
+            $versionsList = '
+            <script>
+                // javascript dynamic loader from https://gist.github.com/hagenburger/500716
+                // using dynamic loading because an exception error or "exit" in template file
+                // was preventing these scripts from being loaded which broke the editor
+                // if this has any problems, there is an alternate version to try here:
+                // https://www.nczonline.net/blog/2009/07/28/the-best-way-to-load-external-javascript/
+                var JavaScript = {
+                    load: function(src, callback) {
+                        var script = document.createElement("script"),
+                                loaded;
+                        script.setAttribute("src", src);
+                        if (callback) {
+                            script.onreadystatechange = script.onload = function() {
+                                if (!loaded) {
+                                    callback();
+                                }
+                                loaded = true;
+                            };
+                        }
+                        document.getElementsByTagName("head")[0].appendChild(script);
+                    }
+                };
+                JavaScript.load("'.$this->wire('config')->urls->siteModules.'TracyDebugger/clipboardjs/clipboard.min.js", function() {
+                    JavaScript.load("'.$this->wire('config')->urls->siteModules.'TracyDebugger/clipboardjs/tooltips.js", function() {
+                        var versionsClipboard=new Clipboard(".tracyCopyBtn");
+                        versionsClipboard.on("success",function(e){e.clearSelection();showTooltip(e.trigger,"Copied!");});versionsClipboard.on("error",function(e){showTooltip(e.trigger,fallbackMessage(e.action));});
+                    });
+                });
+            </script>
+            ';
+            $serverInfo = "ProcessWire: " . $this->wire('config')->version . "\n";
+            $serverInfo .= "PHP: " . phpversion() . "\n";
+            if(isset($_SERVER['SERVER_SOFTWARE'])) $serverInfo .= "Apache: " . str_replace('Apache/', '', current(explode("PHP", $_SERVER['SERVER_SOFTWARE']))) . "\n";
+            $serverInfo .= "MySQL: " . $this->wire('database')->query('select version()')->fetchColumn() . "\n\n";
+
+            $serverSettings = "";
+            //php settings
+            foreach(array('allow_url_fopen', 'max_execution_time', 'max_input_nesting_level', 'max_input_time', 'max_input_vars', 'memory_limit', 'post_max_size', 'upload_max_filesize', 'xdebug', 'xdebug.max_nesting_level') as $setting) {
+                if($setting == 'max_execution_time') {
+                    $max_execution_time = trim(ini_get('max_execution_time'));
+                    $can_change = set_time_limit($max_execution_time);
+                }
+                $serverSettings .= $setting . ": " . ini_get($setting);
+                if($setting == 'max_execution_time') {
+                    $serverSettings .= isset($can_change) ? ' (changeable)' : ' (not changeable)';
+                }
+                $serverSettings .= "\n";
+            }
+            $serverSettings .= "\n";
+
+            // apache modules
+            if(function_exists('apache_get_modules')) $apacheModules = apache_get_modules();
+            foreach(array('mod_rewrite', 'mod_security') as $apacheModule) {
+                if(isset($apacheModules)) {
+                    $serverSettings .= $apacheModule . ": " . (in_array($apacheModule, $apacheModules) ? '1' : false . ($apacheModule == 'mod_security' ? '*confirmed off' : '')) . "\n";
+                }
+                // fallback if apache_get_modules() is not available
+                else {
+                    // this is a more reliable fallback for mod_rewrite
+                    if($apacheModule == 'mod_rewrite' && isset($_SERVER["HTTP_MOD_REWRITE"])) {
+                        $serverSettings .= $apacheModule . ": " . ($_SERVER["HTTP_MOD_REWRITE"] ? '1' : false) . "\n";
+                    }
+                    // this is for mod_security and any others specified, although it's still not very reliable for mod_security
+                    else {
+                        ob_start();
+                        phpinfo(INFO_MODULES);
+                        $contents = ob_get_clean();
+                        $serverSettings .= $apacheModule . ": " . (strpos($contents, $apacheModule) ? '1' : false) . "\n";
+                    }
+                }
+            }
+            $serverSettings .= "\n";
+            // image settings
+            if(function_exists('gd_info')) {
+                $gd  = gd_info();
+                $serverSettings .= "GD: " . (isset($gd['GD Version']) ? $gd['GD Version'] : $this->_('Version-Info not available')) . "\n";
+                $serverSettings .= "GIF: " . (isset($gd['GIF Read Support']) && isset($gd['GIF Create Support']) ? $gd['GIF Create Support'] : false) . "\n";
+                $serverSettings .= "JPG: " . (isset($gd['JPEG Support']) ? $gd['JPEG Support'] : false) . "\n";
+                $serverSettings .= "PNG: " . (isset($gd['PNG Support']) ? $gd['PNG Support'] : false) . "\n";
+
+            }
+            $serverSettings .= "\n";
+            $serverSettings .= "EXIF Support: " . (function_exists('exif_read_data') ? '1' : false) . "\n";
+            $serverSettings .= "FreeType: " . (isset($gd['FreeType Support']) ? $gd['FreeType Support'] : false) . "\n";
+            $serverSettings .= "Imagick Extension: " . (class_exists('Imagick') ? '1' : false) . "\n";
+
+            $serverSettings .= "\n";
+
+            $moduleInfo = '';
+            foreach($this->wire('modules')->sort("className") as $name => $label) {
+                $flags = $this->wire('modules')->getFlags($name);
+                $info = $this->wire('modules')->getModuleInfoVerbose($name);
+                if($info['core']) continue;
+                $moduleInfo .= $name . ": " . $this->wire('modules')->formatVersion($info['version']) . "\n";
+            }
+            $githubVersionsList = '<details><summary><strong>Server Details</strong></summary>' . $serverInfo . '<details><summary><strong>Server Settings</strong></summary> ' . $serverSettings . '</details><details><summary><strong>Module Details</strong></summary> ' . $moduleInfo . '</details></details>';
+            $versionsList .= '
+            <p>
+                <button class="tracyCopyBtn" data-clipboard-text="'.$githubVersionsList.'">
+                    Copy for Github
+                </button>
+                <button class="tracyCopyBtn" data-clipboard-target="#versionsListTextarea">
+                    Copy plain text
+                </button>
+            </p>
+            <p><textarea id="versionsListTextarea" rows="5" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="font-size:12px; width:100%; resize:vertical;">'.$serverInfo . $serverSettings . $moduleInfo.'</textarea></p>';
+        }
+
+        //Objects
+        $pageObject = Dumper::toHtml($p, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false));
+        $templateObject = Dumper::toHtml($p->template, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false));
+        $fieldsObject = Dumper::toHtml($p->fields, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false));
 
 
 
@@ -699,6 +723,26 @@ class ProcesswireInfoPanel extends BasePanel {
         $out .= '</div>';
 
         return parent::loadResources() . $out;
+    }
+
+
+    private function getLanguageVersion($p, $fieldName, $userLang) {
+        if($this->wire('languages')) {
+            $p->of(false);
+            if($fieldName == 'name') {
+                $result = $p->localName($userLang);
+            }
+            elseif(is_object($p->$fieldName)) {
+                $result = $p->$fieldName->getLanguageValue($userLang);
+            }
+            else {
+                $result = $p->$fieldName;
+            }
+            return $result == '' ? '<span title="No '.$fieldName.' for '.$userLang->title.'" style="color:#000000; font-weight: bold" aria-hidden="true">&#9432; </span>' . $p->$fieldName : $result;
+        }
+        else {
+            return $p->$fieldName;
+        }
     }
 
 }

@@ -122,7 +122,7 @@ class CaptainHookPanel extends BasePanel {
         foreach($info['hooks'] as $hook) {
             $out .= '
                 <tr>
-                    <th>'.$hook['name'].'</th>
+                    <td>'.$hook['name'].'</td>
                     <td><a href="'. \TracyDebugger::makePathLocal(str_replace("%file", $info['filename'], str_replace("%line", $hook['lineNumber'], \TracyDebugger::getDataValue("editor")))).'">'.$hook['lineNumber'].'</a></td>
                     <td class="tracy-force-no-wrap">' . $hook['line'] . '</td>
                 </tr>';
