@@ -1656,7 +1656,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'superuserForceDevelopment');
-        $f->label = __('Force Superuser into Development Mode', __FILE__);
+        $f->label = __('Force Superusers into Development Mode', __FILE__);
         $f->description = __('Check to force DEVELOPMENT mode for superusers even on live sites.', __FILE__);
         $f->notes = __('By default, the Output Mode setting\'s DETECT option will force a site into PRODUCTION mode when it is live, which hides the DebugBar and sends errors and dumps to log files. However, with this checked, superusers will always be in DEVELOPMENT mode.', __FILE__);
         $f->columnWidth = 33;
@@ -1665,9 +1665,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'guestForceDevelopmentLocal');
-        $f->label = __('Force Guest into Development Mode on Localhost', __FILE__);
+        $f->label = __('Force Guest Users into Development Mode on Localhost', __FILE__);
         $f->description = __('Check to force DEVELOPMENT mode for guests when server detected as localhost.', __FILE__);
-        $f->notes = __('By default, guest users will always be in PRODUCTION mode. However, with this checked, the will always be in DEVELOPMENT mode on localhost.', __FILE__);
+        $f->notes = __('By default, guest users will always be in PRODUCTION mode (no debug bar). However, with this checked, they will always be in DEVELOPMENT mode on localhost.', __FILE__);
         $f->columnWidth = 34;
         $f->attr('checked', $data['guestForceDevelopmentLocal'] == '1' ? 'checked' : '' );
         $fieldset->add($f);
