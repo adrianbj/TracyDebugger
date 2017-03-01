@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.1.8',
+            'version' => '4.1.9',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -133,6 +133,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "coreBranch" => version_compare(phpversion(), '5.4.4', '>=') ? 'master' : 'legacy',
                 "allowLogProduction" => 1,
                 "superuserForceDevelopment" => null,
+                "guestForceDevelopmentLocal" => null,
                 "ipAddress" => null,
                 "strictMode" => null,
                 "strictModeAjax" => null,
@@ -481,8 +482,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // TRACY MODE
-        if($this->data['outputMode'] == 'development' || ($this->wire('user')->isSuperuser() && $this->data['superuserForceDevelopment'] == 1)) {
-            $outputMode = Debugger::DEVELOPMENT;
+        if($this->data['outputMode'] == 'development' ||
+            ($this->wire('user')->isSuperuser() && $this->data['superuserForceDevelopment'] == 1) ||
+            (static::detectDebugMode() && $this->data['guestForceDevelopmentLocal'] == 1)) {
+                $outputMode = Debugger::DEVELOPMENT;
         }
         elseif($this->data['outputMode'] == 'production') {
             $outputMode = Debugger::PRODUCTION;
@@ -1405,17 +1408,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public static function allowedTracyUsers($u = null, $userBar = false) {
 
+        $isLocal = static::detectDebugMode();
         $outputMode = static::getDataValue('outputMode');
         if($outputMode == 'detect') {
-            $outputMode = static::detectDebugMode() ? 'development' : 'production';
+            $outputMode = $isLocal ? 'development' : 'production';
         }
 
         if(static::getDataValue('userSwitchSession') !== null) $userSwitchSession = static::getDataValue('userSwitchSession');
 
         $u = $u ? $u : wire('user');
 
-        if($u->isSuperuser() && static::getDataValue('superuserForceDevelopment') == 1) {
-            return 'full';
+        if($u->isSuperuser() && static::getDataValue('superuserForceDevelopment') == 1 ||
+            ($isLocal && static::getDataValue('guestForceDevelopmentLocal') == 1)) {
+                return 'full';
         }
         elseif(static::getDataValue('allowLogProduction') == 1 && $userBar === false && $outputMode == 'production') {
             return 'production';
@@ -1627,7 +1632,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'outputMode');
         $f->label = 'Output Mode';
         $f->description = __('The DETECT option automatically switches from DEVELOPMENT to PRODUCTION mode based on whether the IP of the site is publicly accessible or not.', __FILE__);
-        $f->notes = __('In PRODUCTION mode, all errors and dumps etc are logged to file. Nothing is displayed in the browser.', __FILE__);
+        $f->notes = __('In PRODUCTION mode, all errors and dumps etc are logged to file. Nothing is displayed in the browser. In DEVELOPMENT mode, the debug bar is displayed for authorized users - superusers and those with the "tracy-debugger" permission. All other users will be forced into PRODUCTION mode, regardless of this setting.', __FILE__);
         $f->columnWidth = 50;
         $f->required = true;
         $f->addOption('detect', 'DETECT');
@@ -1651,18 +1656,27 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'superuserForceDevelopment');
-        $f->label = __('Superuser Force Development Mode', __FILE__);
+        $f->label = __('Force Superuser into Development Mode', __FILE__);
         $f->description = __('Check to force DEVELOPMENT mode for superusers even on live sites.', __FILE__);
-        $f->notes = __('By default, the Output Mode setting\'s DETECT option will force a site into PRODUCTION mode when it is live, which hides the DebugBar and sends errors and dumps to log files. However, with this checked, Superusers will always be in DEVELOPMENT mode.', __FILE__);
-        $f->columnWidth = 50;
+        $f->notes = __('By default, the Output Mode setting\'s DETECT option will force a site into PRODUCTION mode when it is live, which hides the DebugBar and sends errors and dumps to log files. However, with this checked, superusers will always be in DEVELOPMENT mode.', __FILE__);
+        $f->columnWidth = 33;
         $f->attr('checked', $data['superuserForceDevelopment'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'guestForceDevelopmentLocal');
+        $f->label = __('Force Guest into Development Mode on Localhost', __FILE__);
+        $f->description = __('Check to force DEVELOPMENT mode for guests when server detected as localhost.', __FILE__);
+        $f->notes = __('By default, guest users will always be in PRODUCTION mode. However, with this checked, the will always be in DEVELOPMENT mode on localhost.', __FILE__);
+        $f->columnWidth = 34;
+        $f->attr('checked', $data['guestForceDevelopmentLocal'] == '1' ? 'checked' : '' );
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldText");
         $f->attr('name', 'ipAddress');
         $f->label = __('Restrict Non-superusers', __FILE__);
         $f->description = __('IP Address that non-superusers need to use TracyDebugger. Enter IP address or a PCRE regular expression to match IP address of user, eg. /^123\.456\.789\./ would match all IP addresses that started with 123.456.789.', __FILE__);
-        $f->columnWidth = 50;
+        $f->columnWidth = 33;
         $f->notes = __('Non-superusers are already blocked unless they have the "tracy-debugger" permission. But once a user has been given the permission, this option restricts access to the listed IP address. Highly recommended for debugging live sites that you have manually set into DEVELOPMENT mode.', __FILE__);
         if($data['ipAddress']) $f->attr('value', $data['ipAddress']);
         $fieldset->add($f);

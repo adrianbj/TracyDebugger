@@ -419,7 +419,8 @@ class DebugModePanel extends BasePanel {
                 $configEntries = $this->sectionHeader(array('Key', 'Value'));
                 foreach($this->wire('config') as $key => $value) {
                     if(is_object($value)) {
-                        $value = (array)$value->getIterator();
+                        $outValue = method_exists($value,'getIterator') ? $value->getIterator() : $value;
+                        $value = (array)$outValue;
                         ksort($value);
                         if($key == 'paths') $value = array_map(array($this, 'addRoot'), $value);
                     }
