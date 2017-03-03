@@ -735,19 +735,25 @@ class ProcesswireInfoPanel extends BasePanel {
     }
 
 
-    private function getLanguageVersion($p, $fieldName, $userLang, $showDefault = false) {
+    private function getLanguageVersion($p, $fieldName, $lang, $showDefault = false) {
         if($this->wire('languages')) {
             $p->of(false);
+            $result = '';
             if($fieldName == 'name') {
-                $result = $p->localName($userLang);
+                if($this->wire('modules')->isInstalled("LanguageSupportPageNames")) {
+                    $result = $p->localName($lang);
+                }
+                elseif($lang->isDefaultLanguage) {
+                    $result = $p->$fieldName;
+                }
             }
             elseif(is_object($p->$fieldName)) {
-                $result = $p->$fieldName->getLanguageValue($userLang);
+                $result = $p->$fieldName->getLanguageValue($lang);
             }
             else {
                 $result = $p->$fieldName;
             }
-            return $result == '' && $showDefault ? '<span title="No '.$fieldName.' for '.$userLang->title.'" style="color:#000000; font-weight: bold" aria-hidden="true">&#9432; </span>' . $p->$fieldName : $result;
+            return $result == '' && $showDefault ? '<span title="No '.$fieldName.' for '.$lang->title.'" style="color:#000000; font-weight: bold" aria-hidden="true">&#9432; </span>' . $p->$fieldName : $result;
         }
         else {
             return $p->$fieldName;
