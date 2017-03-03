@@ -82,8 +82,6 @@ class ProcesswireInfoPanel extends BasePanel {
                 </table>
             </div>';
 
-        $titleMultiLanguage = $this->wire('languages') && $this->wire('modules')->isInstalled("FieldtypePageTitleLanguage") && $this->wire('fields')->get('title')->type == 'FieldtypePageTitleLanguage';
-        $nameMultiLanguage = $this->wire('languages') && $this->wire('modules')->isInstalled("LanguageSupportPageNames");
         $userLang = $this->wire('user')->language;
 
         /**
@@ -103,7 +101,7 @@ class ProcesswireInfoPanel extends BasePanel {
                     <td>'.$this->getLanguageVersion($p, 'name', $userLang, true).'</td>
                 </tr>';
 
-            if($titleMultiLanguage) {
+            if($this->wire('languages')) {
                 $summary .= '
                     <tr>
                         <td>Language</td>
@@ -747,11 +745,16 @@ class ProcesswireInfoPanel extends BasePanel {
                     $result = $p->$fieldName;
                 }
             }
-            elseif(is_object($p->$fieldName)) {
-                $result = $p->$fieldName->getLanguageValue($lang);
-            }
-            else {
-                $result = $p->$fieldName;
+            elseif($fieldName == 'title') {
+                if(!$this->wire('modules')->isInstalled("FieldtypePageTitleLanguage") || !$this->wire('fields')->get('title')->type instanceof FieldtypePageTitleLanguage) {
+                    $result = $lang->isDefaultLanguage ? $p->$fieldName : '';
+                }
+                elseif(is_object($p->$fieldName)) {
+                    $result = $p->$fieldName->getLanguageValue($lang);
+                }
+                else {
+                    $result = $p->$fieldName;
+                }
             }
             return $result == '' && $showDefault ? '<span title="No '.$fieldName.' for '.$lang->title.'" style="color:#000000; font-weight: bold" aria-hidden="true">&#9432; </span>' . $p->$fieldName : $result;
         }
