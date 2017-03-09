@@ -105,13 +105,13 @@ class CaptainHookPanel extends BasePanel {
         $lastSection = null;
         foreach($hooks as $file => $info) {
             $name = pathinfo($info['filename'], PATHINFO_FILENAME);
-            $label = str_replace($this->wire('config')->paths->root, '/', $info['filename']);
+            $label = str_replace($this->wire('config')->paths->root, '', $info['filename']);
             $path = parse_url($label, PHP_URL_PATH);
-            $segments = explode('/', $path);
-            $currentSection = ucfirst($segments[1]) . ' ' . ucfirst($segments[2]);
+            $segments = explode(DIRECTORY_SEPARATOR, $path);
+            $currentSection = ucfirst($segments[0]) . ' ' . ucfirst($segments[1]);
             if($currentSection !== $lastSection) $out .= '<h3>'.$currentSection.'</h3>';
             $out .= '
-            <a href="#" rel="'.$name.'" class="tracy-toggle tracy-collapsed">'.str_replace('/'.$segments[1].'/'.$segments[2].'/', '', $label).'</a>
+            <a href="#" rel="'.$name.'" class="tracy-toggle tracy-collapsed">'.str_replace($segments[0].DIRECTORY_SEPARATOR.$segments[1].DIRECTORY_SEPARATOR, '', $label).'</a>
             <div id="'.$name.'" class="tracy-collapsed">'.$this->buildHookTable($info).'</div><br />';
             $lastSection = $currentSection;
         }
