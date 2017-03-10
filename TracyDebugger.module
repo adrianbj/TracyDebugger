@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.1.15',
+            'version' => '4.1.16',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -42,6 +42,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     const COOKIE_SECRET = 'tracy-debug';
 
+    protected $showDebugBar;
     protected $data = array();
     protected $inAdmin;
     protected $httpReferer;
@@ -225,12 +226,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if(in_array('regularModal', $this->data['hideDebugBarModals']) && $this->wire('input')->get->modal == '1') return;
         if(in_array('inlineModal', $this->data['hideDebugBarModals']) && $this->wire('input')->get->modal == 'inline') return;
 
-        // templates
-        if(count($this->data['hideDebugBarTemplates']) > 0) {
-            // get page from URL - this is required because we are in init()
-            $p = $this->wire('pages')->get($this->inputUrl());
-            if($p->id && in_array($p->template->id, $this->data['hideDebugBarTemplates'])) return;
-        }
 
         // don't init Tracy for @soma's PageEditSoftLock polling on Page Edit
         if(strpos(self::inputUrl(), 'checkpagelock') !== false) return;
@@ -506,19 +501,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($this->inAdmin) {
             // should we show debug bar in admin?
             if(in_array('backend', $this->data['showDebugBar']) && $outputMode != Debugger::PRODUCTION) {
-                $showDebugBar = true;
+                $this->showDebugBar = true;
             }
             else {
-                $showDebugBar = false;
+                $this->showDebugBar = false;
             }
         }
         // front-end
         else {
             if(in_array('frontend', $this->data['showDebugBar']) && $outputMode != Debugger::PRODUCTION) {
-                $showDebugBar = true;
+                $this->showDebugBar = true;
             }
             else {
-                $showDebugBar = false;
+                $this->showDebugBar = false;
             }
         }
 
@@ -527,7 +522,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             // TRACY TOGGLER
             // if Tracy has been toggled "disabled" add enable button and then exit
             if($this->wire('input')->cookie->tracyDisabled == 1) {
-                if($showDebugBar && !$this->wire('config')->ajax) {
+                if($this->showDebugBar && !$this->wire('config')->ajax) {
                     $this->addHookAfter('Page::render', $this, 'addEnableButton', array('priority'=>1000));
                 }
                 // Tracy not enabled so exit now
@@ -572,7 +567,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         Debugger::enable($outputMode, $logFolder, $this->data['email'] != '' ? $this->data['email'] : null);
 
         // ensure Tracy can show AJAX bar when SessionHandlerDB module is installed and debugbar is showing
-        if($this->wire('modules')->isInstalled('SessionHandlerDB') && static::$tracyVersion != 'legacy' && $showDebugBar) {
+        if($this->wire('modules')->isInstalled('SessionHandlerDB') && static::$tracyVersion != 'legacy' && $this->showDebugBar) {
             $this->addHookBefore('ProcessWire::finished', $this, 'sessionHandlerDBAjaxFix');
         }
 
@@ -602,9 +597,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         Debugger::$strictMode = $this->data['strictMode'] || ($this->data['strictModeAjax'] && $this->wire('config')->ajax) || $this->wire('input')->cookie->tracyStrictMode ? TRUE : FALSE;
         Debugger::$scream = $this->data['forceScream'] ? TRUE : FALSE;
-
-        // display debug bar if allowed
-        Debugger::$showBar = $showDebugBar;
 
 
         if($this->allowedTracyUsers() === 'full') {
@@ -742,6 +734,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // DEBUG BAR & PANELS
+        // templates
+        if(count($this->data['hideDebugBarTemplates']) > 0) {
+            if($this->wire('page')->id && in_array($this->wire('page')->template->id, $this->data['hideDebugBarTemplates'])) $this->showDebugBar = false;
+        }
+
+        // display debug bar if allowed
+        Debugger::$showBar = $this->showDebugBar;
+
         // add custom css / js
         $this->addHookAfter('Page::render', $this, 'addCustomStuff', array('priority'=>1000));
 
@@ -1101,6 +1101,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     protected function sessionHandlerDBAjaxFix() {
+        if(!$this->showDebugBar) return;
         if(ob_get_level() == 0) ob_start();
         Debugger::getBar()->render();
         Debugger::$showBar = FALSE;
