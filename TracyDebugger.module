@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.1.16',
+            'version' => '4.2.0',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -49,6 +49,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     protected $tracyEnabled = false;
     protected $tracyCacheDir;
     protected $modulesDbBackupFilename;
+    public static $selectors = array();
     public static $templateVars = array();
     public static $templateConsts = array();
     public static $initialFuncs = array();
@@ -167,7 +168,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "styleAdminColors" => "local|#ca6500\ndev.*|#990000\nstaging.*|#8b0066",
                 "processwireInfoPanelSections" => array('summary', 'languageInfo', 'templateInfo', 'fieldsListValues', 'versionsList', 'adminLinks', 'documentationLinks', 'editLinks'),
                 "diagnosticsPanelSections" => array('filesystemFolders'),
-                "todoIgnoreDirs" => 'git, svn, images, img, errors',
+                "todoIgnoreDirs" => 'git, svn, images, img, errors, sass-cache, node_modules',
                 "todoScanModules" => null,
                 "todoAllowedExtensions" => 'php, module, inc, txt, latte, html, htm, md, css, scss, less, js',
                 "variablesShowPwObjects" => null,
@@ -251,6 +252,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
             else {
                 static::$showPanels = $configEnabledPanels;
+            }
+
+            if(in_array('debugMode', static::$showPanels)) {
+                // Selectors for Debug Mode panel
+                $this->addHookAfter('Pages::find', null, function($event) {
+                    static::$selectors[] = $event->arguments;
+                });
             }
 
             // sort panels based on order defined in config settings
@@ -2049,11 +2057,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $fieldset->label = __("ToDo Panel Options");
         $wrapper->add($fieldset);
 
-        $f = $this->wire('modules')->get("InputfieldText");
+        $f = $this->wire('modules')->get("InputfieldTextarea");
         $f->attr('name', 'todoIgnoreDirs');
         $f->label = __('Ignore Directories', __FILE__);
         $f->description = __('Comma separated list of terms used to match folders to be ignored when scanning for ToDo items.', __FILE__);
-        $f->notes = __('Default: git, svn, images, img, errors', __FILE__);
+        $f->notes = __('Default: git, svn, images, img, errors, sass-cache, node_modules', __FILE__);
         $f->columnWidth = 40;
         if($data['todoIgnoreDirs']) $f->attr('value', $data['todoIgnoreDirs']);
         $fieldset->add($f);

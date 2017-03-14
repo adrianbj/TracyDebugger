@@ -324,6 +324,18 @@ class DebugModePanel extends BasePanel {
                 $databaseQueries .= $sectionEnd;
             }
 
+            if($this->showSection('selectors')) {
+                // Selectors Queries
+                $selectorQueries_oc = 0;
+                $selectorQueries = $this->sectionHeader(array('Order', 'Caller', 'Selector'));
+                foreach(\TracyDebugger::$selectors as $n => $arguments) {
+                    $selectorQueries_oc++;
+                    $selector = $this->wire('sanitizer')->entities1($arguments[0]);
+                    $selectorQueries .= "\n<tr><td>$n</td><td>".(isset($arguments[1]) ? $arguments[1]['caller'] : 'pages.find')."</td><td class='tracy-force-break'>".$selector."</td></tr>";
+                }
+                $selectorQueries .= $sectionEnd;
+            }
+
             if($debugMode && $this->showSection('timers')) {
                 // Timers
                 $timers_oc = 0;
@@ -476,6 +488,12 @@ class DebugModePanel extends BasePanel {
                 $out .= '
                 <a href="#" rel="#database-queries" class="tracy-toggle tracy-collapsed">PDO Queries ($database) ('.$databaseQueries_oc.')</a>
                 <div id="database-queries" class="tracy-collapsed">'.$databaseQueries.'</div><br />';
+            }
+
+            if($this->showSection('selectors')) {
+                $out .= '
+                <a href="#" rel="#selector-queries" class="tracy-toggle tracy-collapsed">Selector Queries ('.$selectorQueries_oc.')</a>
+                <div id="selector-queries" class="tracy-collapsed">'.$selectorQueries.'</div><br />';
             }
 
             if($debugMode && $this->showSection('timers')) {
