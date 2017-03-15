@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.2.0',
+            'version' => '4.2.1',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -256,7 +256,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             if(in_array('debugMode', static::$showPanels)) {
                 // Selectors for Debug Mode panel
+                $this->addHookBefore('Pages::find', null, function($event) {
+                    $this->timerkey = Debug::timer();
+                });
                 $this->addHookAfter('Pages::find', null, function($event) {
+                    $event->setArgument(2, Debug::timer($this->timerkey));
                     static::$selectors[] = $event->arguments;
                 });
             }
