@@ -223,28 +223,28 @@ HTML;
             $out .= '<p><label><input type="checkbox" id="accessTemplateVars" /> Allow access to custom variables and functions defined in the page template file and all other included files.</label></p>';
         }
         $out .= '
-                    <br />
-                    <div id="tracyConsoleContainer">
-                        <div id="tracyConsoleCode" style="visibility:hidden; height:100px"></div>
-                        <div style="padding:10px 0">
-                            <input title="Run code" type="submit" id="runCode" onclick="processTracyCode()" value="Run" />&nbsp;
-                            <input title="Go back (CTRL+CMD+&#8593;)" id="historyBack" type="submit" onclick="loadHistory(\'back\')" value="&#11013;" />&nbsp;
-                            <input title="Go forward (CTRL+CMD+&#8595;)" class="arrowRight" id="historyForward" type="submit" onclick="loadHistory(\'forward\')" value="&#11013;" />
-                            <input title="Clear results" type="submit" id="clearResults" onclick="clearResults()" value="&#10006; Clear results" />
-                            <span id="tracyConsoleStatus" style="padding: 10px"></span>
-                        </div>
-                        <div id="tracyConsoleResult" style="background:#F0F3F7; border: 1px dotted #999999; padding: 3px;max-height: 300px; overflow:auto"></div>
+                <br />
+                <div id="tracyConsoleContainer">
+                    <div id="tracyConsoleCode" style="visibility:hidden; height:100px"></div>
+                    <div style="padding:10px 0">
+                        <input title="Run code" type="submit" id="runCode" onclick="processTracyCode()" value="Run" />&nbsp;
+                        <input title="Go back (CTRL+CMD+&#8593;)" id="historyBack" type="submit" onclick="loadHistory(\'back\')" value="&#11013;" />&nbsp;
+                        <input title="Go forward (CTRL+CMD+&#8595;)" class="arrowRight" id="historyForward" type="submit" onclick="loadHistory(\'forward\')" value="&#11013;" />
+                        <input title="Clear results" type="submit" id="clearResults" onclick="clearResults()" value="&#10006; Clear results" />
+                        <span id="tracyConsoleStatus" style="padding: 10px"></span>
                     </div>
-                    <div style="float: left; margin-left: 10px; width: 250px; margin-top: -23px;">
-                        <div style="padding-bottom:5px">
-                            Sort: <a href="#" onclick="sortList(\'alphabetical\')">alphabetical</a>&nbsp;|&nbsp;<a href="#" onclick="sortList(\'chronological\')">chronological</a>
-                        </div>
-                         <div style="position: relative; width:250px !important;">
-	                        <input type="text" id="tracySnippetName" placeholder="Snippet name..." />
-	                        <input id="saveSnippet" type="submit" onclick="saveSnippet()" value="&#128190;" title="Save snippet" />
-                        </div>
-                        <div id="tracySnippets" style="margin-top: 5px; padding:8px; min-height: 115px; max-height: 187px; overflow:auto"></div>
+                    <div id="tracyConsoleResult" style="background:#F0F3F7; border: 1px dotted #999999; padding: 3px;max-height: 300px; overflow:auto"></div>
+                </div>
+                <div style="float: left; margin-left: 10px; width: 250px; margin-top: -23px;">
+                    <div style="padding-bottom:5px">
+                        Sort: <a href="#" onclick="sortList(\'alphabetical\')">alphabetical</a>&nbsp;|&nbsp;<a href="#" onclick="sortList(\'chronological\')">chronological</a>
                     </div>
+                     <div style="position: relative; width:250px !important;">
+                        <input type="text" id="tracySnippetName" placeholder="Snippet name..." />
+                        <input id="saveSnippet" type="submit" onclick="saveSnippet()" value="&#128190;" title="Save snippet" />
+                    </div>
+                    <div id="tracySnippets" style="margin-top: 5px; padding:8px; min-height: 115px; max-height: 187px; overflow:auto"></div>
+                </div>
             </fieldset>
         </div>';
 
