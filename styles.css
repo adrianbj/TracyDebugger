@@ -622,3 +622,8 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] label:hover {
     cursor: pointer;
 }
+
+#tracyUserBar svg {
+    width: 16px !important;
+    height: 16px !important;
+}
