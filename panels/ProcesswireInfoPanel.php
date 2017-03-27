@@ -167,16 +167,17 @@ class ProcesswireInfoPanel extends BasePanel {
                     <td>Children</td>
                     <td>'.$p->numChildren().' <a title="Open Page Tree" href="'.$this->wire('config')->urls->admin.'page/list/?open='.$p->id.'">open tree</a> | <a title="View Children Tab" href="'.$p->editUrl().'#ProcessPageEditChildren">edit</a></td>
                 </tr>
-                <tr>';
+                ';
                 if($p->numChildren()) {
                     $summary .= '
                     <tr>
                         <td>First Child</td>
                         <td>' . ($p->child->viewable() ? '<a title="View First Child" href="'.$p->child->url.'">'.$this->getLanguageVersion($p->child, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->child, 'name', $userLang, true).'</span>') . ' (<a title="Edit First Child" href="'.$p->child->editUrl().'">'.$p->child->id.'</a>)</td>
                     </tr>
-                    <tr>';
+                    ';
                 }
                 $summary .= '
+                <tr>
                     <td>Created</td>
                     <td>'.$p->createdUser->name.' ('.date("Y-m-d H:i:s", $p->created).')</td>
                 </tr>

@@ -139,6 +139,10 @@ body.hidden:before {
     background: #FFFFFF !important;
 }
 
+#tracy-debug table tbody tr {
+    height:30px !important;
+}
+
 #tracy-debug .tracy-panel tr:hover td {
     background: #E2E9EF !important;
 }
@@ -623,7 +627,7 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
     cursor: pointer;
 }
 
-#tracyUserBar svg {
+.tracy-panel svg, #tracyUserBar svg {
     width: 16px !important;
     height: 16px !important;
 }
