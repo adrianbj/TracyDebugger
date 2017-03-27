@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.2.6',
+            'version' => '4.2.7',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -213,11 +213,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // url for $session->redirects
         $this->httpReferer = isset($_SERVER['HTTP_REFERER']) ? $this->wire('sanitizer')->text($_SERVER['HTTP_REFERER']) : self::inputHttpUrl(true);
 
-        // clear session data
+        // logout
+        if($this->wire('input')->get->tracyLogout && $this->allowedTracyUsers() === 'full') {
+            $this->wire('session')->logout();
+            $this->wire('session')->redirect(substr(str_replace('tracyLogout=1', '', self::inputUrl(true)), 0, -1));
+        }
+
+        // clear session & cookies
         if($this->wire('input')->get->tracyClearSession && $this->allowedTracyUsers() === 'full') {
             $userName = $this->wire('user')->name;
             $this->wire('session')->logout();
-            // unset cookies
+
             if (isset($_SERVER['HTTP_COOKIE'])) {
                 $cookies = explode(';', $_SERVER['HTTP_COOKIE']);
                 foreach($cookies as $cookie) {
@@ -227,6 +233,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     setcookie($name, '', time()-1000, '/');
                 }
             }
+
             $this->wire('session')->forceLogin($userName);
             $this->wire('session')->redirect(substr(str_replace('tracyClearSession=1', '', self::inputUrl(true)), 0, -1));
         }

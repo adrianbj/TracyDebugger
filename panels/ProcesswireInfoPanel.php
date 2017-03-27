@@ -583,7 +583,7 @@ class ProcesswireInfoPanel extends BasePanel {
                 <a href="'.$this->wire('config')->urls->admin.'" title="ProcessWire Admin">
                     ' . $this->icon . '
                 </a>&nbsp;
-                <a href="'.$this->wire('config')->urls->admin.'login/logout/" title="Logout">
+                <a href="'.\TracyDebugger::inputUrl(true) . (strpos(\TracyDebugger::inputUrl(true), '?') !== false ? '&' : '?') . 'tracyLogout=1" title="Logout">
                     <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 44.816 44.816" style="enable-background:new 0 0 44.816 44.816;" xml:space="preserve">
                         <g>
                             <path d="M22.404,21.173c2.126,0,3.895-1.724,3.895-3.85V3.849C26.299,1.724,24.53,0,22.404,0c-2.126,0-3.895,1.724-3.895,3.849    v13.475C18.51,19.449,20.278,21.173,22.404,21.173z" fill="#ee1d62"></path>
