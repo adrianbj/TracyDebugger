@@ -207,13 +207,11 @@ class ProcesswireInfoPanel extends BasePanel {
         // Language info
         $languageInfo = '';
         if($this->wire('languages') && in_array('languageInfo', $panelSections)) {
-            if($this->wire('languages')) {
-                $languageInfo .= '<table><tr><th>Language</th><th>ID</th><th>Title</th><th>Name</th><th>Active</th></tr>';
-                foreach($this->wire('languages') as $language) {
-                    $languageInfo .= '<tr><td>' . $language->title . ' ('.$language->name.')</td><td><a title="Edit Language" href="'.$this->wire('config')->urls->admin.'/setup/languages/edit/?id='.$language->id.'">'.$language->id.'</a></td><td>' . $this->getLanguageVersion($p, 'title', $language) . '</td><td>' . $this->getLanguageVersion($p, 'name', $language) . '</td><td>' . ($language->isDefaultLanguage ? 'default' : ($p->get("status{$language->id}") ? "&#10004;" : "&#x2718;")) . '</td></tr>';
-                }
-                $languageInfo .= '</table>';
+            $languageInfo .= '<table><tr><th>Language</th><th>ID</th><th>Title</th><th>Name</th><th>Active</th></tr>';
+            foreach($this->wire('languages') as $language) {
+                $languageInfo .= '<tr><td>' . $language->title . ' ('.$language->name.')</td><td><a title="Edit Language" href="'.$this->wire('config')->urls->admin.'/setup/languages/edit/?id='.$language->id.'">'.$language->id.'</a></td><td>' . $this->getLanguageVersion($p, 'title', $language) . '</td><td>' . $this->getLanguageVersion($p, 'name', $language) . '</td><td>' . ($language->isDefaultLanguage ? 'default' : ($p->get("status{$language->id}") ? "&#10004;" : "&#x2718;")) . '</td></tr>';
             }
+            $languageInfo .= '</table>';
         }
 
         // Template info
@@ -569,10 +567,12 @@ class ProcesswireInfoPanel extends BasePanel {
         foreach(\TracyDebugger::$processWireInfoSections as $name => $label) {
             // get all sections excluding those that are admin "links"
             if(strpos($name, 'Links') === false && in_array($name, $panelSections)) {
-                $out .= '
-                <a href="#" rel="'.$name.'" class="tracy-toggle '.($i>0 ? ' tracy-collapsed' : '').'">'.$label.'</a>
-                <div id="'.$name.'" '.($i>0 ? ' class="tracy-collapsed"' : '').'>'.${$name}.'</div><br />';
-                $i++;
+                if(${$name} !== '') {
+                    $out .= '
+                    <a href="#" rel="'.$name.'" class="tracy-toggle '.($i>0 ? ' tracy-collapsed' : '').'">'.$label.'</a>
+                    <div id="'.$name.'" '.($i>0 ? ' class="tracy-collapsed"' : '').'>'.${$name}.'</div><br />';
+                    $i++;
+                }
             }
         }
 
