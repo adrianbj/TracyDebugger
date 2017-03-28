@@ -169,17 +169,18 @@ class ProcesswireInfoPanel extends BasePanel {
                 </tr>
                 ';
                 if($p->numChildren()) {
+                    $firstChild = $p->child("include=all");
                     $summary .= '
                     <tr>
                         <td>First Child</td>
-                        <td>' . ($p->child->viewable() ? '<a title="View First Child" href="'.$p->child->url.'">'.$this->getLanguageVersion($p->child, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->child, 'name', $userLang, true).'</span>') . ' (<a title="Edit First Child" href="'.$p->child->editUrl().'">'.$p->child->id.'</a>)</td>
+                        <td>' . ($firstChild->viewable() ? '<a title="View First Child" href="'.$firstChild->url.'">'.$this->getLanguageVersion($firstChild, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($firstChild, 'name', $userLang, true).'</span>') . ' (<a title="Edit First Child" href="'.$firstChild->editUrl().'">'.$firstChild->id.'</a>)</td>
                     </tr>
                     ';
                 }
                 $summary .= '
                 <tr>
                     <td>Created</td>
-                    <td>'.$p->createdUser->name.' ('.date("Y-m-d H:i:s", $p->created).')</td>
+                    <td><a href="'.$this->wire('config')->urls->admin.'access/users/edit/?id='.$p->modifiedUser->id.'">'.$p->createdUser->name.'</a> ('.date("Y-m-d H:i:s", $p->created).')</td>
                 </tr>
                 <tr>
                     <td>Published</td>
@@ -187,7 +188,7 @@ class ProcesswireInfoPanel extends BasePanel {
                 </tr>
                 <tr>
                     <td>Modified</td>
-                    <td>'.$p->modifiedUser->name.' ('.date("Y-m-d H:i:s", $p->modified).')</td>
+                    <td><a href="'.$this->wire('config')->urls->admin.'access/users/edit/?id='.$p->modifiedUser->id.'">'.$p->modifiedUser->name.'</a> ('.date("Y-m-d H:i:s", $p->modified).')</td>
                 </tr>
                 <tr>
                     <td>Hidden</td>
