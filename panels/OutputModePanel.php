@@ -50,7 +50,7 @@ class OutputModePanel extends BasePanel {
         $label = \TracyDebugger::getDataValue('showPanelLabels') ? ucfirst($this->outputMode) : '';
 
         return '
-        <span title="Output Mode: '.$label.'">
+        <span title="Output Mode: '.ucfirst($this->outputMode).'">
             ' . $this->{$this->outputMode.'Icon'} . $label . '
         </span>
         ';

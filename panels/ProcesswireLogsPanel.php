@@ -97,7 +97,7 @@ class ProcesswireLogsPanel extends BasePanel {
         </svg>';
 
         return '
-        <span title="ProcessWire logs">' .
+        <span title="ProcessWire Logs">' .
             $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'PW Logs' : '') . '
         </span>
         ';

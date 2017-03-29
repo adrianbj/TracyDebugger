@@ -180,7 +180,7 @@ class ProcesswireInfoPanel extends BasePanel {
                 $summary .= '
                 <tr>
                     <td>Created</td>
-                    <td><a href="'.$this->wire('config')->urls->admin.'access/users/edit/?id='.$p->modifiedUser->id.'">'.$p->createdUser->name.'</a> ('.date("Y-m-d H:i:s", $p->created).')</td>
+                    <td><a title="Edit User" href="'.$this->wire('config')->urls->admin.'access/users/edit/?id='.$p->modifiedUser->id.'">'.$p->createdUser->name.'</a> ('.date("Y-m-d H:i:s", $p->created).')</td>
                 </tr>
                 <tr>
                     <td>Published</td>
@@ -188,7 +188,7 @@ class ProcesswireInfoPanel extends BasePanel {
                 </tr>
                 <tr>
                     <td>Modified</td>
-                    <td><a href="'.$this->wire('config')->urls->admin.'access/users/edit/?id='.$p->modifiedUser->id.'">'.$p->modifiedUser->name.'</a> ('.date("Y-m-d H:i:s", $p->modified).')</td>
+                    <td><a title="Edit User" href="'.$this->wire('config')->urls->admin.'access/users/edit/?id='.$p->modifiedUser->id.'">'.$p->modifiedUser->name.'</a> ('.date("Y-m-d H:i:s", $p->modified).')</td>
                 </tr>
                 <tr>
                     <td>Hidden</td>
@@ -472,10 +472,11 @@ class ProcesswireInfoPanel extends BasePanel {
                 });
             </script>
             ';
-            $serverInfo = "ProcessWire: " . $this->wire('config')->version . "\n";
-            $serverInfo .= "PHP: " . phpversion() . "\n";
-            if(isset($_SERVER['SERVER_SOFTWARE'])) $serverInfo .= "Apache: " . str_replace('Apache/', '', current(explode("PHP", $_SERVER['SERVER_SOFTWARE']))) . "\n";
-            $serverInfo .= "MySQL: " . $this->wire('database')->query('select version()')->fetchColumn() . "\n\n";
+            $eol = " <br />\n";
+            $serverInfo = "ProcessWire: " . $this->wire('config')->version . $eol;
+            $serverInfo .= "PHP: " . phpversion() . $eol;
+            if(isset($_SERVER['SERVER_SOFTWARE'])) $serverInfo .= "Apache: " . str_replace('Apache/', '', current(explode("PHP", $_SERVER['SERVER_SOFTWARE']))) . $eol;
+            $serverInfo .= "MySQL: " . $this->wire('database')->query('select version()')->fetchColumn() . $eol . $eol;
 
             $serverSettings = "";
             //php settings
@@ -488,54 +489,54 @@ class ProcesswireInfoPanel extends BasePanel {
                 if($setting == 'max_execution_time') {
                     $serverSettings .= isset($can_change) ? ' (changeable)' : ' (not changeable)';
                 }
-                $serverSettings .= "\n";
+                $serverSettings .= $eol;
             }
-            $serverSettings .= "\n";
+            $serverSettings .= $eol;
 
             // apache modules
             if(function_exists('apache_get_modules')) $apacheModules = apache_get_modules();
             foreach(array('mod_rewrite', 'mod_security') as $apacheModule) {
                 if(isset($apacheModules)) {
-                    $serverSettings .= $apacheModule . ": " . (in_array($apacheModule, $apacheModules) ? '1' : false . ($apacheModule == 'mod_security' ? '*confirmed off' : '')) . "\n";
+                    $serverSettings .= $apacheModule . ": " . (in_array($apacheModule, $apacheModules) ? '1' : false . ($apacheModule == 'mod_security' ? '*confirmed off' : '')) . $eol;
                 }
                 // fallback if apache_get_modules() is not available
                 else {
                     // this is a more reliable fallback for mod_rewrite
                     if($apacheModule == 'mod_rewrite' && isset($_SERVER["HTTP_MOD_REWRITE"])) {
-                        $serverSettings .= $apacheModule . ": " . ($_SERVER["HTTP_MOD_REWRITE"] ? '1' : false) . "\n";
+                        $serverSettings .= $apacheModule . ": " . ($_SERVER["HTTP_MOD_REWRITE"] ? '1' : false) . $eol;
                     }
                     // this is for mod_security and any others specified, although it's still not very reliable for mod_security
                     else {
                         ob_start();
                         phpinfo(INFO_MODULES);
                         $contents = ob_get_clean();
-                        $serverSettings .= $apacheModule . ": " . (strpos($contents, $apacheModule) ? '1' : false) . "\n";
+                        $serverSettings .= $apacheModule . ": " . (strpos($contents, $apacheModule) ? '1' : false) . $eol;
                     }
                 }
             }
-            $serverSettings .= "\n";
+            $serverSettings .= $eol;
             // image settings
             if(function_exists('gd_info')) {
                 $gd  = gd_info();
-                $serverSettings .= "GD: " . (isset($gd['GD Version']) ? $gd['GD Version'] : $this->_('Version-Info not available')) . "\n";
-                $serverSettings .= "GIF: " . (isset($gd['GIF Read Support']) && isset($gd['GIF Create Support']) ? $gd['GIF Create Support'] : false) . "\n";
-                $serverSettings .= "JPG: " . (isset($gd['JPEG Support']) ? $gd['JPEG Support'] : false) . "\n";
-                $serverSettings .= "PNG: " . (isset($gd['PNG Support']) ? $gd['PNG Support'] : false) . "\n";
+                $serverSettings .= "GD: " . (isset($gd['GD Version']) ? $gd['GD Version'] : $this->_('Version-Info not available')) . $eol;
+                $serverSettings .= "GIF: " . (isset($gd['GIF Read Support']) && isset($gd['GIF Create Support']) ? $gd['GIF Create Support'] : false) . $eol;
+                $serverSettings .= "JPG: " . (isset($gd['JPEG Support']) ? $gd['JPEG Support'] : false) . $eol;
+                $serverSettings .= "PNG: " . (isset($gd['PNG Support']) ? $gd['PNG Support'] : false) . $eol;
 
             }
-            $serverSettings .= "\n";
-            $serverSettings .= "EXIF Support: " . (function_exists('exif_read_data') ? '1' : false) . "\n";
-            $serverSettings .= "FreeType: " . (isset($gd['FreeType Support']) ? $gd['FreeType Support'] : false) . "\n";
-            $serverSettings .= "Imagick Extension: " . (class_exists('Imagick') ? '1' : false) . "\n";
+            $serverSettings .= $eol;
+            $serverSettings .= "EXIF Support: " . (function_exists('exif_read_data') ? '1' : false) . $eol;
+            $serverSettings .= "FreeType: " . (isset($gd['FreeType Support']) ? $gd['FreeType Support'] : false) . $eol;
+            $serverSettings .= "Imagick Extension: " . (class_exists('Imagick') ? '1' : false) . $eol;
 
-            $serverSettings .= "\n";
+            $serverSettings .= $eol;
 
             $moduleInfo = '';
             foreach($this->wire('modules')->sort("className") as $name => $label) {
                 $flags = $this->wire('modules')->getFlags($name);
                 $info = $this->wire('modules')->getModuleInfoVerbose($name);
                 if($info['core']) continue;
-                $moduleInfo .= $name . ": " . $this->wire('modules')->formatVersion($info['version']) . "\n";
+                $moduleInfo .= $name . ": " . $this->wire('modules')->formatVersion($info['version']) . $eol;
             }
             $githubVersionsList = '<details><summary><strong>Server Details</strong></summary>' . $serverInfo . '<details><summary><strong>Server Settings</strong></summary> ' . $serverSettings . '</details><details><summary><strong>Module Details</strong></summary> ' . $moduleInfo . '</details></details>';
             $versionsList .= '
@@ -547,7 +548,7 @@ class ProcesswireInfoPanel extends BasePanel {
                     Copy plain text
                 </button>
             </p>
-            <p><textarea id="versionsListTextarea" rows="5" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="font-size:12px; width:100%; resize:vertical;">'.$serverInfo . $serverSettings . $moduleInfo.'</textarea></p>';
+            <p><textarea id="versionsListTextarea" rows="5" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="font-size:12px; width:100%; resize:vertical; padding:3px !important">'.str_replace(" <br />", "", $serverInfo . $serverSettings . $moduleInfo).'</textarea></p>';
         }
 
         //Objects

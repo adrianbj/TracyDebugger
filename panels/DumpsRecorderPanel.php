@@ -44,7 +44,7 @@ class DumpsRecorderPanel extends BasePanel {
         ';
 
         return '
-        <span title="Dumps">
+        <span title="Dumps Recorder">
             ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Dumps Recorder' : '') . ' ' . ($this->dumpCount > 0 ? '<span class="dumpCount">' . $this->dumpCount . '</span>' : '') . '
         </span>
 

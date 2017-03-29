@@ -75,7 +75,7 @@ class TodoPanel extends BasePanel {
             </svg>
         ';
         return '
-        <span title="Console">
+        <span title="ToDo">
             ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Todo' : '') . ' ' . $thisPageNumEntries . '/' . $numEntries . '
         </span>
         ';

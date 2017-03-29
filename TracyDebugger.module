@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.2.9',
+            'version' => '4.3.0',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -98,6 +98,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'diagnostics' => 'Diagnostics',
         'dumpsRecorder' => 'Dumps Recorder',
         'eventInterceptor' => 'Event Interceptor',
+        'gitInfo' => 'Git Info',
         'mailInterceptor' => 'Mail Interceptor',
         'methodsInfo' => 'Methods Info',
         'moduleDisabler' => 'Module Disabler',
@@ -810,30 +811,31 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     require_once __DIR__ . '/panels/'.$panelName.'.php';
                     break;
                 case 'captainHook':
+                case 'console':
+                case 'customPhp':
+                case 'debugMode':
+                case 'diagnostics':
+                case 'dumpsRecorder':
+                case 'eventInterceptor':
+                case 'gitInfo':
+                case 'mailInterceptor':
+                case 'methodsInfo':
+                case 'moduleDisabler':
+                case 'outputMode':
+                case 'pageRecorder':
+                case 'panelSelector':
+                case 'phpInfo':
                 case 'processwireInfo':
                 case 'processwireLogs':
-                case 'tracyLogs':
-                case 'methodsInfo':
-                case 'diagnostics':
-                case 'debugMode':
-                case 'dumpsRecorder':
-                case 'users':
-                case 'userSwitcher':
-                case 'phpInfo':
-                case 'outputMode':
-                case 'panelSelector':
-                case 'validator':
-                case 'console':
-                case 'todo':
-                case 'mailInterceptor':
-                case 'eventInterceptor':
                 case 'processwireVersion':
                 case 'templateEditor':
-                case 'customPhp':
-                case 'pageRecorder':
                 case 'templateResources':
+                case 'todo':
+                case 'tracyLogs':
                 case 'tracyToggler':
-                case 'moduleDisabler':
+                case 'users':
+                case 'userSwitcher':
+                case 'validator':
                     require_once __DIR__ . '/panels/'.$panelName.'.php';
                     Debugger::getBar()->addPanel(new $panelName);
                     break;

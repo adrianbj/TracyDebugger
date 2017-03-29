@@ -19,10 +19,11 @@ class DebugModePanel extends BasePanel {
 
         $debugColor = $debugMode ? '#CD1818' : '#009900';
 
+        $tooltip = $label = 'PW Debug Mode ' . ($debugMode ? 'ON' : 'OFF');
+
         if(\TracyDebugger::getDataValue('showPanelLabels')) {
             static::$iconColor = '#FFFFFF';
             $background = $debugColor;
-            $label = 'PW Debug Mode ' . ($debugMode ? 'ON' : 'OFF');
             $tabPadding = '5px';
         }
         else {
@@ -34,7 +35,7 @@ class DebugModePanel extends BasePanel {
         static::$panelIconColor = $debugColor;
 
         return "
-        <span title='".$label."'>
+        <span title='".$tooltip."'>
             <span style='display:inline-block;background:".$background."; color:#FFFFFF; padding: 0 ".$tabPadding."';>
                 <svg xmlns=http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' version='1.1' x='0px' y='0px' width='16px' height='16px' viewBox='0 0 456.828 456.828' style='enable-background:new 0 0 456.828 456.828;' xml:space='preserve'>
                     <g>

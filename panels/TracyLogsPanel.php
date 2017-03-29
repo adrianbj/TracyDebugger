@@ -125,7 +125,7 @@ class TracyLogsPanel extends BasePanel {
         </svg>';
 
         return '
-        <span title="Tracy logs">' .
+        <span title="Tracy Logs">' .
             $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Tracy Logs' : '') . '
         </span>
         ';
