@@ -128,11 +128,6 @@ class TemplatePathPanel extends BasePanel {
                 if (parts.length == 2) return parts.pop().split(";").shift();
             }
         </script>
-        <style>
-            fieldset {
-                border: 0 !important;
-            }
-        </style>
         ';
 
 

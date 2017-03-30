@@ -98,15 +98,6 @@ class TemplateEditorPanel extends BasePanel {
                 }
             });
         </script>
-
-        <style type="text/css">
-            #tracy-debug-panel-templateEditorPanel  {
-                width: calc(100vw - 40px) !important;
-            }
-            fieldset {
-                border: 0 !important;
-            }
-        </style>
         ';
 
         $out .= '<h1>'.$this->icon.' Template Editor</h1>

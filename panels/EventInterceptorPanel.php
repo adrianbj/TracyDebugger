@@ -119,16 +119,6 @@ class EventInterceptorPanel extends BasePanel {
             }
         </script>
 
-        <style class="tracy-debug">
-            #tracy-debug .tracy-DumpPanel h2 {
-                font: 11pt/1.5 sans-serif;
-                margin: 0;
-                padding: 2px 8px;
-                background: #3484d2;
-                color: white;
-            }
-        </style>
-
         <div class="tracy-inner tracy-DumpPanel" style="min-width:350px !important">
 
             <fieldset>

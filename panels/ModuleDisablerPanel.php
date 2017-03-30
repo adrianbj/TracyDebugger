@@ -102,24 +102,7 @@ class ModuleDisablerPanel extends BasePanel {
             }
 
         </script>
-
-
-        <style type="text/css">
-            #tracy-debug-Panel-ModuleselectorPanel input[type="submit"] {
-                background: #FFFFFF !important;
-                margin: 3px !important;
-                padding: 3px !important;
-                border: 1px solid #D2D2D2 !important;
-                -webkit-border-radius: 5px !important;
-                -moz-border-radius: 5px !important;
-                border-radius: 5px !important;
-                cursor: pointer !important;
-            }
-
-            fieldset {
-                border: 0 !important;
-            }
-        </style>';
+        ';
 
         $out .= '<h1>'.$this->icon.' Module Disabler</h1>
         <div class="tracy-inner">

@@ -34,6 +34,10 @@ body.hidden:before {
     background-color: #125EAE !important;
 }
 
+.tracy-panel fieldset {
+    border: 0 !important;
+}
+
 .tracy-panel h3 {
     display: block !important;
     font-size: 1.17em !important;
@@ -628,6 +632,18 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
 .tracy-panel svg, #tracyUserBar svg {
     width: 16px !important;
     height: 16px !important;
+}
+
+
+#tracy-debug .tracy-DumpPanel h2 {
+    font: 11pt/1.5 sans-serif;
+    margin: 0;
+    padding: 2px 8px;
+    background: #EAF0F2 !important;
+}
+
+#tracy-debug-panel-templateEditorPanel  {
+    width: calc(100vw - 40px) !important;
 }
 
 

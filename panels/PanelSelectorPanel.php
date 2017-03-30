@@ -111,24 +111,7 @@ class PanelSelectorPanel extends BasePanel {
             }
 
         </script>
-
-
-        <style type="text/css">
-            #tracy-debug-panel-PanelSelectorPanel input[type="submit"] {
-                background: #FFFFFF !important;
-                margin: 3px !important;
-                padding: 3px !important;
-                border: 1px solid #D2D2D2 !important;
-                -webkit-border-radius: 5px !important;
-                -moz-border-radius: 5px !important;
-                border-radius: 5px !important;
-                cursor: pointer !important;
-            }
-
-            fieldset {
-                border: 0 !important;
-            }
-        </style>';
+        ';
 
         $onceIcon = '<span title="Status changed Once">
                         <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="12px" height="12px" viewBox="0 0 405.07 405.07" style="enable-background:new 0 0 405.07 405.07;" xml:space="preserve">
