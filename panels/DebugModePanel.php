@@ -328,11 +328,11 @@ class DebugModePanel extends BasePanel {
             if($this->showSection('selectors')) {
                 // Selectors Queries
                 $selectorQueries_oc = 0;
-                $selectorQueries = $this->sectionHeader(array('Order', 'Caller', 'Selector', 'Time (ms)'));
+                $selectorQueries = $this->sectionHeader(array('Order', 'Selector', 'Settings', 'Time (ms)'));
                 foreach(\TracyDebugger::$selectors as $n => $arguments) {
                     $selectorQueries_oc++;
                     $selector = $this->wire('sanitizer')->entities1($arguments[0]);
-                    $selectorQueries .= "\n<tr><td>$n</td><td>".(isset($arguments[1]) ? $arguments[1]['caller'] : 'pages.find')."</td><td class='tracy-force-break'>".$selector."</td><td>".($arguments[2]*1000)."</td></tr>";
+                    $selectorQueries .= "\n<tr><td>$n</td><td class='tracy-force-break'>".$selector."</td><td>".(isset($arguments[1]) ? \Tracy\Dumper::toHtml($arguments[1], array(Dumper::LIVE => true, Dumper::DEPTH => 10, Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false)) : '')."</td><td>".($arguments[2]*1000)."</td></tr>";
                 }
                 $selectorQueries .= $sectionEnd;
             }
