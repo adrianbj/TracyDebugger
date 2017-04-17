@@ -117,7 +117,7 @@ class TemplateEditorPanel extends BasePanel {
 
         $out .= '
         <script>
-            JavaScript.load("'.$this->wire('config')->urls->siteModules.'TracyDebugger/ace-editor/ace.js", function() {
+            JavaScript.load("'.$this->wire('config')->urls->TracyDebugger.'ace-editor/ace.js", function() {
                 if(typeof ace !== "undefined") {
                     tte = ace.edit("tracyTemplateEditorCode");
                     tte.container.style.lineHeight = 1.8;
@@ -126,17 +126,17 @@ class TemplateEditorPanel extends BasePanel {
                     tte.$blockScrolling = Infinity; //fix deprecation warning
 
                     // set theme
-                    JavaScript.load("'.$this->wire('config')->urls->siteModules.'TracyDebugger/ace-editor/theme-tomorrow_night.js", function() {
+                    JavaScript.load("'.$this->wire('config')->urls->TracyDebugger.'ace-editor/theme-tomorrow_night.js", function() {
                         tte.setTheme("ace/theme/tomorrow_night");
                     });
 
                     // set mode to php
-                    JavaScript.load("'.$this->wire('config')->urls->siteModules.'TracyDebugger/ace-editor/mode-php.js", function() {
+                    JavaScript.load("'.$this->wire('config')->urls->TracyDebugger.'ace-editor/mode-php.js", function() {
                         tte.session.setMode({path:"ace/mode/php", inline:true});
                     });
 
                     // set autocomplete and other options
-                    JavaScript.load("'.$this->wire('config')->urls->siteModules.'TracyDebugger/ace-editor/ext-language_tools.js", function() {
+                    JavaScript.load("'.$this->wire('config')->urls->TracyDebugger.'ace-editor/ext-language_tools.js", function() {
                         var ml = Math.round(Math.max(document.documentElement.clientHeight, window.innerHeight || 0) / 60);
                         tte.setOptions({
                             enableBasicAutocompletion: true,

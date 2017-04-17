@@ -464,8 +464,8 @@ class ProcesswireInfoPanel extends BasePanel {
                         document.getElementsByTagName("head")[0].appendChild(script);
                     }
                 };
-                JavaScript.load("'.$this->wire('config')->urls->siteModules.'TracyDebugger/clipboardjs/clipboard.min.js", function() {
-                    JavaScript.load("'.$this->wire('config')->urls->siteModules.'TracyDebugger/clipboardjs/tooltips.js", function() {
+                JavaScript.load("'.$this->wire('config')->urls->TracyDebugger.'clipboardjs/clipboard.min.js", function() {
+                    JavaScript.load("'.$this->wire('config')->urls->TracyDebugger.'clipboardjs/tooltips.js", function() {
                         var versionsClipboard=new Clipboard(".tracyCopyBtn");
                         versionsClipboard.on("success",function(e){e.clearSelection();showTooltip(e.trigger,"Copied!");});versionsClipboard.on("error",function(e){showTooltip(e.trigger,fallbackMessage(e.action));});
                     });

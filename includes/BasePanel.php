@@ -5,7 +5,7 @@ use Tracy\IBarPanel;
 abstract class BasePanel extends WireData implements IBarPanel {
 
 	function loadResources() {
-		$cssUrl = $this->wire('config')->urls->httpSiteModules . 'TracyDebugger/styles.css';
+		$cssUrl = $this->wire('config')->urls->TracyDebugger . 'styles.css';
 		return '
 		<script>
 			function loadCSSIfNotAlreadyLoaded() {

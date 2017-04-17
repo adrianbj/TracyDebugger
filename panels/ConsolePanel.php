@@ -28,7 +28,7 @@ HTML;
 
     public function getPanel() {
 
-        $siteModulesUrl = $this->wire("config")->urls->httpSiteModules;
+        $tracyModuleUrl = $this->wire("config")->urls->TracyDebugger;
 
         if (\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('page')->process == 'ProcessPageEdit') {
             $p = $this->wire('process')->getPage();
@@ -40,7 +40,7 @@ HTML;
         <script>
 
             var tce; //setup Tracy Console Editor
-            var siteModulesUrl = "$siteModulesUrl";
+            var tracyModuleUrl = "$tracyModuleUrl";
             var maxHistoryItems = 25;
             var storedHistoryItem = localStorage.getItem("tracyConsoleHistoryItem");
             var historyItem = storedHistoryItem ? storedHistoryItem : 1;
@@ -493,7 +493,7 @@ HTML;
                 item.classList.add("activeSnippet");
             }
 
-            JavaScript.load(siteModulesUrl + "TracyDebugger/ace-editor/ace.js", function() {
+            JavaScript.load(tracyModuleUrl + "ace-editor/ace.js", function() {
                 if(typeof ace !== "undefined") {
                     tce = ace.edit("tracyConsoleCode");
                     tce.container.style.lineHeight = 1.8;
@@ -513,17 +513,17 @@ HTML;
                     });
 
                     // set theme
-                    JavaScript.load(siteModulesUrl + "TracyDebugger/ace-editor/theme-tomorrow_night.js", function() {
+                    JavaScript.load(tracyModuleUrl + "ace-editor/theme-tomorrow_night.js", function() {
                         tce.setTheme("ace/theme/tomorrow_night");
                     });
 
                     // set mode to php
-                    JavaScript.load(siteModulesUrl + "TracyDebugger/ace-editor/mode-php.js", function() {
+                    JavaScript.load(tracyModuleUrl + "ace-editor/mode-php.js", function() {
                         tce.session.setMode({path:"ace/mode/php", inline:true});
                     });
 
                     // set autocomplete and other options
-                    JavaScript.load(siteModulesUrl + "TracyDebugger/ace-editor/ext-language_tools.js", function() {
+                    JavaScript.load(tracyModuleUrl + "ace-editor/ext-language_tools.js", function() {
                         var ml = Math.round(Math.max(document.documentElement.clientHeight, window.innerHeight || 0) / 60);
                         tce.setOptions({
                             enableBasicAutocompletion: true,
