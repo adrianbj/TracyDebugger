@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.3.3',
+            'version' => '4.3.4',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -42,7 +42,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     const COOKIE_SECRET = 'tracy-debug';
 
-    protected $showDebugBar;
+    protected $showDebugBarHere;
     protected $data = array();
     protected $inAdmin;
     protected $httpReferer;
@@ -542,19 +542,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($this->inAdmin) {
             // should we show debug bar in admin?
             if(in_array('backend', $this->data['showDebugBar']) && $outputMode != Debugger::PRODUCTION) {
-                $this->showDebugBar = true;
+                $this->showDebugBarHere = true;
             }
             else {
-                $this->showDebugBar = false;
+                $this->showDebugBarHere = false;
             }
         }
         // front-end
         else {
             if(in_array('frontend', $this->data['showDebugBar']) && $outputMode != Debugger::PRODUCTION) {
-                $this->showDebugBar = true;
+                $this->showDebugBarHere = true;
             }
             else {
-                $this->showDebugBar = false;
+                $this->showDebugBarHere = false;
             }
         }
 
@@ -563,7 +563,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             // TRACY TOGGLER
             // if Tracy has been toggled "disabled" add enable button and then exit
             if($this->wire('input')->cookie->tracyDisabled == 1) {
-                if($this->showDebugBar && !$this->wire('config')->ajax) {
+                if($this->showDebugBarHere && !$this->wire('config')->ajax) {
                     $this->addHookAfter('Page::render', $this, 'addEnableButton', array('priority'=>1000));
                 }
                 // Tracy not enabled so exit now
@@ -608,7 +608,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         Debugger::enable($outputMode, $logFolder, $this->data['email'] != '' ? $this->data['email'] : null);
 
         // ensure Tracy can show AJAX bar when SessionHandlerDB module is installed and debugbar is showing
-        if($this->wire('modules')->isInstalled('SessionHandlerDB') && static::$tracyVersion != 'legacy' && $this->showDebugBar) {
+        if($this->wire('modules')->isInstalled('SessionHandlerDB') && static::$tracyVersion != 'legacy' && $this->showDebugBarHere) {
             $this->addHookBefore('ProcessWire::finished', $this, 'sessionHandlerDBAjaxFix');
         }
 
@@ -777,11 +777,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // DEBUG BAR & PANELS
         // templates
         if(count($this->data['hideDebugBarTemplates']) > 0) {
-            if($this->wire('page')->id && in_array($this->wire('page')->template->id, $this->data['hideDebugBarTemplates'])) $this->showDebugBar = false;
+            if($this->wire('page')->id && in_array($this->wire('page')->template->id, $this->data['hideDebugBarTemplates'])) $this->showDebugBarHere = false;
         }
 
         // display debug bar if allowed
-        Debugger::$showBar = $this->showDebugBar;
+        Debugger::$showBar = $this->showDebugBarHere;
 
         // add custom css / js
         $this->addHookAfter('Page::render', $this, 'addCustomStuff', array('priority'=>1000));
@@ -1143,7 +1143,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     protected function sessionHandlerDBAjaxFix() {
-        if(!$this->showDebugBar) return;
+        if(!$this->showDebugBarHere) return;
         if(ob_get_level() == 0) ob_start();
         Debugger::getBar()->render();
         Debugger::$showBar = FALSE;
