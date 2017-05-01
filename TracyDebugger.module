@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.3.4',
+            'version' => '4.3.5',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -255,15 +255,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // don't init Tracy for @soma's PageEditSoftLock polling on Page Edit
         if(strpos(self::inputUrl(), 'checkpagelock') !== false) return;
-        // don't init Tracy for the PW Notifications module polling
-        $info = parse_url($_SERVER['REQUEST_URI']);
-        $queryString = isset($info['query']) ? $info['query'] : '';
-        if(strpos($queryString, 'Notifications=update') !== false) return;
 
-        if(strpos($queryString, 'layout=sidenav-side') !== false ||
-            strpos($queryString, 'layout=sidenav-tree') !== false ||
-            strpos($queryString, 'layout=sidenav-init') !== false) return;
+        if(isset($_SERVER['REQUEST_URI'])) {
+            $info = parse_url($_SERVER['REQUEST_URI']);
+            $queryString = isset($info['query']) ? $info['query'] : '';
+            // don't init Tracy for the PW Notifications module polling
+            if(strpos($queryString, 'Notifications=update') !== false) return;
 
+            // don't init Tracy for sidenav iframes
+            if(strpos($queryString, 'layout=sidenav-side') !== false ||
+                strpos($queryString, 'layout=sidenav-tree') !== false ||
+                strpos($queryString, 'layout=sidenav-init') !== false) return;
+        }
 
         if($this->data['enabled'] && $this->allowedTracyUsers() === 'full') {
 
@@ -1578,8 +1581,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
 
-        if($withQueryString) {
-
+        if($withQueryString && isset($_SERVER['REQUEST_URI'])) {
             $info = parse_url($_SERVER['REQUEST_URI']);
             $queryString = isset($info['query']) ? $info['query'] : '';
 
