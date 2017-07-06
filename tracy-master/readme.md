@@ -28,16 +28,16 @@ Installation and requirements
 The best way how to install Tracy is to [download a latest package](https://github.com/nette/tracy/releases) or use a Composer:
 
 ```
-php composer.phar require tracy/tracy
+composer require tracy/tracy
 ```
 
-Tracy requires PHP version 5.3.0 or newer (master requires PHP 5.4.4).
+Tracy requires PHP version 5.4.4 or newer (is compatible with PHP 7.0 and 7.1). Older Tracy 2.3 works with PHP 5.3.
 
 
 Usage
 -----
 
-Activating Tracy is easy. Simply add these two lines of code, preferably just after library loading (like `require 'vendor/autoload.php'`):
+Activating Tracy is easy. Simply add these two lines of code, preferably just after library loading (like `require 'vendor/autoload.php'`) and before any output is sent to browser:
 
 ```php
 use Tracy\Debugger;
@@ -46,6 +46,9 @@ Debugger::enable();
 ```
 
 The first thing you will notice on the website is a Debugger Bar.
+
+(If you do not see anything, it means that Tracy is running in production mode. For security reasons, Tracy is visible only on localhost.
+You may force Tracy to run in development mode by passing the `Debugger::DEVELOPMENT` as the first parameter of `enable()` method.)
 
 
 Debugger Bar
@@ -311,3 +314,16 @@ Debugger::fireLog(new Exception('Test Exception')); // or exceptions
 The result looks like this:
 
 ![FireLogger](https://nette.github.io/tracy/images/tracy-firelogger.png)
+
+Ports
+-----------------------------
+This is list of unofficial ports to another frameworks and CMS than Nette:
+- [Drupal 7](http://drupal.org/project/traced)
+- Laravel framework: [recca0120/laravel-tracy](https://github.com/recca0120/laravel-tracy), [whipsterCZ/laravel-tracy](https://github.com/whipsterCZ/laravel-tracy)
+- [OpenCart](https://github.com/BurdaPraha/oc_tracy)
+- [ProcessWire CMS/CMF](https://github.com/adrianbj/TracyDebugger)
+- [Slim Framework](https://github.com/runcmf/runtracy)
+- Symfony framework: [kutny/tracy-bundle](https://github.com/kutny/tracy-bundle), [VasekPurchart/Tracy-Blue-Screen-Bundle](https://github.com/VasekPurchart/Tracy-Blue-Screen-Bundle)
+- [Wordpress](https://github.com/ktstudio/WP-Tracy)
+
+... feel free to be famous, create a port for your favourite platform!
