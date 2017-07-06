@@ -256,18 +256,18 @@ class DiagnosticsPanel extends BasePanel {
         }
     }
 
-    protected function getApacheUser() {
+    protected function getPHPUser() {
         if(function_exists('exec')) {
-            return 'Apache is running as user: ' . exec('whoami');
+            return 'PHP is running as user: ' . exec('whoami');
         }
         else {
             $tempDir = new  WireTempDir('whoami');
             $check = file_put_contents($tempDir."/test.txt", "test");
             if(is_int($check) && $check > 0){
-                return 'Apache appears to be running as you.';
+                return 'PHP appears to be running as you.';
             }
             else {
-                return 'Apache appears to be running as another user, ie. not you.';
+                return 'PHP appears to be running as another user, ie. not you.';
             }
         }
     }
@@ -322,7 +322,7 @@ class DiagnosticsPanel extends BasePanel {
             <div id="filesystemFolders">
                 <p>Please read <a href="https://processwire.com/docs/security/file-permissions/">https://processwire.com/docs/security/file-permissions/</a> for details on how to secure these.</p>';
                 if(function_exists('posix_getpwuid')) {
-                    $out .= '<p>'.$this->getApacheUser().'</p><br />';
+                    $out .= '<p>'.$this->getPHPUser().'</p><br />';
                 }
                 $out .= '<p>'.$this->filesystem.'
             </div>

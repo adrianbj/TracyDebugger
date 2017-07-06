@@ -475,7 +475,7 @@ class ProcesswireInfoPanel extends BasePanel {
             $eol = " <br />\n";
             $serverInfo = "ProcessWire: " . $this->wire('config')->version . $eol;
             $serverInfo .= "PHP: " . phpversion() . $eol;
-            if(isset($_SERVER['SERVER_SOFTWARE'])) $serverInfo .= "Apache: " . str_replace('Apache/', '', current(explode("PHP", $_SERVER['SERVER_SOFTWARE']))) . $eol;
+            if(isset($_SERVER['SERVER_SOFTWARE'])) $serverInfo .= "Webserver: " . current(explode("PHP", $_SERVER['SERVER_SOFTWARE'])) . $eol;
             $serverInfo .= "MySQL: " . $this->wire('database')->query('select version()')->fetchColumn() . $eol . $eol;
 
             $serverSettings = "";
