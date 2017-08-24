@@ -45,7 +45,7 @@ if($user->isSuperuser()) {
         // get vars from the page's template file
         ob_start();
         foreach($this->wire('session')->tracyIncludedFiles as $key => $path) {
-            if($path != $this->wire('config')->paths->cache . 'TracyDebugger/consoleCode.php' && $path != $page->template->filename) {
+            if($path != $this->file && $path != $page->template->filename) {
                 include_once($path);
             }
         }

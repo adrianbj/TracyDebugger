@@ -17,22 +17,22 @@ Debugger::enable(Debugger::DETECT, __DIR__ . '/log');
 
 class DemoClass
 {
-
-	function first($arg1, $arg2)
+	public function first($arg1, $arg2)
 	{
-		$this->second(TRUE, FALSE);
+		$this->second(true, false);
 	}
 
-	function second($arg1, $arg2)
+
+	public function second($arg1, $arg2)
 	{
 		self::third([1, 2, 3]);
 	}
 
-	static function third($arg1)
+
+	public static function third($arg1)
 	{
 		throw new Exception('The my exception', 123);
 	}
-
 }
 
 

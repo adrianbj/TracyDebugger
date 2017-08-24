@@ -36,7 +36,7 @@
 		evalScripts(elem);
 
 		draggable(elem, {
-			handle: elem.querySelector('h1'),
+			handles: elem.querySelectorAll('h1'),
 			start: function() {
 				_this.toFloat();
 			}
@@ -71,6 +71,7 @@
 
 		forEach(elem.querySelectorAll('.tracy-icons a'), function(a) {
 			a.addEventListener('click', function(e) {
+				clearTimeout(elem.Tracy.displayTimeout);
 				if (this.rel === 'close') {
 					_this.toPeek();
 				} else {
@@ -213,7 +214,12 @@
 		this.elem = document.getElementById(this.id);
 
 		draggable(this.elem, {
+			handles: this.elem.querySelectorAll('li:first-child'),
 			draggedClass: 'tracy-dragged'
+		});
+
+		this.elem.addEventListener('mousedown', function(e) {
+			e.preventDefault();
 		});
 
 		this.initTabs(this.elem);
@@ -230,6 +236,10 @@
 
 				} else if (this.rel) {
 					var panel = Debug.panels[this.rel];
+					if (panel.elem.dataset.tracyContent) {
+						panel.init();
+					}
+
 					if (e.shiftKey) {
 						panel.toFloat();
 						panel.toWindow();
@@ -468,9 +478,9 @@
 			}
 		};
 
-		var onmousemove = function(e) {
+		var onMove = function(e) {
 			if (e.buttons === 0) {
-				return onmouseup(e);
+				return onEnd(e);
 			}
 			if (!started) {
 				if (options.draggedClass) {
@@ -482,12 +492,12 @@
 				started = true;
 			}
 
-			clientX = e.clientX;
-			clientY = e.clientY;
+			clientX = e.touches ? e.touches[0].clientX : e.clientX;
+			clientY = e.touches ? e.touches[0].clientY : e.clientY;
 			return false;
 		};
 
-		var onmouseup = function(e) {
+		var onEnd = function(e) {
 			if (started) {
 				if (options.draggedClass) {
 					elem.classList.remove(options.draggedClass);
@@ -497,38 +507,47 @@
 				}
 			}
 			dragging = null;
-			dE.removeEventListener('mousemove', onmousemove);
-			dE.removeEventListener('mouseup', onmouseup);
+			dE.removeEventListener('mousemove', onMove);
+			dE.removeEventListener('mouseup', onEnd);
+			dE.removeEventListener('touchmove', onMove);
+			dE.removeEventListener('touchend', onEnd);
 			return false;
 		};
 
-		(options.handle || elem).addEventListener('mousedown', function(e) {
+		var onStart = function(e) {
 			e.preventDefault();
 			e.stopPropagation();
 
 			if (dragging) { // missed mouseup out of window?
-				return onmouseup(e);
+				return onEnd(e);
 			}
 
 			var pos = getPosition(elem);
-			clientX = e.clientX;
-			clientY = e.clientY;
+			clientX = e.touches ? e.touches[0].clientX : e.clientX;
+			clientY = e.touches ? e.touches[0].clientY : e.clientY;
 			deltaX = pos.right + clientX;
 			deltaY = pos.bottom + clientY;
 			dragging = true;
 			started = false;
-			dE.addEventListener('mousemove', onmousemove);
-			dE.addEventListener('mouseup', onmouseup);
+			dE.addEventListener('mousemove', onMove);
+			dE.addEventListener('mouseup', onEnd);
+			dE.addEventListener('touchmove', onMove);
+			dE.addEventListener('touchend', onEnd);
 			requestAnimationFrame(redraw);
 			if (options.start) {
 				options.start(e, elem);
 			}
-		});
+		};
 
-		(options.handle || elem).addEventListener('click', function(e) {
-			if (started) {
-				e.stopImmediatePropagation();
-			}
+		forEach(options.handles, function (handle) {
+			handle.addEventListener('mousedown', onStart);
+			handle.addEventListener('touchstart', onStart);
+
+			handle.addEventListener('click', function(e) {
+				if (started) {
+					e.stopImmediatePropagation();
+				}
+			});
 		});
 	}
 

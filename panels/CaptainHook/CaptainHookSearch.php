@@ -46,30 +46,38 @@ class CaptainHookSearch {
         $source = implode('', $lines);
         $tokens = token_get_all($source);
         $nextStringIsFunc = false;
+        $nextStringIsClass = false;
         $lastStringWasThis = false;
         $secondLastStringWasThis = false;
         $lastStringWasObjectOperator = false;
         $lastStringWasAddHook = false;
+        $className = null;
 
-        $i=0;
         $files = array();
         foreach($tokens as $token) {
             switch($token[0]) {
+                case T_CLASS:
+                    $nextStringIsClass = true;
+                    break;
                 case T_FUNCTION:
                     $nextStringIsFunc = true;
                     break;
 
                 case T_STRING:
+                    if($nextStringIsClass) {
+                        $nextStringIsClass = false;
+                        $className = $token[1];
+                    }
                     if($nextStringIsFunc) {
                         $nextStringIsFunc = false;
                         if(strpos($token[1], '___') !== false) {
-                            $name = pathinfo($file, PATHINFO_FILENAME).'::' . str_replace('___', '', $token[1]);
+                            $name = $className . '::' . str_replace('___', '', $token[1]);
                             if(!in_array($name, self::$hookNames)) {
                                 self::$hookNames[] = $name;
                                 $files['filename'] = $file;
-                                $files['hooks'][$i]['name'] = $name;
-                                $files['hooks'][$i]['lineNumber'] = $token[2];
-                                $files['hooks'][$i]['line'] = self::getFunctionLine($lines[($token[2]-1)]);
+                                $files['hooks'][$name]['name'] = $name;
+                                $files['hooks'][$name]['lineNumber'] = $token[2];
+                                $files['hooks'][$name]['line'] = self::getFunctionLine($lines[($token[2]-1)]);
                             }
                         }
                     }
@@ -104,15 +112,15 @@ class CaptainHookSearch {
                         if(!in_array($name, self::$hookNames)) {
                             self::$hookNames[] = $name;
                             $files['filename'] = $file;
-                            $files['hooks'][$i]['name'] = $name;
-                            $files['hooks'][$i]['lineNumber'] = $token[2];
-                            $files['hooks'][$i]['line'] = self::strip_comments(trim($lines[($token[2]-1)]));
+                            $files['hooks'][$name]['name'] = $name;
+                            $files['hooks'][$name]['lineNumber'] = $token[2];
+                            $files['hooks'][$name]['line'] = self::strip_comments(trim($lines[($token[2]-1)]));
                         }
                     }
             }
-            $i++;
-        }
 
+        }
+        if(isset($files['hooks']) && is_array($files['hooks'])) asort($files['hooks']);
         return $files;
     }
 

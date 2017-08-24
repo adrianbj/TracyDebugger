@@ -7,7 +7,7 @@ use Tracy\Debugger;
 // For security reasons, Tracy is visible only on localhost.
 // You may force Tracy to run in development mode by passing the Debugger::DEVELOPMENT instead of Debugger::DETECT.
 Debugger::enable(Debugger::DETECT, __DIR__ . '/log');
-Debugger::$strictMode = TRUE;
+Debugger::$strictMode = true;
 
 ?>
 <!DOCTYPE html><link rel="stylesheet" href="assets/style.css">
@@ -16,10 +16,12 @@ Debugger::$strictMode = TRUE;
 
 <?php
 
+
 function foo($from)
 {
 	echo $form;
 }
+
 
 foo(123);
 

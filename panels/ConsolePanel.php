@@ -210,8 +210,9 @@ HTML;
         $getPage = '$page = $pages->get('.$p->id.');';
         $file = $this->wire('config')->paths->cache . 'TracyDebugger/consoleCode.php';
         if (file_exists($file)) {
-            $code = file_get_contents($this->wire('config')->paths->cache . 'TracyDebugger/consoleCode.php');
-            $code = str_replace("$openPHP\n$inPwCheck\n$getPage\n", "", $code);
+            $code = file_get_contents($file);
+            $code = implode("\n", array_slice(explode("\n", $code), 3));
+            //$code = str_replace("$openPHP\n$inPwCheck\n$getPage\n", "", $code);
             $code = json_encode($code); // json_encode to convert line breaks to \n - needed by setValue()
         }
 
