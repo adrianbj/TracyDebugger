@@ -52,13 +52,20 @@ class CaptainHookSearch {
         $lastStringWasObjectOperator = false;
         $lastStringWasAddHook = false;
         $className = null;
+        $comment = null;
 
         $files = array();
         foreach($tokens as $token) {
             switch($token[0]) {
                 case T_CLASS:
                     $nextStringIsClass = true;
+                    $lastStringWasComment = false;
                     break;
+
+                case T_DOC_COMMENT:
+                    $comment = $token[1];
+                    $lastStringWasComment = true;
+
                 case T_FUNCTION:
                     $nextStringIsFunc = true;
                     break;
@@ -71,13 +78,28 @@ class CaptainHookSearch {
                     if($nextStringIsFunc) {
                         $nextStringIsFunc = false;
                         if(strpos($token[1], '___') !== false) {
-                            $name = $className . '::' . str_replace('___', '', $token[1]);
+                            $methodName = str_replace('___', '', $token[1]);
+                            $name = $className . '::' . $methodName;
                             if(!in_array($name, self::$hookNames)) {
+                                if(!$lastStringWasComment) $comment = '';
                                 self::$hookNames[] = $name;
                                 $files['filename'] = $file;
-                                $files['hooks'][$name]['name'] = $name;
+                                bd($file);
+                                if(strpos($comment, '#pw-internal') === false && strpos($file, 'wire') !== false && strpos($file, 'modules') === false) {
+                                    $files['hooks'][$name]['name'] = "<a href='https://processwire.com/api/ref/".strtolower($className)."/".strtolower(preg_replace('/([A-Z])/', '-$1', $methodName))."/'>" . $name . "</a>";
+                                }
+                                else {
+                                    $files['hooks'][$name]['name'] = $name;
+                                }
+
                                 $files['hooks'][$name]['lineNumber'] = $token[2];
-                                $files['hooks'][$name]['line'] = self::getFunctionLine($lines[($token[2]-1)]);
+                                $files['hooks'][$name]['line'] = "
+                                    <div id='ch-comment'>
+                                        <label class='".($lastStringWasComment ? 'comment' : '')."' for='".$name."'>".self::getFunctionLine($lines[($token[2]-1)])." </label>
+                                        <input type='checkbox' id='".$name."'>
+                                        <div class='hide'>".nl2br(htmlentities($comment))."</div>
+                                    </div>";
+
                             }
                         }
                     }
@@ -93,6 +115,7 @@ class CaptainHookSearch {
                 case T_VARIABLE:
                     if(strpos($token[1], '$this') !== false) {
                         $lastStringWasThis = true;
+                        $lastStringWasComment = false;
                         $lastString = $token[1];
                     }
                     break;
@@ -100,6 +123,7 @@ class CaptainHookSearch {
                 case T_OBJECT_OPERATOR:
                     if($lastStringWasThis) {
                         $lastStringWasThis = false;
+                        $lastStringWasComment = false;
                         $secondLastStringWasThis = true;
                         $lastStringWasObjectOperator = true;
                     }
@@ -108,6 +132,7 @@ class CaptainHookSearch {
                 case T_CONSTANT_ENCAPSED_STRING:
                     if($lastStringWasAddHook) {
                         $lastStringWasAddHook = false;
+                        $lastStringWasComment = false;
                         $name = str_replace(array("'", '"'), "", $token[1]);
                         if(!in_array($name, self::$hookNames)) {
                             self::$hookNames[] = $name;

@@ -811,3 +811,32 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
 }
 
 
+/* Captain Hook comment display/hide */
+#ch-comment label {
+    display:block;
+    cursor:default !important;
+}
+#ch-comment label.comment {
+    color:#125EAE !important;
+    cursor:pointer !important;
+}
+#ch-comment label.comment:hover { text-decoration:underline }
+#ch-comment input[type="checkbox"] {
+    position:absolute !important;
+    left:-999em !important;
+}
+#ch-comment .hide {
+    max-height:99em;
+    opacity:1;
+    height:auto;
+    overflow:hidden;
+}
+#ch-comment .hide p {
+    padding:10px;
+    margin:0
+}
+#ch-comment input[type="checkbox"]:not(:checked) + div {
+    opacity:0;
+    max-height:0;
+    border:none;
+}

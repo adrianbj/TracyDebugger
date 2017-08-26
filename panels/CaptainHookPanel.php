@@ -123,7 +123,7 @@ class CaptainHookPanel extends BasePanel {
     }
 
     private function buildHookTable($info) {
-        $out = '
+        $out = '<br />
             <table class="captainHookTable">';
         foreach($info['hooks'] as $hook) {
             $out .= '
