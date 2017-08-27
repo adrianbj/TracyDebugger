@@ -84,7 +84,6 @@ class CaptainHookSearch {
                                 if(!$lastStringWasComment) $comment = '';
                                 self::$hookNames[] = $name;
                                 $files['filename'] = $file;
-                                bd($file);
                                 if(strpos($comment, '#pw-internal') === false && strpos($file, 'wire') !== false && strpos($file, 'modules') === false) {
                                     $files['hooks'][$name]['name'] = "<a href='https://processwire.com/api/ref/".strtolower($className)."/".strtolower(preg_replace('/([A-Z])/', '-$1', $methodName))."/'>" . $name . "</a>";
                                 }
