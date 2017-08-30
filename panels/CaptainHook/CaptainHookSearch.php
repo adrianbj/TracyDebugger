@@ -47,11 +47,13 @@ class CaptainHookSearch {
         $tokens = token_get_all($source);
         $nextStringIsFunc = false;
         $nextStringIsClass = false;
+        $nextStringIsExtends = false;
         $lastStringWasThis = false;
         $secondLastStringWasThis = false;
         $lastStringWasObjectOperator = false;
         $lastStringWasAddHook = false;
         $className = null;
+        $extendsClassName = null;
         $comment = null;
 
         $files = array();
@@ -62,9 +64,15 @@ class CaptainHookSearch {
                     $lastStringWasComment = false;
                     break;
 
+                case T_EXTENDS:
+                    $nextStringIsExtends = true;
+                    $lastStringWasComment = false;
+                    break;
+
                 case T_DOC_COMMENT:
                     $comment = $token[1];
                     $lastStringWasComment = true;
+                    break;
 
                 case T_FUNCTION:
                     $nextStringIsFunc = true;
@@ -75,6 +83,10 @@ class CaptainHookSearch {
                         $nextStringIsClass = false;
                         $className = $token[1];
                     }
+                    if($nextStringIsExtends) {
+                        $nextStringIsExtends = false;
+                        $extendsClassName = $token[1];
+                    }
                     if($nextStringIsFunc) {
                         $nextStringIsFunc = false;
                         if(strpos($token[1], '___') !== false) {
@@ -84,6 +96,7 @@ class CaptainHookSearch {
                                 if(!$lastStringWasComment) $comment = '';
                                 self::$hookNames[] = $name;
                                 $files['filename'] = $file;
+                                $files['extends'] = $extendsClassName;
                                 if(strpos($comment, '#pw-internal') === false && strpos($file, 'wire') !== false && strpos($file, 'modules') === false) {
                                     if(wire('modules')->isInstalled('ProcessWireAPI')) {
                                         $ApiModuleId = wire('modules')->getModuleID("ProcessWireAPI");
@@ -104,7 +117,6 @@ class CaptainHookSearch {
                                         <input type='checkbox' id='".$name."'>
                                         <div class='hide'>".nl2br(htmlentities($comment))."</div>
                                     </div>";
-
                             }
                         }
                     }
@@ -147,6 +159,7 @@ class CaptainHookSearch {
                             $files['hooks'][$name]['line'] = self::strip_comments(trim($lines[($token[2]-1)]));
                         }
                     }
+                    break;
             }
 
         }

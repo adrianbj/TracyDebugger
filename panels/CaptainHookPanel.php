@@ -6,6 +6,16 @@
 
 class CaptainHookPanel extends BasePanel {
 
+    public function __construct() {
+        if(wire('modules')->isInstalled('ProcessWireAPI')) {
+            $ApiModuleId = wire('modules')->getModuleID("ProcessWireAPI");
+            $this->apiBaseUrl = wire('pages')->get("process=$ApiModuleId")->url.'methods/';
+        }
+        else {
+            $this->apiBaseUrl = 'https://processwire.com/api/ref/';
+        }
+    }
+
     protected $icon;
 
     public function getTab() {
@@ -101,7 +111,8 @@ class CaptainHookPanel extends BasePanel {
         }
 
         $hooks = unserialize($cachedHooks);
-        asort($hooks);
+        //asort($hooks);
+        //uasort($hooks, function($a, $b) { return $a['filename']>$b['filename']; });
         $lastSection = null;
         foreach($hooks as $file => $info) {
             $name = pathinfo($info['filename'], PATHINFO_FILENAME);
@@ -112,7 +123,7 @@ class CaptainHookPanel extends BasePanel {
             if($currentSection !== $lastSection) $out .= '<h3>'.$currentSection.'</h3>';
             $out .= '
             <a href="#" rel="'.$name.'" class="tracy-toggle tracy-collapsed">'.str_replace($segments[0].DIRECTORY_SEPARATOR.$segments[1].DIRECTORY_SEPARATOR, '', $label).'</a>
-            <div id="'.$name.'" class="tracy-collapsed">'.$this->buildHookTable($info).'</div><br />';
+            <div style="padding-left:10px" id="'.$name.'" class="tracy-collapsed"><p>'.(!in_array('site', $segments) ? '<a href="'.$this->apiBaseUrl.strtolower($name).'/">'.$name.'</a> ' : $name).(isset($info['extends']) ? ' extends <a href="'.$this->apiBaseUrl.strtolower($info['extends']).'/">'.$info['extends'].'</a>' : '').'</p>'.$this->buildHookTable($info).'</div><br />';
             $lastSection = $currentSection;
         }
 
@@ -123,7 +134,7 @@ class CaptainHookPanel extends BasePanel {
     }
 
     private function buildHookTable($info) {
-        $out = '<br />
+        $out = '
             <table class="captainHookTable">';
         foreach($info['hooks'] as $hook) {
             $out .= '
