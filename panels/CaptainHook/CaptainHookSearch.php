@@ -96,6 +96,7 @@ class CaptainHookSearch {
                                 if(!$lastStringWasComment) $comment = '';
                                 self::$hookNames[] = $name;
                                 $files['filename'] = $file;
+                                $files['classname'] = $className;
                                 $files['extends'] = $extendsClassName;
                                 if(strpos($comment, '#pw-internal') === false && strpos($file, 'wire') !== false && strpos($file, 'modules') === false) {
                                     if(wire('modules')->isInstalled('ProcessWireAPI')) {
@@ -154,6 +155,8 @@ class CaptainHookSearch {
                         if(!in_array($name, self::$hookNames)) {
                             self::$hookNames[] = $name;
                             $files['filename'] = $file;
+                            $files['classname'] = $className;
+                            $files['extends'] = $extendsClassName;
                             $files['hooks'][$name]['name'] = $name;
                             $files['hooks'][$name]['lineNumber'] = $token[2];
                             $files['hooks'][$name]['line'] = self::strip_comments(trim($lines[($token[2]-1)]));
