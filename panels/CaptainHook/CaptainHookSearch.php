@@ -98,13 +98,16 @@ class CaptainHookSearch {
                                 $files['filename'] = $file;
                                 $files['classname'] = $className;
                                 $files['extends'] = $extendsClassName;
-                                if(strpos($comment, '#pw-internal') === false && strpos($file, 'wire') !== false && strpos($file, 'modules') === false) {
+                                if(strpos($comment, '#pw-internal') === false && strpos($file, 'wire') !== false) {
                                     if(wire('modules')->isInstalled('ProcessWireAPI')) {
                                         $ApiModuleId = wire('modules')->getModuleID("ProcessWireAPI");
-                                        $files['hooks'][$name]['name'] = "<a href='".wire('pages')->get("process=$ApiModuleId")->url.'methods/'.strtolower($className)."/".strtolower(preg_replace('/([A-Z])/', '-$1', $methodName))."/'>" . $name . "</a>";
+                                        $files['hooks'][$name]['name'] = "<a href='".wire('pages')->get("process=$ApiModuleId")->url.'methods/'.self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $name . "</a>";
+                                    }
+                                    elseif(strpos($file, 'modules') === false) {
+                                        $files['hooks'][$name]['name'] = "<a href='https://processwire.com/api/ref/".self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $name . "</a>";
                                     }
                                     else {
-                                        $files['hooks'][$name]['name'] = "<a href='https://processwire.com/api/ref/".strtolower($className)."/".strtolower(preg_replace('/([A-Z])/', '-$1', $methodName))."/'>" . $name . "</a>";
+                                        $files['hooks'][$name]['name'] = $name;
                                     }
                                 }
                                 else {
@@ -203,6 +206,9 @@ class CaptainHookSearch {
         }
     }
 
+    private static function convertNamesToUrls($str) {
+        return trim(strtolower(preg_replace('/([A-Z])/', '-$1', $str)), '-');
+    }
 
 }
 
