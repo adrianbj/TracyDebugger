@@ -6,6 +6,9 @@
 
 class CaptainHookPanel extends BasePanel {
 
+    protected $icon;
+    protected $apiBaseUrl;
+
     public function __construct() {
         if(wire('modules')->isInstalled('ProcessWireAPI')) {
             $ApiModuleId = wire('modules')->getModuleID("ProcessWireAPI");
@@ -15,8 +18,6 @@ class CaptainHookPanel extends BasePanel {
             $this->apiBaseUrl = 'https://processwire.com/api/ref/';
         }
     }
-
-    protected $icon;
 
     public function getTab() {
 
@@ -122,7 +123,7 @@ class CaptainHookPanel extends BasePanel {
             if($currentSection !== $lastSection) $out .= '<h3>'.$currentSection.'</h3>';
             $out .= '
             <a href="#" rel="'.$name.'" class="tracy-toggle tracy-collapsed">'.str_replace($segments[0].DIRECTORY_SEPARATOR.$segments[1].DIRECTORY_SEPARATOR, '', $label).'</a>
-            <div style="padding-left:10px" id="'.$name.'" class="tracy-collapsed"><p>'.(isset($info['classname']) && !in_array('site', $segments) ? '<a href="'.$this->apiBaseUrl.strtolower($info['classname']).'/">'.$info['classname'].'</a> ' : $info['classname']).(isset($info['extends']) ? ' extends <a href="'.$this->apiBaseUrl.strtolower($info['extends']).'/">'.$info['extends'].'</a>' : '').'</p>'.$this->buildHookTable($info).'</div><br />';
+            <div style="padding-left:10px" id="'.$name.'" class="tracy-collapsed"><p>'.(isset($info['classname']) && (!in_array('site', $segments) || wire('modules')->isInstalled('ProcessWireAPI')) ? '<a href="'.$this->apiBaseUrl.strtolower(preg_replace('/([a-z])([A-Z])/', '$1-$2', $info['classname'])).'/">'.$info['classname'].'</a> ' : $info['classname']).(isset($info['extends']) ? ' extends <a href="'.$this->apiBaseUrl.strtolower(preg_replace('/([a-z])([A-Z])/', '$1-$2', $info['extends'])).'/">'.$info['extends'].'</a>' : '').'</p>'.$this->buildHookTable($info).'</div><br />';
             $lastSection = $currentSection;
         }
 

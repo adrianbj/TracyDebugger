@@ -10,6 +10,17 @@ class DebugModePanel extends BasePanel {
 
     protected static $iconColor;
     protected static $panelIconColor;
+    protected $apiBaseUrl;
+
+    public function __construct() {
+        if(wire('modules')->isInstalled('ProcessWireAPI')) {
+            $ApiModuleId = wire('modules')->getModuleID("ProcessWireAPI");
+            $this->apiBaseUrl = wire('pages')->get("process=$ApiModuleId")->url.'methods/';
+        }
+        else {
+            $this->apiBaseUrl = 'https://processwire.com/api/ref/';
+        }
+    }
 
     public function getTab() {
         if(\TracyDebugger::isAdditionalBar()) return;
@@ -168,7 +179,7 @@ class DebugModePanel extends BasePanel {
                     }
                     ksort($apiVars);
                     foreach($apiVars as $key => $value) {
-                        $apiVariables .= "\n<tr><td><a href='https://processwire.com/api/ref/$key/'>\$$key</a></td>" .
+                        $apiVariables .= "\n<tr><td><a href='".$this->apiBaseUrl.strtolower(preg_replace('/([a-z])([A-Z])/', '$1-$2', $key))."/'>\$$key</a></td>" .
                             "<td>" . get_class($value) . "</td></tr>";
                     }
                 }
@@ -232,7 +243,7 @@ class DebugModePanel extends BasePanel {
                 foreach($classTypes as $type => $classes) {
                     foreach($classes as $class) {
                         $coreClasses_oc++;
-                        $coreClasses .= "\n<tr><td>".$type."</td><td><a href='https://processwire.com/api/ref/".strtolower(preg_replace('/([a-z])([A-Z])/', '$1-$2', $class))."/'>".$class."</a></td></tr>";
+                        $coreClasses .= "\n<tr><td>".$type."</td><td><a href='".$this->apiBaseUrl.strtolower(preg_replace('/([a-z])([A-Z])/', '$1-$2', $class))."/'>".$class."</a></td></tr>";
                     }
                 }
                 $coreClasses .= $sectionEnd;
