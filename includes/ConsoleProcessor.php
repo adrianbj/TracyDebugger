@@ -6,13 +6,6 @@ set_exception_handler('tracyConsoleExceptionHandler');
 // remove location links from dumps - not really meaningful for console
 \Tracy\Debugger::$showLocation = FALSE;
 
-$pwVars = function_exists('wire') ? $this->fuel : \ProcessWire\wire('all');
-
-// populate API variables, eg so $page equals $this->wire('page')
-foreach($pwVars->getArray() as $key => $value) {
-    $$key = $value;
-}
-
 if($user->isSuperuser()) {
     $page = $pages->get((int)$_POST['pid']);
     $code = $_POST['code'];
