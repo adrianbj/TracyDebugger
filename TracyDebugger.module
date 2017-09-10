@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.3.18',
+            'version' => '4.3.19',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -873,19 +873,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // CONSOLE PANEL
         // if it's an ajax request from the Tracy Console panel code execution, then process and return
         if($this->wire('config')->ajax && $this->wire('input')->post->tracyconsole == 1) {
-
-            // populate API variables, eg so $page equals $this->wire('page')
-            $pwVars = function_exists('wire') ? $this->fuel : \ProcessWire\wire('all');
-            foreach($pwVars->getArray() as $key => $value) {
-                $$key = $value;
-            }
-
-            // ready.php and finished.php weren't being loaded, so include here to monitor any bd() etc calls they might have
-            // the other approach to fix this is to call an external ConsoleProcessor.php file via ajax as per PM with @bernhard
-            $readyPath = $this->wire('config')->paths->root . 'site/ready.php';
-            $finishedPath = $this->wire('config')->paths->root . 'site/finished.php';
-            if(file_exists($readyPath)) include_once($readyPath);
-            if(file_exists($finishedPath)) include_once($finishedPath);
             require_once(__DIR__ . '/includes/ConsoleProcessor.php');
             return;
         }

@@ -6,9 +6,23 @@ set_exception_handler('tracyConsoleExceptionHandler');
 // remove location links from dumps - not really meaningful for console
 \Tracy\Debugger::$showLocation = FALSE;
 
+// populate API variables, eg so $page equals $this->wire('page')
+$pwVars = function_exists('wire') ? $this->fuel : \ProcessWire\wire('all');
+foreach($pwVars->getArray() as $key => $value) {
+    $$key = $value;
+}
+
 if($user->isSuperuser()) {
+
     $page = $pages->get((int)$_POST['pid']);
     $code = $_POST['code'];
+
+    // ready.php and finished.php weren't being loaded, so include here to monitor any bd() etc calls they might have
+    // the other approach to fix this is to call an external ConsoleProcessor.php file via ajax as per PM with @bernhard
+    $readyPath = $this->wire('config')->paths->root . 'site/ready.php';
+    $finishedPath = $this->wire('config')->paths->root . 'site/finished.php';
+    if(file_exists($readyPath)) include_once($readyPath);
+    if(file_exists($finishedPath)) include_once($finishedPath);
 
     $cachePath = $config->paths->cache . 'TracyDebugger/';
     if(!is_dir($cachePath)) if(!wireMkdir($cachePath)) {
