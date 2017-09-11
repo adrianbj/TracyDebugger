@@ -584,15 +584,45 @@ class ProcesswireInfoPanel extends BasePanel {
             <div class="pw-admin-links" style="text-align: center; border-top:1px solid #CCCCCC; margin-top:10px; padding-top:10px;">
                 <a href="'.$this->wire('config')->urls->admin.'" title="ProcessWire Admin">
                     ' . $this->icon . '
-                </a>&nbsp;
-                <a href="'.\TracyDebugger::inputUrl(true) . (strpos(\TracyDebugger::inputUrl(true), '?') !== false ? '&' : '?') . 'tracyLogout=1" title="Logout">
-                    <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 44.816 44.816" style="enable-background:new 0 0 44.816 44.816;" xml:space="preserve">
-                        <g>
-                            <path d="M22.404,21.173c2.126,0,3.895-1.724,3.895-3.85V3.849C26.299,1.724,24.53,0,22.404,0c-2.126,0-3.895,1.724-3.895,3.849    v13.475C18.51,19.449,20.278,21.173,22.404,21.173z" fill="#ee1d62"></path>
-                            <path d="M30.727,3.33c-0.481-0.2-1.03-0.147-1.466,0.142c-0.434,0.289-0.695,0.776-0.695,1.298v5.113    c0,0.56,0.301,1.076,0.784,1.354c4.192,2.407,6.918,6.884,6.918,11.999c0,7.654-6.217,13.882-13.87,13.882    c-7.654,0-13.86-6.228-13.86-13.882c0-5.113,2.813-9.589,6.931-11.997c0.478-0.279,0.773-0.794,0.773-1.348V4.769    c0-0.521-0.261-1.009-0.695-1.298c-0.435-0.29-0.984-0.342-1.466-0.142C6.257,6.593,0.845,14.276,0.845,23.236    c0,11.92,9.653,21.58,21.572,21.58c11.917,0,21.555-9.66,21.555-21.58C43.971,14.276,38.554,6.593,30.727,3.33z" fill="#ee1d62"></path>
-                        </g>
-                    </svg>
-                </a>&nbsp;
+                </a>&nbsp;';
+                if($this->wire('user')->isLoggedIn()) {
+                    $out .= '
+                    <a href="'.\TracyDebugger::inputUrl(true) . (strpos(\TracyDebugger::inputUrl(true), '?') !== false ? '&' : '?') . 'tracyLogout=1" title="Logout ('.$this->wire('user')->name.')">
+                        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                             width="16px" height="16px" viewBox="2.5 0 16 16" enable-background="new 2.5 0 16 16" xml:space="preserve">
+                            <g>
+                                <path d="M7.6,5.8c0.4-0.4,0.4-1,0-1.4C7.4,4.2,7.2,4.1,6.9,4.1c-0.3,0-0.5,0.1-0.7,0.3L3,7.3c0,0,0,0-0.1,0.1
+                                    c0,0,0,0,0,0c0,0,0,0,0,0.1c0,0,0,0,0,0c0,0,0,0,0,0.1c0,0,0,0,0,0c0,0,0,0,0,0.1c0,0,0,0,0,0c0,0,0,0.1,0,0.1c0,0,0,0,0,0
+                                    c0,0,0,0.1,0,0.1c0,0,0,0,0,0c0,0,0,0,0,0.1c0,0,0,0.1,0,0.1c0,0,0,0.1,0,0.1c0,0,0,0,0,0.1c0,0,0,0,0,0c0,0,0,0.1,0,0.1
+                                    c0,0,0,0,0,0c0,0,0,0.1,0,0.1c0,0,0,0,0,0c0,0,0,0.1,0,0.1c0,0,0,0,0,0c0,0,0,0,0,0.1c0,0,0,0,0,0c0,0,0,0,0,0.1c0,0,0,0,0,0
+                                    c0,0,0,0,0.1,0.1l3.2,2.9c0.4,0.4,1.1,0.4,1.5,0c0.4-0.4,0.4-1,0-1.4L6.3,9h7.9c0.6,0,1.1-0.4,1.1-1s-0.5-1-1.1-1H6.3L7.6,5.8z" fill="#ee1d62" />
+                                <path d="M4.8,9h9.3c0.6,0,1.1-0.4,1.1-1s-0.5-1-1.1-1H4.8" fill="#ee1d62" />
+                                <path d="M9.9,0C7,0,4.3,1.3,2.7,3.5C2.3,4,2.5,4.6,3,4.9c0.5,0.3,1.1,0.2,1.5-0.3C5.6,3,7.7,2,9.9,2
+                                    c3.6,0,6.5,2.7,6.5,6s-2.9,6-6.5,6c-2.2,0-4.2-1-5.4-2.7c-0.3-0.4-1-0.6-1.5-0.3c-0.5,0.3-0.6,0.9-0.3,1.4C4.3,14.7,7,16,9.9,16
+                                    c4.8,0,8.6-3.6,8.6-8S14.6,0,9.9,0z" fill="#ee1d62" />
+                            </g>
+                        </svg>
+                    </a>&nbsp;';
+                }
+                else {
+                    $out .= '
+                    <a href="'.$this->wire('config')->urls->admin . (strpos(\TracyDebugger::inputUrl(true), '?') !== false ? '&' : '?') . 'tracyLogin=1" title="Login">
+                        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                             width="16px" height="16px" viewBox="1.9 0 16 16" enable-background="new 1.9 0 16 16" xml:space="preserve">
+                            <g>
+                                <path d="M8.9,10.3c-0.4,0.4-0.4,0.9,0,1.4c0.1,0.1,0.4,0.3,0.7,0.3c0.3,0,0.5-0.1,0.7-0.3l3-3c0,0,0,0,0-0.1l0,0l0,0
+                                    l0,0l0,0l0,0c0,0,0,0,0-0.1l0,0c0,0,0,0,0-0.1l0,0c0,0,0,0,0-0.1l0,0c0,0,0,0,0-0.1c0,0,0,0,0-0.1c0,0,0,0,0-0.1c0,0,0,0,0-0.1l0,0
+                                    c0,0,0,0,0-0.1l0,0c0,0,0,0,0-0.1l0,0c0,0,0,0,0-0.1l0,0l0,0l0,0l0,0l0,0c0,0,0,0,0-0.1l-3-3C10,3.9,9.3,3.9,8.9,4.3
+                                    c-0.4,0.4-0.4,0.9,0,1.4l1.2,1.2H2.9C2.4,7.1,1.9,7.5,1.9,8c0,0.5,0.4,0.9,0.9,0.9h7.3L8.9,10.3z" fill="#ee1d62" />
+                                <path d="M11.6,7.1H2.9C2.4,7.1,1.9,7.5,1.9,8c0,0.5,0.4,0.9,0.9,0.9h8.6" fill="#ee1d62" />
+                                <path d="M10.2,0C7.5,0,5,1.4,3.6,3.5C3.2,3.9,3.3,4.6,3.7,4.9C4.1,5.2,4.8,5,5,4.6C6.1,3,8,1.9,10,1.9
+                                    c3.4,0,6.1,2.7,6.1,6.1s-2.7,6.1-6.1,6.1c-2,0-3.9-0.9-5-2.7c-0.3-0.4-0.9-0.5-1.3-0.3c-0.4,0.3-0.5,0.9-0.3,1.4
+                                    c1.5,2.2,4,3.5,6.6,3.5c4.4,0,7.9-3.7,7.9-8S14.5,0,10.2,0z" fill="#ee1d62" />
+                            </g>
+                        </svg>
+                    </a>&nbsp;';
+                }
+                $out .= '
                 <a href="'.\TracyDebugger::inputUrl(true) . (strpos(\TracyDebugger::inputUrl(true), '?') !== false ? '&' : '?') . 'tracyClearSession=1" title="Clear Session & Cookies">
                     <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 16 16" enable-background="new 0 0 16 16" xml:space="preserve">
                         <path fill="#EE2363" d="M15.747201,6.8416004h-1.9904003C13.2032013,3.5680001,10.3552008,1.072,6.9280005,1.072

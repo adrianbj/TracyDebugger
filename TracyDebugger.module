@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.3.19',
+            'version' => '4.3.20',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -214,10 +214,21 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // url for $session->redirects
         $this->httpReferer = isset($_SERVER['HTTP_REFERER']) ? $this->wire('sanitizer')->text($_SERVER['HTTP_REFERER']) : self::inputHttpUrl(true);
 
-        // logout
-        if($this->wire('input')->get->tracyLogout && $this->allowedTracyUsers() === 'full') {
-            $this->wire('session')->logout();
-            $this->wire('session')->redirect(substr(str_replace('tracyLogout=1', '', self::inputUrl(true)), 0, -1));
+        if($this->allowedTracyUsers() === 'full') {
+            // logout
+            if($this->wire('input')->get->tracyLogout) {
+                $this->wire('session')->logout();
+                $this->wire('session')->redirect(substr(str_replace('tracyLogout=1', '', self::inputUrl(true)), 0, -1));
+            }
+            // login
+            if($this->wire('input')->get->tracyLogin) {
+                $this->wire('session')->tracyLoginUrl = $this->httpReferer;
+            }
+            if($this->wire('session')->tracyLoginUrl) {
+                $this->addHookAfter('Session::loginSuccess', function(HookEvent $event) {
+                    $this->wire('session')->redirect($this->wire('session')->tracyLoginUrl);
+                });
+            }
         }
 
         // clear session & cookies
