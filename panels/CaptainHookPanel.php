@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Custom PW panel
- */
-
 class CaptainHookPanel extends BasePanel {
 
     protected $icon;

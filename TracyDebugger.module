@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.3.23',
+            'version' => '4.3.24',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -670,9 +670,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             // CAPTAIN HOOK
             // update cache on module install
             if(in_array('captainHook', static::$showPanels)) {
-                $this->addHookAfter('Module::install', $this, 'deleteHookCache');
+                $this->addHookAfter('Modules::install', $this, 'deleteHookCache');
+                $this->addHookAfter('Modules::uninstall', $this, 'deleteHookCache');
+                $this->addHookAfter('Modules::refresh', $this, 'deleteHookCache');
+                $this->addHookAfter('Modules::moduleVersionChanged', $this, 'deleteHookCache');
+                $this->addHookAfter('SystemUpdater::coreVersionChange', $this, 'deleteHookCache');
             }
-
 
             if(!$this->inAdmin) {
                 // VALIDATOR
