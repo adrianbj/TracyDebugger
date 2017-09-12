@@ -44,7 +44,8 @@ class CaptainHookSearch {
     public static function getHooksInFile($file) {
         $lines = file($file);
         $source = implode('', $lines);
-        if(strpos($source, '___') === false) return;
+        $str = preg_replace('/\s+/', ' ', $source);
+        if(strpos($str, 'function ___') === false && strpos($str, 'addHook') === false) return;
         $tokens = token_get_all($source);
         $nextStringIsFunc = false;
         $nextStringIsClass = false;
