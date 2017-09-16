@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.3.24',
+            'version' => '4.3.25',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -621,9 +621,61 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // ENABLE TRACY
         Debugger::enable($outputMode, $logFolder, $this->data['email'] != '' ? $this->data['email'] : null);
 
-        // ensure Tracy can show AJAX bar when SessionHandlerDB module is installed and debugbar is showing
+        // fixes for when SessionHandlerDB module is installed
         if($this->wire('modules')->isInstalled('SessionHandlerDB') && static::$tracyVersion != 'legacy' && $this->showDebugBarHere) {
+
+            // ensure Tracy can show AJAX bar when SessionHandlerDB module is installed and debugbar is showing
             $this->addHookBefore('ProcessWire::finished', $this, 'sessionHandlerDBAjaxFix');
+
+            /**
+             * Hook before Session::redirect
+             *
+             * ensure Tracy can show Redirect bars when SessionHandlerDB module is installed and debugbar is showing
+             * the only change to the PW core Session::redirect method is that this version moves these lines:
+             *   if($http301) header("HTTP/1.1 301 Moved Permanently");
+             *   header("Location: $url");
+             * from just above "exit(0)" to before ProcessPageView is closed down
+             *
+             * @param HookEvent $event
+             *
+             */
+            if(!$this->wire('config')->disableTracySHDBRedirectFix) {
+                $this->addHookBefore('Session::redirect', function($event) {
+                    $event->replace = true;
+                    $url = $event->arguments[0];
+                    $http301 = isset($event->arguments[1]) ? $event->arguments[1] : true;
+                    // if there are notices, then queue them so that they aren't lost
+                    if($this->sessionInit) {
+                        $notices = $this->wire('notices');
+                        if(count($notices)) foreach($notices as $notice) {
+                            if($notice instanceof NoticeWarning) {
+                                $noticeType = 'warning';
+                            } else if($notice instanceof NoticeError) {
+                                $noticeType = 'error';
+                            } else {
+                                $noticeType = 'message';
+                            }
+                            $this->queueNotice($notice->text, $noticeType, $notice->flags);
+                        }
+                    }
+                    if($http301) header("HTTP/1.1 301 Moved Permanently");
+                    header("Location: $url");
+                    // perform the redirect
+                    $page = $this->wire('page');
+                    if($page) {
+                        // ensure ProcessPageView is properly closed down
+                        $process = $this->wire('modules')->get('ProcessPageView');
+                        $process->setResponseType(ProcessPageView::responseTypeRedirect);
+                        $process->finished();
+                        // retain modal=1 get variables through redirects (this can be moved to a hook later)
+                        if($page->template == 'admin' && $this->wire('input')->get('modal') && strpos($url, '//') === false) {
+                            if(!strpos($url, 'modal=')) $url .= (strpos($url, '?') !== false ? '&' : '?') . 'modal=1';
+                        }
+                    }
+                    $this->wire()->setStatus(ProcessWire::statusFinished);
+                    exit(0);
+                });
+            }
         }
 
 
