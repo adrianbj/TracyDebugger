@@ -78,6 +78,24 @@ if($user->isSuperuser()) {
         }
     }
 
+    // re-populate various $input properties from version stored in session
+    foreach($this->wire('session')->tracyGetData as $k => $v) {
+        $this->wire('input')->get->$k = $v;
+    }
+
+    $postData = $this->wire('session')->tracyPostData;
+    foreach($this->wire('input')->post as $k => $v) {
+        unset($this->wire('input')->post->$k);
+    }
+    foreach($postData as $k => $v) {
+        $this->wire('input')->post->$k = $v;
+    }
+
+    foreach($this->wire('session')->tracyWhitelistData as $k => $v) {
+        $this->wire('input')->whitelist->$k = $v;
+    }
+
+
     // if in admin then $t won't have been instantiated above so do it now
     if(!isset($t) || !$t instanceof TemplateFile) $t = new TemplateFile($this->file);
 

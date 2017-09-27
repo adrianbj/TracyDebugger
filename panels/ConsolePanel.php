@@ -30,6 +30,11 @@ HTML;
 
         $tracyModuleUrl = $this->wire("config")->urls->TracyDebugger;
 
+        // store various $input properties so they are available to the console
+        $this->wire('session')->tracyPostData = $this->wire('input')->post->getArray();
+        $this->wire('session')->tracyGetData = $this->wire('input')->get->getArray();
+        $this->wire('session')->tracyWhitelistData = $this->wire('input')->whitelist->getArray();
+
         if (\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('page')->process == 'ProcessPageEdit') {
             $p = $this->wire('process')->getPage();
         } else {

@@ -254,7 +254,14 @@ class DebugModePanel extends BasePanel {
                 $sessionEntries_oc = 0;
                 $sessionEntries = $this->sectionHeader(array('Key', 'Value'));
                 foreach($this->wire('session') as $key => $value) {
-                    if($key == 'tracyDumpItems' || $key == 'tracyEventItems' || $key == 'tracyMailItems' || $key == 'tracyIncludedFiles') continue;
+                    if($key == 'tracyDumpItems'
+                        || $key == 'tracyEventItems'
+                        || $key == 'tracyMailItems'
+                        || $key == 'tracyIncludedFiles'
+                        || $key == 'tracyPostData'
+                        || $key == 'tracyGetData'
+                        || $key == 'tracyWhitelistData'
+                    ) continue;
                     $sessionEntries_oc++;
                     if(is_object($value)) $value = (string) $value;
                     if(is_array($value)) $value = print_r($value, true);

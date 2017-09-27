@@ -68,7 +68,7 @@ class TD extends TracyDebugger {
             $dumpItems = wire('session')->tracyDumpItems ? wire('session')->tracyDumpItems : array();
             $dumpItem['title'] = $title;
             $dumpItem['dump'] = Dumper::toHtml($var, $options);
-            array_unshift($dumpItems, $dumpItem);
+            array_push($dumpItems, $dumpItem);
             wire('session')->tracyDumpItems = $dumpItems;
         }
         else {
