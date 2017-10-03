@@ -80,9 +80,13 @@ class TD extends TracyDebugger {
      * Tracy\Debugger::dump() shortcut.
      * @tracySkipLocation
      */
-    public static function dump($var, $return = FALSE) {
+    public static function dump($var, array $options = NULL, $return = FALSE) {
         if(self::tracyUnavailable()) return false;
-        return Debugger::dump($var, $return);
+        $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
+        $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
+        $options[Dumper::LOCATION] = Debugger::$showLocation;
+        $options[Dumper::COLLAPSE] = true;
+        echo Dumper::toHtml($var, $options);
     }
 
     /**

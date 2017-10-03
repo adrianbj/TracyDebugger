@@ -46,7 +46,7 @@ class MethodsInfoPanel extends BasePanel {
             da();<br />
             </p>
 
-            <p><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#dump" target="_blank">dump($var, $return = FALSE)</a></strong></p>
+            <p><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#dump" target="_blank">dump($var, $options, $return = FALSE)</a></strong></p>
             <p>
             TD::dump();<br />
             dump();<br />

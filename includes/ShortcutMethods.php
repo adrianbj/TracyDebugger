@@ -53,9 +53,9 @@ if(!function_exists('barDumpLive') && in_array('barDumpLive', $this->data['enabl
  * @tracySkipLocation
  */
 if(!function_exists('dump') && in_array('dump', $this->data['enabledShortcutMethods'])) {
-    function dump($var, $return = FALSE) {
+    function dump($var, array $options = NULL, $return = FALSE) {
         if(tracyUnavailable()) return false;
-        return TD::dump($var, $return);
+        return TD::dump($var, $otions, $return);
     }
 }
 
@@ -146,9 +146,9 @@ if(!function_exists('bdl') && in_array('bdl', $this->data['enabledShortcutMethod
  * @tracySkipLocation
  */
 if(!function_exists('d') && in_array('d', $this->data['enabledShortcutMethods'])) {
-    function d($var, $return = FALSE) {
+    function d($var, array $options = NULL, $return = FALSE) {
         if(tracyUnavailable()) return false;
-        return TD::dump($var, $return);
+        return TD::dump($var, $options, $return);
     }
 }
 

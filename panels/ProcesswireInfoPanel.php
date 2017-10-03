@@ -59,7 +59,13 @@ class ProcesswireInfoPanel extends BasePanel {
 
     public function getPanel() {
 
-        if(\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('page')->process == 'ProcessPageEdit') {
+        if(\TracyDebugger::getDataValue('referencePageEdited') &&
+            ($this->wire('page')->process == 'ProcessPageEdit' ||
+                ($this->wire('input')->get('id') &&
+                    ($this->wire('page')->process == 'ProcessUser' || $this->wire('page')->process == 'ProcessRole' || $this->wire('page')->process == 'ProcessPermission')
+                )
+            )
+        ) {
             $p = $this->wire('process')->getPage();
         }
         else {

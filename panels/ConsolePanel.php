@@ -35,7 +35,13 @@ HTML;
         $this->wire('session')->tracyGetData = $this->wire('input')->get->getArray();
         $this->wire('session')->tracyWhitelistData = $this->wire('input')->whitelist->getArray();
 
-        if (\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('page')->process == 'ProcessPageEdit') {
+        if(\TracyDebugger::getDataValue('referencePageEdited') &&
+            ($this->wire('page')->process == 'ProcessPageEdit' ||
+                ($this->wire('input')->get('id') &&
+                    ($this->wire('page')->process == 'ProcessUser' || $this->wire('page')->process == 'ProcessRole' || $this->wire('page')->process == 'ProcessPermission')
+                )
+            )
+        ) {
             $p = $this->wire('process')->getPage();
         } else {
             $p = $this->wire('page');
