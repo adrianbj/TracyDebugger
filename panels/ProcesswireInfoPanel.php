@@ -62,7 +62,10 @@ class ProcesswireInfoPanel extends BasePanel {
         if(\TracyDebugger::getDataValue('referencePageEdited') &&
             ($this->wire('page')->process == 'ProcessPageEdit' ||
                 ($this->wire('input')->get('id') &&
-                    ($this->wire('page')->process == 'ProcessUser' || $this->wire('page')->process == 'ProcessRole' || $this->wire('page')->process == 'ProcessPermission')
+                    ($this->wire('page')->process == 'ProcessUser' ||
+                        $this->wire('page')->process == 'ProcessRole' ||
+                        $this->wire('page')->process == 'ProcessPermission'
+                    )
                 )
             )
         ) {
@@ -86,34 +89,126 @@ class ProcesswireInfoPanel extends BasePanel {
          * Custom PW panel sections
          */
 
+        // Field Settings
+        if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessField') {
+            $field = $this->wire('fields')->get((int)$this->wire('input')->get('id'));
+            $fieldSettings = '
+            <table>
+                <tr>
+                    <td>label</td>
+                    <td>'.$field->label.'</td>
+                </tr>
+                <tr>
+                    <td>name</td>
+                    <td>'.$field->name.'</td>
+                </tr>
+                <tr>
+                    <td>id</td>
+                    <td>'.$field->id.'</td>
+                </tr>
+                <tr>
+                    <td>type</td>
+                    <td>'.$field->type.'</td>
+                </tr>';
+            foreach($field->getArray() as $k => $v) {
+                $fieldSettings .= '
+                    <tr>
+                        <td>'.$k.'</td>
+                        <td>'.Dumper::toHtml($v).'</td>
+                    </tr>
+                ';
+            }
+            $fieldSettings .= '</table>
+            ';
+        }
+
+        // Template Settings
+        if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessTemplate') {
+            $template = $this->wire('templates')->get((int)$this->wire('input')->get('id'));
+            $templateSettings = '
+            <table>
+                <tr>
+                    <td>label</td>
+                    <td>'.$template->label.'</td>
+                </tr>
+                <tr>
+                    <td>name</td>
+                    <td>'.$template->name.'</td>
+                </tr>
+                <tr>
+                    <td>id</td>
+                    <td>'.$template->id.'</td>
+                </tr>
+                <tr>
+                    <td>type</td>
+                    <td>'.$template->type.'</td>
+                </tr>';
+            foreach($template->getArray() as $k => $v) {
+                $templateSettings .= '
+                    <tr>
+                        <td>'.$k.'</td>
+                        <td>'.Dumper::toHtml($v).'</td>
+                    </tr>
+                ';
+            }
+            $templateSettings .= '</table>
+            ';
+        }
+
+        // Module Settings
+        if($this->wire('input')->get('name') && $this->wire('page')->process == 'ProcessModule') {
+            $moduleName = $this->wire('sanitizer')->name($this->wire('input')->get('name'));
+            $module = $this->wire('modules')->get($moduleName);
+            $moduleSettings = '
+            <table>';
+            foreach($this->wire('modules')->getModuleInfoVerbose($moduleName) as $k => $v) {
+                $moduleSettings .= '
+                    <tr>
+                        <td>'.$k.'</td>
+                        <td>'.Dumper::toHtml($v).'</td>
+                    </tr>
+                ';
+            }
+            foreach($module->getArray() as $k => $v) {
+                $moduleSettings .= '
+                    <tr>
+                        <td>'.$k.'</td>
+                        <td>'.Dumper::toHtml($v).'</td>
+                    </tr>
+                ';
+            }
+            $moduleSettings .= '</table>
+            ';
+        }
+
         // Page info
         if(in_array('summary', $panelSections)) {
             $summary = '
             <table>
                 <tr>
-                    <td>Title</td>
+                    <td>title</td>
                     <td>'.$this->getLanguageVersion($p, 'title', $userLang, true).'</td>
                 </tr>
                 <tr>
-                    <td>Name</td>
+                    <td>name</td>
                     <td>'.$this->getLanguageVersion($p, 'name', $userLang, true).'</td>
                 </tr>';
 
             if($this->wire('languages')) {
                 $summary .= '
                     <tr>
-                        <td>Language</td>
+                        <td>language</td>
                         <td>' . $userLang->title . ' ('.$userLang->name.')</td>
                     </tr>';
             }
 
             $summary .= '
                 <tr>
-                    <td>ID</td>
+                    <td>id</td>
                     <td><a title="Edit Page" href="'.$p->editUrl().'">'.$p->id.'</a></td>
                 </tr>
                 <tr>
-                    <td>Path</td>
+                    <td>path</td>
                     <td><a title="View Page" href="'.$p->url.'">'.$p->path.'</a></td>
                 </tr>
                 ';
@@ -123,7 +218,7 @@ class ProcesswireInfoPanel extends BasePanel {
                         if($this->wire('input')->urlSegment($i)) {
                             $summary .= '
                             <tr>
-                                <td>URL Segment '.$i.'</td>
+                                <td>urlSegment '.$i.'</td>
                                 <td>'.$this->wire('input')->urlSegment($i).'</td>
                             </tr>';
                         }
@@ -132,23 +227,23 @@ class ProcesswireInfoPanel extends BasePanel {
                 }
                 $summary .= '
                 <tr>
-                    <td>Template</td>
+                    <td>template</td>
                     <td><a title="Edit Template" href="'.$this->wire('config')->urls->admin.'setup/template/edit?id='.$p->template->id.'">'.$p->template->name.'</a>'.($p->template->label ? ' ('.($this->wire('languages') ? $p->template->getLabel($userLang) : $p->template->label).')' :'').'</td>
                 </tr>
                 <tr>
-                    <td>Process</td>
+                    <td>process</td>
                     <td>'.$this->wire('process').'</td>
                 </tr>';
                 if($p->parent->id) {
                     $summary .= '
                     <tr>
-                        <td>Parent</td>
+                        <td>parent</td>
                         <td>' . ($p->parent->viewable() ? '<a title="View Parent" href="'.$p->parent->url.'">'.$this->getLanguageVersion($p->parent, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->parent, 'name', $userLang, true).'</span>') . ' (<a title="Edit Parent" href="'.$p->parent->editUrl().'">'.$p->parent->id.'</a>)</td>
                     </tr>';
                 }
                 $summary .= '
                 <tr>
-                    <td>Root Parent</td>
+                    <td>rootParent</td>
                     <td>' . ($p->rootParent->viewable() ? '<a title="View Root Parent" href="'.$p->rootParent->url.'">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang, true).'</span>') . ' (<a title="Edit Root Parent" href="'.$p->rootParent->editUrl().'">'.$p->rootParent->id.'</a>)</td>
                 </tr>
                 ';
@@ -156,7 +251,7 @@ class ProcesswireInfoPanel extends BasePanel {
                 if($prevPage) {
                     $summary .= '
                     <tr>
-                        <td>Prev Sibling</td>
+                        <td>prev (sibling)</td>
                         <td>' . ($prevPage->viewable() ? '<a title="View Prev Sibling" href="'.$prevPage->url.'">'.$this->getLanguageVersion($prevPage, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($prevPage, 'name', $userLang, true).'</span>') . ' (<a title="Edit Prev Sibling" href="'.$prevPage->editUrl().'">'.$prevPage->id.'</a>)</td>
                     </tr>';
                 }
@@ -164,13 +259,13 @@ class ProcesswireInfoPanel extends BasePanel {
                 if($nextPage) {
                     $summary .= '
                     <tr>
-                        <td>Next Sibling</td>
+                        <td>next (sibling)</td>
                         <td>' . ($nextPage->viewable() ? '<a title="View Next Sibling" href="'.$nextPage->url.'">'.$this->getLanguageVersion($nextPage, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($nextPage, 'name', $userLang, true).'</span>') . ' (<a title="Edit Next Sibling" href="'.$nextPage->editUrl().'">'.$nextPage->id.'</a>)</td>
                     </tr>';
                 }
                 $summary .= '
                 <tr>
-                    <td>Children</td>
+                    <td>children</td>
                     <td>'.$p->numChildren().' <a title="Open Page Tree" href="'.$this->wire('config')->urls->admin.'page/list/?open='.$p->id.'">open tree</a> | <a title="View Children Tab" href="'.$p->editUrl().'#ProcessPageEditChildren">edit</a></td>
                 </tr>
                 ';
@@ -178,34 +273,42 @@ class ProcesswireInfoPanel extends BasePanel {
                     $firstChild = $p->child("include=all");
                     $summary .= '
                     <tr>
-                        <td>First Child</td>
+                        <td>child</td>
                         <td>' . ($firstChild->viewable() ? '<a title="View First Child" href="'.$firstChild->url.'">'.$this->getLanguageVersion($firstChild, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($firstChild, 'name', $userLang, true).'</span>') . ' (<a title="Edit First Child" href="'.$firstChild->editUrl().'">'.$firstChild->id.'</a>)</td>
                     </tr>
                     ';
                 }
                 $summary .= '
                 <tr>
-                    <td>Created</td>
-                    <td><a title="Edit User" href="'.$this->wire('config')->urls->admin.'access/users/edit/?id='.$p->modifiedUser->id.'">'.$p->createdUser->name.'</a> ('.date("Y-m-d H:i:s", $p->created).')</td>
+                    <td>createdUser</td>
+                    <td><a title="Edit User" href="'.$this->wire('config')->urls->admin.'access/users/edit/?id='.$p->modifiedUser->id.'">'.$p->createdUser->name.'</a></td>
                 </tr>
                 <tr>
-                    <td>Published</td>
+                    <td>created</td>
+                    <td>'.date("Y-m-d H:i:s", $p->created).'</td>
+                </tr>
+                <tr>
+                    <td>published</td>
                     <td>'.date("Y-m-d H:i:s", $p->published).'</td>
                 </tr>
                 <tr>
-                    <td>Modified</td>
-                    <td><a title="Edit User" href="'.$this->wire('config')->urls->admin.'access/users/edit/?id='.$p->modifiedUser->id.'">'.$p->modifiedUser->name.'</a> ('.date("Y-m-d H:i:s", $p->modified).')</td>
+                    <td>modifiedUser</td>
+                    <td><a title="Edit User" href="'.$this->wire('config')->urls->admin.'access/users/edit/?id='.$p->modifiedUser->id.'">'.$p->modifiedUser->name.'</a></td>
                 </tr>
                 <tr>
-                    <td>Hidden</td>
+                    <td>modified</td>
+                    <td>'.date("Y-m-d H:i:s", $p->modified).'</td>
+                </tr>
+                <tr>
+                    <td>Hidden (status)</td>
                     <td>'. ($p->isHidden() ? "&#10004;" : "&#x2718;") .'</td>
                 </tr>
                 <tr>
-                    <td>Unpublished</td>
+                    <td>Unpublished (status)</td>
                     <td>'. ($p->isUnpublished() ? "&#10004;" : "&#x2718;") .'</td>
                 </tr>
                 <tr>
-                    <td>Locked</td>
+                    <td>Locked (status)</td>
                     <td>'. ($p->is(Page::statusLocked) ? "&#10004;" : "&#x2718;") .'</td>
                 </tr>
             </table>';
@@ -214,7 +317,7 @@ class ProcesswireInfoPanel extends BasePanel {
         // Language info
         $languageInfo = '';
         if($this->wire('languages') && in_array('languageInfo', $panelSections)) {
-            $languageInfo .= '<table><tr><th>Language</th><th>ID</th><th>Title</th><th>Name</th><th>Active</th></tr>';
+            $languageInfo .= '<table><tr><th>language</th><th>id</th><th>title</th><th>name</th><th>active</th></tr>';
             foreach($this->wire('languages') as $language) {
                 $languageInfo .= '<tr><td>' . $language->title . ' ('.$language->name.')</td><td><a title="Edit Language" href="'.$this->wire('config')->urls->admin.'/setup/languages/edit/?id='.$language->id.'">'.$language->id.'</a></td><td>' . $this->getLanguageVersion($p, 'title', $language) . '</td><td>' . $this->getLanguageVersion($p, 'name', $language) . '</td><td>' . ($language->isDefaultLanguage ? 'default' : ($p->get("status{$language->id}") ? "&#10004;" : "&#x2718;")) . '</td></tr>';
             }
@@ -239,81 +342,63 @@ class ProcesswireInfoPanel extends BasePanel {
             $templateInfo = '
             <table>
                 <tr>
-                    <td>Label</td>
+                    <td>label</td>
                     <td>'.($this->wire('languages') ? $p->template->getLabel($userLang) : $p->template->label).'</td>
                 </tr>
                 <tr>
-                    <td>Name</td>
+                    <td>name</td>
                     <td><a title="Edit Template" href="'.$this->wire('config')->urls->admin.'setup/template/edit?id='.$p->template->id.'">'.$p->template->name.'</a></td>
                 </tr>
                 <tr>
-                    <td>ID</td>
+                    <td>id</td>
                     <td>'.$p->template->id.'</td>
                 </tr>
                 <tr>
-                    <td>Modified</td>
+                    <td>modified</td>
                     <td>'.date("Y-m-d H:i:s", $p->template->modified).'</td>
                 </tr>
                 <tr>
-                    <td>Fieldgroup</td>
+                    <td>fieldgroup</td>
                     <td>'.$p->template->fieldgroup.'</td>
                 </tr>
                 <tr>
-                    <td>Filename</td>
-                    <td>'.(isset($templateFilePath) ? '<a title="Edit Template File" href="'.$templateFileEditorPath.'">'.str_replace($this->wire('config')->paths->root, '/', $templateFilePath).'</a>' : 'No file').'</td>
+                    <td>filename</td>
+                    <td>'.(isset($templateFilePath) ? '<a title="Edit Template File" href="'.$templateFileEditorPath.'">'.str_replace($this->wire('config')->paths->root, '/', $templateFilePath).'</a>' . '<br />
+                        modified: ' . date("Y-m-d H:i:s", filemtime($templateFilePath)) . '<br />' .
+                        (isset($owner) ? 'user:group: ' . $owner['name'].":".$group['name'] : '') . '<br />
+                        permissions: ' . $permission
+                         : 'No file').'</td>
                 </tr>
-                ';
-                if(isset($templateFilePath)) {
-                    $templateInfo .= '
-                    <tr>
-                        <td>File Last Modified</td>
-                        <td>'.date("Y-m-d H:i:s", filemtime($templateFilePath)).'</td>
-                    </tr>';
-                }
-                $templateInfo .= '
                 <tr>
-                    <td>Compile</td>
+                    <td>compile</td>
                     <td>'.($p->template->compile == 0 ? 'No' : ($p->template->compile == 1 ? 'Yes (template file only)' : 'Yes (and included files)')).'</td>
                 </tr>
                 <tr>
-                    <td>Content Type</td>
+                    <td>contentType</td>
                     <td>'.$p->template->contentType.'</td>
                 </tr>
-                ';
-                if(isset($owner)) {
-                    $templateInfo .= '
-                    <tr>
-                        <td>Owner (User:Group)</td>
-                        <td>'.$owner['name'].":".$group['name'].'</td>
-                    </tr>';
-                }
-                $templateInfo .= '
                 <tr>
-                    <td>Permission</td>
-                    <td>'.$permission .'</td>
-                </tr>
-                <tr>
-                    <td>Page Numbers</td>
+                    <td>allowPageNum</td>
                     <td>'.($p->template->allowPageNum ? 'Enabled' : 'Disabled').'</td>
                 </tr>
                 <tr>
-                    <td>URL Segments</td>
+                    <td>urlSegments</td>
                     <td>'.($p->template->urlSegments ? 'Enabled' : 'Disabled').'</td>
                 </tr>
                 <tr>
-                    <td>Children Allowed</td>
+                    <td>noChildren (Children Allowed)</td>
                     <td>'.($p->template->noChildren ? 'No' : 'Yes').'</td>
                 </tr>
                 <tr>
-                    <td>Allow for New Page</td>
+                    <td>noParents (Allow for New Page)</td>
                     <td>'.($p->template->noParents < 0 ? 'Only One' : ($p->template->noParents == 1 ? 'No' : 'Yes')).'</td>
                 </tr>
                 <tr>
-                    <td>Children Sorted By</td>
+                    <td>sortfield (Children Sorted By)</td>
                     <td>'.$p->template->sortfield.'</td>
                 </tr>
                 <tr>
-                    <td>Cache Time</td>
+                    <td>cache_time (Cache Time)</td>
                     <td>'.$p->template->cache_time.'</td>
                 </tr>
             </table>';
@@ -322,7 +407,7 @@ class ProcesswireInfoPanel extends BasePanel {
         // Fields List & Values
         if(in_array('fieldsListValues', $panelSections)) {
             // TODO - this is a mess - very repetitive and needs cleaning up a lot
-            $fieldsListValues = $this->sectionHeader(array('ID', 'Name', 'Label', 'FieldType', 'InputfieldType/Class', 'Returns', 'Value', 'Settings'));
+            $fieldsListValues = $this->sectionHeader(array('id', 'name', 'label', 'type', 'inputfieldType/class', 'returns', 'value', 'settings'));
             foreach($p->fields as $f) {
                 if(is_object($p->$f)) {
                     $fieldArray = array();
@@ -576,6 +661,27 @@ class ProcesswireInfoPanel extends BasePanel {
 
         // all the "non" icon links sections
         $i=0;
+        if(isset($fieldSettings)) {
+            $out .= '
+                <a href="#" rel="fieldSettings" class="tracy-toggle '.($i>0 ? ' tracy-collapsed' : '').'">Field Settings</a>
+                <div id="fieldSettings" '.($i>0 ? ' class="tracy-collapsed"' : '').'>'.$fieldSettings.'</div><br />';
+            $i++;
+        }
+
+        if(isset($templateSettings)) {
+            $out .= '
+                <a href="#" rel="templateSettings" class="tracy-toggle '.($i>0 ? ' tracy-collapsed' : '').'">Template Settings</a>
+                <div id="templateSettings" '.($i>0 ? ' class="tracy-collapsed"' : '').'>'.$templateSettings.'</div><br />';
+            $i++;
+        }
+
+        if(isset($moduleSettings)) {
+            $out .= '
+                <a href="#" rel="moduleSettings" class="tracy-toggle '.($i>0 ? ' tracy-collapsed' : '').'">Module Settings</a>
+                <div id="moduleSettings" '.($i>0 ? ' class="tracy-collapsed"' : '').'>'.$moduleSettings.'</div><br />';
+            $i++;
+        }
+
         foreach(\TracyDebugger::$processWireInfoSections as $name => $label) {
             // get all sections excluding those that are admin "links"
             if(strpos($name, 'Links') === false && in_array($name, $panelSections)) {

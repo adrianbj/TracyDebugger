@@ -38,13 +38,35 @@ HTML;
         if(\TracyDebugger::getDataValue('referencePageEdited') &&
             ($this->wire('page')->process == 'ProcessPageEdit' ||
                 ($this->wire('input')->get('id') &&
-                    ($this->wire('page')->process == 'ProcessUser' || $this->wire('page')->process == 'ProcessRole' || $this->wire('page')->process == 'ProcessPermission')
+                    ($this->wire('page')->process == 'ProcessUser' ||
+                        $this->wire('page')->process == 'ProcessRole' ||
+                        $this->wire('page')->process == 'ProcessPermission'
+                    )
                 )
             )
         ) {
             $p = $this->wire('process')->getPage();
         } else {
             $p = $this->wire('page');
+        }
+
+        if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessField') {
+            $fid = (int)$this->wire('input')->get('id');
+        }
+        else {
+            $fid = null;
+        }
+        if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessTemplate') {
+            $tid = (int)$this->wire('input')->get('id');
+        }
+        else {
+            $tid = null;
+        }
+        if($this->wire('input')->get('name') && $this->wire('page')->process == 'ProcessModule') {
+            $mid = $this->wire('sanitizer')->name($this->wire('input')->get('name'));
+        }
+        else {
+            $mid = null;
         }
 
         $out = <<< HTML
@@ -209,7 +231,7 @@ HTML;
                 xmlhttp.open("POST", "./", true);
                 xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-                xmlhttp.send("tracyconsole=1&accessTemplateVars="+accessTemplateVars+"&pid={$p->id}&code="+encodeURIComponent(code));
+                xmlhttp.send("tracyconsole=1&accessTemplateVars="+accessTemplateVars+"&pid={$p->id}&fid={$fid}&tid={$tid}&mid={$mid}&code="+encodeURIComponent(code));
             }
         </script>
 
@@ -218,12 +240,10 @@ HTML;
         $code = '';
         $openPHP = '<' . '?php';
         $inPwCheck = 'if(!defined("PROCESSWIRE")) die("no direct access");';
-        $getPage = '$page = $pages->get('.$p->id.');';
         $file = $this->wire('config')->paths->cache . 'TracyDebugger/consoleCode.php';
         if (file_exists($file)) {
             $code = file_get_contents($file);
-            $code = implode("\n", array_slice(explode("\n", $code), 3));
-            //$code = str_replace("$openPHP\n$inPwCheck\n$getPage\n", "", $code);
+            $code = implode("\n", array_slice(explode("\n", $code), 1));
             $code = json_encode($code); // json_encode to convert line breaks to \n - needed by setValue()
         }
 

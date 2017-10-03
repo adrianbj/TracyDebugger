@@ -33,14 +33,17 @@ if($user->isSuperuser()) {
     $code = trim($code);
     $openPHP = '<' . '?php';
     $inPwCheck = 'if(!defined("PROCESSWIRE")) die("no direct access");';
-    $getPage = '$page = $pages->get('.$page->id.');';
+    $setVars = '$page = $pages->get('.$page->id.'); ';
+    if(isset($_POST['fid'])) $setVars .= '$field = $fields->get('.(int)$_POST['fid'].'); ';
+    if(isset($_POST['tid'])) $setVars .= '$template = $templates->get('.(int)$_POST['tid'].'); ';
+    if(isset($_POST['mid'])) $setVars .= '$module = $modules->get("'.$this->wire('sanitizer')->name($_POST['mid']).'"); ';
 
     if(substr($code, 0, strlen($openPHP)) !== $openPHP) {
         // prepend open PHP tag to code if not already present
-        $code = "$openPHP\n$inPwCheck\n$getPage\n$code";
+        $code = "$openPHP $inPwCheck $setVars\n$code";
     } else {
-        // otherwise insert our $inPwCheck security check and $getPage code
-        $code = str_replace($openPHP, "$openPHP\n$inPwCheck\n$getPage\n", $code);
+        // otherwise insert our $inPwCheck security check and $setVars code
+        $code = str_replace($openPHP, "$openPHP $inPwCheck $setVars\n", $code);
     }
     if(!file_put_contents($this->file, $code, LOCK_EX)) throw new WireException("Unable to write file: $this->file");
     if($this->wire('config')->chmodFile) chmod($this->file, octdec($this->wire('config')->chmodFile));
@@ -138,7 +141,7 @@ function tracyConsoleErrorHandler($errno, $errstr, $errfile, $errline) {
         return;
     }
     else {
-        $customErrStr = $errstr . ' on line: ' . (strpos($errfile, 'cache/TracyDebugger') !== false ? $errline - 3 : $errline) . (strpos($errfile, 'cache/TracyDebugger') !== false ? '' : ' in ' . str_replace(wire('config')->paths->cache . 'FileCompiler/', '../', $errfile));
+        $customErrStr = $errstr . ' on line: ' . (strpos($errfile, 'cache/TracyDebugger') !== false ? $errline - 1 : $errline) . (strpos($errfile, 'cache/TracyDebugger') !== false ? '' : ' in ' . str_replace(wire('config')->paths->cache . 'FileCompiler/', '../', $errfile));
         $customErrStrLog = $customErrStr . (strpos($errfile, 'cache/TracyDebugger') !== false ? ' in Tracy Console Panel' : '');
         \TD::fireLog($customErrStrLog);
         \TD::log($customErrStrLog, 'error');
@@ -160,7 +163,7 @@ function tracyConsoleExceptionHandler($err) {
     $errfile = $err->getFile();
     $errline = $err->getLine();
 
-    $customErrStr = $errstr . ' on line: ' . (strpos($errfile, 'cache/TracyDebugger') !== false ? $errline - 3 : $errline) . (strpos($errfile, 'cache/TracyDebugger') !== false ? '' : ' in ' . str_replace(wire('config')->paths->cache . 'FileCompiler/', '../', $errfile));
+    $customErrStr = $errstr . ' on line: ' . (strpos($errfile, 'cache/TracyDebugger') !== false ? $errline - 1 : $errline) . (strpos($errfile, 'cache/TracyDebugger') !== false ? '' : ' in ' . str_replace(wire('config')->paths->cache . 'FileCompiler/', '../', $errfile));
     $customErrStrLog = $customErrStr . (strpos($errfile, 'cache/TracyDebugger') !== false ? ' in Tracy Console Panel' : '');
     \TD::fireLog($customErrStrLog);
     \TD::log($customErrStrLog, 'error');
