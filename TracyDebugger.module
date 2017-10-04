@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.4.0',
+            'version' => '4.4.1',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -1914,6 +1914,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = $this->wire('modules')->get("InputfieldAsmSelect");
         $f->attr('name', 'hideDebugBarTemplates');
         $f->label = __('No Debug Bar in Selected Templates', __FILE__);
+        $f->description = __('Disable the debug bar on pages with the selected templates.', __FILE__);
         $f->columnWidth = 33;
         foreach($this->wire('templates') as $t) {
             $f->addOption($t->id, $t->name);
