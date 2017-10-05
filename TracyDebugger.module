@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.4.2',
+            'version' => '4.4.3',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -1553,22 +1553,21 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * @param  string|array  IP addresses or computer names whitelist detection
      * @return bool
      */
-    public static function detectDebugMode($list = NULL)
-    {
+    public static function detectDebugMode($list = null) {
         $addr = isset($_SERVER['REMOTE_ADDR'])
             ? $_SERVER['REMOTE_ADDR']
             : php_uname('n');
         $secret = isset($_COOKIE[self::COOKIE_SECRET]) && is_string($_COOKIE[self::COOKIE_SECRET])
             ? $_COOKIE[self::COOKIE_SECRET]
-            : NULL;
+            : null;
         $list = is_string($list)
             ? preg_split('#[,\s]+#', $list)
             : (array) $list;
-        if (!isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        if (!isset($_SERVER['HTTP_X_FORWARDED_FOR']) && !isset($_SERVER['HTTP_FORWARDED'])) {
             $list[] = '127.0.0.1';
             $list[] = '::1';
         }
-        return in_array($addr, $list, TRUE) || in_array("$secret@$addr", $list, TRUE);
+        return in_array($addr, $list, true) || in_array("$secret@$addr", $list, true);
     }
 
 
