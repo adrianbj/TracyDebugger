@@ -23,7 +23,7 @@ class DebugModePanel extends BasePanel {
     }
 
     public function getTab() {
-        if(\TracyDebugger::isAdditionalBar()) return;
+
         \Tracy\Debugger::timer('debugMode');
 
         $debugMode = $this->wire('config')->debug;
@@ -102,6 +102,7 @@ class DebugModePanel extends BasePanel {
                 </table>
             </div>';
 
+        $isAdditionalBar = \TracyDebugger::isAdditionalBar();
         $out = "
         <h1>
         <svg xmlns=http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' version='1.1' x='0px' y='0px' width='16px' height='16px' viewBox='0 0 456.828 456.828' style='enable-background:new 0 0 456.828 456.828;' xml:space='preserve'>
@@ -110,7 +111,7 @@ class DebugModePanel extends BasePanel {
                 <path d='M293.081,31.27c-17.795-17.795-39.352-26.696-64.667-26.696c-25.319,0-46.87,8.901-64.668,26.696    c-17.795,17.797-26.691,39.353-26.691,64.667h182.716C319.771,70.627,310.876,49.067,293.081,31.27z' fill='".static::$panelIconColor."'/>
             </g>
         </svg>
-        ProcessWire Debug Mode</h1>
+        ProcessWire Debug Mode" . ($isAdditionalBar ? " (".$isAdditionalBar.")" : "") . "</h1>
         <div class='tracy-inner'>
             <p>";
 

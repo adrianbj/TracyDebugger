@@ -49,6 +49,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     protected $tracyEnabled = false;
     protected $tracyCacheDir;
     protected $modulesDbBackupFilename;
+    protected static $tracyVersion;
     public static $selectors = array();
     public static $templateVars = array();
     public static $templateConsts = array();
@@ -56,7 +57,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $initialConsts = array();
     public static $templateFuncs = array();
     public static $includedFiles = array();
-    protected static $tracyVersion;
+    public static $fromConsole = false;
     public static $oncePanels;
     public static $stickyPanels;
     public static $showPanels;
@@ -150,7 +151,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "showDebugBar" => array('frontend'),
                 "hideDebugBar" => null,
                 "hideDebugBarTemplates" => array(),
-                "hideDebugBarModals" => array('regularModal', 'inlineModal'),
+                "hideDebugBarModals" => array('regularModal', 'inlineModal', 'overlayPanels'),
                 "frontendPanels" => array('processwireInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'templatePath', 'console', 'templateEditor', 'dumpsRecorder', 'panelSelector', 'tracyToggler'),
                 "backendPanels" => array('processwireInfo', 'processwireLogs', 'tracyLogs', 'debugMode', 'console', 'dumpsRecorder', 'panelSelector', 'tracyToggler'),
                 "restrictedUserDisabledPanels" => array(),
@@ -264,6 +265,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // modals
         if(in_array('regularModal', $this->data['hideDebugBarModals']) && $this->wire('input')->get->modal == '1') return;
         if(in_array('inlineModal', $this->data['hideDebugBarModals']) && $this->wire('input')->get->modal == 'inline') return;
+        if(in_array('overlayPanels', $this->data['hideDebugBarModals']) && $this->wire('input')->get->modal == 'panel') return;
 
         // don't init Tracy for @soma's PageEditSoftLock polling on Page Edit
         if(strpos(self::inputUrl(), 'checkpagelock') !== false) return;
@@ -1473,8 +1475,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public static function isAdditionalBar() {
         $isRedirect = preg_match('#^Location:#im', implode("\n", headers_list()));
-        if((static::$tracyVersion != 'legacy' && Helpers::isAjax()) || $isRedirect) {
-            return true;
+        $isAjax = static::$tracyVersion != 'legacy' && Helpers::isAjax();
+        if($isAjax || $isRedirect) {
+            return $isAjax ? 'ajax' : 'redirect';
         }
         else {
             return false;
@@ -1913,6 +1916,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->columnWidth = 34;
         $f->addOption('regularModal', 'Regular Modal');
         $f->addOption('inlineModal', 'Inline Modal');
+        $f->addOption('overlayPanels', 'Overlay Panels');
         if($data['hideDebugBarModals']) $f->attr('value', $data['hideDebugBarModals']);
         $fieldset->add($f);
 

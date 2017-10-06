@@ -55,9 +55,9 @@ class EventInterceptorPanel extends BasePanel {
 
 
     public function getPanel() {
-
+        $isAdditionalBar = \TracyDebugger::isAdditionalBar();
         $out = '
-        <h1>' . $this->icon . ' Event Interceptor</h1>
+        <h1>' . $this->icon . ' Event Interceptor' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>
 
         <script>
             function clearEvents() {

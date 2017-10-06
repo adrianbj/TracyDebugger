@@ -4,7 +4,7 @@ set_error_handler('tracyConsoleErrorHandler');
 set_exception_handler('tracyConsoleExceptionHandler');
 
 // remove location links from dumps - not really meaningful for console
-\Tracy\Debugger::$showLocation = FALSE;
+\TracyDebugger::$fromConsole = true;
 
 // populate API variables, eg so $page equals $this->wire('page')
 $pwVars = function_exists('wire') ? $this->fuel : \ProcessWire\wire('all');
@@ -122,6 +122,7 @@ if($user->isSuperuser()) {
         \Tracy\Debugger::getBar()->render();
         \Tracy\Debugger::$showBar = FALSE;
     }
+
     exit;
 }
 

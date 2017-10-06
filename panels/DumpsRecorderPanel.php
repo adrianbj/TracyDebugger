@@ -70,9 +70,9 @@ class DumpsRecorderPanel extends BasePanel {
 
 
     public function getPanel() {
-
+        $isAdditionalBar = \TracyDebugger::isAdditionalBar();
         $out = '
-        <h1>' . $this->icon . ' Dumps Recorder</h1>
+        <h1>' . $this->icon . ' Dumps Recorder' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>
 
         <script>
             function preserveDumpsToggle(element) {

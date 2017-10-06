@@ -40,7 +40,6 @@ class TD extends TracyDebugger {
         $options[Dumper::DEPTH] = 99;
         $options[Dumper::TRUNCATE] = 999999;
         $options[Dumper::LOCATION] = Debugger::$showLocation;
-        $options[Dumper::COLLAPSE] = true;
         $options[Dumper::LIVE] = true;
         static::dumpToBar($var, $title, $options);
     }
@@ -54,7 +53,6 @@ class TD extends TracyDebugger {
         $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
         $options[Dumper::LOCATION] = Debugger::$showLocation;
-        $options[Dumper::COLLAPSE] = true;
         static::dumpToBar($var, $title, $options);
     }
 
@@ -84,8 +82,7 @@ class TD extends TracyDebugger {
         if(self::tracyUnavailable()) return false;
         $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
-        $options[Dumper::LOCATION] = Debugger::$showLocation;
-        $options[Dumper::COLLAPSE] = true;
+        $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
         echo Dumper::toHtml($var, $options);
     }
 

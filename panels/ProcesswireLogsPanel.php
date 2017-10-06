@@ -125,11 +125,12 @@ class ProcesswireLogsPanel extends BasePanel {
     public function getPanel() {
 
         // Load all the panel sections
+        $isAdditionalBar = \TracyDebugger::isAdditionalBar();
         $out = '
         <h1>
             <a title="ProcessWire Logs" href="'.$this->wire('config')->urls->admin.'setup/logs/">
                 ' . $this->icon . ' ProcessWire Logs
-            </a>
+            </a>' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '
         </h1>
 
         <div class="tracy-inner">';

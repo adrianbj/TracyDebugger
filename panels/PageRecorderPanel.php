@@ -51,9 +51,9 @@ class PageRecorderPanel extends BasePanel {
 
 
     public function getPanel() {
-
+        $isAdditionalBar = \TracyDebugger::isAdditionalBar();
         $out = '
-        <h1>' . $this->icon . ' Page Recorder</h1>
+        <h1>' . $this->icon . ' Page Recorder' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>
 
         <div class="tracy-inner">';
 

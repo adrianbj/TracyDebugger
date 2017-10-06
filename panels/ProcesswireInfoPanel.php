@@ -12,7 +12,6 @@ class ProcesswireInfoPanel extends BasePanel {
 
     public function getTab() {
 
-        if(\TracyDebugger::isAdditionalBar()) return;
         \Tracy\Debugger::timer('processwireInfo');
 
             $this->icon = '
@@ -59,14 +58,11 @@ class ProcesswireInfoPanel extends BasePanel {
 
     public function getPanel() {
 
-        if(\TracyDebugger::getDataValue('referencePageEdited') &&
-            ($this->wire('page')->process == 'ProcessPageEdit' ||
-                ($this->wire('input')->get('id') &&
-                    ($this->wire('page')->process == 'ProcessUser' ||
-                        $this->wire('page')->process == 'ProcessRole' ||
-                        $this->wire('page')->process == 'ProcessPermission'
-                    )
-                )
+        if(\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
+            ($this->wire('process') == 'ProcessPageEdit' ||
+                $this->wire('process') == 'ProcessUser' ||
+                $this->wire('process') == 'ProcessRole' ||
+                $this->wire('process') == 'ProcessPermission'
             )
         ) {
             $p = $this->wire('process')->getPage();
@@ -654,8 +650,9 @@ class ProcesswireInfoPanel extends BasePanel {
 
 
         // Load all the panel sections
+        $isAdditionalBar = \TracyDebugger::isAdditionalBar();
         $out = '
-        <h1>' . $this->icon . ' ProcessWire Info</h1>
+        <h1>' . $this->icon . ' ProcessWire Info' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>
         <div class="tracy-inner">
         ';
 

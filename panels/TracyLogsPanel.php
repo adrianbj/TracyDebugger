@@ -249,7 +249,8 @@ class TracyLogsPanel extends BasePanel {
     public function getPanel() {
 
         // Load all the panel sections
-        $out = '<h1>' . $this->icon . ' Tracy Logs</h1>
+        $isAdditionalBar = \TracyDebugger::isAdditionalBar();
+        $out = '<h1>' . $this->icon . ' Tracy Logs' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>
 
         <div class="tracy-inner">';
             $out .= $this->logEntries . '<br />';
