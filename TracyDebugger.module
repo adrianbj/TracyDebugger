@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.4.3',
+            'version' => '4.5.0',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -74,17 +74,41 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $hideInAdmin = array('validator', 'templateResources', 'templatePath', 'templateEditor');
     public static $pageHtml;
     public static $processWireInfoSections = array(
-        'summary' => 'Summary',
+        'apiVariables' => 'API Variables',
+        'coreClasses' => 'Core Classes',
+        'configData' => 'Config Data',
+        'versionsList' => 'Versions List',
+        'adminLinks' => 'Admin Links',
+        'documentationLinks' => 'Documentation Links'
+    );
+    public static $requestInfoSections = array(
+        'moduleSettings' => 'Module Settings',
+        'templateSettings' => 'Template Settings',
+        'fieldSettings' => 'Field Settings',
+        'pageInfo' => 'Page Info',
         'languageInfo' => 'Language Info',
         'templateInfo' => 'Template Info',
         'fieldsListValues' => 'Field List & Values',
-        'versionsList' => 'Versions List',
+        'serverRequest' => 'Server Request',
+        'inputGet' => 'Input GET',
+        'inputPost' => 'Input POST',
+        'inputCookie' => 'Input COOKIE',
         'pageObject' => 'Page Object',
         'templateObject' => 'Template Object',
         'fieldsObject' => 'Fields Object',
-        'adminLinks' => 'Admin Links',
-        'documentationLinks' => 'Documentation Links',
-        'editLinks' => 'Edit Links'
+        'editLinks' => 'Page/Template Edit Links'
+    );
+    public static $debugModeSections = array(
+        'pagesLoaded' => 'Pages Loaded',
+        'session' => 'Session',
+        'modulesLoaded' => 'Modules Loaded',
+        'hooks' => 'Hooks Triggered',
+        'databaseQueries' => 'Database Queries',
+        'selectorQueries' => 'Selector Queries',
+        'timers' => 'Timers',
+        'user' => 'User',
+        'cache' => 'Cache',
+        'autoload' => 'Autoload'
     );
     public static $diagnosticsSections = array(
         'filesystemFolders' => 'Filesystem Folders',
@@ -111,6 +135,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'processwireInfo' => 'ProcessWire Info',
         'processwireLogs' => 'ProcessWire Logs',
         'processwireVersion' => 'ProcessWire Version',
+        'requestInfo' => 'Request Info',
         'templateEditor' => 'Template Editor',
         'templatePath' => 'Template Path',
         'templateResources' => 'Template Resources',
@@ -152,8 +177,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "hideDebugBar" => null,
                 "hideDebugBarTemplates" => array(),
                 "hideDebugBarModals" => array('regularModal', 'inlineModal', 'overlayPanels'),
-                "frontendPanels" => array('processwireInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'templatePath', 'console', 'templateEditor', 'dumpsRecorder', 'panelSelector', 'tracyToggler'),
-                "backendPanels" => array('processwireInfo', 'processwireLogs', 'tracyLogs', 'debugMode', 'console', 'dumpsRecorder', 'panelSelector', 'tracyToggler'),
+                "frontendPanels" => array('processwireInfo', 'requestInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'templatePath', 'console', 'templateEditor', 'dumpsRecorder', 'panelSelector', 'tracyToggler'),
+                "backendPanels" => array('processwireInfo', 'requestInfo', 'processwireLogs', 'tracyLogs', 'debugMode', 'console', 'dumpsRecorder', 'panelSelector', 'tracyToggler'),
                 "restrictedUserDisabledPanels" => array(),
                 "showUserBar" => null,
                 "showUserBarTracyUsers" => null,
@@ -169,7 +194,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "styleWhere" => array(),
                 "styleAdminElements" => "body::before {\n\tcontent: \"[type]\";\n\tbackground: [color];\n\tposition: fixed;\n\tleft: 0;\n\tbottom: 100%;\n\tcolor: #ffffff;\n\twidth: 100vh;\n\tpadding: 0;\n\ttext-align: center;\n\tfont-weight: 600;\n\ttext-transform: uppercase;\n\ttransform: rotate(90deg);\n\ttransform-origin: bottom left;\n\tz-index: 999999;\n\tfont-size: 11px;\n\theight: 13px;\n\tline-height: 13px;\npointer-events: none;\n}\n",
                 "styleAdminColors" => "local|#ca6500\ndev.*|#990000\nstaging.*|#8b0066",
-                "processwireInfoPanelSections" => array('summary', 'languageInfo', 'templateInfo', 'fieldsListValues', 'versionsList', 'adminLinks', 'documentationLinks', 'editLinks'),
+                "requestInfoPanelSections" => array('pageInfo', 'serverRequest', 'inputGet', 'inputPost', 'inputCookie', 'languageInfo', 'templateInfo', 'fieldsListValues', 'editLinks'),
+                "processwireInfoPanelSections" => array('moduleSettings', 'templateSettings', 'fieldSettings', 'apiVariables', 'coreClasses', 'configData', 'versionsList', 'adminLinks', 'documentationLinks'),
+                "debugModePanelSections" => array('pagesLoaded', 'session', 'modulesLoaded', 'hooks', 'databaseQueries', 'selectorQueries', 'timers', 'user', 'cache', 'autoload'),
                 "diagnosticsPanelSections" => array('filesystemFolders'),
                 "todoIgnoreDirs" => 'git, svn, images, img, errors, sass-cache, node_modules',
                 "todoScanModules" => null,
@@ -860,6 +887,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 case 'processwireInfo':
                 case 'processwireLogs':
                 case 'processwireVersion':
+                case 'requestInfo':
                 case 'templateEditor':
                 case 'templateResources':
                 case 'todo':
@@ -2131,11 +2159,25 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'processwireInfoPanelSections');
         $f->label = __('Panel Sections', __FILE__);
         $f->description = __('Which sections to include in the ProcessWire Info panel.', __FILE__);
-        $f->notes = __('The three "Object" options will significantly increase the size of this panel.', __FILE__);
         foreach(static::$processWireInfoSections as $name => $label) {
             $f->addOption($name, $label);
         }
         if($data['processwireInfoPanelSections']) $f->attr('value', $data['processwireInfoPanelSections']);
+        $fieldset->add($f);
+
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("Request Info Panel Options");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldCheckboxes");
+        $f->attr('name', 'requestInfoPanelSections');
+        $f->label = __('Panel Sections', __FILE__);
+        $f->description = __('Which sections to include in the Request Info panel.', __FILE__);
+        $f->notes = __('The three "Object" options will significantly increase the size of this panel.', __FILE__);
+        foreach(static::$requestInfoSections as $name => $label) {
+            $f->addOption($name, $label);
+        }
+        if($data['requestInfoPanelSections']) $f->attr('value', $data['requestInfoPanelSections']);
         $fieldset->add($f);
 
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
@@ -2220,12 +2262,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('checked', $data['alwaysShowDebugTools'] == '1' ? 'checked' : '' );
         $fieldset->add($f);
 
-        $f = $this->wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'respectConfigDebugTools');
-        $f->label = __('Respect the PW $config->debugTools config option.', __FILE__);
-        $f->description = __('If unchecked, all debug tools will be displayed regardless of your config setting.', __FILE__);
+        $f = $this->wire('modules')->get("InputfieldCheckboxes");
+        $f->attr('name', 'debugModePanelSections');
+        $f->label = __('Panel Sections', __FILE__);
+        $f->description = __('Which sections to include in the Debug Mode panel.', __FILE__);
         $f->columnWidth = 50;
-        $f->attr('checked', $data['respectConfigDebugTools'] == '1' ? 'checked' : '' );
+        foreach(static::$debugModeSections as $name => $label) {
+            $f->addOption($name, $label);
+        }
+        if($data['debugModePanelSections']) $f->attr('value', $data['debugModePanelSections']);
         $fieldset->add($f);
 
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");

@@ -10,17 +10,6 @@ class DebugModePanel extends BasePanel {
 
     protected static $iconColor;
     protected static $panelIconColor;
-    protected $apiBaseUrl;
-
-    public function __construct() {
-        if(wire('modules')->isInstalled('ProcessWireAPI')) {
-            $ApiModuleId = wire('modules')->getModuleID("ProcessWireAPI");
-            $this->apiBaseUrl = wire('pages')->get("process=$ApiModuleId")->url.'methods/';
-        }
-        else {
-            $this->apiBaseUrl = 'https://processwire.com/api/ref/';
-        }
-    }
 
     public function getTab() {
 
@@ -59,19 +48,6 @@ class DebugModePanel extends BasePanel {
         ";
     }
 
-    private function showSection($section) {
-        if(\TracyDebugger::getDataValue('respectConfigDebugTools')) {
-            if(in_array($section, $this->wire('config')->debugTools)) {
-                return true;
-            }
-            else {
-                return false;
-            }
-        }
-        else {
-            return true;
-        }
-    }
 
     protected function sectionHeader($columnNames = array()) {
         $out = '
@@ -95,6 +71,8 @@ class DebugModePanel extends BasePanel {
 
         $PwVersion = $this->wire('config')->version;
         $debugMode = $this->wire('config')->debug;
+
+        $panelSections = \TracyDebugger::getDataValue('debugModePanelSections');
 
         // end for each section
         $sectionEnd = '
@@ -120,10 +98,10 @@ class DebugModePanel extends BasePanel {
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 483.537 483.537" style="enable-background:new 0 0 483.537 483.537;" xml:space="preserve" width="16px" height="16px">
                 <path d="M479.963,425.047L269.051,29.854c-5.259-9.88-15.565-16.081-26.782-16.081h-0.03     c-11.217,0-21.492,6.171-26.782,16.051L3.603,425.016c-5.046,9.485-4.773,20.854,0.699,29.974     c5.502,9.15,15.413,14.774,26.083,14.774H453.12c10.701,0,20.58-5.594,26.083-14.774     C484.705,445.84,484.979,434.471,479.963,425.047z M242.239,408.965c-16.781,0-30.399-13.619-30.399-30.399     c0-16.78,13.619-30.399,30.399-30.399c16.75,0,30.399,13.619,30.399,30.399C272.638,395.346,259.02,408.965,242.239,408.965z      M272.669,287.854c0,16.811-13.649,30.399-30.399,30.399c-16.781,0-30.399-13.589-30.399-30.399V166.256     c0-16.781,13.619-30.399,30.399-30.399c16.75,0,30.399,13.619,30.399,30.399V287.854z" fill="#FF9933"/>
             </svg>&nbsp;
-            <strong>WARNING</strong><br />ProcessWire Debug Mode is ON<br />Make sure it is OFF for live sites.';
+            <strong>WARNING</strong></p><p>ProcessWire Debug Mode is ON<br />Make sure it is OFF for live sites.';
         }
         else {
-            $out .= '<p><strong>ProcessWire Debug Mode is OFF</strong></p>';
+            $out .= '<strong>ProcessWire Debug Mode is OFF</strong></p>';
             if(\TracyDebugger::getDataValue('alwaysShowDebugTools')) $out .= '<p>With debug mode off, it is not possible to access the "Database Queries", "Timers", and "Autoload" sections.';
         }
 
@@ -137,7 +115,7 @@ class DebugModePanel extends BasePanel {
         if($debugMode || (!$debugMode && \TracyDebugger::getDataValue('alwaysShowDebugTools'))) {
 
             // Pages Loaded
-            if($this->showSection('pages')) {
+            if(in_array('pagesLoaded', $panelSections)) {
                 $pagesLoaded_oc = 0;
                 if($PwVersion >= 2.8) {
                     $pagesLoaded = $this->sectionHeader(array('ID', 'Path', 'Type', 'Loader'));
@@ -166,91 +144,8 @@ class DebugModePanel extends BasePanel {
                 $pagesLoaded .= $sectionEnd;
             }
 
-            if($this->showSection('api')) {
-                // API Variables
-                $apiVars_oc = 0;
-                $apiVariables = $this->sectionHeader(array('Name', 'Class'));
-                $pwVars = $PwVersion >= 2.8 ? $this->wire('all') : $this->wire()->fuel;
-                if(is_object($pwVars)) {
-                    $apiVars = array();
-                    foreach($pwVars as $key => $value) {
-                        if(!is_object($value)) continue;
-                        $apiVars[$key] = $value;
-                        $apiVars_oc++;
-                    }
-                    ksort($apiVars);
-                    foreach($apiVars as $key => $value) {
-                        $apiVariables .= "\n<tr><td><a href='".$this->apiBaseUrl.strtolower(preg_replace('/([a-z])([A-Z])/', '$1-$2', $key))."/'>\$$key</a></td>" .
-                            "<td>" . get_class($value) . "</td></tr>";
-                    }
-                }
-                $apiVariables .= $sectionEnd;
-            }
 
-            if($this->showSection('classes')) {
-                // Core Classes
-                $coreClasses_oc = 0;
-                $coreClasses = $this->sectionHeader(array('Type', 'Name',));
-
-                $classTypes = array(
-                    'Primary' => array(
-                        'Wire',
-                        'WireData',
-                        'WireArray',
-                    ),
-                    'Pages' => array(
-                        'Page',
-                        'NullPage',
-                        'User',
-                        'Role',
-                        'Permission',
-                    ),
-                    'Arrays' => array(
-                        'WireArray',
-                        'PageArray',
-                        'PaginatedArray',
-                    ),
-                    'Modules' => array(
-                        'Module',
-                        'Fieldtype',
-                        'Inputfield',
-                        'Process',
-                        'Textformatter',
-                    ),
-
-                    'Files & Images' => array(
-                        'Pagefile',
-                        'Pagefiles',
-                        'PagefilesManager',
-                        'Pageimage',
-                        'Pageimages',
-                    ),
-                    'Fields & Templates' => array(
-                        'Field',
-                        'Fieldgroup',
-                        'Template',
-                        'TemplateFile',
-                    ),
-                    'Additional' => array(
-                        'HookEvent',
-                        'InputfieldWrapper',
-                        'WireHttp',
-                        'PagesType',
-                        'Selector',
-                        'Selectors',
-                        //'WireDatabaseBackup',
-                    )
-                );
-                foreach($classTypes as $type => $classes) {
-                    foreach($classes as $class) {
-                        $coreClasses_oc++;
-                        $coreClasses .= "\n<tr><td>".$type."</td><td><a href='".$this->apiBaseUrl.strtolower(preg_replace('/([a-z])([A-Z])/', '$1-$2', $class))."/'>".$class."</a></td></tr>";
-                    }
-                }
-                $coreClasses .= $sectionEnd;
-            }
-
-            if($this->showSection('session')) {
+            if(in_array('session', $panelSections)) {
                 // Session
                 $sessionEntries_oc = 0;
                 $sessionEntries = $this->sectionHeader(array('Key', 'Value'));
@@ -271,7 +166,7 @@ class DebugModePanel extends BasePanel {
                 $sessionEntries .= $sectionEnd;
             }
 
-            if($this->showSection('modules')) {
+            if(in_array('modulesLoaded', $panelSections)) {
                 // Modules Loaded
                 $modulesNumLoaded = 0;
                 $modulesNumSkipped = 0;
@@ -292,7 +187,7 @@ class DebugModePanel extends BasePanel {
                 $modulesLoaded .= $sectionEnd;
             }
 
-            if($this->showSection('hooks')) {
+            if(in_array('hooks', $panelSections)) {
                 // Hooks
                 $hooksCalled_oc = 0;
                 $hooksCalled = $this->sectionHeader(array('When', 'Method::object', 'Visited by', 'Type', 'Priority'));
@@ -326,7 +221,7 @@ class DebugModePanel extends BasePanel {
                 $hooksCalled .= $sectionEnd;
             }
 
-            if($debugMode && $this->showSection('database')) {
+            if($debugMode && in_array('databaseQueries', $panelSections)) {
                 // Database Queries
                 $databaseQueries_oc = 0;
                 $databaseQueries = $this->sectionHeader(array('Order', 'Query'));
@@ -344,7 +239,7 @@ class DebugModePanel extends BasePanel {
                 $databaseQueries .= $sectionEnd;
             }
 
-            if($this->showSection('selectors')) {
+            if(in_array('selectorQueries', $panelSections)) {
                 // Selectors Queries
                 $selectorQueries_oc = 0;
                 $selectorQueries = $this->sectionHeader(array('Order', 'Selector', 'Settings', 'Time (ms)'));
@@ -356,7 +251,7 @@ class DebugModePanel extends BasePanel {
                 $selectorQueries .= $sectionEnd;
             }
 
-            if($debugMode && $this->showSection('timers')) {
+            if($debugMode && in_array('timers', $panelSections)) {
                 // Timers
                 $timers_oc = 0;
                 $timers = $this->sectionHeader(array('Timer', 'Seconds'));
@@ -368,7 +263,7 @@ class DebugModePanel extends BasePanel {
                 $timers .= $sectionEnd;
             }
 
-            if($this->showSection('user')) {
+            if(in_array('user', $panelSections)) {
                 // User
                 $userDetails = '
                 <p><strong>Username:</strong> '.$this->wire('user')->name.'</p>
@@ -382,30 +277,13 @@ class DebugModePanel extends BasePanel {
                 $userDetails .= '
                 </p>
                 <p><strong>Current User Permissions on this page</strong><br />';
-                foreach($this->wire('user')->getPermissions($this->wire('page')) as $permission) $userDetails .= "\n{$permission->name}<br />";
+                foreach($this->wire('user')->getPermissions($p) as $permission) $userDetails .= "\n{$permission->name}<br />";
                 $userDetails .= '
                 </p>';
             }
 
-            if($this->showSection('input')) {
-                // GET, POST, & COOKIE
-                $input_oc['get'] = 0;
-                $input_oc['post'] = 0;
-                $input_oc['cookie'] = 0;
-                foreach(array('get', 'post', 'cookie') as $type) {
-                    $i = $this->wire('input')->$type;
-                    if(!count($i)) continue;
-                    $input[$type] = $this->sectionHeader(array('Key', 'Value'));
-                    foreach($i as $key => $value) {
-                        $input_oc[$type]++;
-                        if(is_array($value)) $value = print_r($value, true);
-                        $input[$type] .= "<tr><td>" . $this->wire('sanitizer')->entities($key) . "</td><td><pre>" . $this->wire('sanitizer')->entities($value) . "</pre></td></tr>";
-                    }
-                    $input[$type] .= $sectionEnd;
-                }
-            }
 
-            if($this->showSection('cache')) {
+            if(in_array('cache', $panelSections)) {
                 // Cache
                 $cacheDetails_oc = 0;
                 $cacheDetails_oc2 = 0;
@@ -431,7 +309,7 @@ class DebugModePanel extends BasePanel {
                 }
             }
 
-            if($debugMode && $this->showSection('autoload')) {
+            if($debugMode && in_array('autoload', $panelSections)) {
                 // Autoload
                 $autoload_oc = 0;
                 if($PwVersion >= 2.8) {
@@ -446,51 +324,24 @@ class DebugModePanel extends BasePanel {
                 }
             }
 
-            if($this->showSection('config')) {
-                // Config
-                $configEntries = $this->sectionHeader(array('Key', 'Value'));
-                foreach($this->wire('config') as $key => $value) {
-                    if(is_object($value)) {
-                        $outValue = method_exists($value,'getIterator') ? $value->getIterator() : $value;
-                        $value = (array)$outValue;
-                        ksort($value);
-                        if($key == 'paths') $value = array_map(array($this, 'addRoot'), $value);
-                    }
-                    $value = \Tracy\Dumper::toHtml($value, array(Dumper::LIVE => true, Dumper::DEPTH => 10, Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => (count($value) !== count($value, COUNT_RECURSIVE) || is_object($value) ? true : false)));
-                    $configEntries .= "<tr><td>".$this->wire('sanitizer')->entities($key)."</td><td>" . $value . "</td></tr>";
-                }
-                $configEntries .= $sectionEnd;
-            }
 
             // Load all the panel sections
             $out .= '
             <br />';
 
-            if($this->showSection('pages')) {
+            if(in_array('pagesLoaded', $panelSections)) {
                 $out .= '
                 <a href="#" rel="#pages-loaded" class="tracy-toggle tracy-collapsed">Pages Loaded ('.$pagesLoaded_oc.')</a>
                 <div id="pages-loaded" class="tracy-collapsed">'.$pagesLoaded.'</div><br />';
             }
 
-            if($this->showSection('api')) {
-                $out .= '
-                <a href="#" rel="#api-variables" class="tracy-toggle tracy-collapsed">API Variables ('.$apiVars_oc.')</a>
-                <div id="api-variables" class="tracy-collapsed">'.$apiVariables.'</div><br />';
-            }
-
-            if($this->showSection('classes')) {
-                $out .= '
-                <a href="#" rel="#core-classes" class="tracy-toggle tracy-collapsed">Core Classes ('.$coreClasses_oc.')</a>
-                <div id="api-variables" class="tracy-collapsed">'.$coreClasses.'</div><br />';
-            }
-
-            if($this->showSection('session')) {
+            if(in_array('session', $panelSections)) {
                 $out .= '
                 <a href="#" rel="#session-entries" class="tracy-toggle tracy-collapsed">Session ('.$sessionEntries_oc.')</a>
                 <div id="session-entries" class="tracy-collapsed">'.$sessionEntries.'</div><br />';
             }
 
-            if($this->showSection('modules')) {
+            if(in_array('modulesLoaded', $panelSections)) {
                 $out .= '
                 <a href="#" rel="#modules-loaded" class="tracy-toggle tracy-collapsed">Modules Loaded ('.$modulesNumLoaded.'/'.$modulesNumSkipped.')</a>
                 <div id="modules-loaded" class="tracy-collapsed">'.$modulesLoaded;
@@ -498,57 +349,37 @@ class DebugModePanel extends BasePanel {
                 $out .= '</div><br />';
             }
 
-            if($this->showSection('hooks')) {
+            if(in_array('hooks', $panelSections)) {
                 $out .= '
-                <a href="#" rel="#hooks" class="tracy-toggle tracy-collapsed">Hooks ('.$hooksCalled_oc.')</a>
+                <a href="#" rel="#hooks" class="tracy-toggle tracy-collapsed">Hooks Triggered ('.$hooksCalled_oc.')</a>
                 <div id="hooks" class="tracy-collapsed">'.$hooksCalled.'</div><br />';
             }
 
-            if($debugMode && $this->showSection('database')) {
+            if($debugMode && in_array('databaseQueries', $panelSections)) {
                 $out .= '
                 <a href="#" rel="#database-queries" class="tracy-toggle tracy-collapsed">PDO Queries ($database) ('.$databaseQueries_oc.')</a>
                 <div id="database-queries" class="tracy-collapsed">'.$databaseQueries.'</div><br />';
             }
 
-            if($this->showSection('selectors')) {
+            if(in_array('selectorQueries', $panelSections)) {
                 $out .= '
                 <a href="#" rel="#selector-queries" class="tracy-toggle tracy-collapsed">Selector Queries ('.$selectorQueries_oc.')</a>
                 <div id="selector-queries" class="tracy-collapsed">'.$selectorQueries.'</div><br />';
             }
 
-            if($debugMode && $this->showSection('timers')) {
+            if($debugMode && in_array('timers', $panelSections)) {
                 $out .= '
                 <a href="#" rel="#timers" class="tracy-toggle tracy-collapsed">Timers ('.$timers_oc.')</a>
                 <div id="timers" class="tracy-collapsed">'.$timers.'</div><br />';
             }
 
-            if($this->showSection('user')) {
+            if(in_array('user', $panelSections)) {
                 $out .= '
                 <a href="#" rel="#user-details" class="tracy-toggle tracy-collapsed">User ('.$this->wire('user')->name.')</a>
                 <div id="user-details" class="tracy-collapsed">'.$userDetails.'</div><br />';
             }
 
-            if($this->showSection('input')) {
-                if(isset($input['get'])) {
-                    $out .= '
-                    <a href="#" rel="#input-get" class="tracy-toggle tracy-collapsed">$input->get ('.$input_oc['get'].')</a>
-                    <div id="input-get" class="tracy-collapsed">'.$input['get'].'</div><br />';
-                }
-
-                if(isset($input['post'])) {
-                    $out .= '
-                    <a href="#" rel="#input-post" class="tracy-toggle tracy-collapsed">$input->post ('.$input_oc['post'].')</a>
-                    <div id="input-post" class="tracy-collapsed">'.$input['post'].'</div><br />';
-                }
-
-                if(isset($input['cookie'])) {
-                    $out .= '
-                    <a href="#" rel="#input-cookie" class="tracy-toggle tracy-collapsed">$input->cookie ('.$input_oc['cookie'].')</a>
-                    <div id="input-cookie" class="tracy-collapsed">'.$input['cookie'].'</div><br />';
-                }
-            }
-
-            if($this->showSection('cache')) {
+            if(in_array('cache', $panelSections)) {
                 $out .= '
                 <a href="#" rel="#cache-details" class="tracy-toggle tracy-collapsed">Cache ('.$cacheDetails_oc.'/'.$fileCompilerCacheQty.'/'.$cacheDetails_oc2.')</a>
                 <div id="cache-details" class="tracy-collapsed">'.$cacheDetails;
@@ -558,17 +389,10 @@ class DebugModePanel extends BasePanel {
                 $out .= '</div><br />';
             }
 
-            if($debugMode && $this->showSection('autoload') && $PwVersion >= 2.8) {
+            if($debugMode && in_array('autoload', $panelSections) && $PwVersion >= 2.8) {
                 $out .= '
                 <a href="#" rel="#autoload" class="tracy-toggle tracy-collapsed">Autoload ('.$autoload_oc.')</a>
                 <div id="autoload" class="tracy-collapsed">'.$autoload.'</div><br />
-                ';
-            }
-
-            if($this->showSection('config')) {
-                $out .= '
-                <a href="#" rel="#config" class="tracy-toggle tracy-collapsed">Config</a>
-                <div id="config" class="tracy-collapsed">'.$configEntries.'</div><br />
                 ';
             }
 
