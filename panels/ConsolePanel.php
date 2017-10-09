@@ -229,7 +229,7 @@ HTML;
                 xmlhttp.open("POST", "./", true);
                 xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-                xmlhttp.send("tracyconsole=1&accessTemplateVars="+accessTemplateVars+"&pid={$p->id}&fid={$fid}&tid={$tid}&mid={$mid}&code="+encodeURIComponent(code));
+                xmlhttp.send("tracyConsole=1&accessTemplateVars="+accessTemplateVars+"&pid={$p->id}&fid={$fid}&tid={$tid}&mid={$mid}&code="+encodeURIComponent(code));
             }
         </script>
 
@@ -250,7 +250,7 @@ HTML;
             <fieldset>
                 <legend>Enter PHP code, then use CTRL/CMD+Enter to Run, or ALT/OPT+Enter to Clear & Run.</legend>';
         if ($this->wire('page')->template != "admin") {
-            $out .= '<p><label><input type="checkbox" id="accessTemplateVars" /> Allow access to custom variables and functions defined in the page template file and all other included files.</label></p>';
+            $out .= '<p><label><input type="checkbox" id="accessTemplateVars" /> Allow access to custom variables and functions defined in this page\'s template file and all other included files.</label></p>';
         }
         $out .= '
                 <br />
@@ -265,7 +265,7 @@ HTML;
                     </div>
                     <div id="tracyConsoleResult" style="background:#F0F3F7; border: 1px dotted #999999; padding: 3px;max-height: 300px; overflow:auto"></div>
                 </div>
-                <div style="float: left; margin-left: 10px; width: 250px; margin-top: -23px;">
+                <div style="float: left; margin-left: 10px; width: 250px; margin-top: -'.($this->wire('page')->template != "admin" ? '60' : '23').'px;">
                     <div style="padding-bottom:5px">
                         Sort: <a href="#" onclick="sortList(\'alphabetical\')">alphabetical</a>&nbsp;|&nbsp;<a href="#" onclick="sortList(\'chronological\')">chronological</a>
                     </div>
@@ -286,7 +286,7 @@ HTML;
         <script>
 
             function getSnippet(name) {
-                var tracyConsoleSnippets = getAllSnippets()
+                var tracyConsoleSnippets = getAllSnippets();
                 for (var key in tracyConsoleSnippets) {
                     if (!tracyConsoleSnippets.hasOwnProperty(key)) continue;
                     var obj = tracyConsoleSnippets[key];

@@ -15,7 +15,15 @@ foreach($pwVars->getArray() as $key => $value) {
 if($user->isSuperuser()) {
 
     $page = $pages->get((int)$_POST['pid']);
-    $code = $_POST['code'];
+    if(isset($_POST['tracyConsole'])) {
+        $code = $_POST['code'];
+    }
+    elseif(isset($_POST['tracySnippetRunner']) && isset($_POST['file']) && $_POST['file'] != '') {
+        $code = file_get_contents($_POST['file']);
+    }
+    else {
+        $code = null;
+    }
 
     // ready.php and finished.php weren't being loaded, so include here to monitor any bd() etc calls they might have
     // the other approach to fix this is to call an external ConsoleProcessor.php file via ajax as per PM with @bernhard
@@ -29,7 +37,7 @@ if($user->isSuperuser()) {
         throw new WireException("Unable to create cache path: $cachePath");
     }
 
-    $this->file = $cachePath.'consoleCode.php';
+    $this->file = $cachePath.(isset($_POST['tracyConsole']) ? 'consoleCode.php' : 'snippetRunner.php');
     $code = trim($code);
     $openPHP = '<' . '?php';
     $inPwCheck = 'if(!defined("PROCESSWIRE")) die("no direct access");';

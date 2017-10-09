@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.5.0',
+            'version' => '4.6.0',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -49,7 +49,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     protected $tracyEnabled = false;
     protected $tracyCacheDir;
     protected $modulesDbBackupFilename;
-    protected static $tracyVersion;
+    public static $tracyVersion;
     public static $selectors = array();
     public static $templateVars = array();
     public static $templateConsts = array();
@@ -136,6 +136,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'processwireLogs' => 'ProcessWire Logs',
         'processwireVersion' => 'ProcessWire Version',
         'requestInfo' => 'Request Info',
+        'snippetRunner' => 'Snippet Runner',
         'templateEditor' => 'Template Editor',
         'templatePath' => 'Template Path',
         'templateResources' => 'Template Resources',
@@ -198,6 +199,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "processwireInfoPanelSections" => array('moduleSettings', 'templateSettings', 'fieldSettings', 'apiVariables', 'coreClasses', 'configData', 'versionsList', 'adminLinks', 'documentationLinks'),
                 "debugModePanelSections" => array('pagesLoaded', 'session', 'modulesLoaded', 'hooks', 'databaseQueries', 'selectorQueries', 'timers', 'user', 'cache', 'autoload'),
                 "diagnosticsPanelSections" => array('filesystemFolders'),
+                "snippetsPath" => 'templates',
                 "todoIgnoreDirs" => 'git, svn, images, img, errors, sass-cache, node_modules',
                 "todoScanModules" => null,
                 "todoAllowedExtensions" => 'php, module, inc, txt, latte, html, htm, md, css, scss, less, js',
@@ -648,6 +650,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if(!is_dir($logFolder)) wireMkdir($logFolder);
 
 
+        // CUSTOM CSS FILE
+        if(static::$tracyVersion != 'legacy') Debugger::$customCssFiles = array($this->wire('config')->paths->TracyDebugger.'styles.css');
+
+
         // ENABLE TRACY
         Debugger::enable($outputMode, $logFolder, $this->data['email'] != '' ? $this->data['email'] : null);
 
@@ -855,7 +861,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // LOAD SPECIFIED PANELS
         foreach(static::$showPanels as $panel) {
             if($this->inAdmin && in_array($panel, static::$hideInAdmin)) continue;
-            if(($panel == 'console' || $panel == 'templateEditor') && !$this->wire('user')->isSuperuser()) continue;
+            if(($panel == 'console' || $panel == 'snippetRunner' || $panel == 'templateEditor') && !$this->wire('user')->isSuperuser()) continue;
             if($panel == 'userSwitcher') {
                 if(isset($this->data['userSwitchSession'])) $userSwitchSession = $this->data['userSwitchSession'];
                 if($this->data['outputMode'] != 'development' || (!$this->wire('user')->isSuperuser() && (!$this->wire('session')->tracyUserSwitcherId || (isset($userSwitchSession[$this->wire('session')->tracyUserSwitcherId]) && $userSwitchSession[$this->wire('session')->tracyUserSwitcherId] <= time())))) continue;
@@ -888,6 +894,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 case 'processwireLogs':
                 case 'processwireVersion':
                 case 'requestInfo':
+                case 'snippetRunner':
                 case 'templateEditor':
                 case 'templateResources':
                 case 'todo':
@@ -928,9 +935,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // CONSOLE PANEL
-        // if it's an ajax request from the Tracy Console panel code execution, then process and return
-        if($this->wire('config')->ajax && $this->wire('input')->post->tracyconsole == 1) {
-            require_once(__DIR__ . '/includes/ConsoleProcessor.php');
+        // if it's an ajax request from the Tracy Console or Snippet Runner panels for code execution, then process and return
+        if($this->wire('config')->ajax && ($this->wire('input')->post->tracyConsole == 1 || $this->wire('input')->post->tracySnippetRunner == 1)) {
+            require_once(__DIR__ . '/includes/CodeProcessor.php');
             return;
         }
 
@@ -1026,8 +1033,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                         localStorage.removeItem("tracy-debug-panel-ProcesswireInfoPanel");
                         localStorage.removeItem("remove-tracy-debug-panel-ProcesswireInfoPanel")
                     }
-                </script>
-                <link id="tracyStyles" type="text/css" href="'.$this->wire('config')->urls->TracyDebugger.'styles.css" rel="stylesheet" />';
+                </script>';
+                // if legacy version we need to load styles.css manually because it doesn't have the Debugger::$customCssFiles option
+                if(static::$tracyVersion == 'legacy') $customEndHead .= '<link id="tracyStyles" type="text/css" href="'.$this->wire('config')->urls->TracyDebugger.'styles.css" rel="stylesheet" />';
         }
 
         if(is_null($this->wire('session')->tracyDumpItems)) {
@@ -2271,6 +2279,20 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $f->addOption($name, $label);
         }
         if($data['debugModePanelSections']) $f->attr('value', $data['debugModePanelSections']);
+        $fieldset->add($f);
+
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("Snippet Runner Panel Options");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldRadios");
+        $f->attr('name', 'snippetsPath');
+        $f->label = __('Snippets Path', __FILE__);
+        $f->description = __('This path will be checked for snippets.', __FILE__);
+        $f->notes = __('Neither of these directories exist by default so you will need to create them.', __FILE__);
+        $f->addOption('templates', $this->wire('urls')->templates.'TracyDebugger/snippets/');
+        $f->addOption('assets', $this->wire('urls')->assets.'TracyDebugger/snippets/');
+        if($data['snippetsPath']) $f->attr('value', $data['snippetsPath']);
         $fieldset->add($f);
 
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");

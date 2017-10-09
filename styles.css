@@ -324,17 +324,17 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
     visibility:hidden;
 }
 
-#tracySnippets {
+#tracySnippets, #tracyRunnerSnippets {
     padding: 0 !important;
     border: none;
 }
 
-#tracySnippets ul {
+#tracySnippets ul, #tracyRunnerSnippets ul {
     margin-left: 0 !important;
     padding-left: 0 !important;
 }
 
-#tracySnippets li {
+#tracySnippets li, #tracyRunnerSnippets li {
     display: block;
     padding: 0 !important;
     border-top: 1px solid #ddd;
@@ -344,15 +344,15 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
     position:relative !important;
 }
 
-#tracySnippets li:first-child {
+#tracySnippets li:first-child, #tracyRunnerSnippets li:first-child {
     border-top: none;
 }
 
-#tracySnippets li svg {
+#tracySnippets li svg, #tracyRunnerSnippets li svg {
     width: 100% !important;
 }
 
-#tracySnippets li > span {
+#tracySnippets li > span, #tracyRunnerSnippets li > span {
     display: block;
     padding: 5px 5px 5px 9px !important;
     -moz-user-select: none;
@@ -360,18 +360,18 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
     user-select: none;
 }
 
-#tracySnippets li > span:not(.trashIcon):active,
+#tracySnippets li > span:not(.trashIcon):active, #tracyRunnerSnippets li > span:not(.trashIcon):active,
 .activeSnippet {
     background: #ebeef0 !important;
+}
+
+#tracySnippets li:hover span:not(.activeSnippet), #tracyRunnerSnippets li:hover span:not(.activeSnippet) {
+    background: #F5F8F9;
 }
 
 #tracySnippets li .trashIcon:active + span {
     color: #fff !important;
     background: #EA2262 !important;
-}
-
-#tracySnippets li:hover span:not(.activeSnippet) {
-    background: #F5F8F9;
 }
 
 #tracySnippets .trashIcon {

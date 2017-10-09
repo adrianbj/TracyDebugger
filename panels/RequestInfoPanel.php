@@ -328,8 +328,13 @@ class RequestInfoPanel extends BasePanel {
         }
 
         // Template info
-        // defining $templateFileEditorPath even if not templateInfo not a selected panel because it's used to build the template editing button at the bottom of the panel
-        if(file_exists($p->template->filename)) $templateFilePath = $p->template->filename;
+        // defining $templateFileEditorPath even if templateInfo not a selected panel because it's used to build the template editing button at the bottom of the panel
+        if($_SERVER['PHP_SELF'] == '/index.php') {
+            if(file_exists($p->template->filename)) $templateFilePath = $p->template->filename;
+        }
+        else {
+            $templateFilePath = $_SERVER['SCRIPT_FILENAME'];
+        }
         $templateFileEditorPath = isset($templateFilePath) ? str_replace('%file', $templateFilePath, str_replace('%line', '1', \TracyDebugger::getDataValue('editor'))) : '';
         if(\TracyDebugger::getDataValue('localRootPath') != '') $templateFileEditorPath = str_replace($this->wire('config')->paths->root, \TracyDebugger::getDataValue('localRootPath'), $templateFileEditorPath);
 
@@ -621,12 +626,17 @@ class RequestInfoPanel extends BasePanel {
         if(in_array('editLinks', $panelSections)) {
             $out .= '
             <div class="pw-admin-links" style="text-align: right; border-top:1px solid #CCCCCC; margin-top:10px; padding-top:10px;">
+            ';
+            if($_SERVER['PHP_SELF'] == '/index.php') {
+                $out .= '
                 <a onclick="closePanel()" href="'.$this->wire('config')->urls->admin.'page/edit/?id='.$p->id.'" title="Edit this page">
                     <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 528.899 528.899" style="enable-background:new 0 0 528.899 528.899;" xml:space="preserve">
                         <path d="M328.883,89.125l107.59,107.589l-272.34,272.34L56.604,361.465L328.883,89.125z M518.113,63.177l-47.981-47.981   c-18.543-18.543-48.653-18.543-67.259,0l-45.961,45.961l107.59,107.59l53.611-53.611   C532.495,100.753,532.495,77.559,518.113,63.177z M0.3,512.69c-1.958,8.812,5.998,16.708,14.811,14.565l119.891-29.069   L27.473,390.597L0.3,512.69z" fill="#ee1d62"/>
                     </svg>
-                </a>&nbsp;
-                <a href="'.$templateFileEditorPath.'" title="Edit this template file">
+                </a>&nbsp;';
+            }
+            $out .= '
+                <a href="'.$templateFileEditorPath.'" title="Edit this' . ($_SERVER['PHP_SELF'] == '/index.php' ? ' template ' : ' ') . 'file">
                     <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 492.014 492.014" style="enable-background:new 0 0 492.014 492.014;" xml:space="preserve" width="16px" height="16px">
                         <g id="XMLID_144_">
                             <path id="XMLID_151_" d="M339.277,459.566H34.922V32.446h304.354v105.873l32.446-32.447V16.223C371.723,7.264,364.458,0,355.5,0   H18.699C9.739,0,2.473,7.264,2.473,16.223v459.568c0,8.959,7.265,16.223,16.226,16.223H355.5c8.958,0,16.223-7.264,16.223-16.223   V297.268l-32.446,32.447V459.566z" fill="#444444"/>
