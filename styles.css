@@ -262,10 +262,6 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
     display: inline-block;
 }
 
-#tracy-debug-panel-ProcesswireInfoPanel tbody tr td:first-child {
-    width: 200px !important;
-}
-
 #tracy-debug-panel-PanelSelectorPanel fieldset div label {
     width: 300px !important;
     white-space: nowrap;
@@ -298,14 +294,37 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
     font-size: 12px !important;
 }
 
-.pw-admin-links a {
+ul.pw-info-links {
+    border-top: 1px solid #CCCCCC !important;
+    margin: 10px 0 0 0 !important;
+    padding:10px 0 0 0 !important;
+}
+
+.pw-info-links li {
+    display: inline-block !important;
+}
+
+.pw-info-links li.with-labels {
+    display: block !important;
+    padding: 0 0 5px 0 !important;
+    line-height: 0.7 !important;
+    color: #990000 !important;
+}
+
+.pw-info-links a {
+    font-family: sans-serif !important;
+    font-size: 12px !important;
     transition: transform 0.12s;
 }
-.pw-admin-links a:hover svg {
+.pw-info-links a svg {
+    margin-right: 5px !important;
+}
+.pw-info-links a:hover svg {
     transform: scale(1.4);
 }
-.pw-admin-links a:hover, .pw-admin-links a:active, .pw-admin-links a:focus {
+.pw-info-links a:hover, .pw-info-links a:active, .pw-info-links a:focus {
     background-color: transparent !important;
+    color: #125EAE !important;
 }
 
 #tracy-debug input[type="text"]#tracySnippetName {
