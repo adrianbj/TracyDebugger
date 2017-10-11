@@ -148,6 +148,7 @@ HTML;
                 file = typeof loadedSnippetFile === 'undefined' ? '' : loadedSnippetFile;
                 document.getElementById("tracySnippetRunnerStatus").innerHTML = "Processing";
                 callSnippetRunnerPhp(file);
+                document.getElementById('runSnippetRunnerCode').blur();
             }
 
             function callSnippetRunnerPhp(file) {
@@ -203,7 +204,7 @@ HTML;
         $out .= '<h1>' . $this->icon . ' Snippet Runner</h1>
         <div class="tracy-inner">
             <fieldset>
-                <legend>Load a snippet, then use CTRL/CMD+Enter to Run, or ALT/OPT+Enter to Clear & Run.</legend>';
+                <legend>Select a snippet, then use CTRL/CMD+Enter to Run, or ALT/OPT+Enter to Clear & Run.</legend>';
         if ($this->wire('page')->template != "admin") {
             $out .= '<p><label><input type="checkbox" id="accessTemplateVars" /> Allow access to custom variables and functions defined in this page\'s template file and all other included files.</label></p>';
         }
@@ -212,7 +213,7 @@ HTML;
                 <div id="tracyConsoleContainer">
                     <div id="tracyRunnerSnippetName" style="font-size: 13px"></div>
                     <div style="padding:10px 0">
-                        <input title="Run code" type="submit" id="runCode" onclick="processTracySnippetRunnerCode()" value="Run" />&nbsp;
+                        <input title="Run code" type="submit" id="runSnippetRunnerCode" onclick="processTracySnippetRunnerCode()" value="Run" />&nbsp;
                         <input title="Clear results" type="submit" id="clearSnippetRunnerResults" onclick="clearSnippetRunnerResults()" value="&#10006; Clear results" />
                         <span id="tracySnippetRunnerStatus" style="padding: 10px"></span>
                     </div>
@@ -248,7 +249,7 @@ HTML;
             for (var key in snippets) {
                 if (!snippets.hasOwnProperty(key)) continue;
                 var obj = snippets[key];
-                snippetList += "<li id='"+makeIdFromTitle(obj.name)+"' data-modified='"+obj.modified+"'><span style='color: #125EAE; cursor: pointer' onclick='loadRunnerSnippet(\""+obj.name+"\", \""+obj.filename+"\");setActiveRunnerSnippet(this);'>" + obj.name + "</span></li>";
+                snippetList += "<li id='"+makeIdFromTitle(obj.name)+"' data-modified='"+obj.modified+"'><span style='color: #125EAE; cursor: pointer' onclick='selectRunnerSnippet(\""+obj.name+"\", \""+obj.filename+"\");setActiveRunnerSnippet(this);'>" + obj.name + "</span></li>";
             }
             snippetList += "</ul>";
             document.getElementById("tracyRunnerSnippets").innerHTML = snippetList;
@@ -302,9 +303,9 @@ HTML;
             }
 
 
-            function loadRunnerSnippet(name, filename) {
+            function selectRunnerSnippet(name, filename) {
                 loadedSnippetFile = filename;
-                document.getElementById("tracyRunnerSnippetName").innerHTML = '<strong>Loaded snippet:</strong> ' + name;
+                document.getElementById("tracyRunnerSnippetName").innerHTML = '<strong>Selected snippet:</strong> ' + name;
             }
 
             function makeIdFromTitle(title) {
@@ -316,7 +317,6 @@ HTML;
                 	document.querySelector(".activeSnippet").classList.remove("activeSnippet");
 	            }
                 item.classList.add("activeSnippet");
-                document.getElementById('runCode').focus();
             }
 
         </script>

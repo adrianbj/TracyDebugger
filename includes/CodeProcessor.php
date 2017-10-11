@@ -67,18 +67,10 @@ if($user->isSuperuser()) {
     if(isset($_POST['tid']) && $_POST['tid'] != '') $setVars .= '$template = $templates->get('.(int)$_POST['tid'].'); ';
     if(isset($_POST['mid']) && $_POST['mid'] != '') $setVars .= '$module = $modules->get("'.$this->wire('sanitizer')->name($_POST['mid']).'"); ';
 
-    $codePrefixes = "$nameSpace $inPwCheck $setVars";
+    $codePrefixes = "$openPHP $nameSpace $inPwCheck $setVars";
+    if(strpos($code, '<?') !== false) $codePrefixes .= '?>';
+    $code = "$codePrefixes\n$code";
 
-    if(substr($code, 0, strlen($openPHP)) !== $openPHP) {
-        // if this is a Snippet Runner file and opening php tag not at the start of the file,
-        // add a closing tag after our injected prefix code
-        if(isset($_POST['tracySnippetRunner'])) $codePrefixes .= ' ?>';
-        // prepend open PHP tag to code if not already present
-        $code = "$openPHP $codePrefixes\n$code";
-    } else {
-        // otherwise insert our $inPwCheck security check and $setVars code
-        $code = str_replace($openPHP, "$openPHP $codePrefixes", $code);
-    }
     if(!file_put_contents($this->file, $code, LOCK_EX)) throw new WireException("Unable to write file: $this->file");
     if($this->wire('config')->chmodFile) chmod($this->file, octdec($this->wire('config')->chmodFile));
 
@@ -184,7 +176,8 @@ function tracyConsoleErrorHandler($errno, $errstr, $errfile, $errline) {
         // echo and exit approach allows us to send error to Tracy console dump area
         // this means that the browser will receive a 200 when it may have been a 500,
         // but think that is ok in this case
-        echo '<br />Error: '.$customErrStr;
+        echo 'Error: '.$customErrStr;
+        echo '<div style="border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;"></div>';
         // exit obviously causing scripts to halt even for notices/warnings which we don't want, so get rid of for now
         //exit;
     }
@@ -203,5 +196,6 @@ function tracyConsoleExceptionHandler($err) {
     \TD::fireLog($customErrStrLog);
     \TD::log($customErrStrLog, 'error');
 
-    echo '<br />Exception: '.$customErrStr;
+    echo 'Exception: '.$customErrStr;
+    echo '<div style="border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;"></div>';
 }
