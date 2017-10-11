@@ -72,6 +72,19 @@ class DebugModePanel extends BasePanel {
         $PwVersion = $this->wire('config')->version;
         $debugMode = $this->wire('config')->debug;
 
+        if(\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
+            ($this->wire('process') == 'ProcessPageEdit' ||
+                $this->wire('process') == 'ProcessUser' ||
+                $this->wire('process') == 'ProcessRole' ||
+                $this->wire('process') == 'ProcessPermission'
+            )
+        ) {
+            $p = $this->wire('process')->getPage();
+        }
+        else {
+            $p = $this->wire('page');
+        }
+
         $panelSections = \TracyDebugger::getDataValue('debugModePanelSections');
 
         // end for each section
