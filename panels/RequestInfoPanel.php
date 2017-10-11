@@ -549,7 +549,7 @@ class RequestInfoPanel extends BasePanel {
                 $serverRequest .= '
                     <tr>
                         <td>'.$k.'</td>
-                        <td>'.(is_array($v) ? $v : Dumper::toHtml($v)).'</td>
+                        <td>'.Dumper::toHtml($v).'</td>
                     </tr>
                 ';
             }
