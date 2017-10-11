@@ -236,8 +236,6 @@ HTML;
 HTML;
 
         $code = '';
-        $openPHP = '<' . '?php';
-        $inPwCheck = 'if(!defined("PROCESSWIRE")) die("no direct access");';
         $file = $this->wire('config')->paths->cache . 'TracyDebugger/consoleCode.php';
         if (file_exists($file)) {
             $code = file_get_contents($file);

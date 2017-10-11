@@ -39,19 +39,42 @@ if($user->isSuperuser()) {
 
     $this->file = $cachePath.(isset($_POST['tracyConsole']) ? 'consoleCode.php' : 'snippetRunner.php');
     $code = trim($code);
+    $tokens = token_get_all($code);
+    $nextStringIsNamespace = false;
+    $nameSpace = null;
+    foreach($tokens as $token) {
+        switch($token[0]) {
+            case T_NAMESPACE:
+                $nextStringIsNamespace = true;
+                break;
+
+            case T_STRING:
+                if($nextStringIsNamespace) {
+                    $nextStringIsNamespace = false;
+                    $nameSpace = $token[1];
+                }
+                break;
+        }
+    }
+    if($nameSpace) {
+        $nameSpace = 'namespace ' . $nameSpace . ';';
+        $code = str_replace($nameSpace, '', $code);
+    }
     $openPHP = '<' . '?php';
     $inPwCheck = 'if(!defined("PROCESSWIRE")) die("no direct access");';
     $setVars = '$page = $pages->get('.$page->id.'); ';
-    if(isset($_POST['fid'])) $setVars .= '$field = $fields->get('.(int)$_POST['fid'].'); ';
-    if(isset($_POST['tid'])) $setVars .= '$template = $templates->get('.(int)$_POST['tid'].'); ';
-    if(isset($_POST['mid'])) $setVars .= '$module = $modules->get("'.$this->wire('sanitizer')->name($_POST['mid']).'"); ';
+    if(isset($_POST['fid']) && $_POST['fid'] != '') $setVars .= '$field = $fields->get('.(int)$_POST['fid'].'); ';
+    if(isset($_POST['tid']) && $_POST['tid'] != '') $setVars .= '$template = $templates->get('.(int)$_POST['tid'].'); ';
+    if(isset($_POST['mid']) && $_POST['mid'] != '') $setVars .= '$module = $modules->get("'.$this->wire('sanitizer')->name($_POST['mid']).'"); ';
+
+    $codePrefixes = "$nameSpace $inPwCheck $setVars";
 
     if(substr($code, 0, strlen($openPHP)) !== $openPHP) {
         // prepend open PHP tag to code if not already present
-        $code = "$openPHP $inPwCheck $setVars\n$code";
+        $code = "$openPHP $codePrefixes\n$code";
     } else {
         // otherwise insert our $inPwCheck security check and $setVars code
-        $code = str_replace($openPHP, "$openPHP $inPwCheck $setVars\n", $code);
+        $code = str_replace($openPHP, "$openPHP $codePrefixes", $code);
     }
     if(!file_put_contents($this->file, $code, LOCK_EX)) throw new WireException("Unable to write file: $this->file");
     if($this->wire('config')->chmodFile) chmod($this->file, octdec($this->wire('config')->chmodFile));
