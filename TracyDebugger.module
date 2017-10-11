@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.6.9',
+            'version' => '4.6.10',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -196,8 +196,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "styleAdminElements" => "body::before {\n\tcontent: \"[type]\";\n\tbackground: [color];\n\tposition: fixed;\n\tleft: 0;\n\tbottom: 100%;\n\tcolor: #ffffff;\n\twidth: 100vh;\n\tpadding: 0;\n\ttext-align: center;\n\tfont-weight: 600;\n\ttext-transform: uppercase;\n\ttransform: rotate(90deg);\n\ttransform-origin: bottom left;\n\tz-index: 999999;\n\tfont-size: 11px;\n\theight: 13px;\n\tline-height: 13px;\npointer-events: none;\n}\n",
                 "styleAdminColors" => "local|#ca6500\ndev.*|#990000\nstaging.*|#8b0066",
                 "showPWInfoPanelIconLabels" => 1,
-                "requestInfoPanelSections" => array('pageInfo', 'serverRequest', 'inputGet', 'inputPost', 'inputCookie', 'languageInfo', 'templateInfo', 'fieldsListValues', 'editLinks'),
-                "processwireInfoPanelSections" => array('moduleSettings', 'templateSettings', 'fieldSettings', 'apiVariables', 'coreClasses', 'configData', 'versionsList', 'adminLinks', 'documentationLinks'),
+                "requestInfoPanelSections" => array('moduleSettings', 'templateSettings', 'fieldSettings', 'pageInfo', 'languageInfo', 'templateInfo', 'fieldsListValues', 'serverRequest', 'inputGet', 'inputPost', 'inputCookie', 'editLinks'),
+                "processwireInfoPanelSections" => array('apiVariables', 'coreClasses', 'configData', 'versionsList', 'adminLinks', 'documentationLinks'),
                 "debugModePanelSections" => array('pagesLoaded', 'session', 'modulesLoaded', 'hooks', 'databaseQueries', 'selectorQueries', 'timers', 'user', 'cache', 'autoload'),
                 "diagnosticsPanelSections" => array('filesystemFolders'),
                 "snippetsPath" => 'templates',
@@ -1748,6 +1748,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $wrapper = new InputfieldWrapper();
 
+        // Main Setup
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
         $fieldset->label = __("Main Setup");
         $wrapper->add($fieldset);
@@ -1793,6 +1794,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('checked', $data['allowLogProduction'] == '1' ? 'checked' : '' );
         $fieldset->add($f);
 
+        // Access Permissions
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
         $fieldset->label = __("Access Permission");
         $wrapper->add($fieldset);
@@ -1824,6 +1826,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($data['ipAddress']) $f->attr('value', $data['ipAddress']);
         $fieldset->add($f);
 
+        // Miscellaneous Settings
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
         $fieldset->label = __("Miscellaneous");
         $wrapper->add($fieldset);
@@ -1933,6 +1936,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('checked', $data['referencePageEdited'] == '1' ? 'checked' : '' );
         $fieldset->add($f);
 
+        // Debug Bar and Panel Settings
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
         $fieldset->label = __("Debug Bar and Panels");
         $wrapper->add($fieldset);
@@ -2031,7 +2035,197 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($data['restrictedUserDisabledPanels']) $f->attr('value', $data['restrictedUserDisabledPanels']);
         $fieldset->add($f);
 
+        // Editor Protocol Handler
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("Editor Protocol Handler");
+        $wrapper->add($fieldset);
 
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'editor');
+        $f->label = __('Editor Protocol Handler', __FILE__);
+        $f->description = __('Sets the Tracy `Debugger::$editor` variable. Enter the appropriate address to open your code editor of choice.'."\n".'This approach only works for OSX. For more instructions on Windows and Linux alternatives, [read here](https://pla.nette.org/en/how-open-files-in-ide-from-debugger).'."\n".'For easily adding the SublimeText "subl://" protocol handler to your Mac, use this free [tool](https://github.com/saetia/sublime-url-protocol-mac).', __FILE__);
+        $f->notes = __('Initially configured for SublimeText (`subl://open/?url=file://%file&line=%line`). Change to work with your favorite editor.', __FILE__);
+        $f->columnWidth = 50;
+        if($data['editor']) $f->attr('value', $data['editor']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'localRootPath');
+        $f->label = __('Local Root Path', __FILE__);
+        $f->description = __('This will map editor links from a production site to your local dev files.', __FILE__);
+        $f->notes = __('An example path might be: /Users/myname/Sites/sitefolder/', __FILE__);
+        $f->columnWidth = 50;
+        if($data['localRootPath']) $f->attr('value', $data['localRootPath']);
+        $fieldset->add($f);
+
+        // ProcessWire Info Panel
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("ProcessWire Info Panel Options");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldCheckboxes");
+        $f->attr('name', 'processwireInfoPanelSections');
+        $f->label = __('Panel Sections', __FILE__);
+        $f->description = __('Which sections to include in the ProcessWire Info panel.', __FILE__);
+        $f->columnWidth = 50;
+        foreach(static::$processWireInfoSections as $name => $label) {
+            $f->addOption($name, $label);
+        }
+        if($data['processwireInfoPanelSections']) $f->attr('value', $data['processwireInfoPanelSections']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'showPWInfoPanelIconLabels');
+        $f->label = __('Show Icon Labels', __FILE__);
+        $f->description = __('Shows labels next to each icon for the two "Links" sections.', __FILE__);
+        $f->columnWidth = 50;
+        $f->notes = __('Nice for clarity, but takes up more space.', __FILE__);
+        $f->attr('checked', $data['showPWInfoPanelIconLabels'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        // Request Info Panel
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("Request Info Panel Options");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldCheckboxes");
+        $f->attr('name', 'requestInfoPanelSections');
+        $f->label = __('Panel Sections', __FILE__);
+        $f->description = __('Which sections to include in the Request Info panel.', __FILE__);
+        $f->notes = __('The three "Object" options will significantly increase the size of this panel.', __FILE__);
+        foreach(static::$requestInfoSections as $name => $label) {
+            $f->addOption($name, $label);
+        }
+        if($data['requestInfoPanelSections']) $f->attr('value', $data['requestInfoPanelSections']);
+        $fieldset->add($f);
+
+        // Debug Mode Panel
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("Debug Mode Panel Options");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldCheckboxes");
+        $f->attr('name', 'debugModePanelSections');
+        $f->label = __('Panel Sections', __FILE__);
+        $f->description = __('Which sections to include in the Debug Mode panel.', __FILE__);
+        $f->columnWidth = 50;
+        foreach(static::$debugModeSections as $name => $label) {
+            $f->addOption($name, $label);
+        }
+        if($data['debugModePanelSections']) $f->attr('value', $data['debugModePanelSections']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'alwaysShowDebugTools');
+        $f->label = __('Show debug mode tools even if $config->debug = false.', __FILE__);
+        $f->description = __('If checked, the debug tools will be displayed regardless of whether debug mode is enabled.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['alwaysShowDebugTools'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        // Diagnostics Panel
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("Diagnostics Panel Options");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldCheckboxes");
+        $f->attr('name', 'diagnosticsPanelSections');
+        $f->label = __('Panel Sections', __FILE__);
+        $f->description = __('Which sections to include in the Diagnostics panel.', __FILE__);
+        $f->notes = __('The "Filesystem Files" option may significantly increase the generation time for this panel.', __FILE__);
+        foreach(static::$diagnosticsSections as $name => $label) {
+            $f->addOption($name, $label);
+        }
+        if($data['diagnosticsPanelSections']) $f->attr('value', $data['diagnosticsPanelSections']);
+        $fieldset->add($f);
+
+        // ToDo Panel
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("ToDo Panel Options");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldTextarea");
+        $f->attr('name', 'todoIgnoreDirs');
+        $f->label = __('Ignore Directories', __FILE__);
+        $f->description = __('Comma separated list of terms used to match folders to be ignored when scanning for ToDo items.', __FILE__);
+        $f->notes = __('Default: git, svn, images, img, errors, sass-cache, node_modules', __FILE__);
+        $f->columnWidth = 40;
+        if($data['todoIgnoreDirs']) $f->attr('value', $data['todoIgnoreDirs']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'todoAllowedExtensions');
+        $f->label = __('Allowed Extensions', __FILE__);
+        $f->description = __('Comma separated list file extensions to be scanned for ToDo items.', __FILE__);
+        $f->notes = __('Default: php, module, inc, txt, latte, html, htm, md, css, scss, less, js', __FILE__);
+        $f->columnWidth = 40;
+        if($data['todoAllowedExtensions']) $f->attr('value', $data['todoAllowedExtensions']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'todoScanModules');
+        $f->label = __('Scan Site Modules', __FILE__);
+        $f->description = __('Check to allow the ToDo to scan the /site/modules directory. Otherwise it will only scan /site/templates.', __FILE__);
+        $f->notes = __('Not recommended unless you are a regular module developer.', __FILE__);
+        $f->columnWidth = 20;
+        $f->attr('checked', $data['todoScanModules'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        // ProcessWire and Tracy Log Panels
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("ProcessWire and Tracy Log Panel Options");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldInteger");
+        $f->attr('name', 'numLogEntries');
+        $f->label = __('Number of Log Entries', __FILE__);
+        $f->description = __('Set the number of log entries to be displayed for the Tracy and ProcessWire log viewer panels.', __FILE__);
+        $f->notes = __('Default: 10', __FILE__);
+        $f->attr('value', $data['numLogEntries']);
+        $fieldset->add($f);
+
+        // Template Resources Panel
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("Template Resources Panel Options");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'variablesShowPwObjects');
+        $f->label = __('Show content of ProcessWire Objects', __FILE__);
+        $f->description = __('Shows the full ProcessWire object contents, rather than arrays of values. Only recommended for specific debugging purposes.', __FILE__);
+        $f->notes = __('Checking this will significantly increase the size of this panel if you have any variables set to ProcessWire objects.', __FILE__);
+        $f->attr('checked', $data['variablesShowPwObjects'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        // Snippet Runner Panel
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("Snippet Runner Panel Options");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldRadios");
+        $f->attr('name', 'snippetsPath');
+        $f->label = __('Snippets Path', __FILE__);
+        $f->description = __('This path will be checked for snippets.', __FILE__);
+        $f->notes = __('Neither of these directories exist by default so you will need to create them.', __FILE__);
+        $f->addOption('templates', $this->wire('urls')->templates.'TracyDebugger/snippets/');
+        $f->addOption('assets', $this->wire('urls')->assets.'TracyDebugger/snippets/');
+        if($data['snippetsPath']) $f->attr('value', $data['snippetsPath']);
+        $fieldset->add($f);
+
+        // Custom PHP Panel
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("Custom PHP");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldTextarea");
+        $f->attr('name', 'customPhpCode');
+        $f->label = __('Custom PHP Panel Code', __FILE__);
+        $f->description = __('Use this PHP code block to return any output you want.', __FILE__);
+        $f->notes = __('eg. return \'<a href="https://developers.google.com/speed/pagespeed/insights/?url=\'.$page->httpUrl.\'">Google Speedtest</a>\';', __FILE__);
+        if($data['customPhpCode']) $f->attr('value', $data['customPhpCode']);
+        $fieldset->add($f);
+
+        // Server Type Indicator
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
         $fieldset->label = __("Add Server Type Indicator");
         $wrapper->add($fieldset);
@@ -2066,7 +2260,28 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($data['styleAdminColors']) $f->attr('value', $data['styleAdminColors']);
         $fieldset->add($f);
 
+        // User DEV Template
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __("User Dev Template Options");
+        $wrapper->add($fieldset);
 
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'userDevTemplate');
+        $f->label = __('Enable User Dev Template', __FILE__);
+        $f->description = __('If user has a permission named to match the page template with the set suffix, the page will be rendered with that template file rather than the default.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['userDevTemplate'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'userDevTemplateSuffix');
+        $f->label = __('User Dev Template Suffix', __FILE__);
+        $f->description = __('Template file suffix. eg "dev" will render the homepage with the "home-dev.php" template file if the user has a matching permission (prefixed with "tracy"), eg. "tracy-home-dev".', __FILE__);
+        $f->columnWidth = 50;
+        if($data['userDevTemplateSuffix']) $f->attr('value', $data['userDevTemplateSuffix']);
+        $fieldset->add($f);
+
+        // User Bar
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
         $fieldset->label = __("User Bar");
         $wrapper->add($fieldset);
@@ -2160,204 +2375,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($data['userBarIconColor']) $f->attr('value', $data['userBarIconColor']);
         $fieldset->add($f);
 
-        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("ProcessWire Info Panel Options");
-        $wrapper->add($fieldset);
-
-        $f = $this->wire('modules')->get("InputfieldCheckboxes");
-        $f->attr('name', 'processwireInfoPanelSections');
-        $f->label = __('Panel Sections', __FILE__);
-        $f->description = __('Which sections to include in the ProcessWire Info panel.', __FILE__);
-        foreach(static::$processWireInfoSections as $name => $label) {
-            $f->addOption($name, $label);
-        }
-        if($data['processwireInfoPanelSections']) $f->attr('value', $data['processwireInfoPanelSections']);
-        $fieldset->add($f);
-
-        $f = $this->wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'showPWInfoPanelIconLabels');
-        $f->label = __('Show Icon Labels', __FILE__);
-        $f->description = __('Shows labels next to each icon for the two "Links" sections.', __FILE__);
-        $f->notes = __('Nice for clarity, but takes up more space.', __FILE__);
-        $f->attr('checked', $data['showPWInfoPanelIconLabels'] == '1' ? 'checked' : '' );
-        $fieldset->add($f);
-
-        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("Request Info Panel Options");
-        $wrapper->add($fieldset);
-
-        $f = $this->wire('modules')->get("InputfieldCheckboxes");
-        $f->attr('name', 'requestInfoPanelSections');
-        $f->label = __('Panel Sections', __FILE__);
-        $f->description = __('Which sections to include in the Request Info panel.', __FILE__);
-        $f->notes = __('The three "Object" options will significantly increase the size of this panel.', __FILE__);
-        foreach(static::$requestInfoSections as $name => $label) {
-            $f->addOption($name, $label);
-        }
-        if($data['requestInfoPanelSections']) $f->attr('value', $data['requestInfoPanelSections']);
-        $fieldset->add($f);
-
-        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("Diagnostics Panel Options");
-        $wrapper->add($fieldset);
-
-        $f = $this->wire('modules')->get("InputfieldCheckboxes");
-        $f->attr('name', 'diagnosticsPanelSections');
-        $f->label = __('Panel Sections', __FILE__);
-        $f->description = __('Which sections to include in the Diagnostics panel.', __FILE__);
-        $f->notes = __('The "Filesystem Files" option may significantly increase the generation time for this panel.', __FILE__);
-        foreach(static::$diagnosticsSections as $name => $label) {
-            $f->addOption($name, $label);
-        }
-        if($data['diagnosticsPanelSections']) $f->attr('value', $data['diagnosticsPanelSections']);
-        $fieldset->add($f);
-
-        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("ToDo Panel Options");
-        $wrapper->add($fieldset);
-
-        $f = $this->wire('modules')->get("InputfieldTextarea");
-        $f->attr('name', 'todoIgnoreDirs');
-        $f->label = __('Ignore Directories', __FILE__);
-        $f->description = __('Comma separated list of terms used to match folders to be ignored when scanning for ToDo items.', __FILE__);
-        $f->notes = __('Default: git, svn, images, img, errors, sass-cache, node_modules', __FILE__);
-        $f->columnWidth = 40;
-        if($data['todoIgnoreDirs']) $f->attr('value', $data['todoIgnoreDirs']);
-        $fieldset->add($f);
-
-        $f = $this->wire('modules')->get("InputfieldText");
-        $f->attr('name', 'todoAllowedExtensions');
-        $f->label = __('Allowed Extensions', __FILE__);
-        $f->description = __('Comma separated list file extensions to be scanned for ToDo items.', __FILE__);
-        $f->notes = __('Default: php, module, inc, txt, latte, html, htm, md, css, scss, less, js', __FILE__);
-        $f->columnWidth = 40;
-        if($data['todoAllowedExtensions']) $f->attr('value', $data['todoAllowedExtensions']);
-        $fieldset->add($f);
-
-        $f = $this->wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'todoScanModules');
-        $f->label = __('Scan Site Modules', __FILE__);
-        $f->description = __('Check to allow the ToDo to scan the /site/modules directory. Otherwise it will only scan /site/templates.', __FILE__);
-        $f->notes = __('Not recommended unless you are a regular module developer.', __FILE__);
-        $f->columnWidth = 20;
-        $f->attr('checked', $data['todoScanModules'] == '1' ? 'checked' : '' );
-        $fieldset->add($f);
-
-        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("ProcessWire and Tracy Log Panel Options");
-        $wrapper->add($fieldset);
-
-        $f = $this->wire('modules')->get("InputfieldInteger");
-        $f->attr('name', 'numLogEntries');
-        $f->label = __('Number of Log Entries', __FILE__);
-        $f->description = __('Set the number of log entries to be displayed for the Tracy and ProcessWire log viewer panels.', __FILE__);
-        $f->notes = __('Default: 10', __FILE__);
-        $f->attr('value', $data['numLogEntries']);
-        $fieldset->add($f);
-
-        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("Template Resources Panel Options");
-        $wrapper->add($fieldset);
-
-        $f = $this->wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'variablesShowPwObjects');
-        $f->label = __('Show content of ProcessWire Objects', __FILE__);
-        $f->description = __('Shows the full ProcessWire object contents, rather than arrays of values. Only recommended for specific debugging purposes.', __FILE__);
-        $f->notes = __('Checking this will significantly increase the size of this panel if you have any variables set to ProcessWire objects.', __FILE__);
-        $f->attr('checked', $data['variablesShowPwObjects'] == '1' ? 'checked' : '' );
-        $fieldset->add($f);
-
-        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("Debug Panel Options");
-        $wrapper->add($fieldset);
-
-        $f = $this->wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'alwaysShowDebugTools');
-        $f->label = __('Show debug mode tools even if $config->debug = false.', __FILE__);
-        $f->description = __('If checked, the debug tools will be displayed regardless of whether debug mode is enabled.', __FILE__);
-        $f->columnWidth = 50;
-        $f->attr('checked', $data['alwaysShowDebugTools'] == '1' ? 'checked' : '' );
-        $fieldset->add($f);
-
-        $f = $this->wire('modules')->get("InputfieldCheckboxes");
-        $f->attr('name', 'debugModePanelSections');
-        $f->label = __('Panel Sections', __FILE__);
-        $f->description = __('Which sections to include in the Debug Mode panel.', __FILE__);
-        $f->columnWidth = 50;
-        foreach(static::$debugModeSections as $name => $label) {
-            $f->addOption($name, $label);
-        }
-        if($data['debugModePanelSections']) $f->attr('value', $data['debugModePanelSections']);
-        $fieldset->add($f);
-
-        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("Snippet Runner Panel Options");
-        $wrapper->add($fieldset);
-
-        $f = $this->wire('modules')->get("InputfieldRadios");
-        $f->attr('name', 'snippetsPath');
-        $f->label = __('Snippets Path', __FILE__);
-        $f->description = __('This path will be checked for snippets.', __FILE__);
-        $f->notes = __('Neither of these directories exist by default so you will need to create them.', __FILE__);
-        $f->addOption('templates', $this->wire('urls')->templates.'TracyDebugger/snippets/');
-        $f->addOption('assets', $this->wire('urls')->assets.'TracyDebugger/snippets/');
-        if($data['snippetsPath']) $f->attr('value', $data['snippetsPath']);
-        $fieldset->add($f);
-
-        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("User Dev Template Options");
-        $wrapper->add($fieldset);
-
-        $f = $this->wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'userDevTemplate');
-        $f->label = __('Enable User Dev Template', __FILE__);
-        $f->description = __('If user has a permission named to match the page template with the set suffix, the page will be rendered with that template file rather than the default.', __FILE__);
-        $f->columnWidth = 50;
-        $f->attr('checked', $data['userDevTemplate'] == '1' ? 'checked' : '' );
-        $fieldset->add($f);
-
-        $f = $this->wire('modules')->get("InputfieldText");
-        $f->attr('name', 'userDevTemplateSuffix');
-        $f->label = __('User Dev Template Suffix', __FILE__);
-        $f->description = __('Template file suffix. eg "dev" will render the homepage with the "home-dev.php" template file if the user has a matching permission (prefixed with "tracy"), eg. "tracy-home-dev".', __FILE__);
-        $f->columnWidth = 50;
-        if($data['userDevTemplateSuffix']) $f->attr('value', $data['userDevTemplateSuffix']);
-        $fieldset->add($f);
-
-        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("Custom PHP");
-        $wrapper->add($fieldset);
-
-        $f = $this->wire('modules')->get("InputfieldTextarea");
-        $f->attr('name', 'customPhpCode');
-        $f->label = __('Custom PHP Code', __FILE__);
-        $f->description = __('Use this PHP code block to return any output you want.', __FILE__);
-        $f->notes = __('eg. return \'<a href="https://developers.google.com/speed/pagespeed/insights/?url=\'.$page->httpUrl.\'">Google Speedtest</a>\';', __FILE__);
-        if($data['customPhpCode']) $f->attr('value', $data['customPhpCode']);
-        $fieldset->add($f);
-
-        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __("Editor Protocol Handler");
-        $wrapper->add($fieldset);
-
-        $f = $this->wire('modules')->get("InputfieldText");
-        $f->attr('name', 'editor');
-        $f->label = __('Editor Protocol Handler', __FILE__);
-        $f->description = __('Sets the Tracy `Debugger::$editor` variable. Enter the appropriate address to open your code editor of choice.'."\n".'This approach only works for OSX. For more instructions on Windows and Linux alternatives, [read here](https://pla.nette.org/en/how-open-files-in-ide-from-debugger).'."\n".'For easily adding the SublimeText "subl://" protocol handler to your Mac, use this free [tool](https://github.com/saetia/sublime-url-protocol-mac).', __FILE__);
-        $f->notes = __('Initially configured for SublimeText (`subl://open/?url=file://%file&line=%line`). Change to work with your favorite editor.', __FILE__);
-        $f->columnWidth = 50;
-        if($data['editor']) $f->attr('value', $data['editor']);
-        $fieldset->add($f);
-
-        $f = $this->wire('modules')->get("InputfieldText");
-        $f->attr('name', 'localRootPath');
-        $f->label = __('Local Root Path', __FILE__);
-        $f->description = __('This will map editor links from a production site to your local dev files.', __FILE__);
-        $f->notes = __('An example path might be: /Users/myname/Sites/sitefolder/', __FILE__);
-        $f->columnWidth = 50;
-        if($data['localRootPath']) $f->attr('value', $data['localRootPath']);
-        $fieldset->add($f);
-
+        // Method Shortcuts
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
         $fieldset->label = __("Method Shortcuts");
         $wrapper->add($fieldset);
