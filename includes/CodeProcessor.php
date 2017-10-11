@@ -70,6 +70,9 @@ if($user->isSuperuser()) {
     $codePrefixes = "$nameSpace $inPwCheck $setVars";
 
     if(substr($code, 0, strlen($openPHP)) !== $openPHP) {
+        // if this is a Snippet Runner file and opening php tag not at the start of the file,
+        // add a closing tag after our injected prefix code
+        if(isset($_POST['tracySnippetRunner'])) $codePrefixes .= ' ?>';
         // prepend open PHP tag to code if not already present
         $code = "$openPHP $codePrefixes\n$code";
     } else {
