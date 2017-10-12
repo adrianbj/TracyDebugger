@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.6.10',
+            'version' => '4.6.11',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -1035,18 +1035,21 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                         localStorage.removeItem("remove-tracy-debug-panel-ProcesswireInfoPanel")
                     }
                 </script>';
-                // if legacy version we need to load styles.css manually because it doesn't have the Debugger::$customCssFiles option
-                if(static::$tracyVersion == 'legacy') $customEndHead .= '<link id="tracyStyles" type="text/css" href="'.$this->wire('config')->urls->TracyDebugger.'styles.css" rel="stylesheet" />';
+
+            if(is_null($this->wire('session')->tracyDumpItems)) {
+                $customEndHead .= '
+                    <script>
+                        // remove local storage entry for Dumps Recorder panel so it does not open if it is empty
+                        localStorage.removeItem("tracy-debug-panel-DumpsRecorderPanel");
+                        localStorage.removeItem("tracy-debug-panel-DumpsRecorderPanel-ajax");
+                    </script>';
+            }
+
+            // if legacy version we need to load styles.css manually because it doesn't have the Debugger::$customCssFiles option
+            if(static::$tracyVersion == 'legacy') $customEndHead .= '<link id="tracyStyles" type="text/css" href="'.$this->wire('config')->urls->TracyDebugger.'styles.css" rel="stylesheet" />';
+
         }
 
-        if(is_null($this->wire('session')->tracyDumpItems)) {
-            $customEndHead .= '
-                <script>
-                    // remove local storage entry for Dumps Recorder panel so it does not open if it is empty
-                    localStorage.removeItem("tracy-debug-panel-DumpsRecorderPanel");
-                    localStorage.removeItem("tracy-debug-panel-DumpsRecorderPanel-ajax");
-                </script>';
-        }
 
         if($this->allowedTracyUsers() === 'full') {
             if(count($this->data['styleWhere']) > 0) {
