@@ -25,60 +25,67 @@ class ProcesswireLogsPanel extends BasePanel {
         /**
          * PW log panel sections
          */
-        $this->logEntries = $this->sectionHeader(array('Type', 'Date', 'User', 'URL', 'Text'));
-        $entriesArr = array();
-        $i=0;
-        foreach($this->wire('log')->getLogs() as $log) {
-            $x=99;
-            foreach($this->wire('log')->getEntries($log['name'], array("limit" => \TracyDebugger::getDataValue("numLogEntries"))) as $entry) {
-                $itemKey = $log['name'] . '_' . $x;
-                $entriesArr[$itemKey]['timestamp'] = @strtotime($entry['date']); // silenced in case timezone is not set
-                $entriesArr[$itemKey]['linenumber'] = 99-$x;
-                $entriesArr[$itemKey]['order'] = $itemKey;
-                $entriesArr[$itemKey]['date'] = $entry['date'];
-                $entriesArr[$itemKey]['text'] = $entry['text'];
-                $entriesArr[$itemKey]['user'] = $entry['user'];
-                $entriesArr[$itemKey]['url'] = $entry['url'];
-                $entriesArr[$itemKey]['log'] = $log['name'];
-                $x--;
-                $i++;
 
-                // if log entry was in the last 5 seconds (think this is OK for detecting the last page load),
-                // then count the error or other entry type
-                if(time()-5 < @strtotime($entry['date'])) { // silenced in case timezone is not set
-                    if($log['name'] == 'errors' || $log['name'] == 'exceptions') {
-                        $this->numErrors++;
-                    }
-                    else {
-                        $this->numOther++;
+        $logs = $this->wire('log')->getLogs();
+        if(empty($logs)) {
+            $this->logEntries .= 'There are no logs in the ProcessWire logs directory.';
+        }
+        else {
+            $this->logEntries = $this->sectionHeader(array('Type', 'Date', 'User', 'URL', 'Text'));
+            $entriesArr = array();
+            $i=0;
+            foreach($logs as $log) {
+                $x=99;
+                foreach($this->wire('log')->getEntries($log['name'], array("limit" => \TracyDebugger::getDataValue("numLogEntries"))) as $entry) {
+                    $itemKey = $log['name'] . '_' . $x;
+                    $entriesArr[$itemKey]['timestamp'] = @strtotime($entry['date']); // silenced in case timezone is not set
+                    $entriesArr[$itemKey]['linenumber'] = 99-$x;
+                    $entriesArr[$itemKey]['order'] = $itemKey;
+                    $entriesArr[$itemKey]['date'] = $entry['date'];
+                    $entriesArr[$itemKey]['text'] = $entry['text'];
+                    $entriesArr[$itemKey]['user'] = $entry['user'];
+                    $entriesArr[$itemKey]['url'] = $entry['url'];
+                    $entriesArr[$itemKey]['log'] = $log['name'];
+                    $x--;
+                    $i++;
+
+                    // if log entry was in the last 5 seconds (think this is OK for detecting the last page load),
+                    // then count the error or other entry type
+                    if(time()-5 < @strtotime($entry['date'])) { // silenced in case timezone is not set
+                        if($log['name'] == 'errors' || $log['name'] == 'exceptions') {
+                            $this->numErrors++;
+                        }
+                        else {
+                            $this->numOther++;
+                        }
                     }
                 }
             }
-        }
 
-        // get a list of sort columns and their data to pass to array_multisort
-        $sort = array();
-        foreach ($entriesArr as $key => $row) {
-            $timestamp[$key] = $row['timestamp'];
-            $order[$key] = $row['order'];
-        }
-        // sort by event_type desc and then title asc
-        array_multisort($timestamp, SORT_DESC, $order, SORT_DESC, $entriesArr);
+            // get a list of sort columns and their data to pass to array_multisort
+            $sort = array();
+            foreach ($entriesArr as $key => $row) {
+                $timestamp[$key] = $row['timestamp'];
+                $order[$key] = $row['order'];
+            }
+            // sort by event_type desc and then title asc
+            array_multisort($timestamp, SORT_DESC, $order, SORT_DESC, $entriesArr);
 
-        //display most recent entries from all log files
-        foreach(array_slice($entriesArr, 0, \TracyDebugger::getDataValue("numLogEntries")) as $item) {
-            $logInstance = new FileLog($this->wire('config')->paths->logs . $item['log'].'.txt');
-            $trimmedText = trim(htmlspecialchars($item['text'], ENT_QUOTES, 'UTF-8'));
-            $this->logEntries .= "
-            \n<tr>
-                <td><a title='View \"".$item['log']."\" log file in PW admin' href='".$this->wire('config')->urls->admin."setup/logs/view/".$item['log']."/'>".str_replace('-', '&#8209;', $item['log'])."</a></td>" .
-                "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
-                "<td>".$item['user']."</td>" .
-                "<td>".$item['url']."</td>" .
-                "<td><a title='View this line of \"".$item['log']."\" log file in your code editor' href='". \TracyDebugger::makePathLocal(str_replace("%file", $this->wire('config')->paths->logs . $item['log'] . '.txt', str_replace("%line", ($logInstance->getTotalLines()-$item['linenumber']), \TracyDebugger::getDataValue("editor"))))."'>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</a></td>" .
-            "</tr>";
+            //display most recent entries from all log files
+            foreach(array_slice($entriesArr, 0, \TracyDebugger::getDataValue("numLogEntries")) as $item) {
+                $logInstance = new FileLog($this->wire('config')->paths->logs . $item['log'].'.txt');
+                $trimmedText = trim(htmlspecialchars($item['text'], ENT_QUOTES, 'UTF-8'));
+                $this->logEntries .= "
+                \n<tr>
+                    <td><a title='View \"".$item['log']."\" log file in PW admin' href='".$this->wire('config')->urls->admin."setup/logs/view/".$item['log']."/'>".str_replace('-', '&#8209;', $item['log'])."</a></td>" .
+                    "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
+                    "<td>".$item['user']."</td>" .
+                    "<td>".$item['url']."</td>" .
+                    "<td><a title='View this line of \"".$item['log']."\" log file in your code editor' href='". \TracyDebugger::makePathLocal(str_replace("%file", $this->wire('config')->paths->logs . $item['log'] . '.txt', str_replace("%line", ($logInstance->getTotalLines()-$item['linenumber']), \TracyDebugger::getDataValue("editor"))))."'>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</a></td>" .
+                "</tr>";
+            }
+            $this->logEntries .= $sectionEnd;
         }
-        $this->logEntries .= $sectionEnd;
 
         // color icon based on errors/other log entries
         if($this->numErrors > 0) {
