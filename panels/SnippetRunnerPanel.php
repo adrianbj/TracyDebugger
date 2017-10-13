@@ -230,14 +230,23 @@ HTML;
 
         // get snippets from filesystem
         $snippets = array();
-        $snippetFiles = $this->wire('files')->find($this->wire('config')->paths->site.\TracyDebugger::getDataValue('snippetsPath').'/TracyDebugger/snippets/');
+        if(method_exists($this->wire('files'), 'find')) {
+            $snippetFiles = $this->wire('files')->find($this->wire('config')->paths->site.\TracyDebugger::getDataValue('snippetsPath').'/TracyDebugger/snippets/');
+        }
+        // fallback for older versions of PW without the $files->find() method
+        else {
+            $snippetFiles = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($this->wire('config')->paths->site.\TracyDebugger::getDataValue('snippetsPath').'/TracyDebugger/snippets/'));
+            $snippetFiles->setFlags(RecursiveDirectoryIterator::SKIP_DOTS);
+        }
         $i=0;
         foreach($snippetFiles as $snippetFile) {
-            $snippets[$i]['name'] = pathinfo($snippetFile, PATHINFO_BASENAME);
-            $snippets[$i]['filename'] = $snippetFile;
-            $snippets[$i]['modified'] = filemtime($snippetFile);
+            $snippetFileName = method_exists($this->wire('files'), 'find') ? $snippetFile : $snippetFile->getPathname();
+            $snippets[$i]['name'] = pathinfo($snippetFileName, PATHINFO_BASENAME);
+            $snippets[$i]['filename'] = $snippetFileName;
+            $snippets[$i]['modified'] = filemtime($snippetFileName);
             $i++;
         }
+
         $snippets = json_encode($snippets);
         if(!$snippets) $snippets = json_encode(array());
 
