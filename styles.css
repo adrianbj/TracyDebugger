@@ -168,9 +168,9 @@ body.hidden:before {
     background: #FFFFFF !important;
 }
 
-/*#tracy-debug table tbody tr {
-    height:30px !important;
-}*/
+#tracy-debug table tbody tr {
+    height:25px !important;
+}
 
 #tracy-debug .tracy-panel tr:hover td {
     background: #E2E9EF !important;
