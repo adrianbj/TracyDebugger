@@ -562,14 +562,13 @@ class ProcesswireInfoPanel extends BasePanel {
                         </g>
                     </svg>&nbsp;
                     <input id="pwquery" name="pwquery" placeholder="Search ProcessWire" type="text" />
-                    <p>
-
-                        <input id="section" type="radio" name="section" value="/" checked> All
-                        <input id="section" type="radio" name="section" value="/talk/"> Forums
-                        <input id="section" type="radio" name="section" value="/api/ref/"> API
-                        <input id="section" type="radio" name="section" value="/blog/"> Blog
-                    </p>
                     <input type="submit" name="pwsearch" value="Search" />
+                    <div style="padding: 12px 0 0 23px; font-size: 13px">
+                        <label><input id="section" type="radio" name="section" value="/" checked> All&nbsp;</label>
+                        <label><input id="section" type="radio" name="section" value="/talk/"> Forums&nbsp;</label>
+                        <label><input id="section" type="radio" name="section" value="/api/ref/"> API&nbsp;</label>
+                        <label><input id="section" type="radio" name="section" value="/blog/"> Blog</label>
+                    </div>
                 </form>
                 ';
             }
