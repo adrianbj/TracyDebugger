@@ -70,8 +70,20 @@ class ProcesswireInfoPanel extends BasePanel {
     public function getPanel() {
 
         $PwVersion = $this->wire('config')->version;
-
         $panelSections = \TracyDebugger::getDataValue('processwireInfoPanelSections');
+
+        $out = '';
+
+        if(in_array('processWireWebsiteSearch', $panelSections)) {
+            $out .= '
+            <script>
+                function searchPw(form) {
+                    window.open("https://www.google.com/search?q=site%3Aprocesswire.com%2F%20"+document.getElementById(\'pwquery\').value);
+                    return false;
+                }
+            </script>
+            ';
+        }
 
         // end for each section
         $sectionEnd = '
@@ -308,7 +320,7 @@ class ProcesswireInfoPanel extends BasePanel {
 
 
         // Load all the panel sections
-        $out = '
+        $out .= '
         <h1>' . $this->icon . ' ProcessWire Info</h1>
         <div class="tracy-inner">
         ';
@@ -537,6 +549,23 @@ class ProcesswireInfoPanel extends BasePanel {
                         ($withLabels ? '&nbsp;'.$panelTitle.'</a>' : '</a>&nbsp;') .
                 '</li>
             </ul>';
+
+            if(in_array('processWireWebsiteSearch', $panelSections)) {
+                $out .= '
+                <form onsubmit="searchPw(this); return false;" style="border-top: 1px solid #CCCCCC; margin:10px 0 0 0 ; padding: 10px 0 0 0;">
+                    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                         width="16px" height="16px" viewBox="234.6 234.6 16 16" enable-background="new 234.6 234.6 16 16" xml:space="preserve">
+                        <g>
+                            <path fill="#ee1d62" d="M246.6,240.6c0-3.3-2.7-6-6-6c-3.3,0-6,2.7-6,6c0,3.3,2.7,6,6,6C243.9,246.6,246.6,243.9,246.6,240.6z M240.6,245.1
+                                c-2.5,0-4.5-2-4.5-4.5s2-4.5,4.5-4.5c2.5,0,4.5,2,4.5,4.5S243.1,245.1,240.6,245.1z"/>
+                            <path fill="#ee1d62" d="M250.2,248l-3.7-3.7c-0.5,0.9-1.3,1.6-2.1,2.1l3.7,3.7c0.6,0.6,1.5,0.6,2.1,0C250.8,249.6,250.8,248.6,250.2,248z"/>
+                        </g>
+                    </svg>&nbsp;
+                    <input id="pwquery" name="pwquery" placeholder="Search ProcessWire" type="text" />
+                    <input type="submit" name="pwsearch" value="Search" />
+                </form>
+                ';
+            }
         }
 
         $out .= \TracyDebugger::generatedTimeSize('processwireInfo', \Tracy\Debugger::timer('processwireInfo'), strlen($out));

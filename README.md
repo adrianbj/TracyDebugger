@@ -25,8 +25,7 @@ Tracy library is a useful helper for everyday PHP programmers. It helps you to:
 
 Includes config settings for a variety of Tracy options.
 
-A custom ProcessWire panel in the debug bar provides all the information from the PW admin
-debug tools, as well a tree version of the current Page object.
+Many optional custom panels provide a wide variety of information and tools to help your development and debugging process. See the blog post for more details.
 
 Additionally, content can be dumped to the page via TD::dump() or to the debug bar via TD::barDump(),
 or logged via TD::log() from PW template files. eg.
