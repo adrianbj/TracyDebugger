@@ -103,12 +103,14 @@ class CaptainHookPanel extends BasePanel {
             $configData['hooksPwVersion'] = $this->wire('config')->version;
             $this->wire('modules')->saveModuleConfigData($this->wire('modules')->get("TracyDebugger"), $configData);
             require_once $this->wire('config')->paths->TracyDebugger . 'panels/CaptainHook/GenerateHtml.php';
-            $cachedHooks = serialize($this->hooks);
+            $hooks = $this->hooks;
+            // sort by filename with Wire Core, Wire Modules, & Site Modules sections
+            uasort($hooks, function($a, $b) { return $a['filename']>$b['filename']; });
+            $cachedHooks = serialize($hooks);
             $this->wire('cache')->save($cacheName, $cachedHooks);
         }
 
         $hooks = unserialize($cachedHooks);
-        uasort($hooks, function($a, $b) { return $a['filename']>$b['filename']; });
         $lastSection = null;
         foreach($hooks as $file => $info) {
             $name = pathinfo($info['filename'], PATHINFO_FILENAME);
