@@ -48,6 +48,31 @@ body.hidden:before {
     text-transform: none !important;
 }
 
+#tracy-debug form label {
+    font-family: sans-serif !important;
+    font-size: 13px !important;
+    text-transform: none !important;
+    display: inline !important;
+}
+
+#tracy-debug ::-webkit-input-placeholder { /* Chrome/Opera/Safari */
+    color:#9aa3a6 !important;
+    text-transform: none !important;
+}
+#tracy-debug ::-moz-placeholder { /* Firefox 19+ */
+    color:#9aa3a6 !important;
+    text-transform: none !important;
+}
+#tracy-debug :-ms-input-placeholder { /* IE 10+ */
+    color:#9aa3a6 !important;
+    text-transform: none !important;
+}
+#tracy-debug :-moz-placeholder { /* Firefox 18- */
+    color:#9aa3a6 !important;
+    text-transform: none !important;
+}
+
+
 #tracy-debug h1 {
     max-width: calc(100vw - 40px) !important;
     padding-right: 35px !important;
