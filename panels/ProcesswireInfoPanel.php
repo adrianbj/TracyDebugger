@@ -78,7 +78,7 @@ class ProcesswireInfoPanel extends BasePanel {
             $out .= '
             <script>
                 function searchPw(form) {
-                    window.open("https://www.google.com/search?q=site%3Aprocesswire.com%2F%20"+document.getElementById(\'pwquery\').value);
+                    window.open("https://www.google.com/search?q=site:processwire.com"+form.section.value+" "+form.pwquery.value);
                     return false;
                 }
             </script>
@@ -562,6 +562,13 @@ class ProcesswireInfoPanel extends BasePanel {
                         </g>
                     </svg>&nbsp;
                     <input id="pwquery" name="pwquery" placeholder="Search ProcessWire" type="text" />
+                    <p>
+
+                        <input id="section" type="radio" name="section" value="/" checked> All
+                        <input id="section" type="radio" name="section" value="/talk/"> Forums
+                        <input id="section" type="radio" name="section" value="/api/ref/"> API
+                        <input id="section" type="radio" name="section" value="/blog/"> Blog
+                    </p>
                     <input type="submit" name="pwsearch" value="Search" />
                 </form>
                 ';
