@@ -68,6 +68,9 @@ class RequestInfoPanel extends BasePanel {
             $p = $this->wire('page');
         }
 
+        // check if request is to a PW page - otherwise it's maybe an AJAX request to an external script
+        $isPwPage = $_SERVER['PHP_SELF'] == $this->wire('config')->urls->root . 'index.php' ? true : false;
+
         $panelSections = \TracyDebugger::getDataValue('requestInfoPanelSections');
 
         // end for each section
@@ -83,7 +86,7 @@ class RequestInfoPanel extends BasePanel {
          */
 
         // Field Settings
-        if(in_array('fieldSettings', $panelSections) && $_SERVER['PHP_SELF'] == '/index.php') {
+        if(in_array('fieldSettings', $panelSections) && $isPwPage) {
             $fieldSettings = '';
             if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessField') {
                 $field = $this->wire('fields')->get((int)$this->wire('input')->get('id'));
@@ -119,7 +122,7 @@ class RequestInfoPanel extends BasePanel {
         }
 
         // Template Settings
-        if(in_array('templateSettings', $panelSections) && $_SERVER['PHP_SELF'] == '/index.php') {
+        if(in_array('templateSettings', $panelSections) && $isPwPage) {
             $templateSettings = '';
             if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessTemplate') {
                 $template = $this->wire('templates')->get((int)$this->wire('input')->get('id'));
@@ -155,7 +158,7 @@ class RequestInfoPanel extends BasePanel {
         }
 
         // Module Settings
-        if(in_array('moduleSettings', $panelSections) && $_SERVER['PHP_SELF'] == '/index.php') {
+        if(in_array('moduleSettings', $panelSections) && $isPwPage) {
             $moduleSettings = '';
             if($this->wire('input')->get('name') && $this->wire('page')->process == 'ProcessModule') {
                 $moduleName = $this->wire('sanitizer')->name($this->wire('input')->get('name'));
@@ -185,7 +188,7 @@ class RequestInfoPanel extends BasePanel {
 
 
         // Page info
-        if(in_array('pageInfo', $panelSections) && $_SERVER['PHP_SELF'] == '/index.php') {
+        if(in_array('pageInfo', $panelSections) && $isPwPage) {
             $pageInfo = '
             <table>
                 <tr>
@@ -319,7 +322,7 @@ class RequestInfoPanel extends BasePanel {
 
         // Language info
         $languageInfo = '';
-        if($this->wire('languages') && in_array('languageInfo', $panelSections) && $_SERVER['PHP_SELF'] == '/index.php') {
+        if($this->wire('languages') && in_array('languageInfo', $panelSections) && $isPwPage) {
             $languageInfo .= '<table><tr><th>language</th><th>id</th><th>title</th><th>name</th><th>active</th></tr>';
             foreach($this->wire('languages') as $language) {
                 $languageInfo .= '<tr><td>' . $language->title . ' ('.$language->name.')</td><td><a title="Edit Language" href="'.$this->wire('config')->urls->admin.'/setup/languages/edit/?id='.$language->id.'">'.$language->id.'</a></td><td>' . $this->getLanguageVersion($p, 'title', $language) . '</td><td>' . $this->getLanguageVersion($p, 'name', $language) . '</td><td>' . ($language->isDefaultLanguage ? 'default' : ($p->get("status{$language->id}") ? "&#10004;" : "&#x2718;")) . '</td></tr>';
@@ -329,7 +332,7 @@ class RequestInfoPanel extends BasePanel {
 
         // Template info
         // defining $templateFileEditorPath even if templateInfo not a selected panel because it's used to build the template editing button at the bottom of the panel
-        if($_SERVER['PHP_SELF'] == '/index.php') {
+        if($isPwPage) {
             if(file_exists($p->template->filename)) $templateFilePath = $p->template->filename;
         }
         else {
@@ -338,7 +341,7 @@ class RequestInfoPanel extends BasePanel {
         $templateFileEditorPath = isset($templateFilePath) ? str_replace('%file', $templateFilePath, str_replace('%line', '1', \TracyDebugger::getDataValue('editor'))) : '';
         if(\TracyDebugger::getDataValue('localRootPath') != '') $templateFileEditorPath = str_replace($this->wire('config')->paths->root, \TracyDebugger::getDataValue('localRootPath'), $templateFileEditorPath);
 
-        if(in_array('templateInfo', $panelSections) && $_SERVER['PHP_SELF'] == '/index.php') {
+        if(in_array('templateInfo', $panelSections) && $isPwPage) {
             // posix_getpwuid doesn't exist on Windows
             if(function_exists('posix_getpwuid')) {
                 if(isset($templateFilePath)) {
@@ -415,7 +418,7 @@ class RequestInfoPanel extends BasePanel {
 
 
         // Fields List & Values
-        if(in_array('fieldsListValues', $panelSections) && $_SERVER['PHP_SELF'] == '/index.php') {
+        if(in_array('fieldsListValues', $panelSections) && $isPwPage) {
             // TODO - this is a mess - very repetitive and needs cleaning up a lot
             $fieldsListValues = $this->sectionHeader(array('id', 'name', 'label', 'type', 'inputfieldType/class', 'returns', 'value', 'settings'));
             foreach($p->fields as $f) {
@@ -589,7 +592,7 @@ class RequestInfoPanel extends BasePanel {
 
 
         // Page, Template, and Field Objects
-        if($_SERVER['PHP_SELF'] == '/index.php') {
+        if($isPwPage) {
             if(in_array('pageObject', $panelSections)) $pageObject = Dumper::toHtml($p, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false));
             if(in_array('templateObject', $panelSections)) $templateObject = Dumper::toHtml($p->template, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false));
             if(in_array('fieldsObject', $panelSections)) $fieldsObject = Dumper::toHtml($p->fields, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false));
@@ -627,7 +630,7 @@ class RequestInfoPanel extends BasePanel {
             $out .= '
             <div class="pw-admin-links" style="text-align: right; border-top:1px solid #CCCCCC; margin-top:10px; padding-top:10px;">
             ';
-            if($_SERVER['PHP_SELF'] == '/index.php') {
+            if($isPwPage) {
                 $out .= '
                 <a onclick="closePanel()" href="'.$this->wire('config')->urls->admin.'page/edit/?id='.$p->id.'" title="Edit this page">
                     <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 528.899 528.899" style="enable-background:new 0 0 528.899 528.899;" xml:space="preserve">
@@ -636,7 +639,7 @@ class RequestInfoPanel extends BasePanel {
                 </a>&nbsp;';
             }
             $out .= '
-                <a href="'.$templateFileEditorPath.'" title="Edit this' . ($_SERVER['PHP_SELF'] == '/index.php' ? ' template ' : ' ') . 'file">
+                <a href="'.$templateFileEditorPath.'" title="Edit this' . ($isPwPage ? ' template ' : ' ') . 'file">
                     <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 492.014 492.014" style="enable-background:new 0 0 492.014 492.014;" xml:space="preserve" width="16px" height="16px">
                         <g id="XMLID_144_">
                             <path id="XMLID_151_" d="M339.277,459.566H34.922V32.446h304.354v105.873l32.446-32.447V16.223C371.723,7.264,364.458,0,355.5,0   H18.699C9.739,0,2.473,7.264,2.473,16.223v459.568c0,8.959,7.265,16.223,16.226,16.223H355.5c8.958,0,16.223-7.264,16.223-16.223   V297.268l-32.446,32.447V459.566z" fill="#444444"/>
