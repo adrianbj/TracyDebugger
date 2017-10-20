@@ -80,28 +80,30 @@ class TracyLogsPanel extends BasePanel {
                 }
             }
 
-            # get a list of sort columns and their data to pass to array_multisort
-            $sort = array();
-            foreach ($entriesArr as $key => $row) {
-                $timestamp[$key] = $row['timestamp'];
-                $order[$key] = $row['order'];
-            }
-            # sort by event_type desc and then title asc
-            array_multisort($timestamp, SORT_DESC, $order, SORT_DESC, $entriesArr);
+            if(count($entriesArr)) {
+                # get a list of sort columns and their data to pass to array_multisort
+                foreach($entriesArr as $key => $row) {
+                    $timestamp[$key] = $row['timestamp'];
+                    $order[$key] = $row['order'];
+                }
 
-            //display most recent entries from all log files
-            foreach(array_slice($entriesArr, 0, \TracyDebugger::getDataValue("numLogEntries")) as $item) {
-                $logInstance = new TracyFileLog($this->wire('config')->paths->logs.'tracy/' . $item['log'].'.log');
-                $trimmedText = trim(htmlspecialchars($item['text'], ENT_QUOTES, 'UTF-8'));
-                $this->logEntries .= "
-                \n<tr>" .
-                    "<td>".$item['log']."</td>" .
-                    "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
-                    "<td>".(isset($item['url']) ? $item['url'] : '')."</td>" .
-                    "<td><a title='View this line of \"".$item['log']."\" log file in your code editor' href='". \TracyDebugger::makePathLocal(str_replace("%file", $this->wire('config')->paths->logs.'tracy/' . $item['log'] . '.log', str_replace("%line", ($logInstance->getTotalLines()-$item['linenumber']), \TracyDebugger::getDataValue("editor"))))."'>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</a></td>" .
-                "</tr>";
+                # sort by event_type desc and then title asc
+                array_multisort($timestamp, SORT_DESC, $order, SORT_DESC, $entriesArr);
+
+                //display most recent entries from all log files
+                foreach(array_slice($entriesArr, 0, \TracyDebugger::getDataValue("numLogEntries")) as $item) {
+                    $logInstance = new TracyFileLog($this->wire('config')->paths->logs.'tracy/' . $item['log'].'.log');
+                    $trimmedText = trim(htmlspecialchars($item['text'], ENT_QUOTES, 'UTF-8'));
+                    $this->logEntries .= "
+                    \n<tr>" .
+                        "<td>".$item['log']."</td>" .
+                        "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
+                        "<td>".(isset($item['url']) ? $item['url'] : '')."</td>" .
+                        "<td><a title='View this line of \"".$item['log']."\" log file in your code editor' href='". \TracyDebugger::makePathLocal(str_replace("%file", $this->wire('config')->paths->logs.'tracy/' . $item['log'] . '.log', str_replace("%line", ($logInstance->getTotalLines()-$item['linenumber']), \TracyDebugger::getDataValue("editor"))))."'>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</a></td>" .
+                    "</tr>";
+                }
+                $this->logEntries .= $sectionEnd;
             }
-            $this->logEntries .= $sectionEnd;
         }
 
         // color icon based on errors/other log entries
