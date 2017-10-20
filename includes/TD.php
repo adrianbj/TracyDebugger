@@ -63,7 +63,7 @@ class TD extends TracyDebugger {
     private static function dumpToBar($var, $title = NULL, array $options = NULL) {
         if(is_array(static::$showPanels) && in_array('dumpsRecorder', static::$showPanels)) {
             $dumpItem = array();
-            $dumpItems = wire('session')->tracyDumpItems ? wire('session')->tracyDumpItems : array();
+            $dumpItems = wire('session')->tracyDumpItems ?: array();
             $dumpItem['title'] = $title;
             $dumpItem['dump'] = Dumper::toHtml($var, $options);
             array_push($dumpItems, $dumpItem);

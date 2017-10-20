@@ -185,8 +185,8 @@ class ProcesswireInfoPanel extends BasePanel {
         }
 
 
-        // Config Settings
-        if(in_array('versionsList', $panelSections)) {
+        // Config Data
+        if(in_array('configData', $panelSections)) {
             $configData = $this->sectionHeader(array('Key', 'Value'));
             foreach($this->wire('config') as $key => $value) {
                 if(is_object($value)) {
@@ -195,7 +195,7 @@ class ProcesswireInfoPanel extends BasePanel {
                     ksort($value);
                     if($key == 'paths') $value = array_map(array($this, 'addRoot'), $value);
                 }
-                $value = \Tracy\Dumper::toHtml($value, array(Dumper::LIVE => true, Dumper::DEPTH => 10, Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => (count($value) !== count($value, COUNT_RECURSIVE) || is_object($value) ? true : false)));
+                $value = \Tracy\Dumper::toHtml($value, array(Dumper::LIVE => true, Dumper::DEPTH => 10, Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => ((is_array($value) && count($value) !== count($value, COUNT_RECURSIVE)) || is_object($value) ? true : false)));
                 $configData .= "<tr><td>".$this->wire('sanitizer')->entities($key)."</td><td>" . $value . "</td></tr>";
             }
             $configData .= $sectionEnd;

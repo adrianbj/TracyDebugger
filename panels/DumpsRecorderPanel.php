@@ -10,9 +10,8 @@ class DumpsRecorderPanel extends BasePanel {
     public function getTab() {
 
         \Tracy\Debugger::timer('dumpsRecorder');
-
         $items = $this->wire('session')->tracyDumpItems;
-        $this->dumpCount = count($items);
+        $this->dumpCount = is_array($items) ? count($items) : 0;
         $this->entries .= '<div><span style="display:inline-block;float:left"><label><input type="checkbox" onchange="preserveDumpsToggle(this)" id="preserveDumps" ' . ($this->wire('input')->cookie->tracyPreserveDumpItems ? 'checked="checked"' : '') . ' /> Preserve Dumps<label></span>'.($this->dumpCount > 0 ? '<span id="clearDumpsButton" style="display:inline-block;float:right"><input type="submit" onclick="clearDumps()" value="Clear Dumps" /></span>' : '') . '</div><div style="clear:both; margin-bottom:5px"></div>';
         if ($this->dumpCount > 0) {
             $this->iconColor = '#CD1818';

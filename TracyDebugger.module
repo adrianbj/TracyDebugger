@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.6.20',
+            'version' => '4.6.21',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -662,7 +662,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // fixes for when SessionHandlerDB module is installed
         if($this->wire('modules')->isInstalled('SessionHandlerDB') && static::$tracyVersion != 'legacy' && $this->showDebugBarHere) {
 
-            // ensure Tracy can show AJAX bar when SessionHandlerDB module is installed and debugbar is showing
+            // ensure Tracy can show additional bars when SessionHandlerDB module is installed and debugbar is showing
             $this->addHookBefore('ProcessWire::finished', $this, 'sessionHandlerDBAjaxFix');
 
             // ensure Tracy can show Redirect bars when SessionHandlerDB module is installed and debugbar is showing
@@ -760,7 +760,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             // DUMPS RECORDER
             // if dump recorder panel items were cleared, clear them from the session variable and remove cookie
-            if($this->wire('input')->cookie->tracyClearDumpItems || (!in_array('dumpsRecorder', static::$showPanels) && $this->wire('session')->tracyDumpItems)) {
+            if($this->wire('input')->cookie->tracyClearDumpItems || (!in_array('dumpsRecorder', static::$showPanels) && ($this->wire('session')->tracyDumpItems || $this->wire('session')->tracyDumpItemsAjax || $this->wire('session')->tracyDumpItemsRedirect))) {
                 $this->wire('session')->tracyDumpItems = null;
                 unset($this->wire('input')->cookie->tracyClearDumpItems);
                 setcookie("tracyClearDumpItems", "", time()-3600, "/");
@@ -1040,9 +1040,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if(is_null($this->wire('session')->tracyDumpItems)) {
                 $customEndHead .= '
                     <script>
-                        // remove local storage entry for Dumps Recorder panel so it does not open if it is empty
-                        localStorage.removeItem("tracy-debug-panel-DumpsRecorderPanel");
-                        localStorage.removeItem("tracy-debug-panel-DumpsRecorderPanel-ajax");
+                        // remove local storage entry for Dumps Recorder panels (regular, ajax, & redirect) so they do not open when empty
+                        var i = localStorage.length;
+                        while(i--) {
+                            var key = localStorage.key(i);
+                            if(/tracy-debug-panel-DumpsRecorderPanel/.test(key)) {
+                                localStorage.removeItem(key);
+                            }
+                        }
                     </script>';
             }
 
@@ -1058,6 +1063,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     $customEndHead .= $this->setServerAdminStyleColor();
                 }
             }
+        }
+
+        // hide server type indicator bar if debug bar is hidden by default
+        if($this->data['hideDebugBar']) {
+            $customEndHead .= '<script>document.body.classList.add("hidden");</script>';
         }
 
         if(Debugger::$showBar == true && $this->allowedTracyUsers() === 'full') {
@@ -1120,7 +1130,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             ';
 
             $tracyErrors = Debugger::getBar()->getPanel('Tracy:errors');
-            if(count($tracyErrors->data) === 0) {
+            if(!is_array($tracyErrors->data) || count($tracyErrors->data) === 0) {
                 if(($this->data['hideDebugBar'] && !$this->wire('input')->cookie->tracyShow) || $this->wire('input')->cookie->tracyHidden == 1) {
                     $customEndBody .= '
                     function hideDebugBar() {
@@ -1138,7 +1148,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $customEndBody .= '
             </script>
 
-            <div id="show-button" title="Show Tracy" style="display:'.(($this->data['hideDebugBar'] || $this->wire('input')->cookie->tracyHidden == 1) && !$this->wire('input')->cookie->tracyShow && count($tracyErrors->data) === 0 ? 'block' : 'none' ).'" onclick="unhideBar()">&#8689;</div>
+            <div id="show-button" title="Show Tracy" style="display:'.(($this->data['hideDebugBar'] || $this->wire('input')->cookie->tracyHidden == 1) && !$this->wire('input')->cookie->tracyShow && (!is_array($tracyErrors->data) || count($tracyErrors->data) === 0) ? 'block' : 'none' ).'" onclick="unhideBar()">&#8689;</div>
             ';
         }
 
@@ -1980,6 +1990,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'hideDebugBar');
         $f->label = __('Hide Debug Bar By Default', __FILE__);
         $f->description = __('Hide the debug bar by default on page load.', __FILE__);
+        $f->notes = __('This results in the bar being hidden (unless an error is reported), and replaced with a small "show bar" &#8689; icon.', __FILE__);
         $f->columnWidth = 33;
         $f->attr('checked', $data['hideDebugBar'] == '1' ? 'checked' : '' );
         $fieldset->add($f);
@@ -1996,7 +2007,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = $this->wire('modules')->get("InputfieldInteger");
         $f->attr('name', 'panelZindex');
         $f->label = __('Starting Z-Index for panels', __FILE__);
-        $f->description = __('Adjust if you find panels are below/above elements and you don\'t want it to be.', __FILE__);
+        $f->description = __('Adjust if you find panels are below/above elements that you don\'t want.', __FILE__);
         $f->notes = __('Default: 100', __FILE__);
         $f->columnWidth = 33;
         if($data['panelZindex']) $f->attr('value', $data['panelZindex']);

@@ -14,7 +14,7 @@ class EventInterceptorPanel extends BasePanel {
         \Tracy\Debugger::timer('eventInterceptor');
 
         $items = $this->wire('session')->tracyEventItems;
-        $this->eventCount = count($items);
+        $this->eventCount = is_array($items) ? count($items) : 0;
         if($this->eventCount > 0) {
             $this->iconColor = $this->wire('input')->cookie->eventInterceptorHook ? '#CD1818' : '#009900';
             $this->entries .= '

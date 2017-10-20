@@ -628,7 +628,7 @@ class RequestInfoPanel extends BasePanel {
 
         if(in_array('editLinks', $panelSections)) {
             $out .= '
-            <div class="pw-admin-links" style="text-align: right; border-top:1px solid #CCCCCC; margin-top:10px; padding-top:10px;">
+            <div class="pw-info-links" style="text-align: right; border-top:1px solid #CCCCCC; margin-top:10px; padding-top:10px;">
             ';
             if($isPwPage) {
                 $out .= '
