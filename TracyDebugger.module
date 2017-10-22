@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.6.23',
+            'version' => '4.6.24',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -197,6 +197,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "styleAdminElements" => "body::before {\n\tcontent: \"[type]\";\n\tbackground: [color];\n\tposition: fixed;\n\tleft: 0;\n\tbottom: 100%;\n\tcolor: #ffffff;\n\twidth: 100vh;\n\tpadding: 0;\n\ttext-align: center;\n\tfont-weight: 600;\n\ttext-transform: uppercase;\n\ttransform: rotate(90deg);\n\ttransform-origin: bottom left;\n\tz-index: 999999;\n\tfont-size: 11px;\n\theight: 13px;\n\tline-height: 13px;\npointer-events: none;\n}\n",
                 "styleAdminColors" => "local|#ca6500\ndev.*|#990000\nstaging.*|#8b0066",
                 "showPWInfoPanelIconLabels" => 1,
+                "customPWInfoPanelLinks" => array(),
                 "requestInfoPanelSections" => array('moduleSettings', 'templateSettings', 'fieldSettings', 'pageInfo', 'languageInfo', 'templateInfo', 'fieldsListValues', 'serverRequest', 'inputGet', 'inputPost', 'inputCookie', 'editLinks'),
                 "processwireInfoPanelSections" => array('apiVariables', 'coreClasses', 'configData', 'versionsList', 'adminLinks', 'documentationLinks', 'processWireWebsiteSearch'),
                 "debugModePanelSections" => array('pagesLoaded', 'session', 'modulesLoaded', 'hooks', 'databaseQueries', 'selectorQueries', 'timers', 'user', 'cache', 'autoload'),
@@ -653,7 +654,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // CUSTOM CSS FILE
-        if(static::$tracyVersion != 'legacy') Debugger::$customCssFiles = array($this->wire('config')->paths->TracyDebugger.'styles.css');
+        if(static::$tracyVersion != 'legacy') {
+            Debugger::$customCssFiles = array(
+                $this->wire('config')->paths->TracyDebugger.'styles.css'
+            );
+        }
 
 
         // ENABLE TRACY
@@ -1053,6 +1058,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             // if legacy version we need to load styles.css manually because it doesn't have the Debugger::$customCssFiles option
             if(static::$tracyVersion == 'legacy') $customEndHead .= '<link id="tracyStyles" type="text/css" href="'.$this->wire('config')->urls->TracyDebugger.'styles.css" rel="stylesheet" />';
+
+            // load FontAwesome if on the frontend and PW Info panel is enabled and some custom links selected
+            // must be done here and not as part of Tracy custom CSS - FA can't load font files that way
+            if(!$this->inAdmin && in_array('processwireInfo', static::$showPanels) && count($this->data['customPWInfoPanelLinks'])) {
+                $customEndHead .= '<link id="fontAwesome" type="text/css" href="'.$this->wire('config')->urls->root . 'wire/templates-admin/styles/font-awesome/css/font-awesome.min.css" rel="stylesheet" />';
+            }
 
         }
 
@@ -1740,6 +1751,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public function getModuleConfigInputfields(array $data) {
 
+        // convert PW Info panel custom links from path back to ID
+        $customPWInfoPanelLinkIds = array();
+        $customPWInfoPanelLinks = $data['customPWInfoPanelLinks'];
+        foreach($customPWInfoPanelLinks as $pagePath) {
+            array_push($customPWInfoPanelLinkIds, $this->wire('pages')->get($pagePath)->id);
+        }
+        $data['customPWInfoPanelLinks'] = $customPWInfoPanelLinkIds;
+
+
         if($this->wire('input')->post->submit_save_module) {
             unset($this->wire('input')->cookie->tracyPanelsSticky);
             setcookie("tracyPanelsSticky", "", time()-3600, '/');
@@ -2058,7 +2078,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = $this->wire('modules')->get("InputfieldText");
         $f->attr('name', 'editor');
         $f->label = __('Editor Protocol Handler', __FILE__);
-        $f->description = __('Sets the Tracy `Debugger::$editor` variable. Enter the appropriate address to open your code editor of choice.'."\n".'This approach only works for OSX. For more instructions on Windows and Linux alternatives, [read here](https://pla.nette.org/en/how-open-files-in-ide-from-debugger).'."\n".'For easily adding the SublimeText "subl://" protocol handler to your Mac, use this free [tool](https://github.com/saetia/sublime-url-protocol-mac).', __FILE__);
+        $f->description = __('Sets the Tracy `Debugger::$editor` variable. Enter the appropriate address to open your code editor of choice.'."\n".'This approach only works for OSX. For more instructions on Windows and Linux alternatives, [read here](https://pla.nette.org/en/how-open-files-in-ide-from-debugger).'."\n".'For easily adding the SublimeText "subl://" protocol handler to your Mac, use this free [tool](https://github.com/saetia/sublime-url-protocol-mac).'."\n".' For other editors/IDEs, Google "protocol handler editorname".', __FILE__);
         $f->notes = __('Initially configured for SublimeText (`subl://open/?url=file://%file&line=%line`). Change to work with your favorite editor.', __FILE__);
         $f->columnWidth = 50;
         if($data['editor']) $f->attr('value', $data['editor']);
@@ -2082,18 +2102,27 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'processwireInfoPanelSections');
         $f->label = __('Panel Sections', __FILE__);
         $f->description = __('Which sections to include in the ProcessWire Info panel.', __FILE__);
-        $f->columnWidth = 50;
+        $f->columnWidth = 33;
         foreach(static::$processWireInfoSections as $name => $label) {
             $f->addOption($name, $label);
         }
         if($data['processwireInfoPanelSections']) $f->attr('value', $data['processwireInfoPanelSections']);
         $fieldset->add($f);
 
+        $f = $this->wire('modules')->get("InputfieldPageListSelectMultiple");
+        $f->attr('name', 'customPWInfoPanelLinks');
+        $f->label = __('Custom Links', __FILE__);
+        $f->description = __('Choose pages you would like links to.', __FILE__);
+        $f->columnWidth = 34;
+        $f->notes = __('To provide links to items under the Setup menu, navigate to Admin > Setup >', __FILE__);
+        if($data['customPWInfoPanelLinks']) $f->attr('value', $data['customPWInfoPanelLinks']);
+        $fieldset->add($f);
+
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'showPWInfoPanelIconLabels');
         $f->label = __('Show Icon Labels', __FILE__);
         $f->description = __('Shows labels next to each icon for the two "Links" sections.', __FILE__);
-        $f->columnWidth = 50;
+        $f->columnWidth = 33;
         $f->notes = __('Nice for clarity, but takes up more space.', __FILE__);
         $f->attr('checked', $data['showPWInfoPanelIconLabels'] == '1' ? 'checked' : '' );
         $fieldset->add($f);
@@ -2430,6 +2459,20 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->addOption('tv', 'tv() for TD::templateVars()');
         if($data['enabledShortcutMethods']) $f->attr('value', $data['enabledShortcutMethods']);
         $fieldset->add($f);
+
+        // convert PW Info panel custom links page IDs into paths so we can export settings to another PW site
+        $this->wire('modules')->addHookBefore('saveModuleConfigData', null, function($event) {
+            if($this->wire('input')->get->name !== 'TracyDebugger') return;
+            if(!$this->wire('input')->post->customPWInfoPanelLinks[0]) return;
+            $data = $event->arguments[1];
+            $customPWInfoPanelLinkPaths = array();
+            $customPWInfoPanelLinks = $this->wire('input')->post->customPWInfoPanelLinks;
+            foreach(explode(',',$customPWInfoPanelLinks[0]) as $pid) {
+                array_push($customPWInfoPanelLinkPaths, $this->wire('pages')->get($pid)->path);
+            }
+            $data['customPWInfoPanelLinks'] = $customPWInfoPanelLinkPaths;
+            $event->arguments(1, $data);
+        });
 
         return $wrapper;
     }
