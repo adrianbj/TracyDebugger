@@ -162,27 +162,29 @@ class RequestInfoPanel extends BasePanel {
             $moduleSettings = '';
             if($this->wire('input')->get('name') && $this->wire('page')->process == 'ProcessModule') {
                 $moduleName = $this->wire('sanitizer')->name($this->wire('input')->get('name'));
-                $module = $this->wire('modules')->get($moduleName);
-                $moduleSettings = '
-                <table>';
-                foreach($this->wire('modules')->getModuleInfoVerbose($moduleName) as $k => $v) {
-                    $moduleSettings .= '
-                        <tr>
-                            <td>'.$k.'</td>
-                            <td>'.Dumper::toHtml($v).'</td>
-                        </tr>
+                if($this->wire('modules')->isInstalled($moduleName)) {
+                    $module = $this->wire('modules')->get($moduleName);
+                    $moduleSettings = '
+                    <table>';
+                    foreach($this->wire('modules')->getModuleInfoVerbose($moduleName) as $k => $v) {
+                        $moduleSettings .= '
+                            <tr>
+                                <td>'.$k.'</td>
+                                <td>'.Dumper::toHtml($v).'</td>
+                            </tr>
+                        ';
+                    }
+                    foreach($module->getArray() as $k => $v) {
+                        $moduleSettings .= '
+                            <tr>
+                                <td>'.$k.'</td>
+                                <td>'.Dumper::toHtml($v).'</td>
+                            </tr>
+                        ';
+                    }
+                    $moduleSettings .= '</table>
                     ';
                 }
-                foreach($module->getArray() as $k => $v) {
-                    $moduleSettings .= '
-                        <tr>
-                            <td>'.$k.'</td>
-                            <td>'.Dumper::toHtml($v).'</td>
-                        </tr>
-                    ';
-                }
-                $moduleSettings .= '</table>
-                ';
             }
         }
 
