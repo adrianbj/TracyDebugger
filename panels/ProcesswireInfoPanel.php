@@ -447,8 +447,16 @@ class ProcesswireInfoPanel extends BasePanel {
             ';
 
             $out .= '<ul class="pw-info-links">';
-            foreach(\TracyDebugger::getDataValue('customPWInfoPanelLinks') as $pid) {
-                $cp = $this->wire('pages')->get($pid);
+            foreach(\TracyDebugger::getDataValue('customPWInfoPanelLinks') as $path) {
+                if(method_exists($this->wire('pages'), 'getByPath')) {
+                    $cp = $this->wire('pages')->getByPath($path, array('useHistory' => true));
+                }
+                // fallback for PW < 3.0.6 when getByPath method did not exist
+                else {
+                    $cp = $this->wire('pages')->get($path);
+                }
+                if(!$cp->id || $cp->parent->id === $this->wire('config')->trashPageID) continue;
+
                 $icon = $cp->getIcon();
                 if(!$icon) {
                     if($cp->path == $this->wire('config')->urls->admin . 'setup/') {
