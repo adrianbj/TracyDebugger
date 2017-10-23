@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.6.24',
+            'version' => '4.6.25',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -1752,12 +1752,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public function getModuleConfigInputfields(array $data) {
 
         // convert PW Info panel custom links from path back to ID
-        $customPWInfoPanelLinkIds = array();
-        $customPWInfoPanelLinks = $data['customPWInfoPanelLinks'];
-        foreach($customPWInfoPanelLinks as $pagePath) {
-            array_push($customPWInfoPanelLinkIds, $this->wire('pages')->get($pagePath)->id);
+        if(isset($data['customPWInfoPanelLinks'])) {
+            $customPWInfoPanelLinkIds = array();
+            $customPWInfoPanelLinks = $data['customPWInfoPanelLinks'];
+            foreach($customPWInfoPanelLinks as $pagePath) {
+                array_push($customPWInfoPanelLinkIds, $this->wire('pages')->get($pagePath)->id);
+            }
+            $data['customPWInfoPanelLinks'] = $customPWInfoPanelLinkIds;
         }
-        $data['customPWInfoPanelLinks'] = $customPWInfoPanelLinkIds;
 
 
         if($this->wire('input')->post->submit_save_module) {
