@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.6.28',
+            'version' => '4.6.29',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -773,6 +773,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             // if dump recorder panel items were cleared, clear them from the session variable and remove cookie
             if($this->wire('input')->cookie->tracyClearDumpItems || (!in_array('dumpsRecorder', static::$showPanels) && ($this->wire('session')->tracyDumpItems || $this->wire('session')->tracyDumpItemsAjax || $this->wire('session')->tracyDumpItemsRedirect))) {
                 $this->wire('session')->remove('tracyDumpItems');
+                $this->wire('session')->remove('tracyDumpItemsAjax');
                 unset($this->wire('input')->cookie->tracyClearDumpItems);
                 setcookie("tracyClearDumpItems", "", time()-3600, "/");
             }
@@ -2267,8 +2268,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Snippets Path', __FILE__);
         $f->description = __('This path will be checked for snippets.', __FILE__);
         $f->notes = __('Neither of these directories exist by default so you will need to create them.', __FILE__);
-        $f->addOption('templates', $this->wire('urls')->templates.'TracyDebugger/snippets/');
-        $f->addOption('assets', $this->wire('urls')->assets.'TracyDebugger/snippets/');
+        $f->addOption('templates', $this->wire('config')->urls->templates.'TracyDebugger/snippets/');
+        $f->addOption('assets', $this->wire('config')->urls->assets.'TracyDebugger/snippets/');
         if($data['snippetsPath']) $f->attr('value', $data['snippetsPath']);
         $fieldset->add($f);
 
