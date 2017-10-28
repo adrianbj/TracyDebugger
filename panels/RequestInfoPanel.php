@@ -592,6 +592,27 @@ class RequestInfoPanel extends BasePanel {
             }
         }
 
+        // Session
+        if(in_array('session', $panelSections)) {
+            $session_oc = 0;
+            $session = $this->sectionHeader(array('Key', 'Value'));
+            foreach($this->wire('session') as $key => $value) {
+                if($key == 'tracyDumpItems'
+                    || $key == 'tracyEventItems'
+                    || $key == 'tracyMailItems'
+                    || $key == 'tracyIncludedFiles'
+                    || $key == 'tracyPostData'
+                    || $key == 'tracyGetData'
+                    || $key == 'tracyWhitelistData'
+                ) continue;
+                $session_oc++;
+                if(is_object($value)) $value = (string) $value;
+                if(is_array($value)) $value = print_r($value, true);
+                $session .= "<tr><td>".$this->wire('sanitizer')->entities($key)."</td><td><pre>" . $this->wire('sanitizer')->entities($value) . "</pre></td></tr>";
+            }
+            $session .= $sectionEnd;
+        }
+
 
         // Page, Template, and Field Objects
         if($isPwPage) {
@@ -619,6 +640,7 @@ class RequestInfoPanel extends BasePanel {
                     if($name == 'inputGet') $counter = ' (' . $input_oc['get'] . ')';
                     if($name == 'inputPost') $counter = ' (' . $input_oc['post'] . ')';
                     if($name == 'inputCookie') $counter = ' (' . $input_oc['cookie'] . ')';
+                    if($name == 'session') $counter = ' (' . $session_oc . ')';
                     $out .= '
                     <a href="#" rel="'.$name.'" class="tracy-toggle '.($name == 'pageInfo' && $i==0 ? '' : ' tracy-collapsed').'">'.$label.$counter.'</a>
                     <div id="'.$name.'" '.($name == 'pageInfo' && $i==0 ? '' : ' class="tracy-collapsed"').'>'.${$name}.'</div><br />';

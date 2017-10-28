@@ -673,7 +673,7 @@ ul.pw-info-links {
     cursor: pointer;
 }
 
-.tracy-panel svg, #tracyUserBar svg {
+.tracy-panel svg, {
     width: 16px !important;
     height: 16px !important;
 }

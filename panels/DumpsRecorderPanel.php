@@ -9,17 +9,19 @@ class DumpsRecorderPanel extends BasePanel {
 
     public function getTab() {
 
+        if(\TracyDebugger::isAdditionalBar()) return;
         \Tracy\Debugger::timer('dumpsRecorder');
+
         $items = $this->wire('session')->tracyDumpItems;
         $this->dumpCount = is_array($items) ? count($items) : 0;
-        $this->entries .= '<div><span style="display:inline-block;float:left"><label><input type="checkbox" onchange="preserveDumpsToggle(this)" id="preserveDumps" ' . ($this->wire('input')->cookie->tracyPreserveDumpItems ? 'checked="checked"' : '') . ' /> Preserve Dumps<label></span>'.($this->dumpCount > 0 ? '<span id="clearDumpsButton" style="display:inline-block;float:right"><input type="submit" onclick="clearDumps()" value="Clear Dumps" /></span>' : '') . '</div><div style="clear:both; margin-bottom:5px"></div>';
+        $this->entries .= '<div>'.($this->dumpCount > 0 ? '<span id="clearDumpsButton" style="display:inline-block;float:right"><input type="submit" onclick="clearDumps()" value="Clear Dumps" /></span>' : '') . '</div><div style="clear:both; margin-bottom:5px"></div>';
         if ($this->dumpCount > 0) {
             $this->iconColor = '#CD1818';
             $this->entries .= '
-            <div class="dump-items">';
+            <div class="dumpsrecorder-items">';
             foreach ($items as $item) {
                 if ($item['title'] != '') {
-                    $this->entries .= '<h2>' . $item['title'] . '</h2>';
+                    $this->entries .= '<h2>' . \Tracy\Helpers::escapeHtml($item['title']) . '</h2>';
                 }
                 $this->entries .= $item['dump'];
             }
@@ -46,24 +48,6 @@ class DumpsRecorderPanel extends BasePanel {
         <span title="Dumps Recorder">
             ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Dumps Recorder' : '') . ' ' . ($this->dumpCount > 0 ? '<span class="dumpCount">' . $this->dumpCount . '</span>' : '') . '
         </span>
-
-        <script>
-            preserveDumps = ' . ($this->wire('input')->cookie->tracyPreserveDumpItems ? 'true' : 'false') . ';
-
-            window.addEventListener("beforeunload", function () {
-                alterCookies();
-            });
-
-            function alterCookies() {
-                if(!preserveDumps) {
-                    document.cookie = "tracyClearDumpItems=true;expires=0;path=/";
-                    document.cookie = "tracyPreserveDumpItems=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/";
-                }
-                else {
-                    document.cookie = "tracyPreserveDumpItems=true;expires=0;path=/";
-                }
-            }
-        </script>
         ';
     }
 
@@ -74,15 +58,10 @@ class DumpsRecorderPanel extends BasePanel {
         <h1>' . $this->icon . ' Dumps Recorder' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>
 
         <script>
-            function preserveDumpsToggle(element) {
-                preserveDumps = element.checked;
-                alterCookies();
-            }
-
             function clearDumps() {
                 document.cookie = "tracyClearDumpItems=true;expires=0;path=/";
                 document.getElementById("clearDumpsButton").innerHTML="";
-                var elements = document.getElementsByClassName("dump-items");
+                var elements = document.getElementsByClassName("dumpsrecorder-items");
                 while(elements.length > 0) {
                     elements[0].parentNode.removeChild(elements[0]);
                 }

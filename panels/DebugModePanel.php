@@ -158,27 +158,6 @@ class DebugModePanel extends BasePanel {
             }
 
 
-            if(in_array('session', $panelSections)) {
-                // Session
-                $sessionEntries_oc = 0;
-                $sessionEntries = $this->sectionHeader(array('Key', 'Value'));
-                foreach($this->wire('session') as $key => $value) {
-                    if($key == 'tracyDumpItems'
-                        || $key == 'tracyEventItems'
-                        || $key == 'tracyMailItems'
-                        || $key == 'tracyIncludedFiles'
-                        || $key == 'tracyPostData'
-                        || $key == 'tracyGetData'
-                        || $key == 'tracyWhitelistData'
-                    ) continue;
-                    $sessionEntries_oc++;
-                    if(is_object($value)) $value = (string) $value;
-                    if(is_array($value)) $value = print_r($value, true);
-                    $sessionEntries .= "<tr><td>".$this->wire('sanitizer')->entities($key)."</td><td><pre>" . $this->wire('sanitizer')->entities($value) . "</pre></td></tr>";
-                }
-                $sessionEntries .= $sectionEnd;
-            }
-
             if(in_array('modulesLoaded', $panelSections)) {
                 // Modules Loaded
                 $modulesNumLoaded = 0;

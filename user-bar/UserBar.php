@@ -16,6 +16,10 @@ $userBar = '
         border:none !important;
         cursor:pointer;
     }
+    div#tracyUserBar svg {
+        width: 16px !important;
+        height: 16px !important;
+    }
 </style>
 
 <div id="tracyUserBar">';

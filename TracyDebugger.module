@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.6.29',
+            'version' => '4.7.0',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -94,6 +94,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'inputGet' => 'Input GET',
         'inputPost' => 'Input POST',
         'inputCookie' => 'Input COOKIE',
+        'session' => 'SESSION',
         'pageObject' => 'Page Object',
         'templateObject' => 'Template Object',
         'fieldsObject' => 'Fields Object',
@@ -101,7 +102,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     );
     public static $debugModeSections = array(
         'pagesLoaded' => 'Pages Loaded',
-        'session' => 'Session',
         'modulesLoaded' => 'Modules Loaded',
         'hooks' => 'Hooks Triggered',
         'databaseQueries' => 'Database Queries',
@@ -179,8 +179,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "hideDebugBar" => null,
                 "hideDebugBarTemplates" => array(),
                 "hideDebugBarModals" => array('regularModal', 'inlineModal', 'overlayPanels'),
-                "frontendPanels" => array('processwireInfo', 'requestInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'templatePath', 'console', 'templateEditor', 'dumpsRecorder', 'panelSelector', 'tracyToggler'),
-                "backendPanels" => array('processwireInfo', 'requestInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'console', 'dumpsRecorder', 'panelSelector', 'tracyToggler'),
+                "frontendPanels" => array('processwireInfo', 'requestInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'console', 'templatePath', 'templateEditor', 'panelSelector', 'tracyToggler'),
+                "backendPanels" => array('processwireInfo', 'requestInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'console', 'panelSelector', 'tracyToggler'),
                 "restrictedUserDisabledPanels" => array(),
                 "showUserBar" => null,
                 "showUserBarTracyUsers" => null,
@@ -198,9 +198,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 "styleAdminColors" => "local|#ca6500\ndev.*|#990000\nstaging.*|#8b0066",
                 "showPWInfoPanelIconLabels" => 1,
                 "customPWInfoPanelLinks" => array(),
-                "requestInfoPanelSections" => array('moduleSettings', 'templateSettings', 'fieldSettings', 'pageInfo', 'languageInfo', 'templateInfo', 'fieldsListValues', 'serverRequest', 'inputGet', 'inputPost', 'inputCookie', 'editLinks'),
+                "requestInfoPanelSections" => array('moduleSettings', 'templateSettings', 'fieldSettings', 'pageInfo', 'languageInfo', 'templateInfo', 'fieldsListValues', 'serverRequest', 'inputGet', 'inputPost', 'inputCookie', 'session', 'editLinks'),
                 "processwireInfoPanelSections" => array('apiVariables', 'coreClasses', 'configData', 'versionsList', 'adminLinks', 'documentationLinks', 'processWireWebsiteSearch'),
-                "debugModePanelSections" => array('pagesLoaded', 'session', 'modulesLoaded', 'hooks', 'databaseQueries', 'selectorQueries', 'timers', 'user', 'cache', 'autoload'),
+                "debugModePanelSections" => array('pagesLoaded', 'modulesLoaded', 'hooks', 'databaseQueries', 'selectorQueries', 'timers', 'user', 'cache', 'autoload'),
                 "diagnosticsPanelSections" => array('filesystemFolders'),
                 "snippetsPath" => 'templates',
                 "todoIgnoreDirs" => 'git, svn, images, img, errors, sass-cache, node_modules',
@@ -614,8 +614,21 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
 
+        // DUMPS PANEL AND BASE PANEL CLASS
+        // load base panel and Dumps Panel early so it can capture bd() calls in PW init()
+        if($this->showDebugBarHere & $this->allowedTracyUsers() === 'full') {
+            // load base panel class
+            require_once __DIR__ . '/includes/BasePanel.php';
+
+            // load custom replacement Dumps panel - this is not optional/configurable
+            $panelName = 'DumpsPanel';
+            require_once __DIR__ . '/panels/'.$panelName.'.php';
+            Debugger::getBar()->addPanel(new $panelName);
+        }
+
+
+        // TRACY TOGGLER
         if($this->allowedTracyUsers() === 'full') {
-            // TRACY TOGGLER
             // if Tracy has been toggled "disabled" add enable button and then exit
             if($this->wire('input')->cookie->tracyDisabled == 1) {
                 if($this->showDebugBarHere && !$this->wire('config')->ajax) {
@@ -769,11 +782,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
 
 
+            // DUMPS
+            // clear ajax items from session on window unload (javascript set cookie in Dumps panel)
+            if($this->wire('input')->cookie->tracyClearDumpItemsAjax) {
+                $this->wire('session')->remove('tracyDumpItemsAjax');
+                unset($this->wire('input')->cookie->tracyClearDumpItemsAjax);
+                setcookie("tracyClearDumpItemsAjax", "", time()-3600, "/");
+            }
+
+
             // DUMPS RECORDER
             // if dump recorder panel items were cleared, clear them from the session variable and remove cookie
-            if($this->wire('input')->cookie->tracyClearDumpItems || (!in_array('dumpsRecorder', static::$showPanels) && ($this->wire('session')->tracyDumpItems || $this->wire('session')->tracyDumpItemsAjax || $this->wire('session')->tracyDumpItemsRedirect))) {
+            if($this->wire('input')->cookie->tracyClearDumpItems || !in_array('dumpsRecorder', static::$showPanels)) {
                 $this->wire('session')->remove('tracyDumpItems');
-                $this->wire('session')->remove('tracyDumpItemsAjax');
                 unset($this->wire('input')->cookie->tracyClearDumpItems);
                 setcookie("tracyClearDumpItems", "", time()-3600, "/");
             }
@@ -854,7 +875,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // DEBUG BAR & PANELS
-        // templates
+
+        // hide debug bar from specified templates
         if(count($this->data['hideDebugBarTemplates']) > 0) {
             if($this->wire('page')->id && in_array($this->wire('page')->template->id, $this->data['hideDebugBarTemplates'])) $this->showDebugBarHere = false;
         }
@@ -867,9 +889,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // exit now if not showing debug bar or user doesn't have 'full' access
         if(Debugger::$showBar == false || $this->allowedTracyUsers() !== 'full') return;
-
-        // load base panel class
-        require_once __DIR__ . '/includes/BasePanel.php';
 
 
         // LOAD SPECIFIED PANELS
@@ -946,6 +965,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     break;
             }
         }
+
 
 
         // CONSOLE PANEL
@@ -1052,14 +1072,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if(is_null($this->wire('session')->tracyDumpItems)) {
                 $customEndHead .= '
                     <script>
-                        // remove local storage entry for Dumps Recorder panels (regular, ajax, & redirect) so they do not open when empty
-                        var i = localStorage.length;
-                        while(i--) {
-                            var key = localStorage.key(i);
-                            if(/tracy-debug-panel-DumpsRecorderPanel/.test(key)) {
-                                localStorage.removeItem(key);
-                            }
-                        }
+                        // remove local storage entry for Dumps Recorder panel so it does not open if it is empty
+                        localStorage.removeItem("tracy-debug-panel-DumpsRecorderPanel");
                     </script>';
             }
 

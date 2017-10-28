@@ -26,7 +26,7 @@ if($user->isSuperuser()) {
     }
 
     // ready.php and finished.php weren't being loaded, so include here to monitor any bd() etc calls they might have
-    // the other approach to fix this is to call an external ConsoleProcessor.php file via ajax as per PM with @bernhard
+    // the other approach to fix this is to call an external CodeProcessor.php file via ajax as per PM with @bernhard
     $readyPath = $this->wire('config')->paths->root . 'site/ready.php';
     $finishedPath = $this->wire('config')->paths->root . 'site/finished.php';
     if(file_exists($readyPath)) include_once($readyPath);

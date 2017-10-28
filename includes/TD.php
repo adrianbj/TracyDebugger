@@ -61,16 +61,19 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     private static function dumpToBar($var, $title = NULL, array $options = NULL) {
-        if(is_array(static::$showPanels) && in_array('dumpsRecorder', static::$showPanels)) {
-            $dumpItem = array();
+        static $panel;
+        if (!$panel) {
+            $panelName = 'DumpsPanel';
+            $panel = Debugger::getBar()->getPanel($panelName);
+        }
+        $dumpItem = array();
+        $dumpItem['title'] = $title;
+        $dumpItem['dump'] = Dumper::toHtml($var, (array) $options);
+        $panel->data[] = $dumpItem;
+        if(in_array('dumpsRecorder', \TracyDebugger::$showPanels)) {
             $dumpItems = wire('session')->tracyDumpItems ?: array();
-            $dumpItem['title'] = $title;
-            $dumpItem['dump'] = Dumper::toHtml($var, $options);
             array_push($dumpItems, $dumpItem);
             wire('session')->tracyDumpItems = $dumpItems;
-        }
-        else {
-            return Debugger::barDump($var, $title, $options);
         }
     }
 
