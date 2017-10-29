@@ -30,6 +30,7 @@ class CaptainHookSearch {
             RecursiveIteratorIterator::CATCH_GET_CHILD // Ignore "Permission denied"
         );
 
+        $paths = array();
         foreach ($iter as $path => $dir) {
             // '/.' check is for site module backups - SKIP_DOTS above is not excluding these
             if (!$dir->isDir() && strpos($path, '/.') === false && preg_match($fileNamePattern, $path) && !in_array(basename($path), $excludeFilenames) ) {
