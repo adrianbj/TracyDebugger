@@ -1,5 +1,7 @@
 <?php
 
+ini_set('memory_limit', -1);
+
 class CaptainHookSearch {
 
     //protected static $hookNames = array();
@@ -31,9 +33,9 @@ class CaptainHookSearch {
         );
 
         $paths = array();
-        foreach ($iter as $path => $dir) {
+        foreach($iter as $path => $dir) {
             // '/.' check is for site module backups - SKIP_DOTS above is not excluding these
-            if (!$dir->isDir() && strpos($path, '/.') === false && preg_match($fileNamePattern, $path) && !in_array(basename($path), $excludeFilenames) ) {
+            if(!$dir->isDir() && strpos(str_replace(wire('config')->paths->root, '', $path), '/.') === false && preg_match($fileNamePattern, $path) && !in_array(basename($path), $excludeFilenames) ) {
                 $paths[] = $path;
             }
         }
