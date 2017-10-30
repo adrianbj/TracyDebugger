@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.7.3',
+            'version' => '4.7.4',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -50,6 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     protected $tracyCacheDir;
     protected $modulesDbBackupFilename;
     public static $tracyVersion;
+    public static $dumpItems = array();
     public static $selectors = array();
     public static $templateVars = array();
     public static $templateConsts = array();
@@ -627,19 +628,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
 
-        // DUMPS PANEL AND BASE PANEL CLASS
-        // load base panel and Dumps Panel early so it can capture bd() calls in PW init()
-        if($this->showDebugBarHere & $this->allowedTracyUsers() === 'full') {
-            // load base panel class
-            require_once __DIR__ . '/includes/BasePanel.php';
-
-            // load custom replacement Dumps panel - this is not optional/configurable
-            $panelName = 'DumpsPanel';
-            require_once __DIR__ . '/panels/'.$panelName.'.php';
-            Debugger::getBar()->addPanel(new $panelName);
-        }
-
-
         // TRACY TOGGLER
         if($this->allowedTracyUsers() === 'full') {
             // if Tracy has been toggled "disabled" add enable button and then exit
@@ -806,10 +794,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             // DUMPS RECORDER
             // if dump recorder panel items were cleared, clear them from the session variable and remove cookie
-            if($this->wire('input')->cookie->tracyClearDumpItems || !in_array('dumpsRecorder', static::$showPanels)) {
-                $this->wire('session')->remove('tracyDumpItems');
-                unset($this->wire('input')->cookie->tracyClearDumpItems);
-                setcookie("tracyClearDumpItems", "", time()-3600, "/");
+            if($this->wire('input')->cookie->tracyClearDumpsRecorderItems || !in_array('dumpsRecorder', static::$showPanels)) {
+                $this->wire('session')->remove('tracyDumpsRecorderItems');
+                unset($this->wire('input')->cookie->tracyClearDumpsRecorderItems);
+                setcookie("tracyClearDumpsRecorderItems", "", time()-3600, "/");
             }
 
 
@@ -903,6 +891,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // exit now if not showing debug bar or user doesn't have 'full' access
         if(Debugger::$showBar == false || $this->allowedTracyUsers() !== 'full') return;
 
+        // load base panel class
+        require_once __DIR__ . '/includes/BasePanel.php';
 
         // LOAD SPECIFIED PANELS
         foreach(static::$showPanels as $panel) {
@@ -978,7 +968,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     break;
             }
         }
-
+        // load custom replacement Dumps panel - this is not optional/configurable
+        // at the end so it has access to bd() calls in any of the other panels - helpful for debugging these panels
+        $panelName = 'DumpsPanel';
+        require_once __DIR__ . '/panels/'.$panelName.'.php';
+        Debugger::getBar()->addPanel(new $panelName);
 
 
         // CONSOLE PANEL
@@ -1082,7 +1076,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     }
                 </script>';
 
-            if(is_null($this->wire('session')->tracyDumpItems)) {
+            if(is_null($this->wire('session')->tracyDumpsRecorderItems)) {
                 $customEndHead .= '
                     <script>
                         // remove local storage entry for Dumps Recorder panel so it does not open if it is empty

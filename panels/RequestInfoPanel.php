@@ -597,14 +597,15 @@ class RequestInfoPanel extends BasePanel {
             $session_oc = 0;
             $session = $this->sectionHeader(array('Key', 'Value'));
             foreach($this->wire('session') as $key => $value) {
-                if($key == 'tracyDumpItems'
-                    || $key == 'tracyDumpItemsAjax'
-                    || $key == 'tracyEventItems'
-                    || $key == 'tracyMailItems'
-                    || $key == 'tracyIncludedFiles'
-                    || $key == 'tracyPostData'
-                    || $key == 'tracyGetData'
-                    || $key == 'tracyWhitelistData'
+                if(
+                    $key == 'tracyDumpItemsAjax' ||
+                    $key == 'tracyDumpsRecorderItems' ||
+                    $key == 'tracyEventItems' ||
+                    $key == 'tracyMailItems' ||
+                    $key == 'tracyIncludedFiles' ||
+                    $key == 'tracyPostData' ||
+                    $key == 'tracyGetData' ||
+                    $key == 'tracyWhitelistData'
                 ) continue;
                 $session_oc++;
                 if(is_object($value)) $value = (string) $value;

@@ -12,7 +12,7 @@ class DumpsPanel extends BasePanel {
 
         \Tracy\Debugger::timer('dumps');
 
-        $this->data = $this->data ?: array();
+        $this->data = \TracyDebugger::$dumpItems;
 
         if(\TracyDebugger::isAdditionalBar() == 'ajax') {
             $dumpItemsAjax = wire('session')->tracyDumpItemsAjax ?: array();
@@ -29,8 +29,8 @@ class DumpsPanel extends BasePanel {
             $this->iconColor = '#CD1818';
             $this->entries .= '
             <div class="dump-items">';
-            foreach ($data as $item) {
-                if ($item['title'] != '') {
+            foreach($data as $item) {
+                if($item['title'] != '') {
                     $this->entries .= '<h2>' . \Tracy\Helpers::escapeHtml($item['title']) . '</h2>';
                 }
                 $this->entries .= $item['dump'];
