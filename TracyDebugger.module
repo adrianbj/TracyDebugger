@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.7.2',
+            'version' => '4.7.3',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -283,6 +283,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $this->wire('session')->forceLogin($userName);
             $this->wire('session')->redirect(substr(str_replace('tracyClearSession=1', '', self::inputUrl(true)), 0, -1));
         }
+
+
+        // refresh modules
+        if($this->wire('input')->get->tracyModulesRefresh && $this->allowedTracyUsers() === 'full') {
+            $this->wire('session')->tracyLastUrl = substr(str_replace('tracyModulesRefresh=1', '', self::inputUrl(true)), 0, -1);
+            $this->wire('session')->redirect($this->wire('config')->urls->admin.'module/?reset=1');
+        }
+        if($this->wire('input')->get->reset == 2 && $this->wire('session')->tracyLastUrl && $this->allowedTracyUsers() === 'full') {
+            $tracyLastUrl = $this->wire('session')->tracyLastUrl;
+            $this->wire('session')->remove('tracyLastUrl');
+            $this->wire('session')->redirect($tracyLastUrl);
+        }
+
 
         // determine if we are in the admin / backend
         $this->inAdmin = $this->inAdmin();

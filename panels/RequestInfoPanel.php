@@ -598,6 +598,7 @@ class RequestInfoPanel extends BasePanel {
             $session = $this->sectionHeader(array('Key', 'Value'));
             foreach($this->wire('session') as $key => $value) {
                 if($key == 'tracyDumpItems'
+                    || $key == 'tracyDumpItemsAjax'
                     || $key == 'tracyEventItems'
                     || $key == 'tracyMailItems'
                     || $key == 'tracyIncludedFiles'
