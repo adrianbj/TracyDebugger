@@ -327,12 +327,6 @@ class DebugModePanel extends BasePanel {
                 <div id="pages-loaded" class="tracy-collapsed">'.$pagesLoaded.'</div><br />';
             }
 
-            if(in_array('session', $panelSections)) {
-                $out .= '
-                <a href="#" rel="#session-entries" class="tracy-toggle tracy-collapsed">Session ('.$sessionEntries_oc.')</a>
-                <div id="session-entries" class="tracy-collapsed">'.$sessionEntries.'</div><br />';
-            }
-
             if(in_array('modulesLoaded', $panelSections)) {
                 $out .= '
                 <a href="#" rel="#modules-loaded" class="tracy-toggle tracy-collapsed">Modules Loaded ('.$modulesNumLoaded.'/'.$modulesNumSkipped.')</a>

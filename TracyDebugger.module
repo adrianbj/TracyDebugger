@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.7.4',
+            'version' => '4.7.5',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -332,6 +332,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             // PANELS TO DISPLAY
             $configEnabledPanels = $this->inAdmin ? $this->data['backendPanels'] : $this->data['frontendPanels'];
+
+            // need to set $stickyPanels here so it is alway set if available, rather than in the elseif below
+            // because a "once" cookie would prevent if from being set
+            if($this->wire('input')->cookie->tracyPanelsSticky) {
+                static::$stickyPanels = array_filter(explode(',', $this->wire('input')->cookie->tracyPanelsSticky));
+            }
+
             if($this->wire('input')->cookie->tracyPanelsOnce) {
                 static::$oncePanels = array_filter(explode(',', $this->wire('input')->cookie->tracyPanelsOnce));
                 static::$showPanels = static::$oncePanels;
@@ -339,7 +346,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 setcookie("tracyPanelsOnce", "", time()-3600, '/');
             }
             elseif($this->wire('input')->cookie->tracyPanelsSticky) {
-                static::$stickyPanels = array_filter(explode(',', $this->wire('input')->cookie->tracyPanelsSticky));
                 static::$showPanels = static::$stickyPanels;
             }
             else {
