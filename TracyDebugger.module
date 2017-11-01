@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.7.5',
+            'version' => '4.7.6',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -642,6 +642,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     $this->addHookAfter('Page::render', $this, 'addEnableButton', array('priority'=>1000));
                 }
                 // Tracy not enabled so exit now
+                $this->tracyEnabled = false;
                 return;
             }
         }
@@ -1028,14 +1029,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $enableButton = '
         <style>
             div#TracyEnableButton {
-                bottom: 5px;
-                right: 5px;
-                z-index: 99999;
-                position: fixed;
-                width: 16px;
+                bottom: 10px !important;
+                right: 10px !important;
+                z-index: 99999 !important;
+                position: fixed !important;
+                width: 16px !important;
+                height: 16px !important;
                 margin: 0px !important;
                 padding: 0px !important;
-                cursor:pointer;
+                cursor:pointer !important;
+            }
+            div#TracyEnableButton svg {
+                width: 16px !important;
+                height: 16px !important;
             }
         </style>
         <script>
