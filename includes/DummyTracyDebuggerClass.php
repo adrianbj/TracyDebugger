@@ -4,15 +4,7 @@ use Tracy;
 
 class Debugger {
 
-	public static function debugAll() {
-		return false;
-	}
-
 	public static function barDump() {
-		return false;
-	}
-
-	public static function barDumpLive() {
 		return false;
 	}
 
@@ -29,10 +21,6 @@ class Debugger {
 	}
 
 	public static function fireLog() {
-		return false;
-	}
-
-	public static function addBreakpoint() {
 		return false;
 	}
 

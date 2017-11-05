@@ -85,7 +85,8 @@ class TemplateEditorPanel extends BasePanel {
                     confirmed = true;
                 }
 
-                document.getElementById("tracyTemplateEditorRawCode").innerHTML = tte.getValue();
+                // doing btoa because if template code contains <script>, browser are failing with ERR_BLOCKED_BY_XSS_AUDITOR
+                document.getElementById("tracyTemplateEditorRawCode").innerHTML = btoa(tte.getValue());
             }
 
             document.getElementById("tracyEditorSubmission").onsubmit = function(e){

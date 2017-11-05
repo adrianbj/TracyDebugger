@@ -246,7 +246,7 @@ HTML;
         $out .= '<h1>' . $this->icon . ' Console</h1>
         <div class="tracy-inner">
             <fieldset>
-                <legend>Enter PHP code, then use CTRL/CMD+Enter to Run, or ALT/OPT+Enter to Clear & Run.</legend>';
+                <legend>Use CTRL/CMD+Enter to Run, or ALT/OPT+Enter to Clear & Run.</legend>';
         if ($this->wire('page')->template != "admin") {
             $out .= '<p><label><input type="checkbox" id="accessTemplateVars" /> Allow access to custom variables and functions defined in this page\'s template file and all other included files.</label></p>';
         }
