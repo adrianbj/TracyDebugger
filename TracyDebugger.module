@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.7.7',
+            'version' => '4.7.8',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -1043,8 +1043,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     protected function addUserBar($event) {
         $userBar = '';
         require_once __DIR__ . '/user-bar/UserBar.php';
-        $event->return = str_replace("</body>", $userBar.'</body>', $event->return);
+        $event->return = str_replace("</body>", "\n<!-- Tracy User Bar -->\n" . $this->minify($userBar)."\n</body>", $event->return);
     }
+
 
     /**
      * Hook after Page::render()
@@ -1055,6 +1056,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     protected function addEnableButton($event) {
+        // DON'T add comments to injected code below because it breaks my simple minify() function
+        // if Tracy temporarily toggled disabled, add enable icon link
         $enableButton = '
         <style>
             div#TracyEnableButton {
@@ -1088,7 +1091,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             </svg>
         </div>';
 
-        $event->return = str_replace("</body>", $enableButton.'</body>', $event->return);
+        $event->return =  str_replace("</body>", "\n<!-- Tracy Enable Button -->\n" . $this->minify($enableButton)."\n</body>", $event->return);
 
     }
 
@@ -1106,11 +1109,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $customEndBody = '';
 
         if(Debugger::$showBar == true) {
+            // DON'T add comments to injected code below because it breaks my simple minify() function
+            // remove localStorage items to prevent the panel from staying open
             $customEndHead .= '
                 <script>
-                    // remove local storage entry for Panel Selector panel so it does not open after page reload from selecting a panel change
                     localStorage.removeItem("tracy-debug-panel-PanelSelectorPanel");
-                    // remove local storage entry for PW Info panel if a button was clicked
                     if(localStorage.getItem("remove-tracy-debug-panel-ProcesswireInfoPanel")) {
                         localStorage.removeItem("tracy-debug-panel-ProcesswireInfoPanel");
                         localStorage.removeItem("remove-tracy-debug-panel-ProcesswireInfoPanel")
@@ -1118,9 +1121,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 </script>';
 
             if(is_null($this->wire('session')->tracyDumpsRecorderItems)) {
+                // DON'T add comments to injected code below because it breaks my simple minify() function
+                // remove localStorage items to prevent the panel from staying open
                 $customEndHead .= '
                     <script>
-                        // remove local storage entry for Dumps Recorder panel so it does not open if it is empty
                         localStorage.removeItem("tracy-debug-panel-DumpsRecorderPanel");
                     </script>';
             }
@@ -1143,24 +1147,26 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
 
-
-        // hide server type indicator bar if debug bar is hidden by default
         if($this->data['hideDebugBar']) {
+            // DON'T add comments to injected code below because it breaks my simple minify() function
+            // hide server type indicator bar if debug bar is hidden by default
             $customEndHead .= '<script>document.body.classList.add("hidden");</script>';
         }
 
         if(Debugger::$showBar == true) {
+            // DON'T add comments to injected code below because it breaks my simple minify() function
+            // override Tracy core default zIndex for panels
+            // add settings link on double-click to "TRACY" icon
+            // replace "close" icon link with "hide" and "unhide" links
             $customEndBody .= '
             <script>
                 window.onload = function(e) {
-                    // set default and all already loaded panel zIndexes to base from module settings
-                    // this overrides the Tracy core value of 20000 which was above PW dropdown menus
                     window.Tracy.DebugPanel.zIndex = z = '.$this->data['panelZindex'].';
                     var panels = document.getElementsByClassName("tracy-panel");
                     for (var i = 0; i < panels.length; i++) {
                         panels[i].style.zIndex = z++;
                     }
-                }
+                };
 
                 function addSettingsLink() {
                     if(!document.getElementById("tracy-debug-logo")) {
@@ -1172,7 +1178,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             window.open("'.$this->wire('config')->urls->admin.'module/edit?name=TracyDebugger","_blank");
                         }, false);
                     }
-                };
+                }
                 addSettingsLink();
 
                 function addHideLink() {
@@ -1193,10 +1199,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             document.body.classList.add("hidden");
                         });
                         barul.appendChild(toggleli);
-                        // remove Tracy core close debug bar x button
                         barul.removeChild(barul.lastChild.previousElementSibling);
                     }
-                };
+                }
                 addHideLink();
 
                 function unhideBar() {
@@ -1231,7 +1236,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             ';
         }
 
-        $event->return = str_replace("</body>", $customEndBody.'</body>', str_replace('</head>', $customEndHead.'</head>', $event->return));
+        $event->return = str_replace("</body>", "\n<!-- Tracy Helpers -->\n" . $this->minify($customEndBody)."\n</body>", str_replace('</head>', "\n" . $this->minify($customEndHead)."\n</head>", $event->return));
     }
 
 
@@ -1351,6 +1356,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     private function deleteFile($path) {
         if(file_exists($path)) unlink($path);
+    }
+
+
+    /**
+     * Minify
+     *
+     * Remove line breaks and unnecessary whitespace
+     *
+     * @param string $str String to minify
+     *
+     */
+    private function minify($str) {
+        return preg_replace(array('/ {2,}/','/<!--.*?-->|\t|(?:\r?\n[ \t]*)+/s'),array(' ', ''), $str);
     }
 
 

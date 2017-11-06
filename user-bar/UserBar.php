@@ -19,6 +19,7 @@ $userBar = '
     div#tracyUserBar svg {
         width: 16px !important;
         height: 16px !important;
+        margin: 2px !important;
     }
 </style>
 
