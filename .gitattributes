@@ -1,2 +1,3 @@
-$ cat .gitattributes
 *.module linguist-language=PHP
+.gitattributes export-ignore
+docs export-ignore
