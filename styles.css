@@ -681,9 +681,12 @@ ul.pw-info-links {
 
 #tracy-debug .tracy-DumpPanel h2, #tracyConsoleResult h2 {
     font: 11pt/1.5 sans-serif;
+    font-size: 14px !important;
     margin: 0;
     padding: 2px 8px;
     background: #EAF0F2 !important;
+    border: 1px solid #D2D2D2 !important;
+    border-bottom: 0 !important;
 }
 
 #tracy-debug-panel-templateEditorPanel  {
