@@ -2,10 +2,6 @@
 
 use Tracy\Dumper;
 
-/**
- * Custom PW panel
- */
-
 class ProcesswireInfoPanel extends BasePanel {
 
     protected $icon;
@@ -468,7 +464,10 @@ class ProcesswireInfoPanel extends BasePanel {
 
             $out .= '<ul class="pw-info-links">';
             foreach(\TracyDebugger::getDataValue('customPWInfoPanelLinks') as $path) {
-                if(method_exists($this->wire('pages'), 'getByPath')) {
+                if(is_integer($path)) {
+                    $cp = $this->wire('pages')->get($path);
+                }
+                elseif(method_exists($this->wire('pages'), 'getByPath')) {
                     $cp = $this->wire('pages')->getByPath($path, array('useHistory' => true));
                 }
                 // fallback for PW < 3.0.6 when getByPath method did not exist
