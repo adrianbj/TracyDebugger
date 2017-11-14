@@ -55,11 +55,12 @@ class PhpInfoPanel extends BasePanel {
         // data output from phpinfo()
         ob_start();
         phpinfo();
-        $phpInfo = ob_get_contents();
-        ob_get_clean();
+        $phpInfo = ob_get_clean();
 
         $dom = new DOMDocument();
+        libxml_use_internal_errors(true);
         $dom->loadHTML($phpInfo);
+        libxml_use_internal_errors(false);
         $body = $dom->getElementsByTagName('body')->item(0);
         $this->removeElementsByTagName('img', $body);
         $phpInfo = $dom->saveHTML($body);

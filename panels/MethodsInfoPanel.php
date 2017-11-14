@@ -39,14 +39,14 @@ class MethodsInfoPanel extends BasePanel {
             <p><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/">TracyDebugger Blog Documentation</a></p>
             <p><a href="https://tracy.nette.org/">Tracy Documentation</a></p>
 
-            <p><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#debugall" target="_blank">debugAll($var, $title)</a></strong></p>
+            <p><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#debugall" target="_blank">debugAll($var, $title = NULL, array $options = NULL)</a></strong></p>
             <p>
             TD::debugAll();<br />
             debugAll();<br />
             da();<br />
             </p>
 
-            <p><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#dump" target="_blank">dump($var, array $options = NULL, $return = FALSE)</a></strong></p>
+            <p><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#dump" target="_blank">dump($var, $title = NULL, array $options = NULL, $return = FALSE)</a></strong></p>
             <p>
             TD::dump();<br />
             dump();<br />

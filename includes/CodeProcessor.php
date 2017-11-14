@@ -140,7 +140,7 @@ if($user->isSuperuser()) {
         tracyConsoleExceptionHandler($e);
     }
     echo '
-    <div style="border-bottom: 1px dotted #cccccc; color:#A9ABAB; font-size: 10px; padding: 3px; margin:5px 0;">' .
+    <div style="border-top: 1px dotted #cccccc; color:#A9ABAB; border-bottom: 1px solid #cccccc; color:#A9ABAB; font-size: 10px; padding: 3px; margin:20px 0 20px 0;">' .
         round((\Tracy\Debugger::timer('consoleCode')*1000), 2) . 'ms, ' .
         number_format((memory_get_usage() - $initialMemory) / 1000000, 2, '.', ' ') . ' MB
     </div>';

@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.7.8',
+            'version' => '4.7.9',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -726,13 +726,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             // CAPTAIN HOOK
             // update cache on module install
-            if(in_array('captainHook', static::$showPanels)) {
-                $this->addHookAfter('Modules::install', $this, 'deleteHookCache');
-                $this->addHookAfter('Modules::uninstall', $this, 'deleteHookCache');
-                $this->addHookAfter('Modules::refresh', $this, 'deleteHookCache');
-                $this->addHookAfter('Modules::moduleVersionChanged', $this, 'deleteHookCache');
-                $this->addHookAfter('SystemUpdater::coreVersionChange', $this, 'deleteHookCache');
-            }
+            // not wrapped in: if(in_array('captainHook', static::$showPanels)) because this wouldn't work for "once" enabled
+            $this->addHookAfter('Modules::install', $this, 'deleteHookCache');
+            $this->addHookAfter('Modules::uninstall', $this, 'deleteHookCache');
+            $this->addHookAfter('Modules::refresh', $this, 'deleteHookCache');
+            $this->addHookAfter('Modules::moduleVersionChanged', $this, 'deleteHookCache');
+            $this->addHookAfter('SystemUpdater::coreVersionChange', $this, 'deleteHookCache');
+
 
             if(!$this->inAdmin) {
                 // VALIDATOR

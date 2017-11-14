@@ -103,27 +103,8 @@ class ValidatorPanel extends BasePanel {
         return $tab;
     }
 
-    protected function sectionHeader($columnNames = array()) {
-        $out = '
-        <div>
-            <table>
-                <thead>
-                    <tr>';
-                        foreach($columnNames as $columnName) {
-                            $out .= '<th>'.$columnName.'</th>';
-                        }
-                    $out .= '
-                    </tr>
-                </thead>
-            <tbody>
-        ';
-        return $out;
-    }
-
-
     public function getPanel() {
 
-        // Load all the panel sections
         $out = '
         <h1>
             '.str_replace('#FFFFFF', $this->color, $this->icon).' '.$this->resultLabel.

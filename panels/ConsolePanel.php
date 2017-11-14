@@ -261,7 +261,7 @@ HTML;
                         <input title="Clear results" type="submit" id="clearResults" onclick="clearResults()" value="&#10006; Clear results" />
                         <span id="tracyConsoleStatus" style="padding: 10px"></span>
                     </div>
-                    <div id="tracyConsoleResult" style="background:#F0F3F7; border: 1px dotted #999999; padding: 3px;max-height: 300px; overflow:auto"></div>
+                    <div id="tracyConsoleResult" style="border: 1px solid #D2D2D2; padding: 10px;max-height: 300px; overflow:auto"></div>
                 </div>
                 <div style="float: left; margin-left: 10px; width: 250px; margin-top: -'.($this->wire('page')->template != "admin" ? '60' : '23').'px;">
                     <div style="padding-bottom:5px">
