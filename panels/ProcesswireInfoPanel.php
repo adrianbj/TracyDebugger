@@ -76,7 +76,12 @@ class ProcesswireInfoPanel extends BasePanel {
             $out .= '
             <script>
                 function searchPw(form) {
-                    window.open("https://www.google.com/search?q=site:processwire.com"+form.section.value+" "+form.pwquery.value);
+                    if(form.section.value == "modules") {
+                        window.open("https://www.google.com/search?q=site:modules.processwire.com "+form.pwquery.value);
+                    }
+                    else {
+                        window.open("https://www.google.com/search?q=site:processwire.com"+form.section.value+" "+form.pwquery.value);
+                    }
                     return false;
                 }
             </script>
@@ -579,7 +584,8 @@ class ProcesswireInfoPanel extends BasePanel {
                         <label><input id="section" type="radio" name="section" value="/" checked> All&nbsp;</label>
                         <label><input id="section" type="radio" name="section" value="/talk/"> Forums&nbsp;</label>
                         <label><input id="section" type="radio" name="section" value="/api/ref/"> API&nbsp;</label>
-                        <label><input id="section" type="radio" name="section" value="/blog/"> Blog</label>
+                        <label><input id="section" type="radio" name="section" value="/blog/"> Blog&nbsp;</label>
+                        <label><input id="section" type="radio" name="section" value="modules"> Modules</label>
                     </div>
                 </form>
                 ';
