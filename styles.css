@@ -353,9 +353,13 @@ ul.pw-info-links {
 }
 
 #tracy-debug input[type="text"]#tracySnippetName {
-    padding: 4px 34px 4px 8px !important;
+    padding: 4px 30px 4px 8px !important;
+    margin: 0 !important;
     height: 29px !important;
-    width: 250px !important;
+    width: 289px !important;
+    -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+    -moz-box-sizing: border-box;    /* Firefox, other Gecko */
+    box-sizing: border-box;         /* Opera/IE 8+ */
 }
 
 /* not sure why these need to be different in popup window, but they do :) */
@@ -370,12 +374,21 @@ ul.pw-info-links {
 
 #tracySnippets, #tracyRunnerSnippets {
     padding: 0 !important;
-    border: none;
+    border: none !important;
+}
+
+#tracySnippets {
+    margin: 5px 0 0 0 !important;
+    width: 290px !important;
+    padding: 0 !important;
+    min-height: 115px !important;
+    max-height: 187px !important;
+    overflow:auto !important;
 }
 
 #tracySnippets ul, #tracyRunnerSnippets ul {
-    margin-left: 0 !important;
-    padding-left: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 #tracySnippets li, #tracyRunnerSnippets li {
@@ -423,9 +436,9 @@ ul.pw-info-links {
     background: transparent !important;
     position: absolute !important;
     padding: 5px !important;
-    top: 1px;
+    top: 1px !important;
     right: 5px !important;
-    cursor: pointer;
+    cursor: pointer !important;
 }
 
 #tracySnippets .trashIcon:active {
@@ -433,7 +446,7 @@ ul.pw-info-links {
 }
 
 #tracySnippets .trashIcon:hover {
-    color: #EA2262;
+    color: #EA2262 !important;
 }
 
 #tracySnippets .trashIcon:not(:hover) {
@@ -441,54 +454,55 @@ ul.pw-info-links {
 }
 
 #tracySnippets li:hover .trashIcon {
-    visibility: visible;
+    visibility: visible !important;
 }
 
 #tracy-debug #saveSnippet {
-	padding: 2px 6px !important;
-	position: absolute;
-	font-size: 15px !important;
-	right: 3px;
-	top: 2px;
-	border-color: transparent !important;
-	background: transparent !important;
+    padding: 2px 6px !important;
+    margin: 0 !important;
+    position: absolute !important;
+    font-size: 15px !important;
+    right: 3px !important;
+    top: 2px !important;
+    border-color: transparent !important;
+    background: transparent !important;
 }
 
 #tracy-debug #runCode,
 #tracy-debug #clearResults,
 #tracy-debug #historyBack,
 #tracy-debug #historyForward {
-	padding: 3px 10px !important;
-	margin-right: 5px !important;
+    padding: 3px 10px !important;
+    margin-right: 5px !important;
 }
 
 #tracy-debug #runCode:hover,
 /*#tracy-debug #clearResults:hover,*/
 #tracy-debug #historyBack:hover,
 #tracy-debug #historyForward:hover {
-	background: #F5F8F9 !important;
+    background: #F5F8F9 !important;
 }
 
 #tracy-debug #historyForward {
-	margin-left: -11px !important;
-	border-right-color: transparent !important;
+    margin-left: -11px !important;
+    border-right-color: transparent !important;
 }
 
 #tracy-debug #historyBack,
 #tracy-debug #historyForward {
-	border-top-right-radius: 0 !important;
-	border-bottom-right-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
 }
 
 #tracy-debug #clearResults {
-	border-color: transparent !important;
-	/*float: right !important;*/
-	/*padding-right: 0 !important;*/
-	/*margin-left: 8px !important;*/
+    border-color: transparent !important;
+    /*float: right !important;*/
+    /*padding-right: 0 !important;*/
+    /*margin-left: 8px !important;*/
 }
 
 #clearResults:hover {
-	text-decoration: underline;
+    text-decoration: underline;
 }
 .arrowRight {
     transform: scaleX(-1);
@@ -498,8 +512,8 @@ ul.pw-info-links {
 }
 
 #tracyConsoleStatus {
-	font-style: italic;
-	opacity: 0.8;
+    font-style: italic;
+    opacity: 0.8;
 }
 
 .disabledButton {
@@ -535,6 +549,8 @@ ul.pw-info-links {
 
 #tracy-debug-panel-ConsolePanel {
     width: calc(100vw - 40px) !important;
+    padding: 0px !important;
+    margin: 0px !important;
 }
 
 #tracy-debug-panel-ConsolePanel.tracy-mode-window {
@@ -572,7 +588,7 @@ ul.pw-info-links {
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] > .tracy-inner {
     min-width: 400px !important;
     padding-right: 12px !important;
-    margin: 0;
+    margin: 0 !important;
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-window"] > .tracy-inner {
@@ -679,7 +695,7 @@ ul.pw-info-links {
 }
 
 
-#tracy-debug .tracy-DumpPanel h2, #tracyConsoleResult h2 {
+#tracy-debug .tracy-DumpPanel h2, #tracyConsoleResult h2, #tracySnippetRunnerResult h2 {
     font: 11pt/1.5 sans-serif;
     font-size: 14px !important;
     margin: 0;

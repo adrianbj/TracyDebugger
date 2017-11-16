@@ -263,15 +263,15 @@ HTML;
                     </div>
                     <div id="tracyConsoleResult" style="border: 1px solid #D2D2D2; padding: 10px;max-height: 300px; overflow:auto"></div>
                 </div>
-                <div style="float: left; margin-left: 10px; width: 250px; margin-top: -'.($this->wire('page')->template != "admin" ? '60' : '23').'px;">
+                <div style="float: left; margin-left: 10px; width: 280px; margin-top: -'.($this->wire('page')->template != "admin" ? '60' : '23').'px;">
                     <div style="padding-bottom:5px">
                         Sort: <a href="#" onclick="sortList(\'alphabetical\')">alphabetical</a>&nbsp;|&nbsp;<a href="#" onclick="sortList(\'chronological\')">chronological</a>
                     </div>
-                     <div style="position: relative; width:250px !important;">
+                     <div style="position: relative; width:290px !important;">
                         <input type="text" id="tracySnippetName" placeholder="Snippet name..." />
                         <input id="saveSnippet" type="submit" onclick="saveSnippet()" value="&#128190;" title="Save snippet" />
                     </div>
-                    <div id="tracySnippets" style="margin-top: 5px; padding:8px; min-height: 115px; max-height: 187px; overflow:auto"></div>
+                    <div id="tracySnippets"></div>
                 </div>
             </fieldset>
         </div>';

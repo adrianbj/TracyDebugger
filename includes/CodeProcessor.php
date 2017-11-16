@@ -68,9 +68,11 @@ if($user->isSuperuser()) {
     if(isset($_POST['mid']) && $_POST['mid'] != '') $setVars .= '$module = $modules->get("'.$this->wire('sanitizer')->name($_POST['mid']).'"); ';
 
     $codePrefixes = "$openPHP $nameSpace $inPwCheck $setVars";
-    // if Snippet Runner always close php after codePrefixes,
-    // but with Console, only close it if there is a PHP open tag somewhere else in the code
-    if(isset($_POST['tracySnippetRunner']) || strpos($code, '<?') !== false) $codePrefixes .= '?>';
+    // close php after codePrefixes if there is a PHP open tag somewhere in the code,
+    // or it starts with an < without the ? which indicates an HTML opening tag
+    if(strpos($code, '<?') !== false || (substr($code, 0, 1) === '<' && substr($code, 1, 1) !== '?')) {
+        $codePrefixes .= '?>';
+    }
     $code = "$codePrefixes\n$code";
 
     if(!file_put_contents($this->file, $code, LOCK_EX)) throw new WireException("Unable to write file: $this->file");

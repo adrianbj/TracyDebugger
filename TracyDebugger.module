@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.7.12',
+            'version' => '4.7.13',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -421,7 +421,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $this->wire('session')->tracyPwVersion = $this->wire('session')->tracyPwVersion ?: $this->wire('input')->post->tracyPwVersion;
                 while($this->wire('session')->tracyPwVersion != $this->wire('config')->version) {
                     sleep(1);
-                    $this->wire('session')->redirect($this->httpReferer);
+                    $this->wire('session')->redirect($this->httpReferer . (strpos($this->httpReferer, '?') !== false ? '&' : '?') . 'tracyModulesRefresh=1');
                 }
                 $this->wire('session')->remove('tracyPwVersion');
             }
