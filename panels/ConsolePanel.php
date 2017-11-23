@@ -6,18 +6,28 @@
 class ConsolePanel extends BasePanel {
 
     protected $icon;
+    protected $iconColor;
+    protected $tracyIncludeCode;
 
     public function getTab() {
         if(\TracyDebugger::isAdditionalBar()) return;
         \Tracy\Debugger::timer('console');
 
+        $this->tracyIncludeCode = json_decode($this->wire('input')->cookie->tracyIncludeCode, true);
+        if($this->tracyIncludeCode && $this->tracyIncludeCode['when'] !== 'off') {
+            $this->iconColor = '#CD1818';
+        }
+        else {
+            $this->iconColor = '#444444';
+        }
+
         $this->icon = <<< HTML
-        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 471.362 471.362" style="enable-background:new 0 0 471.362 471.362;" xml:space="preserve">
-            <g>
-                <path d="M468.794,355.171c-1.707-1.718-3.897-2.57-6.563-2.57H188.145c-2.664,0-4.854,0.853-6.567,2.57    c-1.711,1.711-2.565,3.897-2.565,6.563v18.274c0,2.662,0.854,4.853,2.565,6.563c1.713,1.712,3.903,2.57,6.567,2.57h274.086    c2.666,0,4.856-0.858,6.563-2.57c1.711-1.711,2.567-3.901,2.567-6.563v-18.274C471.365,359.068,470.513,356.882,468.794,355.171z" fill="#444444"/>
-                <path d="M30.259,85.075c-1.903-1.903-4.093-2.856-6.567-2.856s-4.661,0.953-6.563,2.856L2.852,99.353    C0.95,101.255,0,103.442,0,105.918c0,2.478,0.95,4.664,2.852,6.567L115.06,224.69L2.852,336.896C0.95,338.799,0,340.989,0,343.46    c0,2.478,0.95,4.665,2.852,6.567l14.276,14.273c1.903,1.906,4.089,2.854,6.563,2.854s4.665-0.951,6.567-2.854l133.048-133.045    c1.903-1.902,2.853-4.096,2.853-6.57c0-2.473-0.95-4.663-2.853-6.565L30.259,85.075z" fill="#444444"/>
-            </g>
-        </svg>
+            <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                 width="16px" height="13.7px" viewBox="439 504.1 16 13.7" enable-background="new 439 504.1 16 13.7" xml:space="preserve">
+            <path fill="{$this->iconColor}" d="M453.9,504.1h-13.7c-0.6,0-1.1,0.5-1.1,1.1v11.4c0,0.6,0.5,1.1,1.1,1.1h13.7c0.6,0,1.1-0.5,1.1-1.1v-11.4
+                C455,504.7,454.5,504.1,453.9,504.1z M441.3,512.1l2.3-2.3l-2.3-2.3l1.1-1.1l3.4,3.4l-3.4,3.4L441.3,512.1z M450.4,513.3h-4.6v-1.1
+                h4.6V513.3z"/>
+            </svg>
 HTML;
 
         return '
@@ -66,6 +76,8 @@ HTML;
         else {
             $mid = null;
         }
+
+        $pageUrl = \TracyDebugger::inputUrl(true);
 
         $out = <<< HTML
         <script>
@@ -185,6 +197,20 @@ HTML;
                 tce.focus();
             }
 
+            function tracyIncludeCode(when) {
+                var code = tce.getValue();
+                saveHistory(code);
+                params = {when: when, pid: "{$p->id}"};
+                if(when === 'off') {
+                    document.cookie = "tracyIncludeCode=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
+                }
+                else {
+                    var expires = new Date();
+                    expires.setMinutes( expires.getMinutes() + 5 );
+                    document.cookie = "tracyIncludeCode="+JSON.stringify(params)+";expires="+expires.toGMTString()+";path=/";
+                }
+            }
+
             function callPhp(code) {
 
                 var xmlhttp;
@@ -250,6 +276,7 @@ HTML;
         if ($this->wire('page')->template != "admin") {
             $out .= '<p><label><input type="checkbox" id="accessTemplateVars" /> Allow access to custom variables and functions defined in this page\'s template file and all other included files.</label></p>';
         }
+
         $out .= '
                 <br />
                 <div id="tracyConsoleContainer">
@@ -259,6 +286,12 @@ HTML;
                         <input title="Go back (CTRL+CMD+&#8593;)" id="historyBack" type="submit" onclick="loadHistory(\'back\')" value="&#11013;" />&nbsp;
                         <input title="Go forward (CTRL+CMD+&#8595;)" class="arrowRight" id="historyForward" type="submit" onclick="loadHistory(\'forward\')" value="&#11013;" />
                         <input title="Clear results" type="submit" id="clearResults" onclick="clearResults()" value="&#10006; Clear results" />
+                        <span style="float:right">
+                            <label title="Don\'t Run on Page Load" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyIncludeCode(\'off\')" value="off" '.(!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? ' checked' : '').' /> off</label>&nbsp;
+                            <label title="Run on init" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyIncludeCode(\'init\')" value="init" '.($this->tracyIncludeCode['when'] === 'init' ? ' checked' : '').' /> init</label>&nbsp;
+                            <label title="Run on ready" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyIncludeCode(\'ready\')" value="ready" '.($this->tracyIncludeCode['when'] === 'ready' ? ' checked' : '').' /> ready</label>&nbsp;
+                            <label title="Run on finished" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyIncludeCode(\'finished\')" value="finished" '.($this->tracyIncludeCode['when'] === 'finished' ? ' checked' : '').' /> finished</label>&nbsp;
+                        </span>
                         <span id="tracyConsoleStatus" style="padding: 10px"></span>
                     </div>
                     <div id="tracyConsoleResult" style="border: 1px solid #D2D2D2; padding: 10px;max-height: 300px; overflow:auto"></div>

@@ -133,7 +133,7 @@ class TemplateEditorPanel extends BasePanel {
 
                     // set mode to php
                     JavaScript.load("'.$this->wire('config')->urls->TracyDebugger.'ace-editor/mode-php.js", function() {
-                        tte.session.setMode({path:"ace/mode/php", inline:true});
+                        tte.session.setMode({path:"ace/mode/php"});
                     });
 
                     // set autocomplete and other options

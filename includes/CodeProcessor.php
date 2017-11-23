@@ -1,5 +1,8 @@
 <?php
 
+unset($this->wire('input')->cookie->tracyCodeError);
+setcookie("tracyCodeError", "", time()-3600, '/');
+
 set_error_handler('tracyConsoleErrorHandler');
 set_exception_handler('tracyConsoleExceptionHandler');
 
@@ -32,7 +35,7 @@ if($user->isSuperuser()) {
     if(file_exists($readyPath)) include_once($readyPath);
     if(file_exists($finishedPath)) include_once($finishedPath);
 
-    $cachePath = $config->paths->cache . 'TracyDebugger/';
+    $cachePath = $this->wire('config')->paths->cache . 'TracyDebugger/';
     if(!is_dir($cachePath)) if(!wireMkdir($cachePath)) {
         throw new WireException("Unable to create cache path: $cachePath");
     }
@@ -166,6 +169,8 @@ function tracyConsoleErrorHandler($errno, $errstr, $errfile, $errline) {
         return true;
     }
 
+    setcookie('tracyCodeError', 1, time() + (10 * 365 * 24 * 60 * 60), '/');
+
     // ignore any include/require errors - we are including all files by their full path via
     // $this->wire('session')->tracyIncludedFiles anyway, so the errors caused by relative paths won't matter
     if (strpos($errstr, 'include') !== false || strpos($errstr, 'require') !== false) {
@@ -190,6 +195,8 @@ function tracyConsoleErrorHandler($errno, $errstr, $errfile, $errline) {
 
 // exception handler function
 function tracyConsoleExceptionHandler($err) {
+
+    setcookie('tracyCodeError', 1, time() + (10 * 365 * 24 * 60 * 60), '/');
 
     $errstr = $err->getMessage();
     $errfile = $err->getFile();

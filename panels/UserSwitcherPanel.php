@@ -10,8 +10,6 @@ class UserSwitcherPanel extends BasePanel {
 
     public function getTab() {
 
-        if(\TracyDebugger::getDataValue('outputMode') != 'development') return;
-
         if(\TracyDebugger::isAdditionalBar()) return;
         \Tracy\Debugger::timer('userSwitcher');
 
@@ -44,8 +42,6 @@ class UserSwitcherPanel extends BasePanel {
 
 
     public function getPanel() {
-
-        if(\TracyDebugger::getDataValue('outputMode') != 'development') return;
 
         $userRoles = array();
         foreach($this->wire('user')->roles as $r) {

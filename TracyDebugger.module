@@ -28,11 +28,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public static function getModuleInfo() {
         return array(
-            'title' => 'Tracy Debugger',
-            'summary' => 'Tracy debugger from Nette with several PW specific custom tools.',
+            'title' => __('Tracy Debugger', __FILE__),
+            'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.7.13',
+            'version' => '4.8.0',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -265,10 +265,26 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             return;
         }
 
+
+        // url for $session->redirects
+        $this->httpReferer = isset($_SERVER['HTTP_REFERER']) ? $this->wire('sanitizer')->text($_SERVER['HTTP_REFERER']) : self::inputHttpUrl(true);
+
+
         // modals
         if(in_array('regularModal', $this->data['hideDebugBarModals']) && $this->wire('input')->get->modal == '1') return;
         if(in_array('inlineModal', $this->data['hideDebugBarModals']) && $this->wire('input')->get->modal == 'inline') return;
         if(in_array('overlayPanels', $this->data['hideDebugBarModals']) && $this->wire('input')->get->modal == 'panel') return;
+
+        // iframes
+        if(in_array('allIframes', $this->data['hideDebugBarModals']) &&
+            isset($_SERVER['HTTP_REFERER']) &&
+            $this->wire('config')->urls->httpRoot.self::inputUrl(true) !== $_SERVER['HTTP_REFERER'])
+                return;
+
+        // formbuilder iframe
+        if(in_array('formBuilderIframe', $this->data['hideDebugBarModals']) &&
+            strpos(self::inputUrl(true), '/form-builder/') !== false)
+                return;
 
         // don't init Tracy for @soma's PageEditSoftLock polling on Page Edit
         if(strpos(self::inputUrl(), 'checkpagelock') !== false) return;
@@ -287,6 +303,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             // don't init Tracy for Setup > Logs view polling
             if(strpos($_SERVER['REQUEST_URI'], '/logs/view/') !== false &&
                 strpos($queryString, 'q=') !== false) return;
+
         }
 
 
@@ -311,15 +328,21 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
 
-
-        // url for $session->redirects
-        $this->httpReferer = isset($_SERVER['HTTP_REFERER']) ? $this->wire('sanitizer')->text($_SERVER['HTTP_REFERER']) : self::inputHttpUrl(true);
-
         // determine if we are in the admin / backend
         $this->inAdmin = $this->inAdmin();
 
+
         // USER BAR
-        if(!$this->inAdmin && $this->data['showUserBar'] && count($this->data['userBarFeatures'])>0 && !$this->wire('config')->ajax && (!$this->allowedTracyUsers(null, true) || $this->data['showUserBarTracyUsers']) && $this->wire('user')->isLoggedin()) {
+        if(
+            $this->wire('user')->isLoggedin() &&
+            !$this->inAdmin &&
+            $this->data['showUserBar'] &&
+            count($this->data['userBarFeatures'])>0 &&
+            !$this->wire('config')->ajax &&
+            (!$this->allowedTracyUsers(null, true) || $this->data['showUserBarTracyUsers']) &&
+            (strpos(self::inputUrl(true), '/form-builder/') === false) &&
+            (!isset($_SERVER['HTTP_REFERER']) || $this->wire('config')->urls->httpRoot.self::inputUrl(true) === $_SERVER['HTTP_REFERER'])
+        ) {
             $this->addHookAfter('Page::render', $this, 'addUserBar', array('priority'=>1000));
         }
 
@@ -372,7 +395,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             foreach(static::$allPanels as $panelName => $panelTitle) {
                 if(in_array($panelName, static::$showPanels) && !in_array($panelName, $showPanelsOrdered)) $showPanelsOrdered[$i] = $panelName;
                 // define disabled panels for restricted users
-                if($this->superuserHasPermission(null, "tracy-restricted-panels") && in_array($panelName, $this->data['restrictedUserDisabledPanels'])) {
+                if(($this->superuserHasPermission("tracy-restricted-panels") || $this->wire('user')->hasRole("tracy-restricted-panels")) && in_array($panelName, $this->data['restrictedUserDisabledPanels'])) {
                     static::$restrictedUserDisabledPanels[] = $panelName;
                 }
                 $i++;
@@ -429,7 +452,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             // USER SWITCHER
             // process userSwitcher if panel open and switch initiated
-            if(in_array('userSwitcher', static::$showPanels) && $this->wire('input')->post->userSwitcher && $this->data['outputMode'] == 'development') {
+            if(in_array('userSwitcher', static::$showPanels) && $this->wire('input')->post->userSwitcher) {
                 // if user is superuser and session length is set, save to config settings
                 if($this->wire('user')->isSuperuser() && $this->wire('input')->post->userSwitchSessionLength && $this->wire('session')->CSRF->validate()) {
                     // cleanup expired sessions
@@ -612,6 +635,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // always needs to be loaded to prevent function not defined errors when user not allowed to use Tracy
         if($this->data['enableShortcutMethods']) {
             require_once __DIR__ . '/includes/ShortcutMethods.php';
+        }
+
+
+        // CONSOLE PANEL CODE INJECTION
+        if($this->allowedTracyUsers() === 'full') {
+            $this->insertCode('init');
+            $this->addHookBefore('ProcessWire::finished', function($event) {
+                $this->insertCode('finished');
+            });
         }
 
 
@@ -879,13 +911,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // check if current user has a matching permission for the current page's template
         if($this->data['userDevTemplate'] && $this->wire('permissions')->get("tracy-".$this->wire('page')->template->name."-".$this->data['userDevTemplateSuffix'])->id) {
             $devTemplateFilename = str_replace('.php', '-'.$this->data['userDevTemplateSuffix'].'.php', $this->wire('page')->template->filename);
-            if(file_exists($devTemplateFilename) && $this->superuserHasPermission(null, "tracy-".$this->wire('page')->template->name."-".$this->data['userDevTemplateSuffix'])) {
+            if(file_exists($devTemplateFilename) && $this->wire('user')->hasPermission("tracy-".$this->wire('page')->template->name."-".$this->data['userDevTemplateSuffix'])) {
                 $this->wire('page')->template->filename = static::$templatePath = static::$templatePathPermission = $devTemplateFilename;
             }
         }
 
 
         if($this->allowedTracyUsers() === 'full') {
+
+            // CONSOLE PANEL CODE INJECTION
+            $this->insertCode('ready');
+
+
             // TEMPLATE EDITOR
             // if template editor changes submitted
             if($this->wire('input')->post->tracyTemplateEditorRawCode && $this->wire('user')->isSuperuser()) {
@@ -936,7 +973,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if(($panel == 'console' || $panel == 'snippetRunner' || $panel == 'templateEditor') && !$this->wire('user')->isSuperuser()) continue;
             if($panel == 'userSwitcher') {
                 if(isset($this->data['userSwitchSession'])) $userSwitchSession = $this->data['userSwitchSession'];
-                if($this->data['outputMode'] != 'development' || (!$this->wire('user')->isSuperuser() && (!$this->wire('session')->tracyUserSwitcherId || (isset($userSwitchSession[$this->wire('session')->tracyUserSwitcherId]) && $userSwitchSession[$this->wire('session')->tracyUserSwitcherId] <= time())))) continue;
+                if(!$this->wire('user')->isSuperuser() && (!$this->wire('session')->tracyUserSwitcherId || (isset($userSwitchSession[$this->wire('session')->tracyUserSwitcherId]) && $userSwitchSession[$this->wire('session')->tracyUserSwitcherId] <= time()))) continue;
             }
             // ignore disabled panels for restricted users
             if(!empty(static::$restrictedUserDisabledPanels) && in_array($panel, static::$restrictedUserDisabledPanels)) continue;
@@ -1383,9 +1420,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * @return bool
      *
      */
-    private function superuserHasPermission($u = null, $permission) {
-        $u = $u ? $u : $this->wire('user');
-        foreach($u->roles as $role) {
+    private function superuserHasPermission($permission) {
+        foreach($this->wire('user')->roles as $role) {
             foreach($role->permissions as $perm) {
                 if($perm->name == $permission) return true;
             }
@@ -1474,6 +1510,26 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
         else return;
 
+    }
+
+
+    private function insertCode($when) {
+        if(!$this->wire('user')->isSuperuser() ||
+            $this->wire('config')->ajax ||
+            $this->wire('input')->cookie->tracyCodeError ||
+            !$this->wire('input')->cookie->tracyIncludeCode)
+                return;
+
+        $options = json_decode($this->wire('input')->cookie->tracyIncludeCode, true);
+        if($options['when'] !== $when) return;
+
+        // populate API variables, eg so $page equals $this->wire('page')
+        $pwVars = function_exists('wire') ? $this->fuel : \ProcessWire\wire('all');
+        foreach($pwVars->getArray() as $key => $value) {
+            $$key = $value;
+        }
+        $page = $pages->get((int)$options['pid']);
+        include_once($this->wire('config')->paths->cache . 'TracyDebugger/consoleCode.php');
     }
 
 
@@ -2104,11 +2160,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldCheckboxes");
         $f->attr('name', 'hideDebugBarModals');
-        $f->label = __('No Debug Bar in Modals', __FILE__);
+        $f->label = __('No Debug Bar in ...', __FILE__);
         $f->columnWidth = 34;
         $f->addOption('regularModal', 'Regular Modal');
         $f->addOption('inlineModal', 'Inline Modal');
         $f->addOption('overlayPanels', 'Overlay Panels');
+        $f->addOption('formBuilderIframe', 'Form Builder iframe');
+        $f->addOption('allIframes', 'All iframes');
         if($data['hideDebugBarModals']) $f->attr('value', $data['hideDebugBarModals']);
         $fieldset->add($f);
 
@@ -2178,7 +2236,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = $this->wire('modules')->get("InputfieldCheckboxes");
         $f->attr('name', 'restrictedUserDisabledPanels');
         $f->label = __('Disabled Panels for Restricted Users', __FILE__);
-        $f->description = __('Check the panels that should NOT be shown to users with the "tracy-restricted-panels" user permission.', __FILE__);
+        $f->description = __('Check the panels that should NOT be shown to users with the "tracy-restricted-panels" role or permission.', __FILE__);
         $f->notes = __('Unchecked panels will still only be shown to restricted users if they are selected in the Front/Back-end options above.', __FILE__);
         $f->optionColumns = 3;
         foreach(static::$allPanels as $name => $label) {

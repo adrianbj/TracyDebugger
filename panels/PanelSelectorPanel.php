@@ -130,10 +130,10 @@ class PanelSelectorPanel extends BasePanel {
                     foreach(\TracyDebugger::$allPanels as $name => $label) {
 
                         if(in_array($name, \TracyDebugger::$restrictedUserDisabledPanels)) continue;
-
+                        if(($name == 'console' || $name == 'snippetRunner' || $name == 'templateEditor') && !$this->wire('user')->isSuperuser()) continue;
                         if($name == 'userSwitcher') {
                             if(\TracyDebugger::getDataValue('userSwitchSession') != '') $userSwitchSession = \TracyDebugger::getDataValue('userSwitchSession');
-                            if(\TracyDebugger::getDataValue('outputMode') != 'development' || (!$this->wire('user')->isSuperuser() && (!$this->wire('session')->tracyUserSwitcherId || (isset($userSwitchSession[$this->wire('session')->tracyUserSwitcherId]) && $userSwitchSession[$this->wire('session')->tracyUserSwitcherId] <= time())))) continue;
+                            if(!$this->wire('user')->isSuperuser() && (!$this->wire('session')->tracyUserSwitcherId || (isset($userSwitchSession[$this->wire('session')->tracyUserSwitcherId]) && $userSwitchSession[$this->wire('session')->tracyUserSwitcherId] <= time()))) continue;
                         }
 
                         $seconds = isset(\TracyDebugger::$panelGenerationTime[$name]['time']) ? \TracyDebugger::$panelGenerationTime[$name]['time'] : '';
