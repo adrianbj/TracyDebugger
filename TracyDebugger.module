@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.8.0',
+            'version' => '4.8.1',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -275,12 +275,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if(in_array('inlineModal', $this->data['hideDebugBarModals']) && $this->wire('input')->get->modal == 'inline') return;
         if(in_array('overlayPanels', $this->data['hideDebugBarModals']) && $this->wire('input')->get->modal == 'panel') return;
 
-        // iframes
-        if(in_array('allIframes', $this->data['hideDebugBarModals']) &&
-            isset($_SERVER['HTTP_REFERER']) &&
-            $this->wire('config')->urls->httpRoot.self::inputUrl(true) !== $_SERVER['HTTP_REFERER'])
-                return;
-
         // formbuilder iframe
         if(in_array('formBuilderIframe', $this->data['hideDebugBarModals']) &&
             strpos(self::inputUrl(true), '/form-builder/') !== false)
@@ -340,8 +334,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             count($this->data['userBarFeatures'])>0 &&
             !$this->wire('config')->ajax &&
             (!$this->allowedTracyUsers(null, true) || $this->data['showUserBarTracyUsers']) &&
-            (strpos(self::inputUrl(true), '/form-builder/') === false) &&
-            (!isset($_SERVER['HTTP_REFERER']) || $this->wire('config')->urls->httpRoot.self::inputUrl(true) === $_SERVER['HTTP_REFERER'])
+            (strpos(self::inputUrl(true), '/form-builder/') === false)
         ) {
             $this->addHookAfter('Page::render', $this, 'addUserBar', array('priority'=>1000));
         }
@@ -911,7 +904,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // check if current user has a matching permission for the current page's template
         if($this->data['userDevTemplate'] && $this->wire('permissions')->get("tracy-".$this->wire('page')->template->name."-".$this->data['userDevTemplateSuffix'])->id) {
             $devTemplateFilename = str_replace('.php', '-'.$this->data['userDevTemplateSuffix'].'.php', $this->wire('page')->template->filename);
-            if(file_exists($devTemplateFilename) && $this->wire('user')->hasPermission("tracy-".$this->wire('page')->template->name."-".$this->data['userDevTemplateSuffix'])) {
+            if(file_exists($devTemplateFilename) && $this->superuserHasPermission("tracy-".$this->wire('page')->template->name."-".$this->data['userDevTemplateSuffix'])) {
                 $this->wire('page')->template->filename = static::$templatePath = static::$templatePathPermission = $devTemplateFilename;
             }
         }
@@ -2166,7 +2159,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->addOption('inlineModal', 'Inline Modal');
         $f->addOption('overlayPanels', 'Overlay Panels');
         $f->addOption('formBuilderIframe', 'Form Builder iframe');
-        $f->addOption('allIframes', 'All iframes');
         if($data['hideDebugBarModals']) $f->attr('value', $data['hideDebugBarModals']);
         $fieldset->add($f);
 
