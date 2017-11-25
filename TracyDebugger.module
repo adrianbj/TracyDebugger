@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.8.3',
+            'version' => '4.8.4',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -1193,8 +1193,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 window.onload = function(e) {
                     window.Tracy.DebugPanel.zIndex = z = '.$this->data['panelZindex'].';
                     var panels = document.getElementsByClassName("tracy-panel");
-                    for (var i = 0; i < panels.length; i++) {
-                        panels[i].style.zIndex = z++;
+                    if(panels.length > 0) {
+                        for (var i = 0; i < panels.length; i++) {
+                            panels[i].style.zIndex = z++;
+                        }
                     }
                 };
 
