@@ -188,7 +188,12 @@ HTML;
             }
 
             function processTracyCode() {
-                var code = tce.getValue();
+                if(tce.getSession().doc.getTextRange(tce.selection.getRange()) != '') {
+                    var code = tce.getSession().doc.getTextRange(tce.selection.getRange());
+                }
+                else {
+                    var code = tce.getValue();
+                }
                 document.getElementById("tracyConsoleStatus").innerHTML = "Processing";
                 callPhp(code);
                 saveHistory(code);

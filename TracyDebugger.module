@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.8.2',
+            'version' => '4.8.3',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -1522,7 +1522,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $$key = $value;
         }
         $page = $pages->get((int)$options['pid']);
-        include_once($this->wire('config')->paths->cache . 'TracyDebugger/consoleCode.php');
+        $consoleCodeFile = $this->wire('config')->paths->cache . 'TracyDebugger/consoleCode.php';
+        if(file_exists($consoleCodeFile)) {
+            require_once($consoleCodeFile);
+        }
+        else {
+            unset($_COOKIE['tracyIncludeCode']);
+            $this->wire('input')->cookie->remove('tracyIncludeCode');
+        }
     }
 
 
