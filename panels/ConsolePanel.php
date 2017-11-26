@@ -1,8 +1,5 @@
 <?php
 
-/**
- * Console panel
- */
 class ConsolePanel extends BasePanel {
 
     protected $icon;
@@ -131,22 +128,11 @@ HTML;
                 }
             };
 
-
             document.getElementById("tracyConsoleCode").addEventListener("keydown", function(e) {
                 if(((e.keyCode==10||e.charCode==10)||(e.keyCode==13||e.charCode==13)) && (e.metaKey || e.ctrlKey || e.altKey)) {
                     if(e.altKey) clearResults();
                     processTracyCode();
-                    var tracyConsoleEditor = {
-                        "scrollTop": tce.session.getScrollTop(),
-                        "scrollLeft": tce.session.getScrollLeft(),
-                        "row": Number(tce.selection.getCursor()["row"]) + 1,
-                        "column": tce.selection.getCursor()["column"]
-                    };
-                    localStorage.setItem("tracyConsoleEditor", JSON.stringify(tracyConsoleEditor));
                 }
-            });
-
-            document.getElementById("tracyConsoleCode").addEventListener("keydown", function(e) {
                 if((e.keyCode==38||e.charCode==38) && e.ctrlKey && e.metaKey) {
                     loadHistory('back');
                 }
@@ -155,7 +141,7 @@ HTML;
                 }
             });
 
-            function tryParseJSON (str){
+            function tryParseJSON(str){
                 if(!isNaN(str)) return str; // JSON.parse on numbers not being parsed and returning false
                 try {
                     var o = JSON.parse(str);
@@ -174,7 +160,7 @@ HTML;
                         }
                     }
                 }
-                catch (e) {
+                catch(e) {
                     return str;
                 }
 
@@ -191,15 +177,13 @@ HTML;
                 var code = tce.getSelectedText() || tce.getValue();
                 document.getElementById("tracyConsoleStatus").innerHTML = "Processing";
                 callPhp(code);
-                saveHistory(code);
+                saveHistory();
                 disableButton("historyForward");
                 if(historyCount > 1) enableButton("historyBack");
                 tce.focus();
             }
 
             function tracyIncludeCode(when) {
-                var code = tce.getValue();
-                saveHistory(code);
                 params = {when: when, pid: "{$p->id}"};
                 if(when === 'off') {
                     document.cookie = "tracyIncludeCode=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
@@ -449,7 +433,7 @@ HTML;
                 for (var key in tracyConsoleHistory) {
                     if (!tracyConsoleHistory.hasOwnProperty(key)) continue;
                     var obj = tracyConsoleHistory[key];
-                    if(obj.id === id) return obj.code;
+                    if(obj.id === id) return obj;
                 }
             }
 
@@ -485,10 +469,8 @@ HTML;
 
                 localStorage.setItem("tracyConsoleHistoryItem", historyItem);
 
-                tce.setValue(getHistoryItem(id));
-                // go to end of the last line
-                count = tce.session.getLength();
-                tce.gotoLine(count, tce.session.getLine(count-1).length);
+                setEditorState(getHistoryItem(id));
+
                 tce.focus();
             }
 
@@ -496,14 +478,14 @@ HTML;
                 loadedSnippetCode = getSnippet(name);
                 tce.setValue(loadedSnippetCode);
                 document.getElementById("tracySnippetName").value = name;
-                // go to end of the last line
-                count = tce.session.getLength();
-                tce.gotoLine(count, tce.session.getLine(count-1).length);
+                tce.gotoLine(0,0);
                 tce.focus();
                 ++historyItem;
             }
 
-            function saveHistory(code) {
+            function saveHistory() {
+                var code = tce.getValue();
+                var selections = tce.selection.toJSON();
                 if(code) {
                     var existingItems = JSON.parse(localStorage.getItem("tracyConsoleHistory"));
                     var numItems = 0;
@@ -518,11 +500,11 @@ HTML;
                         if (!existingItems.hasOwnProperty(key)) continue;
                         ++count;
                         if(numItems === maxHistoryItems && count === 1) continue;
-                        tracyConsoleHistory.push({id: id, code: existingItems[key].code});
+                        tracyConsoleHistory.push({id: id, code: existingItems[key].code, selections: existingItems[key].selections, scrollTop: existingItems[key].scrollTop, scrollLeft: existingItems[key].scrollLeft});
                         ++id;
                     }
                     // add new item
-                    tracyConsoleHistory.push({id: id, code: code});
+                    tracyConsoleHistory.push({id: id, code: code, selections: selections, scrollTop: tce.session.getScrollTop(), scrollLeft: tce.session.getScrollLeft()});
 
                     localStorage.setItem("tracyConsoleHistoryCount", historyCount = id);
                     localStorage.setItem("tracyConsoleHistoryItem", historyItem = id);
@@ -554,6 +536,18 @@ HTML;
                 item.classList.add("activeSnippet");
             }
 
+            function saveToLocalStorage(name) {
+                var tracyHistoryItem = {code: tce.getValue(), selections: tce.selection.toJSON(), scrollTop: tce.session.getScrollTop(), scrollLeft: tce.session.getScrollLeft()};
+                localStorage.setItem(name, JSON.stringify(tracyHistoryItem));
+            }
+
+            function setEditorState(data) {
+                tce.setValue(data.code);
+                tce.selection.fromJSON(data.selections);
+                tce.session.setScrollTop(data.scrollTop);
+                tce.session.setScrollLeft(data.scrollLeft);
+            }
+
             JavaScript.load(tracyModuleUrl + "ace-editor/ace.js", function() {
                 if(typeof ace !== "undefined") {
                     tce = ace.edit("tracyConsoleCode");
@@ -563,7 +557,7 @@ HTML;
                     tce.\$blockScrolling = Infinity; //fix deprecation warning
 
                     tce.on("beforeEndOperation", function(e) {
-                        localStorage.setItem("tracyConsole", tce.getValue());
+                        saveToLocalStorage('tracyConsole');
                         var tracySnippetName = document.getElementById("tracySnippetName").value;
                         if(typeof loadedSnippetCode === 'undefined' || (tracySnippetName != '' && tce.getValue() != loadedSnippetCode)) {
                             enableButton("saveSnippet");
@@ -571,6 +565,13 @@ HTML;
                         else {
                             disableButton("saveSnippet");
                         }
+                    });
+
+                    tce.session.on("changeScrollTop", function() {
+                        saveToLocalStorage('tracyConsole');
+                    });
+                    tce.session.on("changeScrollLeft", function() {
+                        saveToLocalStorage('tracyConsole');
                     });
 
                     // set theme
@@ -594,26 +595,34 @@ HTML;
                         });
                         document.getElementById("tracyConsoleCode").style.visibility = "visible";
                         if(!!localStorage.getItem("tracyConsole") && localStorage.getItem("tracyConsole") !== "null" && localStorage.getItem("tracyConsole") !== "undefined") {
-                            tce.setValue(localStorage.getItem("tracyConsole"));
+                            try {
+                                setEditorState(JSON.parse(localStorage.getItem("tracyConsole")));
+                            }
+                            catch(e) {
+                                // for users upgrading from old version of Console panel that didn't store selection & scroll info
+                                tce.setValue(localStorage.getItem("tracyConsole"));
+                            }
                         }
                         else {
                             tce.setValue({$code});
+                            count = tce.session.getLength();
+                            tce.gotoLine(count, tce.session.getLine(count-1).length);
                         }
 
                         tce.focus();
 
-                        // go to last cursor position
-                        var tracyConsoleEditor = JSON.parse(localStorage.getItem("tracyConsoleEditor"));
-                        if(!!tracyConsoleEditor) {
-                            tce.gotoLine(tracyConsoleEditor.row, tracyConsoleEditor.column);
-                            tce.session.setScrollTop(tracyConsoleEditor.scrollTop);
-                            tce.session.setScrollLeft(tracyConsoleEditor.scrollLeft);
-                        }
-                        else {
-                            // go to end of the last line
-                            count = tce.session.getLength();
-                            tce.gotoLine(count, tce.session.getLine(count-1).length);
-                        }
+                        // checks for changes to Console panel class which indicates focus so we can focus cursor in editor
+                        var observer = new MutationObserver(function(mutations) {
+                            mutations.forEach(function(mutation) {
+                                if(mutation.attributeName === "class") {
+                                    tce.focus();
+                                }
+                            });
+                        });
+                        observer.observe(document.getElementById("tracy-debug-panel-ConsolePanel"), {
+                            attributes: true
+                        });
+
 
                         function resizeAce() {
                             var ml = Math.round(Math.max(document.documentElement.clientHeight, window.innerHeight || 0) / 60);

@@ -257,7 +257,7 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
 #tracy-debug pre.tracy-dump {
     background: transparent !important;
     padding: .4em 2em .4em .7em !important;
-    margin-top: 0 !important;
+    margin: 0 0 20px 0 !important;
 }
 
 .tracy-inner td {
@@ -564,7 +564,7 @@ ul.pw-info-links {
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-window"] #tracyConsoleContainer {
     float: left;
-    width: calc(100vw - 320px) !important;
+    width: calc(100vw - 330px) !important;
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] {
