@@ -72,6 +72,23 @@ class ProcesswireInfoPanel extends BasePanel {
 
         $out = '';
 
+        if(in_array('gotoId', $panelSections)) {
+            $out .= '
+            <script>
+                function gotoPage(type) {
+                    var pageId = document.getElementById(\'pageId\').value;
+                    if(type == "view") {
+                        window.location.href = "'.\TracyDebugger::inputUrl(true) . (strpos(\TracyDebugger::inputUrl(true), '?') !== false ? '&' : '?') . 'tracyViewPage="+pageId;
+                    }
+                    else {
+                        window.location.href = "'.$this->wire('config')->urls->admin.'page/edit/?id="+pageId;
+                    }
+                    return false;
+                }
+            </script>
+            ';
+        }
+
         if(in_array('processWireWebsiteSearch', $panelSections)) {
             $out .= '
             <script>
@@ -567,20 +584,22 @@ class ProcesswireInfoPanel extends BasePanel {
                 '</li>
             </ul>';
 
+            if(in_array('gotoId', $panelSections)) {
+                $out .= '
+                <form onsubmit="return false;" style="border-top: 1px solid #CCCCCC; margin:10px 0 0 0 ; padding: 10px 0 0 0;">
+                    <input id="pageId" name="pageId" placeholder="Goto Page ID" type="text" />
+                    <input onclick="gotoPage(\'view\')" type="submit" name="idGoToView" value="View" />
+                    <input onclick="gotoPage(\'edit\')" type="submit" name="idGoToEdit" value="Edit" />
+                </form>
+                ';
+            }
+
             if(in_array('processWireWebsiteSearch', $panelSections)) {
                 $out .= '
                 <form onsubmit="searchPw(this); return false;" style="border-top: 1px solid #CCCCCC; margin:10px 0 0 0 ; padding: 10px 0 0 0;">
-                    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-                         width="16px" height="16px" viewBox="234.6 234.6 16 16" enable-background="new 234.6 234.6 16 16" xml:space="preserve">
-                        <g>
-                            <path fill="#ee1d62" d="M246.6,240.6c0-3.3-2.7-6-6-6c-3.3,0-6,2.7-6,6c0,3.3,2.7,6,6,6C243.9,246.6,246.6,243.9,246.6,240.6z M240.6,245.1
-                                c-2.5,0-4.5-2-4.5-4.5s2-4.5,4.5-4.5c2.5,0,4.5,2,4.5,4.5S243.1,245.1,240.6,245.1z"/>
-                            <path fill="#ee1d62" d="M250.2,248l-3.7-3.7c-0.5,0.9-1.3,1.6-2.1,2.1l3.7,3.7c0.6,0.6,1.5,0.6,2.1,0C250.8,249.6,250.8,248.6,250.2,248z"/>
-                        </g>
-                    </svg>&nbsp;
                     <input id="pwquery" name="pwquery" placeholder="Search ProcessWire" type="text" />
                     <input type="submit" name="pwsearch" value="Search" />
-                    <div style="padding: 12px 0 0 23px; font-size: 13px">
+                    <div style="padding: 12px 0 0 0; font-size: 13px">
                         <label><input id="section" type="radio" name="section" value="/" checked> All&nbsp;</label>
                         <label><input id="section" type="radio" name="section" value="/talk/"> Forums&nbsp;</label>
                         <label><input id="section" type="radio" name="section" value="/api/ref/"> API&nbsp;</label>
@@ -590,6 +609,7 @@ class ProcesswireInfoPanel extends BasePanel {
                 </form>
                 ';
             }
+
         }
 
         $out .= \TracyDebugger::generatedTimeSize('processwireInfo', \Tracy\Debugger::timer('processwireInfo'), strlen($out));

@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.8.5',
+            'version' => '4.8.6',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -81,6 +81,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'versionsList' => 'Versions List',
         'adminLinks' => 'Admin Links',
         'documentationLinks' => 'Documentation Links',
+        'gotoId' => 'Goto Page By ID',
         'processWireWebsiteSearch' => 'ProcessWire Website Search'
     );
     public static $requestInfoSections = array(
@@ -402,6 +403,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
             // ProcessWire Info panel early redirects
+
+            // view page
+            if($this->wire('input')->get->tracyViewPage) {
+                $this->wire('session')->redirect($this->wire('pages')->get((int)$this->wire('input')->get->tracyViewPage)->url);
+            }
 
             // logout
             if($this->wire('input')->get->tracyLogout) {
