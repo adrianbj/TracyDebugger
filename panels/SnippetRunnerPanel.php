@@ -139,6 +139,16 @@ HTML;
                 return false;
             };
 
+            function getQueryVariable(variable, url) {
+                var vars = url.split('&');
+                for (var i = 0; i < vars.length; i++) {
+                    var pair = vars[i].split('=');
+                    if (decodeURIComponent(pair[0]) == variable) {
+                        return decodeURIComponent(pair[1]);
+                    }
+                }
+            }
+
             function clearSnippetRunnerResults() {
                 document.getElementById("tracySnippetRunnerResult").innerHTML = "";
                 document.getElementById("tracySnippetRunnerStatus").innerHTML = "";
@@ -165,16 +175,21 @@ HTML;
 
                 xmlhttp.onreadystatechange = function() {
                     if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
+                        document.getElementById("tracySnippetRunnerStatus").innerHTML = "Completed!";
                         if(xmlhttp.status == 200){
                             document.getElementById("tracySnippetRunnerResult").innerHTML += tryParseJSON(xmlhttp.responseText);
-                            document.getElementById("tracySnippetRunnerStatus").innerHTML = "Completed!";
                             // scroll to bottom of results
                             var objDiv = document.getElementById("tracySnippetRunnerResult");
                             objDiv.scrollTop = objDiv.scrollHeight;
                         }
                         else {
-                            document.getElementById("tracySnippetRunnerResult").innerHTML = xmlhttp.status+": " + xmlhttp.statusText + "<br />See the browser dev console Network panel for more error information<br />Reload page to restore console<div style='border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;'></div>";
-                            document.write(xmlhttp.responseText);
+                            var tracyBsError = new DOMParser().parseFromString(xmlhttp.responseText, "text/html");
+                            var tracyBsErrorDiv = tracyBsError.getElementById("tracy-bs-error");
+                            var tracyBsErrorType = tracyBsErrorDiv.getElementsByTagName('p')[0].innerHTML;
+                            var tracyBsErrorText = tracyBsErrorDiv.getElementsByTagName('h1')[0].getElementsByTagName('span')[0].innerHTML;
+                            var tracyBsErrorLineNum = getQueryVariable('line', tracyBsError.querySelector('[data-tracy-href]').getAttribute("data-tracy-href")) - 1;
+                            var tracyBsErrorStr = "<br />" + tracyBsErrorType + ": " + tracyBsErrorText + " on line: " + tracyBsErrorLineNum + "<br />";
+                            document.getElementById("tracySnippetRunnerResult").innerHTML = xmlhttp.status+": " + xmlhttp.statusText + tracyBsErrorStr + "<div style='border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;'></div>";
                         }
                         xmlhttp.getAllResponseHeaders();
                     }
