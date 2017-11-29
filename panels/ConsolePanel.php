@@ -237,7 +237,7 @@ HTML;
 
                             var expires = new Date();
                             expires.setMinutes(expires.getMinutes() + (10 * 365 * 24 * 60));
-                            document.cookie = "tracyCodeError="+xmlhttp.status+": " + xmlhttp.statusText + "<br />Rerun to see error information;expires="+expires.toGMTString()+";path=/";
+                            document.cookie = "tracyCodeError="+xmlhttp.status+": " + xmlhttp.statusText + tracyBsErrorStr + ";expires="+expires.toGMTString()+";path=/";
                         }
                         xmlhttp.getAllResponseHeaders();
                     }
