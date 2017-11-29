@@ -173,7 +173,8 @@ HTML;
                             objDiv.scrollTop = objDiv.scrollHeight;
                         }
                         else {
-                            document.getElementById("tracySnippetRunnerResult").innerHTML = xmlhttp.status+": " + xmlhttp.statusText + "<br />See the browser dev console for the actual error";
+                            document.getElementById("tracySnippetRunnerResult").innerHTML = xmlhttp.status+": " + xmlhttp.statusText + "<br />See the browser dev console Network panel for more error information<br />Reload page to restore console<div style='border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;'></div>";
+                            document.write(xmlhttp.responseText);
                         }
                         xmlhttp.getAllResponseHeaders();
                     }

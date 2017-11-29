@@ -169,8 +169,6 @@ function tracyConsoleErrorHandler($errno, $errstr, $errfile, $errline) {
         return true;
     }
 
-    setcookie('tracyCodeError', 1, time() + (10 * 365 * 24 * 60 * 60), '/');
-
     // ignore any include/require errors - we are including all files by their full path via
     // $this->wire('session')->tracyIncludedFiles anyway, so the errors caused by relative paths won't matter
     if (strpos($errstr, 'include') !== false || strpos($errstr, 'require') !== false) {
@@ -181,6 +179,8 @@ function tracyConsoleErrorHandler($errno, $errstr, $errfile, $errline) {
         $customErrStrLog = $customErrStr . (strpos($errfile, 'cache/TracyDebugger') !== false ? ' in Tracy Console Panel' : '');
         \TD::fireLog($customErrStrLog);
         \TD::log($customErrStrLog, 'error');
+
+        setcookie('tracyCodeError', 'Error: '.$customErrStr, time() + (10 * 365 * 24 * 60 * 60), '/');
 
         // echo and exit approach allows us to send error to Tracy console dump area
         // this means that the browser will receive a 200 when it may have been a 500,
@@ -196,8 +196,6 @@ function tracyConsoleErrorHandler($errno, $errstr, $errfile, $errline) {
 // exception handler function
 function tracyConsoleExceptionHandler($err) {
 
-    setcookie('tracyCodeError', 1, time() + (10 * 365 * 24 * 60 * 60), '/');
-
     $errstr = $err->getMessage();
     $errfile = $err->getFile();
     $errline = $err->getLine();
@@ -206,6 +204,8 @@ function tracyConsoleExceptionHandler($err) {
     $customErrStrLog = $customErrStr . (strpos($errfile, 'cache/TracyDebugger') !== false ? ' in Tracy Console Panel' : '');
     \TD::fireLog($customErrStrLog);
     \TD::log($customErrStrLog, 'error');
+
+    setcookie('tracyCodeError', 'Exception: '.$customErrStr, time() + (10 * 365 * 24 * 60 * 60), '/');
 
     echo 'Exception: '.$customErrStr;
     echo '<div style="border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;"></div>';

@@ -217,10 +217,11 @@ HTML;
                             objDiv.scrollTop = objDiv.scrollHeight;
                         }
                         else {
-                            document.getElementById("tracyConsoleResult").innerHTML = xmlhttp.status+": " + xmlhttp.statusText + "<br />See the browser dev console for the actual error";
+                            document.getElementById("tracyConsoleResult").innerHTML = xmlhttp.status+": " + xmlhttp.statusText + "<br />See the browser dev console Network panel for more error information<br />Reload page to restore console<div style='border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;'></div>";
+                            document.write(xmlhttp.responseText);
                             var expires = new Date();
                             expires.setMinutes(expires.getMinutes() + (10 * 365 * 24 * 60));
-                            document.cookie = "tracyCodeError=1;expires="+expires.toGMTString()+";path=/";
+                            document.cookie = "tracyCodeError="+xmlhttp.status+": " + xmlhttp.statusText + "<br />Rerun to see error information;expires="+expires.toGMTString()+";path=/";
                         }
                         xmlhttp.getAllResponseHeaders();
                     }
@@ -281,7 +282,13 @@ HTML;
                         </span>
                         <span id="tracyConsoleStatus" style="padding: 10px"></span>
                     </div>
-                    <div id="tracyConsoleResult" style="border: 1px solid #D2D2D2; padding: 10px;max-height: 300px; overflow:auto"></div>
+                    <div id="tracyConsoleResult" style="border: 1px solid #D2D2D2; padding: 10px;max-height: 300px; overflow:auto">';
+                        if($this->wire('input')->cookie->tracyCodeError) {
+                            $out .= $this->wire('input')->cookie->tracyCodeError.
+                            '<div style="border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;"></div>';
+                        }
+                    $out .= '
+                    </div>
                 </div>
                 <div style="float: left; margin-left: 10px; width: 280px; margin-top: -'.($this->wire('page')->template != "admin" ? '60' : '23').'px;">
                     <div style="padding-bottom:5px">
