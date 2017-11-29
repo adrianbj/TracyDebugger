@@ -12,7 +12,7 @@ class ConsolePanel extends BasePanel {
 
         $this->tracyIncludeCode = json_decode($this->wire('input')->cookie->tracyIncludeCode, true);
         if($this->tracyIncludeCode && $this->tracyIncludeCode['when'] !== 'off') {
-            $this->iconColor = '#CD1818';
+            $this->iconColor = $this->wire('input')->cookie->tracyCodeError ? '#CD1818' : '#FF9933';
         }
         else {
             $this->iconColor = '#444444';
@@ -190,7 +190,7 @@ HTML;
                 }
                 else {
                     var expires = new Date();
-                    expires.setMinutes( expires.getMinutes() + 5 );
+                    expires.setMinutes(expires.getMinutes() + 5);
                     document.cookie = "tracyIncludeCode="+JSON.stringify(params)+";expires="+expires.toGMTString()+";path=/";
                 }
             }
@@ -218,6 +218,9 @@ HTML;
                         }
                         else {
                             document.getElementById("tracyConsoleResult").innerHTML = xmlhttp.status+": " + xmlhttp.statusText + "<br />See the browser dev console for the actual error";
+                            var expires = new Date();
+                            expires.setMinutes(expires.getMinutes() + (10 * 365 * 24 * 60));
+                            document.cookie = "tracyCodeError=1;expires="+expires.toGMTString()+";path=/";
                         }
                         xmlhttp.getAllResponseHeaders();
                     }
