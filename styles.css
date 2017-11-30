@@ -230,6 +230,23 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
     color: #444444;
 }
 
+
+#tracy-debug .tracyLinkBtn {
+    background: #F0F3F7 !important;
+    border: 1px solid #D2D2D2 !important;
+    border-radius: 0 !important;
+    padding: 5px 8px !important;
+    color: #2C3E50;
+    transition: all 0.12s;
+}
+
+#tracy-debug .tracyLinkBtn:hover {
+    background: #fff !important;
+    color: #2C3E50 !important;
+    border-color: #b8c7d8 !important;
+}
+
+
 #tracy-debug fieldset {
     all: initial !important;
     font: inherit !important;

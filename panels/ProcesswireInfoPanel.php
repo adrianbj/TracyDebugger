@@ -75,16 +75,10 @@ class ProcesswireInfoPanel extends BasePanel {
         if(in_array('gotoId', $panelSections)) {
             $out .= '
             <script>
-                function gotoPage(type) {
-                    var pageId = document.getElementById(\'pageId\').value;
-                    if(type == "view") {
-                        window.location.href = "'.\TracyDebugger::inputUrl(true) . (strpos(\TracyDebugger::inputUrl(true), '?') !== false ? '&' : '?') . 'tracyViewPage="+pageId;
-                    }
-                    else {
-                        window.location.href = "'.$this->wire('config')->urls->admin.'page/edit/?id="+pageId;
-                    }
-                    return false;
-                }
+                document.getElementById(\'pageId\').addEventListener(\'keyup\', function() {
+                    document.getElementById("idGoToView").href = "'.\TracyDebugger::inputUrl(true) . (strpos(\TracyDebugger::inputUrl(true), '?') !== false ? '&' : '?') . 'tracyViewPage=" + this.value;
+                    document.getElementById("idGoToEdit").href = "'.$this->wire('config')->urls->admin.'page/edit/?id=" + this.value;
+                });
             </script>
             ';
         }
@@ -588,8 +582,8 @@ class ProcesswireInfoPanel extends BasePanel {
                 $out .= '
                 <form onsubmit="return false;" style="border-top: 1px solid #CCCCCC; margin:10px 0 0 0 ; padding: 10px 0 0 0;">
                     <input id="pageId" name="pageId" placeholder="Goto Page ID" type="text" />
-                    <input onclick="gotoPage(\'view\')" type="submit" name="idGoToView" value="View" />
-                    <input onclick="gotoPage(\'edit\')" type="submit" name="idGoToEdit" value="Edit" />
+                    <a href="#" class="tracyLinkBtn" id="idGoToView" />View</a>
+                    <a href="#" class="tracyLinkBtn" id="idGoToEdit" />Edit</a>
                 </form>
                 ';
             }
