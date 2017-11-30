@@ -70,7 +70,13 @@ class ProcesswireInfoPanel extends BasePanel {
         $PwVersion = $this->wire('config')->version;
         $panelSections = \TracyDebugger::getDataValue('processwireInfoPanelSections');
 
-        $out = '';
+        $out = '
+        <script>
+            function closePanel() {
+                localStorage.setItem("remove-tracy-debug-panel-ProcesswireInfoPanel", 1);
+            }
+        </script>
+        ';
 
         if(in_array('gotoId', $panelSections)) {
             $out .= '
@@ -222,10 +228,6 @@ class ProcesswireInfoPanel extends BasePanel {
         if(in_array('versionsList', $panelSections)) {
             $versionsList = '
             <script>
-                function closePanel() {
-                    localStorage.setItem("remove-tracy-debug-panel-ProcesswireInfoPanel", 1);
-                }
-
                 // javascript dynamic loader from https://gist.github.com/hagenburger/500716
                 // using dynamic loading because an exception error or "exit" in template file
                 // was preventing these scripts from being loaded which broke the editor
@@ -582,8 +584,8 @@ class ProcesswireInfoPanel extends BasePanel {
                 $out .= '
                 <form onsubmit="return false;" style="border-top: 1px solid #CCCCCC; margin:10px 0 0 0 ; padding: 10px 0 0 0;">
                     <input id="pageId" name="pageId" placeholder="Goto Page ID" type="text" />
-                    <a href="#" class="tracyLinkBtn" id="idGoToView" />View</a>
-                    <a href="#" class="tracyLinkBtn" id="idGoToEdit" />Edit</a>
+                    <a onclick="closePanel()" href="#" class="tracyLinkBtn" id="idGoToView" />View</a>
+                    <a onclick="closePanel()" href="#" class="tracyLinkBtn" id="idGoToEdit" />Edit</a>
                 </form>
                 ';
             }
