@@ -236,7 +236,7 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
     border: 1px solid #D2D2D2 !important;
     border-radius: 0 !important;
     padding: 5px 8px !important;
-    color: #2C3E50;
+    color: #2C3E50 !important;
     transition: all 0.12s;
 }
 
