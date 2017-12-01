@@ -82,8 +82,14 @@ class ProcesswireInfoPanel extends BasePanel {
             $out .= '
             <script>
                 document.getElementById(\'pageId\').addEventListener(\'keyup\', function() {
-                    document.getElementById("idGoToView").href = "'.\TracyDebugger::inputUrl(true) . (strpos(\TracyDebugger::inputUrl(true), '?') !== false ? '&' : '?') . 'tracyViewPage=" + this.value;
-                    document.getElementById("idGoToEdit").href = "'.$this->wire('config')->urls->admin.'page/edit/?id=" + this.value;
+                    if(this.value) {
+                        document.getElementById("idGoToView").href = "'.\TracyDebugger::inputUrl(true) . (strpos(\TracyDebugger::inputUrl(true), '?') !== false ? '&' : '?') . 'tracyViewPage=" + this.value;
+                        document.getElementById("idGoToEdit").href = "'.$this->wire('config')->urls->admin.'page/edit/?id=" + this.value;
+                    }
+                    else {
+                        document.getElementById("idGoToView").href = "javascript:void(0)";
+                        document.getElementById("idGoToEdit").href = "javascript:void(0)";
+                    }
                 });
             </script>
             ';
@@ -584,8 +590,8 @@ class ProcesswireInfoPanel extends BasePanel {
                 $out .= '
                 <form onsubmit="return false;" style="border-top: 1px solid #CCCCCC; margin:10px 0 0 0 ; padding: 10px 0 0 0;">
                     <input id="pageId" name="pageId" placeholder="Goto Page ID" type="text" />
-                    <a onclick="closePanel()" href="#" class="tracyLinkBtn" id="idGoToView" />View</a>
-                    <a onclick="closePanel()" href="#" class="tracyLinkBtn" id="idGoToEdit" />Edit</a>
+                    <a onclick="closePanel()" href="javascript:void(0)" class="tracyLinkBtn" id="idGoToView" />View</a>
+                    <a onclick="closePanel()" href="javascript:void(0)" class="tracyLinkBtn" id="idGoToEdit" />Edit</a>
                 </form>
                 ';
             }
