@@ -33,7 +33,12 @@ class ValidatorPanel extends BasePanel {
         $http->setHeader('User-Agent', 'ProcessWireTracyDebugger');
 
         $this->rawResult = $http->post($this->validatorUrl, \TracyDebugger::$pageHtml);
-        $this->rawResult = mb_convert_encoding($this->rawResult, 'HTML-ENTITIES', "UTF-8");
+        if(function_exists('mb_convert_encoding')) {
+            $this->rawResult = mb_convert_encoding($this->rawResult, 'HTML-ENTITIES', 'UTF-8');
+        }
+        else {
+            $this->rawResult = htmlspecialchars_decode(utf8_decode(htmlentities($this->rawResult, ENT_COMPAT, 'UTF-8', false)));
+        }
 
         $showPanelLabels = \TracyDebugger::getDataValue('showPanelLabels');
 

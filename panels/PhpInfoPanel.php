@@ -59,7 +59,12 @@ class PhpInfoPanel extends BasePanel {
 
         $dom = new DOMDocument();
         libxml_use_internal_errors(true);
-        $dom->loadHTML(mb_convert_encoding($phpInfo, 'HTML-ENTITIES', 'UTF-8'));
+        if(function_exists('mb_convert_encoding')) {
+            $dom->loadHTML(mb_convert_encoding($phpInfo, 'HTML-ENTITIES', 'UTF-8'));
+        }
+        else {
+            $dom->loadHTML(htmlspecialchars_decode(utf8_decode(htmlentities($phpInfo, ENT_COMPAT, 'UTF-8', false))));
+        }
         libxml_use_internal_errors(false);
         $body = $dom->getElementsByTagName('body')->item(0);
         $this->removeElementsByTagName('img', $body);
