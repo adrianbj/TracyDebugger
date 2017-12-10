@@ -24,6 +24,7 @@ class ValidatorPanel extends BasePanel {
         // determine which version of the validator to use
         // $this->validatorUrl = strpos(\TracyDebugger::$pageHtml, '<!DOCTYPE html>') !== false ? "https://html5.validator.nu/" : "https://validator.nu/";
         // seems to be problems with the https://validator.nu/ validator for some sites, so forcing the html5 one
+        // what about switching to: https://checker.html5.org ?
         $this->validatorUrl = 'https://html5.validator.nu/';
         $this->validationUrl = $this->validatorUrl . "?doc=".$this->wire('page')->httpUrl."&out=html&showimagereport=yes&showsource=yes";
 
@@ -173,6 +174,7 @@ class ValidatorPanel extends BasePanel {
                 }
 
                 #validatorBody ol {
+                    list-style-position: inside;
                     margin-left: 0;
                     margin-right: 0;
                     margin-top: 1.5em;
@@ -282,6 +284,10 @@ class ValidatorPanel extends BasePanel {
 
                 #validatorBody dl {
                     margin-top: 0.5em;
+                    font-size: 14px;
+                    font-family: sans-serif;
+                    font-weight: normal;
+                    color: #333333;
                 }
 
                 #validatorBody dd {
