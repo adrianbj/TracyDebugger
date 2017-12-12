@@ -89,7 +89,7 @@ class ProcesswireInfoPanel extends BasePanel {
                 }
 
                 document.getElementById(\'pageId\').addEventListener(\'keyup\', function() {
-
+                    tracyClearGoToPageID("");
                     if(this.value) {
                         var pid = this.value;
                         if(this.t) clearTimeout(this.t);
@@ -126,10 +126,6 @@ class ProcesswireInfoPanel extends BasePanel {
 
                         }
                         , 500);
-
-                    }
-                    else {
-                        tracyClearGoToPageID("");
                     }
                 });
             </script>
