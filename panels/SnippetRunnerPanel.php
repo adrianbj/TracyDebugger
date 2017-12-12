@@ -156,7 +156,7 @@ HTML;
 
             function processTracySnippetRunnerCode() {
                 file = typeof loadedSnippetFile === 'undefined' ? '' : loadedSnippetFile;
-                document.getElementById("tracySnippetRunnerStatus").innerHTML = "Processing";
+                document.getElementById("tracySnippetRunnerStatus").innerHTML = "<i class='fa fa-spinner fa-spin'></i> Processing";
                 callSnippetRunnerPhp(file);
                 document.getElementById('runSnippetRunnerCode').blur();
             }

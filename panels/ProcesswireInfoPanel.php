@@ -82,15 +82,16 @@ class ProcesswireInfoPanel extends BasePanel {
             $out .= '
             <script>
 
-                function tracyClearGoToPageID(pageDetails) {
+                function tracyClearGoToPageID(matchStatus) {
                     document.getElementById("idGoToView").href = "javascript:void(0)";
                     document.getElementById("idGoToEdit").href = "javascript:void(0)";
-                    document.getElementById("pageDetails").innerHTML = pageDetails;
+                    document.getElementById("pageDetails").innerHTML = matchStatus;
                 }
 
                 document.getElementById(\'pageId\').addEventListener(\'keyup\', function() {
                     tracyClearGoToPageID("");
                     if(this.value) {
+                        tracyClearGoToPageID("<i class=\'fa fa-spinner fa-spin\'></i>");
                         var pid = this.value;
                         if(this.t) clearTimeout(this.t);
                         this.t = setTimeout(function() {

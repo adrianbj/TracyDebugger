@@ -185,7 +185,7 @@ HTML;
 
             function processTracyCode() {
                 var code = tce.getSelectedText() || tce.getValue();
-                document.getElementById("tracyConsoleStatus").innerHTML = "Processing";
+                document.getElementById("tracyConsoleStatus").innerHTML = "<i class='fa fa-spinner fa-spin'></i> Processing";
                 callPhp(code);
                 saveHistory();
                 disableButton("historyForward");
