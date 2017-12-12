@@ -109,7 +109,7 @@ class ProcesswireInfoPanel extends BasePanel {
                                 if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
                                     if(xmlhttp.status == 200 && xmlhttp.responseText !== "[]") {
                                         var pageDetails = JSON.parse(xmlhttp.responseText);
-                                        document.getElementById("pageDetails").innerHTML = pageDetails.title + "&nbsp;&nbsp;"  + pageDetails.template;
+                                        document.getElementById("pageDetails").innerHTML = "<span style=\'font-weight:bold\'>" + pageDetails.title + "</span>&nbsp;&nbsp;<a href=\''.$this->wire('config')->urls->admin.'setup/template/edit?id="  + pageDetails.template_id + "\' style=\'color:#888\'>" + pageDetails.template_name + "</a>";
                                         document.getElementById("idGoToEdit").href = "'.$this->wire('config')->urls->admin.'page/edit/?id=" + pageDetails.id;
                                         document.getElementById("idGoToView").href = pageDetails.url;
                                     }
@@ -630,7 +630,7 @@ class ProcesswireInfoPanel extends BasePanel {
                     <input id="pageId" name="pageId" placeholder="Goto Page ID" type="text" autocomplete="off" />
                     <a onclick="closePanel()" href="javascript:void(0)" class="tracyLinkBtn" id="idGoToView" />View</a>
                     <a onclick="closePanel()" href="javascript:void(0)" class="tracyLinkBtn" id="idGoToEdit" />Edit</a>
-                    <div id="pageDetails" style="height:15px; padding:3px 0"></div>
+                    <div id="pageDetails" style="height:15px; margin-top:6px"></div>
                 </form>
                 ';
             }
