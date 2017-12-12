@@ -81,14 +81,55 @@ class ProcesswireInfoPanel extends BasePanel {
         if(in_array('gotoId', $panelSections)) {
             $out .= '
             <script>
+
+                function tracyClearGoToPageID(pageDetails) {
+                    document.getElementById("idGoToView").href = "javascript:void(0)";
+                    document.getElementById("idGoToEdit").href = "javascript:void(0)";
+                    document.getElementById("pageDetails").innerHTML = pageDetails;
+                }
+
                 document.getElementById(\'pageId\').addEventListener(\'keyup\', function() {
+
                     if(this.value) {
-                        document.getElementById("idGoToView").href = "'.\TracyDebugger::inputUrl(true) . (strpos(\TracyDebugger::inputUrl(true), '?') !== false ? '&' : '?') . 'tracyViewPage=" + this.value;
-                        document.getElementById("idGoToEdit").href = "'.$this->wire('config')->urls->admin.'page/edit/?id=" + this.value;
+                        var pid = this.value;
+                        if(this.t) clearTimeout(this.t);
+                        this.t = setTimeout(function() {
+                            var xmlhttp;
+
+                            if (window.XMLHttpRequest) {
+                                // code for IE7+, Firefox, Chrome, Opera, Safari
+                                xmlhttp = new XMLHttpRequest();
+                            } else {
+                                // code for IE6, IE5
+                                xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+                            }
+
+                            xmlhttp.onreadystatechange = function() {
+                                if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
+                                    if(xmlhttp.status == 200 && xmlhttp.responseText !== "[]") {
+                                        var pageDetails = JSON.parse(xmlhttp.responseText);
+                                        document.getElementById("pageDetails").innerHTML = pageDetails.title + "&nbsp;&nbsp;"  + pageDetails.template;
+                                        document.getElementById("idGoToEdit").href = "'.$this->wire('config')->urls->admin.'page/edit/?id=" + pageDetails.id;
+                                        document.getElementById("idGoToView").href = pageDetails.url;
+                                    }
+                                    else {
+                                        tracyClearGoToPageID("No match");
+                                    }
+                                    xmlhttp.getAllResponseHeaders();
+                                }
+                            }
+
+                            xmlhttp.open("POST", "./", true);
+                            xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                            xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+                            xmlhttp.send("goToPage="+pid);
+
+                        }
+                        , 500);
+
                     }
                     else {
-                        document.getElementById("idGoToView").href = "javascript:void(0)";
-                        document.getElementById("idGoToEdit").href = "javascript:void(0)";
+                        tracyClearGoToPageID("");
                     }
                 });
             </script>
@@ -589,9 +630,10 @@ class ProcesswireInfoPanel extends BasePanel {
             if(in_array('gotoId', $panelSections)) {
                 $out .= '
                 <form onsubmit="return false;" style="border-top: 1px solid #CCCCCC; margin:10px 0 0 0 ; padding: 10px 0 0 0;">
-                    <input id="pageId" name="pageId" placeholder="Goto Page ID" type="text" />
+                    <input id="pageId" name="pageId" placeholder="Goto Page ID" type="text" autocomplete="off" />
                     <a onclick="closePanel()" href="javascript:void(0)" class="tracyLinkBtn" id="idGoToView" />View</a>
                     <a onclick="closePanel()" href="javascript:void(0)" class="tracyLinkBtn" id="idGoToEdit" />Edit</a>
+                    <div id="pageDetails" style="height:15px; padding:3px 0"></div>
                 </form>
                 ';
             }
@@ -602,11 +644,11 @@ class ProcesswireInfoPanel extends BasePanel {
                     <input id="pwquery" name="pwquery" placeholder="Search ProcessWire" type="text" />
                     <input type="submit" name="pwsearch" value="Search" />
                     <div style="padding: 12px 0 0 0; font-size: 13px">
-                        <label><input id="section" type="radio" name="section" value="/" checked> All&nbsp;</label>
-                        <label><input id="section" type="radio" name="section" value="/talk/"> Forums&nbsp;</label>
-                        <label><input id="section" type="radio" name="section" value="/api/ref/"> API&nbsp;</label>
-                        <label><input id="section" type="radio" name="section" value="/blog/"> Blog&nbsp;</label>
-                        <label><input id="section" type="radio" name="section" value="modules"> Modules</label>
+                        <label><input type="radio" name="section" value="/" checked> All&nbsp;</label>
+                        <label><input type="radio" name="section" value="/talk/"> Forums&nbsp;</label>
+                        <label><input type="radio" name="section" value="/api/ref/"> API&nbsp;</label>
+                        <label><input type="radio" name="section" value="/blog/"> Blog&nbsp;</label>
+                        <label><input type="radio" name="section" value="modules"> Modules</label>
                     </div>
                 </form>
                 ';

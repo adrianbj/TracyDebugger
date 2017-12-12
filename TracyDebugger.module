@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.8.18',
+            'version' => '4.8.19',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -403,12 +403,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
             // ProcessWire Info panel early redirects
-
-            // view page
-            if($this->wire('input')->get->tracyViewPage) {
-                $this->wire('session')->redirect($this->wire('pages')->get((int)$this->wire('input')->get->tracyViewPage)->url);
-            }
-
             // logout
             if($this->wire('input')->get->tracyLogout) {
                 $this->wire('session')->logout();
@@ -915,6 +909,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         if($this->allowedTracyUsers() === 'full') {
+
+            // if it's an ajax request from the ProcessWire Info GoTo Page ID feature
+            if($this->wire('config')->ajax && isset($this->wire('input')->post->goToPage)) {
+                require_once(__DIR__ . '/includes/GetPageById.php');
+                return;
+            }
 
             // CONSOLE PANEL CODE INJECTION
             $this->insertCode('ready');
