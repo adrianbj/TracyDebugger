@@ -1,76 +1,86 @@
-Tracy Debugger
-================
+# Tracy Debugger
 
-[Processwire](https://processwire.com) module for running the [Tracy debugger from Nette](https://tracy.nette.org/).
+Tracy Debugger is a module for the ProcessWire CMF/CMS for integrating Nette's awesome Tracy debugging tool.
 
-#### Blog Post Documentation
+#### About Tracy
 
-https://processwire.com/blog/posts/introducing-tracy-debugger/
+For more information about the core Tracy project from Nette, please visit: https://tracy.nette.org/
 
 #### Support forum
 
-https://processwire.com/talk/topic/12208-tracy-debugger/
+For support for this module, please visit this thread on the ProcessWire forum: https://processwire.com/talk/topic/12208-tracy-debugger/
 
-### About Tracy
+***
 
-Tracy library is a useful helper for everyday PHP programmers. It helps you to:
+## Table of Contents
 
-* quickly detect and correct errors with an expandable call stack tree
-* log errors (and optionally receive emails when an error occurs in production mode)
-* dump variables
-* measure execution time of scripts/queries
-* see memory consumption between breakpoints
+* [Panels](#panels)
+  * [Captain Hook](#captain-hook)
+  * [Console](#console)
+  * [Custom PHP](#custom-php)
+  * [Debug Mode](#debug-mode)
+  * [Diagnostics](#diagnostics)
+  * [Dumps](#dumps)
+  * [Dumps Recorder](#dumps-recorder)
+  * [Errors](#errors)
+  * [Event Interceptor](#event-interceptor)
+  * [Mail Interceptor](#mail-interceptor)
+  * [Methods Info](#methods-info)
+  * [Module Disabler](#module-disabler)
+  * [Output Mode](#output-mode)
+  * [Page Recorder](#page-recorder)
+  * [Panel Selector](#panel-selector)
+  * [Performance](#performance)
+  * [PHP Info](#php-info)
+  * [ProcessWire Info](#processwire-info)
+  * [ProcessWire Logs](#processwire-logs)
+  * [ProcessWire Version](#processwire-version)
+  * [Snippet Runner](#snippet-runner)
+  * [System Info](#system-info-panel)
+  * [Template Editor](#template-editor)
+  * [Template Path](#template-path)
+  * [Template Resources](#template-resources)
+  * [Tracy Logs](#tracy-logs)
+  * [Tracy Toggler](#tracy-toggler)
+  * [Todo](#todo)
+  * [User Switcher](#user-switcher)
+  * [Users](#users)
+  * [Validator](#validator)
+* [License](#license)
 
-### Module features
+***
 
-Includes config settings for a variety of Tracy options.
+## Panels
 
-Many optional custom panels provide a wide variety of information and tools to help your development and debugging process. See the blog post for more details.
+### Captain Hook
 
-Additionally, content can be dumped to the page via TD::dump() or to the debug bar via TD::barDump(),
-or logged via TD::log() from PW template files. eg.
+Generates a list of hookable methods from your ProcessWire install, including site modules.
 
-```
-TD::debugAll($page, 'Current Page');
-   Aliases;  debugAll(), da()
+If your editor protocol handler is setup, clicking on the line number will open to the method in your code editor. You can copy and paste the formatted hook directly from the first column.
 
-TD::barDump($page, 'Current Page');
-   Aliases;  barDump(), bd()
+Results are cached, but will be updated whenever you update your ProcessWire version or install a new module.
 
-TD::dump($page);
-   Aliases; dump(), d()
+### Console
 
-TD::log('Log Message');
-    Alias; l()
+Here are the key points/features of this panel:
 
-TD::fireLog('Log Message');
-    Alias; fireLog(), fl()
+* Uses the excellent ACE Editor for code highlighting and syntax checking
+* Has full access to all PW variables: $pages, $page, $user, etc
+* Has access to all template defined variables and functions, although checking this option will load these files so if they contain API write actions, be careful.
+* Works with fl(), bd(), d(), and l() calls, or even simply echo()
+* All output is generated via ajax, and so is virtually instant
+* No need for editing a template file and reloading the page in browser - simply type your code in the console panel for an instant result
+* Only available to superusers
+* Caches code in the filesystem so it stored between page reloads, navigation to other pages, and even browser restarts
+* Use CTRL+Enter or CMD+Enter or the "Run Code" button to run the code
+* Remember that this allows you to run any PHP code, so be careful!
 
-TD::addBreakpoint('Name');
-    Alias; addBreakpoint(), bp()
-
-TD::timer();
-    Aliases; timer(), t()
-```
-
-By default, manually logged content is sent to: /site/assets/logs/tracy/info.log,
-but you can specify an optional second parameter to one of the following:
-'debug', 'info', 'warning', 'error', 'exception', 'critical' files.
-
-eg. `TD::log('Log Message', 'debug');` which will put the message in the debug.log file.
+![Console example](https://github.com/adrianbj/TracyDebugger/raw/master/docs/images/console-1.png "Console Example")
 
 
-#### FireLog
+### Custom PHP
 
-To make fireLog work, you need to add some browser extensions:
-
-Chrome:
-* https://github.com/MattSkala/chrome-firelogger
-
-Firefox:
-* http://www.getfirebug.com/
-* http://firelogger.binaryage.com/
-
+***
 
 ## License
 
