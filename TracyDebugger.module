@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.8.22',
+            'version' => '4.8.23',
             'autoload' => true,
             'singular' => true,
             'icon' => 'bug',
@@ -477,15 +477,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     }
                     $this->wire('session')->redirect($this->httpReferer);
                 }
+                // if end session clicked, remove session variable and config settings entry
                 elseif($this->wire('input')->post->endSessionUserSwitcher && $this->wire('session')->CSRF->validate()) {
-                    // if end session clicked, remove session variable and config settings entry
                     $this->wire('session')->remove("tracyUserSwitcherId");
                     unset($this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId]);
                     $this->wire('modules')->saveModuleConfigData($this->wire('modules')->get("TracyDebugger"), $this->data);
                     $this->wire('session')->redirect($this->httpReferer);
                 }
+                // if session not expired, switch to requested user
                 elseif($this->wire('input')->post->userSwitcher && $this->wire('session')->CSRF->validate()) {
-                    // if session not expired, switch to requested user
                     if(isset($this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId]) && $this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId] > time() && $this->wire('session')->tracyUserSwitcherId) {
                         // if session variable exists, grab it and add to the new session after logging out
                         // and forceLogin the new switched user
@@ -494,7 +494,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                         $user = $this->wire('session')->forceLogin($this->wire('input')->post->userSwitcher);
                         $this->wire('session')->tracyUserSwitcherId = $tracyUserSwitcherId;
                     }
-                    $this->wire('session')->redirect($this->httpReferer);
+                    if($this->wire('pages')->get(self::inputUrl())->viewable) {
+                        $this->wire('session')->redirect($this->httpReferer);
+                    }
+                    else {
+                        $this->wire('session')->redirect($this->inAdmin ? $this->wire('config')->urls->admin : $this->wire('config')->urls->root);
+                    }
                 }
             }
 
