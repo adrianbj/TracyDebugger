@@ -5,6 +5,8 @@ In addition to Tracy's core functionality, this module comes with more than 30 c
 
 These tools extend Tracy beyond just debugging and tranform it into a development swiss army knife!
 
+![Debug bar](https://github.com/adrianbj/TracyDebugger/raw/master/docs/images/debugbar.png "Debug bar")
+
 ### About Tracy
 The core Nette Tracy project helps you to:
 
