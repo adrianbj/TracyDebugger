@@ -6,11 +6,21 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
   <meta name="description" content="Description">
   <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="media/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="media/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="media/favicon-16x16.png">
+  <link rel="manifest" href="media/manifest.json">
+  <link rel="mask-icon" href="media/safari-pinned-tab.svg" color="#5bbad5">
+  <link rel="shortcut icon" href="media/favicon.ico">
+  <meta name="msapplication-config" content="media/browserconfig.xml">
+  <meta name="theme-color" content="#ffffff">
   <link rel="stylesheet" href="//unpkg.com/docsify/lib/themes/vue.css">
 </head>
 <body>
   <div id="app">Loading ...</div>
   <script src="//unpkg.com/docsify-edit-on-github@1.0.1/index.js"></script>
+  <link rel="stylesheet" href="//unpkg.com/docsify-copy-code/styles.css">
+  <script src="//unpkg.com/docsify-copy-code/index.js"></script>
   <script>
     window.$docsify = {
       themeColor: '#D22778',
@@ -27,6 +37,7 @@
 
       plugins: [
         EditOnGithubPlugin.create('https://github.com/adrianbj/TracyDebugger/tree/master/docs/'),
+        window.DocsifyCopyCodePlugin.init(),
       ],
 
       search: 'auto',

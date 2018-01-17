@@ -1,3 +1,5 @@
+![logo](img/icon.svg)
+
 # Tracy Debugger for ProcessWire
 
 > The ultimate “swiss army knife” debugging and development tool for the [ProcessWire](https://processwire.com/) CMF/CMS
