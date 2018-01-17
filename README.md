@@ -1,12 +1,12 @@
 # Tracy Debugger for ProcessWire
 
-> The ultimate “swiss army knife” debugging and development tool for the [ProcessWire](https://processwire.com/) CMF/CMS
+**The ultimate “swiss army knife” debugging and development tool for the [ProcessWire](https://processwire.com/) CMF/CMS**
 
 Integrates and extends Nette's Tracy debugging tool
 
 30+ custom tools designed for effective ProcessWire debugging and lightning fast development
 
-![Tracy Debug Bar Kitchen Sink](/img/debug-bar-kitchen-sink.png "Tracy Debug Bar")
+![Tracy Debug Bar Kitchen Sink](https://github.com/adrianbj/TracyDebugger/blob/master/docs/img/debug-bar-kitchen-sink.png?raw=true "Tracy Debug Bar")
 
 ### Documentation
 Documentation is available at: https://adrianbj.github.io/TracyDebugger/
@@ -16,6 +16,9 @@ For support for this module, please visit this thread on the ProcessWire forum: 
 
 ### ProcessWire Modules Directory
 http://modules.processwire.com/modules/tracy-debugger/
+
+### Installation
+
 It is recommended to install via the ProcessWire admin Modules > Site > Add New > Add Module from Directory using the `TracyDebugger` class name.
 
 ### License
