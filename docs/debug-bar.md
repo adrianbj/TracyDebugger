@@ -41,14 +41,22 @@ Remember that this allows you to run any PHP code, so be careful!
 ***
 
 ## Custom PHP
-This panel lets you output anything you want. Primarily I see this being used for creating links to things like GTmetrix, but use your imagination.
+This panel lets you output anything you want. Primarily I see this being used for creating links to things like Google PageSpeed, but use your imagination.
+
+```php
+return '<a href="https://developers.google.com/speed/pagespeed/insights/?url='.$page->httpUrl.'">Google PageSpeed</a>';
+```
 
 ***
 
 ## Debug Mode
-Provides access to all the information that is available in the back-end "Debug Mode Tools" section of your PW admin. This panel makes it available on the front-end and even when Debug Mode is off. Note that with Debug Mode Off, you won't have access to the "Database Queries", "Timers", and "Autload" sections. This is a ProcessWire core restriction.
+Provides access to most of the information that is available in the back-end "Debug Mode Tools" section of your PW admin. This panel makes it available on the front-end and even when Debug Mode is off. Note that with Debug Mode Off, you won't have access to the "Database Queries", "Timers", and "Autload" sections. This is a ProcessWire core restriction.
+
+Other information from the back-end "Debug Mode Tools" (POST, GET, REQUEST, COOKIE, SESSION) have been moved to the [Request Info Panel](#request-info).
 
 The icon color on the debug bar is red when debug mode is on and green when it is off. This may seem opposite, but the idea is that when the icon is green, it is OK for production mode, whereas red indicates something that you need to be alerted to. This is particularly useful if you have the "Superuser Force Development Mode" option enabled because you will see the debug bar even in Production mode.
+
+![Debug Mode Panel](/img/debug-mode.png)
 
 ***
 
@@ -74,6 +82,8 @@ If this panel is enabled, any calls to bd() will be sent to this panel instead o
 ## Errors
 The errors panel is only displayed when there are non-fatal errors and you are not in Strict Mode. All PHP notices and warnings will be displayed in this panel.
 
+![Errors panel](/img/errors.png)
+
 ***
 
 ## Event Interceptor
@@ -90,16 +100,27 @@ This panel lets you define any Hook that you want to intercept. Much like the Ma
 ## File Editor
 
 * Supports editing all files in your PW install (you can define the root as /, /site, or /site/templates
-* Can be used as the handler for opening editor links from the debug bar (errors, log files, Captain Hook, ToDo, Template editor, etc), rather than your code editor.
-* Can be enabled as the link handler for live sites only, or local as well if you prefer.
-* Has "Test" functionality for all files so if you make a change, it will only appear for you and not other users.
-* Makes a backup of the old version each time you save a change and provides a "Restore Backup" button to instantly revert.
+* Can be used as the handler for opening editor links from the debug bar (errors, log files, Captain Hook, ToDo, Template editor, etc), rather than your code editor
+* Can be enabled as the link handler for live sites only, or local as well if you prefer
+* Has "Test" functionality for all files so if you make a change, it will only appear for you and not other users
+* Makes a backup of the old version each time you save a change and provides a "Restore Backup" button to instantly revert
 * Supports in-code search & replace with CMD+F
 * Syntax highlighting/linting for PHP, CSS, and JS
-* This replaces the Template Editor panel, so that one has been removed.
+* This replaces the Template Editor panel, so that one has been removed
 * Handles fatal errors gracefully - this is the biggest feature in my opinion. The problem with most online file editors is that if you accidentally make a code change that results in a fatal error, it can be impossible to fix and resave because the system is not functional. This editor gets around this problem by using Tracy's custom error handling which allows debug bar panels to continue to work, so you can manually fix the problem, or click the "Restore Backup" button. Of course if you used the "Test" option, you don't even need to worry, because you are the only one to see the version with the error anyway.
+* Red icon: Test code is being rendered.
+* Green icon: Saved template file is being rendered.
 
-As a follow up to that last point. I have used the excellent ProcessFileEdit module for helping to debug some issues on other people's sites without needing FTP access, but a couple of times I have made a fatal error mistake and had to get them to restore the file, so this really is a huge feature for me!
+**Action buttons (some only available when relevant):**
+* **Test**: reloads the page using the code in the editor - no changes are made to the template file or the code served to all other users of the site.
+* **Save**: saves the editor code to the template file, making this a live and permanent change.
+* **Reset**: re-loads the page (and the code in the editor) with the code from the saved file. This is no different from loading the page again, but different from clicking the "reload" button in your browser which will actually send the test code again.
+* **Restore**: returns the code for the file to the last saved version (restored from automatic backup of the file)
+
+**Possible use scenarios**
+* Use this panel similarly to your dev console for tweaking CSS/HTML - it still requires a page reload, but there are likely less clicks than your normal workflow.
+* Tweak a live site if you're away from your computer and need a quick way to fix something, but want the ability to test first without breaking something temporarily due to a simple syntax error mistake or more serious code mistakes.
+* Add debug statements: `bd()`, `d()`, `fl()` etc to your file code without editing touching the actual files.
 
 ## Mail Interceptor
 Intercepts all outgoing emails sent using `wireMail()` and displays them in the panel. Ideal for form submission testing. This panel is activated when enabled, so it's best to enable it from the Panel Selector using the sticky option when needed.
@@ -107,7 +128,9 @@ Intercepts all outgoing emails sent using `wireMail()` and displays them in the 
 ***
 
 ## Methods Info
-Lists all the available logging methods that you can call within your PHP code.
+Lists available logging methods you can call in your PHP code.<br />Links to Tracy Debugger docs (this site) and [Tracy Nette docs](https://tracy.nette.org/)
+
+![Methods Info panel](/img/methods-info.png)
 
 ***
 
@@ -168,10 +191,14 @@ Provides all the output from PHP's `phpinfo()`. Probable best to leave disabled 
 ## Processwire Info
 Provides a wide variety of links, information and search features for all things ProcessWire.
 
+![ProcessWire Info panel](/img/processwire-info.png)
+
 ***
 
 ## ProcessWire Logs
 Displays the most recent entries across all ProcessWire log files with links to view the log in the PW logs viewer, as well as direct links to view each entry in your code editor. By default it shows the last 10, but this can be changed in the config settings. A red icon indicates the last page load contained an errors or exceptions log entry. An orange icon is for all other log types.
+
+![ProcessWire Logs panel](/img/processwire-logs.png)
 
 ***
 
@@ -184,6 +211,31 @@ When you click "Change", it swaps the names of: wire/, .htaccess, and index.php 
 
 The icon is green when you are using the latest version that is available on your system, and orange for any other version.
 
+![ProcessWire Version panel](/img/processwire-version.png)
+
+***
+
+## Request Info
+
+Provides very detailed infomation and links related to the current page. It contains several expandable sections listed below.
+
+### Page Info
+Links to view (from page name) and edit the page (from page ID), template, parent and sibling pages, etc. Also includes page status, creation, modified, and published username and datetime.
+
+
+
+### Template Info
+Details about the template of the current page and its settings, includes a link to open the template for editing in the PW admin, and the template file for editing in your code editor.
+
+
+
+### Fields List & Values
+Complete list of all available fields for the page and their values - all arrays/objects are presented as expandable trees. For image fields it provides additional information, such as filesize and dimension attributes. There is also Settings column for each field - truncated in this screenshot so that everything else is legible.
+
+
+
+Here is another example showing three different image fields; images (with Maximum files allowed set to 0), image (with Maximum files allowed set to 1), and imagestr (with Formatted Value set to Rendered string of text). You can see the differences in what they return. The key thing is the multidimensional status of the array for the "images" field - you can see how you need to expand one of the images to see its various properties. But with the "image" field, it is a one dimensional array. This correlates to the need to call first(), last(), or eq() to get an image from the "images" field, but not for the "image" field. The"imagestr" field returns the exact output, which in this case is an img tag with the src specified (see the outputString property in the Settings column).
+
 ***
 
 ## Snippet Runner
@@ -194,29 +246,7 @@ This is similar to the Console Panel, but instead lets you run snippets stored o
 ## System Info
 Provides a table of basic stats about the current page and your system.
 
-***
-
-## Template Editor
-This is an alternative to the Template Path panel. It allows you to test changes without affecting other users currently viewing the site.
-
-*Icon colors*
-
-* Red: Test code is being rendered.
-* Green: Saved template file is being rendered.
-
-Note that there are three buttons:
-
-* Test: This will reload the page using the code in the editor - no changes are made to the template file or the code served to all other users of the site.
-
-* Push Live: This will save the editor code to the template file, making this a live and permanent change.
-
-* Reset: This will reload the page (and the code in the editor) with the code from the saved template file.
-
-*Possible use scenarios*
-
-* Use this panel similarly to your dev console for tweaking CSS/HTML - it still requires a page reload, but there are likely less clicks than your normal workflow.
-* Use it to tweak a live site if you're away from your computer and need a quick way to fix something, but want the ability to test first without breaking something temporarily due to a simple syntax error mistake or more serious code mistakes.
-* Use it to add debug statements: `fl()`, `bd()`, `d()` etc to your template file code without ever touching the actual template files.
+![System Info panel](/img/system-info.png)
 
 ***
 
