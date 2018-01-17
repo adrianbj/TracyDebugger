@@ -163,18 +163,22 @@ This is perfect for all sorts of testing, whether you need to create a LOT of pa
 ***
 
 ## Panel Selector
-Allows you to set up a default set of panels in the module config settings and then easily enable / disable other panels from the debugger bar. There are three options: Once, Sticky, and Reset. "Once" will only make the selection change for one page load. "Sticky" will keep the changes for the browser session. "Reset" will return to the default set defined in the module config settings.
+Allows you to set up a default set of panels in the module config settings and then easily enable / disable other panels from the debugger bar.
 
-There are icons indicating if:
+Your page loading speed will be better if you limit the default panels to those you use all the time and load others as needed via this selector.
 
-the panel is set in the default list in the module config settings ("Tick" icon),
-the state of the panel is different for the current view, ie you have made a "Once" change (number "1" icon)
+There are three options: Once, Sticky, and Reset
+* **Once** will only make the selection change for one page load
+* **Sticky** will keep the changes for the browser session
+* **Reset**  will return to the default set defined in the module config settings
 
-In the following example, you can see that:
+There are indicators if:
 
-Debug Mode is disabled. Default is enabled (checkbox icon). There is no "1" icon so it is a Sticky setting.
-ProcesswireInfo is disabled. Default is enabled (checkbox icon), There is a "1" icon so you know it's a "Once" only setting.
-Validator is enabled. Default is disabled (no checkbox icon). There is a "1" icon so you know it's a "Once" only setting.
+**\*** the panel is set in the default list in the module config settings
+
+![Once icon](img/once-icon.svg) the state of the panel is different for the current view, ie you have made a "Once" change
+
+![Panel Selector panel](img/panel-selector.png)
 
 ***
 
@@ -185,6 +189,10 @@ Performance Panel is a third party extension for Tracy developed by Martin Jirá
 
 ## PHP Info
 Provides all the output from PHP's `phpinfo()`. Probable best to leave disabled unless you need to check something.
+
+CTRL/CMD+F works well to find relevant entries within this panel (and all panels actually), although this seems to be browser specific. It works in Chrome and Safari, but not Firefox.
+
+![PHP Info panel](/img/php-info.png)
 
 ***
 
@@ -239,7 +247,13 @@ Here is another example showing three different image fields; images (with Maxim
 ***
 
 ## Snippet Runner
-This is similar to the Console Panel, but instead lets you run snippets stored on the server's filesystem which allows for easier version control, and also for editing snippets in your code editor.
+This is similar to the [Console Panel](#console), but instead lets you run snippets stored on the server's filesystem which allows for easier version control, and also for editing snippets in your code editor. It has access to all the same ProcessWire system variables that the Console panel has, so please see it's documentation for details.
+
+Snippets can be stored in either of these. Visit the config settings to set which you prefer. You can also make use of subfolders to categorize your snippets.
+* /site/templates/TracyDebugger/snippets/
+* /site/assets/TracyDebugger/snippets/
+
+![Snippet Runner panel](/img/snippet-runner.png)
 
 ***
 
@@ -255,11 +269,11 @@ The template path panel allows you to temporarily choose an alternate template f
 
 Not only is this useful for debugging (especially on a live production server), but it could also be used for sharing different versions of a page among trusted users.
 
-*Icon colors*
+* **Red:** The current page is using a different template file.
+* **Orange:** The current page is using it's default template file, but there are other pages on the site that are using a different template file (obviously via the Sticky option). Use "Reset All" to clear this when you're done testing.
+* **Green:** All pages on the site are using their default template files.
 
-* Red: The current page is using a different template file.
-* Orange: The current page is using it's default template file, but there are other pages on the site that are using a different template file (obviously via the Sticky option). Use "Reset All" to clear this when you're done testing.
-* Green: All pages on the site are using their default template files.
+![Template Path panel](/img/template-path.png)
 
 ### User Dev Template Option
 This is not reliant on the Template Path Panel, but its functionality is similar and its status is integrated into the panel, so it is presented here.
@@ -291,8 +305,25 @@ Displays the names, types, and values of all variables defined in the template f
 
 ***
 
+## Todo
+The ToDo Panel report the following comment types: 'todo', 'fixme', 'pending', 'xxx', 'hack', 'bug'. See the config settings for determining which folders and files will be scanned.
+
+If you have your editor configured, the comment text link opens the file to the line of the comment.
+
+The icon reports the number of items in the template file for the current file / the total number of items across all files.
+
+* **Red:** there are items for the current page's template file.
+* **Orange:** there are items in other files, but none in the current page's template file.
+* **Green:** no items in any files under /site/templates/
+
+![TODO panel](/img/todo.png)
+
+***
+
 ## Tracy Logs
 Displays the most recent entries from the Tracy log files. These log files can be written to automatically when Tracy is in Production mode, or manually using `TD::log()` or `l()` calls. Includes direct links to view each entry in your code editor. By default it shows the last 10, but this can be changed in the config settings. A red icon indicates the last page load contained an error, exception, or critical log entry. An orange icon is for all other log types.
+
+![Tracy Logs panel](/img/tracy-logs.png)
 
 ***
 
@@ -301,25 +332,9 @@ Not really a panel, but this button on the debug bar lets you toggle Tracy on / 
 
 ***
 
-## Todo
-The ToDo Panel report the following comment types: 'todo', 'fixme', 'pending', 'xxx', 'hack', 'bug'. See the config settings for determining which folders and files will be scanned.
-
-If you have your editor configured, the comment text link opens the file to the line of the comment.
-
-The icon reports the number of items in the template file for the current file / the total number of items across all files.
-
-*Icon colors*
-
-* Red: there are items for the current page's template file.
-* Orange: there are items in other files, but none in the current page's template file.
-* Green: no items in any files under /site/templates/
-
-***
-
 ## User Switcher
 Allows you to instantly switch to any user in the system without knowing their password. After switching, you will still have full access to the Tracy debug bar, which can be very useful for debugging issues with other users and even guest (not logged in) visitors.
 
-* It is completely disabled unless Tracy is specifically set to Development mode. Detect mode won't work and even the "Superuser Force Development Mode" option won't enable it so you can be sure your live sites are safe unless you specifically enable Development Mode for a debugging session.
 * You need to be a superuser to have access to the panel until a session is started, so even when Development mode is enabled, other users still won't be able to use it.
 * It only works for the duration of user switcher session (max 60 minutes) and only a superuser can start a session.
 * Starting the session makes use of PW's CSRF protection.
@@ -327,12 +342,11 @@ Allows you to instantly switch to any user in the system without knowing their p
 * Once the session has expired, it is no longer possible to switch users. You can manually end the session, or if you forget it will expire automatically based on the session length you set.
 
 As usual, icon colors are meaningful, telling you what type of user is currently logged in:
-
-*Icon colors*
-
 * Green: superuser
 * Orange: non-superuser
 * Red: guest / logged out
+
+![User Switcher panel](/img/user-switcher.png)
 
 ***
 
@@ -343,5 +357,7 @@ Lists all the users/roles with access to the Tracy Debugger bar. A green debug b
 
 ## Validator
 Validates the HTML of the page using the validator.nu service. This works with local development sites as well as live sites.
+
+![Validator panel](/img/validator.png)
 
 ***
