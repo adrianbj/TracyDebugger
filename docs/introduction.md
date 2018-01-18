@@ -1,3 +1,5 @@
+# Introduction
+
 ## About
 Tracy Debugger for ProcessWire is a highly configurable debugging and development tool. Built on top of Tracy by Nette, it adds [30+ custom panels/tools](panels.md) that will dramatically reduce your ProcessWire learning curve and speed up your development time.
 
