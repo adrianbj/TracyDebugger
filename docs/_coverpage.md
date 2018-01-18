@@ -10,7 +10,7 @@ Integrates and extends Nette's Tracy debugging tool
 
 <br />
 
-![Tracy Debug Bar Kitchen Sink](/img/debug-bar-kitchen-sink.png "Tracy Debug Bar")
+![Tracy Debug Bar Kitchen Sink](img/debug-bar-kitchen-sink.png "Tracy Debug Bar")
 
 <br />
 

@@ -1,7 +1,7 @@
 # Debug Bar
 The debug bar shows non-fatal errors, dumps, and provides access to all the custom panels/tools for ProcessWire development. You can set the default panels for both frontend and backend versions of the bar and also add / remove them on-the-fly via the [Panel Selector](#panel-selector).
 
-![Tracy Debug Bar Kitchen Sink](/img/debug-bar-kitchen-sink.png "Tracy Debug Bar")
+![Tracy Debug Bar Kitchen Sink](img/debug-bar-kitchen-sink.png "Tracy Debug Bar")
 
 ## Captain Hook
 Generates a list of hookable methods in your ProcessWire install, including site modules.
@@ -12,7 +12,7 @@ Results are cached for speed, but will be updated whenever you update your Proce
 * Line number (second column) links to the method in your code editor, or via the File Editor Panel or the ProcessFileEdit module
 * Method definition (third column) toggles the docblock open/closed
 
-![Captain Hook Panel](/img/captain-hook.png)
+![Captain Hook Panel](img/captain-hook.png)
 
 ***
 
@@ -36,7 +36,7 @@ Results are cached for speed, but will be updated whenever you update your Proce
 
 Remember that this allows you to run any PHP code, so be careful!
 
-![Console Panel](/img/console-1.png)
+![Console Panel](img/console-1.png)
 
 ***
 
@@ -56,7 +56,7 @@ Other information from the back-end "Debug Mode Tools" (POST, GET, REQUEST, COOK
 
 The icon color on the debug bar is red when debug mode is on and green when it is off. This may seem opposite, but the idea is that when the icon is green, it is OK for production mode, whereas red indicates something that you need to be alerted to. This is particularly useful if you have the "Superuser Force Development Mode" option enabled because you will see the debug bar even in Production mode.
 
-![Debug Mode Panel](/img/debug-mode.png)
+![Debug Mode Panel](img/debug-mode.png)
 
 ***
 
@@ -82,7 +82,7 @@ If this panel is enabled, any calls to bd() will be sent to this panel instead o
 ## Errors
 The errors panel is only displayed when there are non-fatal errors and you are not in Strict Mode. All PHP notices and warnings will be displayed in this panel.
 
-![Errors panel](/img/errors.png)
+![Errors panel](img/errors.png)
 
 ***
 
@@ -130,7 +130,7 @@ Intercepts all outgoing emails sent using `wireMail()` and displays them in the 
 ## Methods Info
 Lists available logging methods you can call in your PHP code.<br />Links to Tracy Debugger docs (this site) and [Tracy Nette docs](https://tracy.nette.org/)
 
-![Methods Info panel](/img/methods-info.png)
+![Methods Info panel](img/methods-info.png)
 
 ***
 
@@ -192,21 +192,21 @@ Provides all the output from PHP's `phpinfo()`. Probable best to leave disabled 
 
 CTRL/CMD+F works well to find relevant entries within this panel (and all panels actually), although this seems to be browser specific. It works in Chrome and Safari, but not Firefox.
 
-![PHP Info panel](/img/php-info.png)
+![PHP Info panel](img/php-info.png)
 
 ***
 
 ## Processwire Info
 Provides a wide variety of links, information and search features for all things ProcessWire.
 
-![ProcessWire Info panel](/img/processwire-info.png)
+![ProcessWire Info panel](img/processwire-info.png)
 
 ***
 
 ## ProcessWire Logs
 Displays the most recent entries across all ProcessWire log files with links to view the log in the PW logs viewer, as well as direct links to view each entry in your code editor. By default it shows the last 10, but this can be changed in the config settings. A red icon indicates the last page load contained an errors or exceptions log entry. An orange icon is for all other log types.
 
-![ProcessWire Logs panel](/img/processwire-logs.png)
+![ProcessWire Logs panel](img/processwire-logs.png)
 
 ***
 
@@ -219,7 +219,7 @@ When you click "Change", it swaps the names of: wire/, .htaccess, and index.php 
 
 The icon is green when you are using the latest version that is available on your system, and orange for any other version.
 
-![ProcessWire Version panel](/img/processwire-version.png)
+![ProcessWire Version panel](img/processwire-version.png)
 
 ***
 
@@ -253,14 +253,14 @@ Snippets can be stored in either of these. Visit the config settings to set whic
 * /site/templates/TracyDebugger/snippets/
 * /site/assets/TracyDebugger/snippets/
 
-![Snippet Runner panel](/img/snippet-runner.png)
+![Snippet Runner panel](img/snippet-runner.png)
 
 ***
 
 ## System Info
 Provides a table of basic stats about the current page and your system.
 
-![System Info panel](/img/system-info.png)
+![System Info panel](img/system-info.png)
 
 ***
 
@@ -273,7 +273,7 @@ Not only is this useful for debugging (especially on a live production server), 
 * **Orange:** The current page is using it's default template file, but there are other pages on the site that are using a different template file (obviously via the Sticky option). Use "Reset All" to clear this when you're done testing.
 * **Green:** All pages on the site are using their default template files.
 
-![Template Path panel](/img/template-path.png)
+![Template Path panel](img/template-path.png)
 
 ### User Dev Template Option
 This is not reliant on the Template Path Panel, but its functionality is similar and its status is integrated into the panel, so it is presented here.
@@ -316,14 +316,14 @@ The icon reports the number of items in the template file for the current file /
 * **Orange:** there are items in other files, but none in the current page's template file.
 * **Green:** no items in any files under /site/templates/
 
-![TODO panel](/img/todo.png)
+![TODO panel](img/todo.png)
 
 ***
 
 ## Tracy Logs
 Displays the most recent entries from the Tracy log files. These log files can be written to automatically when Tracy is in Production mode, or manually using `TD::log()` or `l()` calls. Includes direct links to view each entry in your code editor. By default it shows the last 10, but this can be changed in the config settings. A red icon indicates the last page load contained an error, exception, or critical log entry. An orange icon is for all other log types.
 
-![Tracy Logs panel](/img/tracy-logs.png)
+![Tracy Logs panel](img/tracy-logs.png)
 
 ***
 
@@ -346,7 +346,7 @@ As usual, icon colors are meaningful, telling you what type of user is currently
 * Orange: non-superuser
 * Red: guest / logged out
 
-![User Switcher panel](/img/user-switcher.png)
+![User Switcher panel](img/user-switcher.png)
 
 ***
 
@@ -358,6 +358,6 @@ Lists all the users/roles with access to the Tracy Debugger bar. A green debug b
 ## Validator
 Validates the HTML of the page using the validator.nu service. This works with local development sites as well as live sites.
 
-![Validator panel](/img/validator.png)
+![Validator panel](img/validator.png)
 
 ***

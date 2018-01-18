@@ -1,11 +1,5 @@
 # Debug Methods
 
-## debugAll()
-```php
-da($var);
-```
-debugAll is a shortcut for outputting via all the dump/log methods via the one call.
-
 ## barDump()
 ```php
 bd($page->body, 'body');
@@ -21,9 +15,15 @@ bd($myArr, 'My Array', array('maxDepth' => 7, 'maxLength' => 0));
 
 This can be very handy when you have a deep array or very long string that you need to see more of without changing the defaults of maxDepth:3 and MaxLength:150 which can cause problems with PW objects if you go too high. Setting to '0' means no limit so don't do this on maxDepth when dumping a PW object - it won't be pretty!
 
+***
+
 ## barDumpBig()
 
+***
+
 ## barDumpLive()
+
+***
 
 ## dump()
 ```php
@@ -36,16 +36,13 @@ Tip: Don't forget PW's built-in getIterator() and getArray() methods when dumpin
 d($page->phone->getArray());
 ```
 
-## timer()
+## debugAll()
 ```php
-t();
-
-// insert resource intensive code here
-sleep(2);
-bd(t());
+da($var);
 ```
-You can also add an optional name parameter to each timer() call and then dump several at once in a single page load. Note the total execution time of the entire page in the debug bar - so we can assume the rest of the page took about 274 ms.
+debugAll is a shortcut for outputting via all the dump/log methods via the one call.
 
+***
 
 ## fireLog()
 ```php
@@ -68,6 +65,8 @@ To make this work you must first install these browser extensions:
 
 [http://firelogger.binaryage.com/](http://firelogger.binaryage.com/)
 
+***
+
 ## log()
 ```php
 l('Message to debug.log file', 'debug');
@@ -76,3 +75,13 @@ l($page);
 log() is useful if you want to store the results over multiple page requests.
 
 ***
+
+## timer()
+```php
+t();
+
+// insert resource intensive code here
+sleep(2);
+bd(t());
+```
+You can also add an optional name parameter to each timer() call and then dump several at once in a single page load. Note the total execution time of the entire page in the debug bar - so we can assume the rest of the page took about 274 ms.

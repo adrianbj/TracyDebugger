@@ -21,7 +21,7 @@ The Tracy library is a useful helper for everyday PHP programmers. It helps you 
 ## Installation
 The recommended way to install is via the ProcessWire modules interface: ** Modules > Site > Add New **
 
-![Tracy Debug Bar Kitchen Sink](/img/install.png "Tracy Debugger")
+![Tracy Debug Bar Kitchen Sink](img/install.png "Tracy Debugger")
 
 ## Getting Started
 If you are on a local development setup and you are logged in as a superuser the debug bar will show automatically. If you are on a live site, you will need to go into the [config settings](configuration.md).
