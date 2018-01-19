@@ -5,7 +5,7 @@
 #### Enable Tracy Debugger
 
 * Checked by default
-* If disabled, a few tiny dummy classes will be loaded instead to ensure debug calls `bd()` etc don't cause errors.
+* If disabled, a few tiny dummy classes will be loaded instead to ensure debug calls, eg `bd()` etc don't cause errors.
 
 #### Output Mode
 
@@ -22,6 +22,46 @@
 ## Access Permissions
 
 #### Force Superusers into Development Mode
+
+#### Force Guest Users into Development Mode on Localhost
+
+#### Restrict Non-superusers
+
+***
+
+## Miscellaneous
+
+#### Strict Mode
+
+#### Strict Mode AJAX Only
+
+#### Force Scream
+
+#### Show Locations
+
+#### Log Severity
+
+#### Maximum Nesting Depth
+
+#### Maxiumum String Length
+
+#### Email for Production Errors
+
+#### Clear Email Sent Flag
+
+#### Reference Page Being Edited
+
+***
+
+## Debug Bar and Panels
+
+#### Show Debug Bar
+
+#### No Debug Bar in ...
+
+#### No Debug Bar in Selected Templates
+
+#### Hide Debug Bar
 
 ***
 
