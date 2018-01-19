@@ -183,7 +183,7 @@ There are indicators if:
 
 **\*** the panel is set in the default list in the module config settings
 
-![Once icon](img/once-icon.svg)the state of the panel is different for the current view, ie you have made a "Once" change
+![Once icon](img/once-icon.svg) the state of the panel is different for the current view, ie you have made a "Once" change
 
 ![Panel Selector panel](img/panel-selector.png)
 
