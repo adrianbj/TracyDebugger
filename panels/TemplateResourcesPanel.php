@@ -92,7 +92,7 @@ class TemplateResourcesPanel extends BasePanel {
                 $i=1;
                 foreach($this->variables['$'.$var] as $item) {
                     $path = $this->removeCompilerFromPath($item['file']);
-                    $fileLines[$var][str_replace($this->wire('config')->paths->root, '/', $path)]['lines'][] = '<a href="'.$this->getFileEditorPath($path, $item['line']).'">' . $item['line'] . '</a>';
+                    $fileLines[$var][str_replace($this->wire('config')->paths->root, '/', $path)]['lines'][] = '<a href="'.\TracyDebugger::createEditorPath($path, $item['line']).'">' . $item['line'] . '</a>';
                     $i++;
                 }
                 $currentFile = null;
@@ -202,13 +202,6 @@ class TemplateResourcesPanel extends BasePanel {
         return str_replace($compilerCachePath, $this->wire('config')->paths->root, $path);
     }
 
-    protected function getFileEditorPath($path, $line) {
-        $fileEditorPath = str_replace('%file', $path, str_replace('%line', $line, \TracyDebugger::getDataValue('editor')));
-        if(\TracyDebugger::getDataValue('localRootPath') != '') $fileEditorPath = str_replace($this->wire('config')->paths->root, \TracyDebugger::getDataValue('localRootPath'), $fileEditorPath);
-
-        return $fileEditorPath;
-    }
-
     public function getPanel() {
 
         // panel title
@@ -232,7 +225,7 @@ class TemplateResourcesPanel extends BasePanel {
                 $functions[] = $this->get_defined_resources_in_file($path);
                 $path = $this->removeCompilerFromPath($path);
                 $includedFilesOut .= "\n<tr>" .
-                    '<td><a title="Edit File" href="'.$this->getFileEditorPath($path, 1).'">'.str_replace($this->wire('config')->paths->root, '/', $path).'</a></td>' .
+                    '<td><a title="Edit File" href="'.\TracyDebugger::createEditorPath($path, 1).'">'.str_replace($this->wire('config')->paths->root, '/', $path).'</a></td>' .
                     "</tr>";
             }
             $includedFilesOut .= $this->sectionEnd;
@@ -278,7 +271,7 @@ class TemplateResourcesPanel extends BasePanel {
                         if(isset($details['file'])) {
                             $path = $this->removeCompilerFromPath($details['file']);
                             $out .= "\n<tr>" .
-                                '<td'.(isset($this->resourceCounts[$name]) && $this->resourceCounts[$name] === 1 ? ' style="background:#FF9933"' : '').'><a href="'.$this->getFileEditorPath($path, $details['line']).'">'.$name.'</a></td>' .
+                                '<td'.(isset($this->resourceCounts[$name]) && $this->resourceCounts[$name] === 1 ? ' style="background:#FF9933"' : '').'><a href="'.\TracyDebugger::createEditorPath($path, $details['line']).'">'.$name.'</a></td>' .
                                 '<td>'.str_replace($this->wire('config')->paths->root, '/', $path).'</td>' .
                                 '<td>'.$details['line'].'</td>' .
                                 "</tr>";
@@ -307,7 +300,7 @@ class TemplateResourcesPanel extends BasePanel {
         foreach($this->searchedFiles as $path) {
             if(!in_array($path, array_map(array($this, 'removeCompilerFromPath'), \TracyDebugger::$includedFiles))) {
                 $out .= "\n<tr>" .
-                    '<td><a title="Edit File" href="'.$this->getFileEditorPath($path, 1).'">'.str_replace($this->wire('config')->paths->root, '/', $path).'</a></td>' .
+                    '<td><a title="Edit File" href="'.\TracyDebugger::createEditorPath($path, 1).'">'.str_replace($this->wire('config')->paths->root, '/', $path).'</a></td>' .
                     "</tr>";
             }
         }

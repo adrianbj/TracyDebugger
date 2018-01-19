@@ -81,7 +81,7 @@ class ProcesswireLogsPanel extends BasePanel {
                     "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
                     "<td>".$item['user']."</td>" .
                     "<td>".$item['url']."</td>" .
-                    "<td><a title='View this line of \"".$item['log']."\" log file in your code editor' href='". \TracyDebugger::makePathLocal(str_replace("%file", $this->wire('config')->paths->logs . $item['log'] . '.txt', str_replace("%line", ($logInstance->getTotalLines()-$item['linenumber']), \TracyDebugger::getDataValue("editor"))))."'>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</a></td>" .
+                    "<td><a title='View this line of \"".$item['log']."\" log file in your code editor' href='". \TracyDebugger::createEditorPath($this->wire('config')->paths->logs . $item['log'] . '.txt', $logInstance->getTotalLines()-$item['linenumber'])."'>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</a></td>" .
                 "</tr>";
             }
             $this->logEntries .= $sectionEnd;

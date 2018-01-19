@@ -344,8 +344,8 @@ class RequestInfoPanel extends BasePanel {
         else {
             $templateFilePath = $_SERVER['SCRIPT_FILENAME'];
         }
-        $templateFileEditorPath = isset($templateFilePath) ? str_replace('%file', $templateFilePath, str_replace('%line', '1', \TracyDebugger::getDataValue('editor'))) : '';
-        if(\TracyDebugger::getDataValue('localRootPath') != '') $templateFileEditorPath = str_replace($this->wire('config')->paths->root, \TracyDebugger::getDataValue('localRootPath'), $templateFileEditorPath);
+
+        if(isset($templateFilePath) && $templateFilePath != '') $templateFileEditorPath = \TracyDebugger::createEditorPath($templateFilePath, 1);
 
         if(in_array('templateInfo', $panelSections) && $isPwPage) {
             // posix_getpwuid doesn't exist on Windows
@@ -609,7 +609,8 @@ class RequestInfoPanel extends BasePanel {
                     $key == 'tracyIncludedFiles' ||
                     $key == 'tracyPostData' ||
                     $key == 'tracyGetData' ||
-                    $key == 'tracyWhitelistData'
+                    $key == 'tracyWhitelistData' ||
+                    $key == 'tracyLoginUrl'
                 ) continue;
                 $session_oc++;
                 if(is_object($value)) $value = (string) $value;
@@ -668,21 +669,23 @@ class RequestInfoPanel extends BasePanel {
                     </svg>
                 </a>&nbsp;';
             }
-            $out .= '
-                <a href="'.$templateFileEditorPath.'" title="Edit this' . ($isPwPage ? ' template ' : ' ') . 'file">
-                    <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 492.014 492.014" style="enable-background:new 0 0 492.014 492.014;" xml:space="preserve" width="16px" height="16px">
-                        <g id="XMLID_144_">
-                            <path id="XMLID_151_" d="M339.277,459.566H34.922V32.446h304.354v105.873l32.446-32.447V16.223C371.723,7.264,364.458,0,355.5,0   H18.699C9.739,0,2.473,7.264,2.473,16.223v459.568c0,8.959,7.265,16.223,16.226,16.223H355.5c8.958,0,16.223-7.264,16.223-16.223   V297.268l-32.446,32.447V459.566z" fill="#444444"/>
-                            <path id="XMLID_150_" d="M291.446,71.359H82.751c-6.843,0-12.396,5.553-12.396,12.398c0,6.844,5.553,12.397,12.396,12.397h208.694   c6.845,0,12.397-5.553,12.397-12.397C303.843,76.912,298.29,71.359,291.446,71.359z" fill="#444444"/>
-                            <path id="XMLID_149_" d="M303.843,149.876c0-6.844-5.553-12.398-12.397-12.398H82.751c-6.843,0-12.396,5.554-12.396,12.398   c0,6.845,5.553,12.398,12.396,12.398h208.694C298.29,162.274,303.843,156.722,303.843,149.876z" fill="#444444"/>
-                            <path id="XMLID_148_" d="M274.004,203.6H82.751c-6.843,0-12.396,5.554-12.396,12.398c0,6.845,5.553,12.397,12.396,12.397h166.457   L274.004,203.6z" fill="#444444"/>
-                            <path id="XMLID_147_" d="M204.655,285.79c1.678-5.618,4.076-11.001,6.997-16.07h-128.9c-6.843,0-12.396,5.553-12.396,12.398   c0,6.844,5.553,12.398,12.396,12.398h119.304L204.655,285.79z" fill="#444444"/>
-                            <path id="XMLID_146_" d="M82.751,335.842c-6.843,0-12.396,5.553-12.396,12.398c0,6.843,5.553,12.397,12.396,12.397h108.9   c-3.213-7.796-4.044-16.409-1.775-24.795H82.751z" fill="#444444"/>
-                            <path id="XMLID_145_" d="M479.403,93.903c-6.496-6.499-15.304-10.146-24.48-10.146c-9.176,0-17.982,3.647-24.471,10.138   L247.036,277.316c-5.005,5.003-8.676,11.162-10.703,17.942l-14.616,48.994c-0.622,2.074-0.057,4.318,1.477,5.852   c1.122,1.123,2.624,1.727,4.164,1.727c0.558,0,1.13-0.08,1.688-0.249l48.991-14.618c6.782-2.026,12.941-5.699,17.943-10.702   l183.422-183.414c6.489-6.49,10.138-15.295,10.138-24.472C489.54,109.197,485.892,100.392,479.403,93.903z" fill="#444444"/>
-                        </g>
-                    </svg>
-                </a>&nbsp;
-            </div>';
+            if(isset($templateFileEditorPath) && $templateFileEditorPath != '') {
+                $out .= '
+                    <a href="'.$templateFileEditorPath.'" title="Edit this' . ($isPwPage ? ' template ' : ' ') . 'file">
+                        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 492.014 492.014" style="enable-background:new 0 0 492.014 492.014;" xml:space="preserve" width="16px" height="16px">
+                            <g id="XMLID_144_">
+                                <path id="XMLID_151_" d="M339.277,459.566H34.922V32.446h304.354v105.873l32.446-32.447V16.223C371.723,7.264,364.458,0,355.5,0   H18.699C9.739,0,2.473,7.264,2.473,16.223v459.568c0,8.959,7.265,16.223,16.226,16.223H355.5c8.958,0,16.223-7.264,16.223-16.223   V297.268l-32.446,32.447V459.566z" fill="#444444"/>
+                                <path id="XMLID_150_" d="M291.446,71.359H82.751c-6.843,0-12.396,5.553-12.396,12.398c0,6.844,5.553,12.397,12.396,12.397h208.694   c6.845,0,12.397-5.553,12.397-12.397C303.843,76.912,298.29,71.359,291.446,71.359z" fill="#444444"/>
+                                <path id="XMLID_149_" d="M303.843,149.876c0-6.844-5.553-12.398-12.397-12.398H82.751c-6.843,0-12.396,5.554-12.396,12.398   c0,6.845,5.553,12.398,12.396,12.398h208.694C298.29,162.274,303.843,156.722,303.843,149.876z" fill="#444444"/>
+                                <path id="XMLID_148_" d="M274.004,203.6H82.751c-6.843,0-12.396,5.554-12.396,12.398c0,6.845,5.553,12.397,12.396,12.397h166.457   L274.004,203.6z" fill="#444444"/>
+                                <path id="XMLID_147_" d="M204.655,285.79c1.678-5.618,4.076-11.001,6.997-16.07h-128.9c-6.843,0-12.396,5.553-12.396,12.398   c0,6.844,5.553,12.398,12.396,12.398h119.304L204.655,285.79z" fill="#444444"/>
+                                <path id="XMLID_146_" d="M82.751,335.842c-6.843,0-12.396,5.553-12.396,12.398c0,6.843,5.553,12.397,12.396,12.397h108.9   c-3.213-7.796-4.044-16.409-1.775-24.795H82.751z" fill="#444444"/>
+                                <path id="XMLID_145_" d="M479.403,93.903c-6.496-6.499-15.304-10.146-24.48-10.146c-9.176,0-17.982,3.647-24.471,10.138   L247.036,277.316c-5.005,5.003-8.676,11.162-10.703,17.942l-14.616,48.994c-0.622,2.074-0.057,4.318,1.477,5.852   c1.122,1.123,2.624,1.727,4.164,1.727c0.558,0,1.13-0.08,1.688-0.249l48.991-14.618c6.782-2.026,12.941-5.699,17.943-10.702   l183.422-183.414c6.489-6.49,10.138-15.295,10.138-24.472C489.54,109.197,485.892,100.392,479.403,93.903z" fill="#444444"/>
+                            </g>
+                        </svg>
+                    </a>&nbsp;
+                </div>';
+            }
         }
 
         $out .= \TracyDebugger::generatedTimeSize('requestInfo', \Tracy\Debugger::timer('requestInfo'), strlen($out));

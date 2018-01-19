@@ -105,7 +105,7 @@ class TemplateEditorPanel extends BasePanel {
         <div class="tracy-inner">
             <form id="tracyEditorSubmission" method="post" action="'.\TracyDebugger::inputUrl(true).'">
                 <fieldset>
-                    <legend>Enter PHP code, then use CTRL+Enter or CMD+Enter to test.</legend><br />';
+                    <legend>CTRL/CMD+Enter to test changes. There is intentionally no keyboard shortcut for Push Live.</legend><br />';
                     $out .= '
                     <div id="tracyTemplateEditorCode" style="visibility:hidden; width: calc(100vw - 80px) !important; height:100px"></div><br />
                     <textarea id="tracyTemplateEditorRawCode" name="tracyTemplateEditorRawCode" style="display:none"></textarea>
@@ -113,76 +113,71 @@ class TemplateEditorPanel extends BasePanel {
                     <input type="submit" name="changeTemplateCode" onclick="tracyGetRawCode(\'live\')" value="Push Live" />&nbsp;
                     <input type="submit" name="resetTemplateCode" onclick="tracyGetRawCode(\'reset\')" value="Reset" />
                 </fieldset>
-            </form>
-        </div>';
+            </form>';
+
+            $out .= '
+            <script>
+                JavaScript.load("'.$this->wire('config')->urls->TracyDebugger.'ace-editor/ace.js", function() {
+                    if(typeof ace !== "undefined") {
+                        tte = ace.edit("tracyTemplateEditorCode");
+                        tte.container.style.lineHeight = 1.8;
+                        tte.setFontSize(13);
+                        tte.setShowPrintMargin(false);
+                        tte.$blockScrolling = Infinity; //fix deprecation warning
+
+                        // set theme
+                        JavaScript.load("'.$this->wire('config')->urls->TracyDebugger.'ace-editor/theme-tomorrow_night.js", function() {
+                            tte.setTheme("ace/theme/tomorrow_night");
+                        });
+
+                        // set mode to php
+                        JavaScript.load("'.$this->wire('config')->urls->TracyDebugger.'ace-editor/mode-php.js", function() {
+                            tte.session.setMode({path:"ace/mode/php"});
+                        });
+
+                        // set autocomplete and other options
+                        JavaScript.load("'.$this->wire('config')->urls->TracyDebugger.'ace-editor/ext-language_tools.js", function() {
+                            document.getElementById("tracyTemplateEditorCode").style.visibility = "visible";
+                            tte.setValue('.json_encode(file_get_contents($this->wire('page')->template->filename)).');
+                            tte.focus();
+
+                            // go to last cursor position
+                            var tracyTemplateEditor = JSON.parse(localStorage.getItem("tracyTemplateEditor-'.$this->wire('page')->template->name.'"));
+                            if(!!tracyTemplateEditor) {
+                                tte.gotoLine(tracyTemplateEditor.row, tracyTemplateEditor.column);
+                                tte.session.setScrollTop(tracyTemplateEditor.scrollTop);
+                                tte.session.setScrollLeft(tracyTemplateEditor.scrollLeft);
+                            }
+                            else {
+                                tte.gotoLine(1, 0);
+                            }
+
+                            function resizeAce() {
+                                var ml = Math.round((document.getElementById("tracy-debug-panel-TemplateEditorPanel").offsetHeight - 210) / 23);
+                                tte.setOptions({
+                                    enableBasicAutocompletion: true,
+                                    enableLiveAutocompletion: true,
+                                    minLines: 5,
+                                    maxLines: ml
+                                });
+                            }
+
+                            resizeAce();
+
+                            window.onresize = function(event) {
+                                resizeAce();
+                            };
+
+                        });
+                    }
+                });
+            </script>
+            ';
+
+            $out .= \TracyDebugger::generatedTimeSize('templateEditor', \Tracy\Debugger::timer('templateEditor'), strlen($out));
 
         $out .= '
-        <script>
-            JavaScript.load("'.$this->wire('config')->urls->TracyDebugger.'ace-editor/ace.js", function() {
-                if(typeof ace !== "undefined") {
-                    tte = ace.edit("tracyTemplateEditorCode");
-                    tte.container.style.lineHeight = 1.8;
-                    tte.setFontSize(13);
-                    tte.setShowPrintMargin(false);
-                    tte.$blockScrolling = Infinity; //fix deprecation warning
-
-                    // set theme
-                    JavaScript.load("'.$this->wire('config')->urls->TracyDebugger.'ace-editor/theme-tomorrow_night.js", function() {
-                        tte.setTheme("ace/theme/tomorrow_night");
-                    });
-
-                    // set mode to php
-                    JavaScript.load("'.$this->wire('config')->urls->TracyDebugger.'ace-editor/mode-php.js", function() {
-                        tte.session.setMode({path:"ace/mode/php"});
-                    });
-
-                    // set autocomplete and other options
-                    JavaScript.load("'.$this->wire('config')->urls->TracyDebugger.'ace-editor/ext-language_tools.js", function() {
-                        var ml = Math.round(Math.max(document.documentElement.clientHeight, window.innerHeight || 0) / 60);
-                        tte.setOptions({
-                            enableBasicAutocompletion: true,
-                            enableLiveAutocompletion: true,
-                            minLines: 5,
-                            maxLines: ml
-                        });
-                        document.getElementById("tracyTemplateEditorCode").style.visibility = "visible";
-                        tte.setValue('.json_encode(file_get_contents($this->wire('page')->template->filename)).');
-                        tte.focus();
-
-                        // go to last cursor position
-                        var tracyTemplateEditor = JSON.parse(localStorage.getItem("tracyTemplateEditor-'.$this->wire('page')->template->name.'"));
-                        if(!!tracyTemplateEditor) {
-                            tte.gotoLine(tracyTemplateEditor.row, tracyTemplateEditor.column);
-                            tte.session.setScrollTop(tracyTemplateEditor.scrollTop);
-                            tte.session.setScrollLeft(tracyTemplateEditor.scrollLeft);
-                        }
-                        else {
-                            tte.gotoLine(1, 0);
-                        }
-
-                        function resizeAce() {
-                            var ml = Math.round(Math.max(document.documentElement.clientHeight, window.innerHeight || 0) / 60);
-                            tte.setOptions({
-                                enableBasicAutocompletion: true,
-                                enableLiveAutocompletion: true,
-                                minLines: 5,
-                                maxLines: ml
-                            });
-                        }
-
-                        resizeAce();
-
-                        window.onresize = function(event) {
-                            resizeAce();
-                        };
-
-                    });
-                }
-            });
-        </script>
-        ';
-
-        $out .= \TracyDebugger::generatedTimeSize('templateEditor', \Tracy\Debugger::timer('templateEditor'), strlen($out));
+        </div>';
 
         return parent::loadResources() . $out;
     }

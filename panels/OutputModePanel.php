@@ -21,7 +21,7 @@ class OutputModePanel extends BasePanel {
         $this->outputMode = \TracyDebugger::getDataValue('outputMode');
 
         if($this->outputMode == 'detect') {
-            $this->outputMode = \Tracy\Debugger::detectDebugMode() ? 'development' : 'production';
+            $this->outputMode = \Tracy\Debugger::$isLocal ? 'development' : 'production';
         }
 
         $iconColor = $this->outputMode == 'development' ? $this->developmentColor : $this->productionColor;

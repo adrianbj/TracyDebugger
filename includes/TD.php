@@ -25,6 +25,10 @@ class TD extends TracyDebugger {
      */
     public static function debugAll($var, $title = NULL, array $options = NULL) {
         if(self::tracyUnavailable()) return false;
+        if(is_array($title)) {
+            $options = $title;
+            $title = NULL;
+        }
         Debugger::barDump($var, $title, $options);
         Debugger::dump($var, $title, $options);
         Debugger::fireLog($var);
@@ -37,6 +41,10 @@ class TD extends TracyDebugger {
      */
     public static function barDumpLive($var, $title = NULL, array $options = NULL) {
         if(self::tracyUnavailable()) return false;
+        if(is_array($title)) {
+            $options = $title;
+            $title = NULL;
+        }
         $options[Dumper::DEPTH] = 99;
         $options[Dumper::TRUNCATE] = 999999;
         $options[Dumper::LOCATION] = Debugger::$showLocation;
@@ -50,6 +58,10 @@ class TD extends TracyDebugger {
      */
     public static function barDump($var, $title = NULL, array $options = NULL) {
         if(self::tracyUnavailable()) return false;
+        if(is_array($title)) {
+            $options = $title;
+            $title = NULL;
+        }
         $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
         $options[Dumper::LOCATION] = Debugger::$showLocation;
@@ -61,13 +73,9 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     private static function dumpToBar($var, $title = NULL, array $options = NULL) {
-        if(is_array($title)) {
-            $options = $title;
-            $title = NULL;
-        }
         $dumpItem = array();
         $dumpItem['title'] = $title;
-        $dumpItem['dump'] = Dumper::toHtml($var, (array) $options);
+        $dumpItem['dump'] = Dumper::toHtml($var, $options);
         array_push(\TracyDebugger::$dumpItems, $dumpItem);
 
         if(in_array('dumpsRecorder', \TracyDebugger::$showPanels)) {

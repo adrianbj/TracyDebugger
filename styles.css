@@ -1,14 +1,15 @@
 /* for hiding the server type indicator bar */
-body.hidden:before {
+body.tracyHidden:before {
     display: none;
 }
 
 #tracy-debug-bar {
     background: #F0F3F7 !important;
-    border: 1px solid #DDDDDD !important;
+    border: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
     opacity: 1 !important;
+    padding: 1px 0 1px 0 !important;
 }
 
 #tracy-debug-bar li > a:hover {
@@ -379,12 +380,6 @@ ul.pw-info-links {
     box-sizing: border-box;         /* Opera/IE 8+ */
 }
 
-/* not sure why these need to be different in popup window, but they do :) */
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-window"] input[type="text"]#tracySnippetName {
-    height: 20px !important;
-    width: 210px !important;
-}
-
 #snippetTrash {
     visibility:hidden;
 }
@@ -398,8 +393,7 @@ ul.pw-info-links {
     margin: 5px 0 0 0 !important;
     width: 290px !important;
     padding: 0 !important;
-    min-height: 115px !important;
-    max-height: 187px !important;
+    height: 100% !important;
     overflow:auto !important;
 }
 
@@ -538,26 +532,19 @@ ul.pw-info-links {
     cursor: default !important;
 }
 
-#hide-button {
-    cursor: pointer !important;
-    padding: 0 5px 0 3px !important;
+#tracy-debug .resizeIcons {
+    display: block;
+    margin: 5px 70px 0 0;
+    font-size: 13px !important;
+}
+#tracy-debug .resizeIcons a:link, #tracy-debug .resizeIcons a:hover {
+    color: #2C3E50 !important;
+    background: transparent !important;
 }
 
-#show-button {
-    bottom: 0 !important;
-    right: 0 !important;
-    z-index: 99999 !important;
-    position: fixed !important;
-    width: 16px !important;
-    margin: 0 !important;
-    padding: 4px 15px 2px 6px !important;
-    background: #FFFFFF !important;
-    border: 1px solid #DDDDDD !important;
-    font-size: 12px !important;
-    cursor: pointer;
-    box-sizing: border-box !important;
-    line-height: normal !important;
-    height: 22px !important;
+#tracy-debug #hide-button {
+    cursor: pointer !important;
+    padding: 0 5px 0 3px !important;
 }
 
 #tracy-debug input[type="submit"][disabled] {
@@ -566,6 +553,8 @@ ul.pw-info-links {
 
 #tracy-debug-panel-ConsolePanel {
     width: calc(100vw - 40px) !important;
+    height: 50%;
+    min-height: 230px !important;
     padding: 0px !important;
     margin: 0px !important;
 }
@@ -576,7 +565,7 @@ ul.pw-info-links {
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] #tracyConsoleContainer {
     float: left;
-    width: calc(100vw - 370px) !important;
+    width: calc(100vw - 380px) !important;
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-window"] #tracyConsoleContainer {
@@ -634,6 +623,7 @@ ul.pw-info-links {
 */
 
 /* Remove the open in popup window button from certain panels that don't work properly in popup */
+/*#tracy-debug-panel-ConsolePanel > .tracy-icons a:first-child,*/
 #tracy-debug-panel-TemplatePathPanel > .tracy-icons a:first-child,
 #tracy-debug-panel-TemplateEditorPanel > .tracy-icons a:first-child,
 #tracy-debug-panel-EventInterceptorPanel > .tracy-icons a:first-child,
@@ -724,6 +714,7 @@ ul.pw-info-links {
 
 #tracy-debug-panel-templateEditorPanel  {
     width: calc(100vw - 40px) !important;
+    height: calc(100vh - 60px) !important;
 }
 
 
@@ -919,3 +910,27 @@ ul.pw-info-links {
 #validatorBody ol {
     font-size: 16px !important;
 }
+
+
+/* Splitjs styles */
+#tracyConsoleContainer > .split {
+    -webkit-box-sizing: border-box !important;
+    -moz-box-sizing: border-box !important;
+    box-sizing: border-box !important;
+}
+
+#tracyConsoleContainer .gutter {
+    all: unset;
+    display: block !important;
+    height: 8px !important;
+    background-color: #444 !important;
+    opacity: 0.35 !important;
+    background-repeat: no-repeat !important;
+    background-position: 50% !important;
+}
+
+#tracyConsoleContainer .gutter.gutter-vertical {
+    cursor: row-resize !important;
+    background-image:  url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=') !important;
+}
+

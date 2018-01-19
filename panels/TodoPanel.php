@@ -222,7 +222,7 @@ class TodoPanel extends BasePanel {
             'line' => $line,
             'type' => $type,
             'comment' => nl2br(trim(htmlentities(str_replace(array('/*', '//', '*/', '*'), '', $comment)))),
-            'link' => \TracyDebugger::makePathLocal(str_replace("%file", $filename, str_replace("%line", $line, \TracyDebugger::getDataValue("editor"))))
+            'link' => \TracyDebugger::createEditorPath($filename, $line)
         );
     }
 
