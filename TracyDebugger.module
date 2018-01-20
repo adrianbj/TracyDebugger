@@ -40,7 +40,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.9.0',
+            'version' => '4.9.1',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -192,8 +192,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "showDebugBar" => array('frontend', 'backend'),
             "hideDebugBar" => null,
             "hideDebugBarTemplates" => array(),
-            "hideDebugBarModals" => array('regularModal', 'inlineModal', 'overlayPanels'),
-            "frontendPanels" => array('processwireInfo', 'requestInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'console', 'templatePath', 'panelSelector', 'tracyToggler'),
+            "hideDebugBarModals" => array('regularModal', 'inlineModal', 'overlayPanels', 'formBuilderIframe'),
+            "frontendPanels" => array('processwireInfo', 'requestInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'console', 'panelSelector', 'tracyToggler'),
             "backendPanels" => array('processwireInfo', 'requestInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'console', 'panelSelector', 'tracyToggler'),
             "restrictedUserDisabledPanels" => array(),
             "showUserBar" => null,
@@ -238,10 +238,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "localRootPath" => '',
             "fileEditorAllowedExtensions" => 'php, module, js, css, htaccess',
             "fileEditorBaseDirectory" => 'templates',
-            "htaccessUsername" => '',
-            "htaccessPassword" => '',
             "enableShortcutMethods" => 1,
-            "enabledShortcutMethods" => array('debugAll', 'da', 'dump', 'd', 'barDump', 'bd', 'barDumpLive', 'bdl', 'l', 'timer', 't', 'fireLog', 'fl', 'addBreakpoint', 'bp', 'templateVars', 'tv')
+            "enabledShortcutMethods" => array('debugAll', 'da', 'dump', 'd', 'barDump', 'bd', 'barDumpBig', 'bdb', 'barDumpLive', 'bdl', 'l', 'timer', 't', 'fireLog', 'fl', 'addBreakpoint', 'bp', 'templateVars', 'tv')
         );
     }
 
@@ -327,7 +325,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // clear session & cookies option in Processwire Info panel
-        // not inside $this->allowedTracyUsers() === 'full' check because it won't validate during forceLogin()
+        // not inside $this->allowedTracyUsers() === 'development' check because it won't validate during forceLogin()
         if($this->wire('input')->get->tracyClearSession) {
             $userName = $this->wire('user')->name;
             $this->wire('session')->logout();
@@ -354,7 +352,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $this->data['showUserBar'] &&
             count($this->data['userBarFeatures'])>0 &&
             !$this->wire('config')->ajax &&
-            ($this->allowedTracyUsers() !== 'full' || $this->data['showUserBarTracyUsers']) &&
+            ($this->allowedTracyUsers() !== 'development' || $this->data['showUserBarTracyUsers']) &&
             (strpos(self::inputUrl(true), '/form-builder/') === false)
         ) {
             $this->addHookAfter('Page::render', $this, 'addUserBar', array('priority'=>1000));
@@ -362,7 +360,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // Various features that require an early $session->redirect() so do now before loading Tracy core files
-        if($this->allowedTracyUsers() === 'full') {
+        if($this->allowedTracyUsers() === 'development') {
 
             // PANELS TO DISPLAY
             $configEnabledPanels = static::$inAdmin ? $this->data['backendPanels'] : $this->data['frontendPanels'];
@@ -657,7 +655,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // CONSOLE PANEL CODE INJECTION
-        if($this->allowedTracyUsers() === 'full') {
+        if($this->allowedTracyUsers() === 'development') {
             $this->insertCode('init');
             $this->addHookBefore('ProcessWire::finished', function($event) {
                 $this->insertCode('finished');
@@ -690,7 +688,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // TRACY MODE
-        if($this->data['outputMode'] == 'development' || $this->allowedTracyUsers() === 'full') {
+        if($this->data['outputMode'] == 'development' || $this->allowedTracyUsers() === 'development') {
             $outputMode = Debugger::DEVELOPMENT;
         }
         elseif($this->data['outputMode'] == 'production' || $this->allowedTracyUsers() === 'production') {
@@ -720,7 +718,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
 
-        if($this->allowedTracyUsers() === 'full') {
+        if($this->allowedTracyUsers() === 'development') {
 
             // TRACY TOGGLER
             // if Tracy has been toggled "disabled" add enable button and then exit
@@ -1091,7 +1089,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
 
-        if($this->allowedTracyUsers() === 'full') {
+        if($this->allowedTracyUsers() === 'development') {
 
             // if it's an ajax request for the File Editor feature
             if($this->wire('config')->ajax && isset($this->wire('input')->post->filePath)) {
@@ -1177,8 +1175,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
 
-        // exit now if not showing debug bar or user doesn't have 'full' access
-        if(Debugger::$showBar == false || $this->allowedTracyUsers() !== 'full') return;
+        // exit now if not showing debug bar or user doesn't have 'development' access
+        if(Debugger::$showBar == false || $this->allowedTracyUsers() !== 'development') return;
 
         // load base panel class
         require_once __DIR__ . '/includes/BasePanel.php';
@@ -1853,7 +1851,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * This considers the Tracy output mode, the user's "tracy-debugger" permissions,
      * superuser status, and IP address if relevant
      *
-     * @return string|bool String is 'full' or 'production'. Bool is only for false
+     * @return string|bool String is 'development' or 'production'. Bool is only for false
      *
      */
     public static function allowedTracyUsers() {
@@ -1869,10 +1867,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         if($u->isSuperuser() && static::getDataValue('superuserForceDevelopment') == 1 ||
             (static::$isLocal && static::getDataValue('guestForceDevelopmentLocal') == 1)) {
-                return 'full';
+                return 'development';
         }
         elseif(wire('session')->tracyUserSwitcherId && (isset($userSwitchSession[wire('session')->tracyUserSwitcherId]) && $userSwitchSession[wire('session')->tracyUserSwitcherId] > time())) {
-            return 'full';
+            return 'development';
         }
         elseif($outputMode == 'production') {
             return 'production';
@@ -1880,10 +1878,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         else {
             $checkIpAddress = static::checkIpAddress();
             if($checkIpAddress['ipAddress'] != '' && $u->hasPermission('tracy-debugger')) {
-                return $checkIpAddress['ipAddressAllowed'] ? 'full' : false;
+                return $checkIpAddress['ipAddressAllowed'] ? 'development' : false;
             }
             elseif($u->hasPermission('tracy-debugger')) {
-                return 'full';
+                return 'development';
             }
             else {
                 return false;
