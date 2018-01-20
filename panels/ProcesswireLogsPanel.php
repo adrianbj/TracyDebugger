@@ -64,7 +64,7 @@ class ProcesswireLogsPanel extends BasePanel {
 
             // get a list of sort columns and their data to pass to array_multisort
             $sort = array();
-            foreach ($entriesArr as $key => $row) {
+            foreach($entriesArr as $key => $row) {
                 $timestamp[$key] = $row['timestamp'];
                 $order[$key] = $row['order'];
             }
@@ -81,7 +81,7 @@ class ProcesswireLogsPanel extends BasePanel {
                     "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
                     "<td>".$item['user']."</td>" .
                     "<td>".$item['url']."</td>" .
-                    "<td><a title='View this line of \"".$item['log']."\" log file in your code editor' href='". \TracyDebugger::createEditorPath($this->wire('config')->paths->logs . $item['log'] . '.txt', $logInstance->getTotalLines()-$item['linenumber'])."'>".(strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText)."</a></td>" .
+                    "<td>".\TracyDebugger::createEditorLink($this->wire('config')->paths->logs . $item['log'] . '.txt', $logInstance->getTotalLines()-$item['linenumber'], (strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText), 'View in your code editor')."</td>" .
                 "</tr>";
             }
             $this->logEntries .= $sectionEnd;

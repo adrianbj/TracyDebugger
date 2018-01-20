@@ -59,10 +59,10 @@ class ModuleDisablerPanel extends BasePanel {
             function disableTracyModules() {
                 var moduleCheckboxes = document.getElementsByName("selectedModules[]");
                 count = 0;
-                for (var i=0; i<moduleCheckboxes.length; i++) {
-                   if (moduleCheckboxes[i].checked === true){
-                      count++;
-                   }
+                for(var i=0; i<moduleCheckboxes.length; i++) {
+                    if(moduleCheckboxes[i].checked === true) {
+                        count++;
+                    }
                 }
                 if(count === 0) {
                     alert("No modules selected");
@@ -85,15 +85,15 @@ class ModuleDisablerPanel extends BasePanel {
 
             function toggleAllModules(ele) {
                 var checkboxes = document.getElementsByName("selectedModules[]");
-                if (ele.checked) {
-                    for (var i = 0; i < checkboxes.length; i++) {
+                if(ele.checked) {
+                    for(var i = 0; i < checkboxes.length; i++) {
                         if(checkboxes[i].disabled === false) {
                             checkboxes[i].checked = true;
                         }
                     }
                 }
                 else {
-                     for (var i = 0; i < checkboxes.length; i++) {
+                     for(var i = 0; i < checkboxes.length; i++) {
                         if(checkboxes[i].disabled === false) {
                             checkboxes[i].checked = false;
                         }

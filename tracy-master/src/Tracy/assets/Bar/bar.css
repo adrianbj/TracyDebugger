@@ -43,7 +43,7 @@ body#tracy-debug { /* in popup window */
 }
 
 #tracy-debug-bar *:before,
-#tracy-debug *:after {
+#tracy-debug-bar *:after {
 	all: unset;
 }
 

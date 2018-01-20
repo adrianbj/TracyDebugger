@@ -14,13 +14,13 @@ class DumpsRecorderPanel extends BasePanel {
 
         $items = $this->wire('session')->tracyDumpsRecorderItems ?: array();
         $this->dumpCount = is_array($items) ? count($items) : 0;
-        $this->entries .= '<div>'.($this->dumpCount > 0 ? '<span id="clearDumpsButton" style="display:inline-block;float:right"><input type="submit" onclick="clearDumps()" value="Clear Dumps" /></span>' : '') . '</div><div style="clear:both; margin-bottom:5px"></div>';
-        if ($this->dumpCount > 0) {
+        $this->entries .= '<div>'.($this->dumpCount > 0 ? '<span id="clearDumpsRecorderButton" style="display:inline-block;float:right"><input type="submit" onclick="clearRecorderDumps()" value="Clear Dumps" /></span>' : '') . '</div><div style="clear:both; margin-bottom:5px"></div>';
+        if($this->dumpCount > 0) {
             $this->iconColor = '#CD1818';
             $this->entries .= '
             <div class="dumpsrecorder-items">';
-            foreach ($items as $item) {
-                if ($item['title'] != '') {
+            foreach($items as $item) {
+                if($item['title'] != '') {
                     $this->entries .= '<h2>' . \Tracy\Helpers::escapeHtml($item['title']) . '</h2>';
                 }
                 $this->entries .= $item['dump'];
@@ -46,39 +46,31 @@ class DumpsRecorderPanel extends BasePanel {
 
         return '
         <span title="Dumps Recorder">
-            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Dumps Recorder' : '') . ' ' . ($this->dumpCount > 0 ? '<span class="dumpsRecorderCount">' . $this->dumpCount . '</span>' : '') . '
+            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Dumps Recorder' : '') . ' ' . ($this->dumpCount > 0 ? '<span id="dumpsRecorderCount">' . $this->dumpCount . '</span>' : '') . '
         </span>
         ';
     }
 
 
     public function getPanel() {
-        $isAdditionalBar = \TracyDebugger::isAdditionalBar();
         $out = '
-        <h1>' . $this->icon . ' Dumps Recorder' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>
+        <h1>' . $this->icon . ' Dumps Recorder</h1>
 
         <script>
-            function clearDumps() {
+            function clearRecorderDumps() {
                 document.cookie = "tracyClearDumpsRecorderItems=true;expires=0;path=/";
-                document.getElementById("clearDumpsButton").innerHTML="";
+                document.getElementById("clearDumpsRecorderButton").innerHTML="";
                 var elements = document.getElementsByClassName("dumpsrecorder-items");
                 while(elements.length > 0) {
                     elements[0].parentNode.removeChild(elements[0]);
                 }
-
                 var icons = document.getElementsByClassName("dumpsRecorderIconPath");
                 i=0;
                 while(i < icons.length) {
                     icons[i].style.fill="#009900";
                     i++;
                 }
-
-                var iconCounts = document.getElementsByClassName("dumpsRecorderCount");
-                i=0;
-                while(i < iconCounts.length) {
-                    iconCounts[i].innerHTML="";
-                    i++;
-                }
+                document.getElementById("dumpsRecorderCount").innerHTML="";
             }
         </script>
 

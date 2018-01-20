@@ -10,7 +10,7 @@ class ProcesswireVersionPanel extends BasePanel {
         \Tracy\Debugger::timer('processwireVersion');
 
         $this->versions = array();
-        foreach (new DirectoryIterator($this->wire('config')->paths->root) as $fileInfo) {
+        foreach(new DirectoryIterator($this->wire('config')->paths->root) as $fileInfo) {
             if($fileInfo->isDot()) continue;
             $filePath = $fileInfo->getPathname();
             $version = str_replace($this->wire('config')->paths->root, '', $filePath);

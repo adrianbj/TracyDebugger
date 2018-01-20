@@ -42,9 +42,20 @@ if(!function_exists('barDump') && in_array('barDump', $this->data['enabledShortc
  * @tracySkipLocation
  */
 if(!function_exists('barDumpLive') && in_array('barDumpLive', $this->data['enabledShortcutMethods'])) {
-    function barDumpLive($var, $title = NULL, array $options = NULL) {
+    function barDumpLive($var, $title = NULL) {
         if(tracyUnavailable()) return false;
-        return TD::barDumpLive($var, $title, $options);
+        return TD::barDumpLive($var, $title);
+    }
+}
+
+/**
+ * TD::barDump() shortcut dumping with maxDepth = 6 and maxLength = 999.
+ * @tracySkipLocation
+ */
+if(!function_exists('barDumpBig') && in_array('barDumpBig', $this->data['enabledShortcutMethods'])) {
+    function barDumpBig($var, $title = NULL) {
+        if(tracyUnavailable()) return false;
+        return TD::barDumpBig($var, $title);
     }
 }
 
@@ -135,9 +146,20 @@ if(!function_exists('bd') && in_array('bd', $this->data['enabledShortcutMethods'
  * @tracySkipLocation
  */
 if(!function_exists('bdl') && in_array('bdl', $this->data['enabledShortcutMethods'])) {
-    function bdl($var, $title = NULL, array $options = NULL) {
+    function bdl($var, $title = NULL) {
         if(tracyUnavailable()) return false;
-        return TD::barDumpLive($var, $title, $options);
+        return TD::barDumpLive($var, $title);
+    }
+}
+
+/**
+ * TD::barDump() shortcut dumping with maxDepth = 6 and maxLength = 999.
+ * @tracySkipLocation
+ */
+if(!function_exists('bdb') && in_array('bdb', $this->data['enabledShortcutMethods'])) {
+    function bdb($var, $title = NULL) {
+        if(tracyUnavailable()) return false;
+        return TD::barDumpBig($var, $title);
     }
 }
 

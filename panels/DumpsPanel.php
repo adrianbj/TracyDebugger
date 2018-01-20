@@ -25,7 +25,8 @@ class DumpsPanel extends BasePanel {
             $data = $this->data;
         }
         $this->dumpCount = is_array($data) ? count($data) : 0;
-        if ($this->dumpCount > 0) {
+        if(\TracyDebugger::isAdditionalBar() == 'ajax') $this->entries .= '<div>'.($this->dumpCount > 0 ? '<span id="clearDumpsButton" style="display:inline-block;float:right"><input type="submit" onclick="clearDumps()" value="Clear Dumps" /></span>' : '') . '</div><div style="clear:both; margin-bottom:5px"></div>';
+        if($this->dumpCount > 0) {
             $this->iconColor = '#CD1818';
             $this->entries .= '
             <div class="dump-items">';
@@ -44,7 +45,7 @@ class DumpsPanel extends BasePanel {
         $this->icon = '
             <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
                  width="16px" height="16px" viewBox="3 4 16 16" enable-background="new 3 4 16 16" xml:space="preserve">
-            <path d="M7.8,16.8c-0.9,0-1.6,0.7-1.6,1.6c0,0.9,0.7,1.6,1.6,1.6s1.6-0.7,1.6-1.6C9.4,17.5,8.7,16.8,7.8,16.8z M3,4v1.6h1.6l2.9,6.1
+            <path class="'.(\TracyDebugger::isAdditionalBar() == 'ajax' ? 'ajaxDumpIconPath' : 'dumpIconPath').'" d="M7.8,16.8c-0.9,0-1.6,0.7-1.6,1.6c0,0.9,0.7,1.6,1.6,1.6s1.6-0.7,1.6-1.6C9.4,17.5,8.7,16.8,7.8,16.8z M3,4v1.6h1.6l2.9,6.1
                 l-1.1,2c-0.1,0.2-0.2,0.5-0.2,0.8c0,0.9,0.7,1.6,1.6,1.6h9.6v-1.6H8.1c-0.1,0-0.2-0.1-0.2-0.2l0-0.1l0.7-1.3h6
                 c0.6,0,1.1-0.3,1.4-0.8l2.9-5.2C19,6.7,19,6.5,19,6.4c0-0.4-0.4-0.8-0.8-0.8H6.4L5.6,4C5.6,4,3,4,3,4z M15.8,16.8
                 c-0.9,0-1.6,0.7-1.6,1.6c0,0.9,0.7,1.6,1.6,1.6c0.9,0,1.6-0.7,1.6-1.6C17.4,17.5,16.7,16.8,15.8,16.8z" fill="' . $this->iconColor . '" />
@@ -53,7 +54,7 @@ class DumpsPanel extends BasePanel {
 
         return '
         <span title="Dumps">
-            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Dumps' : '') . ' ' . ($this->dumpCount > 0 ? '<span class="dumpCount">' . $this->dumpCount . '</span>' : '') . '
+            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Dumps' : '') . ' ' . ($this->dumpCount > 0 ? '<span id="'.(\TracyDebugger::isAdditionalBar() == 'ajax' ? 'ajaxDumpCount' : 'dumpCount').'">' . $this->dumpCount . '</span>' : '') . '
         </span>
 
         <script>
@@ -69,6 +70,24 @@ class DumpsPanel extends BasePanel {
         $isAdditionalBar = \TracyDebugger::isAdditionalBar();
         $out = '
         <h1>' . $this->icon . ' Dumps' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>
+
+        <script>
+            function clearDumps() {
+                document.cookie = "tracyClearDumpItemsAjax=true;expires=0;path=/";
+                document.getElementById("clearDumpsButton").innerHTML="";
+                var elements = document.getElementsByClassName("dump-items");
+                while(elements.length > 0) {
+                    elements[0].parentNode.removeChild(elements[0]);
+                }
+                var icons = document.getElementsByClassName("ajaxDumpIconPath");
+                i=0;
+                while(i < icons.length) {
+                    icons[i].style.fill="#009900";
+                    i++;
+                }
+                document.getElementById("ajaxDumpCount").innerHTML="";
+            }
+        </script>
 
         <div class="tracy-inner tracy-DumpPanel">
 

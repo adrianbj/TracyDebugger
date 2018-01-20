@@ -41,12 +41,16 @@ if($user->isSuperuser()) {
     }
 
     $this->file = $cachePath.(isset($_POST['tracyConsole']) ? 'consoleCode.php' : 'snippetRunner.php');
-    $code = trim($code);
     $tokens = token_get_all($code);
     $nextStringIsNamespace = false;
     $nameSpace = null;
+    $containsPhpOpenTag = false;
     foreach($tokens as $token) {
         switch($token[0]) {
+            case T_OPEN_TAG:
+                $containsPhpOpenTag = true;
+                break;
+
             case T_NAMESPACE:
                 $nextStringIsNamespace = true;
                 break;
@@ -71,9 +75,10 @@ if($user->isSuperuser()) {
     if(isset($_POST['mid']) && $_POST['mid'] != '') $setVars .= '$module = $modules->get("'.$this->wire('sanitizer')->name($_POST['mid']).'"); ';
 
     $codePrefixes = "$openPHP $nameSpace $inPwCheck $setVars";
-    // close php after codePrefixes if there is a PHP open tag somewhere in the code,
-    // or it starts with an < without the ? which indicates an HTML opening tag
-    if(strpos($code, '<?') !== false || (substr($code, 0, 1) === '<' && substr($code, 1, 1) !== '?')) {
+
+    // close php after codePrefixes if there is a PHP open tag somewhere in the code
+    // or it starts with a < without the ? which indicates an HTML opening tag
+    if($containsPhpOpenTag || (substr($code, 0, 1) === '<' && substr($code, 1, 1) !== '?')) {
         $codePrefixes .= '?>';
     }
     $code = "$codePrefixes\n$code";
@@ -151,7 +156,7 @@ if($user->isSuperuser()) {
     </div>';
 
     // fix for updating AJAX bar when SessionHandlerDB is installed
-    if(\TracyDebugger::$tracyVersion != 'legacy' && $this->wire('modules')->isInstalled('SessionHandlerDB')) {
+    if($this->wire('modules')->isInstalled('SessionHandlerDB')) {
         \Tracy\Debugger::getBar()->render();
         \Tracy\Debugger::$showBar = FALSE;
     }
@@ -164,14 +169,14 @@ if($user->isSuperuser()) {
 function tracyConsoleErrorHandler($errno, $errstr, $errfile, $errline) {
 
     // this prevents silenced(@) errors from being captured by this custom error handler
-    if (error_reporting() === 0) {
+    if(error_reporting() === 0) {
         // continue script execution, skipping standard PHP error handler
         return true;
     }
 
     // ignore any include/require errors - we are including all files by their full path via
     // $this->wire('session')->tracyIncludedFiles anyway, so the errors caused by relative paths won't matter
-    if (strpos($errstr, 'include') !== false || strpos($errstr, 'require') !== false) {
+    if(strpos($errstr, 'include') !== false || strpos($errstr, 'require') !== false) {
         return;
     }
     else {

@@ -75,17 +75,15 @@ class Panel implements IBarPanel
 						}'
 				. '</style>'
 				. '<span id="performance-panel" title="Performance Tracy Panel">'
-					. '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-		 					viewBox="0 0 33.1 11.7" enable-background="new 0 0 33.1 11.7" xml:space="preserve">
-							<linearGradient id="PerformancePanelGradient" gradientUnits="userSpaceOnUse" x1="5.8319" y1="0.5" x2="5.8319" y2="11.1638">
-								<stop  offset="0" style="stop-color:#FFFFFF"/>
-								<stop  offset="1" style="stop-color:#F7A69E"/>
-							</linearGradient>
-							<rect x="0.5" y="0.5" fill="url(#PerformancePanelGradient)" stroke="#773B37" width="10.7" height="10.7"/>
-							<rect x="22" y="0.5" fill="url(#PerformancePanelGradient)" stroke="#773B37" width="10.7" height="10.7"/>
-							<polygon fill="#9ADAEA" stroke="#28A0DA" points="16.5,8.1 14,8.1 14,10.5 9,5.9 14,1.2 14,3.6 16.5,3.6 "/>
-							<polygon fill="#9ADAEA" stroke="#28A0DA" points="16.5,8.1 19,8.1 19,10.5 24.1,5.7 19.1,1.2 19.1,3.6 16.5,3.6 "/>'
-					. '</svg>'
+					. '<svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+							 width="16px" height="16px" viewBox="40.6 40.6 16 16" enable-background="new 40.6 40.6 16 16" xml:space="preserve">
+							<g>
+								<path fill="#444444" d="M48.6,40.6c-4.4,0-8,3.6-8,8s3.6,8,8,8s8-3.6,8-8S53,40.6,48.6,40.6z M48.6,54.9c-3.5,0-6.3-2.8-6.3-6.3
+									s2.8-6.3,6.3-6.3s6.3,2.8,6.3,6.3S52.1,54.9,48.6,54.9z"/>
+								<path fill="#444444" d="M52.7,48.3h-3.6V44c0-0.4-0.3-0.7-0.7-0.7c-0.4,0-0.7,0.3-0.7,0.7v5c0,0.4,0.3,0.7,0.7,0.7h4.3
+									c0.4,0,0.7-0.3,0.7-0.7C53.4,48.6,53.1,48.3,52.7,48.3z"/>
+							</g>
+						</svg>'
 				. '</span>'
 		;
 	}

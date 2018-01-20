@@ -25,30 +25,34 @@ class TD extends TracyDebugger {
      */
     public static function debugAll($var, $title = NULL, array $options = NULL) {
         if(self::tracyUnavailable()) return false;
-        if(is_array($title)) {
-            $options = $title;
-            $title = NULL;
-        }
-        Debugger::barDump($var, $title, $options);
-        Debugger::dump($var, $title, $options);
-        Debugger::fireLog($var);
-        Debugger::log($var);
+        static::barDump($var, $title, $options);
+        static::dump($var, $title, $options);
+        static::fireLog($var);
+        static::log($var);
     }
 
     /**
      * Tracy\Debugger::barDumpLive() shortcut with live dumping.
      * @tracySkipLocation
      */
-    public static function barDumpLive($var, $title = NULL, array $options = NULL) {
+    public static function barDumpLive($var, $title = NULL) {
         if(self::tracyUnavailable()) return false;
-        if(is_array($title)) {
-            $options = $title;
-            $title = NULL;
-        }
         $options[Dumper::DEPTH] = 99;
         $options[Dumper::TRUNCATE] = 999999;
         $options[Dumper::LOCATION] = Debugger::$showLocation;
         $options[Dumper::LIVE] = true;
+        static::dumpToBar($var, $title, $options);
+    }
+
+    /**
+     * Tracy\Debugger::barDumpBig() shortcut dumping with maxDepth = 6 and maxLength = 999.
+     * @tracySkipLocation
+     */
+    public static function barDumpBig($var, $title = NULL) {
+        if(self::tracyUnavailable()) return false;
+        $options[Dumper::DEPTH] = 6;
+        $options[Dumper::TRUNCATE] = 999;
+        $options[Dumper::LOCATION] = Debugger::$showLocation;
         static::dumpToBar($var, $title, $options);
     }
 
@@ -61,6 +65,10 @@ class TD extends TracyDebugger {
         if(is_array($title)) {
             $options = $title;
             $title = NULL;
+        }
+        if(is_array($options) && !static::has_string_keys($options)) {
+            $options['maxDepth'] = $options[0];
+            if(isset($options[1])) $options['maxLength'] = $options[1];
         }
         $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
@@ -94,6 +102,10 @@ class TD extends TracyDebugger {
         if(is_array($title)) {
             $options = $title;
             $title = NULL;
+        }
+        if(is_array($options) && !static::has_string_keys($options)) {
+            $options['maxDepth'] = $options[0];
+            if(isset($options[1])) $options['maxLength'] = $options[1];
         }
         $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
@@ -151,6 +163,10 @@ class TD extends TracyDebugger {
     public static function templateVars($vars) {
         if(self::tracyUnavailable()) return false;
         return \TracyDebugger::templateVars((array) $vars);
+    }
+
+    private static function has_string_keys(array $array) {
+        return count(array_filter(array_keys($array), 'is_string')) > 0;
     }
 
 }

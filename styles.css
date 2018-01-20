@@ -1,3 +1,20 @@
+#tracy-show-button {
+    bottom: 0 !important;
+    right: 0 !important;
+    z-index: 99999 !important;
+    position: fixed !important;
+    width: 16px !important;
+    margin: 0 !important;
+    padding: 4px 15px 2px 6px !important;
+    background: #FFFFFF !important;
+    font-size: 12px !important;
+    cursor: pointer;
+    box-sizing: border-box !important;
+    line-height: normal !important;
+    height: 22px !important;
+    display: none;
+}
+
 /* for hiding the server type indicator bar */
 body.tracyHidden:before {
     display: none;
@@ -82,7 +99,7 @@ body.tracyHidden:before {
     text-transform: none !important;
 }
 
-#tracy-debug input {
+#tracy-debug input:not(.ace_search_field) {
     height: 18px !important;
 }
 
@@ -140,10 +157,17 @@ body.tracyHidden:before {
     background: none !important;
 }
 
-#tracy-debug textarea, #tracy-debug input, #tracy-debug select {
+#tracy-debug textarea, #tracy-debug select {
     background-color: #FFFFFF !importantt;
     border: 1px solid #D2D2D2 !important;
-    padding: initial !important;
+    padding-left: initial !important;
+    font-size: 12px !important;
+}
+
+#tracy-debug input:not(.ace_search_field) {
+    background-color: #FFFFFF !importantt;
+    border: 1px solid #D2D2D2 !important;
+    padding-left: 5px !important;
     font-size: 12px !important;
 }
 
@@ -305,6 +329,11 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
 
 .tracy-inner a {
     display: inline-block;
+}
+
+/* ensure click on linked SVG icon is on the parent a */
+.tracy-inner a > svg {
+    pointer-events: none;
 }
 
 #tracy-debug-panel-PanelSelectorPanel fieldset div label {
@@ -563,12 +592,14 @@ ul.pw-info-links {
     width: 100% !important;
 }
 
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] #tracyConsoleContainer {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] #tracyConsoleContainer,
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] #tracySnippetRunnerContainer {
     float: left;
     width: calc(100vw - 380px) !important;
 }
 
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-window"] #tracyConsoleContainer {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-window"] #tracyConsoleContainer,
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-window"] #tracySnippetRunnerContainer {
     float: left;
     width: calc(100vw - 330px) !important;
 }
@@ -625,7 +656,6 @@ ul.pw-info-links {
 /* Remove the open in popup window button from certain panels that don't work properly in popup */
 /*#tracy-debug-panel-ConsolePanel > .tracy-icons a:first-child,*/
 #tracy-debug-panel-TemplatePathPanel > .tracy-icons a:first-child,
-#tracy-debug-panel-TemplateEditorPanel > .tracy-icons a:first-child,
 #tracy-debug-panel-EventInterceptorPanel > .tracy-icons a:first-child,
 #tracy-debug-panel-ModuleDisablerPanel > .tracy-icons a:first-child,
 #tracy-debug-panel-PageRecorderPanel > .tracy-icons a:first-child,
@@ -712,11 +742,14 @@ ul.pw-info-links {
     border-bottom: 0 !important;
 }
 
-#tracy-debug-panel-templateEditorPanel  {
+#tracy-debug-panel-FileEditorPanel {
     width: calc(100vw - 40px) !important;
     height: calc(100vh - 60px) !important;
 }
 
+#tracy-debug-panel-FileEditorPanel.tracy-mode-window {
+    width: 100% !important;
+}
 
 /* clipboardjs "Copied!" tooltip */
 .tooltipped {
@@ -934,3 +967,191 @@ ul.pw-info-links {
     background-image:  url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=') !important;
 }
 
+
+/* File Editor folders */
+/* Hide all subfolders at startup */
+.tracy-file-tree .tft-d:not(.tft-d-open) > ul {
+    display: none;
+}
+
+.tracy-file-tree > ul > li.tft-f a:before {
+    padding: 0 8px 0 6px;
+}
+
+.tracy-file-tree ul {
+    list-style: none;
+    margin: 0 0 0 5px;
+    padding: 0;
+    width: 290px;
+}
+
+.tracy-file-tree ul ul {
+    margin-left: 15px !important;
+    width: 275px !important;
+}
+
+.tracy-file-tree ul ul ul {
+    margin-left: 15px !important;
+    width: 260px !important;
+}
+
+.tracy-file-tree ul ul ul ul {
+    margin-left: 15px !important;
+    width: 245px !important;
+}
+
+.tracy-file-tree ul ul ul ul ul {
+    margin-left: 15px !important;
+    width: 230px !important;
+}
+
+.tracy-file-tree ul ul ul ul ul ul {
+    margin-left: 15px !important;
+    width: 215px !important;
+}
+
+.tracy-file-tree ul ul ul ul ul ul ul {
+    margin-left: 15px !important;
+    width: 200px !important;
+}
+
+.tracy-file-tree ul ul ul ul ul ul ul ul {
+    margin-left: 15px !important;
+    width: 185px !important;
+}
+
+.tracy-file-tree li {
+    margin: 0;
+    position: relative;
+    user-select: none;
+}
+
+.tracy-file-tree a {
+    color: #2f4248; /* neutral grey */
+    text-decoration: none;
+    display: block;
+    border-bottom: 1px solid #e4ecf0;
+    padding: 0;
+    cursor: pointer;
+}
+
+.tracy-file-tree li,
+.tracy-file-tree li a {
+    transition: all .12s;
+    font-size: 13px !important;
+}
+
+.tracy-file-tree .tft-d-open > a.active {
+    opacity: 1;
+    color: #9e255d /*!important;*/
+}
+.tracy-file-tree .tft-d > a {
+    color: inherit;
+}
+.tracy-file-tree .tft-d a.active:after,
+.tracy-file-tree .tft-d a:hover:after {
+    content: attr(data-p);
+    font-size: 13px;
+    text-decoration: none;
+    position: absolute;
+    color: rgba(255, 255, 255, 1);
+    font-weight: bold;
+    margin-left: 20px;
+    margin-top: 1px;
+    right: 6px;
+}
+.tracy-file-tree .tft-d a.active:after {
+    color: rgba(255, 255, 255, 1);
+}
+
+.tracy-file-tree a[href] {
+    padding-left: 1px;
+}
+.tracy-file-tree a[href]:hover {
+    text-decoration: underline;
+}
+.tracy-file-tree li a:hover {
+    color: #db1174;
+    background: rgba(0, 0, 0, 0.02);
+}
+.tracy-file-tree a:focus {
+    outline: 0;
+}
+
+.tracy-file-tree .tft-d a:before {
+    font-family: FontAwesome;
+    content: '\f07b';
+    padding-right: 5px;
+    padding-left: 5px;
+    font-size: 14px;
+    margin-right: 4px;
+    display: inline-block !important;
+}
+.tracy-file-tree .tft-d-open > a:before {
+    /*content: '\f115'; non filled */
+    content: '\f07c';
+}
+
+.tracy-file-tree .tft-f a:before {
+    font-family: FontAwesome;
+    content: '\f0f6';
+    padding-right: 6px;
+    font-size: 14px;
+}
+
+.tft-f > a {
+    padding-left: 6px;
+}
+
+/* more filetype icons */
+.tracy-file-tree .ext-txt a:before {
+    font-family: FontAwesome;
+    content: '\f0f6';
+    padding-right: 5px;
+    font-size: 14px;
+}
+.tracy-file-tree .ext-css a:before,
+.tracy-file-tree .ext-htm a:before,
+.tracy-file-tree .ext-html a:before {
+    font-family: FontAwesome;
+    content: '\f1c9';
+    padding-right: 5px;
+    font-size: 14px;
+}
+.tracy-file-tree .ext-jpg a:before,
+.tracy-file-tree .ext-gif a:before,
+.tracy-file-tree .ext-png a:before,
+.tracy-file-tree .ext-bmp a:before {
+    font-family: FontAwesome;
+    content: '\f1c5';
+    padding-right: 5px;
+    font-size: 14px;
+}
+
+.tracy-file-tree .tft-f span {
+    position: absolute;
+    right: 0;
+    top: 0;
+    padding: 7px 0;
+    cursor: pointer;
+    opacity: .6;
+}
+.tracy-file-tree .tft-f span:hover {
+    opacity: 1;
+    color: #db1174;
+    text-decoration: underline;
+}
+.tracy-file-tree .tft-f span:before {
+    content: "#";
+    /*font-family: FontAwesome;*/
+    /*content: '\f1b2';*/
+    /*padding-right: 5px;*/
+    /*font-size: 14px;*/
+}
+
+/* Ace search */
+.ace_search { font-size:12px; line-height:normal; }
+.ace_search *, .ace_search *:after { box-sizing:content-box; }
+#tracy-debug .ace_search_field { padding-top:0; padding-bottom:0; background:#fff; border-right:0; line-height:inherit; border-color:#cbcbcb; }
+#tracy-debug .ace_search_field:focus { border-color:#cbcbcb !important; }
+#tracy-debug .ace_search input, #tracy-debug .ace_search_counter { font-family:Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace; }

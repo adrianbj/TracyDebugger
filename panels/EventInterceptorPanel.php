@@ -19,12 +19,12 @@ class EventInterceptorPanel extends BasePanel {
             $this->iconColor = $this->wire('input')->cookie->eventInterceptorHook ? '#CD1818' : '#009900';
             $this->entries .= '
             <div class="event-items">
-                <p><input type="submit" onclick="clearEvents()" value="Clear Events" /></p>';
+                <p><input type="submit" onclick="clearEvents()" value="Clear Events" /></p><br />';
             foreach($items as $item) {
-                $this->entries .= '<h2>' . date("Y-m-d H:i:s", $item['timestamp']) . '</h2>';
-                $this->entries .= '<h3>Event Object</h3>';
+                $this->entries .= '<h2><strong>' . date("Y-m-d H:i:s", $item['timestamp']) . '</strong></h2>';
+                $this->entries .= '<h2>Event Object</h2>';
                 $this->entries .= $item['object'];
-                $this->entries .= '<h3>Event Arguments</h3>';
+                $this->entries .= '<h2>Event Arguments</h2>';
                 $this->entries .= $item['arguments'];
             }
             $this->entries .= '</div>';
@@ -56,6 +56,9 @@ class EventInterceptorPanel extends BasePanel {
 
     public function getPanel() {
         $isAdditionalBar = \TracyDebugger::isAdditionalBar();
+
+        $hookSettings = json_decode($this->wire('input')->cookie->eventInterceptorHook, true);
+
         $out = '
         <h1>' . $this->icon . ' Event Interceptor' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>
 
@@ -69,7 +72,7 @@ class EventInterceptorPanel extends BasePanel {
                     var fillColor = "#FF9933";
                 }
                 var elements = document.getElementsByClassName("event-items");
-                while(elements.length > 0){
+                while(elements.length > 0) {
                     elements[0].parentNode.removeChild(elements[0]);
                 }
 
@@ -94,11 +97,15 @@ class EventInterceptorPanel extends BasePanel {
                 if(status === "remove") {
                     document.cookie = "eventInterceptorHook=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
                     document.getElementById("eventInterceptorHook").value = "";
-                    document.getElementById("eventHookLegend").innerHTML = "Enter an Event Hook";
+                    document.getElementById("eventHookLegend").innerHTML = "Enter an Event Hook (eg. PageRender::renderPage)";
                 }
                 else if(document.getElementById("eventInterceptorHook").value != "") {
-                    document.cookie = "eventInterceptorHook="+document.getElementById("eventInterceptorHook").value+"; expires=0; path=/";
-                    document.getElementById("eventHookLegend").innerHTML = "<strong>" + document.getElementById("eventInterceptorHook").value + "</strong> hook is set";
+                    var interceptEvent = {};
+                    interceptEvent.hook = document.getElementById("eventInterceptorHook").value;
+                    interceptEvent.when = document.getElementById("tracyEventWhenBefore").checked ? "before" : "after";
+                    interceptEvent.return = document.getElementById("tracyEventReturnFalse").checked ? "false" : "default";
+                    document.cookie = "eventInterceptorHook="+JSON.stringify(interceptEvent)+"; expires=0; path=/";
+                    document.getElementById("eventHookLegend").innerHTML = "<strong>" + document.getElementById("eventInterceptorHook").value + "</strong> <em>" + interceptEvent.when + "</em> hook is set to return <em>" + interceptEvent.return + "</em>";
                 }
 
                 if(status === "set") {
@@ -121,10 +128,20 @@ class EventInterceptorPanel extends BasePanel {
 
         <div class="tracy-inner tracy-DumpPanel" style="min-width:350px !important">
 
-            <fieldset>
-                <legend><span id="eventHookLegend">'.($this->wire('input')->cookie->eventInterceptorHook ? '<strong>' . $this->wire('input')->cookie->eventInterceptorHook . '</strong> hook is set' : 'Enter an Event Hook') .'</span></legend><br />';
+            <fieldset id="eventInterceptor">
+                <legend><span id="eventHookLegend">'.($hookSettings['hook'] ? '<strong>' . $hookSettings['hook'] . '</strong> <em>' . $hookSettings['when'] . '</em> hook is set to return <em>' . $hookSettings['return'] . '</em>' : 'Enter an Event Hook (eg. PageRender::renderPage)') .'</span></legend><br />';
                 $out .= '
-                <input type="text" id="eventInterceptorHook" name="eventInterceptorHook" value="'.$this->wire('input')->cookie->eventInterceptorHook.'">
+                <input type="text" style="width:250px !important" id="eventInterceptorHook" name="eventInterceptorHook" value="'.$hookSettings['hook'].'">
+                <p>
+                    Hook: <label style="display:inline-block !important"><input type="radio" id="tracyEventWhenBefore" name="when" value="before" '. ($hookSettings['when'] == 'before' ? ' checked="checked"' : '') .' /> Before</label>
+                    <label style="display:inline-block !important"><input type="radio" id="tracyEventWhenAfter" name="when" value="after" '. (!isset($hookSettings) || $hookSettings['when'] == 'after' ? ' checked="checked"' : '') .' /> After</label>
+                </p>
+                <p>
+                    Return: <label style="display:inline-block !important"><input type="radio" id="tracyEventReturnDefault" name="return" value="default" '. (!isset($hookSettings) || $hookSettings['return'] == 'default' ? ' checked="checked"' : '') .' /> Default</label>
+                    <label style="display:inline-block !important"><input type="radio" id="tracyEventReturnFalse" name="return" value="false" '. ($hookSettings['return'] == 'false' ? ' checked="checked"' : '') .' /> False</label>
+
+                </p>
+                <br />
                 <input type="submit" onclick="setEventInterceptorHook(\'set\')" value="Set Hook" />&nbsp;
                 <input type="submit" onclick="setEventInterceptorHook(\'remove\')" value="Remove Hook" />&nbsp;
             </fieldset>

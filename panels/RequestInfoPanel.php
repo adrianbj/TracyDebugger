@@ -337,15 +337,31 @@ class RequestInfoPanel extends BasePanel {
         }
 
         // Template info
-        // defining $templateFileEditorPath even if templateInfo not a selected panel because it's used to build the template editing button at the bottom of the panel
-        if($isPwPage) {
+        // defining $templateFilePath even if templateInfo not a selected panel because it's used to build the template editing button at the bottom of the panel
+        if($isPwPage && ($this->wire('process') == 'ProcessPageView' || $this->wire('process') == 'ProcessPageEdit')) {
             if(file_exists($p->template->filename)) $templateFilePath = $p->template->filename;
+        }
+        elseif($isPwPage && $this->wire('process')) {
+            $templateFilePath = $this->wire('modules')->getModuleFile($this->wire('process'));
         }
         else {
             $templateFilePath = $_SERVER['SCRIPT_FILENAME'];
         }
 
-        if(isset($templateFilePath) && $templateFilePath != '') $templateFileEditorPath = \TracyDebugger::createEditorPath($templateFilePath, 1);
+        $templateFileEditorLinkIcon = '
+            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                 width="14.2px" height="16px" viewBox="388.9 298 14.2 16" enable-background="new 388.9 298 14.2 16" xml:space="preserve">
+                    <path fill="#444444" d="M394.6,307.5c-0.1,0.1-0.1,0.1-0.1,0.2l-1,3.2c0,0.1,0,0.2,0.1,0.3c0.1,0.1,0.1,0.1,0.2,0.1c0,0,0,0,0.1,0
+                        c0,0,0,0,0,0l3.3-1.1c0.1,0,0.1-0.1,0.1-0.1l5.9-5.9c0.1-0.1,0.1-0.1,0.1-0.2c0-0.1,0-0.2-0.1-0.2l-2.2-2.2
+                        c-0.1-0.1-0.1-0.1-0.2-0.1c-0.1,0-0.2,0-0.2,0.1l-0.2,0.2v-3.4c0-0.1,0-0.2-0.1-0.3c-0.1-0.1-0.2-0.1-0.3-0.1h-6.5l0,0h-0.8
+                        c0,0,0,0,0,0h-0.1v0.1l-3.3,3.3c0,0,0,0,0,0.1h0v0.1v0.9v11.2c0,0.1,0,0.2,0.1,0.3c0.1,0.1,0.2,0.1,0.3,0.1h3.1h4.2h3.1
+                        c0.1,0,0.2,0,0.3-0.1c0.1-0.1,0.1-0.2,0.1-0.4v-4.2c0-0.1,0-0.1-0.1-0.2c0,0-0.1,0-0.2,0.1l-0.2,0.2c-0.1,0.1-0.2,0.2-0.4,0.3
+                        c-0.1,0.1-0.3,0.3-0.6,0.6v2.3h-2.1h-4.2h-2.1v-10.1h2.9c0.1,0,0.2-0.1,0.2-0.2v-2.9h5.4v3.9L394.6,307.5z M394.6,310l0.6-1.8
+                        l1.2,1.2L394.6,310z"/>
+            </svg>
+        ';
+
+        if(isset($templateFilePath) && $templateFilePath != '') $templateFileEditorLink = \TracyDebugger::createEditorLink($templateFilePath, 1, $templateFileEditorLinkIcon, 'Edit ' . pathinfo($templateFilePath, PATHINFO_BASENAME));
 
         if(in_array('templateInfo', $panelSections) && $isPwPage) {
             // posix_getpwuid doesn't exist on Windows
@@ -381,7 +397,7 @@ class RequestInfoPanel extends BasePanel {
                 </tr>
                 <tr>
                     <td>filename</td>
-                    <td>'.(isset($templateFilePath) ? '<a title="Edit Template File" href="'.$templateFileEditorPath.'">'.str_replace($this->wire('config')->paths->root, '/', $templateFilePath).'</a>' . '<br />
+                    <td>'.(isset($templateFilePath) ? \TracyDebugger::createEditorLink($templateFilePath, 1, str_replace($this->wire('config')->paths->root, '/', $templateFilePath), 'Edit Template File') . '<br />
                         modified: ' . date("Y-m-d H:i:s", filemtime($templateFilePath)) . '<br />' .
                         (isset($owner) ? 'user:group: ' . $owner['name'].":".$group['name'] : '') . '<br />
                         permissions: ' . $permission
@@ -661,7 +677,7 @@ class RequestInfoPanel extends BasePanel {
             $out .= '
             <div class="pw-info-links" style="text-align: right; border-top:1px solid #CCCCCC; margin-top:10px; padding-top:10px;">
             ';
-            if($isPwPage) {
+            if($isPwPage && !\TracyDebugger::$inAdmin) {
                 $out .= '
                 <a onclick="closePanel()" href="'.$this->wire('config')->urls->admin.'page/edit/?id='.$p->id.'" title="Edit this page">
                     <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 528.899 528.899" style="enable-background:new 0 0 528.899 528.899;" xml:space="preserve">
@@ -669,21 +685,8 @@ class RequestInfoPanel extends BasePanel {
                     </svg>
                 </a>&nbsp;';
             }
-            if(isset($templateFileEditorPath) && $templateFileEditorPath != '') {
-                $out .= '
-                    <a href="'.$templateFileEditorPath.'" title="Edit this' . ($isPwPage ? ' template ' : ' ') . 'file">
-                        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 492.014 492.014" style="enable-background:new 0 0 492.014 492.014;" xml:space="preserve" width="16px" height="16px">
-                            <g id="XMLID_144_">
-                                <path id="XMLID_151_" d="M339.277,459.566H34.922V32.446h304.354v105.873l32.446-32.447V16.223C371.723,7.264,364.458,0,355.5,0   H18.699C9.739,0,2.473,7.264,2.473,16.223v459.568c0,8.959,7.265,16.223,16.226,16.223H355.5c8.958,0,16.223-7.264,16.223-16.223   V297.268l-32.446,32.447V459.566z" fill="#444444"/>
-                                <path id="XMLID_150_" d="M291.446,71.359H82.751c-6.843,0-12.396,5.553-12.396,12.398c0,6.844,5.553,12.397,12.396,12.397h208.694   c6.845,0,12.397-5.553,12.397-12.397C303.843,76.912,298.29,71.359,291.446,71.359z" fill="#444444"/>
-                                <path id="XMLID_149_" d="M303.843,149.876c0-6.844-5.553-12.398-12.397-12.398H82.751c-6.843,0-12.396,5.554-12.396,12.398   c0,6.845,5.553,12.398,12.396,12.398h208.694C298.29,162.274,303.843,156.722,303.843,149.876z" fill="#444444"/>
-                                <path id="XMLID_148_" d="M274.004,203.6H82.751c-6.843,0-12.396,5.554-12.396,12.398c0,6.845,5.553,12.397,12.396,12.397h166.457   L274.004,203.6z" fill="#444444"/>
-                                <path id="XMLID_147_" d="M204.655,285.79c1.678-5.618,4.076-11.001,6.997-16.07h-128.9c-6.843,0-12.396,5.553-12.396,12.398   c0,6.844,5.553,12.398,12.396,12.398h119.304L204.655,285.79z" fill="#444444"/>
-                                <path id="XMLID_146_" d="M82.751,335.842c-6.843,0-12.396,5.553-12.396,12.398c0,6.843,5.553,12.397,12.396,12.397h108.9   c-3.213-7.796-4.044-16.409-1.775-24.795H82.751z" fill="#444444"/>
-                                <path id="XMLID_145_" d="M479.403,93.903c-6.496-6.499-15.304-10.146-24.48-10.146c-9.176,0-17.982,3.647-24.471,10.138   L247.036,277.316c-5.005,5.003-8.676,11.162-10.703,17.942l-14.616,48.994c-0.622,2.074-0.057,4.318,1.477,5.852   c1.122,1.123,2.624,1.727,4.164,1.727c0.558,0,1.13-0.08,1.688-0.249l48.991-14.618c6.782-2.026,12.941-5.699,17.943-10.702   l183.422-183.414c6.489-6.49,10.138-15.295,10.138-24.472C489.54,109.197,485.892,100.392,479.403,93.903z" fill="#444444"/>
-                            </g>
-                        </svg>
-                    </a>&nbsp;
+            if(isset($templateFileEditorLink) && $templateFileEditorLink != '') {
+                $out .= $templateFileEditorLink . '&nbsp;
                 </div>';
             }
         }

@@ -53,10 +53,10 @@ class ValidatorPanel extends BasePanel {
             $success = $xpath->query("//*[@class='success']");
             $failure = $xpath->query("//*[@class='failure']");
 
-            if ($success->length > 0) {
+            if($success->length > 0) {
                 $this->message = $success->item(0)->nodeValue;
             }
-            if ($failure->length > 0) {
+            if($failure->length > 0) {
                 $this->message = $failure->item(0)->nodeValue;
             }
 

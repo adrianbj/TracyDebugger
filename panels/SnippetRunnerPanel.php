@@ -32,7 +32,7 @@ HTML;
 
         $tracyModuleUrl = $this->wire("config")->urls->TracyDebugger;
 
-        // store various $input properties so they are available to the console
+        // store various $input properties so they are available to the snippets
         $this->wire('session')->tracyPostData = $this->wire('input')->post->getArray();
         $this->wire('session')->tracyGetData = $this->wire('input')->get->getArray();
         $this->wire('session')->tracyWhitelistData = $this->wire('input')->whitelist->getArray();
@@ -69,35 +69,160 @@ HTML;
             $mid = null;
         }
 
-        $out = <<< HTML
+        $out = '<script>' . file_get_contents($this->wire("config")->paths->TracyDebugger . 'scripts/js-loader.js') . '</script>';
+        $out .= '<script>' . file_get_contents($this->wire("config")->paths->TracyDebugger . 'scripts/get-query-variable.js') . '</script>';
+
+        // determine whether 'l' or 'line' is used for line number with current editor
+        parse_str(\Tracy\Debugger::$editor, $vars);
+        $lineVar = array_key_exists('l', $vars) ? 'l' : 'line';
+
+        $out .= <<< HTML
         <script>
 
-            var loadedSnippetFile;
-            var desc = false;
+            var tracySnippetRunner = {
 
+                loadedSnippetFile: null,
+                desc: false,
 
-            // javascript dynamic loader from https://gist.github.com/hagenburger/500716
-            // using dynamic loading because an exception error or "exit" in template file
-            // was preventing these scripts from being loaded which broke the editor
-            // if this has any problems, there is an alternate version to try here:
-            // https://www.nczonline.net/blog/2009/07/28/the-best-way-to-load-external-javascript/
-            var JavaScript = {
-                load: function(src, callback) {
-                    var script = document.createElement("script"),
-                            loaded;
-                    script.setAttribute("src", src);
-                    if (callback) {
-                        script.onreadystatechange = script.onload = function() {
-                            if (!loaded) {
-                                callback();
+                tryParseJSON: function(str) {
+                    if(!isNaN(str)) return str;
+                    try {
+                        var o = JSON.parse(str);
+                        if(o && typeof o === "object" && o !== null) {
+                            if(o.message.indexOf("Compiled file") > -1) {
+                                return "";
                             }
-                            loaded = true;
-                        };
+                            else {
+                                return "Error: " + o.message;
+                            }
+                        }
                     }
-                    document.getElementsByTagName("head")[0].appendChild(script);
-                }
-            };
+                    catch (e) {
+                        return str;
+                    }
+                    return false;
+                },
 
+                compareAlphabetical: function(a1, a2) {
+                    var t1 = a1.innerText,
+                        t2 = a2.innerText;
+                    return t1 > t2 ? 1 : (t1 < t2 ? -1 : 0);
+                },
+
+                compareChronological: function(a1, a2) {
+                    var t1 = a1.dataset.modified,
+                        t2 = a2.dataset.modified;
+                    return t1 > t2 ? 1 : (t1 < t2 ? -1 : 0);
+                },
+
+                sortUnorderedList: function(ul, sortDescending, type) {
+                    if(typeof ul == "string") {
+                        ul = document.getElementById(ul);
+                    }
+
+                    var lis = ul.getElementsByTagName("LI");
+                    var vals = [];
+
+                    for(var i = 0, l = lis.length; i < l; i++) {
+                        vals.push(lis[i]);
+                    }
+
+                    if(type === 'alphabetical') {
+                        vals.sort(this.compareAlphabetical);
+                    }
+                    else {
+                        vals.sort(this.compareChronological);
+                    }
+
+                    if(sortDescending) {
+                        vals.reverse();
+                    }
+
+                    ul.innerHTML = '';
+                    for(var i = 0, l = vals.length; i < l; i++) {
+                        ul.appendChild(vals[i]);
+                    }
+                },
+
+                sortList: function(type) {
+                    this.sortUnorderedList("runnerSnippetsList", this.desc, type);
+                    this.desc = !this.desc;
+                    return false;
+                },
+
+                selectRunnerSnippet: function(name, filename) {
+                    this.loadedSnippetFile = filename;
+                    document.getElementById("tracyRunnerSnippetName").innerHTML = '<strong>Selected snippet:</strong> ' + name;
+                },
+
+                makeIdFromTitle: function(title) {
+                    return title.replace(/^[^a-z]+|[^\w:.-]+/gi, "");
+                },
+
+                setActiveRunnerSnippet: function(item) {
+                    if(document.querySelector(".activeSnippet")) {
+                        document.querySelector(".activeSnippet").classList.remove("activeSnippet");
+                    }
+                    item.classList.add("activeSnippet");
+                },
+
+                clearSnippetRunnerResults: function() {
+                    document.getElementById("tracySnippetRunnerResult").innerHTML = "";
+                    document.getElementById("tracySnippetRunnerStatus").innerHTML = "";
+                },
+
+                processTracySnippetRunnerCode: function() {
+                    file = typeof this.loadedSnippetFile === 'undefined' ? '' : this.loadedSnippetFile;
+                    document.getElementById("tracySnippetRunnerStatus").innerHTML = "<i class='fa fa-spinner fa-spin'></i> Processing";
+                    this.callSnippetRunnerPhp(file);
+                    document.getElementById('runSnippetRunnerCode').blur();
+                },
+
+                callSnippetRunnerPhp: function(file) {
+                    var xmlhttp;
+                    xmlhttp = new XMLHttpRequest();
+                    xmlhttp.onreadystatechange = function() {
+                        if(xmlhttp.readyState == XMLHttpRequest.DONE) {
+                            document.getElementById("tracySnippetRunnerStatus").innerHTML = "Completed!";
+                            if(xmlhttp.status == 200) {
+                                document.getElementById("tracySnippetRunnerResult").innerHTML += tracySnippetRunner.tryParseJSON(xmlhttp.responseText);
+                                // scroll to bottom of results
+                                var objDiv = document.getElementById("tracySnippetRunnerResult");
+                                objDiv.scrollTop = objDiv.scrollHeight;
+                            }
+                            else {
+                                var tracyBsError = new DOMParser().parseFromString(xmlhttp.responseText, "text/html");
+                                var tracyBsErrorDiv = tracyBsError.getElementById("tracy-bs-error");
+                                var tracyBsErrorType = tracyBsErrorDiv.getElementsByTagName('p')[0].innerHTML;
+                                var tracyBsErrorText = tracyBsErrorDiv.getElementsByTagName('h1')[0].getElementsByTagName('span')[0].innerHTML;
+                                var tracyBsErrorLineNum = tracyDebugger.getQueryVariable('{$lineVar}', tracyBsError.querySelector('[data-tracy-href]').getAttribute("data-tracy-href")) - 1;
+                                var tracyBsErrorStr = "<br />" + tracyBsErrorType + ": " + tracyBsErrorText + " on line: " + tracyBsErrorLineNum + "<br />";
+                                document.getElementById("tracySnippetRunnerResult").innerHTML = xmlhttp.status+": " + xmlhttp.statusText + tracyBsErrorStr + "<div style='border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;'></div>";
+                            }
+                            xmlhttp.getAllResponseHeaders();
+                        }
+                    }
+
+HTML;
+
+                    if($this->wire('page')->template != "admin") {
+                        $out .= <<< HTML
+                            var accessTemplateVars = document.getElementById("accessTemplateVars").checked;
+HTML;
+                    } else {
+                        $out .= <<< HTML
+                            var accessTemplateVars = "false";
+HTML;
+                    }
+
+                    $out .= <<< HTML
+                    xmlhttp.open("POST", "./", true);
+                    xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                    xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+                    xmlhttp.send("tracySnippetRunner=1&accessTemplateVars="+accessTemplateVars+"&pid={$p->id}&fid={$fid}&tid={$tid}&mid={$mid}&file="+file);
+                },
+
+            };
 
             document.addEventListener("keydown", function(e) {
                 if(document.getElementById("tracy-debug-panel-SnippetRunnerPanel").classList.contains("tracy-focused") &&
@@ -106,105 +231,12 @@ HTML;
                 ) {
                     if(((e.keyCode==10||e.charCode==10)||(e.keyCode==13||e.charCode==13)) && (e.metaKey || e.ctrlKey || e.altKey)) {
                         e.preventDefault();
-                        if(e.altKey) clearSnippetRunnerResults();
-                        processTracySnippetRunnerCode();
+                        if(e.altKey) tracySnippetRunner.clearSnippetRunnerResults();
+                        tracySnippetRunner.processTracySnippetRunnerCode();
                     }
                 }
             });
 
-
-            function tryParseJSON (str){
-                if(!isNaN(str)) return str; // JSON.parse on numbers not being parsed and returning false
-                try {
-                    var o = JSON.parse(str);
-
-                    // Handle non-exception-throwing cases:
-                    // Neither JSON.parse(false) or JSON.parse(1234) throw errors, hence the type-checking,
-                    // but... JSON.parse(null) returns "null", and typeof null === "object",
-                    // so we must check for that, too.
-                    if (o && typeof o === "object" && o !== null) {
-                        // when using clear code, getting a "Compiled File" error that we do not care about
-                        if(o.message.indexOf("Compiled file") > -1) {
-                            return "";
-                        }
-                        else {
-                            return "Error: " + o.message;
-                        }
-                    }
-                }
-                catch (e) {
-                    return str;
-                }
-
-                return false;
-            };
-
-            function getQueryVariable(variable, url) {
-                var vars = url.split('&');
-                for (var i = 0; i < vars.length; i++) {
-                    var pair = vars[i].split('=');
-                    if (decodeURIComponent(pair[0]) == variable) {
-                        return decodeURIComponent(pair[1]);
-                    }
-                }
-            }
-
-            function clearSnippetRunnerResults() {
-                document.getElementById("tracySnippetRunnerResult").innerHTML = "";
-                document.getElementById("tracySnippetRunnerStatus").innerHTML = "";
-            }
-
-            function processTracySnippetRunnerCode() {
-                file = typeof loadedSnippetFile === 'undefined' ? '' : loadedSnippetFile;
-                document.getElementById("tracySnippetRunnerStatus").innerHTML = "<i class='fa fa-spinner fa-spin'></i> Processing";
-                callSnippetRunnerPhp(file);
-                document.getElementById('runSnippetRunnerCode').blur();
-            }
-
-            function callSnippetRunnerPhp(file) {
-
-                var xmlhttp;
-                xmlhttp = new XMLHttpRequest();
-                xmlhttp.onreadystatechange = function() {
-                    if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
-                        document.getElementById("tracySnippetRunnerStatus").innerHTML = "Completed!";
-                        if(xmlhttp.status == 200){
-                            document.getElementById("tracySnippetRunnerResult").innerHTML += tryParseJSON(xmlhttp.responseText);
-                            // scroll to bottom of results
-                            var objDiv = document.getElementById("tracySnippetRunnerResult");
-                            objDiv.scrollTop = objDiv.scrollHeight;
-                        }
-                        else {
-                            var tracyBsError = new DOMParser().parseFromString(xmlhttp.responseText, "text/html");
-                            var tracyBsErrorDiv = tracyBsError.getElementById("tracy-bs-error");
-                            var tracyBsErrorType = tracyBsErrorDiv.getElementsByTagName('p')[0].innerHTML;
-                            var tracyBsErrorText = tracyBsErrorDiv.getElementsByTagName('h1')[0].getElementsByTagName('span')[0].innerHTML;
-                            var tracyBsErrorLineNum = getQueryVariable('line', tracyBsError.querySelector('[data-tracy-href]').getAttribute("data-tracy-href")) - 1;
-                            var tracyBsErrorStr = "<br />" + tracyBsErrorType + ": " + tracyBsErrorText + " on line: " + tracyBsErrorLineNum + "<br />";
-                            document.getElementById("tracySnippetRunnerResult").innerHTML = xmlhttp.status+": " + xmlhttp.statusText + tracyBsErrorStr + "<div style='border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;'></div>";
-                        }
-                        xmlhttp.getAllResponseHeaders();
-                    }
-                }
-
-HTML;
-
-                if ($this->wire('page')->template != "admin") {
-                    $out .= <<< HTML
-                        var accessTemplateVars = document.getElementById("accessTemplateVars").checked;
-HTML;
-                } else {
-                    $out .= <<< HTML
-                        var accessTemplateVars = "false";
-HTML;
-                }
-
-                $out .= <<< HTML
-                xmlhttp.open("POST", "./", true);
-                xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-                xmlhttp.send("tracySnippetRunner=1&accessTemplateVars="+accessTemplateVars+"&pid={$p->id}&fid={$fid}&tid={$tid}&mid={$mid}&file="+file);
-            }
         </script>
 
 HTML;
@@ -213,23 +245,23 @@ HTML;
         <div class="tracy-inner">
             <fieldset>
                 <legend>Select a snippet, then use CTRL/CMD+Enter to Run, or ALT/OPT+Enter to Clear & Run.</legend>';
-        if ($this->wire('page')->template != "admin") {
+        if($this->wire('page')->template != "admin") {
             $out .= '<p><label><input type="checkbox" id="accessTemplateVars" /> Allow access to custom variables and functions defined in this page\'s template file and all other included files.</label></p>';
         }
         $out .= '
                 <br />
-                <div id="tracyConsoleContainer">
+                <div id="tracySnippetRunnerContainer">
                     <div id="tracyRunnerSnippetName" style="font-size: 13px"></div>
                     <div style="padding:10px 0">
-                        <input title="Run code" type="submit" id="runSnippetRunnerCode" onclick="processTracySnippetRunnerCode()" value="Run" />&nbsp;
-                        <input title="Clear results" type="submit" id="clearSnippetRunnerResults" onclick="clearSnippetRunnerResults()" value="&#10006; Clear results" />
+                        <input title="Run code" type="submit" id="runSnippetRunnerCode" onclick="tracySnippetRunner.processTracySnippetRunnerCode()" value="Run" />&nbsp;
+                        <input title="Clear results" type="submit" id="clearSnippetRunnerResults" onclick="tracySnippetRunner.clearSnippetRunnerResults()" value="&#10006; Clear results" />
                         <span id="tracySnippetRunnerStatus" style="padding: 10px"></span>
                     </div>
                     <div id="tracySnippetRunnerResult" style="border: 1px solid #D2D2D2; padding: 10px;max-height: 300px; overflow:auto"></div>
                 </div>
                 <div style="float: left; margin-left: 10px; width: 250px; margin-top: -'.($this->wire('page')->template != "admin" ? '60' : '23').'px;">
                     <div>
-                        Sort: <a href="#" onclick="sortList(\'alphabetical\')">alphabetical</a>&nbsp;|&nbsp;<a href="#" onclick="sortList(\'chronological\')">chronological</a>
+                        Sort: <a href="#" onclick="tracySnippetRunner.sortList(\'alphabetical\')">alphabetical</a>&nbsp;|&nbsp;<a href="#" onclick="tracySnippetRunner.sortList(\'chronological\')">chronological</a>
                     </div>
                     <div id="tracyRunnerSnippets" style="margin-top: 5px; padding:8px; min-height: 115px; max-height: 187px; overflow:auto"></div>
                 </div>
@@ -263,78 +295,13 @@ HTML;
 
             var snippets = {$snippets};
             var snippetList = "<ul id='runnerSnippetsList'>";
-            for (var key in snippets) {
-                if (!snippets.hasOwnProperty(key)) continue;
+            for(var key in snippets) {
+                if(!snippets.hasOwnProperty(key)) continue;
                 var obj = snippets[key];
-                snippetList += "<li id='"+makeIdFromTitle(obj.name)+"' data-modified='"+obj.modified+"'><span style='color: #125EAE; cursor: pointer' onclick='selectRunnerSnippet(\""+obj.name+"\", \""+obj.filename+"\");setActiveRunnerSnippet(this);'>" + obj.name + "</span></li>";
+                snippetList += "<li id='"+tracySnippetRunner.makeIdFromTitle(obj.name)+"' data-modified='"+obj.modified+"'><span style='color: #125EAE; cursor: pointer' onclick='tracySnippetRunner.selectRunnerSnippet(\""+obj.name+"\", \""+obj.filename+"\");tracySnippetRunner.setActiveRunnerSnippet(this);'>" + obj.name + "</span></li>";
             }
             snippetList += "</ul>";
             document.getElementById("tracyRunnerSnippets").innerHTML = snippetList;
-
-
-            function compareAlphabetical(a1, a2) {
-                var t1 = a1.innerText,
-                    t2 = a2.innerText;
-                return t1 > t2 ? 1 : (t1 < t2 ? -1 : 0);
-            }
-
-            function compareChronological(a1, a2) {
-                var t1 = a1.dataset.modified,
-                    t2 = a2.dataset.modified;
-                return t1 > t2 ? 1 : (t1 < t2 ? -1 : 0);
-            }
-
-            function sortUnorderedList(ul, sortDescending, type) {
-                if (typeof ul == "string") {
-                    ul = document.getElementById(ul);
-                }
-
-                var lis = ul.getElementsByTagName("LI");
-                var vals = [];
-
-                for (var i = 0, l = lis.length; i < l; i++) {
-                    vals.push(lis[i]);
-                }
-
-                if(type === 'alphabetical') {
-                    vals.sort(compareAlphabetical);
-                }
-                else {
-                    vals.sort(compareChronological);
-                }
-
-                if (sortDescending) {
-                    vals.reverse();
-                }
-
-                ul.innerHTML = '';
-                for (var i = 0, l = vals.length; i < l; i++) {
-                    ul.appendChild(vals[i]);
-                }
-            }
-
-            function sortList(type) {
-                sortUnorderedList("runnerSnippetsList", desc, type);
-                desc = !desc;
-                return false;
-            }
-
-
-            function selectRunnerSnippet(name, filename) {
-                loadedSnippetFile = filename;
-                document.getElementById("tracyRunnerSnippetName").innerHTML = '<strong>Selected snippet:</strong> ' + name;
-            }
-
-            function makeIdFromTitle(title) {
-                return title.replace(/^[^a-z]+|[^\w:.-]+/gi, "");
-            }
-
-            function setActiveRunnerSnippet(item) {
-	            if(document.querySelector(".activeSnippet")) {
-                	document.querySelector(".activeSnippet").classList.remove("activeSnippet");
-	            }
-                item.classList.add("activeSnippet");
-            }
 
         </script>
 HTML;

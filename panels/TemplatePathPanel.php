@@ -15,10 +15,11 @@ class TemplatePathPanel extends BasePanel {
         \Tracy\Debugger::timer('templatePath');
 
         $userDevTemplateFiles = 0;
-        foreach (new \DirectoryIterator($this->wire('config')->paths->templates) as $file) {
+        foreach(new \DirectoryIterator($this->wire('config')->paths->templates) as $file) {
             if($file->isFile()) {
                 $fileName = pathinfo($file, PATHINFO_FILENAME);
-                if(strpos($file, '-'.\TracyDebugger::getDataValue('userDevTemplateSuffix').'.php')) $userDevTemplateFiles++;
+                $fileExt = pathinfo($file, PATHINFO_EXTENSION);
+                if(strpos($file, '-'.\TracyDebugger::getDataValue('userDevTemplateSuffix').'.'.$fileExt)) $userDevTemplateFiles++;
                 if(strpos($fileName, $this->wire('page')->template->name) !== false && strpos($fileName, '-tracytemp') === false) { // '-tracytemp' is extension from template editor panel
                     $this->templateOptions .= '<option value="'.$file.'"'.(pathinfo($this->wire('page')->template->filename, PATHINFO_BASENAME) == $file ? 'selected="selected"' : '').'>'.$file.'</option>';
                 }
@@ -102,7 +103,7 @@ class TemplatePathPanel extends BasePanel {
             function removeCurrentTemplateFromCookie(existingCookie) {
                 if(existingCookie) {
                     var templateArr = existingCookie.split(",");
-                    for (var i = 0; i < templateArr.length; i++) {
+                    for(var i = 0; i < templateArr.length; i++) {
                         if(templateArr[i].indexOf("'.wire("page")->template->name.'") > -1) {
                             templateArr.splice(i, 1);
                         }
@@ -125,7 +126,7 @@ class TemplatePathPanel extends BasePanel {
             function getCookie(name) {
                 var value = "; " + document.cookie;
                 var parts = value.split("; " + name + "=");
-                if (parts.length == 2) return parts.pop().split(";").shift();
+                if(parts.length == 2) return parts.pop().split(";").shift();
             }
         </script>
         ';

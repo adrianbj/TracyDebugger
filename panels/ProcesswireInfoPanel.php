@@ -70,7 +70,9 @@ class ProcesswireInfoPanel extends BasePanel {
         $PwVersion = $this->wire('config')->version;
         $panelSections = \TracyDebugger::getDataValue('processwireInfoPanelSections');
 
-        $out = '
+        $out = '<script>' . file_get_contents($this->wire("config")->paths->TracyDebugger . 'scripts/js-loader.js') . '</script>';
+
+        $out .= '
         <script>
             function closePanel() {
                 localStorage.setItem("remove-tracy-debug-panel-ProcesswireInfoPanel", 1);
@@ -98,7 +100,7 @@ class ProcesswireInfoPanel extends BasePanel {
                             var xmlhttp;
                             xmlhttp = new XMLHttpRequest();
                             xmlhttp.onreadystatechange = function() {
-                                if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
+                                if(xmlhttp.readyState == XMLHttpRequest.DONE) {
                                     if(xmlhttp.status == 200 && xmlhttp.responseText !== "[]") {
                                         var pageDetails = JSON.parse(xmlhttp.responseText);
                                         document.getElementById("pageDetails").innerHTML = "<span style=\'font-weight:bold\'>" + pageDetails.title + "</span>&nbsp;&nbsp;<a href=\''.$this->wire('config')->urls->admin.'setup/template/edit?id="  + pageDetails.template_id + "\' style=\'color:#888\'>" + pageDetails.template_name + "</a>";
@@ -129,7 +131,10 @@ class ProcesswireInfoPanel extends BasePanel {
             $out .= '
             <script>
                 function searchPw(form) {
-                    if(form.section.value == "modules") {
+                    if(form.section.value == "github") {
+                        window.open("https://github.com/processwire/processwire/search?utf8=✓&q="+form.pwquery.value);
+                    }
+                    else if(form.section.value == "modules") {
                         window.open("https://www.google.com/search?q=site:modules.processwire.com "+form.pwquery.value);
                     }
                     else {
@@ -264,29 +269,8 @@ class ProcesswireInfoPanel extends BasePanel {
         if(in_array('versionsList', $panelSections)) {
             $versionsList = '
             <script>
-                // javascript dynamic loader from https://gist.github.com/hagenburger/500716
-                // using dynamic loading because an exception error or "exit" in template file
-                // was preventing these scripts from being loaded which broke the editor
-                // if this has any problems, there is an alternate version to try here:
-                // https://www.nczonline.net/blog/2009/07/28/the-best-way-to-load-external-javascript/
-                var JavaScript = {
-                    load: function(src, callback) {
-                        var script = document.createElement("script"),
-                                loaded;
-                        script.setAttribute("src", src);
-                        if (callback) {
-                            script.onreadystatechange = script.onload = function() {
-                                if (!loaded) {
-                                    callback();
-                                }
-                                loaded = true;
-                            };
-                        }
-                        document.getElementsByTagName("head")[0].appendChild(script);
-                    }
-                };
-                JavaScript.load("'.$this->wire('config')->urls->TracyDebugger.'clipboardjs/clipboard.min.js", function() {
-                    JavaScript.load("'.$this->wire('config')->urls->TracyDebugger.'clipboardjs/tooltips.js", function() {
+                tracyJSLoader.load("'.$this->wire('config')->urls->TracyDebugger.'scripts/clipboardjs/clipboard.min.js", function() {
+                    tracyJSLoader.load("'.$this->wire('config')->urls->TracyDebugger.'scripts/clipboardjs/tooltips.js", function() {
                         var versionsClipboard=new Clipboard(".tracyCopyBtn");
                         versionsClipboard.on("success",function(e){e.clearSelection();showTooltip(e.trigger,"Copied!");});versionsClipboard.on("error",function(e){showTooltip(e.trigger,fallbackMessage(e.action));});
                     });
@@ -633,11 +617,12 @@ class ProcesswireInfoPanel extends BasePanel {
                     <input id="pwquery" name="pwquery" placeholder="Search ProcessWire" type="text" style="width:205px !important" />
                     <input type="submit" name="pwsearch" value="Search" />
                     <div style="padding: 12px 0 0 0; font-size: 13px">
-                        <label><input type="radio" name="section" value="/" checked> All&nbsp;</label>
-                        <label><input type="radio" name="section" value="/talk/"> Forums&nbsp;</label>
-                        <label><input type="radio" name="section" value="/api/ref/"> API&nbsp;</label>
-                        <label><input type="radio" name="section" value="/blog/"> Blog&nbsp;</label>
-                        <label><input type="radio" name="section" value="modules"> Modules</label>
+                        <label><input type="radio" name="section" value="/api/ref/"> API</label>&nbsp;&nbsp;
+                        <label><input type="radio" name="section" value="github"> Github</label>&nbsp;&nbsp;
+                        <label><input type="radio" name="section" value="/talk/"> Forums</label>&nbsp;&nbsp;
+                        <label><input type="radio" name="section" value="/blog/"> Blog</label>&nbsp;&nbsp;
+                        <label><input type="radio" name="section" value="modules"> Modules</label>&nbsp;&nbsp;
+                        <label><input type="radio" name="section" value="/" checked> All PW</label>
                     </div>
                 </form>
                 ';

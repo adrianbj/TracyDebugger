@@ -26,6 +26,9 @@ class MethodsInfoPanel extends BasePanel {
 
     public function getPanel() {
 
+        $docsUrl = 'https://adrianbj.github.io/TracyDebugger';
+        $debugMethodsRootUrl = $docsUrl . '/#/debug-methods?id=';
+
         // panel title
         $out = '
         <h1>
@@ -36,71 +39,80 @@ class MethodsInfoPanel extends BasePanel {
             Methods Info
         </h1>
         <div class="tracy-inner">
-            <p><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/">TracyDebugger Blog Documentation</a></p>
-            <p><a href="https://tracy.nette.org/">Tracy Documentation</a></p>
+            <p><a href="'.$docsUrl.'" target="_blank"><button class="tracyCopyBtn">TracyDebugger Docs</button></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://tracy.nette.org/" target="_blank"><button class="tracyCopyBtn">Tracy Docs</button></a></p>
+            <br />
 
-            <p><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#debugall" target="_blank">debugAll($var, $title = NULL, array $options = NULL)</a></strong></p>
+            <p><strong><a href="'.$debugMethodsRootUrl.'additional-debug-methods" target="_blank">addBreakpoint($name = NULL, $enforceParent&nbsp;=&nbsp;NULL)</a></strong></p>
             <p>
-            TD::debugAll();<br />
-            debugAll();<br />
-            da();<br />
+            TD::addBreakpoint()<br />
+            addBreakpoint()<br />
+            bp()<br />
             </p>
 
-            <p><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#dump" target="_blank">dump($var, $title = NULL, array $options = NULL, $return = FALSE)</a></strong></p>
+            <p><strong><a href="'.$debugMethodsRootUrl.'bardump" target="_blank">barDump($var, $title = NULL, array $options = NULL)</a></strong></p>
             <p>
-            TD::dump();<br />
-            dump();<br />
-            d();<br />
+            TD::barDump()<br />
+            barDump()<br />
+            bd()<br />
             </p>
 
-            <p><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#bardump" target="_blank">barDump($var, $title = NULL, array $options = NULL)</a></strong></p>
+            <p><strong><a href="'.$debugMethodsRootUrl.'bardumpbig" target="_blank">barDumpBig($var, $title = NULL)</a></strong></p>
             <p>
-            TD::barDump();<br />
-            barDump();<br />
-            bd();<br />
+            TD::barDumpBig()<br />
+            barDumpBig()<br />
+            bdb()<br />
             </p>
 
-            <p><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#bardumpLive" target="_blank">barDumpLive($var, $title = NULL, array $options = NULL)</a></strong></p>
+
+            <p><strong><a href="'.$debugMethodsRootUrl.'bardumplive" target="_blank">barDumpLive($var, $title = NULL)</a></strong></p>
             <p>
-            TD::barDumpLive();<br />
-            barDumpLive();<br />
-            bdl();<br />
+            TD::barDumpLive()<br />
+            barDumpLive()<br />
+            bdl()<br />
             </p>
 
-            <p><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#log" target="_blank">log($message, $priority = ILogger::INFO)</a></strong></p>
+            <p><strong><a href="'.$debugMethodsRootUrl.'debugall" target="_blank">debugAll($var, $title = NULL, array $options = NULL)</a></strong></p>
+            <p>
+            TD::debugAll()<br />
+            debugAll()<br />
+            da()<br />
+            </p>
+
+            <p><strong><a href="'.$debugMethodsRootUrl.'dump" target="_blank">dump($var, $title = NULL, array $options = NULL, $return = FALSE)</a></strong></p>
+            <p>
+            TD::dump()<br />
+            dump()<br />
+            d()<br />
+            </p>
+
+            <p><strong><a href="'.$debugMethodsRootUrl.'firelog" target="_blank">fireLog($var)</a></strong></p>
+            <p>
+            TD::fireLog()<br />
+            fireLog()<br />
+            fl()<br />
+            </p>
+
+            <p><strong><a href="'.$debugMethodsRootUrl.'log" target="_blank">log($str, $priority = ILogger::INFO)</a></strong></p>
             @priority: "debug", "info", "warning", "error", "exception", "critical"
             <p>
-            TD::log();<br />
-            l();<br />
+            TD::log()<br />
+            l()<br />
             </p>
 
-            <p><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#additional-debug-methods" target="_blank">addBreakpoint($name = NULL, $enforceParent&nbsp;=&nbsp;NULL)</a></strong></p>
+            <p><strong><a href="'.$debugMethodsRootUrl.'dump-all-variables-at-various-breakpoints" target="_blank">templateVars(get_defined_vars())</a></strong></p>
             <p>
-            TD::addBreakpoint();<br />
-            addBreakpoint();<br />
-            bp();<br />
+            TD::templateVars()<br />
+            templateVars()<br />
+            tv()<br />
             </p>
 
-            <p><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#timer" target="_blank">timer($name = NULL)</a></strong></p>
+            <p><strong><a href="'.$debugMethodsRootUrl.'timer" target="_blank">timer($name = NULL)</a></strong></p>
             <p>
-            TD::timer();<br />
-            timer();<br />
-            t();<br />
+            TD::timer()<br />
+            timer()<br />
+            t()<br />
             </p>
-
-            <p><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#firelog" target="_blank">fireLog($message)</a></strong></p>
-            <p>
-            TD::fireLog();<br />
-            fireLog();<br />
-            fl();<br />
-            </p>
-
-            <p><strong><a href="https://processwire.com/blog/posts/introducing-tracy-debugger/#dump-all-variables-at-various-breakpoints" target="_blank">templateVars(get_defined_vars())</a></strong></p>
-            <p>
-            TD::templateVars();<br />
-            templateVars();<br />
-            tv();<br />
-            </p>';
+            ';
             $out .= \TracyDebugger::generatedTimeSize('methodsInfo', \Tracy\Debugger::timer('methodsInfo'), strlen($out)) . '
         </div>
         ';

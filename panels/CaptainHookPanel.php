@@ -139,7 +139,7 @@ class CaptainHookPanel extends BasePanel {
             $out .= '
                 <tr>
                     <td>'.$hook['name'].'</td>
-                    <td><a href="'. \TracyDebugger::createEditorPath($info['filename'], $hook['lineNumber']).'">'.$hook['lineNumber'].'</a></td>
+                    <td>'.\TracyDebugger::createEditorLink($info['filename'], $hook['lineNumber'], $hook['lineNumber']).'</td>
                     <td class="tracy-force-no-wrap">' . $hook['line'] . '</td>
                 </tr>';
         }

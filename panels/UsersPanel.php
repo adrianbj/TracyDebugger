@@ -41,7 +41,7 @@ class UsersPanel extends BasePanel {
         }
         $this->listTracyRoles = rtrim($this->listTracyRoles, ', ');
 
-        if($this->numNonSuperusers > 0){
+        if($this->numNonSuperusers > 0) {
             return true;
         }
         else {

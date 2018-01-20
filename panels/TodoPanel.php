@@ -45,7 +45,7 @@ class TodoPanel extends BasePanel {
                             $this->entries .=
                             "<td>".$item['line']."</td>" .
                             "<td>".strtoupper($item['type'])."</td>" .
-                            "<td><a href='".$item['link']."' />".preg_replace('/(?<!-)\b'.$item['type'].'\b(?!-)/i', $replacement, $item['comment'])."</td>" .
+                            "<td>".\TracyDebugger::createEditorLink($item['file'], $item['line'], preg_replace('/(?<!-)\b'.$item['type'].'\b(?!-)/i', $replacement, $item['comment']))."</td>" .
                         "</tr>";
                 }
                 $currentFile = $item['file'];
@@ -98,10 +98,10 @@ class TodoPanel extends BasePanel {
 
     protected function strpos_array($haystack, $needles, $offset = 0) {
         if($needles == '') return false;
-        if (is_array($needles)) {
-            foreach ($needles as $needle) {
+        if(is_array($needles)) {
+            foreach($needles as $needle) {
                 $pos = $this->strpos_array($haystack, $needle);
-                if ($pos !== false) {
+                if($pos !== false) {
                     return $pos;
                 }
             }
@@ -157,7 +157,7 @@ class TodoPanel extends BasePanel {
         $ignoreDirs = array_map('trim', explode(',', \TracyDebugger::getDataValue('todoIgnoreDirs')));
         array_push($ignoreDirs, 'TracyDebugger');
         $allowedExtensions = array_map('trim', explode(',', \TracyDebugger::getDataValue('todoAllowedExtensions')));
-        foreach ($iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST) as $fileinfo){
+        foreach($iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST) as $fileinfo) {
             $filePath = $fileinfo->getPathname();
             $fileSize = filesize($filePath);
             if($fileSize > 0 && $fileinfo->isFile() && $this->strpos_array($filePath, $ignoreDirs) === false && in_array($fileinfo->getExtension(), $allowedExtensions) === true) {
@@ -221,8 +221,7 @@ class TodoPanel extends BasePanel {
             'file' => $filename,
             'line' => $line,
             'type' => $type,
-            'comment' => nl2br(trim(htmlentities(str_replace(array('/*', '//', '*/', '*'), '', $comment)))),
-            'link' => \TracyDebugger::createEditorPath($filename, $line)
+            'comment' => nl2br(trim(htmlentities(str_replace(array('/*', '//', '*/', '*'), '', $comment))))
         );
     }
 

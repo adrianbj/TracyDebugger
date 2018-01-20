@@ -37,28 +37,28 @@ class GitInfoPanel extends BasePanel
      * @return string
      */
     function getPanel() {
-        if ($this->isUnderVersionControl()) {
+        if($this->isUnderVersionControl()) {
             $title = '<h1>' . $this->icon . ' Git Info</h1>';
             $warning = '';
             $cntTable = '';
 
             // commit message
-            if ($this->getLastCommitMessage() != null) {
+            if($this->getLastCommitMessage() != null) {
                 $cntTable .= '<tr><td>Last commit</td><td> ' . $this->getLastCommitMessage() . ' </td></tr>';
             }
 
             // heads
-            if ($this->getHeads() != null) {
+            if($this->getHeads() != null) {
                 $cntTable .= '<tr><td>Branches</td><td> ' . $this->getHeads() . ' </td></tr>';
             }
 
             // remotes
-            if ($this->getRemotes() != null) {
+            if($this->getRemotes() != null) {
                 $cntTable .= '<tr><td>Remotes</td><td> ' . $this->getRemotes() . ' </td></tr>';
             }
 
             // tags
-            if ($this->getTags() != null) {
+            if($this->getTags() != null) {
                 $cntTable .= '<tr><td>Tags</td><td> ' . $this->getTags() . ' </td></tr>';
             }
 
@@ -76,9 +76,9 @@ class GitInfoPanel extends BasePanel
         $dir = $this->getDirectory();
 
         $head = $dir . '/.git/HEAD';
-        if ($dir && is_readable($head)) {
+        if($dir && is_readable($head)) {
             $branch = file_get_contents($head);
-            if (strpos($branch, 'ref:') === 0) {
+            if(strpos($branch, 'ref:') === 0) {
                 $parts = explode('/', $branch);
                 return substr($parts[2], 0, -1);
             }
@@ -93,7 +93,7 @@ class GitInfoPanel extends BasePanel
 
         $fileMessage = $dir . '/.git/COMMIT_EDITMSG';
 
-        if ($dir && is_readable($fileMessage)) {
+        if($dir && is_readable($fileMessage)) {
             $message = file_get_contents($fileMessage);
             return $message;
         }
@@ -107,10 +107,10 @@ class GitInfoPanel extends BasePanel
         $files = scandir($dir . '/.git/refs/heads');
         $message = '';
 
-        if ($dir && is_array($files)) {
-            foreach ($files as $file) {
-                if ($file != '.' && $file != '..') {
-                    if ($file == $this->branchName) {
+        if($dir && is_array($files)) {
+            foreach($files as $file) {
+                if($file != '.' && $file != '..') {
+                    if($file == $this->branchName) {
                         $message .= '<strong>' . $file . ' </strong>';
                     } else {
                         $message .= $file . ' <br>';
@@ -134,10 +134,10 @@ class GitInfoPanel extends BasePanel
 
         $message = '';
 
-        if ($dir && is_array($files)) {
-            foreach ($files as $file) {
-                if ($file != '.' && $file != '..') {
-                        $message .= $file . ' ';
+        if($dir && is_array($files)) {
+            foreach($files as $file) {
+                if($file != '.' && $file != '..') {
+                    $message .= $file . ' ';
                 }
             }
             return $message;
@@ -153,9 +153,9 @@ class GitInfoPanel extends BasePanel
         $files = scandir($dir . '/.git/refs/tags');
         $message = '';
 
-        if ($dir && is_array($files)) {
-            foreach ($files as $file) {
-                if ($file != '.' && $file != '..') {
+        if($dir && is_array($files)) {
+            foreach($files as $file) {
+                if($file != '.' && $file != '..') {
                     $message .= $file . ' ';
                 }
             }
@@ -177,7 +177,7 @@ class GitInfoPanel extends BasePanel
             $dir = realpath($dir);
 
             // Stop recursion to parent on root directory
-            if ($dir == $currentDir) {
+            if($dir == $currentDir) {
                 break;
             }
         }
@@ -189,7 +189,7 @@ class GitInfoPanel extends BasePanel
         $dir = $this->getDirectory();
         $head = $dir . '/.git/HEAD';
 
-        if ($dir && is_readable($head)) {
+        if($dir && is_readable($head)) {
             return true;
         }
         return false;

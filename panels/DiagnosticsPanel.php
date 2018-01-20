@@ -146,7 +146,7 @@ class DiagnosticsPanel extends BasePanel {
         return $shortened ? str_replace($config->paths->root, '/', $path) : $path;
     }
 
-    protected function buildAttrRow($attribute){
+    protected function buildAttrRow($attribute) {
 
         $path = $this->getPaths($attribute);
         $permission = !file_exists($path) ? '' : substr(sprintf('%o', fileperms($path)), -4);
@@ -263,7 +263,7 @@ class DiagnosticsPanel extends BasePanel {
         else {
             $tempDir = new  WireTempDir('whoami');
             $check = file_put_contents($tempDir."/test.txt", "test");
-            if(is_int($check) && $check > 0){
+            if(is_int($check) && $check > 0) {
                 return 'PHP appears to be running as you.';
             }
             else {
@@ -276,7 +276,7 @@ class DiagnosticsPanel extends BasePanel {
 
         $this->incorrectFiles = $this->sectionHeader(array('File', 'Permissions'));
 
-        foreach($iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($this->wire('config')->paths->root, RecursiveDirectoryIterator::SKIP_DOTS), RecursiveIteratorIterator::SELF_FIRST) as $fileinfo){
+        foreach($iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($this->wire('config')->paths->root, RecursiveDirectoryIterator::SKIP_DOTS), RecursiveIteratorIterator::SELF_FIRST) as $fileinfo) {
             if((strpos($fileinfo->getPathname(), 'assets/sessions/') === false && !$fileinfo->isDir() && strpos($fileinfo->getPathname(), '/.') === false) || $fileinfo->getFilename() == ".htaccess") {
                 $octal_perms = substr(sprintf('%o', $fileinfo->getPerms()), -4);
                 if($octal_perms != $this->wire('config')->chmodFile) $this->incorrectFiles .= '<tr><td>'.$fileinfo->getPathname() . "</td><td>" . $octal_perms . "</tr>\n";
@@ -356,7 +356,7 @@ class DiagnosticsPanel extends BasePanel {
 
             $dbInfo = $this->sectionHeader(array('Attribute', 'Value'));
 
-            foreach ($attributes as $val) {
+            foreach($attributes as $val) {
                 $dbInfo .= "\n<tr>" .
                     "<td>PDO::ATTR_$val</td>" .
                     "<td>".$this->wire('database')->getAttribute(constant("PDO::ATTR_$val"))."</td>" .

@@ -12,7 +12,7 @@ class CaptainHookSearch {
 
         $hooks = array();
 
-        foreach ($filenamesArray as $filename) {
+        foreach($filenamesArray as $filename) {
             if($hooksInFile = self::getHooksInFile($filename)) {
                 $hooks[] = $hooksInFile;
             }
@@ -195,9 +195,9 @@ class CaptainHookSearch {
         $commentTokens = array(T_COMMENT, T_DOC_COMMENT);
         $tokens = token_get_all('<?php ' . $source);
         $newStr = '';
-        foreach ($tokens as $token) {
-            if (is_array($token)) {
-                if (in_array($token[0], $commentTokens))
+        foreach($tokens as $token) {
+            if(is_array($token)) {
+                if(in_array($token[0], $commentTokens))
                     continue;
                 $token = $token[1];
             }

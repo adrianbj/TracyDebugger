@@ -44,7 +44,7 @@ class PhpInfoPanel extends BasePanel {
 
     function removeElementsByTagName($tagName, $document) {
         $nodeList = $document->getElementsByTagName($tagName);
-        for ($nodeIdx = $nodeList->length; --$nodeIdx >= 0; ) {
+        for($nodeIdx = $nodeList->length; --$nodeIdx >= 0; ) {
             $node = $nodeList->item($nodeIdx);
             $node->parentNode->removeChild($node);
         }

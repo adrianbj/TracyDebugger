@@ -88,15 +88,15 @@ class PanelSelectorPanel extends BasePanel {
 
             function toggleAllTracyPanels(ele) {
                 var checkboxes = document.getElementsByName("selectedPanels[]");
-                if (ele.checked) {
-                    for (var i = 0; i < checkboxes.length; i++) {
+                if(ele.checked) {
+                    for(var i = 0; i < checkboxes.length; i++) {
                         if(checkboxes[i].disabled === false) {
                             checkboxes[i].checked = true;
                         }
                     }
                 }
                 else {
-                     for (var i = 0; i < checkboxes.length; i++) {
+                     for(var i = 0; i < checkboxes.length; i++) {
                         if(checkboxes[i].disabled === false) {
                             checkboxes[i].checked = false;
                         }
@@ -107,7 +107,7 @@ class PanelSelectorPanel extends BasePanel {
             function getCookie(name) {
                 var value = "; " + document.cookie;
                 var parts = value.split("; " + name + "=");
-                if (parts.length == 2) return parts.pop().split(";").shift();
+                if(parts.length == 2) return parts.pop().split(";").shift();
             }
 
         </script>
@@ -130,7 +130,7 @@ class PanelSelectorPanel extends BasePanel {
                     foreach(\TracyDebugger::$allPanels as $name => $label) {
 
                         if(in_array($name, \TracyDebugger::$restrictedUserDisabledPanels)) continue;
-                        if(($name == 'console' || $name == 'snippetRunner' || $name == 'templateEditor') && !$this->wire('user')->isSuperuser()) continue;
+                        if(($name == 'console' || $name == 'snippetRunner' || $name == 'fileEditor') && !$this->wire('user')->isSuperuser()) continue;
                         if($name == 'userSwitcher') {
                             if(\TracyDebugger::getDataValue('userSwitchSession') != '') $userSwitchSession = \TracyDebugger::getDataValue('userSwitchSession');
                             if(!$this->wire('user')->isSuperuser() && (!$this->wire('session')->tracyUserSwitcherId || (isset($userSwitchSession[$this->wire('session')->tracyUserSwitcherId]) && $userSwitchSession[$this->wire('session')->tracyUserSwitcherId] <= time()))) continue;
@@ -141,7 +141,7 @@ class PanelSelectorPanel extends BasePanel {
                         $out .= '
                             <label style="'.($this->wire('page')->template == 'admin' && in_array($name, \TracyDebugger::$hideInAdmin) ? ' visibility:hidden;position: absolute; left: -999em;' : '').'">' .
                                 ($this->isOnce($name, $defaultPanels) ? $onceIcon .'&nbsp;' : '<span style="display:inline-block;width:18px">&nbsp;</span>') . '
-                                 <span style="font-size:16px; font-weight:600"><a title="Panel Info" href="https://processwire.com/blog/posts/introducing-tracy-debugger/#'.str_replace(' ', '-', strtolower($label)).'-panel" target="_blank">&#8505;</a></span>
+                                 <span style="font-size:16px; font-weight:600"><a title="Panel Info" href="https://adrianbj.github.io/TracyDebugger/#/debug-bar?id='.str_replace(' ', '-', strtolower($label)).'" target="_blank">&#8505;</a></span>
                                 <input type="checkbox" name="selectedPanels[]" ' . ($name == 'panelSelector' ? 'disabled="disabled"' : '') . ' value="'.$name.'" ' . (in_array($name, $showPanels) ? 'checked="checked"' : '') . ' /> '
                                 . $label . (in_array($name, $defaultPanels) ? '&nbsp;<strong>*</strong>' : '') . ($seconds ? '<span style="color:#999999; font-size:11px; float:right; margin-left:20px">&nbsp;' . \TracyDebugger::formatTime($seconds) . ($size ? ', '.$size : '') . '</span>' : '') . '
                             </label>';
