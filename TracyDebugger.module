@@ -40,7 +40,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.9.1',
+            'version' => '4.9.2',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -2102,7 +2102,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // Main Setup
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __('Main Setup', __FILE__);
+        $fieldset->label = __('Main setup', __FILE__);
         $fieldset->description = __('For more details on the settings below see:'."\n".'[TracyDebugger Debugger for ProcessWire](https://adrianbj.github.io/TracyDebugger)'."\n".'[Tracy Docs](https://tracy.nette.org/)', __FILE__);
         $wrapper->add($fieldset);
 
@@ -2129,7 +2129,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldSelect");
         $f->attr('name', 'outputMode');
-        $f->label = 'Output Mode';
+        $f->label = 'Output mode';
         $f->description = __('The DETECT option automatically switches from DEVELOPMENT to PRODUCTION mode based on whether the IP of the site is publicly accessible or not.', __FILE__);
         $f->notes = __('In PRODUCTION mode, all errors and dumps etc are logged to file. Nothing is displayed in the browser. In DEVELOPMENT mode, the debug bar is displayed for authorized users - superusers and those with the "tracy-debugger" permission. All other users will be forced into PRODUCTION mode, regardless of this setting.', __FILE__);
         $f->columnWidth = 50;
@@ -2142,12 +2142,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // Access Permissions
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __('Access Permission', __FILE__);
+        $fieldset->label = __('Access permission', __FILE__);
         $wrapper->add($fieldset);
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'superuserForceDevelopment');
-        $f->label = __('Force Superusers into Development Mode', __FILE__);
+        $f->label = __('Force superusers into DEVELOPMENT mode', __FILE__);
         $f->description = __('Check to force DEVELOPMENT mode for superusers even on live sites.', __FILE__);
         $f->notes = __('By default, the Output Mode setting\'s DETECT option will force a site into PRODUCTION mode when it is live, which hides the DebugBar and sends errors and dumps to log files. However, with this checked, superusers will always be in DEVELOPMENT mode.', __FILE__);
         $f->columnWidth = 33;
@@ -2156,7 +2156,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'guestForceDevelopmentLocal');
-        $f->label = __('Force Guest Users into Development Mode on Localhost', __FILE__);
+        $f->label = __('Force guest users into DEVELOPMENT mode on localhost', __FILE__);
         $f->description = __('Check to force DEVELOPMENT mode for guests when server detected as localhost.', __FILE__);
         $f->notes = __('By default, guest users will always be in PRODUCTION mode (no debug bar). However, with this checked, they will always be in DEVELOPMENT mode on localhost.', __FILE__);
         $f->columnWidth = 34;
@@ -2165,7 +2165,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldText");
         $f->attr('name', 'ipAddress');
-        $f->label = __('Restrict Non-superusers', __FILE__);
+        $f->label = __('Restrict non-superusers', __FILE__);
         $f->description = __('IP Address that non-superusers need to use TracyDebugger. Enter IP address or a PCRE regular expression to match IP address of user, eg. /^123\.456\.789\./ would match all IP addresses that started with 123.456.789.', __FILE__);
         $f->columnWidth = 33;
         $f->notes = __('Non-superusers are already blocked unless they have the "tracy-debugger" permission. But once a user has been given the permission, this option restricts access to the listed IP address. Highly recommended for debugging live sites that you have manually set into DEVELOPMENT mode.', __FILE__);
@@ -2179,7 +2179,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'strictMode');
-        $f->label = __('Strict Mode', __FILE__);
+        $f->label = __('Strict mode', __FILE__);
         $f->description = __('Check to enable strict mode which displays notices and warnings like errors.', __FILE__);
         $f->columnWidth = 33;
         $f->attr('checked', $data['strictMode'] == '1' ? 'checked' : '' );
@@ -2187,7 +2187,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'strictModeAjax');
-        $f->label = __('Strict Mode AJAX Only', __FILE__);
+        $f->label = __('Strict mode AJAX only', __FILE__);
         $f->description = __('Check to enable strict mode only for AJAX calls.', __FILE__);
         $f->notes = __('Because Tracy intercepts notices and warnings, these will no longer be returned with the AJAX response which may result in a "success" reponse, rather than "failure". Notices and warnings from an AJAX call will be displayed in the AJAX bar\'s Errors panel, but you still might prefer this option as it provides a more prominent indication of failure.', __FILE__);
         $f->showIf="strictMode!='1'";
@@ -2197,7 +2197,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'forceScream');
-        $f->label = __('Force Scream', __FILE__);
+        $f->label = __('Force scream', __FILE__);
         $f->description = __('Check to force "scream" of mode which disables the @ (silence/shut-up) operator so that notices and warnings are no longer hidden.', __FILE__);
         $f->notes = __('This is disabled when Strict Mode is enabled because of a bug? [https://forum.nette.org/en/25569-strict-and-scream-modes-together](https://forum.nette.org/en/25569-strict-and-scream-modes-together) in the core Tracy package.', __FILE__);
         $f->showIf="strictMode!='1', strictModeAjax!='1'";
@@ -2207,7 +2207,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldCheckboxes");
         $f->attr('name', 'showLocation');
-        $f->label = 'Show Location';
+        $f->label = 'Show location';
         $f->description = __('Shows the location of dump() and barDump() calls.', __FILE__);
         $f->notes = __('LOCATION_SOURCE adds tooltip with path to the file, where the function was called.'."\n".'LOCATION_LINK adds a link to the file which can be opened directly.'."\n".'LOCATION_CLASS adds a tooltip to every dumped object containing path to the file, in which the object\'s class is defined.');
         $f->columnWidth = 50;
@@ -2219,7 +2219,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldInteger");
         $f->attr('name', 'maxDepth');
-        $f->label = __('Maximum Nesting Depth', __FILE__);
+        $f->label = __('Maximum nesting depth', __FILE__);
         $f->description = __('Set the maximum nesting depth of dumped arrays and objects.', __FILE__);
         $f->notes = __('Default: 3. Warning: making this too large can slow your page load down or even crash your browser.', __FILE__);
         $f->columnWidth = 25;
@@ -2228,7 +2228,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldInteger");
         $f->attr('name', 'maxLength');
-        $f->label = __('Maximum String Length', __FILE__);
+        $f->label = __('Maximum string length', __FILE__);
         $f->description = __('Set the maximum displayed strings length.', __FILE__);
         $f->notes = __('Default: 150.', __FILE__);
         $f->columnWidth = 25;
@@ -2245,12 +2245,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // Error Logging Settings
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __('Error Logging', __FILE__);
+        $fieldset->label = __('Error logging', __FILE__);
         $wrapper->add($fieldset);
 
         $f = $this->wire('modules')->get("InputfieldCheckboxes");
         $f->attr('name', 'logSeverity');
-        $f->label = 'Log Severity';
+        $f->label = 'Log severity';
         $f->description = __('If you want Tracy to log PHP errors like E_NOTICE or E_WARNING with detailed information (HTML report), set them here.', __FILE__);
         $f->notes = __('These only affect log file content, not onscreen debug info.');
         $f->columnWidth = 40;
@@ -2283,19 +2283,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'clearEmailSent');
-        $f->label = __('Clear Email Sent Flag', __FILE__);
+        $f->label = __('Clear "email sent" flag', __FILE__);
         $f->description = __('Check and save settings to remove the "email-sent" file so that you will start receiving new error emails.', __FILE__);
         $f->columnWidth = 20;
         $fieldset->add($f);
 
         // Debug Bar and Panel Settings
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __('Debug Bar and Panels', __FILE__);
+        $fieldset->label = __('Debug bar and panels', __FILE__);
         $wrapper->add($fieldset);
 
         $f = $this->wire('modules')->get("InputfieldCheckboxes");
         $f->attr('name', 'showDebugBar');
-        $f->label = __('Show Debug Bar', __FILE__);
+        $f->label = __('Show debug bar', __FILE__);
         $f->description = __('Show the debug bar.', __FILE__);
         $f->columnWidth = 33;
         $f->addOption('frontend', 'Frontend');
@@ -2305,7 +2305,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldCheckboxes");
         $f->attr('name', 'hideDebugBarModals');
-        $f->label = __('No Debug Bar in ...', __FILE__);
+        $f->label = __('No debug bar in ...', __FILE__);
         $f->columnWidth = 34;
         $f->addOption('regularModal', 'Regular Modal');
         $f->addOption('inlineModal', 'Inline Modal');
@@ -2316,7 +2316,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldAsmSelect");
         $f->attr('name', 'hideDebugBarTemplates');
-        $f->label = __('No Debug Bar in Selected Templates', __FILE__);
+        $f->label = __('No debug bar in selected templates', __FILE__);
         $f->description = __('Disable the debug bar on pages with the selected templates.', __FILE__);
         $f->columnWidth = 33;
         foreach($this->wire('templates') as $t) {
@@ -2327,7 +2327,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'hideDebugBar');
-        $f->label = __('Hide Debug Bar By Default', __FILE__);
+        $f->label = __('Hide debug bar by default', __FILE__);
         $f->description = __('Hide the debug bar by default on page load.', __FILE__);
         $f->notes = __('This results in the bar being hidden (unless an error is reported), and replaced with a small "show bar" &#8689; icon.', __FILE__);
         $f->columnWidth = 33;
@@ -2336,7 +2336,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'showPanelLabels');
-        $f->label = __('Show Panel Labels', __FILE__);
+        $f->label = __('Show panel labels', __FILE__);
         $f->description = __('Show the labels next to each panel.', __FILE__);
         $f->notes = __('Unchecking this will make the debugger bar much more compact.', __FILE__);
         $f->columnWidth = 34;
@@ -2345,7 +2345,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldInteger");
         $f->attr('name', 'panelZindex');
-        $f->label = __('Starting Z-Index for panels', __FILE__);
+        $f->label = __('Starting zIndex for panels', __FILE__);
         $f->description = __('Adjust if you find panels are below/above elements that you don\'t want.', __FILE__);
         $f->notes = __('Default: 100', __FILE__);
         $f->columnWidth = 33;
@@ -2354,7 +2354,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldAsmSelect");
         $f->attr('name', 'frontendPanels');
-        $f->label = __('Frontend Panels', __FILE__);
+        $f->label = __('Frontend panels', __FILE__);
         $f->description = __('Determines which panels are shown in the Debug Bar on the frontend. Sort to match order of panels in Debugger Bar.', __FILE__);
         $f->columnWidth = 50;
         foreach(static::$allPanels as $name => $label) {
@@ -2365,7 +2365,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldAsmSelect");
         $f->attr('name', 'backendPanels');
-        $f->label = __('Backend Panels', __FILE__);
+        $f->label = __('Backend panels', __FILE__);
         $f->description = __('Determines which panels are shown in the Debug Bar on the backend. Sort to match order of panels in Debugger Bar.', __FILE__);
         $f->notes = __('Note that '.implode(', ', static::$hideInAdmin).' are intentionally missing from this list because they have no use in the backend.', __FILE__);
         $f->columnWidth = 50;
@@ -2379,7 +2379,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldCheckboxes");
         $f->attr('name', 'restrictedUserDisabledPanels');
-        $f->label = __('Disabled Panels for Restricted Users', __FILE__);
+        $f->label = __('Disabled panels for restricted users', __FILE__);
         $f->description = __('Check the panels that should NOT be shown to users with the "tracy-restricted-panels" role or permission.', __FILE__);
         $f->notes = __('Unchecked panels will still only be shown to restricted users if they are selected in the Front/Back-end options above.', __FILE__);
         $f->optionColumns = 3;
@@ -2391,12 +2391,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // Editor Protocol Handler
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __('Editor Links', __FILE__);
+        $fieldset->label = __('Editor links', __FILE__);
         $wrapper->add($fieldset);
 
         $f = $this->wire('modules')->get("InputfieldText");
         $f->attr('name', 'editor');
-        $f->label = __('Editor Protocol Handler', __FILE__);
+        $f->label = __('Editor protocol handler', __FILE__);
         $f->description = __('Sets the Tracy `Debugger::$editor` variable. Enter the appropriate address to open your code editor of choice.'."\n".'This approach only works for OSX. For more instructions on Windows and Linux alternatives, [read here](https://pla.nette.org/en/how-open-files-in-ide-from-debugger).'."\n".'For easily adding the SublimeText "subl://" protocol handler to your Mac, use this free [tool](https://github.com/saetia/sublime-url-protocol-mac).'."\n".' For other editors/IDEs, Google "protocol handler editorname".', __FILE__);
         $f->notes = __('Initially configured for SublimeText (`subl://open/?url=file://%file&line=%line`). Change to work with your favorite editor.', __FILE__);
         $f->columnWidth = 50;
@@ -2405,7 +2405,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldText");
         $f->attr('name', 'localRootPath');
-        $f->label = __('Local Root Path', __FILE__);
+        $f->label = __('Local root path', __FILE__);
         $f->description = __('Maps editor links from live site to local dev files. Only used if you are viewing a live site, otherwise it is ignored.', __FILE__);
         $f->notes = __('An example path on MacOS might be: /Users/myname/Sites/sitefolder/', __FILE__);
         $f->columnWidth = 50;
@@ -2414,7 +2414,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldCheckboxes");
         $f->attr('name', 'useOnlineEditor');
-        $f->label = __('Use Online Editor for Links', __FILE__);
+        $f->label = __('Use online editor for links', __FILE__);
         $f->description = __('This will open links in an online editor instead of your code editor.', __FILE__);
         $f->columnWidth = 50;
         $f->addOption('live', 'Live');
@@ -2424,7 +2424,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldRadios");
         $f->attr('name', 'onlineEditor');
-        $f->label = __('Online Editor', __FILE__);
+        $f->label = __('Online editor', __FILE__);
         $f->description = __('Which online editor to use: Tracy File Editor or [ProcessFileEdit (Files Editor)](http://modules.processwire.com/modules/process-file-edit/).', __FILE__);
         if($this->wire('modules')->isInstalled('ProcessFileEdit')) {
             $f->notes = __('Process File Edit is installed, but you may want to adjust its [settings]('.$this->wire('config')->urls->admin.'module/edit?name=ProcessFileEdit)', __FILE__);
@@ -2442,7 +2442,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'forceEditorLinksToTracy');
-        $f->label = __('Force Editor Links to Use Tracy File Editor', __FILE__);
+        $f->label = __('Force editor links to use Tracy File Editor', __FILE__);
         $f->description = __('Even if neither of the "Use Online Editor for Links" options are checked, if the File Editor Panel is enabled, all links will be sent to it.', __FILE__);
         $f->notes = __("RECOMMENDED: This is a handy option if you generally want links to use your code editor, but want the option to use the File Editor occasionally.\nYou can enable it (once or sticky) from the Panel selector on the debug bar without the need to change the above settings.", __FILE__);
         $f->attr('checked', $data['forceEditorLinksToTracy'] == '1' ? 'checked' : '' );
@@ -2450,7 +2450,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // File Editor Panel
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __('File Editor Panel', __FILE__);
+        $fieldset->label = __('File Editor panel', __FILE__);
         $fieldset->description = __("These settings don't affect links opened via the Editor Protocol Handler. They only affect browsing directly from the File Editor folder/file selector sidebar.");
         $wrapper->add($fieldset);
 
@@ -2462,7 +2462,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldSelect");
         $f->attr('name', 'fileEditorBaseDirectory');
-        $f->label = __('Base Directory', __FILE__);
+        $f->label = __('Base directory', __FILE__);
         $f->description = __('A more specific selection results in better performance in the File Editor Panel.', __FILE__);
         $f->columnWidth = 50;
         $f->addOption('root', 'Root');
@@ -2474,7 +2474,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldText");
         $f->attr('name', 'fileEditorAllowedExtensions');
-        $f->label = __('Allowed Extensions', __FILE__);
+        $f->label = __('Allowed extensions', __FILE__);
         $f->description = __('List of extensions that can be opened in the editor. Fewer extensions results in better performance in the File Editor Panel.', __FILE__);
         $f->notes = __('Initially configured for: php, module, js, css, htaccess', __FILE__);
         $f->columnWidth = 50;
@@ -2483,12 +2483,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // ProcessWire Info Panel
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __('ProcessWire Info Panel', __FILE__);
+        $fieldset->label = __('ProcessWire Info panel', __FILE__);
         $wrapper->add($fieldset);
 
         $f = $this->wire('modules')->get("InputfieldCheckboxes");
         $f->attr('name', 'processwireInfoPanelSections');
-        $f->label = __('Panel Sections', __FILE__);
+        $f->label = __('Panel sections', __FILE__);
         $f->description = __('Which sections to include in the ProcessWire Info panel.', __FILE__);
         $f->columnWidth = 50;
         foreach(static::$processWireInfoSections as $name => $label) {
@@ -2499,7 +2499,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldPageListSelectMultiple");
         $f->attr('name', 'customPWInfoPanelLinks');
-        $f->label = __('Custom Links', __FILE__);
+        $f->label = __('Custom links', __FILE__);
         $f->description = __('Choose pages you would like links to.', __FILE__);
         $f->notes = __('To provide links to items under the Setup menu, navigate to Admin > Setup >', __FILE__);
         $f->columnWidth = 50;
@@ -2508,7 +2508,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'showPWInfoPanelIconLabels');
-        $f->label = __('Show Icon Labels', __FILE__);
+        $f->label = __('Show icon labels', __FILE__);
         $f->description = __('Shows labels next to each icon for the two "Links" sections.', __FILE__);
         $f->notes = __('Nice for clarity, but takes up more space.', __FILE__);
         $f->columnWidth = 50;
@@ -2517,7 +2517,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'pWInfoPanelLinksNewTab');
-        $f->label = __('Open Links in New Tab', __FILE__);
+        $f->label = __('Open links in new tab', __FILE__);
         $f->description = __('Makes links open in a new browser tab.', __FILE__);
         $f->columnWidth = 50;
         $f->attr('checked', $data['pWInfoPanelLinksNewTab'] == '1' ? 'checked' : '' );
@@ -2525,12 +2525,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // Request Info Panel
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __('Request Info Panel', __FILE__);
+        $fieldset->label = __('Request Info panel', __FILE__);
         $wrapper->add($fieldset);
 
         $f = $this->wire('modules')->get("InputfieldCheckboxes");
         $f->attr('name', 'requestInfoPanelSections');
-        $f->label = __('Panel Sections', __FILE__);
+        $f->label = __('Panel sections', __FILE__);
         $f->description = __('Which sections to include in the Request Info panel.', __FILE__);
         $f->notes = __('The three "Object" options will significantly increase the size of this panel.', __FILE__);
         foreach(static::$requestInfoSections as $name => $label) {
@@ -2541,12 +2541,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // Debug Mode Panel
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __('Debug Mode Panel', __FILE__);
+        $fieldset->label = __('Debug Mode panel', __FILE__);
         $wrapper->add($fieldset);
 
         $f = $this->wire('modules')->get("InputfieldCheckboxes");
         $f->attr('name', 'debugModePanelSections');
-        $f->label = __('Panel Sections', __FILE__);
+        $f->label = __('Panel sections', __FILE__);
         $f->description = __('Which sections to include in the Debug Mode panel.', __FILE__);
         $f->columnWidth = 50;
         foreach(static::$debugModeSections as $name => $label) {
@@ -2565,12 +2565,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // Diagnostics Panel
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __('Diagnostics Panel', __FILE__);
+        $fieldset->label = __('Diagnostics panel', __FILE__);
         $wrapper->add($fieldset);
 
         $f = $this->wire('modules')->get("InputfieldCheckboxes");
         $f->attr('name', 'diagnosticsPanelSections');
-        $f->label = __('Panel Sections', __FILE__);
+        $f->label = __('Panel sections', __FILE__);
         $f->description = __('Which sections to include in the Diagnostics panel.', __FILE__);
         $f->notes = __('The "Filesystem Files" option may significantly increase the generation time for this panel.', __FILE__);
         foreach(static::$diagnosticsSections as $name => $label) {
@@ -2581,12 +2581,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // ToDo Panel
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __('ToDo Panel', __FILE__);
+        $fieldset->label = __('TODO panel', __FILE__);
         $wrapper->add($fieldset);
 
         $f = $this->wire('modules')->get("InputfieldTextarea");
         $f->attr('name', 'todoIgnoreDirs');
-        $f->label = __('Ignore Directories', __FILE__);
+        $f->label = __('Ignore directories', __FILE__);
         $f->description = __('Comma separated list of terms used to match folders to be ignored when scanning for ToDo items.', __FILE__);
         $f->notes = __('Default: git, svn, images, img, errors, sass-cache, node_modules', __FILE__);
         $f->columnWidth = 40;
@@ -2595,7 +2595,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldText");
         $f->attr('name', 'todoAllowedExtensions');
-        $f->label = __('Allowed Extensions', __FILE__);
+        $f->label = __('Allowed extensions', __FILE__);
         $f->description = __('Comma separated list file extensions to be scanned for ToDo items.', __FILE__);
         $f->notes = __('Default: php, module, inc, txt, latte, html, htm, md, css, scss, less, js', __FILE__);
         $f->columnWidth = 40;
@@ -2604,7 +2604,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'todoScanModules');
-        $f->label = __('Scan Site Modules', __FILE__);
+        $f->label = __('Scan site modules', __FILE__);
         $f->description = __('Check to allow the ToDo to scan the /site/modules directory. Otherwise it will only scan /site/templates.', __FILE__);
         $f->notes = __('Not recommended unless you are a regular module developer.', __FILE__);
         $f->columnWidth = 20;
@@ -2613,12 +2613,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // ProcessWire and Tracy Log Panels
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __('ProcessWire and Tracy Log Panel', __FILE__);
+        $fieldset->label = __('ProcessWire and Tracy Log panels', __FILE__);
         $wrapper->add($fieldset);
 
         $f = $this->wire('modules')->get("InputfieldInteger");
         $f->attr('name', 'numLogEntries');
-        $f->label = __('Number of Log Entries', __FILE__);
+        $f->label = __('Number of log entries', __FILE__);
         $f->description = __('Set the number of log entries to be displayed for the Tracy and ProcessWire log viewer panels.', __FILE__);
         $f->notes = __('Default: 10', __FILE__);
         $f->attr('value', $data['numLogEntries']);
@@ -2626,12 +2626,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // Template Resources Panel
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __('Template Resources Panel', __FILE__);
+        $fieldset->label = __('Template Resources panel', __FILE__);
         $wrapper->add($fieldset);
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'variablesShowPwObjects');
-        $f->label = __('Show content of ProcessWire Objects', __FILE__);
+        $f->label = __('Show content of ProcessWire objects', __FILE__);
         $f->description = __('Shows the full ProcessWire object contents, rather than arrays of values. Only recommended for specific debugging purposes.', __FILE__);
         $f->notes = __('Checking this will significantly increase the size of this panel if you have any variables set to ProcessWire objects.', __FILE__);
         $f->attr('checked', $data['variablesShowPwObjects'] == '1' ? 'checked' : '' );
@@ -2639,12 +2639,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // Snippet Runner Panel
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __('Snippet Runner Panel', __FILE__);
+        $fieldset->label = __('Snippet Runner panel', __FILE__);
         $wrapper->add($fieldset);
 
         $f = $this->wire('modules')->get("InputfieldRadios");
         $f->attr('name', 'snippetsPath');
-        $f->label = __('Snippets Path', __FILE__);
+        $f->label = __('Snippets path', __FILE__);
         $f->description = __('This path will be checked for snippets.', __FILE__);
         $f->notes = __('Neither of these directories exist by default so you will need to create them.', __FILE__);
         $f->addOption('templates', $this->wire('config')->urls->templates.'TracyDebugger/snippets/');
@@ -2654,12 +2654,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // Custom PHP Panel
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __('Custom PHP Panel', __FILE__);
+        $fieldset->label = __('Custom PHP panel', __FILE__);
         $wrapper->add($fieldset);
 
         $f = $this->wire('modules')->get("InputfieldTextarea");
         $f->attr('name', 'customPhpCode');
-        $f->label = __('Custom PHP Code', __FILE__);
+        $f->label = __('Custom PHP code', __FILE__);
         $f->description = __('Use this PHP code block to return any output you want.', __FILE__);
         $f->notes = __('eg. return \'<a href="https://developers.google.com/speed/pagespeed/insights/?url=\'.$page->httpUrl.\'">Google PageSpeed</a>\';', __FILE__);
         if($data['customPhpCode']) $f->attr('value', $data['customPhpCode']);
@@ -2667,7 +2667,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // Server Type Indicator
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __('Server Type Indicator', __FILE__);
+        $fieldset->label = __('Server type indicator', __FILE__);
         $wrapper->add($fieldset);
 
         $f = $this->wire('modules')->get("InputfieldCheckboxes");
@@ -2682,7 +2682,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldTextarea");
         $f->attr('name', 'styleAdminColors');
-        $f->label = __('Indicator Colors', __FILE__);
+        $f->label = __('Indicator colors', __FILE__);
         $f->showIf = "styleWhere.count>0";
         $f->description = __('Use "type|#color" entries to define indicator styling for each server type. "local" is determined by IP address. Other types are detected based on their existence in subdomain or TLD (eg. dev.mysite.com or mysite.dev), dependant on whether you include the period after (dev.﹡) or before (﹡.dev).', __FILE__);
         $f->notes = __("**DEFAULT**\nlocal|#FF9933\n*.local|#FF9933\n*.dev|#FF9933\ndev.*|#FF9933\n*.test|#FF9933\nstaging.*|#8b0066\n*.com|#009900", __FILE__);
@@ -2692,7 +2692,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldRadios");
         $f->attr('name', 'styleAdminType');
-        $f->label = __('Indicator Type', __FILE__);
+        $f->label = __('Indicator type', __FILE__);
         $f->showIf = "styleWhere.count>0";
         $f->description = __('Choose custom if you want complete control', __FILE__);
         $f->notes = __('You will need to do a hard reload in your browser for these changes to take effect.', __FILE__);
@@ -2704,7 +2704,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldTextarea");
         $f->attr('name', 'styleAdminElements');
-        $f->label = __('Custom Indicator CSS', __FILE__);
+        $f->label = __('Custom indicator CSS', __FILE__);
         $f->showIf = "styleWhere.count>0, styleAdminType='custom'";
         $f->description = __('Use [color] and [type] shortcodes to add indicator based on server type.', __FILE__);
         $f->notes = __("**DEFAULT**\nbody::before {\n&nbsp;&nbsp;&nbsp;&nbsp;content: \"[type]\";\n&nbsp;&nbsp;&nbsp;&nbsp;background: [color];\n&nbsp;&nbsp;&nbsp;&nbsp;position: fixed;\n&nbsp;&nbsp;&nbsp;&nbsp;left: 0;\n&nbsp;&nbsp;&nbsp;&nbsp;bottom: 100%;\n&nbsp;&nbsp;&nbsp;&nbsp;color: #ffffff;\n&nbsp;&nbsp;&nbsp;&nbsp;width: 100vh;\n&nbsp;&nbsp;&nbsp;&nbsp;padding: 0;\n&nbsp;&nbsp;&nbsp;&nbsp;text-align: center;\n&nbsp;&nbsp;&nbsp;&nbsp;font-family: sans-serif;\n&nbsp;&nbsp;&nbsp;&nbsp;font-weight: 600;\n&nbsp;&nbsp;&nbsp;&nbsp;text-transform: uppercase;\n&nbsp;&nbsp;&nbsp;&nbsp;transform: rotate(90deg);\n&nbsp;&nbsp;&nbsp;&nbsp;transform-origin: bottom left;\n&nbsp;&nbsp;&nbsp;&nbsp;z-index: 999999;\n&nbsp;&nbsp;&nbsp;&nbsp;font-family: sans-serif;\n&nbsp;&nbsp;&nbsp;&nbsp;font-size: 11px;\n&nbsp;&nbsp;&nbsp;&nbsp;height: 13px;\n&nbsp;&nbsp;&nbsp;&nbsp;line-height: 13px;\n&nbsp;&nbsp;&nbsp;&nbsp;pointer-events: none;\n}\n", __FILE__);
@@ -2716,12 +2716,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // User DEV Template
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __('User Dev Template', __FILE__);
+        $fieldset->label = __('User dev template', __FILE__);
         $wrapper->add($fieldset);
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'userDevTemplate');
-        $f->label = __('Enable User Dev Template', __FILE__);
+        $f->label = __('Enable user dev template', __FILE__);
         $f->description = __('If user has a permission named to match the page template with the set suffix, the page will be rendered with that template file rather than the default.', __FILE__);
         $f->columnWidth = 50;
         $f->attr('checked', $data['userDevTemplate'] == '1' ? 'checked' : '' );
@@ -2729,7 +2729,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldText");
         $f->attr('name', 'userDevTemplateSuffix');
-        $f->label = __('User Dev Template Suffix', __FILE__);
+        $f->label = __('User dev template suffix', __FILE__);
         $f->description = __('Template file suffix. eg "dev" will render the homepage with the "home-dev.php" template file if the user has a matching permission (prefixed with "tracy"), eg. "tracy-home-dev".', __FILE__);
         $f->columnWidth = 50;
         if($data['userDevTemplateSuffix']) $f->attr('value', $data['userDevTemplateSuffix']);
@@ -2742,7 +2742,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'showUserBar');
-        $f->label = __('Show User Bar', __FILE__);
+        $f->label = __('Show user bar', __FILE__);
         $f->description = __('This bar is shown to logged in users without permission for the Tracy debug bar (typically all non-superusers).', __FILE__);
         $f->columnWidth = 33;
         $f->attr('checked', $data['showUserBar'] == '1' ? 'checked' : '' );
@@ -2750,7 +2750,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'showUserBarTracyUsers');
-        $f->label = __('Show User Bar for Tracy Users', __FILE__);
+        $f->label = __('Show user bar for Tracy users', __FILE__);
         $f->showIf = "showUserBar=1";
         $f->description = __('Also show the bar to users with Tracy debug bar permission.', __FILE__);
         $f->notes = __('Only recommended if you position this bar somewhere other than bottom right so it doesn\'t conflict with the Debug bar.', __FILE__);
@@ -2774,7 +2774,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldTextarea");
         $f->attr('name', 'userBarCustomFeatures');
-        $f->label = __('Custom Features', __FILE__);
+        $f->label = __('Custom features', __FILE__);
         $f->showIf = "showUserBar=1";
         $f->description = __('Use this PHP code block to return any output you want.', __FILE__);
         $f->notes = __('eg. return \'<a href="https://developers.google.com/speed/pagespeed/insights/?url=\'.$page->httpUrl.\'" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 452.555 452.555" style="enable-background:new 0 0 452.555 452.555;" xml:space="preserve" width="16px" height="16px"><path d="M404.927,209.431h47.175c-3.581-49.699-23.038-94.933-53.539-130.611l-33.715,33.715l-23.275-23.296l33.758-33.78     C339.826,24.353,294.527,4.206,244.591,0.194v48.923h-32.917V0C161.22,3.236,115.296,22.8,79.165,53.668l35.57,35.549     l-23.296,23.296L55.804,76.878C24.332,112.858,4.12,158.804,0.475,209.452h50.864v32.917H0.453     C8.93,359.801,106.646,452.555,226.256,452.555s217.347-92.754,225.846-210.186h-47.197L404.927,209.431L404.927,209.431z      M228.133,362.217c-24.116,0-43.659-19.522-43.659-43.681c0-17.839,10.742-33.176,26.144-39.928l16.394-151.707l4.034,0.043     l14.927,151.729c15.229,6.881,25.863,22.045,25.863,39.863C271.857,342.695,252.27,362.217,228.133,362.217z" fill="\'.$iconColor.\'"/></svg></a>\';', __FILE__);
@@ -2803,7 +2803,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldText");
         $f->attr('name', 'userBarBackgroundColor');
-        $f->label = __('Background Color', __FILE__);
+        $f->label = __('Background color', __FILE__);
         $f->showIf = "showUserBar=1";
         $f->description = __('Leave blank for transparent/none', __FILE__);
         $f->notes = __('eg. #FFFFFF', __FILE__);
@@ -2813,7 +2813,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldText");
         $f->attr('name', 'userBarBackgroundOpacity');
-        $f->label = __('Background Opacity', __FILE__);
+        $f->label = __('Background opacity', __FILE__);
         $f->showIf = "showUserBar=1";
         $f->notes = __('0 to 1', __FILE__);
         $f->columnWidth = 34;
@@ -2822,7 +2822,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldText");
         $f->attr('name', 'userBarIconColor');
-        $f->label = __('Icon Color', __FILE__);
+        $f->label = __('Icon color', __FILE__);
         $f->showIf = "showUserBar=1";
         $f->notes = __('eg. #666666', __FILE__);
         $f->columnWidth = 33;
@@ -2831,13 +2831,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // Method Shortcuts
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->label = __('Method Shortcuts', __FILE__);
+        $fieldset->label = __('Method shortcuts', __FILE__);
         $wrapper->add($fieldset);
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'enableShortcutMethods');
-        $f->label = __('Enable Shortcut Methods', __FILE__);
-        $f->description = __('Uncheck to not define any of the shortcut methods. If you are not going to use these in your templates, unchecking means that they will not be defined which may reduce possible future name clashes. If in doubt, uncheck and use the full methods:'."\n".'TD::debugAll()'."\n".'TD::dump()'."\n".'TD::barDump()'."\n".'TD::barDumpLive()'."\n".'TD::barDumpBig()'."\n".'TD::log()'."\n".'TD::timer()'."\n".'TD::fireLog()'."\n".'TD::addBreakpoint()'."\n".'TD::templateVars()', __FILE__);
+        $f->label = __('Enable shortcut methods', __FILE__);
+        $f->description = __('Uncheck to not define any of the shortcut methods. If you are not going to use these in your templates, unchecking means that they will not be defined which may reduce possible future name clashes. If in doubt, uncheck and use the full methods:'."\n".'TD::addBreakpoint()'."\n".'TD::barDump()'."\n".'TD::barDumpBig()'."\n".'TD::barDumpLive()'."\n".'TD::debugAll()'."\n".'TD::dump()'."\n".'TD::fireLog()'."\n".'TD::log()'."\n".'TD::templateVars()'."\n".'TD::timer()', __FILE__);
         $f->notes = __('If this, or one of the shortcut methods is not enabled, but is called in your templates, all users will get a "call to undefined function" fatal error, so please be aware when using the shortcut methods in your templates if they are not enabled here.', __FILE__);
         $f->columnWidth = 50;
         $f->attr('checked', $data['enableShortcutMethods'] == '1' ? 'checked' : '' );
@@ -2845,30 +2845,30 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldCheckboxes");
         $f->attr('name', 'enabledShortcutMethods');
-        $f->label = __('Enabled Shortcuts', __FILE__);
+        $f->label = __('Enabled shortcuts', __FILE__);
         $f->description = __('Uncheck any shortcuts/aliases to methods that you do not want available.', __FILE__);
         $f->notes = __('Useful if any of these functions/methods are defined elswhere in your site and you are getting a "previously declared" fatal error.', __FILE__);
         $f->showIf = "enableShortcutMethods=1";
         $f->columnWidth = 50;
+        $f->addOption('addBreakpoint', 'addBreakpoint() for TD::addBreakpoint()');
+        $f->addOption('bp', 'bp() for TD::addBreakpoint()');
+        $f->addOption('barDump', 'barDump() for TD::barDump()');
+        $f->addOption('bd', 'bd() for TD::barDump()');
+        $f->addOption('barDumpBig', 'barDumpBig() for TD::barDumpBig()');
+        $f->addOption('bdb', 'bdb() for TD::barDumpBig()');
+        $f->addOption('barDumpLive', 'barDumpLive() for TD::barDumpLive()');
+        $f->addOption('bdl', 'bdl() for TD::barDumpLive()');
         $f->addOption('debugAll', 'debugAll() for TD::debugAll()');
         $f->addOption('da', 'da() for TD::debugAll()');
         $f->addOption('dump', 'dump() for TD::dump()');
         $f->addOption('d', 'd() for TD::dump()');
-        $f->addOption('barDump', 'barDump() for TD::barDump()');
-        $f->addOption('bd', 'bd() for TD::barDump()');
-        $f->addOption('barDumpLive', 'barDumpLive() for TD::barDumpLive()');
-        $f->addOption('bdl', 'bdl() for TD::barDumpLive()');
-        $f->addOption('barDumpBig', 'barDumpBig() for TD::barDumpBig()');
-        $f->addOption('bdb', 'bdb() for TD::barDumpBig()');
-        $f->addOption('l', 'l() for TD::log()');
-        $f->addOption('timer', 'timer() for TD::timer()');
-        $f->addOption('t', 't() for TD::timer()');
         $f->addOption('fireLog', 'fireLog() for TD::fireLog()');
         $f->addOption('fl', 'fl() for TD::fireLog()');
-        $f->addOption('addBreakpoint', 'addBreakpoint() for TD::addBreakpoint()');
-        $f->addOption('bp', 'bp() for TD::addBreakpoint()');
+        $f->addOption('l', 'l() for TD::log()');
         $f->addOption('templateVars', 'templateVars() for TD::templateVars()');
         $f->addOption('tv', 'tv() for TD::templateVars()');
+        $f->addOption('timer', 'timer() for TD::timer()');
+        $f->addOption('t', 't() for TD::timer()');
         if($data['enabledShortcutMethods']) $f->attr('value', $data['enabledShortcutMethods']);
         $fieldset->add($f);
 
