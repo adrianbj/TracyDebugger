@@ -94,13 +94,31 @@ The errors panel is only displayed when there are non-fatal errors and you are n
 ***
 
 ## ![Event Interceptor](icons/event-interceptor.svg)Event Interceptor
-This panel lets you define any Hook that you want to intercept. Much like the Mail panel, this new panel prevents the chosen hook from being executed, but instead, returns that contents of $event->object and $event->arguments in the panel instead. This may be useful for debugging all sorts of things but you MUST USE EXTREME CAUTION - for example, setting Pages::save and then deleting a page can result in some pages ending up having the trashed status, but their parent still listed as the home page. This is a situation that requires some careful database manipulation to fix.
 
-*Icon colors*
+> This panel lets you define any Hook that you want to intercept.
 
-* Green - no hook set
-* Orange - hook set, but nothing intercepted
-* Red - hook set and event intercepted
+```
+@Hook
+@options: Before | After
+@default: Before
+
+@Return
+@options: Default | False
+@default: Default
+```
+
+Returns the contents of $event->object and $event->arguments in the panel.
+
+**CAUTION  with Return False**
+
+`Return: False` prevents the chosen hook from being executed.
+For example, setting the hook to `Pages::save` and then deleting a page can result in some pages ending up having the trashed status, but their parent still listed as the home page. This is a situation that requires some careful database manipulation to fix.
+
+* **Green:** no hook set
+* **Orange:** hook set, but nothing intercepted
+* **Red:** hook set and event intercepted
+
+![Event Interceptor](img/event-interceptor.png)
 
 ***
 
@@ -129,6 +147,16 @@ This panel lets you define any Hook that you want to intercept. Much like the Ma
 * Tweak a live site if you're away from your computer and need a quick way to fix something, but want the ability to test first without breaking something temporarily due to a simple syntax error mistake or more serious code mistakes.
 * Add debug statements: `bd()`, `d()`, `fl()` etc to your file code without editing touching the actual files.
 
+***
+
+## ![Git Info](icons/git-info.svg)Git Info
+
+Displays the Git branch, latest commit message, etc for your site (assuming you have it under Git version control).
+
+![Git Info panel](img/git-info.png)
+
+***
+
 ## ![Mail Interceptor](icons/mail-interceptor.svg)Mail Interceptor
 Intercepts all outgoing emails sent using `wireMail()` and displays them in the panel. Ideal for form submission testing. This panel is activated when enabled, so it's best to enable it from the Panel Selector using the sticky option when needed.
 
@@ -154,10 +182,16 @@ OR
 
 Execute "/site/assets/cache/TracyDebugger/modulesBackup.sql" manually (via PHPMyAdmin, the command line, etc)
 
+![Module Disabler panel](img/module-disabler.png)
+
 ***
 
 ## ![Output Mode](icons/output-mode.svg)Output Mode
-Indicates which mode Tracy is in - Development or Production - this is determined at runtime so if you have configured it to "Detect" mode, you can easily see which mode it has automatically switched to. This is useful if you have the "Superuser Force Development Mode" option enabled because you will see the debug bar even in Production mode.
+Indicates which mode Tracy is in - DEVELOPMENT or PRODUCTION - this is determined at runtime so if you have configured it to "Detect" mode, you can easily see which mode it has automatically switched to. This is useful if you have the "Superuser Force Development Mode" option enabled because you will see the debug bar even in Production mode.
+
+![Output Mode panel](img/output-mode.png)
+
+* Note that no matter what mode you are in, guest users will always be in PRODUCTION mode which means no debug bar and no detailed error reporting.
 
 ***
 
@@ -166,6 +200,10 @@ Indicates which mode Tracy is in - Development or Production - this is determine
 This panel records the ID of all pages added whenever it is enabled (so this is one you'll want off by default and just enabled via "Sticky" when you need it).
 
 This is perfect for all sorts of testing, whether you need to create a LOT of pages for performance testing or you are testing a form which is automatically creating pages. Once you are done with the testing session, simply click the "Trash Recorded Pages" button and they will all be moved to the Trash.
+
+If you decide you want to keep the pages, you can click "Clear Recorded Pages List" instead.
+
+![Page Recorder panel](img/page-recorder.png)
 
 ***
 
@@ -309,6 +347,10 @@ If you are on a page that is using an alternate template due to user permissions
 
 ## ![Template Resources](icons/template-resources.svg)Template Resources
 Displays the names, types, and values of all variables defined in the template file (and any other included files) for the current page. It also shows any defined constants and functions (linked to open in your code editor), as well as a list of included files (also linked to open in your code editor).
+
+![Template Resources panel 1](img/template-resources-1.png)
+
+![Template Resources panel 2](img/template-resources-2.png)
 
 ***
 
