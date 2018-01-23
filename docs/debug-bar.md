@@ -31,7 +31,7 @@ Results are cached for speed, but will be updated whenever you update your Proce
 * In-code search & replace with CMD/CTRL+F
 * History stack
 * Snippets storage for regularly used code
-* Options to run code instead at `init`, `ready`, or `finished` - useful for testing hooks
+* Options to run code instead at `init`, `ready`, or `finished` - useful for testing hooks. To use this, click Run, select `init`, `ready`, or `finished` and then execute whatever action in ProcessWire that is needed to trigger the hook. An orange icon will indicate this feature is active. You can switch to `off` manually when you are done. It will also expire automatically after 5 minutes.
 
 
 Remember that this allows you to run any PHP code, so be careful!
@@ -46,6 +46,8 @@ This panel lets you output anything you want. Primarily I see this being used fo
 ```php
 return '<a href="https://developers.google.com/speed/pagespeed/insights/?url='.$page->httpUrl.'">Google PageSpeed</a>';
 ```
+
+![Custom PHP Panel](img/custom-php.png)
 
 ***
 
@@ -160,6 +162,8 @@ Displays the Git branch, latest commit message, etc for your site (assuming you 
 ## ![Mail Interceptor](icons/mail-interceptor.svg)Mail Interceptor
 Intercepts all outgoing emails sent using `wireMail()` and displays them in the panel. Ideal for form submission testing. This panel is activated when enabled, so it's best to enable it from the Panel Selector using the sticky option when needed.
 
+![Mail Interceptor Panel](img/mail-interceptor.png)
+
 ***
 
 ## ![Methods Info](icons/methods-info.svg)Methods Info
@@ -229,6 +233,22 @@ There are indicators if:
 
 ## ![Performance](icons/performance.svg)Performance
 Performance Panel is a third party extension for Tracy developed by Martin Jirásek. It adds support for inserting named breakpoints in your code and reports execution time and various memory usages stats between the various breakpoints. This is where calls to addBreakpoint() are rendered.
+
+```
+bp('A');
+for($i = 0; $i < 10000000; $i++) {
+     $a += $i;
+}
+bp('B');
+sleep(2);
+bp('C', 'B');
+for($i = 0; $i < 10000000; $i++) {
+     $a += $i;
+}
+bp('D');
+```
+
+![Performance panel](img/performance.png)
 
 ***
 
@@ -377,7 +397,7 @@ Displays the most recent entries from the Tracy log files. These log files can b
 ***
 
 ## ![Tracy Toggler](icons/tracy-toggler.svg)Tracy Toggler
-Not really a panel, but this button on the debug bar lets you toggle Tracy on / off without needing to visit the module config settings. If you don't want another button always taking up room, you can also use the "Disable Tracy" button on the Panel Selector. Another alternative is the Hide/Show toggle icon at the far right of the debug bar. This doesn't actually turn Tracy off, but it get the debug out of the way.
+Not really a panel, but this button on the debug bar lets you toggle Tracy on / off without needing to visit the module config settings. If you don't want another button always taking up room, you can also use the "Disable Tracy" button on the Panel Selector. Another alternative is the Hide/Show toggle icon at the far right of the debug bar, although this one doesn't actually turn Tracy off, but it gets the debug out of the way.
 
 ***
 
@@ -400,7 +420,9 @@ As usual, icon colors are meaningful, telling you what type of user is currently
 ***
 
 ## ![Users](icons/users.svg)Users
-Lists all the users/roles with access to the Tracy Debugger bar. A green debug bar icon indicates that only superusers can access the debug bar. A red icon indicates that others have the tracy-debugger permission and may be able to see the debug bar. Another good reason to have the "Superuser Force Development Mode" option enabled because you will see this warning even in Production mode.
+Lists all the users/roles with access to the Tracy Debugger bar. A green debug bar icon indicates that only superusers can access the debug bar. An orange icon indicates that others have the tracy-debugger permission and may be able to see the debug bar. Another good reason to have the "Superuser Force Development Mode" option enabled because you will see this warning even in Production mode.
+
+![Users panel](img/users.png)
 
 ***
 

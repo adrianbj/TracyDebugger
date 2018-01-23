@@ -52,9 +52,6 @@ class Panel implements IBarPanel
 		return ''
 			. '<h1>Performance between breakpoints</h1>'
 			. '<div class="tracy-inner">'
-			. '<p><i>'
-			. 'Add breakpoint: Zarganwar\PerformancePanel\Register::add([name], [parent]);'
-			. '</i></p>'
 			. '<p>'
 			. '<table>' . $this->getRowsString() . '<tr><th><b>Total breakpoints</b></th><th colspan="4">' . $this->countBreakpoints() . '</th></tr></table>'
 			. '</p>'
@@ -68,12 +65,6 @@ class Panel implements IBarPanel
 	public function getTab()
 	{
 		return ''
-				. '<style>'
-					. '#performance-panel svg
-						{
-							width: 1.93em !important;
-						}'
-				. '</style>'
 				. '<span id="performance-panel" title="Performance Tracy Panel">'
 					. '<svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
 							 width="16px" height="16px" viewBox="40.6 40.6 16 16" enable-background="new 40.6 40.6 16 16" xml:space="preserve">
