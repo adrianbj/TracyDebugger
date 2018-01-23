@@ -79,7 +79,18 @@ Some basic details about your MySQL server and client setup.
 ***
 
 ## ![Dumps](icons/dumps.svg)Dumps
-This panel is only displayed when you have called the barDump() method and contains the contents of that dump. No need for an additional screenshot here - you have seen examples in the tutorial above.
+This panel is only displayed when you have called the barDump() method and contains the contents of that dump.
+
+Note the second optional parameter used to name the outputs in the Dumps panel.
+
+```php
+bd($page->body, 'Body');
+bd(array('a' => array(1,2,3), 'b' => array(4,5,6)), 'Test Array');
+```
+
+![Dumps Panel Example](img/dumps-panel-1.png)
+
+> For more details, see the [barDump()](debug-methods.md#bardump) and other associate debug methods
 
 ***
 
