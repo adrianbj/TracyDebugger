@@ -78,7 +78,7 @@ if($user->isSuperuser()) {
 
     // close php after codePrefixes if there is a PHP open tag somewhere in the code
     // or it starts with a < without the ? which indicates an HTML opening tag
-    if($containsPhpOpenTag || (substr($code, 0, 1) === '<' && substr($code, 1, 1) !== '?')) {
+    if($containsPhpOpenTag || (substr(trim($code), 0, 1) === '<' && substr(trim($code), 1, 1) !== '?')) {
         $codePrefixes .= '?>';
     }
     $code = "$codePrefixes\n$code";
