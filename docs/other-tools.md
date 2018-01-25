@@ -24,7 +24,7 @@ From this I could quickly see a call from line #1095 of BatchChildEditor.module,
 
 ![User Bar](img/user-bar.png)
 
-The the [configuration options](configuration.md#user-bar) for more details on the setup.
+See the [configuration options](configuration.md#user-bar) for more details on the setup.
 
 ### Page Versions
 

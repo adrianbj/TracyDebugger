@@ -141,13 +141,12 @@ For example, setting the hook to `Pages::save` and then deleting a page can resu
 * Can be used as the handler for opening editor links from the debug bar (errors, log files, Captain Hook, ToDo, Template editor, etc), rather than your code editor
 * Can be enabled as the link handler for live sites only, or local as well if you prefer
 * Has "Test" functionality for all files so if you make a change, it will only appear for you and not other users
+* Red icon: Test code is being rendered
 * Makes a backup of the old version each time you save a change and provides a "Restore Backup" button to instantly revert
 * Supports in-code search & replace with CMD+F
 * Syntax highlighting/linting for PHP, CSS, and JS
 * This replaces the Template Editor panel, so that one has been removed
 * Handles fatal errors gracefully - this is the biggest feature in my opinion. The problem with most online file editors is that if you accidentally make a code change that results in a fatal error, it can be impossible to fix and resave because the system is not functional. This editor gets around this problem by using Tracy's custom error handling which allows debug bar panels to continue to work, so you can manually fix the problem, or click the "Restore Backup" button. Of course if you used the "Test" option, you don't even need to worry, because you are the only one to see the version with the error anyway.
-* Red icon: Test code is being rendered.
-* Green icon: Saved template file is being rendered.
 
 **Action buttons (some only available when relevant):**
 * **Test**: reloads the page using the code in the editor - no changes are made to the template file or the code served to all other users of the site.
@@ -159,6 +158,8 @@ For example, setting the hook to `Pages::save` and then deleting a page can resu
 * Use this panel similarly to your dev console for tweaking CSS/HTML - it still requires a page reload, but there are likely less clicks than your normal workflow.
 * Tweak a live site if you're away from your computer and need a quick way to fix something, but want the ability to test first without breaking something temporarily due to a simple syntax error mistake or more serious code mistakes.
 * Add debug statements: `bd()`, `d()`, `fl()` etc to your file code without editing touching the actual files.
+
+![File Editor panel](img/file-editor.png)
 
 ***
 

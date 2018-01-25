@@ -102,6 +102,7 @@ class FileEditorPanel extends BasePanel {
                 resizeAce: function() {
                     var ml = Math.round((document.getElementById("tracy-debug-panel-FileEditorPanel").offsetHeight - 160) / 23);
                     tracyFileEditor.tfe.setOptions({
+                        minLines: ml,
                         maxLines: ml
                     });
                 }
@@ -191,16 +192,6 @@ HTML;
 
         $out .= '<h1>'.$this->icon.' File Editor: <span id="panelTitleFilePath" style="font-size:14px">'.($this->tracyFileEditorFilePath ?: 'no selected file').'</span></h1>
         <div class="tracy-inner">
-            <div id="tracyFileEditorCodeContainer" style="float: left; width: calc(100vw - 400px) !important;">
-                <div id="tracyFileEditorCode" style="visibility:hidden; height:100px"></div><br />
-                <form id="tracyFileEditorSubmission" method="post" action="'.\TracyDebugger::inputUrl(true).'">
-                    <fieldset>
-                        <textarea id="tracyFileEditorRawCode" name="tracyFileEditorRawCode" style="display:none"></textarea>
-                        <input type="hidden" id="fileEditorFilePath" name="fileEditorFilePath" value="'.$this->tracyFileEditorFilePath.'" />
-                        <div id="fileEditorButtons"></div>
-                    </fieldset>
-                </form>
-            </div>
             <div id="tracyFoldersFiles" style="float: left; margin: 0; padding:0; width: 310px; height: calc(100vh - 150px); overflow: auto">';
 
                 $out .= "<div class='fe-file-tree'>";
@@ -208,6 +199,16 @@ HTML;
                 $out .= "</div>";
 
             $out .= '
+            </div>
+            <div id="tracyFileEditorCodeContainer" style="float: left; width: calc(100vw - 390px) !important;">
+                <div id="tracyFileEditorCode" style="visibility:hidden; height:100px; position:relative;"></div><br />
+                <form id="tracyFileEditorSubmission" method="post" action="'.\TracyDebugger::inputUrl(true).'">
+                    <fieldset>
+                        <textarea id="tracyFileEditorRawCode" name="tracyFileEditorRawCode" style="display:none"></textarea>
+                        <input type="hidden" id="fileEditorFilePath" name="fileEditorFilePath" value="'.$this->tracyFileEditorFilePath.'" />
+                        <div id="fileEditorButtons" style="margin-left:15px"></div>
+                    </fieldset>
+                </form>
             </div>
             ';
 

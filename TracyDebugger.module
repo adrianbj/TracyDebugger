@@ -1,7 +1,7 @@
 <?php
 
 // TODO
-// sometimes Console panel isn't loading content from history?
+// sometimes Console panel isn't loading content from history, or maybe it's just not resizing properly?
 // check test mode when editing template file in backend - is there any point since you can't view changes?
 // cleanup unnecessary File Editor code
 // maybe an option to automatically restore backup if error/exception
@@ -41,7 +41,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.9.4',
+            'version' => '4.9.5',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
