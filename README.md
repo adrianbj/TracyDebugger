@@ -1,3 +1,5 @@
+![Tracy Debugger for ProcessWire logo](https://adrianbj.github.io/TracyDebugger/img/icon.svg)
+
 # Tracy Debugger for ProcessWire
 
 **The ultimate “swiss army knife” debugging and development tool for the [ProcessWire](https://processwire.com/) CMF/CMS**
@@ -6,7 +8,7 @@ Integrates and extends Nette's Tracy debugging tool
 
 30+ custom tools designed for effective ProcessWire debugging and lightning fast development
 
-![Tracy Debug Bar Kitchen Sink](https://github.com/adrianbj/TracyDebugger/blob/master/docs/img/debug-bar-kitchen-sink.png?raw=true "Tracy Debug Bar")
+![Tracy Debug Bar Kitchen Sink](https://adrianbj.github.io/TracyDebugger/img/debug-bar-kitchen-sink.png "Tracy Debug Bar")
 
 ### Documentation
 Documentation is available at: https://adrianbj.github.io/TracyDebugger/

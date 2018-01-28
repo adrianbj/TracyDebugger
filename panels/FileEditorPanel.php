@@ -201,7 +201,7 @@ HTML;
             $out .= '
             </div>
             <div id="tracyFileEditorCodeContainer" style="float: left; width: calc(100vw - 400px) !important;">
-                <div id="tracyFileEditorCode" style="visibility:hidden; height:100px; position:relative;"></div><br />
+                <div id="tracyFileEditorCode" style="position:relative;"></div><br />
                 <form id="tracyFileEditorSubmission" method="post" action="'.\TracyDebugger::inputUrl(true).'">
                     <fieldset>
                         <textarea id="tracyFileEditorRawCode" name="tracyFileEditorRawCode" style="display:none"></textarea>

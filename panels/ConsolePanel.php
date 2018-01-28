@@ -521,7 +521,6 @@ class ConsolePanel extends BasePanel {
 
                     // set autocomplete and other options
                     ace.config.loadModule('ace/ext/language_tools', function () {
-                        document.getElementById("tracyConsoleCode").style.visibility = "visible";
                         if(!!localStorage.getItem("tracyConsole") && localStorage.getItem("tracyConsole") !== "null" && localStorage.getItem("tracyConsole") !== "undefined") {
                             try {
                                 tracyConsole.setEditorState(JSON.parse(localStorage.getItem("tracyConsole")));
