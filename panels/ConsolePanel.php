@@ -232,7 +232,8 @@ class ConsolePanel extends BasePanel {
                     tracyConsole.resizeContainers();
                     var ml = Math.round(document.getElementById("tracyConsoleCode").offsetHeight / tracyConsole.tce.renderer.lineHeight);
                     tracyConsole.tce.setOptions({
-                        maxLines: (ml - 1)
+                        maxLines: (ml - 1),
+                        minLines: (ml - 1)
                     });
                     tracyConsole.setEditorHeight();
                     if(focus) tracyConsole.tce.focus();
@@ -575,7 +576,8 @@ class ConsolePanel extends BasePanel {
                         tracyConsole.observer = new MutationObserver(function(mutations) {
                             mutations.forEach(function(mutation) {
                                 if(mutation.attributeName === "class") {
-                                    tracyConsole.tce.focus();
+                                    //tracyConsole.tce.focus();
+                                    tracyConsole.resizeAce();
                                 }
                             });
                         });

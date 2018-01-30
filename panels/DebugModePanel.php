@@ -234,11 +234,11 @@ class DebugModePanel extends BasePanel {
             if(in_array('selectorQueries', $panelSections)) {
                 // Selectors Queries
                 $selectorQueries_oc = 0;
-                $selectorQueries = $this->sectionHeader(array('Order', 'Selector', 'Settings', 'Time (ms)'));
-                foreach(\TracyDebugger::$selectors as $n => $arguments) {
+                $selectorQueries = $this->sectionHeader(array('Order', 'Selector', 'Caller', 'SQL Query', 'Settings', 'Time (ms)'));
+                foreach(\TracyDebugger::$pageFinderQueries as $n => $query) {
                     $selectorQueries_oc++;
-                    $selector = $this->wire('sanitizer')->entities1($arguments[0]);
-                    $selectorQueries .= "\n<tr><td>$n</td><td class='tracy-force-break'>".$selector."</td><td>".(isset($arguments[1]) ? \Tracy\Dumper::toHtml($arguments[1], array(Dumper::LIVE => true, Dumper::DEPTH => 10, Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false)) : '')."</td><td>".($arguments[2]*1000)."</td></tr>";
+                    $selector = $this->wire('sanitizer')->entities1((string)$query->arguments[0]);
+                    $selectorQueries .= "\n<tr><td>$n</td><td class='tracy-force-break'>".$selector."</td><td>".(isset($query->arguments[1]['caller']) ? $query->arguments[1]['caller'] : '')."</td><td class='tracy-force-break'>".$query->return->getQuery()."</td><td>".(isset($query->arguments[1]) ? \Tracy\Dumper::toHtml($query->arguments[1], array(Dumper::LIVE => true, Dumper::DEPTH => 10, Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false)) : '')."</td><td>".($query->arguments[2]*1000)."</td></tr>";
                 }
                 $selectorQueries .= $sectionEnd;
             }

@@ -1,4 +1,4 @@
-![logo](img/icon.svg)
+![logo](img/icon.svg ':no-zoom')
 
 # Tracy Debugger for ProcessWire
 
@@ -10,7 +10,7 @@ Integrates and extends Nette's Tracy debugging tool
 
 <br />
 
-![Tracy Debug Bar Kitchen Sink](img/debug-bar-kitchen-sink.png "Tracy Debug Bar")
+![Tracy Debug Bar Kitchen Sink](img/debug-bar-kitchen-sink.png 'Tracy Debug Bar :no-zoom')
 
 <br />
 <a class="github-button" href="https://github.com/adrianbj/TracyDebugger" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star adrianbj/TracyDebugger on GitHub">Star</a>
