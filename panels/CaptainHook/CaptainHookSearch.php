@@ -35,7 +35,7 @@ class CaptainHookSearch {
         $paths = array();
         foreach($iter as $path => $dir) {
             // '/.' check is for site module backups - SKIP_DOTS above is not excluding these
-            if(!$dir->isDir() && strpos(str_replace(wire('config')->paths->root, '', $path), '/.') === false && preg_match($fileNamePattern, $path) && !in_array(basename($path), $excludeFilenames) ) {
+            if(!$dir->isDir() && strpos(str_replace(wire('config')->paths->root, '', $path), DIRECTORY_SEPARATOR.'.') === false && preg_match($fileNamePattern, $path) && !in_array(basename($path), $excludeFilenames) ) {
                 $paths[] = $path;
             }
         }

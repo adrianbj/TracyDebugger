@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.9.9',
+            'version' => '4.9.10',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -292,7 +292,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // formbuilder iframe
         if(in_array('formBuilderIframe', $this->data['hideDebugBarModals']) &&
             !static::$inAdmin &&
-            strpos(self::inputUrl(true), '/form-builder/') !== false)
+            strpos(self::inputUrl(true), DIRECTORY_SEPARATOR.'form-builder'.DIRECTORY_SEPARATOR) !== false)
                 return;
 
         // don't init Tracy for @soma's PageEditSoftLock polling on Page Edit
@@ -310,7 +310,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 strpos($queryString, 'layout=sidenav-init') !== false) return;
 
             // don't init Tracy for Setup > Logs view polling
-            if(strpos($_SERVER['REQUEST_URI'], '/logs/view/') !== false &&
+            if(strpos($_SERVER['REQUEST_URI'], DIRECTORY_SEPARATOR.'logs'.DIRECTORY_SEPARATOR.'view'.DIRECTORY_SEPARATOR) !== false &&
                 strpos($queryString, 'q=') !== false) return;
 
         }
@@ -345,7 +345,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             count($this->data['userBarFeatures'])>0 &&
             !$this->wire('config')->ajax &&
             ($this->allowedTracyUsers() !== 'development' || $this->data['showUserBarTracyUsers']) &&
-            (strpos(self::inputUrl(true), '/form-builder/') === false)
+            (strpos(self::inputUrl(true), DIRECTORY_SEPARATOR.'form-builder'.DIRECTORY_SEPARATOR) === false)
         ) {
             $this->addHookAfter('Page::render', $this, 'addUserBar', array('priority'=>1000));
         }
@@ -1769,6 +1769,20 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     /**
+    *
+    * Replace all backslashes with forward slashes
+    *
+    * @param string $path
+    * @return string
+    *
+    */
+    public static function forwardSlashPath($path) {
+        if(DIRECTORY_SEPARATOR != '/') $path = str_replace(DIRECTORY_SEPARATOR, '/', $path);
+        return $path;
+    }
+
+
+    /**
      * Insert generated time and size for a panel
      *
      * @param string $panel Panel name
@@ -1796,6 +1810,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static function createEditorLink($file, $line, $linkText, $title = null) {
         if(strpos($file, '..') !== false) return;
         $file = str_replace("%file", $file, str_replace("%line", $line, Debugger::$editor));
+        $file = static::forwardSlashPath($file);
         if(static::$useOnlineEditor) $file = str_replace(static::$onlineFileEditorDirPath, '', $file);
         elseif(!static::$isLocal && self::getDataValue('localRootPath') != '') $file = str_replace(wire('config')->paths->root, self::getDataValue('localRootPath'), $file);
         return '<a '.($title ? 'title="'.$title.'"' : '').' href="'.$file.'">'.$linkText.'</a>';

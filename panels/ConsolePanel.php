@@ -193,6 +193,8 @@ class ConsolePanel extends BasePanel {
                                 var objDiv = document.getElementById("tracyConsoleResult");
                                 objDiv.scrollTop = objDiv.scrollHeight;
                             }
+                            // this may no longer be needed since we now have our own non-Tracy fatal error / shutdown handler
+                            // but maybe leave just in case? Maybe still relevant for init, ready, finished injecting?
                             else {
                                 var tracyBsError = new DOMParser().parseFromString(xmlhttp.responseText, "text/html");
                                 var tracyBsErrorDiv = tracyBsError.getElementById("tracy-bs-error");

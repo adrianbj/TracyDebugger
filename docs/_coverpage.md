@@ -13,7 +13,6 @@ Integrates and extends Nette's Tracy debugging tool
 ![Tracy Debug Bar Kitchen Sink](img/debug-bar-kitchen-sink.png 'Tracy Debug Bar :no-zoom')
 
 <br />
-<a class="github-button" href="https://github.com/adrianbj/TracyDebugger" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star adrianbj/TracyDebugger on GitHub">Star</a>
 
 [GitHub](https://github.com/adrianbj/TracyDebugger)
 [ProcessWire Modules Directory](http://modules.processwire.com/modules/tracy-debugger/)

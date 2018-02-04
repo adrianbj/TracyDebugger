@@ -2,10 +2,6 @@
 
 use Tracy\Dumper;
 
-/**
- * Custom PW panel
- */
-
 class TemplateResourcesPanel extends BasePanel {
 
     protected $sectionEnd;
@@ -92,6 +88,7 @@ class TemplateResourcesPanel extends BasePanel {
                 $i=1;
                 foreach($this->variables['$'.$var] as $item) {
                     $path = $this->removeCompilerFromPath($item['file']);
+                    $path = \TracyDebugger::forwardSlashPath($path);
                     $fileLines[$var][str_replace($this->wire('config')->paths->root, '/', $path)]['lines'][] = \TracyDebugger::createEditorLink($path, $item['line'], $item['line']);
                     $i++;
                 }
@@ -224,6 +221,7 @@ class TemplateResourcesPanel extends BasePanel {
             foreach(\TracyDebugger::$includedFiles as $key => $path) {
                 $functions[] = $this->get_defined_resources_in_file($path);
                 $path = $this->removeCompilerFromPath($path);
+                $path = \TracyDebugger::forwardSlashPath($path);
                 $includedFilesOut .= "\n<tr>" .
                     '<td>'.\TracyDebugger::createEditorLink($path, 1, str_replace($this->wire('config')->paths->root, '/', $path), 'Edit File').'</td>' .
                     "</tr>";
@@ -270,6 +268,7 @@ class TemplateResourcesPanel extends BasePanel {
                     if(in_array(strtolower($name), array_map('strtolower', array_values(\TracyDebugger::$templateFuncs)))) {
                         if(isset($details['file'])) {
                             $path = $this->removeCompilerFromPath($details['file']);
+                            $path = \TracyDebugger::forwardSlashPath($path);
                             $out .= "\n<tr>" .
                                 '<td'.(isset($this->resourceCounts[$name]) && $this->resourceCounts[$name] === 1 ? ' style="background:#FF9933"' : '').'>'.\TracyDebugger::createEditorLink($path, $details['line'], $name).'</td>' .
                                 '<td>'.str_replace($this->wire('config')->paths->root, '/', $path).'</td>' .
@@ -299,6 +298,7 @@ class TemplateResourcesPanel extends BasePanel {
         $out .= $this->sectionHeader(array('Path'));
         foreach($this->searchedFiles as $path) {
             if(!in_array($path, array_map(array($this, 'removeCompilerFromPath'), \TracyDebugger::$includedFiles))) {
+                $path = \TracyDebugger::forwardSlashPath($path);
                 $out .= "\n<tr>" .
                     '<td>'.\TracyDebugger::createEditorLink($path, 1, str_replace($this->wire('config')->paths->root, '/', $path), 'Edit File').'</td>' .
                     "</tr>";

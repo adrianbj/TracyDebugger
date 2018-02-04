@@ -5,6 +5,8 @@ setcookie("tracyCodeError", "", time()-3600, '/');
 
 set_error_handler('tracyConsoleErrorHandler');
 set_exception_handler('tracyConsoleExceptionHandler');
+\Tracy\Debugger::$disableShutdownHandler = true;
+register_shutdown_function('tracyConsoleShutdownHandler');
 
 // remove location links from dumps - not really meaningful for console
 \TracyDebugger::$fromConsole = true;
@@ -155,11 +157,9 @@ if($user->isSuperuser()) {
         number_format((memory_get_usage() - $initialMemory) / 1000000, 2, '.', ' ') . ' MB
     </div>';
 
-    // fix for updating AJAX bar when SessionHandlerDB is installed
-    if($this->wire('modules')->isInstalled('SessionHandlerDB')) {
-        \Tracy\Debugger::getBar()->render();
-        \Tracy\Debugger::$showBar = FALSE;
-    }
+    // fix for updating AJAX bar
+    \Tracy\Debugger::getBar()->render();
+    \Tracy\Debugger::$showBar = false;
 
     exit;
 }
@@ -167,7 +167,6 @@ if($user->isSuperuser()) {
 
 // error handler function
 function tracyConsoleErrorHandler($errno, $errstr, $errfile, $errline) {
-
     // this prevents silenced(@) errors from being captured by this custom error handler
     if(error_reporting() === 0) {
         // continue script execution, skipping standard PHP error handler
@@ -180,38 +179,72 @@ function tracyConsoleErrorHandler($errno, $errstr, $errfile, $errline) {
         return;
     }
     else {
-        $customErrStr = $errstr . ' on line: ' . (strpos($errfile, 'cache/TracyDebugger') !== false ? $errline - 1 : $errline) . (strpos($errfile, 'cache/TracyDebugger') !== false ? '' : ' in ' . str_replace(wire('config')->paths->cache . 'FileCompiler/', '../', $errfile));
-        $customErrStrLog = $customErrStr . (strpos($errfile, 'cache/TracyDebugger') !== false ? ' in Tracy Console Panel' : '');
-        \TD::fireLog($customErrStrLog);
-        \TD::log($customErrStrLog, 'error');
-
-        setcookie('tracyCodeError', 'Error: '.$customErrStr, time() + (10 * 365 * 24 * 60 * 60), '/');
-
-        // echo and exit approach allows us to send error to Tracy console dump area
-        // this means that the browser will receive a 200 when it may have been a 500,
-        // but think that is ok in this case
-        echo 'Error: '.$customErrStr;
-        echo '<div style="border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;"></div>';
-        // exit obviously causing scripts to halt even for notices/warnings which we don't want, so get rid of for now
-        //exit;
+        writeError(array('type' => 'Error', 'line' => $errline, 'message' => $errstr, 'file' => $errfile));
     }
 }
 
-
 // exception handler function
 function tracyConsoleExceptionHandler($err) {
+    writeError(array('type' => 'Exception', 'line' => $err->getLine(), 'message' => $err->getMessage(), 'file' => $err->getFile()));
+}
 
-    $errstr = $err->getMessage();
-    $errfile = $err->getFile();
-    $errline = $err->getLine();
+// fatal error / shutdown handler function
+function tracyConsoleShutdownHandler() {
+    // this prevents silenced(@) errors from being captured by this custom error handler
+    if(error_reporting() === 0) {
+        // continue script execution, skipping standard PHP error handler
+        return true;
+    }
 
-    $customErrStr = $errstr . ' on line: ' . (strpos($errfile, 'cache/TracyDebugger') !== false ? $errline - 1 : $errline) . (strpos($errfile, 'cache/TracyDebugger') !== false ? '' : ' in ' . str_replace(wire('config')->paths->cache . 'FileCompiler/', '../', $errfile));
-    $customErrStrLog = $customErrStr . (strpos($errfile, 'cache/TracyDebugger') !== false ? ' in Tracy Console Panel' : '');
+    $lasterror = error_get_last();
+
+    // convert error constants to strings,
+    // otherwise the error's numerical value (http://php.net/manual/en/errorfunc.constants.php) is returned
+    $errorStrings = array(
+        E_ERROR => 'ERROR',
+        E_CORE_ERROR => 'E_CORE_ERROR',
+        E_COMPILE_ERROR => 'E_COMPILE_ERROR',
+        E_USER_ERROR => 'E_USER_ERROR',
+        E_RECOVERABLE_ERROR => 'E_RECOVERABLE_ERROR',
+        E_CORE_WARNING => 'E_CORE_WARNING',
+        E_COMPILE_WARNING => 'E_COMPILE_WARNING',
+        E_PARSE => 'E_PARSE'
+    );
+
+    // ignore any include/require errors - we are including all files by their full path via
+    // $this->wire('session')->tracyIncludedFiles anyway, so the errors caused by relative paths won't matter
+    if(strpos($lasterror['message'], 'include') !== false || strpos($lasterror['message'], 'require') !== false) {
+        return;
+    }
+    else {
+        switch ($lasterror['type']) {
+            case E_ERROR:
+            case E_CORE_ERROR:
+            case E_COMPILE_ERROR:
+            case E_USER_ERROR:
+            case E_RECOVERABLE_ERROR:
+            case E_CORE_WARNING:
+            case E_COMPILE_WARNING:
+            case E_PARSE:
+                // remove PHP's "fatal error" message so we can display just our cleaner version
+                @ob_end_clean();
+                $lasterror['type'] = $errorStrings[$lasterror['type']];
+                writeError($lasterror);
+        }
+    }
+}
+
+function writeError($error) {
+    $customErrStr = $error['message'] . ' on line: ' . (strpos($error['file'], 'cache'.DIRECTORY_SEPARATOR.'TracyDebugger') !== false ? $error['line'] - 1 : $error['line']) . (strpos($error['file'], 'cache'.DIRECTORY_SEPARATOR.'TracyDebugger') !== false ? '' : ' in ' . str_replace(wire('config')->paths->cache . 'FileCompiler'.DIRECTORY_SEPARATOR, '../', $error['file']));
+    $customErrStrLog = $customErrStr . (strpos($error['file'], 'cache'.DIRECTORY_SEPARATOR.'TracyDebugger') !== false ? ' in Tracy Console Panel' : '');
     \TD::fireLog($customErrStrLog);
     \TD::log($customErrStrLog, 'error');
 
-    setcookie('tracyCodeError', 'Exception: '.$customErrStr, time() + (10 * 365 * 24 * 60 * 60), '/');
+    setcookie('tracyCodeError', $error['type'].': '.$customErrStr, time() + (10 * 365 * 24 * 60 * 60), '/');
 
-    echo 'Exception: '.$customErrStr;
+    // echo and exit approach allows us to send error to Tracy console dump area
+    // this means that the browser will receive a 200 when it may have been a 500,
+    // but think that is ok in this case
+    echo $error['type'].': '.$customErrStr;
     echo '<div style="border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;"></div>';
 }

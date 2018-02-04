@@ -115,12 +115,13 @@ class CaptainHookPanel extends BasePanel {
         foreach($hooks as $file => $info) {
             $name = pathinfo($info['filename'], PATHINFO_FILENAME);
             $label = str_replace($this->wire('config')->paths->root, '', $info['filename']);
+            $label = \TracyDebugger::forwardSlashPath($label);
             $path = parse_url($label, PHP_URL_PATH);
-            $segments = explode(DIRECTORY_SEPARATOR, $path);
+            $segments = explode('/', $path);
             $currentSection = ucfirst($segments[0]) . ' ' . ucfirst($segments[1]);
             if($currentSection !== $lastSection) $out .= '<h3>'.$currentSection.'</h3>';
             $out .= '
-            <a href="#" rel="'.$name.'" class="tracy-toggle tracy-collapsed">'.str_replace($segments[0].DIRECTORY_SEPARATOR.$segments[1].DIRECTORY_SEPARATOR, '', $label).'</a>
+            <a href="#" rel="'.$name.'" class="tracy-toggle tracy-collapsed">'.str_replace($segments[0].'/'.$segments[1].'/', '', $label).'</a>
             <div style="padding-left:10px" id="'.$name.'" class="tracy-collapsed"><p>'.(isset($info['classname']) && (!in_array('site', $segments) || wire('modules')->isInstalled('ProcessWireAPI')) ? '<a href="'.$this->apiBaseUrl.$this->convertNamesToUrls($info['classname']).'/">'.$info['classname'].'</a> ' : $info['classname']).(isset($info['extends']) ? ' extends <a href="'.$this->apiBaseUrl.$this->convertNamesToUrls($info['extends']).'/">'.$info['extends'].'</a>' : '').'</p>'.$this->buildHookTable($info).'</div><br />';
             $lastSection = $currentSection;
         }

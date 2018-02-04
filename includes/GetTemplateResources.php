@@ -10,8 +10,9 @@ $functions = get_defined_functions();
 
 $includedFiles = array();
 foreach(get_included_files() as $includedFile) {
+	$includedFile = \TracyDebugger::forwardSlashPath($includedFile);
 	if(strpos($includedFile, $this->wire('config')->paths->site) !== false &&
-		strpos($includedFile, '/site/modules/') === false &&
+		strpos($includedFile, DIRECTORY_SEPARATOR.'site'.DIRECTORY_SEPARATOR.'modules'.DIRECTORY_SEPARATOR) === false &&
 		strpos($includedFile, 'config.php') === false) {
 		if(!in_array($includedFile, $includedFiles)) $includedFiles[] = $includedFile;
 	}

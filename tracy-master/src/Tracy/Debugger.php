@@ -16,7 +16,7 @@ use Tracy;
  */
 class Debugger
 {
-	const VERSION = '2.4.10';
+	const VERSION = '2.4.11';
 
 	/** server modes for Debugger::enable() */
 	const
@@ -31,6 +31,9 @@ class Debugger
 
 	/** @var bool whether to display debug bar in development mode */
 	public static $showBar = true;
+
+	/** @var bool whether to disable the shutdown handler in development mode */
+	public static $disableShutdownHandler = false;
 
 	/** @var bool */
 	private static $enabled = false;
@@ -267,6 +270,10 @@ class Debugger
 	 */
 	public static function shutdownHandler()
 	{
+		if (self::$disableShutdownHandler) {
+			return false;
+		}
+
 		if (!self::$reserved) {
 			return;
 		}
