@@ -343,7 +343,7 @@ class ProcesswireInfoPanel extends BasePanel {
                 if($info['core']) continue;
                 $moduleInfo .= $name . ": " . $this->wire('modules')->formatVersion($info['version']) . $eol;
             }
-            $githubVersionsList = '<details><summary><strong>Server Details</strong></summary>' . $serverInfo . '<details><summary><strong>Server Settings</strong></summary> ' . $serverSettings . '</details><details><summary><strong>Module Details</strong></summary> ' . $moduleInfo . '</details></details>';
+            $githubVersionsList = '<details><summary><strong>Server Details</strong></summary>' . $serverInfo . '</details><details><summary><strong>Server Settings</strong></summary> ' . $serverSettings . '</details><details><summary><strong>Module Details</strong></summary> ' . $moduleInfo . '</details>';
             $versionsList .= '
             <p>
                 <button class="tracyCopyBtn" data-clipboard-text="'.$githubVersionsList.'">

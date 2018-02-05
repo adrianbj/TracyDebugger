@@ -141,7 +141,7 @@ class PanelSelectorPanel extends BasePanel {
                         $out .= '
                             <label style="'.($this->wire('page')->template == 'admin' && in_array($name, \TracyDebugger::$hideInAdmin) ? ' visibility:hidden;position: absolute; left: -999em;' : '').'">' .
                                 ($this->isOnce($name, $defaultPanels) ? $onceIcon .'&nbsp;' : '<span style="display:inline-block;width:18px">&nbsp;</span>') . '
-                                 <span style="font-size:16px; font-weight:600"><a title="Panel Info" href="https://adrianbj.github.io/TracyDebugger/#/debug-bar?id='.str_replace(' ', '-', strtolower($label)).'" target="_blank">&#8505;</a></span>
+                                 <span style="font-size:16px; font-weight:600"><a title="Panel Info" href="https://adrianbj.github.io/TracyDebugger/#/debug-bar?id='.str_replace(' ', '-', strtolower($label)).'" target="_blank">ℹ</a></span>
                                 <input type="checkbox" name="selectedPanels[]" ' . ($name == 'panelSelector' ? 'disabled="disabled"' : '') . ' value="'.$name.'" ' . (in_array($name, $showPanels) ? 'checked="checked"' : '') . ' /> '
                                 . $label . (in_array($name, $defaultPanels) ? '&nbsp;<strong>*</strong>' : '') . ($seconds ? '<span style="color:#999999; font-size:11px; float:right; margin-left:20px">&nbsp;' . \TracyDebugger::formatTime($seconds) . ($size ? ', '.$size : '') . '</span>' : '') . '
                             </label>';

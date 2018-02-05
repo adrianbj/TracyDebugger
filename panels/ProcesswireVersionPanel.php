@@ -13,6 +13,7 @@ class ProcesswireVersionPanel extends BasePanel {
         foreach(new DirectoryIterator($this->wire('config')->paths->root) as $fileInfo) {
             if($fileInfo->isDot()) continue;
             $filePath = $fileInfo->getPathname();
+            $filePath = \TracyDebugger::forwardSlashPath($filePath);
             $version = str_replace($this->wire('config')->paths->root, '', $filePath);
             $version = str_replace('.wire-', '', $version);
             if(strpos($filePath, 'wire') === false) continue;

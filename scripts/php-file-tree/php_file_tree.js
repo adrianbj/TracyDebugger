@@ -32,12 +32,6 @@
 
 */
 
-function getCookie(name) {
-    var value = "; " + document.cookie;
-    var parts = value.split("; " + name + "=");
-    if (parts.length == 2) return parts.pop().split(";").shift();
-}
-
 function init_php_file_tree() {
 
 	if (!document.getElementsByTagName) return;
@@ -75,7 +69,7 @@ function init_php_file_tree() {
 
 					submenu[j].className = (mclass.indexOf("open") > -1) ? "open" : "closed";
 
-					if(getCookie('tracyFileEditorFilePath') && getCookie('tracyFileEditorFilePath').indexOf(submenu[j].text) > -1) {
+					if(document.getElementById('panelTitleFilePath').innerHTML.indexOf(submenu[j].text) > -1) {
 						submenu[j].className = "open";
 						parentOpen = true;
 					}
@@ -100,8 +94,7 @@ function init_php_file_tree() {
 					var parser = document.createElement('a');
 					parser.href = items[j].href;
 					var currentFilePath = parser.search.replace('?f=','').replace('&l=1','');
-					if((getCookie('tracyFileEditorFilePath') && getCookie('tracyFileEditorFilePath') == currentFilePath) ||
-						document.getElementById('panelTitleFilePath').innerHTML == currentFilePath) {
+					if(document.getElementById('panelTitleFilePath').innerHTML == currentFilePath) {
 						items[j].classList.add("active");
 					}
 				}

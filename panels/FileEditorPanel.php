@@ -5,6 +5,7 @@ class FileEditorPanel extends BasePanel {
     protected $icon;
     protected $tracyFileEditorFilePath;
     protected $errorMessage = null;
+    protected $encoding = 'auto';
 
     public function getTab() {
 
@@ -352,6 +353,9 @@ HTML;
      *
      */
     private function toUTF8($str, $encoding = 'auto', $c = false) {
+
+        if(PHP_VERSION_ID >= 70100) return $str;
+
         // http://stackoverflow.com/questions/7979567/php-convert-any-string-to-utf-8-without-knowing-the-original-character-set-or
         if(extension_loaded('mbstring') && function_exists('iconv')) {
             if($encoding == 'auto') {
