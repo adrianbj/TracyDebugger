@@ -61,12 +61,12 @@ class DiagnosticsPanel extends BasePanel {
             'Sessions Directory'
         );
 
-        // posix_getpwuid doesn't exist on Windows so don't add Owner column
+        // posix_getpwuid doesn't exist on Windows so don't add Owner & Permission columns
         if(function_exists('posix_getpwuid')) {
             $this->filesystem = $this->sectionHeader(array('Attribute', 'Path', 'Exists', 'Readable', 'Writeable', 'Permissions', 'Owner (User:Group)', 'Status', 'Notes'));
         }
         else {
-            $this->filesystem = $this->sectionHeader(array('Attribute', 'Path', 'Exists', 'Readable', 'Writeable', 'Permissions', 'Status', 'Notes'));
+            $this->filesystem = $this->sectionHeader(array('Attribute', 'Path', 'Exists', 'Readable', 'Writeable', 'Status', 'Notes'));
         }
 
         foreach($attributes as $attribute) {
@@ -202,8 +202,11 @@ class DiagnosticsPanel extends BasePanel {
             <td title='".$this->getPaths($attribute)."'>".$this->getPaths($attribute, true)."</td>
             <td>".$exists."</td>
             <td>".$readable."</td>
-            <td>".$writeable."</td>
-            <td>".$permission."</td>";
+            <td>".$writeable."</td>";
+            // posix_getpwuid doesn't exist on Windows so don't add Permission column
+            if(function_exists('posix_getpwuid')) {
+                $out .= "<td>".$permission."</td>";
+            }
             if(isset($owner)) {
                 $out .= "<td>".(!empty($owner) ? $owner['name'].":".$group['name'] : '')."</td>";
             }
@@ -220,7 +223,8 @@ class DiagnosticsPanel extends BasePanel {
     * return an array with status and notes items
     */
     protected function getStatusNotes($attribute, $exists, $readable, $writeable, $permission) {
-        if($permission == '0777') {
+        // also check if NOT on Windows by using presence of posix_getpwuid
+        if($permission == '0777' && function_exists('posix_getpwuid')) {
             return array('Failure', '0777 is usually unsafe');
         }
         else {
