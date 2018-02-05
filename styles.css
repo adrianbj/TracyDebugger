@@ -752,6 +752,11 @@ ul.pw-info-links {
     width: 100% !important;
 }
 
+.tracy-file-tree a[href].active {
+    color: #FFFFFF !important;
+    background-color: #125EAE !important;
+}
+
 /* clipboardjs "Copied!" tooltip */
 .tooltipped {
     position:relative !important;

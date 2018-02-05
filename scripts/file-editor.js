@@ -18,13 +18,18 @@ if(!tracyFileEditorLoader) {
             else {
                 document.getElementById("tracy-debug").addEventListener("click", function(e) {
                     if(e.target) {
-                        var el = e.target;
-                        while(el && el.tagName != "A") {
-                            el = el.parentNode;
+                        var curEl = e.target;
+                        while(curEl && curEl.tagName != "A") {
+                            curEl = curEl.parentNode;
                         }
-                        if(el && el.href && el.href.indexOf("tracy://") !== -1) {
+                        if(curEl && curEl.href && curEl.href.indexOf("tracy://") !== -1) {
                             e.preventDefault();
-                            tracyFileEditorLoader.loadFileEditor(tracyFileEditorLoader.getFileLineVars(el.search, "f"), tracyFileEditorLoader.getFileLineVars(el.search, "l"));
+                            var els = document.getElementsByClassName("active");
+                            [].forEach.call(els, function (el) {
+                                el.classList.remove("active");
+                            });
+                            curEl.classList.add("active");
+                            tracyFileEditorLoader.loadFileEditor(tracyFileEditorLoader.getFileLineVars(curEl.search, "f"), tracyFileEditorLoader.getFileLineVars(curEl.search, "l"));
                         }
                     }
                 });
