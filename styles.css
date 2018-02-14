@@ -186,7 +186,6 @@ body.tracyHidden:before {
 #tracy-debug a {
     border: none !important;
     font-weight: normal !important;
-    font-size: 12px !important;
 }
 
 #tracy-debug table {
