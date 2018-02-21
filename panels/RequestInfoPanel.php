@@ -167,14 +167,7 @@ class RequestInfoPanel extends BasePanel {
             if($this->wire('input')->get('name') && $this->wire('page')->process == 'ProcessModule') {
                 $moduleName = $this->wire('sanitizer')->name($this->wire('input')->get('name'));
                 if($this->wire('modules')->isInstalled($moduleName)) {
-                    // get was causing problems with some core modules like ProcessPageEdit and ProcessPageEditImageSelect
-                    // resulting in a "No page specified" error
-                    try {
-                        $moduleConfigData = $this->wire('modules')->get($moduleName);
-                    }
-                    catch(\Exception $e) {
-                        $moduleConfigData = $this->wire('modules')->getModuleConfigData($moduleName);
-                    }
+                    $moduleObject = $this->wire('modules')->getModule($moduleName, array('noInit' => true));
                     $moduleSettings = '
                     <table>';
                     foreach($this->wire('modules')->getModuleInfoVerbose($moduleName) as $k => $v) {
@@ -185,7 +178,7 @@ class RequestInfoPanel extends BasePanel {
                             </tr>
                         ';
                     }
-                    foreach($moduleConfigData as $k => $v) {
+                    foreach($moduleObject as $k => $v) {
                         $moduleSettings .= '
                             <tr>
                                 <td>'.$k.'</td>
