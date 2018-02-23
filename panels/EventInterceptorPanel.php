@@ -40,7 +40,7 @@ class EventInterceptorPanel extends BasePanel {
 
         $this->icon = '
         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="248 248 16 16" enable-background="new 248 248 16 16" xml:space="preserve" width="16px" height="16px">
-            <path class="interceptorIconPath" d="M248,256c0,4.4,3.6,8,8,8c4.4,0,8-3.6,8-8s-3.6-8-8-8C251.6,248,248,251.6,248,256z M262,256
+            <path class="eventInterceptorIconPath" d="M248,256c0,4.4,3.6,8,8,8c4.4,0,8-3.6,8-8s-3.6-8-8-8C251.6,248,248,251.6,248,256z M262,256
                 c0,1.1-0.3,2.2-0.9,3.1l-8.2-8.2c0.9-0.6,2-0.9,3.1-0.9C259.3,250,262,252.7,262,256z M250,256c0-1.1,0.3-2.2,0.9-3.1l8.2,8.2
                 c-0.9,0.6-2,0.9-3.1,0.9C252.7,262,250,259.3,250,256z" fill="'.$this->iconColor.'"/>
         </svg>
@@ -65,18 +65,13 @@ class EventInterceptorPanel extends BasePanel {
         <script>
             function clearEvents() {
                 document.cookie = "tracyClearEventItems=true;expires=0;path=/";
-                if(document.getElementById("eventInterceptorHook").value == "") {
-                    var fillColor = "#009900";
-                }
-                else {
-                    var fillColor = "#FF9933";
-                }
+
                 var elements = document.getElementsByClassName("event-items");
                 while(elements.length > 0) {
                     elements[0].parentNode.removeChild(elements[0]);
                 }
 
-                var icons = document.getElementsByClassName("interceptorIconPath");
+                var icons = document.getElementsByClassName("eventInterceptorIconPath");
                 i=0;
                 while(i < icons.length) {
                     icons[i].style.fill="#009900";
@@ -89,11 +84,9 @@ class EventInterceptorPanel extends BasePanel {
                     iconCounts[i].innerHTML="";
                     i++;
                 }
-
             }
 
             function setEventInterceptorHook(status) {
-
                 if(status === "remove") {
                     document.cookie = "eventInterceptorHook=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
                     document.getElementById("eventInterceptorHook").value = "";
@@ -115,14 +108,12 @@ class EventInterceptorPanel extends BasePanel {
                     var fillColor = "#009900";
                 }
 
-
-                var icons = document.getElementsByClassName("interceptorIconPath");
+                var icons = document.getElementsByClassName("eventInterceptorIconPath");
                 i=0;
                 while(i < icons.length) {
                     icons[i].style.fill=fillColor;
                     i++;
                 }
-
             }
         </script>
 

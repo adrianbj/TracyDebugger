@@ -18,9 +18,7 @@ class MailInterceptorPanel extends BasePanel {
             $this->entries .= '
             <div class="mail-items">
                 <p>
-                    <form method="post" action="'.\TracyDebugger::inputUrl(true).'">
-                        <input type="submit" name="tracyClearMailItems" value="Clear Emails" />
-                    </form>
+                    <input type="submit" onclick="clearEmails()" value="Clear Emails" />
                 </p><br />';
 
             foreach($items as $item) {
@@ -91,16 +89,16 @@ class MailInterceptorPanel extends BasePanel {
         $this->icon = '
         <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 14 14" style="enable-background:new 0 0 14 14;" xml:space="preserve" width="16px" height="16px">
             <g>
-                <path d="M7,9L5.268,7.484l-4.952,4.245C0.496,11.896,0.739,12,1.007,12h11.986    c0.267,0,0.509-0.104,0.688-0.271L8.732,7.484L7,9z" fill="'.$this->iconColor.'"/>
-                <path d="M13.684,2.271C13.504,2.103,13.262,2,12.993,2H1.007C0.74,2,0.498,2.104,0.318,2.273L7,8    L13.684,2.271z" fill="'.$this->iconColor.'"/>
-                <polygon points="0,2.878 0,11.186 4.833,7.079" fill="'.$this->iconColor.'"/>
-                <polygon points="9.167,7.079 14,11.186 14,2.875" fill="'.$this->iconColor.'"/>
+                <path class="emailInterceptorIconPath" d="M7,9L5.268,7.484l-4.952,4.245C0.496,11.896,0.739,12,1.007,12h11.986    c0.267,0,0.509-0.104,0.688-0.271L8.732,7.484L7,9z" fill="'.$this->iconColor.'"/>
+                <path class="emailInterceptorIconPath" d="M13.684,2.271C13.504,2.103,13.262,2,12.993,2H1.007C0.74,2,0.498,2.104,0.318,2.273L7,8    L13.684,2.271z" fill="'.$this->iconColor.'"/>
+                <polygon class="emailInterceptorIconPath" points="0,2.878 0,11.186 4.833,7.079" fill="'.$this->iconColor.'"/>
+                <polygon class="emailInterceptorIconPath" points="9.167,7.079 14,11.186 14,2.875" fill="'.$this->iconColor.'"/>
             </g>
         </svg>
         ';
         return '
         <span title="Mail Interceptor">
-            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Mail Interceptor' : '') . ' ' . ($this->mailCount > 0 ? $this->mailCount : '') . '
+            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Mail Interceptor' : '') . ' ' . ($this->mailCount > 0 ? '<span class="mailCount">' . $this->mailCount . '</span>' : '') . '
         </span>
         ';
     }
@@ -111,7 +109,60 @@ class MailInterceptorPanel extends BasePanel {
         $out = '
         <h1>' . $this->icon . ' Mail Interceptor' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>
 
-        <div class="tracy-inner">';
+        <script>
+            function clearEmails() {
+                document.cookie = "tracyClearMailItems=true;expires=0;path=/";
+
+                var elements = document.getElementsByClassName("mail-items");
+                while(elements.length > 0) {
+                    elements[0].parentNode.removeChild(elements[0]);
+                }
+
+                var icons = document.getElementsByClassName("emailInterceptorIconPath");
+                i=0;
+                while(i < icons.length) {
+                    icons[i].style.fill="#009900";
+                    i++;
+                }
+
+                var iconCounts = document.getElementsByClassName("mailCount");
+                i=0;
+                while(i < iconCounts.length) {
+                    iconCounts[i].innerHTML="";
+                    i++;
+                }
+            }
+
+            function setTestEmail(status) {
+                var setEmailButton = document.getElementById("setEmailButton");
+                var removeEmailButton = document.getElementById("removeEmailButton");
+                if(status === "remove") {
+                    document.cookie = "tracyTestEmail=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
+                    document.getElementById("tracyTestEmail").value = "";
+                    removeEmailButton.disabled = true;
+                    setEmailButton.disabled = false;
+                    document.getElementById("tracyTestEmail").style.color = "#000000";
+                }
+                else if(document.getElementById("tracyTestEmail").value != "") {
+                    document.cookie = "tracyTestEmail="+document.getElementById("tracyTestEmail").value+"; expires=0; path=/";
+                    removeEmailButton.disabled = false;
+                    setEmailButton.disabled = true;
+                    document.getElementById("tracyTestEmail").style.color = "#009900";
+                }
+            }
+        </script>
+
+        <div class="tracy-inner">
+            <fieldset id="mailInterceptor">';
+                $out .= '
+                <p>
+                    <input type="text" style="width:250px !important; color:'.($this->wire('input')->cookie->tracyTestEmail ? '#009900' : '#000000').'" id="tracyTestEmail" name="tracyTestEmail" placeholder="Test Email Address" value="'.$this->wire('input')->cookie->tracyTestEmail.'">
+                </p>
+                <input id="setEmailButton" type="submit" onclick="setTestEmail(\'set\')" value="Set Email" />&nbsp;
+                <input id="removeEmailButton" type="submit" onclick="setTestEmail(\'remove\')" value="Remove Email" />&nbsp;
+            </fieldset>
+            <br /><br />
+        ';
             $out .= $this->entries;
             $out .= \TracyDebugger::generatedTimeSize('mailInterceptor', \Tracy\Debugger::timer('mailInterceptor'), strlen($out)) . '
         </div>';

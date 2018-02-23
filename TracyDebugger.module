@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.9.20',
+            'version' => '4.9.21',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -924,9 +924,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             // MAIL INTERCEPTOR
             // if mail panel items were cleared, clear them from the session variable
-            if($this->wire('input')->post->tracyClearMailItems || (!in_array('mailInterceptor', static::$showPanels) && $this->wire('session')->tracyMailItems)) {
+            if($this->wire('input')->cookie->tracyClearMailItems || (!in_array('mailInterceptor', static::$showPanels) && $this->wire('session')->tracyMailItems)) {
                 $this->wire('session')->tracyMailItems = null;
-                $this->wire('session')->redirect($this->httpReferer);
+                unset($this->wire('input')->cookie->tracyClearMailItems);
+                setcookie("tracyClearMailItems", "", time()-3600, "/");
             }
             // mail panel intercept hook
             if(in_array('mailInterceptor', static::$showPanels)) {
@@ -1394,9 +1395,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $mailItem[$param] = $event->object->$param;
         }
         $mailItem['timestamp'] = time();
-        array_unshift($mailItems, $mailItem);
+        array_push($mailItems, $mailItem);
         $this->wire('session')->tracyMailItems = $mailItems;
-        $event->replace = true;
+
+        if($this->wire('input')->cookie->tracyTestEmail) {
+            $event->object->to();
+            $event->object->cc();
+            $event->object->bcc();
+            $event->object->to($this->wire('input')->cookie->tracyTestEmail);
+        }
+        else {
+            $event->replace = true;
+        }
         $event->return = true;
     }
 
