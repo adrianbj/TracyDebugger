@@ -172,7 +172,7 @@ Displays the Git branch, latest commit message, etc for your site (assuming you 
 ***
 
 ## ![Mail Interceptor](icons/mail-interceptor.svg ':no-zoom')Mail Interceptor
-Intercepts all outgoing emails sent using `wireMail()` and displays them in the panel. Ideal for form submission testing. This panel is activated when enabled, so it's best to enable it from the Panel Selector using the sticky option when needed.
+Intercepts all outgoing emails sent using `wireMail()` and displays them in the panel. Ideal for form submission testing. This panel is activated when enabled, so it's best to enable it from the Panel Selector using the sticky option when needed. If you'd also like to receive the email at a test address (but not the original recipients), you can enter an address and click "Set Email".
 
 ![Mail Interceptor Panel](img/mail-interceptor.png)
 
