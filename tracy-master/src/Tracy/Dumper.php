@@ -7,8 +7,6 @@
 
 namespace Tracy;
 
-use Tracy;
-
 
 /**
  * Dumps a variable.
