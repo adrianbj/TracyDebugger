@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.9.22',
+            'version' => '4.9.23',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -794,6 +794,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 // override Tracy core default zIndex for panels
                 // add settings link on double-click to "TRACY" icon
                 // replace "close" icon link with "hide" and "unhide" links
+                // add esc key event handler to close all panels
                 $this->addHookAfter('Page::render', function($event) {
                     $tracyErrors = Debugger::getBar()->getPanel('Tracy:errors');
                     if(!is_array($tracyErrors->data) || count($tracyErrors->data) === 0) {
@@ -882,6 +883,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     bsZIndex();
 
                     window.Tracy.panelZIndex = ' . ($this->data['panelZindex'] + 1) . ';
+
+                    document.addEventListener("keydown", function(e) {
+                        if((e.keyCode==27||e.charCode==27)) {
+                            var panels = document.getElementsByClassName("tracy-panel");
+                            if(panels.length > 0) {
+                                for (var i = 0; i < panels.length; i++) {
+                                    window.Tracy.Debug.panels[panels[i].id].toPeek();
+                                }
+                            }
+                        }
+                    });
+
                 ';
 
                 if($this->data['hideDebugBar'] && $this->showServerTypeIndicator() && $this->data['styleAdminType'] == 'custom' && !$this->wire('input')->cookie->tracyShow) {
