@@ -441,113 +441,11 @@ class RequestInfoPanel extends BasePanel {
 
         // Fields List & Values
         if(in_array('fieldsListValues', $panelSections) && $isPwPage) {
-            // TODO - this is a mess - very repetitive and needs cleaning up a lot
             $fieldsListValues = $this->sectionHeader(array('id', 'name', 'label', 'type', 'inputfieldType/class', 'returns', 'value', 'settings'));
+            $value = '';
             foreach($p->fields as $f) {
-                if(is_object($p->$f)) {
-                    $fieldArray = array();
-                    foreach($p->$f as $key => $item) {
-                        if(is_object($item)) {
-                            foreach($item as $type => $value) {
-                                // TODO this is a temp fix for situations where the type is: 0
-                                // need to figure out why and deal with properly
-                                if($type === 0) break 2;
-                                if($type == 'created' || $type == 'modified' || $type == 'published') $value .= ' ('.date("Y-m-d H:i:s", $value).')';
-                                if($type == 'created_users_id' || $type == 'modified_users_id') $value .= ' ('.$this->wire('users')->get($value)->name.')';
-
-                                if(is_object($value)) {
-                                    $outValue = method_exists($value,'getArray') ? $value->getArray() : $value;
-                                    // run getValue() on as many levels as the Max Nesting Depth config setting
-                                    for($i=0;$i<=\TracyDebugger::getDataValue('maxDepth');$i++) {
-                                        if(is_array($outValue)) {
-                                            array_walk_recursive($outValue, function (&$val) {
-                                                $val = is_object($val) && method_exists($val,'getArray') ? $val->getArray() : $val;
-                                            });
-                                        }
-                                    }
-                                }
-                                else {
-                                    $outValue = $value;
-                                }
-
-                                if(is_array($outValue)) {
-                                    $n=0;
-                                    foreach($outValue as &$val) {
-                                        if(is_array($val)) {
-                                            if(isset($val['created'])) $val['created'] .= ' ('.date("Y-m-d H:i:s", $val['created']).')';
-                                            if(isset($val['modified'])) $val['modified'] .= ' ('.date("Y-m-d H:i:s", $val['modified']).')';
-                                            if($value instanceof PageFiles) {
-                                                $val['name'] = $value->eq($n)->name;
-                                                $val['filename'] = $value->eq($n)->filename;
-                                                $val['ext'] = $value->eq($n)->ext;
-                                                $val['url'] = $value->eq($n)->url;
-                                                $val['httpUrl'] = $value->eq($n)->httpUrl;
-                                                $val['filesize'] = $value->eq($n)->filesize;
-                                                $val['filesizeStr'] = $value->eq($n)->filesizeStr;
-                                            }
-                                            if($value instanceof PageImages) {
-                                                $val['width'] = $value->eq($n)->width;
-                                                $val['height'] = $value->eq($n)->height;
-                                            }
-                                            $n++;
-                                        }
-                                    }
-                                }
-
-                                $fieldArray['value'][$key][$type] = $outValue;
-
-                                if($f->type instanceof FieldtypeFile) {
-                                    $fieldArray['value'][$key]['name'] = $item->name;
-                                    $fieldArray['value'][$key]['filename'] = $item->filename;
-                                    $fieldArray['value'][$key]['ext'] = $item->ext;
-                                    $fieldArray['value'][$key]['url'] = $item->url;
-                                    $fieldArray['value'][$key]['httpUrl'] = $item->httpUrl;
-                                    $fieldArray['value'][$key]['filesize'] = $item->filesize;
-                                    $fieldArray['value'][$key]['filesizeStr'] = $item->filesizeStr;
-                                }
-                                if($f->type instanceof FieldtypeImage) {
-                                    $fieldArray['value'][$key]['width'] = $item->width;
-                                    $fieldArray['value'][$key]['height'] = $item->height;
-                                    //just don't think there is any point showing the variations so remove to clean up
-                                    unset($fieldArray['value'][$key]['imageVariations']);
-                                }
-                            }
-                        }
-                        elseif($f->type instanceof FieldtypeFile || $f->type instanceof FieldtypeImage) {
-                            if($f->type instanceof FieldtypeFile) {
-                                $fieldArray['value']['basename'] = $p->$f->name;
-                                $fieldArray['value']['name'] = $p->$f->name;
-                                $fieldArray['value']['filename'] = $p->$f->filename;
-                                $fieldArray['value']['ext'] = $p->$f->ext;
-                                $fieldArray['value']['url'] = $p->$f->url;
-                                $fieldArray['value']['httpUrl'] = $p->$f->httpUrl;
-                                $fieldArray['value']['filesize'] = $p->$f->filesize;
-                                $fieldArray['value']['filesizeStr'] = $p->$f->filesizeStr;
-                            }
-                            if($f->type instanceof FieldtypeImage) {
-                                $fieldArray['value']['width'] = $p->$f->width;
-                                $fieldArray['value']['height'] = $p->$f->height;
-                                //just don't think there is any point showing the variations so remove to clean up
-                                unset($fieldArray['value']['imageVariations']);
-                            }
-                            foreach($p->$f->getArray() as $type => $value) {
-                                if($type == 'created' || $type == 'modified' || $type == 'published') $value .= ' ('.date("Y-m-d H:i:s", $value).')';
-                                if($type == 'created_users_id' || $type == 'modified_users_id') $value .= ' ('.$this->wire('users')->get($value)->name.')';
-                                $fieldArray['value'][$type] = $value;
-                            }
-                        }
-                        else {
-                            $fieldArray['value'][$key] = $item;
-                        }
-                    }
-                    if(isset($fieldArray['value'])) $value = Dumper::toHtml($fieldArray['value'], array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
-                }
-                elseif(is_array($p->$f)) {
-                    $value = Dumper::toHtml($p->$f, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
-                }
-                else {
-                    $value = $p->$f;
-                }
+                $value = $this->getFieldArray($p,$f);
+                $value = Dumper::toHtml($value, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
                 $fieldArray['settings'] = $f->getArray();
                 $settings = Dumper::toHtml($fieldArray['settings'], array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
 
@@ -695,6 +593,64 @@ class RequestInfoPanel extends BasePanel {
         $out .= '</div>';
 
         return parent::loadResources() . $out;
+    }
+
+
+    private function getFieldArray(Page $p, $f){
+        $fieldArray = '';
+        if($f->type == "FieldtypeFieldsetTabOpen"
+           || $f->type == "FieldtypeFieldsetTabClose"
+           || $f->type == "FieldtypeFieldsetOpen"
+           || $f->type == "FieldtypePassword"
+           || $f->type == "FieldtypeFieldsetClose") return false;
+
+        if($f->type == "FieldtypeRepeater"){
+            if(count($p->$f)){
+                $fieldArray = array();
+                foreach($p->$f as $o) $fieldArray[$o->id] = $o->getIterator();
+            }
+        } else if($f->type == "FieldtypePage"){
+            if(count($p->$f)){
+                $fieldArray = array();
+                if($p->$f instanceof PageArray){
+                    foreach($p->$f as $o) $fieldArray[$o->id] = $o->getIterator();
+                }
+                else {
+                    if($p->$f) $fieldArray[$p->$f->id] = $p->$f->getIterator();
+                        else $fieldArray = '';
+                }
+            } else {
+                $fieldArray = $p->$f;
+            }
+        } else if($f->type == "FieldtypeImage" || $f->type == " FieldtypeFile"){
+            if(count($p->$f)){
+                $fieldArray = array();
+                foreach($p->$f as $o) {
+                    $fieldArray[$o->filename] = $o->getIterator();
+
+                    if($f->type instanceof FieldtypeFile) {
+                        $fieldArray[$o->filename]['basename'] = $o->name;
+                        $fieldArray[$o->filename]['name'] = $o->name;
+                        $fieldArray[$o->filename]['filename'] = $o->filename;
+                        $fieldArray[$o->filename]['ext'] = $o->ext;
+                        $fieldArray[$o->filename]['url'] = $o->url;
+                        $fieldArray[$o->filename]['httpUrl'] = $o->httpUrl;
+                        $fieldArray[$o->filename]['filesize'] = $o->filesize;
+                        $fieldArray[$o->filename]['filesizeStr'] = $o->filesizeStr;
+                    }
+                    if($f->type instanceof FieldtypeImage) {
+                        $fieldArray[$o->filename]['width'] = $o->width;
+                        $fieldArray[$o->filename]['height'] = $o->height;
+                    }
+
+                }
+            }
+        } else {
+            $p->of(true);
+            $fieldArray = $p->$f ? $p->$f : '';
+            $p->of(false);
+        }
+        return $fieldArray;
     }
 
 
