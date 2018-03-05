@@ -307,19 +307,61 @@ Provides very detailed infomation and links related to the current page. It cont
 ### Page Info
 Links to view (from page name) and edit the page (from page ID), template, parent and sibling pages, etc. Also includes page status, creation, modified, and published username and datetime.
 
+![Request Info panel - Page Info](img/request-info-page-info.png)
 
+### Language Info
+Details about the languages of the current page (title, name, and status). Also includes a link to edit each language.
+
+![Request Info panel - Language Info](img/request-info-language-info.png)
 
 ### Template Info
 Details about the template of the current page and its settings, includes a link to open the template for editing in the PW admin, and the template file for editing in your code editor.
 
-
+![Request Info panel - Template Info](img/request-info-template-info.png)
 
 ### Fields List & Values
 Complete list of all available fields for the page and their values - all arrays/objects are presented as expandable trees. For image fields it provides additional information, such as filesize and dimension attributes. There is also Settings column for each field - truncated in this screenshot so that everything else is legible.
 
+![Request Info panel - Field List & Values](img/request-info-field-list-values.png)
 
+### Server Request
 
-Here is another example showing three different image fields; images (with Maximum files allowed set to 0), image (with Maximum files allowed set to 1), and imagestr (with Formatted Value set to Rendered string of text). You can see the differences in what they return. The key thing is the multidimensional status of the array for the "images" field - you can see how you need to expand one of the images to see its various properties. But with the "image" field, it is a one dimensional array. This correlates to the need to call first(), last(), or eq() to get an image from the "images" field, but not for the "image" field. The"imagestr" field returns the exact output, which in this case is an img tag with the src specified (see the outputString property in the Settings column).
+![Request Info panel - Server Request](img/request-info-server-request.png)
+
+### Input GET
+
+![Request Info panel - Input GET](img/request-info-input-get.png)
+
+### Input POST
+
+![Request Info panel - Input POST](img/request-info-input-post.png)
+
+### Input COOKIE
+
+![Request Info panel - Input COOKIE](img/request-info-input-cookie.png)
+
+### SESSION
+
+![Request Info panel - SESSION](img/request-info-session.png)
+
+### Template Settings
+
+This section is only available when viewing the settings page for a template in the admin
+
+![Request Info panel - Template Settings](img/request-info-template-settings.png)
+
+### Field Settings
+
+This section is only available when viewing the settings page for a field in the admin
+
+![Request Info panel - Field Settings](img/request-info-field-settings.png)
+
+### Module Settings
+
+This section is only available when viewing the settings page for a module in the admin
+
+![Request Info panel - Module Settings](img/request-info-module-settings.png)
+
 
 ***
 
