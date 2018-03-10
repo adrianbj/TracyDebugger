@@ -578,15 +578,13 @@ class ConsolePanel extends BasePanel {
                         // checks for changes to Console panel class which indicates focus so we can focus cursor in editor
                         tracyConsole.observer = new MutationObserver(function(mutations) {
                             mutations.forEach(function(mutation) {
-                                if(mutation.attributeName === "class") {
-                                    //tracyConsole.tce.focus();
+                                if(mutation.attributeName == 'class' && mutation.oldValue !== mutation.target.className && mutation.oldValue.indexOf('tracy-focused') === -1 && mutation.target.classList.contains('tracy-focused')) {
                                     tracyConsole.resizeAce();
                                 }
                             });
                         });
-                        tracyConsole.observer.observe(document.getElementById("tracy-debug-panel-ConsolePanel"), {
-                            attributes: true
-                        });
+                        var config = { attributes: true, attributeOldValue: true };
+                        tracyConsole.observer.observe(document.getElementById("tracy-debug-panel-ConsolePanel"), config);
 
                         window.onresize = function(event) {
                             tracyConsole.resizeAce();
