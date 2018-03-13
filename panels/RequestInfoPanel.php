@@ -338,7 +338,10 @@ class RequestInfoPanel extends BasePanel {
 
         // Template info
         // defining $templateFilePath even if templateInfo not a selected panel because it's used to build the template editing button at the bottom of the panel
-        if($isPwPage && ($this->wire('process') == 'ProcessPageView' || $this->wire('process') == 'ProcessPageEdit')) {
+        if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessTemplate') {
+            $templateFilePath = $this->wire('templates')->get((int)$this->wire('input')->get('id'))->filename;
+        }
+        elseif($isPwPage && ($this->wire('process') == 'ProcessPageView' || $this->wire('process') == 'ProcessPageEdit')) {
             if(file_exists($p->template->filename)) $templateFilePath = $p->template->filename;
         }
         elseif($isPwPage && $this->wire('process')) {
@@ -347,6 +350,7 @@ class RequestInfoPanel extends BasePanel {
         else {
             $templateFilePath = $_SERVER['SCRIPT_FILENAME'];
         }
+        if(!isset($templateFilePath) || !file_exists($templateFilePath)) $templateFilePath = null;
 
         $templateFileEditorLinkIcon = '
             <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -373,27 +377,34 @@ class RequestInfoPanel extends BasePanel {
             }
             $permission = !isset($templateFilePath) ? '' : substr(sprintf('%o', fileperms($templateFilePath)), -4);
 
+            if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessTemplate') {
+                $template = $this->wire('templates')->get((int)$this->wire('input')->get('id'));
+            }
+            else {
+                $template = $p->template;
+            }
+
             $templateInfo = '
             <table>
                 <tr>
                     <td>label</td>
-                    <td>'.($this->wire('languages') ? $p->template->getLabel($userLang) : $p->template->label).'</td>
+                    <td>'.($this->wire('languages') ? $template->getLabel($userLang) : $template->label).'</td>
                 </tr>
                 <tr>
                     <td>name</td>
-                    <td><a title="Edit Template" href="'.$this->wire('config')->urls->admin.'setup/template/edit?id='.$p->template->id.'">'.$p->template->name.'</a></td>
+                    <td><a title="Edit Template" href="'.$this->wire('config')->urls->admin.'setup/template/edit?id='.$template->id.'">'.$template->name.'</a></td>
                 </tr>
                 <tr>
                     <td>id</td>
-                    <td>'.$p->template->id.'</td>
+                    <td>'.$template->id.'</td>
                 </tr>
                 <tr>
                     <td>modified</td>
-                    <td>'.date("Y-m-d H:i:s", $p->template->modified).'</td>
+                    <td>'.date("Y-m-d H:i:s", $template->modified).'</td>
                 </tr>
                 <tr>
                     <td>fieldgroup</td>
-                    <td>'.$p->template->fieldgroup.'</td>
+                    <td>'.$template->fieldgroup.'</td>
                 </tr>
                 <tr>
                     <td>filename</td>
@@ -405,35 +416,35 @@ class RequestInfoPanel extends BasePanel {
                 </tr>
                 <tr>
                     <td>compile</td>
-                    <td>'.($p->template->compile == 0 ? 'No' : ($p->template->compile == 1 ? 'Yes (template file only)' : 'Yes (and included files)')).'</td>
+                    <td>'.($template->compile === 0 ? 'No' : ($template->compile === 1 ? 'Yes (template file only)' : 'Yes (and included files)')).'</td>
                 </tr>
                 <tr>
                     <td>contentType</td>
-                    <td>'.$p->template->contentType.'</td>
+                    <td>'.$template->contentType.'</td>
                 </tr>
                 <tr>
                     <td>allowPageNum</td>
-                    <td>'.($p->template->allowPageNum ? 'Enabled' : 'Disabled').'</td>
+                    <td>'.($template->allowPageNum === 1 ? 'Enabled' : 'Disabled').'</td>
                 </tr>
                 <tr>
                     <td>urlSegments</td>
-                    <td>'.($p->template->urlSegments ? 'Enabled' : 'Disabled').'</td>
+                    <td>'.($template->urlSegments === 1 ? 'Enabled' : 'Disabled').'</td>
                 </tr>
                 <tr>
                     <td>noChildren (Children Allowed)</td>
-                    <td>'.($p->template->noChildren ? 'No' : 'Yes').'</td>
+                    <td>'.($template->noChildren === 1 ? 'No' : 'Yes').'</td>
                 </tr>
                 <tr>
                     <td>noParents (Allow for New Page)</td>
-                    <td>'.($p->template->noParents < 0 ? 'Only One' : ($p->template->noParents == 1 ? 'No' : 'Yes')).'</td>
+                    <td>'.($template->noParents < 0 ? 'Only One' : ($template->noParents === 1 ? 'No' : 'Yes')).'</td>
                 </tr>
                 <tr>
                     <td>sortfield (Children Sorted By)</td>
-                    <td>'.$p->template->sortfield.'</td>
+                    <td>'.$template->sortfield.'</td>
                 </tr>
                 <tr>
                     <td>cache_time (Cache Time)</td>
-                    <td>'.$p->template->cache_time.'</td>
+                    <td>'.$template->cache_time.'</td>
                 </tr>
             </table>';
         }
