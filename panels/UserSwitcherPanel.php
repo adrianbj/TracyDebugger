@@ -86,7 +86,13 @@ class UserSwitcherPanel extends BasePanel {
                     <select name="userSwitcher" size="5" style="width:100% !important; height:90px !important">';
                         if(!$this->wire('user')->isLoggedin()) $out .= '<option value="guest" selected="selected">guest</option>';
 
-                        foreach($this->wire('users')->find('roles!='.implode(', roles!=', \TracyDebugger::getDataValue('userSwitcherRestricted'))) as $u) {
+                        if(\TracyDebugger::getDataValue('userSwitcherRestricted') && count(\TracyDebugger::getDataValue('userSwitcherRestricted')) > 0) {
+                            $selectableUsers = $this->wire('users')->find('roles!='.implode(', roles!=', \TracyDebugger::getDataValue('userSwitcherRestricted')));
+                        }
+                        else {
+                            $selectableUsers = $this->wire('users');
+                        }
+                        foreach($selectableUsers as $u) {
                             if(count($u->roles)>1) $out .= '<option value="'.$u->name.'"' . ($this->wire('user')->name === $u->name ? 'selected="selected"' : '') . '>'.$u->name.'</option>';
                         }
                 $out .= '
