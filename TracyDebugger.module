@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.9.27',
+            'version' => '4.9.28',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -211,6 +211,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "debugModePanelSections" => array('pagesLoaded', 'modulesLoaded', 'hooks', 'databaseQueries', 'selectorQueries', 'timers', 'user', 'cache', 'autoload'),
             "diagnosticsPanelSections" => array('filesystemFolders'),
             "snippetsPath" => 'templates',
+            "userSwitcherRestricted" => null,
             "todoIgnoreDirs" => 'git, svn, images, img, errors, sass-cache, node_modules',
             "todoScanModules" => null,
             "todoAllowedExtensions" => 'php, module, inc, txt, latte, html, htm, md, css, scss, less, js',
@@ -2710,6 +2711,23 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->description = __('Use this PHP code block to return any output you want.', __FILE__);
         $f->notes = __('eg. return \'<a href="https://developers.google.com/speed/pagespeed/insights/?url=\'.$page->httpUrl.\'">Google PageSpeed</a>\';', __FILE__);
         if($data['customPhpCode']) $f->attr('value', $data['customPhpCode']);
+        $fieldset->add($f);
+
+        // User Switcher Panel
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __('User Switcher panel', __FILE__);
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldAsmSelect");
+        $f->attr('name', 'userSwitcherRestricted');
+        $f->label = __('Restricted Roles', __FILE__);
+        $f->description = __('Users with selected roles will not be available from the list of users to switch to.', __FILE__);
+        $f->notes = __('This can be useful if you use the User system to store frontend "members" and the system has a lot of users.', __FILE__);
+        $f->setAsmSelectOption('sortable', false);
+        foreach($this->wire('roles') as $role) {
+            $f->addOption($role->id, $role->name);
+        }
+        if($data['userSwitcherRestricted']) $f->attr('value', $data['userSwitcherRestricted']);
         $fieldset->add($f);
 
         // Server Type Indicator
