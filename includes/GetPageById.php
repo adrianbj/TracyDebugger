@@ -4,7 +4,7 @@ $p = $this->wire('pages')->get((int)$_POST['goToPage']);
 $pageInfo = array();
 if($p->id) {
     $pageInfo['id'] = $p->id;
-    $pageInfo['title'] = truncateText($p->title, 50);
+    $pageInfo['title'] = truncateText($p->title ?: $p->name, 50);
     $pageInfo['url'] = $p->url;
     $pageInfo['template_id'] = $p->template->id;
     $pageInfo['template_name'] = $p->template->name;
