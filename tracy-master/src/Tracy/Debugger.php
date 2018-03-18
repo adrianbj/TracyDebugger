@@ -31,6 +31,9 @@ class Debugger
 	/** @var bool whether to display debug bar in development mode */
 	public static $showBar = true;
 
+	/** @var bool whether to send data to FireLogger in development mode */
+	public static $showFireLogger = true;
+
 	/** @var bool whether to disable the shutdown handler in development mode */
 	public static $disableShutdownHandler = false;
 
@@ -622,7 +625,7 @@ class Debugger
 	 */
 	public static function fireLog($message)
 	{
-		if (!self::$productionMode) {
+		if (!self::$productionMode && self::$showFireLogger) {
 			return self::getFireLogger()->log($message);
 		}
 	}

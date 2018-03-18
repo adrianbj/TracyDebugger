@@ -607,7 +607,7 @@ class RequestInfoPanel extends BasePanel {
     }
 
 
-    private function getFieldArray(Page $p, $f){
+    private function getFieldArray(Page $p, $f) {
         $fieldArray = '';
         if($f->type == "FieldtypeFieldsetTabOpen"
            || $f->type == "FieldtypeFieldsetTabClose"
@@ -615,26 +615,29 @@ class RequestInfoPanel extends BasePanel {
            || $f->type == "FieldtypePassword"
            || $f->type == "FieldtypeFieldsetClose") return false;
 
-        if($f->type == "FieldtypeRepeater"){
-            if(count($p->$f)){
+        if($f->type == "FieldtypeRepeater") {
+            if(count($p->$f)) {
                 $fieldArray = array();
                 foreach($p->$f as $o) $fieldArray[$o->id] = $o->getIterator();
             }
-        } else if($f->type == "FieldtypePage"){
-            if(count($p->$f)){
+        }
+        elseif($f->type == "FieldtypePage") {
+            if(count($p->$f)) {
                 $fieldArray = array();
-                if($p->$f instanceof PageArray){
+                if($p->$f instanceof PageArray) {
                     foreach($p->$f as $o) $fieldArray[$o->id] = $o->getIterator();
                 }
                 else {
                     if($p->$f) $fieldArray[$p->$f->id] = $p->$f->getIterator();
                         else $fieldArray = '';
                 }
-            } else {
+            }
+            else {
                 $fieldArray = $p->$f;
             }
-        } else if($f->type == "FieldtypeImage" || $f->type == " FieldtypeFile"){
-            if(count($p->$f)){
+        }
+        elseif($f->type == "FieldtypeImage" || $f->type == " FieldtypeFile") {
+            if(count($p->$f)) {
                 $fieldArray = array();
                 foreach($p->$f as $o) {
                     $fieldArray[$o->filename] = $o->getIterator();
@@ -656,7 +659,8 @@ class RequestInfoPanel extends BasePanel {
 
                 }
             }
-        } else {
+        }
+        else {
             $p->of(true);
             $fieldArray = $p->$f ? $p->$f : '';
             $p->of(false);

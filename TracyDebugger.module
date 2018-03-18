@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.9.30',
+            'version' => '4.9.31',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -223,6 +223,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "customPhpCode" => '',
             "email" => '',
             "clearEmailSent" => null,
+            "showFireLogger" => 1,
             "referencePageEdited" => 1,
             "editor" => 'subl://open/?url=file://%file&line=%line',
             "useOnlineEditor" => array(),
@@ -710,6 +711,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
 
+        Debugger::$showFireLogger = $this->data['showFireLogger'];
 
         if($this->allowedTracyUsers() === 'development') {
 
@@ -2283,10 +2285,20 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'showFireLogger');
+        $f->label = __('Send data to FireLogger', __FILE__);
+        $f->description = __('When checked, certain errors and `fl()` calls will be sent to FireLogger in the browser console.', __FILE__);
+        $f->notes = __('If you are running on nginx and don\'t have access to adjust `fastcgi_buffers` and `fastcgi_buffer_size` settings, you may want to uncheck this to avoid 502 bad gateway errors because of `upstream sent too big header while reading response header from upstreamupstream sent too big` issues.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['showFireLogger'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'referencePageEdited');
         $f->label = __('Reference page being edited', __FILE__);
         $f->description = __('When editing a page in the admin, the Request Info Panel will show details of the page being edited, and the Consol Panel will assign the $page variable to the page being edited.', __FILE__);
         $f->notes = __('Highly recommended unless you have a reason not to do this.', __FILE__);
+        $f->columnWidth = 50;
         $f->attr('checked', $data['referencePageEdited'] == '1' ? 'checked' : '' );
         $fieldset->add($f);
 
