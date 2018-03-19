@@ -11,6 +11,7 @@
 
 @default: enabled
 ```
+* You can also disable Tracy via the PW API with: `$config->tracyDisabled = true;`
 * If disabled, a few tiny dummy classes will be loaded instead to ensure any debug calls, eg `bd()` etc don't cause errors.
 
 ##### Output mode
@@ -142,6 +143,19 @@
 ```
 
 * Rather than adjusting this, consider using `barDumpBig()`, setting the `maxDepth` and `maxLength` in the options for the call, or using `barDumpLive()`
+
+##### Send data to FireLogger
+
+> When checked, certain errors and fl() calls will be sent to FireLogger in the browser console.
+
+```
+@options: enabled | disabled
+
+@default: enabled
+```
+
+* If you are running on nginx and don't have access to adjust `fastcgi_buffers` and `fastcgi_buffer_size` settings, you may want to uncheck this to avoid 502 bad gateway errors because of `upstream sent too big header while reading response header from upstream` issues.
+
 
 ##### Reference page being edited
 
@@ -564,6 +578,16 @@ Selector Queries | Timers | User | Cache | Autoload
 ```
 @example return '<a href="https://developers.google.com/speed/pagespeed/insights/?url='.$page->httpUrl.'">Google PageSpeed</a>';
 ```
+
+***
+
+## User Switcher panel
+
+##### Restricted Roles
+
+> Users with selected roles will not be available from the list of users to switch to.
+
+* This can be useful if you use the User system to store frontend "members" and the system has a lot of users.
 
 ***
 

@@ -2288,7 +2288,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'showFireLogger');
         $f->label = __('Send data to FireLogger', __FILE__);
         $f->description = __('When checked, certain errors and `fl()` calls will be sent to FireLogger in the browser console.', __FILE__);
-        $f->notes = __('If you are running on nginx and don\'t have access to adjust `fastcgi_buffers` and `fastcgi_buffer_size` settings, you may want to uncheck this to avoid 502 bad gateway errors because of `upstream sent too big header while reading response header from upstreamupstream sent too big` issues.', __FILE__);
+        $f->notes = __('If you are running on nginx and don\'t have access to adjust `fastcgi_buffers` and `fastcgi_buffer_size` settings, you may want to uncheck this to avoid 502 bad gateway errors because of `upstream sent too big header while reading response header from upstream` issues.', __FILE__);
         $f->columnWidth = 50;
         $f->attr('checked', $data['showFireLogger'] == '1' ? 'checked' : '' );
         $fieldset->add($f);
