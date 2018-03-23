@@ -336,7 +336,7 @@ class ConsolePanel extends BasePanel {
                 saveSnippet: function() {
                     var tracySnippetName = document.getElementById("tracySnippetName").value;
                     if(tracySnippetName != "") {
-                        this.modifyConsoleSnippets(tracySnippetName, this.tce.getValue());
+                        this.modifyConsoleSnippets(tracySnippetName, encodeURIComponent(this.tce.getValue()));
                         this.disableButton("saveSnippet");
                         this.tce.focus();
                     }
@@ -448,7 +448,8 @@ class ConsolePanel extends BasePanel {
 
                 loadSnippet: function(name) {
                     this.loadedSnippetCode = this.getSnippet(name);
-                    this.tce.setValue(this.loadedSnippetCode);
+                    this.tce.setValue(decodeURIComponent(this.loadedSnippetCode));
+                    localStorage.setItem("tracyConsoleSelectedSnippet", name);
                     document.getElementById("tracySnippetName").value = name;
                     this.tce.gotoLine(0,0);
                     ++tracyConsole.historyItem;
@@ -590,9 +591,10 @@ class ConsolePanel extends BasePanel {
                             tracyConsole.resizeAce();
                         };
 
-                        // build snippet list and populate local storage version from database
+                        // build snippet list, populate local storage version from database, and show last selected snippet name
                         tracyConsole.modifySnippetList(null, $snippets, false);
                         localStorage.setItem("tracyConsoleSnippets", JSON.stringify($snippets));
+                        document.getElementById("tracySnippetName").value = localStorage.getItem("tracyConsoleSelectedSnippet");
 
                         // history buttons
                         if(tracyConsole.historyCount == tracyConsole.historyItem || !tracyConsole.historyItem || !tracyConsole.historyCount) {
