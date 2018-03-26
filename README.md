@@ -1,4 +1,4 @@
-![Tracy Debugger for ProcessWire logo](https://adrianbj.github.io/TracyDebugger/img/icon.svg)
+[![Tracy Debugger for ProcessWire logo](https://adrianbj.github.io/TracyDebugger/img/icon.svg)](https://adrianbj.github.io/TracyDebugger/)
 
 # Tracy Debugger for ProcessWire
 
