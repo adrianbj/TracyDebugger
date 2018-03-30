@@ -746,7 +746,7 @@ ul.pw-info-links {
 
 
 #tracy-debug .tracy-DumpPanel h2, #tracyConsoleResult h2, #tracySnippetRunnerResult h2 {
-    font: 11pt/1.5 sans-serif;
+    font: 11pt/1.5 sans-serif !important;
     font-size: 14px !important;
     margin: 0;
     padding: 2px 8px;
@@ -1173,3 +1173,8 @@ ul.pw-info-links {
 #tracy-debug .ace_search_field { padding-top:0; padding-bottom:0; background:#fff; border-right:0; line-height:inherit; border-color:#cbcbcb; }
 #tracy-debug .ace_search_field:focus { border-color:#cbcbcb !important; }
 #tracy-debug .ace_search input, #tracy-debug .ace_search_counter { font-family:Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace; }
+
+
+.ace_editor, .ace_editor * {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
+}

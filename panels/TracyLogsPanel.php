@@ -244,7 +244,7 @@ class TracyLogsPanel extends BasePanel {
         unset($options['pageNum']);
         $log = $this->getFileLog($name);
         $limit = isset($options['limit']) ? (int) $options['limit'] : 100;
-        return $log->find($limit, $pageNum);
+        return $log->find($limit, $pageNum, $options);
     }
 
 
