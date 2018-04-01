@@ -259,16 +259,16 @@ class RequestInfoPanel extends BasePanel {
                     <td>' . ($p->rootParent->viewable() ? '<a title="View Root Parent" href="'.$p->rootParent->url.'">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang, true).'</span>') . ' (<a title="Edit Root Parent" href="'.$p->rootParent->editUrl().'">'.$p->rootParent->id.'</a>)</td>
                 </tr>
                 ';
-                $prevPage = $p->prevAll("include=all")->first();
-                if($prevPage) {
+                $prevPage = $p->prev;
+                if($prevPage->id) {
                     $pageInfo .= '
                     <tr>
                         <td>prev (sibling)</td>
                         <td>' . ($prevPage->viewable() ? '<a title="View Prev Sibling" href="'.$prevPage->url.'">'.$this->getLanguageVersion($prevPage, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($prevPage, 'name', $userLang, true).'</span>') . ' (<a title="Edit Prev Sibling" href="'.$prevPage->editUrl().'">'.$prevPage->id.'</a>)</td>
                     </tr>';
                 }
-                $nextPage = $p->nextAll("include=all")->first();
-                if($nextPage) {
+                $nextPage = $p->next;
+                if($nextPage->id) {
                     $pageInfo .= '
                     <tr>
                         <td>next (sibling)</td>

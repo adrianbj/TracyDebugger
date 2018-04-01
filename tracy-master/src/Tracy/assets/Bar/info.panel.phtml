@@ -9,8 +9,6 @@
 
 namespace Tracy;
 
-use Tracy;
-
 if (isset($this->cpuUsage) && $this->time) {
 	foreach (getrusage() as $key => $val) {
 		$this->cpuUsage[$key] -= $val;
@@ -20,7 +18,7 @@ if (isset($this->cpuUsage) && $this->time) {
 }
 
 $countClasses = function ($list) {
-	return count(array_filter($list, function($name) {
+	return count(array_filter($list, function ($name) {
 		return (new \ReflectionClass($name))->isUserDefined();
 	}));
 };
@@ -97,7 +95,7 @@ if (class_exists('Composer\Autoload\ClassLoader', false)) {
 	<?php if ($packages): ?>
 	<table>
 	<?php foreach ($packages as $package): ?>
-		<tr><td><?= Helpers::escapeHtml($package->name) ?></td><td><?= Helpers::escapeHtml($package->version) ?></td></tr>
+		<tr><td><?= Helpers::escapeHtml($package->name) ?></td><td><?= Helpers::escapeHtml($package->version . (strpos($package->version, 'dev') === false ? '' : ' #' . substr(isset($package->source) ? $package->source->reference : $package->dist->reference, 0, 4))) ?></td></tr>
 	<?php endforeach ?>
 	</table>
 	<?php endif ?>
@@ -106,7 +104,7 @@ if (class_exists('Composer\Autoload\ClassLoader', false)) {
 	<h2>Dev Packages</h2>
 	<table>
 	<?php foreach ($devPackages as $package): ?>
-		<tr><td><?= Helpers::escapeHtml($package->name) ?></td><td><?= Helpers::escapeHtml($package->version) ?></td></tr>
+		<tr><td><?= Helpers::escapeHtml($package->name) ?></td><td><?= Helpers::escapeHtml($package->version . (strpos($package->version, 'dev') === false ? '' : ' #' . substr(isset($package->source) ? $package->source->reference : $package->dist->reference, 0, 4))) ?></td></tr>
 	<?php endforeach ?>
 	</table>
 	<?php endif ?>
