@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.9.35',
+            'version' => '4.9.36',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -224,6 +224,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "email" => '',
             "clearEmailSent" => null,
             "showFireLogger" => 1,
+            "debugInfo" => 1,
             "referencePageEdited" => 1,
             "editor" => 'subl://open/?url=file://%file&line=%line',
             "useOnlineEditor" => array(),
@@ -2266,12 +2267,21 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($data['showLocation']) $f->attr('value', $data['showLocation']);
         $fieldset->add($f);
 
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'debugInfo');
+        $f->label = __('Use debugInfo() magic method', __FILE__);
+        $f->description = __('If a `__debugInfo()` method has been defined, it will be used instead of dumping the full object.', __FILE__);
+        $f->notes = __('This results in a smaller, cleaner dump, but you may miss some information. You can override this with the `debugInfo` option when calling `d()`, `bd()`, `fl()`, etc.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['debugInfo'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
         $f = $this->wire('modules')->get("InputfieldInteger");
         $f->attr('name', 'maxDepth');
         $f->label = __('Maximum nesting depth', __FILE__);
         $f->description = __('Set the maximum nesting depth of dumped arrays and objects.', __FILE__);
         $f->notes = __('Default: 3. Warning: making this too large can slow your page load down or even crash your browser.', __FILE__);
-        $f->columnWidth = 25;
+        $f->columnWidth = 50;
         $f->attr('value', $data['maxDepth']);
         $fieldset->add($f);
 
@@ -2280,7 +2290,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Maximum string length', __FILE__);
         $f->description = __('Set the maximum displayed strings length.', __FILE__);
         $f->notes = __('Default: 150.', __FILE__);
-        $f->columnWidth = 25;
+        $f->columnWidth = 50;
         $f->attr('value', $data['maxLength']);
         $fieldset->add($f);
 
