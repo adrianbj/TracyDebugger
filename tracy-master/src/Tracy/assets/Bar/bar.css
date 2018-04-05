@@ -14,12 +14,6 @@ body#tracy-debug { /* in popup window */
 	display: block;
 }
 
-#tracy-debug:not(body) {
-	position: absolute;
-	bottom: 0;
-	right: 0;
-}
-
 #tracy-debug-bar * {
 	font: inherit;
 	line-height: inherit;
@@ -151,7 +145,6 @@ body#tracy-debug { /* in popup window */
 #tracy-debug-bar ul {
 	list-style: none none;
 	display: flex;
-	flex-wrap: wrap;
 }
 
 #tracy-debug-bar ul:not(:first-child) li {

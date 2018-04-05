@@ -662,7 +662,7 @@ class RequestInfoPanel extends BasePanel {
         }
         else {
             $p->of(true);
-            $fieldArray = $p->$f ? $p->$f : '';
+            $fieldArray = $p->$f ?: '';
             $p->of(false);
         }
         return $fieldArray;
