@@ -57,9 +57,6 @@ if (class_exists('Composer\Autoload\ClassLoader', false)) {
 
 ?>
 <style class="tracy-debug">
-	#tracy-debug .tracy-InfoPanel table {
-		width: 100%;
-	}
 	#tracy-debug .tracy-InfoPanel td {
 		white-space: nowrap;
 	}
@@ -89,7 +86,7 @@ if (class_exists('Composer\Autoload\ClassLoader', false)) {
 </table>
 
 <?php if ($packages || $devPackages): ?>
-	<h2><a class="tracy-toggle tracy-collapsed" data-tracy-ref="^div .tracy-InfoPanel-packages">Composer Packages (<?= count($packages) ?> + <?= count($devPackages) ?> dev)</a></h2>
+	<h2><a class="tracy-toggle tracy-collapsed" data-tracy-ref="^div .tracy-InfoPanel-packages">Composer Packages (<?= count($packages), $devPackages ? ' + ' . count($devPackages) . ' dev' : '' ?>)</a></h2>
 
 	<div class="tracy-InfoPanel-packages tracy-collapsed">
 	<?php if ($packages): ?>

@@ -20,6 +20,11 @@ body.tracyHidden:before {
     display: none;
 }
 
+/* needed to make panels draggable - comes from bar.css but we change block to #tracy-debug-bar so need to add this here. */
+#tracy-debug * {
+    pointer-events: auto;
+}
+
 #tracy-debug-bar {
     background: #F0F3F7 !important;
     border: 0 !important;
@@ -39,6 +44,12 @@ body.tracyHidden:before {
 }
 #tracy-debug-bar li > a:hover svg {
     transform: scale(1.2);
+}
+
+#tracy-debug .tracy-mode-peek,
+#tracy-debug .tracy-mode-float:not(.tracy-panel-resized) {
+    max-width: initial !important;
+    max-height: initial !important;
 }
 
 .tracy-panel a:link {
@@ -593,7 +604,7 @@ ul.pw-info-links {
     cursor: default !important;
 }
 
-#tracy-debug-panel-ConsolePanel {
+#tracy-debug-panel-ConsolePanel, #tracy-debug-panel-SnippetRunnerPanel {
     width: calc(100vw - 40px) !important;
     height: 50%;
     min-height: 230px !important;
@@ -618,8 +629,7 @@ ul.pw-info-links {
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] {
-    padding: 0;
-    /*border: 4px solid rgba(44, 62, 80, 0.2);*/
+    padding: 0 0 13px 0; /* bottom padding needed for resize handle */
     border: 4px solid rgba(0,0,0, 0.18);
     border-radius: 0;
     box-shadow: none;

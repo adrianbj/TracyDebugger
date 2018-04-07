@@ -87,7 +87,7 @@ class TD extends TracyDebugger {
         $dumpItem['dump'] = Dumper::toHtml($var, $options);
         array_push(\TracyDebugger::$dumpItems, $dumpItem);
 
-        if(in_array('dumpsRecorder', \TracyDebugger::$showPanels)) {
+        if(isset(\TracyDebugger::$showPanels) && in_array('dumpsRecorder', \TracyDebugger::$showPanels)) {
             $dumpsRecorderItems = wire('session')->tracyDumpsRecorderItems ?: array();
             array_push($dumpsRecorderItems, $dumpItem);
             wire('session')->tracyDumpsRecorderItems = $dumpsRecorderItems;

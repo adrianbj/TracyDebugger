@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.9.37',
+            'version' => '4.10.0',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -846,8 +846,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                                 }
                             Debugger::$customJsStr .= '
                             });
-                            barul.appendChild(toggleli);
-                            barul.removeChild(barul.lastChild.previousElementSibling);
+                            barul.replaceChild(toggleli, barul.lastChild.previousElementSibling);
+                            window.Tracy.Debug.bar.restorePosition();
                         }
                     }
                     addHideLink();

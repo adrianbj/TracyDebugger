@@ -248,16 +248,18 @@ class ConsolePanel extends BasePanel {
                     document.getElementById("tracyConsoleEditor").style.height = document.getElementById("tracyConsoleCode").offsetHeight + 'px';
                 },
 
-                resizePanel: function(size) {
+                resizePanel: function(type) {
                     var currentTop = document.getElementById("tracy-debug-panel-ConsolePanel").offsetTop;
-                    var currentHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-                    size = size == 's' ? '50%' : 'calc(100vh - 90px)';
-                    document.getElementById("tracy-debug-panel-ConsolePanel").style.height = size;
-                    localStorage.setItem('tracyConsolePanelHeight', size);
-                    this.resizeAce();
-                    if(document.getElementById("tracy-debug-panel-ConsolePanel").offsetTop < 0) {
-                        document.getElementById("tracy-debug-panel-ConsolePanel").style.bottom = (currentHeight - document.getElementById("tracy-debug-panel-ConsolePanel").offsetHeight - currentTop) + 'px';
+                    var viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+                    document.getElementById("tracy-debug-panel-ConsolePanel").style.height = type == 'small' ? '50%' : 'calc(100vh - 40px)';
+                    if(type == 'large') {
+                        document.getElementById("tracy-debug-panel-ConsolePanel").style.top = '10px';
                     }
+                    else {
+                        document.getElementById("tracy-debug-panel-ConsolePanel").style.top = (viewportHeight - document.getElementById("tracy-debug-panel-ConsolePanel").offsetHeight) - 30 + 'px';
+                    }
+                    document.getElementById("tracy-debug-panel-ConsolePanel").style.left = '10px';
+                    this.resizeAce();
                 },
 
                 getSnippet: function(name) {
@@ -576,16 +578,24 @@ class ConsolePanel extends BasePanel {
                             tracyConsole.resizeAce();
                         });
 
-                        // checks for changes to Console panel class which indicates focus so we can focus cursor in editor
+                        // checks for changes to Console panel
+                        var config = { attributes: true, attributeOldValue: true };
                         tracyConsole.observer = new MutationObserver(function(mutations) {
                             mutations.forEach(function(mutation) {
+                                // change in class indicates focus so we can focus cursor in editor
                                 if(mutation.attributeName == 'class' && mutation.oldValue !== mutation.target.className && mutation.oldValue.indexOf('tracy-focused') === -1 && mutation.target.classList.contains('tracy-focused')) {
                                     tracyConsole.resizeAce();
                                 }
                             });
                         });
-                        var config = { attributes: true, attributeOldValue: true };
                         tracyConsole.observer.observe(document.getElementById("tracy-debug-panel-ConsolePanel"), config);
+
+                        // check for resizing of the panel so we can resize the editor/results panes
+                        tracyConsole.resizeObserver = new ResizeObserver(function(mutations) {
+                            tracyConsole.resizeAce(false);
+                        });
+                        tracyConsole.resizeObserver.observe(document.getElementById("tracy-debug-panel-ConsolePanel"), config);
+
 
                         window.onresize = function(event) {
                             tracyConsole.resizeAce();
@@ -623,10 +633,6 @@ class ConsolePanel extends BasePanel {
                             tracyConsole.toggleSnippetButton();
                         };
 
-                        // set Console panel height
-                        var consolePanelHeight = localStorage.getItem('tracyConsolePanelHeight');
-                        document.getElementById('tracy-debug-panel-ConsolePanel').style.height = consolePanelHeight ? consolePanelHeight : '50%';
-
                     });
 
                 }
@@ -637,7 +643,7 @@ HTML;
 
 
 
-        $out .= '<h1>' . $this->icon . ' Console </h1><span class="tracy-icons"><span class="resizeIcons"><a href="javascript:void(0)" title="small" rel="min" onclick="tracyConsole.resizePanel(\'s\')">▼</a> <a href="javascript:void(0)" title="large" rel="max" onclick="tracyConsole.resizePanel(\'l\')">▲</a></span></span>
+        $out .= '<h1>' . $this->icon . ' Console </h1><span class="tracy-icons"><span class="resizeIcons"><a href="javascript:void(0)" title="small" rel="min" onclick="tracyConsole.resizePanel(\'small\')">▼</a> <a href="javascript:void(0)" title="large" rel="max" onclick="tracyConsole.resizePanel(\'large\')">▲</a></span></span>
         <div class="tracy-inner">
 
             <fieldset>
