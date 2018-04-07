@@ -85,6 +85,7 @@ body#tracy-debug { /* in popup window */
 #tracy-debug table {
 	border-collapse: collapse;
 	background: #FDF5CE;
+	width: 100%;
 }
 
 #tracy-debug tr:nth-child(2n) td {
@@ -230,10 +231,6 @@ body#tracy-debug .tracy-panel { /* in popup window */
 	flex: 1;
 }
 
-#tracy-debug .tracy-inner > table {
-	width: 100%;
-}
-
 #tracy-debug .tracy-panel .tracy-icons {
 	display: none;
 }
@@ -304,6 +301,12 @@ body#tracy-debug .tracy-panel { /* in popup window */
 
 #tracy-debug .tracy-icons a:hover {
 	color: white;
+}
+
+
+#tracy-debug .tracy-content {
+	min-width: 100%;
+	float: left;
 }
 
 

@@ -48,8 +48,8 @@ body.tracyHidden:before {
 
 #tracy-debug .tracy-mode-peek,
 #tracy-debug .tracy-mode-float:not(.tracy-panel-resized) {
-    max-width: initial !important;
-    max-height: initial !important;
+    max-width: calc(100vw - 40px) !important;
+    max-height: calc(100vh - 40px) !important;
 }
 
 .tracy-panel a:link {
@@ -104,7 +104,7 @@ body.tracyHidden:before {
 
 
 #tracy-debug h1 {
-    max-width: calc(100vw - 40px) !important;
+    max-width: 100% !important;
     padding-right: 35px !important;
     color: #444444 !important;
     text-transform: none !important;
@@ -294,11 +294,6 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
 
 .tracy-panel h2 {
     font-size: 20px !important;
-}
-
-.tracy-inner {
-    max-height: calc(100vh - 85px) !important;
-    max-width: calc(100vw - 40px) !important;
 }
 
 .tracy-inner fieldset label {
