@@ -649,7 +649,7 @@ HTML;
                 }
 
             $out .= '
-                <div style="padding-bottom:10px">
+                <div style="padding:10px 0">
                     <input title="Run code" type="submit" id="runCode" onclick="tracyConsole.processTracyCode()" value="Run" />&nbsp;
                     <input title="Go back (CTRL+CMD+&#8593;)" id="historyBack" type="submit" onclick="tracyConsole.loadHistory(\'back\')" value="&#11013;" />&nbsp;
                     <input title="Go forward (CTRL+CMD+&#8595;)" class="arrowRight" id="historyForward" type="submit" onclick="tracyConsole.loadHistory(\'forward\')" value="&#11013;" />
