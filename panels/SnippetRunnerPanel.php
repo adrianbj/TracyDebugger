@@ -243,30 +243,27 @@ HTML;
 
         $out .= '<h1>' . $this->icon . ' Snippet Runner</h1>
         <div class="tracy-inner">
-            <fieldset>
+            <div id="tracySnippetRunnerContainer">
                 <legend>Select a snippet, then use CTRL/CMD+Enter to Run, or ALT/OPT+Enter to Clear & Run.</legend>';
         if($this->wire('page')->template != "admin") {
-            $out .= '<p><label><input type="checkbox" id="accessTemplateVars" /> Allow access to custom variables and functions defined in this page\'s template file and all other included files.</label></p>';
+            $out .= '<p><label><input type="checkbox" id="accessTemplateVars" /> Access to custom variables & functions from this page\'s template file and included files.</label></p>';
         }
         $out .= '
-                <br />
-                <div id="tracySnippetRunnerContainer">
-                    <div id="tracyRunnerSnippetName" style="font-size: 13px"></div>
-                    <div style="padding:10px 0">
-                        <input title="Run code" type="submit" id="runSnippetRunnerCode" onclick="tracySnippetRunner.processTracySnippetRunnerCode()" value="Run" />&nbsp;
-                        <input title="Clear results" type="submit" id="clearSnippetRunnerResults" onclick="tracySnippetRunner.clearSnippetRunnerResults()" value="&#10006; Clear results" />
-                        <span id="tracySnippetRunnerStatus" style="padding: 10px"></span>
-                    </div>
-                    <div id="tracySnippetRunnerResult" style="border: 1px solid #D2D2D2; padding: 10px;max-height: 300px; overflow:auto"></div>
+                <div id="tracyRunnerSnippetName" style="font-size: 13px"></div>
+                <div style="padding:10px 0">
+                    <input title="Run code" type="submit" id="runSnippetRunnerCode" onclick="tracySnippetRunner.processTracySnippetRunnerCode()" value="Run" />&nbsp;
+                    <input title="Clear results" type="submit" id="clearSnippetRunnerResults" onclick="tracySnippetRunner.clearSnippetRunnerResults()" value="&#10006; Clear results" />
+                    <span id="tracySnippetRunnerStatus" style="padding: 10px"></span>
                 </div>
-                <div style="float: left; margin-left: 10px; width: 250px; margin-top: -'.($this->wire('page')->template != "admin" ? '60' : '23').'px;">
-                    <div>
-                        Sort: <a href="#" onclick="tracySnippetRunner.sortList(\'alphabetical\')">alphabetical</a>&nbsp;|&nbsp;<a href="#" onclick="tracySnippetRunner.sortList(\'chronological\')">chronological</a>
-                    </div>
-                    <div id="tracyRunnerSnippets" style="margin-top: 5px; padding:8px; min-height: 115px; max-height: 187px; overflow:auto"></div>
+                <div id="tracySnippetRunnerResult" style="border: 1px solid #D2D2D2; padding: 10px;"></div>
+            </div>
+            <div style="float: left; margin: 0 0 0 20px; width: 265px;">
+                <div>
+                    Sort: <a href="#" onclick="tracySnippetRunner.sortList(\'alphabetical\')">alphabetical</a>&nbsp;|&nbsp;<a href="#" onclick="tracySnippetRunner.sortList(\'chronological\')">chronological</a>
                 </div>
-            </fieldset>
-        </div>';
+                <div id="tracyRunnerSnippets" style="margin-top: 5px; padding:8px; min-height: 115px; overflow:auto"></div>
+            </div>
+        ';
 
         // get snippets from filesystem
         $snippets = array();
@@ -306,7 +303,8 @@ HTML;
         </script>
 HTML;
 
-        $out .= \TracyDebugger::generatedTimeSize('snippetRunner', \Tracy\Debugger::timer('snippetRunner'), strlen($out));
+        $out .= \TracyDebugger::generatedTimeSize('snippetRunner', \Tracy\Debugger::timer('snippetRunner'), strlen($out)) .
+        '</div>';
 
         return parent::loadResources() . $out;
     }

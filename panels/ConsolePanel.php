@@ -586,16 +586,13 @@ class ConsolePanel extends BasePanel {
                                 if(mutation.attributeName == 'class' && mutation.oldValue !== mutation.target.className && mutation.oldValue.indexOf('tracy-focused') === -1 && mutation.target.classList.contains('tracy-focused')) {
                                     tracyConsole.resizeAce();
                                 }
+                                // else if a change in style then resize but don't focus
+                                else if(mutation.attributeName == 'style'){
+                                    tracyConsole.resizeAce(false);
+                                }
                             });
                         });
                         tracyConsole.observer.observe(document.getElementById("tracy-debug-panel-ConsolePanel"), config);
-
-                        // check for resizing of the panel so we can resize the editor/results panes
-                        tracyConsole.resizeObserver = new ResizeObserver(function(mutations) {
-                            tracyConsole.resizeAce(false);
-                        });
-                        tracyConsole.resizeObserver.observe(document.getElementById("tracy-debug-panel-ConsolePanel"), config);
-
 
                         window.onresize = function(event) {
                             tracyConsole.resizeAce();
@@ -645,20 +642,19 @@ HTML;
 
         $out .= '<h1>' . $this->icon . ' Console </h1><span class="tracy-icons"><span class="resizeIcons"><a href="javascript:void(0)" title="small" rel="min" onclick="tracyConsole.resizePanel(\'small\')">▼</a> <a href="javascript:void(0)" title="large" rel="max" onclick="tracyConsole.resizePanel(\'large\')">▲</a></span></span>
         <div class="tracy-inner">
-
-            <fieldset>
+            <div id="tracyConsoleMainContainer">
                 <legend>CTRL/CMD+Enter to Run&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ALT/OPT+Enter to Clear & Run</legend>';
-        if($this->wire('page')->template != "admin") {
-            $out .= '<p><label><input type="checkbox" id="accessTemplateVars" /> Allow access to custom variables and functions defined in this page\'s template file and all other included files.</label></p>';
-        }
+                if($this->wire('page')->template != "admin") {
+                    $out .= '<p><label><input type="checkbox" id="accessTemplateVars" /> Access to custom variables & functions from this page\'s template file and included files.</label></p>';
+                }
 
-        $out .= '
-                <div style="padding:10px 0">
+            $out .= '
+                <div style="padding-bottom:10px">
                     <input title="Run code" type="submit" id="runCode" onclick="tracyConsole.processTracyCode()" value="Run" />&nbsp;
                     <input title="Go back (CTRL+CMD+&#8593;)" id="historyBack" type="submit" onclick="tracyConsole.loadHistory(\'back\')" value="&#11013;" />&nbsp;
                     <input title="Go forward (CTRL+CMD+&#8595;)" class="arrowRight" id="historyForward" type="submit" onclick="tracyConsole.loadHistory(\'forward\')" value="&#11013;" />
                     <input title="Clear results" type="submit" id="clearResults" onclick="tracyConsole.clearResults()" value="&#10006; Clear results" />
-                    <span style="float:right; position:relative; right: 270px">
+                    <span style="float:right;">
                         <label title="Don\'t Run on Page Load" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'off\')" value="off" '.(!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? ' checked' : '').' /> off</label>&nbsp;
                         <label title="Run on init" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'init\')" value="init" '.($this->tracyIncludeCode['when'] === 'init' ? ' checked' : '').' /> init</label>&nbsp;
                         <label title="Run on ready" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'ready\')" value="ready" '.($this->tracyIncludeCode['when'] === 'ready' ? ' checked' : '').' /> ready</label>&nbsp;
@@ -667,7 +663,7 @@ HTML;
                     <span id="tracyConsoleStatus" style="padding: 10px"></span>
                 </div>
 
-                <div id="tracyConsoleContainer" class="split" style="float: left; display: block;">
+                <div id="tracyConsoleContainer" class="split">
                     <div id="tracyConsoleCode" class="split" style="min-height:23px; background:#1D1F21">
                         <div id="tracyConsoleEditor"></div>
                     </div>
@@ -679,20 +675,19 @@ HTML;
                     $out .= '
                     </div>
                 </div>
+            </div>
 
-                <div id="tracySnippetsContainer" style="float: left; margin: 0 10px; width: 240px; margin-top: -'.($this->wire('page')->template != "admin" ? '60' : '23').'px;">
-                    <div style="padding-bottom:5px">
-                        Sort: <a href="#" onclick="tracyConsole.sortList(\'alphabetical\')">alphabetical</a>&nbsp;|&nbsp;<a href="#" onclick="tracyConsole.sortList(\'chronological\')">chronological</a>
-                    </div>
-                    <div style="position: relative; width:295px !important;">
-                        <input type="text" id="tracySnippetName" placeholder="Snippet name..." />
-                        <input id="saveSnippet" type="submit" onclick="tracyConsole.saveSnippet()" value="&#128190;" title="Save snippet" />
-                    </div>
-                    <div id="tracySnippets"></div>
+            <div id="tracySnippetsContainer" style="float: left; margin: 0 0 0 20px; width: 265px;">
+                <div style="padding-bottom:5px">
+                    Sort: <a href="#" onclick="tracyConsole.sortList(\'alphabetical\')">alphabetical</a>&nbsp;|&nbsp;<a href="#" onclick="tracyConsole.sortList(\'chronological\')">chronological</a>
                 </div>
-            </fieldset>
-
-        ';
+                <div style="position: relative; width:100% !important;">
+                    <input type="text" id="tracySnippetName" placeholder="Snippet name..." />
+                    <input id="saveSnippet" type="submit" onclick="tracyConsole.saveSnippet()" value="&#128190;" title="Save snippet" />
+                </div>
+                <div id="tracySnippets"></div>
+            </div>
+            ';
             $out .= \TracyDebugger::generatedTimeSize('console', \Tracy\Debugger::timer('console'), strlen($out)) .
         '</div>';
 

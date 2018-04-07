@@ -422,7 +422,7 @@ ul.pw-info-links {
     padding: 4px 30px 4px 8px !important;
     margin: 0 !important;
     height: 29px !important;
-    width: 289px !important;
+    width: 100% !important;
     -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
     -moz-box-sizing: border-box;    /* Firefox, other Gecko */
     box-sizing: border-box;         /* Opera/IE 8+ */
@@ -439,7 +439,6 @@ ul.pw-info-links {
 
 #tracySnippets {
     margin: 5px 0 0 0 !important;
-    width: 290px !important;
     padding: 0 !important;
     height: 100% !important;
     overflow:auto !important;
@@ -600,31 +599,40 @@ ul.pw-info-links {
 }
 
 #tracy-debug-panel-ConsolePanel, #tracy-debug-panel-SnippetRunnerPanel {
-    width: calc(100vw - 40px) !important;
     height: 50%;
     min-height: 230px !important;
+    width:1200px;
+    min-width: 825px !important;
     padding: 0px !important;
     margin: 0px !important;
+}
+
+#tracy-debug-panel-ConsolePanel fieldset, #tracy-debug-panel-SnippetRunnerPanel fieldset {
+    width:100% !important;
 }
 
 #tracy-debug-panel-ConsolePanel.tracy-mode-window {
     width: 100% !important;
 }
 
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] #tracyConsoleContainer,
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] #tracyConsoleMainContainer,
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] #tracySnippetRunnerContainer {
     float: left;
-    width: calc(100vw - 380px) !important;
+    width: calc(100% - 290px);
+    float: left;
+    display: block;
 }
 
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-window"] #tracyConsoleContainer,
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-window"] #tracyConsoleMainContainer,
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-window"] #tracySnippetRunnerContainer {
     float: left;
-    width: calc(100vw - 330px) !important;
+    width: calc(100% - 240px) !important;
+    float: left;
+    display: block;
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] {
-    padding: 0 0 13px 0; /* bottom padding needed for resize handle */
+    padding: 0 !important;
     border: 4px solid rgba(0,0,0, 0.18);
     border-radius: 0;
     box-shadow: none;
@@ -642,8 +650,8 @@ ul.pw-info-links {
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] > .tracy-inner {
     min-width: 400px !important;
-    padding-right: 12px !important;
-    margin: 0 !important;
+    padding: 12px 12px 0 12px !important;
+    margin: 0 0 20px 0 !important;
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-window"] > .tracy-inner {
