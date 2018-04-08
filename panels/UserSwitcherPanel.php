@@ -117,7 +117,7 @@ class UserSwitcherPanel extends BasePanel {
             $out .= '
                 <input type="hidden" id="_post_token" name="' . $this->wire('session')->CSRF->getTokenName() . '" value="' . $this->wire('session')->CSRF->getTokenValue() . '"/>
             </form>
-        </div>';
+            ';
 
         $out .= \TracyDebugger::generatedTimeSize('userSwitcher', \Tracy\Debugger::timer('userSwitcher'), strlen($out));
 

@@ -635,6 +635,17 @@ class ConsolePanel extends BasePanel {
                 }
             });
 
+            function loadFAIfNotAlreadyLoaded() {
+                if(!document.getElementById("fontAwesome")) {
+                    var link = document.createElement("link");
+                    link.rel = "stylesheet";
+                    link.href = "'.$this->wire('config')->urls->root . 'wire/templates-admin/styles/font-awesome/css/font-awesome.min.css";
+                    document.getElementsByTagName("head")[0].appendChild(link);
+                }
+            }
+            loadFAIfNotAlreadyLoaded();
+
+
         </script>
 HTML;
 
@@ -651,8 +662,8 @@ HTML;
             $out .= '
                 <div style="padding:10px 0">
                     <input title="Run code" type="submit" id="runCode" onclick="tracyConsole.processTracyCode()" value="Run" />&nbsp;
-                    <input title="Go back (CTRL+CMD+&#8593;)" id="historyBack" type="submit" onclick="tracyConsole.loadHistory(\'back\')" value="&#11013;" />&nbsp;
-                    <input title="Go forward (CTRL+CMD+&#8595;)" class="arrowRight" id="historyForward" type="submit" onclick="tracyConsole.loadHistory(\'forward\')" value="&#11013;" />
+                    <input style="font-family: FontAwesome !important" title="Go back (CTRL+CMD+&#8593;)" id="historyBack" type="submit" onclick="tracyConsole.loadHistory(\'back\')" value="&#xf060;" />&nbsp;
+                    <input style="font-family: FontAwesome !important" title="Go forward (CTRL+CMD+&#8595;)" class="arrowRight" id="historyForward" type="submit" onclick="tracyConsole.loadHistory(\'forward\')" value="&#xf060;" />
                     <input title="Clear results" type="submit" id="clearResults" onclick="tracyConsole.clearResults()" value="&#10006; Clear results" />
                     <span style="float:right;">
                         <label title="Don\'t Run on Page Load" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'off\')" value="off" '.(!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? ' checked' : '').' /> off</label>&nbsp;
