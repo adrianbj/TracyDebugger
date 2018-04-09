@@ -174,6 +174,7 @@ class ValidatorPanel extends BasePanel {
                 }
 
                 #validatorBody ol {
+                    width: 100% !important;
                     list-style-position: inside;
                     margin-left: 0;
                     margin-right: 0;
@@ -485,10 +486,10 @@ class ValidatorPanel extends BasePanel {
 
         $validatorLink = '<a href="'.$this->validationUrl.'">Results for '.$this->wire('page')->httpUrl.' at '.$this->validatorUrl.'</a>';
         if($this->rawResult) {
-            $out .= '<div id="validatorBody" style="width:934px"><h2>'.$validatorLink.'</h2>'.$this->message.$this->filteredResult.'</div>';
+            $out .= '<div id="validatorBody"><h2>'.$validatorLink.'</h2>'.$this->message.$this->filteredResult.'</div>';
         }
         else {
-            $out .= '<div id="validatorBody" style="width:934px"><h2>Sorry, but there was a problem accessing the validation server at '.$this->validatorUrl.'</h2><h2>'.$validatorLink.'</h2></div>';
+            $out .= '<div id="validatorBody"><h2>Sorry, but there was a problem accessing the validation server at '.$this->validatorUrl.'</h2><h2>'.$validatorLink.'</h2></div>';
         }
 
         $out .= \TracyDebugger::generatedTimeSize('validator', \Tracy\Debugger::timer('validator'), strlen($out));

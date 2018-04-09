@@ -118,9 +118,12 @@ class ModuleDisablerPanel extends BasePanel {
                                 <a href="'.$this->wire('config')->urls->admin.'module/edit?name='.$name.'">' . $name . '</a>
                             </label>';
                     }
-                    $out .= '<br />
-                    <input type="submit" onclick="disableTracyModules()" value="Disable Modules" />&nbsp;
-                    <input type="submit" onclick="resetTracyModules()" value="Reset" />';
+                    $out .= '
+                    <br /><br />
+                    <p>
+                        <input type="submit" onclick="disableTracyModules()" value="Disable Modules" />&nbsp;
+                        <input type="submit" onclick="resetTracyModules()" value="Reset" />
+                    </p>';
                 }
                 else {
                     if(!$this->wire('config')->advanced || !$this->wire('config')->debug) {

@@ -88,7 +88,7 @@ class PhpInfoPanel extends BasePanel {
                 #phpinfoBody pre {margin: 0; font-family: monospace;}
                 #phpinfoBody a:link {color: #009; text-decoration: none; background-color: #fff;}
                 #phpinfoBody a:hover {text-decoration: underline;}
-                #phpinfoBody table {border-collapse: collapse; border: 0; width: 934px; box-shadow: 1px 2px 3px #ccc;}
+                #phpinfoBody table {border-collapse: collapse; border: 0; box-shadow: 1px 2px 3px #ccc;}
                 #phpinfoBody .center {text-align: center;}
                 #phpinfoBody .center table {margin: 1em auto; text-align: left; width:100% !important;}
                 #phpinfoBody .center th {text-align: center !important;}
@@ -101,12 +101,12 @@ class PhpInfoPanel extends BasePanel {
                 #phpinfoBody .v {background-color: #ddd !important; max-width: 300px;}
                 #phpinfoBody .v i {color: #999 !important; }
                 #phpinfoBody img {float: right; border: 0;}
-                #phpinfoBody hr {width: 934px; background-color: #ccc; border: 0; height: 1px;}
+                #phpinfoBody hr {background-color: #ccc; border: 0; height: 1px;}
                 #phpinfoBody td {border: 1px solid #000 !important;}
                 #phpinfoBody th {border: 1px solid #000 !important; color:#000 !important;}
             </style>
             <br />
-            <div id="phpinfoBody" style="width:934px">'.$phpInfo.'</div>';
+            <div id="phpinfoBody">'.$phpInfo.'</div>';
 
             $out .= \TracyDebugger::generatedTimeSize('phpInfo', \Tracy\Debugger::timer('phpInfo'), strlen($out));
         $out .= '</div>
