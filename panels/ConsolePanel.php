@@ -34,6 +34,7 @@ class ConsolePanel extends BasePanel {
 
     public function getPanel() {
 
+        $pwRoot = $this->wire('config')->urls->root;
         $tracyModuleUrl = $this->wire("config")->urls->TracyDebugger;
         $inAdmin = \TracyDebugger::$inAdmin;
         $consoleContainerAdjustment = $inAdmin ? 160 : 190;
@@ -639,7 +640,7 @@ class ConsolePanel extends BasePanel {
                 if(!document.getElementById("fontAwesome")) {
                     var link = document.createElement("link");
                     link.rel = "stylesheet";
-                    link.href = "'.$this->wire('config')->urls->root . 'wire/templates-admin/styles/font-awesome/css/font-awesome.min.css";
+                    link.href = "$pwRoot" + "wire/templates-admin/styles/font-awesome/css/font-awesome.min.css";
                     document.getElementsByTagName("head")[0].appendChild(link);
                 }
             }
