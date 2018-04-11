@@ -191,7 +191,7 @@ class FileEditorPanel extends BasePanel {
         </script>
 HTML;
 
-        $out .= '<h1>'.$this->icon.' File Editor: <span id="panelTitleFilePath" style="font-size:14px">'.($this->tracyFileEditorFilePath ?: 'no selected file').'</span></h1>
+        $out .= '<h1>'.$this->icon.' File Editor: <span id="panelTitleFilePath" style="font-size:14px">'.($this->tracyFileEditorFilePath ?: 'no selected file').'</span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="javascript:void(0)" title="halfscreen" rel="min" onclick="tracyResizePanel(\'FileEditorPanel\', \'halfscreen\')">▼</a> <a href="javascript:void(0)" title="fullscreen" rel="max" onclick="tracyResizePanel(\'FileEditorPanel\', \'fullscreen\')">▲</a></span></span>
         <div class="tracy-inner">
             <div id="tracyFoldersFiles" style="float: left; margin: 0; padding:0; width: 310px; height: calc(100vh - 150px); overflow: auto">';
 

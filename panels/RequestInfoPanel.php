@@ -559,7 +559,7 @@ class RequestInfoPanel extends BasePanel {
         // Load all the panel sections
         $isAdditionalBar = \TracyDebugger::isAdditionalBar();
         $out = '
-        <h1>' . $this->icon . ' Request Info' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>
+        <h1>' . $this->icon . ' Request Info' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1><span class="tracy-icons"><span class="resizeIcons"><a href="javascript:void(0)" title="halfscreen" rel="min" onclick="tracyResizePanel(\'RequestInfoPanel\', \'halfscreen\')">▼</a> <a href="javascript:void(0)" title="fullscreen" rel="max" onclick="tracyResizePanel(\'RequestInfoPanel\', \'fullscreen\')">▲</a></span></span>
         <div class="tracy-inner">
         ';
 
@@ -664,7 +664,7 @@ class RequestInfoPanel extends BasePanel {
             if(isset($inputfield) && $inputfield) {
                 $thumb = $inputfield->getAdminThumb($image);
                 $thumb = $thumb['thumb'];
-                $imagePreview = '<img width="125" src="'.$thumb->url().'" /><br />';
+                $imagePreview = '<a class="pw-modal" href="'.$image->url.'"><img width="125" src="'.$thumb->url.'" /></a><br />';
             }
             $imageStr .= '<p>'.$image->name.'<br />'.$imagePreview.'width: '.$image->width.'<br />height: '.$image->height.'<br />size: '.$image->filesizeStr.'</p><br />';
         }

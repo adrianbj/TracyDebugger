@@ -249,22 +249,6 @@ class ConsolePanel extends BasePanel {
                     document.getElementById("tracyConsoleEditor").style.height = document.getElementById("tracyConsoleCode").offsetHeight + 'px';
                 },
 
-                resizePanel: function(type) {
-                    var consolePanel = document.getElementById("tracy-debug-panel-ConsolePanel");
-                    consolePanel.style.left = '0px';
-                    if(type == 'fullscreen') {
-                        consolePanel.style.top = '0px';
-                        consolePanel.style.height = '100vh';
-                        consolePanel.style.width = '100vw';
-                    }
-                    else {
-                        consolePanel.style.top = 'calc(50vh - 22px)';
-                        consolePanel.style.height = '50vh';
-                        consolePanel.style.width = '100vw';
-                    }
-                    this.resizeAce();
-                },
-
                 getSnippet: function(name) {
                     var tracyConsoleSnippets = this.getAllSnippets();
                     for(var key in tracyConsoleSnippets) {
@@ -654,7 +638,7 @@ HTML;
 
 
 
-        $out .= '<h1>' . $this->icon . ' Console </h1><span class="tracy-icons"><span class="resizeIcons"><a href="javascript:void(0)" title="halfscreen" rel="min" onclick="tracyConsole.resizePanel(\'halfscreen\')">▼</a> <a href="javascript:void(0)" title="fullscreen" rel="max" onclick="tracyConsole.resizePanel(\'fullscreen\')">▲</a></span></span>
+        $out .= '<h1>' . $this->icon . ' Console </h1><span class="tracy-icons"><span class="resizeIcons"><a href="javascript:void(0)" title="halfscreen" rel="min" onclick="tracyResizePanel(\'ConsolePanel\', \'halfscreen\')">▼</a> <a href="javascript:void(0)" title="fullscreen" rel="max" onclick="tracyResizePanel(\'ConsolePanel\', \'fullscreen\')">▲</a></span></span>
         <div class="tracy-inner">
             <div id="tracyConsoleMainContainer">
                 <legend>CTRL/CMD+Enter to Run&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ALT/OPT+Enter to Clear & Run</legend>';

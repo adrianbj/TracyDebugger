@@ -79,7 +79,7 @@ body.tracyHidden:before {
 }
 
 #tracy-debug input {
-    font-family: sans-serif !important;
+    font: normal normal 13px/1.55 Tahoma, sans-serif !important;
     font-size: 13px !important;
     text-transform: none !important;
     display: inline-block !important;
@@ -124,7 +124,7 @@ body.tracyHidden:before {
 }
 
 #tracy-debug input[type="text"], #tracy-debug input[type="number"] {
-    font-family: sans-serif !important;
+    font: normal normal 13px/1.55 Tahoma, sans-serif !important;
     height: 30px !important;
     width: initial !important;
     display: inline-block !important;
@@ -134,14 +134,14 @@ body.tracyHidden:before {
 }
 
 #tracy-debug, #tracy-debug h2, #tracy-debug legend {
-    font-family: sans-serif !important;
+    font: normal normal 13px/1.55 Tahoma, sans-serif !important;
     font-weight: normal !important;
     color: #333333 !important;
     text-transform: none !important;
 }
 
 #tracy-debug, #tracy-debug legend, #tracy-debug p, #tracy-debug legend li, #tracy-debug select, #tracy-debug label {
-    font-family: sans-serif !important;
+    font: normal normal 13px/1.55 Tahoma, sans-serif !important;
     font-weight: normal !important;
     color: #333333 !important;
     font-size: 12px !important;
@@ -215,12 +215,16 @@ body.tracyHidden:before {
     background: #E2E9EF !important;
 }
 
+.tracy-panel th {
+    position: sticky;
+    top: -13px;
+}
+
 #tracy-debug .tracy-panel td,
 #tracy-debug .tracy-panel th {
-    font-family: sans-serif !important;
+    font: normal normal 13px/1.55 Tahoma, sans-serif !important;
     font-weight: normal !important;
     font-size: 12px !important;
-    color: #444444 !important;
     padding: 4px !important;
     border: 1px solid #C9D4E1 !important;
     line-height: 1.8 !important;
@@ -230,10 +234,13 @@ body.tracyHidden:before {
     background: #F0F3F7 !important;
 }
 
+#tracy-debug td {
+    color: #444444 !important;
+}
 
 #tracy-debug th {
-    background: #F4F3F1;
-    color: #655E5E;
+    background: #2C3E50;
+    color: #FFFFFF !important;
     font-size: 90%;
     font-weight: bold;
 }
@@ -265,7 +272,7 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
     border-radius: 5px !important;
     cursor: pointer !important;
     text-transform: none !important;
-    font: normal normal 12px/1.5 sans-serif;
+    font: normal normal 13px/1.55 Tahoma, sans-serif;
     color: #444444;
 }
 
@@ -413,8 +420,7 @@ ul.pw-info-links {
 }
 
 .pw-info-links a {
-    font-family: sans-serif !important;
-    font-size: 12px !important;
+    font: normal normal 12px/1.55 Tahoma, sans-serif !important;
     transition: transform 0.12s;
 }
 .pw-info-links a svg {
@@ -463,7 +469,7 @@ ul.pw-info-links {
     display: block;
     padding: 0 !important;
     border-top: 1px solid #ddd;
-    font-family: sans-serif !important;
+    font: normal normal 13px/1.55 Tahoma, sans-serif !important;
     line-height: 18px !important;
     font-size: 12px !important;
     position:relative !important;
@@ -771,18 +777,13 @@ ul.pw-info-links {
 
 
 #tracy-debug .tracy-DumpPanel h2, #tracyConsoleResult h2, #tracySnippetRunnerResult h2 {
-    font: 11pt/1.5 sans-serif !important;
+    font: normal normal Tahoma, sans-serif !important;
     font-size: 14px !important;
     margin: 0;
     padding: 2px 8px;
     background: #EAF0F2 !important;
     border: 1px solid #D2D2D2 !important;
     border-bottom: 0 !important;
-}
-
-#tracy-debug-panel-FileEditorPanel {
-    width: calc(100vw - 40px) !important;
-    height: calc(100vh - 60px) !important;
 }
 
 #tracy-debug-panel-FileEditorPanel.tracy-mode-window {
