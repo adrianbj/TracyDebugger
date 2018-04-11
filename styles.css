@@ -108,6 +108,7 @@ body.tracyHidden:before {
     padding-right: 35px !important;
     color: #444444 !important;
     text-transform: none !important;
+    user-select: none;
 }
 
 #tracy-debug input:not(.ace_search_field) {
@@ -1203,4 +1204,25 @@ ul.pw-info-links {
 
 .ace_editor, .ace_editor * {
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
+}
+
+/*panel rollup*/
+#tracy-debug .tracy-panel.tracy-mode-rollup {
+    min-height: 0 !important;
+    resize: none !important;
+    max-height: 47px !important;
+    width: auto !important;
+    min-width: unset !important;
+}
+#tracy-debug .tracy-panel.tracy-mode-rollup .tracy-inner,
+#tracy-debug .tracy-panel.tracy-mode-rollup .resizeIcons,
+#tracy-debug .tracy-panel.tracy-mode-rollup a[rel="window"] {
+    display: none;
+}
+#tracy-debug .tracy-panel.tracy-mode-rollup h1 {
+    border-bottom: none !important;
+    border-right: 1rem solid transparent;
+}
+#tracy-debug .tracy-panel.tracy-mode-rollup h1 a {
+    pointer-events: none;
 }

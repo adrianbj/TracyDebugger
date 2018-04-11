@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.10.7',
+            'version' => '4.10.8',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -783,7 +783,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     $this->wire('config')->paths->TracyDebugger.'styles.css'
                 );
 
-                Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/panel-resizer.js';
+                Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/main.js';
 
                 if(in_array('fileEditor', static::$showPanels)) {
                     // these need to be loaded here (not just in File Editor panel) so that File Editor links
