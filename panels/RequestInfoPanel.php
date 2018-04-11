@@ -452,11 +452,11 @@ class RequestInfoPanel extends BasePanel {
 
         // Fields List & Values
         if(in_array('fieldsListValues', $panelSections) && $isPwPage) {
-            $fieldsListValues = $this->sectionHeader(array('id', 'name', 'label', 'type', 'inputfieldType/class', 'returns', 'value', 'settings'));
-            $value = '';
+            $fieldsListValues = $this->sectionHeader(array('id', 'name', 'label', 'type', 'inputfieldType/class', 'unformatted', 'formatted', 'image details', 'settings'));
+            $value = array();
             foreach($p->fields as $f) {
                 $value = $this->getFieldArray($p,$f);
-                $value = Dumper::toHtml($value, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
+                $dumpedValue = Dumper::toHtml($value, array(Dumper::LIVE => true, Dumper::DEBUGINFO => \TracyDebugger::getDataValue('debugInfo'), Dumper::DEPTH => 99, Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
                 $fieldArray['settings'] = $f->getArray();
                 $settings = Dumper::toHtml($fieldArray['settings'], array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
 
@@ -466,9 +466,10 @@ class RequestInfoPanel extends BasePanel {
                     "<td>$f->label</td>" .
                     "<td>".str_replace('Fieldtype', '', $f->type)."</td>" .
                     "<td>".str_replace('Inputfield', '', ($f->inputfield ? $f->inputfield : $f->inputfieldClass))."</td>" .
-                    "<td>".gettype($p->$f)."</td>" .
-                    "<td>".$value."</td>" .
-                    "<td>$settings</td>" .
+                    "<td>".$dumpedValue."</td>" .
+                    "<td>".$p->getFormatted($f->name)."</td>" .
+                    "<td>".$this->imageDetails($p, $f)."</td>" .
+                    "<td>".$settings."</td>" .
                     "</tr>";
             }
             $fieldsListValues .= $sectionEnd;
@@ -608,6 +609,8 @@ class RequestInfoPanel extends BasePanel {
 
 
     private function getFieldArray(Page $p, $f) {
+        $of = $p->of();
+        $p->of(false);
         $fieldArray = '';
         if($f->type == "FieldtypeFieldsetTabOpen"
            || $f->type == "FieldtypeFieldsetTabClose"
@@ -615,13 +618,13 @@ class RequestInfoPanel extends BasePanel {
            || $f->type == "FieldtypePassword"
            || $f->type == "FieldtypeFieldsetClose") return false;
 
-        if($f->type == "FieldtypeRepeater") {
+        if($f->type instanceof FieldtypeRepeater) {
             if(count($p->$f)) {
                 $fieldArray = array();
                 foreach($p->$f as $o) $fieldArray[$o->id] = $o->getIterator();
             }
         }
-        elseif($f->type == "FieldtypePage") {
+        elseif($f->type instanceof FieldtypePage) {
             if(count($p->$f)) {
                 $fieldArray = array();
                 if($p->$f instanceof PageArray) {
@@ -636,36 +639,37 @@ class RequestInfoPanel extends BasePanel {
                 $fieldArray = $p->$f;
             }
         }
-        elseif($f->type == "FieldtypeImage" || $f->type == " FieldtypeFile") {
-            if(count($p->$f)) {
-                $fieldArray = array();
-                foreach($p->$f as $o) {
-                    $fieldArray[$o->filename] = $o->getIterator();
-
-                    if($f->type instanceof FieldtypeFile) {
-                        $fieldArray[$o->filename]['basename'] = $o->name;
-                        $fieldArray[$o->filename]['name'] = $o->name;
-                        $fieldArray[$o->filename]['filename'] = $o->filename;
-                        $fieldArray[$o->filename]['ext'] = $o->ext;
-                        $fieldArray[$o->filename]['url'] = $o->url;
-                        $fieldArray[$o->filename]['httpUrl'] = $o->httpUrl;
-                        $fieldArray[$o->filename]['filesize'] = $o->filesize;
-                        $fieldArray[$o->filename]['filesizeStr'] = $o->filesizeStr;
-                    }
-                    if($f->type instanceof FieldtypeImage) {
-                        $fieldArray[$o->filename]['width'] = $o->width;
-                        $fieldArray[$o->filename]['height'] = $o->height;
-                    }
-
-                }
-            }
+        elseif($f->type instanceof FieldtypeFile) {
+            $fieldArray = array();
+            $fieldArray = $p->$f->getIterator();
         }
         else {
-            $p->of(true);
             $fieldArray = $p->$f ?: '';
-            $p->of(false);
         }
+        $p->of($of);
         return $fieldArray;
+    }
+
+
+    private function imageDetails($p, $f) {
+        if(!$f->type instanceof FieldtypeImage) return;
+        $of = $p->of();
+        $p->of(false);
+        $imageStr = '';
+        $imagePreview = '';
+        if(\TracyDebugger::getDataValue('imagesInFieldListValues')) {
+            $inputfield = $f->getInputfield($p);
+        }
+        foreach($p->$f as $image) {
+            if(isset($inputfield) && $inputfield) {
+                $thumb = $inputfield->getAdminThumb($image);
+                $thumb = $thumb['thumb'];
+                $imagePreview = '<img width="125" src="'.$thumb->url().'" /><br />';
+            }
+            $imageStr .= '<p>'.$image->name.'<br />'.$imagePreview.'width: '.$image->width.'<br />height: '.$image->height.'<br />size: '.$image->filesizeStr.'</p><br />';
+        }
+        $p->of($of);
+        return $imageStr;
     }
 
 

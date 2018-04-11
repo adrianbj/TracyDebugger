@@ -250,16 +250,18 @@ class ConsolePanel extends BasePanel {
                 },
 
                 resizePanel: function(type) {
-                    var currentTop = document.getElementById("tracy-debug-panel-ConsolePanel").offsetTop;
-                    var viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-                    document.getElementById("tracy-debug-panel-ConsolePanel").style.height = type == 'small' ? '50%' : 'calc(100vh - 40px)';
-                    if(type == 'large') {
-                        document.getElementById("tracy-debug-panel-ConsolePanel").style.top = '10px';
+                    var consolePanel = document.getElementById("tracy-debug-panel-ConsolePanel");
+                    consolePanel.style.left = '0px';
+                    if(type == 'fullscreen') {
+                        consolePanel.style.top = '0px';
+                        consolePanel.style.height = '100vh';
+                        consolePanel.style.width = '100vw';
                     }
                     else {
-                        document.getElementById("tracy-debug-panel-ConsolePanel").style.top = (viewportHeight - document.getElementById("tracy-debug-panel-ConsolePanel").offsetHeight) - 30 + 'px';
+                        consolePanel.style.top = 'calc(50vh - 22px)';
+                        consolePanel.style.height = '50vh';
+                        consolePanel.style.width = '100vw';
                     }
-                    document.getElementById("tracy-debug-panel-ConsolePanel").style.left = '10px';
                     this.resizeAce();
                 },
 
@@ -652,7 +654,7 @@ HTML;
 
 
 
-        $out .= '<h1>' . $this->icon . ' Console </h1><span class="tracy-icons"><span class="resizeIcons"><a href="javascript:void(0)" title="small" rel="min" onclick="tracyConsole.resizePanel(\'small\')">▼</a> <a href="javascript:void(0)" title="large" rel="max" onclick="tracyConsole.resizePanel(\'large\')">▲</a></span></span>
+        $out .= '<h1>' . $this->icon . ' Console </h1><span class="tracy-icons"><span class="resizeIcons"><a href="javascript:void(0)" title="halfscreen" rel="min" onclick="tracyConsole.resizePanel(\'halfscreen\')">▼</a> <a href="javascript:void(0)" title="fullscreen" rel="max" onclick="tracyConsole.resizePanel(\'fullscreen\')">▲</a></span></span>
         <div class="tracy-inner">
             <div id="tracyConsoleMainContainer">
                 <legend>CTRL/CMD+Enter to Run&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ALT/OPT+Enter to Clear & Run</legend>';

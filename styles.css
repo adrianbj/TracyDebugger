@@ -48,8 +48,8 @@ body.tracyHidden:before {
 
 #tracy-debug .tracy-mode-peek,
 #tracy-debug .tracy-mode-float:not(.tracy-panel-resized) {
-    max-width: calc(100vw - 40px) !important;
-    max-height: calc(100vh - 40px) !important;
+    max-width: calc(100vw - 15px) !important;
+    max-height: calc(100vh - 22px) !important;
 }
 
 .tracy-panel a:link {
@@ -591,12 +591,14 @@ ul.pw-info-links {
 
 #tracy-debug .resizeIcons {
     display: block;
-    margin: 5px 70px 0 0;
+    margin-right: 70px;
     font-size: 13px !important;
 }
 #tracy-debug .resizeIcons a:link, #tracy-debug .resizeIcons a:hover {
     color: #2C3E50 !important;
     background: transparent !important;
+    padding:10px !important;
+    margin: 0 !important;
 }
 
 #tracy-debug #hide-button {

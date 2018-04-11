@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.10.5',
+            'version' => '4.10.6',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -210,6 +210,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "processwireInfoPanelSections" => array('apiVariables', 'coreClasses', 'configData', 'versionsList', 'adminLinks', 'documentationLinks', 'gotoId', 'processWireWebsiteSearch'),
             "debugModePanelSections" => array('pagesLoaded', 'modulesLoaded', 'hooks', 'databaseQueries', 'selectorQueries', 'timers', 'user', 'cache', 'autoload'),
             "diagnosticsPanelSections" => array('filesystemFolders'),
+            "imagesInFieldListValues" => 1,
             "snippetsPath" => 'templates',
             "userSwitcherRestricted" => null,
             "todoIgnoreDirs" => 'git, svn, images, img, errors, sass-cache, node_modules',
@@ -2602,11 +2603,20 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'requestInfoPanelSections');
         $f->label = __('Panel sections', __FILE__);
         $f->description = __('Which sections to include in the Request Info panel.', __FILE__);
+        $f->columnWidth = 50;
         $f->notes = __('The three "Object" options will significantly increase the size of this panel.', __FILE__);
         foreach(static::$requestInfoSections as $name => $label) {
             $f->addOption($name, $label);
         }
         if($data['requestInfoPanelSections']) $f->attr('value', $data['requestInfoPanelSections']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'imagesInFieldListValues');
+        $f->label = __('Show image thumbnails in Field List & Values section', __FILE__);
+        $f->description = __('This will load all image thumbnails for the page, along with the dimensions & size details.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['imagesInFieldListValues'] == '1' ? 'checked' : '' );
         $fieldset->add($f);
 
         // Debug Mode Panel
