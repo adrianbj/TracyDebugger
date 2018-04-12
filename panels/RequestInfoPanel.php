@@ -663,6 +663,8 @@ class RequestInfoPanel extends BasePanel {
             if(is_object($p->$f) && count($p->$f)) {
                 // $subpage is referenced page or repeater item
                 foreach($p->$f as $subpage) {
+                    $subpage_of = $subpage->of();
+                    $subpage->of(false);
                     foreach($subpage as $field => $item) {
                         $f = $this->wire('fields')->get($field);
                         if($item && $f && $f->type instanceof FieldTypeImage) {
@@ -671,6 +673,7 @@ class RequestInfoPanel extends BasePanel {
                             }
                         }
                     }
+                    $subpage->of($subpage_of);
                 }
             }
         }
