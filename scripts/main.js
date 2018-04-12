@@ -1,15 +1,14 @@
 function tracyResizePanel(panel, type) {
-    panel = document.getElementById("tracy-debug-panel-"+panel);
+    panel = document.getElementById("tracy-debug-panel-" + panel);
     panel.style.left = '0px';
+    panel.style.width = 'calc(100vw - 15px)';
     if(type == 'fullscreen') {
         panel.style.top = '0px';
-        panel.style.height = '100vh';
-        panel.style.width = '100vw';
+        panel.style.height = 'calc(100vh - 22px)';
     }
     else {
-        panel.style.top = 'calc(50vh - 22px)';
-        panel.style.height = '50vh';
-        panel.style.width = '100vw';
+        panel.style.top = '50vh';
+        panel.style.height = 'calc(50vh - 22px)';
     }
 }
 
@@ -42,7 +41,7 @@ document.addEventListener("mouseup", filterEventHandler(".tracy-panel.tracy-mode
     e.filterdTarget.parentElement.parentElement.classList.remove("tracy-mode-rollup");
 }));
 
-// hide rolled up panels to allow Tracy save their position correctly
+// hide rolled up panels to allow Tracy to save their position correctly
 window.addEventListener("beforeunload", function () {
     var $rollupPanels = document.querySelectorAll(".tracy-mode-rollup");
 
