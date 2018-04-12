@@ -619,13 +619,13 @@ class RequestInfoPanel extends BasePanel {
            || $f->type == "FieldtypeFieldsetClose") return false;
 
         if($f->type instanceof FieldtypeRepeater) {
-            if(count($p->$f)) {
+            if(is_object($p->$f) && count($p->$f)) {
                 $fieldArray = array();
                 foreach($p->$f as $o) $fieldArray[$o->id] = $o->getIterator();
             }
         }
         elseif($f->type instanceof FieldtypePage) {
-            if(count($p->$f)) {
+            if(is_object($p->$f) && count($p->$f)) {
                 $fieldArray = array();
                 if($p->$f instanceof PageArray) {
                     foreach($p->$f as $o) $fieldArray[$o->id] = $o->getIterator();
@@ -652,7 +652,6 @@ class RequestInfoPanel extends BasePanel {
 
 
     private function imageDetails($p, $f) {
-        if(!$f->type instanceof FieldtypeImage) return;
         $of = $p->of();
         $p->of(false);
         $imageStr = '';
@@ -660,16 +659,38 @@ class RequestInfoPanel extends BasePanel {
         if(\TracyDebugger::getDataValue('imagesInFieldListValues')) {
             $inputfield = $f->getInputfield($p);
         }
-        foreach($p->$f as $image) {
-            if(isset($inputfield) && $inputfield) {
-                $thumb = $inputfield->getAdminThumb($image);
-                $thumb = $thumb['thumb'];
-                $imagePreview = '<a class="pw-modal" href="'.$image->url.'"><img width="125" src="'.$thumb->url.'" /></a><br />';
+        if($f->type instanceof FieldtypePage || $f->type instanceof FieldtypeRepeater) {
+            if(is_object($p->$f) && count($p->$f)) {
+                // $subpage is referenced page or repeater item
+                foreach($p->$f as $subpage) {
+                    foreach($subpage as $field => $item) {
+                        $f = $this->wire('fields')->get($field);
+                        if($item && $f && $f->type instanceof FieldTypeImage) {
+                            foreach($item as $image) {
+                                $imageStr .= $this->imageStr($f->getInputfield($p), $image);
+                            }
+                        }
+                    }
+                }
             }
-            $imageStr .= '<p>'.$image->name.'<br />'.$imagePreview.'width: '.$image->width.'<br />height: '.$image->height.'<br />size: '.$image->filesizeStr.'</p><br />';
+        }
+        elseif($f->type instanceof FieldtypeImage) {
+            foreach($p->$f as $image) {
+                $imageStr .= $this->imageStr($inputfield, $image);
+            }
         }
         $p->of($of);
         return $imageStr;
+    }
+
+
+    private function imageStr($inputfield, $image) {
+        if(isset($inputfield) && $inputfield) {
+            $thumb = $inputfield->getAdminThumb($image);
+            $thumb = $thumb['thumb'];
+            $imagePreview = '<a class="pw-modal" href="'.$image->url.'"><img width="125" src="'.$thumb->url.'" /></a><br />';
+        }
+        return '<p>'.$image->name.'<br />'.$imagePreview.'width: '.$image->width.'<br />height: '.$image->height.'<br />size: '.$image->filesizeStr.'</p><br />';
     }
 
 
