@@ -102,7 +102,7 @@ class DebugModePanel extends BasePanel {
                 <path d='M293.081,31.27c-17.795-17.795-39.352-26.696-64.667-26.696c-25.319,0-46.87,8.901-64.668,26.696    c-17.795,17.797-26.691,39.353-26.691,64.667h182.716C319.771,70.627,310.876,49.067,293.081,31.27z' fill='".static::$panelIconColor."'/>
             </g>
         </svg>
-        ProcessWire Debug Mode" . ($isAdditionalBar ? " (".$isAdditionalBar.")" : "") . "</h1>
+        ProcessWire Debug Mode" . ($isAdditionalBar ? " (".$isAdditionalBar.")" : "") . "</h1>" . '<span class="tracy-icons"><span class="resizeIcons"><a href="javascript:void(0)" title="halfscreen" rel="min" onclick="tracyResizePanel(\'DebugModePanel\', \'halfscreen\')">▼</a> <a href="javascript:void(0)" title="fullscreen" rel="max" onclick="tracyResizePanel(\'DebugModePanel\', \'fullscreen\')">▲</a></span></span>' . "
         <div class='tracy-inner'>
             <p>";
 

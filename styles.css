@@ -35,6 +35,7 @@ body.tracyHidden:before {
 }
 
 #tracy-debug-bar {
+    font: normal normal 13px/1.55 Arial, sans-serif !important;
     background: #F0F3F7 !important;
     border: 0 !important;
     border-radius: 0 !important;

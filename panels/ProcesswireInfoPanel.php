@@ -93,7 +93,7 @@ class ProcesswireInfoPanel extends BasePanel {
                 document.getElementById(\'pageId\').addEventListener(\'keyup\', function() {
                     tracyClearGoToPageID("");
                     if(this.value) {
-                        tracyClearGoToPageID("<i class=\'fa fa-spinner fa-spin\'></i>");
+                        tracyClearGoToPageID("<i style=\'font-family: FontAwesome !important\' class=\'fa fa-spinner fa-spin\'></i>");
                         var pid = this.value;
                         if(this.t) clearTimeout(this.t);
                         this.t = setTimeout(function() {
