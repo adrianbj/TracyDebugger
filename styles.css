@@ -20,16 +20,17 @@ body.tracyHidden:before {
     display: none;
 }
 
-/* needed to make panels draggable - comes from bar.css but we change block to #tracy-debug-bar so need to add this here. */
+
 #tracy-debug * {
-    pointer-events: auto;
+    pointer-events: auto; /* needed to make panels draggable - comes from bar.css but we change block to #tracy-debug-bar so need to add this here. */
+    font: inherit;
 }
 
-#tracy-debug *:not(span):not(h1):not('.tracy-icons') {
-    font: normal normal 13px/1.55 Tahoma, sans-serif !important;
+#tracy-debug:not(.tracy-icons):not(.tracy-label):not(.ace_editor) {
+    font: normal normal 13px/1.3 Arial, sans-serif !important;
 }
 
-#tracy-debug pre * {
+#tracy-debug pre {
     font-family: monospace !important;
 }
 
@@ -92,7 +93,7 @@ body.tracyHidden:before {
 }
 
 #tracy-debug input {
-    font: normal normal 13px/1.55 Tahoma, sans-serif !important;
+    font: normal normal 13px/1.3 Arial, sans-serif !important;
     font-size: 13px !important;
     text-transform: none !important;
     display: inline-block !important;
@@ -138,7 +139,7 @@ body.tracyHidden:before {
 }
 
 #tracy-debug input[type="text"], #tracy-debug input[type="number"] {
-    font: normal normal 13px/1.55 Tahoma, sans-serif !important;
+    font: normal normal 13px/1.3 Arial, sans-serif !important;
     height: 30px !important;
     width: initial !important;
     display: inline-block !important;
@@ -147,15 +148,20 @@ body.tracyHidden:before {
     border-radius: 0 !important;
 }
 
+#tracy-debug legend {
+    margin: 0 !important;
+    border: 0 !important;
+}
+
 #tracy-debug, #tracy-debug h2, #tracy-debug legend {
-    font: normal normal 13px/1.55 Tahoma, sans-serif !important;
+    font: normal normal 13px/1.3 Arial, sans-serif !important;
     font-weight: normal !important;
     color: #333333 !important;
     text-transform: none !important;
 }
 
 #tracy-debug, #tracy-debug legend, #tracy-debug p, #tracy-debug legend li, #tracy-debug select, #tracy-debug label {
-    font: normal normal 13px/1.55 Tahoma, sans-serif !important;
+    font: normal normal 13px/1.3 Arial, sans-serif !important;
     font-weight: normal !important;
     color: #333333 !important;
 }
@@ -233,7 +239,7 @@ body.tracyHidden:before {
 
 #tracy-debug .tracy-panel td,
 #tracy-debug .tracy-panel th {
-    font: normal normal 13px/1.55 Tahoma, sans-serif !important;
+    font: normal normal 13px/1.3 Arial, sans-serif !important;
     font-weight: normal !important;
     padding: 4px !important;
     border: 1px solid #C9D4E1 !important;
@@ -282,7 +288,7 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
     border-radius: 5px !important;
     cursor: pointer !important;
     text-transform: none !important;
-    font: normal normal 13px/1.55 Tahoma, sans-serif;
+    font: normal normal 13px/1.3 Arial, sans-serif;
     color: #444444;
 }
 
@@ -381,6 +387,10 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
     pointer-events: none;
 }
 
+#tracy-debug-panel-PanelSelectorPanel label {
+    line-height: 1.75 !important;
+}
+
 #tracy-debug-panel-PanelSelectorPanel fieldset div label {
     display: block !important;
     width: 300px !important;
@@ -430,7 +440,7 @@ ul.pw-info-links {
 }
 
 .pw-info-links a {
-    font: normal normal 13px/1.55 Tahoma, sans-serif !important;
+    font: normal normal 13px/1.3 Arial, sans-serif !important;
     transition: transform 0.12s;
 }
 .pw-info-links a svg {
@@ -476,7 +486,7 @@ ul.pw-info-links {
     display: block;
     padding: 0 !important;
     border-top: 1px solid #ddd;
-    font: normal normal 13px/1.55 Tahoma, sans-serif !important;
+    font: normal normal 13px/1.3 Arial, sans-serif !important;
     line-height: 18px !important;
     position:relative !important;
 }
@@ -782,9 +792,8 @@ ul.pw-info-links {
     height: 16px !important;
 }
 
-
 #tracy-debug .tracy-DumpPanel h2, #tracyConsoleResult h2, #tracySnippetRunnerResult h2 {
-    font: normal normal Tahoma, sans-serif !important;
+    font: normal normal Arial, sans-serif !important;
     font-size: 14px !important;
     margin: 0;
     padding: 2px 8px;
@@ -800,6 +809,14 @@ ul.pw-info-links {
 .tracy-file-tree a[href].active {
     color: #FFFFFF !important;
     background-color: #125EAE !important;
+}
+
+.tracy-time-size {
+    position:absolute;
+    bottom: 3px;
+    clear:both;
+    font-size:9px !important;
+    text-align:left !important;
 }
 
 /* clipboardjs "Copied!" tooltip */

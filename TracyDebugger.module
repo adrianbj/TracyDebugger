@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.10.12',
+            'version' => '4.10.13',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1810,7 +1810,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static function generatedTimeSize($panel, $seconds, $bytes) {
         \TracyDebugger::$panelGenerationTime[$panel]['time'] = $seconds;
         \TracyDebugger::$panelGenerationTime[$panel]['size'] = $bytes;
-        return '<div style="position:absolute; bottom: 3px; clear:both; font-size:9px !important; text-align:left !important">'.static::formatTime($seconds).'<span style="color: #999999;">,</span> '.static::human_filesize($bytes).'</div>';
+        return '<div class="tracy-time-size">'.static::formatTime($seconds).'<span style="color: #999999;">,</span> '.static::human_filesize($bytes).'</div>';
     }
 
 

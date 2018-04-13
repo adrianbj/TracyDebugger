@@ -37,7 +37,7 @@ class ConsolePanel extends BasePanel {
         $pwRoot = $this->wire('config')->urls->root;
         $tracyModuleUrl = $this->wire("config")->urls->TracyDebugger;
         $inAdmin = \TracyDebugger::$inAdmin;
-        $consoleContainerAdjustment = $inAdmin ? 140 : 170;
+        $consoleContainerAdjustment = $inAdmin ? 130 : 160;
 
         // store various $input properties so they are available to the console
         $this->wire('session')->tracyPostData = $this->wire('input')->post->getArray();
