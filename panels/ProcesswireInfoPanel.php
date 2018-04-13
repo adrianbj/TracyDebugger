@@ -536,7 +536,7 @@ class ProcesswireInfoPanel extends BasePanel {
                 $out .=
                 '<li ' . ($withLabels ? ' class="with-labels"' : '') . '>
                     <a onclick="closePanel()" '.$this->newTab.' href="'.$cp->url.'"'. (!$withLabels ? ' title="'.$cp->title.'"' : '') . '>
-                        <span style="color:#ee1d62; font-size: 15px; margin-right: 2px" class="fa fa-fw fa-'.$icon.'"></span>'
+                        <span style="color:#ee1d62; font-family: FontAwesome !important; font-size: 15px; margin-right: 2px" class="fa fa-fw fa-'.$icon.'"></span>'
                         . ($withLabels ? '&nbsp;'.$cp->title.'</a>' : '</a>&nbsp;') .
                     '</a>
                 </li>';

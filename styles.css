@@ -7,7 +7,7 @@
     margin: 0 !important;
     padding: 4px 15px 2px 6px !important;
     background: #FFFFFF !important;
-    font-size: 12px !important;
+    font-size: 13px !important;
     cursor: pointer;
     box-sizing: border-box !important;
     line-height: normal !important;
@@ -23,6 +23,14 @@ body.tracyHidden:before {
 /* needed to make panels draggable - comes from bar.css but we change block to #tracy-debug-bar so need to add this here. */
 #tracy-debug * {
     pointer-events: auto;
+}
+
+#tracy-debug *:not(span):not(h1):not('.tracy-icons') {
+    font: normal normal 13px/1.55 Tahoma, sans-serif !important;
+}
+
+#tracy-debug pre * {
+    font-family: monospace !important;
 }
 
 #tracy-debug-bar {
@@ -52,6 +60,10 @@ body.tracyHidden:before {
     max-height: calc(100vh - 22px) !important;
 }
 
+.tracy-panel {
+    box-sizing: border-box !important;
+}
+
 .tracy-panel a:link {
     color: #125EAE !important;
     background-color: transparent !important;
@@ -59,9 +71,10 @@ body.tracyHidden:before {
 .tracy-panel a:focus {
     color: #125EAE !important;
 }
-.tracy-panel a:hover {
-    color: #FFFFFF !important;
-    background-color: #125EAE !important;
+.tracy-panel * a:hover {
+    background-color: transparent !important;
+    color: #D82C82 !important;
+    text-decoration: underline !important;
 }
 
 .tracy-panel fieldset {
@@ -145,7 +158,6 @@ body.tracyHidden:before {
     font: normal normal 13px/1.55 Tahoma, sans-serif !important;
     font-weight: normal !important;
     color: #333333 !important;
-    font-size: 12px !important;
 }
 
 #tracy-debug textarea:focus, #tracy-debug input:focus, #tracy-debug select:focus {
@@ -173,20 +185,18 @@ body.tracyHidden:before {
     background-color: #FFFFFF !important;
     border: 1px solid #D2D2D2 !important;
     padding-left: initial !important;
-    font-size: 12px !important;
 }
 
 #tracy-debug input:not(.ace_search_field) {
     background-color: #FFFFFF !important;
     border: 1px solid #D2D2D2 !important;
     padding-left: 5px !important;
-    font-size: 12px !important;
 }
 
 #tracy-debug label {
     display: inline-block !important;
     margin:0 !important;
-    font-size: 12px !important;
+    font-size: 13px !important;
     color: #444444 !important;
     font-weight: normal !important;
     user-select: none !important;
@@ -225,7 +235,6 @@ body.tracyHidden:before {
 #tracy-debug .tracy-panel th {
     font: normal normal 13px/1.55 Tahoma, sans-serif !important;
     font-weight: normal !important;
-    font-size: 12px !important;
     padding: 4px !important;
     border: 1px solid #C9D4E1 !important;
     line-height: 1.8 !important;
@@ -310,7 +319,7 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
 }
 
 .tracy-inner p {
-    font-size:12px !important;
+    font-size:13px !important;
 }
 
 #tracy-debug td pre, #tracy-debug code {
@@ -401,7 +410,7 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
 }
 
 .tracy-toggle {
-    font-size: 12px !important;
+    font-size: 13px !important;
 }
 
 ul.pw-info-links {
@@ -421,7 +430,7 @@ ul.pw-info-links {
 }
 
 .pw-info-links a {
-    font: normal normal 12px/1.55 Tahoma, sans-serif !important;
+    font: normal normal 13px/1.55 Tahoma, sans-serif !important;
     transition: transform 0.12s;
 }
 .pw-info-links a svg {
@@ -430,10 +439,7 @@ ul.pw-info-links {
 .pw-info-links a:hover svg, .pw-info-links a:hover .fa {
     transform: scale(1.2);
 }
-.pw-info-links a:hover, .pw-info-links a:active, .pw-info-links a:focus {
-    background-color: transparent !important;
-    color: #125EAE !important;
-}
+
 
 #tracy-debug input[type="text"]#tracySnippetName {
     padding: 4px 30px 4px 8px !important;
@@ -472,7 +478,6 @@ ul.pw-info-links {
     border-top: 1px solid #ddd;
     font: normal normal 13px/1.55 Tahoma, sans-serif !important;
     line-height: 18px !important;
-    font-size: 12px !important;
     position:relative !important;
 }
 
@@ -598,13 +603,13 @@ ul.pw-info-links {
 
 #tracy-debug .resizeIcons {
     display: block;
-    margin-right: 70px;
+    margin-right: 65px;
     font-size: 13px !important;
 }
 #tracy-debug .resizeIcons a:link, #tracy-debug .resizeIcons a:hover {
     color: #2C3E50 !important;
     background: transparent !important;
-    padding:10px !important;
+    padding:6px 8px !important;
     margin: 0 !important;
 }
 
@@ -652,7 +657,7 @@ ul.pw-info-links {
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] {
     padding: 0 !important;
-    border: 4px solid rgba(0,0,0, 0.18);
+    border: 2px solid rgba(0,0,0, 0.18);
     border-radius: 0;
     box-shadow: none;
     background-clip: padding-box;
@@ -663,7 +668,7 @@ ul.pw-info-links {
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] > * {
-    padding: 10px 12px 11px;
+    padding: 10px 12px 11px 10px;
     margin: 0;
 }
 
@@ -677,17 +682,17 @@ ul.pw-info-links {
     min-width: 0 !important;
 }
 
+.tracy-icons a:hover {
+    text-decoration: none !important;
+}
+
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] > .tracy-icons {
     padding: 0;
     margin-right: -5px;
 }
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] > .tracy-icons a {
     color: #2C3E50 !important;
-    padding: 6px 12px;
-    /*margin-left: 1px;*/
-    /*position: relative;*/
-    /*top: 1px;*/
-    /*right: 1px;*/
+    padding: 3px 11px 1px;
     display: inline-block;
     transition: all 0.1s;
 }
@@ -725,9 +730,9 @@ ul.pw-info-links {
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] > h1 {
-    padding-top: 8px !important;
-    padding-bottom: 8px !important;
-    font-size: 17px;
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
+    font-size: 15px;
     color: #2C3E50 !important;
     text-transform: uppercase;
     background: #F0F3F7 !important;
@@ -735,12 +740,13 @@ ul.pw-info-links {
     border-bottom: 1px solid #c9d4e1 !important;
 }
 
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] > h1 > svg {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] > h1 > svg,
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] > h1 > a > svg {
     display: inline-block;
     vertical-align: text-bottom;
-    margin-right: 3px;
+    margin-right: 2px;
     position: relative;
-    top: -2px;
+    top: -1px;
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] input[type="submit"],
@@ -1210,7 +1216,7 @@ ul.pw-info-links {
 #tracy-debug .tracy-panel.tracy-mode-rollup {
     min-height: 0 !important;
     resize: none !important;
-    max-height: 47px !important;
+    max-height: 35px !important;
     width: auto !important;
     min-width: unset !important;
 }
@@ -1225,4 +1231,16 @@ ul.pw-info-links {
 }
 #tracy-debug .tracy-panel.tracy-mode-rollup h1 a {
     pointer-events: none;
+}
+
+
+#tracy-debug .tracy-mode-float h1:hover {
+    cursor: -webkit-grab !important;
+    cursor: -moz-grab !important;
+    cursor: grab !important;
+}
+#tracy-debug .tracy-mode-float h1:hover:active {
+    cursor: -webkit-grabbing !important;
+    cursor: -moz-grabbing !important;
+    cursor: grabbing !important;
 }
