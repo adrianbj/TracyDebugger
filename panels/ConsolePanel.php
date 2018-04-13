@@ -164,7 +164,7 @@ class ConsolePanel extends BasePanel {
 
                 processTracyCode: function() {
                     var code = this.tce.getSelectedText() || this.tce.getValue();
-                    document.getElementById("tracyConsoleStatus").innerHTML = "<i class='fa fa-spinner fa-spin'></i> Processing";
+                    document.getElementById("tracyConsoleStatus").innerHTML = "<i style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></i> Processing";
                     this.callPhp(code);
                     this.saveHistory();
                     this.tce.focus();

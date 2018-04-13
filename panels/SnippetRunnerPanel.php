@@ -173,7 +173,7 @@ HTML;
 
                 processTracySnippetRunnerCode: function() {
                     file = typeof this.loadedSnippetFile === 'undefined' ? '' : this.loadedSnippetFile;
-                    document.getElementById("tracySnippetRunnerStatus").innerHTML = "<i class='fa fa-spinner fa-spin'></i> Processing";
+                    document.getElementById("tracySnippetRunnerStatus").innerHTML = "<i style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></i> Processing";
                     this.callSnippetRunnerPhp(file);
                     document.getElementById('runSnippetRunnerCode').blur();
                 },
