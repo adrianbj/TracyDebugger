@@ -659,21 +659,23 @@ class RequestInfoPanel extends BasePanel {
         if(\TracyDebugger::getDataValue('imagesInFieldListValues')) {
             $inputfield = $f->getInputfield($p);
         }
-        if($f->type instanceof FieldtypePage || $f->type instanceof FieldtypeRepeater) {
+        if($f->type instanceof FieldtypeRepeater) {
             if(is_object($p->$f) && count($p->$f)) {
-                // $subpage is referenced page or repeater item
                 foreach($p->$f as $subpage) {
-                    $subpage_of = $subpage->of();
-                    $subpage->of(false);
-                    foreach($subpage as $field => $item) {
-                        $f = $this->wire('fields')->get($field);
-                        if($item && $f && $f->type instanceof FieldTypeImage) {
-                            foreach($item as $image) {
-                                $imageStr .= $this->imageStr($f->getInputfield($p), $image);
-                            }
-                        }
+                    $imageStr .= $this->getImages($subpage);
+                }
+            }
+        }
+        elseif($f->type instanceof FieldtypePage) {
+            if(is_object($p->$f)) {
+                $fieldArray = array();
+                if($p->$f instanceof PageArray) {
+                    foreach($p->$f as $subpage) {
+                        $imageStr .= $this->getImages($subpage);
                     }
-                    $subpage->of($subpage_of);
+                }
+                else {
+                    $imageStr .= $this->getImages($p->$f);
                 }
             }
         }
@@ -683,6 +685,24 @@ class RequestInfoPanel extends BasePanel {
             }
         }
         $p->of($of);
+        return $imageStr;
+    }
+
+
+    private function getImages($p) {
+        $p_of = $p->of();
+        $p->of(false);
+        $imageStr = '';
+        foreach($p as $field => $item) {
+            $f = $this->wire('fields')->get($field);
+            if($item && $f && $f->type instanceof FieldTypeImage) {
+                foreach($item as $image) {
+                    $imageStr .= $this->imageStr($f->getInputfield($p), $image);
+                }
+            }
+        }
+        $p->of($p_of);
+
         return $imageStr;
     }
 
