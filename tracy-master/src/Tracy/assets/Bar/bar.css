@@ -18,8 +18,6 @@ body#tracy-debug { /* in popup window */
 	position: absolute;
 	left: 0;
 	top: 0;
-	width: calc(100vw - 100px); /* bigger to not affect inner content when windows gets smaller */
-	height: calc(100vh - 100px);
 	pointer-events: none;
 }
 

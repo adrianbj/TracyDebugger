@@ -62,11 +62,11 @@ class GitInfoPanel extends BasePanel
                 $cntTable .= '<tr><td>Tags</td><td> ' . $this->getTags() . ' </td></tr>';
             }
 
-            $content = '<div class=\"tracy-inner tracy-InfoPanel\"><table><tbody>' .
+            $content = '<div class="tracy-inner tracy-InfoPanel"><table><tbody>' .
                 $cntTable .
-                '</tbody></table></div>';
+                '</tbody></table>';
 
-            $content .= \TracyDebugger::generatedTimeSize('gitInfo', \Tracy\Debugger::timer('gitInfo'), strlen($content));
+            $content .= \TracyDebugger::generatedTimeSize('gitInfo', \Tracy\Debugger::timer('gitInfo'), strlen($content)) . '</div>';
 
             return parent::loadResources() . $title . $content;
         }

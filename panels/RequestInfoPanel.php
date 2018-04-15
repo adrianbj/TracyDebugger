@@ -656,9 +656,8 @@ class RequestInfoPanel extends BasePanel {
         $p->of(false);
         $imageStr = '';
         $imagePreview = '';
-        if(\TracyDebugger::getDataValue('imagesInFieldListValues')) {
-            $inputfield = $f->getInputfield($p);
-        }
+        $inputfield = \TracyDebugger::getDataValue('imagesInFieldListValues') ? $f->getInputfield($p) : null;
+
         if($f->type instanceof FieldtypeRepeater) {
             if(is_object($p->$f) && count($p->$f)) {
                 foreach($p->$f as $subpage) {
@@ -696,8 +695,9 @@ class RequestInfoPanel extends BasePanel {
         foreach($p as $field => $item) {
             $f = $this->wire('fields')->get($field);
             if($item && $f && $f->type instanceof FieldTypeImage) {
+                $inputfield = \TracyDebugger::getDataValue('imagesInFieldListValues') ? $f->getInputfield($p) : null;
                 foreach($item as $image) {
-                    $imageStr .= $this->imageStr($f->getInputfield($p), $image);
+                    $imageStr .= $this->imageStr($inputfield, $image);
                 }
             }
         }
@@ -708,12 +708,22 @@ class RequestInfoPanel extends BasePanel {
 
 
     private function imageStr($inputfield, $image) {
+        $imagePreview = '';
         if(isset($inputfield) && $inputfield) {
             $thumb = $inputfield->getAdminThumb($image);
             $thumb = $thumb['thumb'];
-            $imagePreview = '<a class="pw-modal" href="'.$image->url.'"><img width="125" src="'.$thumb->url.'" /></a><br />';
+            $imagePreview = '<a class="pw-modal" href="'.$image->url.'"><img style="padding:5px 0" width="125" src="'.$thumb->url.'" /></a><br />';
         }
-        return '<p>'.$image->name.'<br />'.$imagePreview.'width: '.$image->width.'<br />height: '.$image->height.'<br />size: '.$image->filesizeStr.'</p><br />';
+        return '<p><strong>'.$image->name.'</strong><br />'.$imagePreview.'description: '.$image->description.'<br />tags: '.$image->tags.'<br />dimensions: '.$image->width.'x'.$image->height.'<br />size: '.$image->filesizeStr.'<br />variations: '.$this->variationsStr($image).'</p><br />';
+    }
+
+
+    private function variationsStr($image) {
+        $variationsArr = array();
+        foreach($image->getVariations() as $var) {
+            $variationsArr[] = $var->width . 'x' . $var->height . '&nbsp;(' . str_replace(' ', '&nbsp;', $var->filesizeStr) . ')';
+        }
+        return implode (', ', $variationsArr);
     }
 
 

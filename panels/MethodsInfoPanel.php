@@ -41,76 +41,75 @@ class MethodsInfoPanel extends BasePanel {
         <div class="tracy-inner">
             <p><a href="'.$docsUrl.'" target="_blank"><button class="tracyCopyBtn">TracyDebugger Docs</button></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://tracy.nette.org/" target="_blank"><button class="tracyCopyBtn">Tracy Docs</button></a></p>
             <br />
-
             <p><strong><a href="'.$debugMethodsRootUrl.'additional-debug-methods" target="_blank">addBreakpoint($name = NULL, $enforceParent&nbsp;=&nbsp;NULL)</a></strong></p>
             <p>
-            TD::addBreakpoint()<br />
-            addBreakpoint()<br />
-            bp()<br />
+                <strong>bp()</strong><br />
+                addBreakpoint()<br />
+                TD::addBreakpoint()<br />
             </p>
 
             <p><strong><a href="'.$debugMethodsRootUrl.'bardump" target="_blank">barDump($var, $title = NULL, array $options = NULL)</a></strong></p>
             <p>
-            TD::barDump()<br />
-            barDump()<br />
-            bd()<br />
+                <strong>bd()</strong><br />
+                barDump()<br />
+                TD::barDump()<br />
             </p>
 
             <p><strong><a href="'.$debugMethodsRootUrl.'bardumpbig" target="_blank">barDumpBig($var, $title = NULL)</a></strong></p>
             <p>
-            TD::barDumpBig()<br />
-            barDumpBig()<br />
-            bdb()<br />
+                <strong>bdb()</strong><br />
+                barDumpBig()<br />
+                TD::barDumpBig()<br />
             </p>
 
 
             <p><strong><a href="'.$debugMethodsRootUrl.'bardumplive" target="_blank">barDumpLive($var, $title = NULL)</a></strong></p>
             <p>
-            TD::barDumpLive()<br />
-            barDumpLive()<br />
-            bdl()<br />
+                <strong>bdl()</strong><br />
+                barDumpLive()<br />
+                TD::barDumpLive()<br />
             </p>
 
             <p><strong><a href="'.$debugMethodsRootUrl.'debugall" target="_blank">debugAll($var, $title = NULL, array $options = NULL)</a></strong></p>
             <p>
-            TD::debugAll()<br />
-            debugAll()<br />
-            da()<br />
+                <strong>da()</strong><br />
+                debugAll()<br />
+                TD::debugAll()<br />
             </p>
 
             <p><strong><a href="'.$debugMethodsRootUrl.'dump" target="_blank">dump($var, $title = NULL, array $options = NULL, $return = FALSE)</a></strong></p>
             <p>
-            TD::dump()<br />
-            dump()<br />
-            d()<br />
+                <strong>d()</strong><br />
+                dump()<br />
+                TD::dump()<br />
             </p>
 
             <p><strong><a href="'.$debugMethodsRootUrl.'firelog" target="_blank">fireLog($var)</a></strong></p>
             <p>
-            TD::fireLog()<br />
-            fireLog()<br />
-            fl()<br />
+                <strong>fl()</strong><br />
+                fireLog()<br />
+                TD::fireLog()<br />
             </p>
 
             <p><strong><a href="'.$debugMethodsRootUrl.'log" target="_blank">log($str, $priority = ILogger::INFO)</a></strong></p>
             @priority: "debug", "info", "warning", "error", "exception", "critical"
             <p>
-            TD::log()<br />
-            l()<br />
+                <strong>l()</strong><br />
+                TD::log()<br />
             </p>
 
             <p><strong><a href="'.$debugMethodsRootUrl.'dump-all-variables-at-various-breakpoints" target="_blank">templateVars(get_defined_vars())</a></strong></p>
             <p>
-            TD::templateVars()<br />
-            templateVars()<br />
-            tv()<br />
+                <strong>tv()</strong><br />
+                templateVars()<br />
+                TD::templateVars()<br />
             </p>
 
             <p><strong><a href="'.$debugMethodsRootUrl.'timer" target="_blank">timer($name = NULL)</a></strong></p>
             <p>
-            TD::timer()<br />
-            timer()<br />
-            t()<br />
+                <strong>t()</strong><br />
+                timer()<br />
+                TD::timer()<br />
             </p>
             ';
             $out .= \TracyDebugger::generatedTimeSize('methodsInfo', \Tracy\Debugger::timer('methodsInfo'), strlen($out)) . '
