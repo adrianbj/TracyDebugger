@@ -2,10 +2,6 @@
 
 use Tracy\Dumper;
 
-/**
- * Custom PW panel
- */
-
 class RequestInfoPanel extends BasePanel {
 
     protected $icon;
@@ -84,6 +80,7 @@ class RequestInfoPanel extends BasePanel {
             </div>';
 
         $userLang = $this->wire('user')->language;
+
 
         /**
          * Panel sections
@@ -589,7 +586,7 @@ class RequestInfoPanel extends BasePanel {
             ';
             if($isPwPage && !\TracyDebugger::$inAdmin) {
                 $out .= '
-                <a onclick="closePanel()" href="'.$this->wire('config')->urls->admin.'page/edit/?id='.$p->id.'" title="Edit this page">
+                <a onclick="tracyClosePanel(\'RequestInfo\')" href="'.$this->wire('config')->urls->admin.'page/edit/?id='.$p->id.'" title="Edit this page">
                     <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 528.899 528.899" style="enable-background:new 0 0 528.899 528.899;" xml:space="preserve">
                         <path d="M328.883,89.125l107.59,107.589l-272.34,272.34L56.604,361.465L328.883,89.125z M518.113,63.177l-47.981-47.981   c-18.543-18.543-48.653-18.543-67.259,0l-45.961,45.961l107.59,107.59l53.611-53.611   C532.495,100.753,532.495,77.559,518.113,63.177z M0.3,512.69c-1.958,8.812,5.998,16.708,14.811,14.565l119.891-29.069   L27.473,390.597L0.3,512.69z" fill="#ee1d62"/>
                     </svg>
@@ -694,7 +691,13 @@ class RequestInfoPanel extends BasePanel {
         $imageStr = '';
         foreach($p as $field => $item) {
             $f = $this->wire('fields')->get($field);
-            if($item && $f && $f->type instanceof FieldTypeImage) {
+            // this is for nested repeaters
+            if($item && $f && $f->type instanceof FieldTypeRepeater) {
+                foreach($p->$f as $subpage) {
+                    $imageStr .= $this->getImages($subpage);
+                }
+            }
+            elseif($item && $f && $f->type instanceof FieldTypeImage) {
                 $inputfield = \TracyDebugger::getDataValue('imagesInFieldListValues') ? $f->getInputfield($p) : null;
                 foreach($item as $image) {
                     $imageStr .= $this->imageStr($inputfield, $image);

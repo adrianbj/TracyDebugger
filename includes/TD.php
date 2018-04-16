@@ -40,6 +40,7 @@ class TD extends TracyDebugger {
         $options[Dumper::DEPTH] = 99;
         $options[Dumper::TRUNCATE] = 999999;
         $options[Dumper::LOCATION] = Debugger::$showLocation;
+        $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
         $options[Dumper::LIVE] = true;
         static::dumpToBar($var, $title, $options);
     }
@@ -53,6 +54,7 @@ class TD extends TracyDebugger {
         $options[Dumper::DEPTH] = 6;
         $options[Dumper::TRUNCATE] = 999;
         $options[Dumper::LOCATION] = Debugger::$showLocation;
+        $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
         static::dumpToBar($var, $title, $options);
     }
 

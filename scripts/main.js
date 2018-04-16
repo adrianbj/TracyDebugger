@@ -12,6 +12,10 @@ function tracyResizePanel(panel, type) {
     }
 }
 
+function tracyClosePanel(panel) {
+    localStorage.setItem("remove-tracy-debug-panel-" + panel + "Panel", 1);
+}
+
 // panel rollup thanks to @tpr / @rolandtoth
 // jQuery .on() equivalent
 var filterEventHandler = function (selector, callback) {
