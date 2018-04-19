@@ -22,7 +22,6 @@ body.tracyHidden:before {
 
 
 #tracy-debug * {
-    pointer-events: auto; /* needed to make panels draggable - comes from bar.css but we change block to #tracy-debug-bar so need to add this here. */
     font: inherit;
 }
 

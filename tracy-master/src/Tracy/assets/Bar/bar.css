@@ -18,7 +18,6 @@ body#tracy-debug { /* in popup window */
 	position: absolute;
 	left: 0;
 	top: 0;
-	pointer-events: none;
 }
 
 #tracy-debug-bar * {
@@ -41,7 +40,6 @@ body#tracy-debug { /* in popup window */
 	white-space: inherit;
 	float: none;
 	clear: none;
-	pointer-events: auto;
 }
 
 #tracy-debug-bar *:before,

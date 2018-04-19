@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.10.18',
+            'version' => '4.10.19',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -858,6 +858,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     function unhideBar() {
                         document.getElementById("tracy-debug").style.display = "block";
                         document.getElementById("tracy-show-button").style.display = "none";
+                        window.Tracy.Debug.bar.restorePosition();
                         document.cookie = "tracyHidden=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
                         document.cookie = "tracyShow=1; path=/";';
                         if($this->showServerTypeIndicator() && $this->data['styleAdminType'] == 'custom') {
@@ -2421,7 +2422,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldInteger");
         $f->attr('name', 'panelZindex');
-        $f->label = __('Starting zIndex for panels', __FILE__);
+        $f->label = __('Starting z-index for panels', __FILE__);
         $f->description = __('Adjust if you find panels are below/above elements that you don\'t want.', __FILE__);
         $f->notes = __('Default: 100', __FILE__);
         $f->columnWidth = 33;
