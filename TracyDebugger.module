@@ -92,6 +92,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'moduleSettings' => 'Module Settings',
         'templateSettings' => 'Template Settings',
         'fieldSettings' => 'Field Settings',
+        'fieldCode' => 'Field Code',
         'pageInfo' => 'Page Info',
         'languageInfo' => 'Language Info',
         'templateInfo' => 'Template Info',

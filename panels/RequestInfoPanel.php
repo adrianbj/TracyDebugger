@@ -122,6 +122,30 @@ class RequestInfoPanel extends BasePanel {
             }
         }
 
+        // Field Settings
+        if(in_array('fieldCode', $panelSections) && $isPwPage) {
+            if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessField') {
+                $fieldCode = '<pre>';
+                $fieldCode .= "\$form->add([\n";
+                $field = $this->wire('fields')->get((int)$this->wire('input')->get('id'));
+                $fieldCode .= "\t'type' => '" . (string)$field->getInputfield(new NullPage()) . "',\n";
+                $fieldCode .= "\t'name' => '$field->name',\n";
+                $fieldCode .= "\t'label' => __('$field->label'),\n";
+                foreach($field->getArray() as $k => $v) {
+                    if(is_string($v)) $fieldCode .= "\t'$k' => '$v',\n";
+                    elseif(is_array($v)) {
+                        $fieldCode .= "\t'$k' => [\n";
+                        foreach($v as $key=>$val) {
+                            $fieldCode .= "\t\t'$val',\n";
+                        }
+                        $fieldCode .= "\t],\n";
+                    }
+                }
+                $fieldCode .= "]);\n";
+                $fieldCode .= '</pre>';
+            }
+        }
+
         // Template Settings
         if(in_array('templateSettings', $panelSections) && $isPwPage) {
             $templateSettings = '';
