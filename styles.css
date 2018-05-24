@@ -197,6 +197,10 @@ body.tracyHidden:before {
     padding-left: 5px !important;
 }
 
+#tracy-debug input[type="checkbox"] {
+    height: 12px !important;
+}
+
 #tracy-debug label {
     display: inline-block !important;
     margin:0 !important;
