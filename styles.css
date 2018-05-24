@@ -189,7 +189,7 @@ body.tracyHidden:before {
     padding-left: initial !important;
 }
 
-#tracy-debug input:not(.ace_search_field) {
+#tracy-debug input:not([type="checkbox"]):not(.ace_search_field) {
     height: 18px !important;
     color: #333333;
     background-color: #FFFFFF !important;
