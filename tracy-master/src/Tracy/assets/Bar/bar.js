@@ -232,7 +232,10 @@
 
 			draggable(this.elem, {
 				handles: this.elem.querySelectorAll('li:first-child'),
-				draggedClass: 'tracy-dragged'
+				draggedClass: 'tracy-dragged',
+				stop: () => {
+					this.savePosition();
+				}
 			});
 
 			this.elem.addEventListener('mousedown', e => {
@@ -241,6 +244,10 @@
 
 			this.initTabs(this.elem);
 			this.restorePosition();
+
+			(new MutationObserver(() => {
+				this.restorePosition();
+			})).observe(this.elem, {childList: true, characterData: true, subtree: true});
 		}
 
 
@@ -316,19 +323,22 @@
 		reposition(deltaX, deltaY) {
 			var pos = getPosition(this.elem);
 			setPosition(this.elem, {left: pos.left + (deltaX || 0), top: pos.top + (deltaY || 0)});
+			this.savePosition();
 		}
 
 
 		savePosition() {
-			if(document.getElementById('tracy-debug').style.display == 'none') return;
-			var pos = getPosition(this.elem);
-			localStorage.setItem(this.id, JSON.stringify(this.isAtTop() ? {right: pos.right, top: pos.top} : {right: pos.right, bottom: pos.bottom}));
+			if (document.getElementById('tracy-debug').style.display !== 'none') {
+				var pos = getPosition(this.elem);
+				localStorage.setItem(this.id, JSON.stringify(this.isAtTop() ? {right: pos.right, top: pos.top} : {right: pos.right, bottom: pos.bottom}));
+			}
 		}
 
 
 		restorePosition() {
 			var pos = JSON.parse(localStorage.getItem(this.id));
 			setPosition(this.elem, pos || {right: 0, bottom: 0});
+			this.savePosition();
 		}
 
 
@@ -373,7 +383,6 @@
 				panel.parentNode.removeChild(panel);
 			});
 
-			Debug.bar.savePosition();
 			var ajaxBar = document.getElementById('tracy-ajax-bar');
 			if (ajaxBar) {
 				ajaxBar.parentNode.removeChild(ajaxBar);
@@ -383,7 +392,6 @@
 			evalScripts(Debug.layer);
 			ajaxBar = document.getElementById('tracy-ajax-bar');
 			Debug.bar.elem.appendChild(ajaxBar);
-			Debug.bar.restorePosition();
 
 			forEach(document.querySelectorAll('.tracy-panel'), panel => {
 				if (!Debug.panels[panel.id]) {
@@ -413,7 +421,6 @@
 			});
 
 			window.addEventListener('unload', () => {
-				Debug.bar.savePosition();
 				for (var id in Debug.panels) {
 					Debug.panels[id].savePosition();
 				}

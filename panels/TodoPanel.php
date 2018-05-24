@@ -11,7 +11,7 @@ class TodoPanel extends BasePanel {
         if(\TracyDebugger::isAdditionalBar()) return;
         \Tracy\Debugger::timer('todo');
 
-        $pathReplace = \TracyDebugger::getDataValue('todoScanModules') == 1 ? $this->wire('config')->paths->root : $this->wire('config')->paths->templates;
+        $pathReplace = \TracyDebugger::getDataValue('todoScanModules') == 1 || \TracyDebugger::getDataValue('todoScanAssets') == 1 ? $this->wire('config')->paths->root : $this->wire('config')->paths->templates;
 
         $numEntries = 0;
         $thisPageNumEntries = 0;
@@ -149,6 +149,8 @@ class TodoPanel extends BasePanel {
         $items = $this->scanDirectories($this->wire('config')->paths->templates);
         if(\TracyDebugger::getDataValue('todoScanModules') == 1) $moduleItems = $this->scanDirectories($this->wire('config')->paths->siteModules);
         if(isset($moduleItems)) $items = array_merge($items, $moduleItems);
+        if(\TracyDebugger::getDataValue('todoScanAssets') == 1) $assetsItems = $this->scanDirectories($this->wire('config')->paths->assets);
+        if(isset($assetsItems)) $items = array_merge($items, $assetsItems);
         return $items;
     }
 

@@ -51,6 +51,14 @@ class TD extends TracyDebugger {
      */
     public static function barDumpBig($var, $title = NULL) {
         if(self::tracyUnavailable()) return false;
+        if(is_array($title)) {
+            $options = $title;
+            $title = NULL;
+        }
+        if(is_array($options) && !static::has_string_keys($options)) {
+            $options['maxDepth'] = $options[0];
+            if(isset($options[1])) $options['maxLength'] = $options[1];
+        }
         $options[Dumper::DEPTH] = 6;
         $options[Dumper::TRUNCATE] = 999;
         $options[Dumper::LOCATION] = Debugger::$showLocation;

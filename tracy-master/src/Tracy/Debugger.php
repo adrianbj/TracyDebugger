@@ -40,7 +40,7 @@ class Debugger
 	/** @var bool */
 	private static $enabled = false;
 
-	/** @var string reserved memory; also prevents double rendering */
+	/** @var string|null reserved memory; also prevents double rendering */
 	private static $reserved;
 
 	/** @var int initial output buffer level */
@@ -54,7 +54,7 @@ class Debugger
 	/** @var bool disables the @ (shut-up) operator so that notices and warnings are no longer hidden */
 	public static $scream = false;
 
-	/** @var array of callables specifies the functions that are automatically called after fatal error */
+	/** @var callable[] functions that are automatically called after fatal error */
 	public static $onFatalError = [];
 
 	/********************* Debugger::dump() ****************d*g**/
@@ -73,7 +73,7 @@ class Debugger
 
 	/********************* logging ****************d*g**/
 
-	/** @var string name of the directory where errors should be logged */
+	/** @var string|null name of the directory where errors should be logged */
 	public static $logDirectory;
 
 	/** @var int  log bluescreen in production mode for this error severity */
@@ -97,7 +97,7 @@ class Debugger
 	public static $time;
 
 	/** @var string URI pattern mask to open editor */
-	public static $editor = 'editor://open/?file=%file&line=%line';
+	public static $editor = 'editor://%action/?file=%file&line=%line&search=%search&replace=%replace';
 
 	/** @var array replacements in path */
 	public static $editorMapping = [];
@@ -152,9 +152,9 @@ class Debugger
 
 	/**
 	 * Enables displaying or logging errors and exceptions.
-	 * @param  mixed   production, development mode, autodetection or IP address(es) whitelist.
-	 * @param  string  error log directory
-	 * @param  string  administrator email; enables email sending in production mode
+	 * @param  mixed   $mode  production, development mode, autodetection or IP address(es) whitelist.
+	 * @param  string  $logDirectory  error log directory
+	 * @param  string  $email  administrator email; enables email sending in production mode
 	 * @return void
 	 */
 	public static function enable($mode = null, $logDirectory = null, $email = null)
@@ -192,7 +192,8 @@ class Debugger
 			ini_set('html_errors', '0');
 			ini_set('log_errors', '0');
 
-		} elseif (ini_get('display_errors') != !self::$productionMode // intentionally ==
+		} elseif (
+			ini_get('display_errors') != !self::$productionMode // intentionally ==
 			&& ini_get('display_errors') !== (self::$productionMode ? 'stderr' : 'stdout')
 		) {
 			self::exceptionHandler(new \RuntimeException("Unable to set 'display_errors' because function ini_set() is disabled."));
@@ -297,7 +298,7 @@ class Debugger
 
 	/**
 	 * Handler to catch uncaught exception.
-	 * @param  \Exception|\Throwable
+	 * @param  \Exception|\Throwable  $exception
 	 * @return void
 	 * @internal
 	 */
@@ -384,7 +385,7 @@ class Debugger
 
 	/**
 	 * Handler to catch warnings and notices.
-	 * @return bool   false to call normal error handler, null otherwise
+	 * @return bool|null   false to call normal error handler, null otherwise
 	 * @throws ErrorException
 	 * @internal
 	 */
@@ -420,7 +421,9 @@ class Debugger
 			}
 			return null;
 
-		} elseif (!self::$productionMode && !isset($_GET['_tracy_skip_error'])
+		} elseif (
+			!self::$productionMode
+			&& !isset($_GET['_tracy_skip_error'])
 			&& (is_bool(self::$strictMode) ? self::$strictMode : ((self::$strictMode & $severity) === $severity))
 		) {
 			$e = new ErrorException($message, 0, $severity, $file, $line);
@@ -541,8 +544,8 @@ class Debugger
 	/**
 	 * Dumps information about a variable in readable format.
 	 * @tracySkipLocation
-	 * @param  mixed  variable to dump
-	 * @param  bool   return output instead of printing it? (bypasses $productionMode)
+	 * @param  mixed  $var  variable to dump
+	 * @param  bool   $return  return output instead of printing it? (bypasses $productionMode)
 	 * @return mixed  variable itself or dump
 	 */
 	public static function dump($var, $return = false)
@@ -569,7 +572,7 @@ class Debugger
 
 	/**
 	 * Starts/stops stopwatch.
-	 * @param  string  name
+	 * @param  string  $name
 	 * @return float   elapsed seconds
 	 */
 	public static function timer($name = null)
@@ -585,9 +588,9 @@ class Debugger
 	/**
 	 * Dumps information about a variable in Tracy Debug Bar.
 	 * @tracySkipLocation
-	 * @param  mixed  variable to dump
-	 * @param  string optional title
-	 * @param  array  dumper options
+	 * @param  mixed  $var
+	 * @param  string $title
+	 * @param  array  $options
 	 * @return mixed  variable itself
 	 */
 	public static function barDump($var, $title = null, array $options = null)
@@ -609,7 +612,7 @@ class Debugger
 
 	/**
 	 * Logs message or exception.
-	 * @param  string|\Exception|\Throwable
+	 * @param  string|\Exception|\Throwable  $message
 	 * @return mixed
 	 */
 	public static function log($message, $priority = ILogger::INFO)
@@ -620,8 +623,8 @@ class Debugger
 
 	/**
 	 * Sends message to FireLogger console.
-	 * @param  mixed   message to log
-	 * @return bool    was successful?
+	 * @param  mixed  $message
+	 * @return bool   was successful?
 	 */
 	public static function fireLog($message)
 	{
@@ -633,7 +636,7 @@ class Debugger
 
 	/**
 	 * Detects debug mode by IP address.
-	 * @param  string|array  IP addresses or computer names whitelist detection
+	 * @param  string|array  $list  IP addresses or computer names whitelist detection
 	 * @return bool
 	 */
 	public static function detectDebugMode($list = null)

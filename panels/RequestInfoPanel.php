@@ -598,6 +598,7 @@ class RequestInfoPanel extends BasePanel {
             }
         }
 
+        $out .= '<br />';
         $out .= \TracyDebugger::generatedTimeSize('requestInfo', \Tracy\Debugger::timer('requestInfo'), strlen($out));
         $out .= '</div>';
 

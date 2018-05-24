@@ -125,10 +125,6 @@ body.tracyHidden:before {
     user-select: none;
 }
 
-#tracy-debug input:not(.ace_search_field) {
-    height: 18px !important;
-}
-
 #tracy-debug input[type="checkbox"],
 #tracy-debug input[type="radio"] {
     width: 12px !important;
@@ -194,6 +190,8 @@ body.tracyHidden:before {
 }
 
 #tracy-debug input:not(.ace_search_field) {
+    height: 18px !important;
+    color: #333333;
     background-color: #FFFFFF !important;
     border: 1px solid #D2D2D2 !important;
     padding-left: 5px !important;

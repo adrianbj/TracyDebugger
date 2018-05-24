@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.10.19',
+            'version' => '4.10.20',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -215,6 +215,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "userSwitcherRestricted" => null,
             "todoIgnoreDirs" => 'git, svn, images, img, errors, sass-cache, node_modules',
             "todoScanModules" => null,
+            "todoScanAssets" => null,
             "todoAllowedExtensions" => 'php, module, inc, txt, latte, html, htm, md, css, scss, less, js',
             "variablesShowPwObjects" => null,
             "alwaysShowDebugTools" => 1,
@@ -2676,7 +2677,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Ignore directories', __FILE__);
         $f->description = __('Comma separated list of terms used to match folders to be ignored when scanning for ToDo items.', __FILE__);
         $f->notes = __('Default: git, svn, images, img, errors, sass-cache, node_modules', __FILE__);
-        $f->columnWidth = 40;
+        $f->columnWidth = 50;
         if($data['todoIgnoreDirs']) $f->attr('value', $data['todoIgnoreDirs']);
         $fieldset->add($f);
 
@@ -2685,7 +2686,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Allowed extensions', __FILE__);
         $f->description = __('Comma separated list file extensions to be scanned for ToDo items.', __FILE__);
         $f->notes = __('Default: php, module, inc, txt, latte, html, htm, md, css, scss, less, js', __FILE__);
-        $f->columnWidth = 40;
+        $f->columnWidth = 50;
         if($data['todoAllowedExtensions']) $f->attr('value', $data['todoAllowedExtensions']);
         $fieldset->add($f);
 
@@ -2694,8 +2695,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Scan site modules', __FILE__);
         $f->description = __('Check to allow the ToDo to scan the /site/modules directory. Otherwise it will only scan /site/templates.', __FILE__);
         $f->notes = __('Not recommended unless you are a regular module developer.', __FILE__);
-        $f->columnWidth = 20;
+        $f->columnWidth = 50;
         $f->attr('checked', $data['todoScanModules'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'todoScanAssets');
+        $f->label = __('Scan site assets', __FILE__);
+        $f->description = __('Check to allow the ToDo to scan the /site/assets directory. Otherwise it will only scan /site/templates.', __FILE__);
+        $f->notes = __('If you check this, you should add files, logs, cache, sessions and other relevant terms to the `Ignore Directories` field.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['todoScanAssets'] == '1' ? 'checked' : '' );
         $fieldset->add($f);
 
         // ProcessWire and Tracy Log Panels

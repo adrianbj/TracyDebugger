@@ -300,7 +300,7 @@ body#tracy-debug .tracy-panel { /* in popup window */
 }
 
 
-#tracy-debug .tracy-content {
+#tracy-debug .tracy-inner-container {
 	min-width: 100%;
 	float: left;
 }
