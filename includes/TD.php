@@ -55,7 +55,7 @@ class TD extends TracyDebugger {
             $options = $title;
             $title = NULL;
         }
-        if(is_array($options) && !static::has_string_keys($options)) {
+        if(isset($options) && is_array($options) && !static::has_string_keys($options)) {
             $options['maxDepth'] = $options[0];
             if(isset($options[1])) $options['maxLength'] = $options[1];
         }
@@ -76,7 +76,7 @@ class TD extends TracyDebugger {
             $options = $title;
             $title = NULL;
         }
-        if(is_array($options) && !static::has_string_keys($options)) {
+        if(isset($options) && is_array($options) && !static::has_string_keys($options)) {
             $options['maxDepth'] = $options[0];
             if(isset($options[1])) $options['maxLength'] = $options[1];
         }
@@ -114,7 +114,7 @@ class TD extends TracyDebugger {
             $options = $title;
             $title = NULL;
         }
-        if(is_array($options) && !static::has_string_keys($options)) {
+        if(isset($options) && is_array($options) && !static::has_string_keys($options)) {
             $options['maxDepth'] = $options[0];
             if(isset($options[1])) $options['maxLength'] = $options[1];
         }
