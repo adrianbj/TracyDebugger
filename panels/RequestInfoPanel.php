@@ -425,7 +425,11 @@ class RequestInfoPanel extends BasePanel {
                 </tr>
                 <tr>
                     <td>urlSegments</td>
-                    <td>'.($template->urlSegments === 1 ? 'Enabled' : 'Disabled').'</td>
+                    <td>'.($template->urlSegments === 1 || is_array($template->urlSegments) ? 'Enabled' : 'Disabled').'</td>
+                </tr>
+                <tr>
+                    <td>urlSegmentsList (Segments Allowed)</td>
+                    <td>'.(is_array($template->urlSegments) ? Dumper::toHtml($template->urlSegments) : '').'</td>
                 </tr>
                 <tr>
                     <td>noChildren (Children Allowed)</td>
