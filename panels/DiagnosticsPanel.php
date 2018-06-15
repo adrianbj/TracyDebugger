@@ -366,6 +366,16 @@ class DiagnosticsPanel extends BasePanel {
                     "<td>".$this->wire('database')->getAttribute(constant("PDO::ATTR_$val"))."</td>" .
                     "</tr>";
             }
+
+            $query = $this->wire('database')->prepare('SHOW STATUS WHERE variable_name LIKE "Threads_%" OR variable_name = "Connections"');
+            $query->execute();
+            foreach($query->fetchAll() as $row) {
+                $dbInfo .= "\n<tr>" .
+                    "<td>".$row[0]."</td>" .
+                    "<td>".$row[1]."</td>" .
+                    "</tr>";
+            }
+
             $dbInfo .= $sectionEnd;
 
             $out .= '

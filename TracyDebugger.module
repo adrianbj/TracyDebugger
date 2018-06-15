@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.10.23',
+            'version' => '4.10.24',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -198,6 +198,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "userBarTopBottom" => 'bottom',
             "userBarLeftRight" => 'left',
             "showPanelLabels" => null,
+            "debugbarFixedPosition" => null,
             "panelZindex" => 100,
             "styleWhere" => array(),
             "styleAdminElements" => "body::before {\n\tcontent: \"[type]\";\n\tbackground: [color];\n\tposition: fixed;\n\tleft: 0;\n\tbottom: 100%;\n\tcolor: #ffffff;\n\twidth: 100vh;\n\tpadding: 0;\n\ttext-align: center;\n\tfont-weight: 600;\n\ttext-transform: uppercase;\n\ttransform: rotate(90deg);\n\ttransform-origin: bottom left;\n\tz-index: 999999;\n\tfont-family: sans-serif;\n\tfont-size: 11px;\n\theight: 13px;\n\tline-height: 13px;\npointer-events: none;\n}\n",
@@ -797,6 +798,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
                 if(!static::$inAdmin && (in_array('fileEditor', static::$showPanels) || (in_array('processwireInfo', static::$showPanels) && count($this->data['customPWInfoPanelLinks'])))) {
                     Debugger::$customCssStr .= '<link id="fontAwesomeStyles" type="text/css" href="'.$this->wire('config')->urls->root . 'wire/templates-admin/styles/font-awesome/css/font-awesome.min.css" rel="stylesheet" />';
+                }
+
+                if($this->data['debugbarFixedPosition']) {
+                    Debugger::$customCssStr .= '
+                    <style>
+                        #tracy-debug-bar { position:fixed !important; left:auto !important; top:auto !important; right:0 !important; bottom:0 !important; }
+                        #tracy-debug-bar li:first-child {cursor: pointer !important;}
+                    </style>';
                 }
 
                 // override Tracy core default zIndex for panels
@@ -2405,11 +2414,20 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'debugbarFixedPosition');
+        $f->label = __('Fixed Position', __FILE__);
+        $f->description = __('Forces debug bar to stay at bottom right of viewport.', __FILE__);
+        $f->notes = __('Normally the debug bar position is draggable. This option locked it in position.', __FILE__);
+        $f->columnWidth = 25;
+        $f->attr('checked', $data['debugbarFixedPosition'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'hideDebugBar');
         $f->label = __('Hide debug bar by default', __FILE__);
         $f->description = __('Hide the debug bar by default on page load.', __FILE__);
         $f->notes = __('This results in the bar being hidden (unless an error is reported), and replaced with a small "show bar" &#8689; icon.', __FILE__);
-        $f->columnWidth = 33;
+        $f->columnWidth = 25;
         $f->attr('checked', $data['hideDebugBar'] == '1' ? 'checked' : '' );
         $fieldset->add($f);
 
@@ -2418,7 +2436,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Show panel labels', __FILE__);
         $f->description = __('Show the labels next to each panel.', __FILE__);
         $f->notes = __('Unchecking this will make the debugger bar much more compact.', __FILE__);
-        $f->columnWidth = 34;
+        $f->columnWidth = 25;
         $f->attr('checked', $data['showPanelLabels'] == '1' ? 'checked' : '' );
         $fieldset->add($f);
 
@@ -2427,7 +2445,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Starting z-index for panels', __FILE__);
         $f->description = __('Adjust if you find panels are below/above elements that you don\'t want.', __FILE__);
         $f->notes = __('Default: 100', __FILE__);
-        $f->columnWidth = 33;
+        $f->columnWidth = 25;
         if($data['panelZindex']) $f->attr('value', $data['panelZindex']);
         $fieldset->add($f);
 

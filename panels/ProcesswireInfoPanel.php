@@ -279,8 +279,7 @@ class ProcesswireInfoPanel extends BasePanel {
             //php settings
             foreach(array('allow_url_fopen', 'max_execution_time', 'max_input_nesting_level', 'max_input_time', 'max_input_vars', 'memory_limit', 'post_max_size', 'upload_max_filesize', 'xdebug', 'xdebug.max_nesting_level') as $setting) {
                 if($setting == 'max_execution_time') {
-                    $max_execution_time = trim(ini_get('max_execution_time'));
-                    $can_change = set_time_limit($max_execution_time);
+                    $can_change = set_time_limit((int)trim(ini_get('max_execution_time')));
                 }
                 $serverSettings .= $setting . ": " . ini_get($setting);
                 if($setting == 'max_execution_time') {
