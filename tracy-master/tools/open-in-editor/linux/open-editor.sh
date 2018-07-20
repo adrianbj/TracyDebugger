@@ -30,7 +30,7 @@ declare -A mapping
 # Find and return URI parameter value. Or nothing, if the param is missing.
 # Arguments: 1) URI, 2) Parameter name.
 function get_param {
-	echo "$1" | sed -n -r "s/.*$2=([^&]+).*/\1/ip"
+	echo "$1" | sed -n -r "s/.*$2=([^&]*).*/\1/ip"
 }
 
 if [[ -z "$editor" ]]; then

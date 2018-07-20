@@ -237,7 +237,7 @@ class Dumper
 		$editorAttributes = '';
 		if ($options[self::LOCATION] & self::LOCATION_CLASS) {
 			$rc = $var instanceof \Closure ? new \ReflectionFunction($var) : new \ReflectionClass($var);
-			$editor = $rc->getFileName() ? Helpers::editorUri($rc->getFileName(), $rc->getStartLine()) : null;
+			$editor = Helpers::editorUri($rc->getFileName(), $rc->getStartLine());
 			if ($editor) {
 				$editorAttributes = Helpers::formatHtml(
 					' title="Declared in file % on line %" data-tracy-href="%"',
