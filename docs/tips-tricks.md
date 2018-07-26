@@ -1,3 +1,0 @@
-# Tips & Tricks
-
-## Coming soon!
