@@ -269,72 +269,98 @@ class ProcesswireInfoPanel extends BasePanel {
                 });
             </script>
             ';
-            $eol = " <br />\n";
-            $serverInfo = "ProcessWire: " . $this->wire('config')->version . $eol;
-            $serverInfo .= "PHP: " . phpversion() . $eol;
-            if(isset($_SERVER['SERVER_SOFTWARE'])) $serverInfo .= "Webserver: " . current(explode("PHP", $_SERVER['SERVER_SOFTWARE'])) . $eol;
-            $serverInfo .= "MySQL: " . $this->wire('database')->query('select version()')->fetchColumn() . $eol . $eol;
 
-            $serverSettings = "";
+            // Server Details
+            $versionsDetails = array();
+            $versionsDetails['Server Details']['headings'] = array('Software', 'Version');
+            $versionsDetails['Server Details']['items'] = array();
+            $versionsDetails['Server Details']['items']['ProcessWire'] = $this->wire('config')->version;
+            $versionsDetails['Server Details']['items']['PHP'] = phpversion();
+            if(isset($_SERVER['SERVER_SOFTWARE'])) $versionsDetails['Server Details']['items']['Webserver'] = current(explode("PHP", $_SERVER['SERVER_SOFTWARE']));
+            $versionsDetails['Server Details']['items']['MySQL'] = $this->wire('database')->query('select version()')->fetchColumn();
+
+
+            // Server Settings
+            $versionsDetails['Server Settings']['headings'] = array('Parameter', 'Value');
+            $versionsDetails['Server Settings']['items'] = array();
             //php settings
             foreach(array('allow_url_fopen', 'max_execution_time', 'max_input_nesting_level', 'max_input_time', 'max_input_vars', 'memory_limit', 'post_max_size', 'upload_max_filesize', 'xdebug', 'xdebug.max_nesting_level') as $setting) {
                 if($setting == 'max_execution_time') {
                     $can_change = set_time_limit((int)trim(ini_get('max_execution_time')));
                 }
-                $serverSettings .= $setting . ": " . ini_get($setting);
+                $versionsDetails['Server Settings']['items'][$setting] = ini_get($setting);
                 if($setting == 'max_execution_time') {
-                    $serverSettings .= isset($can_change) ? ' (changeable)' : ' (not changeable)';
+                    $versionsDetails['Server Settings']['items'][$setting] .= isset($can_change) ? ' (changeable)' : ' (not changeable)';
                 }
-                $serverSettings .= $eol;
             }
-            $serverSettings .= $eol;
 
             // apache modules
             if(function_exists('apache_get_modules')) $apacheModules = apache_get_modules();
             foreach(array('mod_rewrite', 'mod_security') as $apacheModule) {
                 if(isset($apacheModules)) {
-                    $serverSettings .= $apacheModule . ": " . (in_array($apacheModule, $apacheModules) ? '1' : false . ($apacheModule == 'mod_security' ? '*confirmed off' : '')) . $eol;
+                    $versionsDetails['Server Settings'][$apacheModule] = (in_array($apacheModule, $apacheModules) ? '1' : false . ($apacheModule == 'mod_security' ? '*confirmed off' : ''));
                 }
                 // fallback if apache_get_modules() is not available
                 else {
                     // this is a more reliable fallback for mod_rewrite
                     if($apacheModule == 'mod_rewrite' && isset($_SERVER["HTTP_MOD_REWRITE"])) {
-                        $serverSettings .= $apacheModule . ": " . ($_SERVER["HTTP_MOD_REWRITE"] ? '1' : false) . $eol;
+                        $versionsDetails['Server Settings']['items'][$apacheModule] = ($_SERVER["HTTP_MOD_REWRITE"] ? '1' : false);
                     }
                     // this is for mod_security and any others specified, although it's still not very reliable for mod_security
                     else {
                         ob_start();
                         phpinfo(INFO_MODULES);
                         $contents = ob_get_clean();
-                        $serverSettings .= $apacheModule . ": " . (strpos($contents, $apacheModule) ? '1' : false) . $eol;
+                        $versionsDetails['Server Settings']['items'][$apacheModule] = (strpos($contents, $apacheModule) ? '1' : false);
                     }
                 }
             }
-            $serverSettings .= $eol;
+
             // image settings
             if(function_exists('gd_info')) {
                 $gd  = gd_info();
-                $serverSettings .= "GD: " . (isset($gd['GD Version']) ? $gd['GD Version'] : $this->_('Version-Info not available')) . $eol;
-                $serverSettings .= "GIF: " . (isset($gd['GIF Read Support']) && isset($gd['GIF Create Support']) ? $gd['GIF Create Support'] : false) . $eol;
-                $serverSettings .= "JPG: " . (isset($gd['JPEG Support']) ? $gd['JPEG Support'] : false) . $eol;
-                $serverSettings .= "PNG: " . (isset($gd['PNG Support']) ? $gd['PNG Support'] : false) . $eol;
+                $versionsDetails['Server Settings']['items']['GD'] = (isset($gd['GD Version']) ? $gd['GD Version'] : $this->_('Version-Info not available'));
+                $versionsDetails['Server Settings']['items']['GIF'] = (isset($gd['GIF Read Support']) && isset($gd['GIF Create Support']) ? $gd['GIF Create Support'] : false);
+                $versionsDetails['Server Settings']['items']['JPG'] = (isset($gd['JPEG Support']) ? $gd['JPEG Support'] : false);
+                $versionsDetails['Server Settings']['items']['PNG'] = (isset($gd['PNG Support']) ? $gd['PNG Support'] : false);
 
             }
-            $serverSettings .= $eol;
-            $serverSettings .= "EXIF Support: " . (function_exists('exif_read_data') ? '1' : false) . $eol;
-            $serverSettings .= "FreeType: " . (isset($gd['FreeType Support']) ? $gd['FreeType Support'] : false) . $eol;
-            $serverSettings .= "Imagick Extension: " . (class_exists('Imagick') ? '1' : false) . $eol;
 
-            $serverSettings .= $eol;
+            $versionsDetails['Server Settings']['items']['EXIF Support'] = (function_exists('exif_read_data') ? '1' : false);
+            $versionsDetails['Server Settings']['items']['FreeType'] = (isset($gd['FreeType Support']) ? $gd['FreeType Support'] : false);
+            $versionsDetails['Server Settings']['items']['Imagick Extension'] = (class_exists('Imagick') ? '1' : false);
 
-            $moduleInfo = '';
+
+            // Module Details
+            $versionsDetails['Module Details']['headings'] = array('Module ClassName', 'Version');
+            $versionsDetails['Module Details']['items'] = array();
             foreach($this->wire('modules')->sort("className") as $name => $label) {
                 $flags = $this->wire('modules')->getFlags($name);
                 $info = $this->wire('modules')->getModuleInfoVerbose($name);
                 if($info['core']) continue;
-                $moduleInfo .= $name . ": " . $this->wire('modules')->formatVersion($info['version']) . $eol;
+                $versionsDetails['Module Details']['items'][$name] = $this->wire('modules')->formatVersion($info['version']);
             }
-            $githubVersionsList = '<details><summary><strong>Server Details</strong></summary>' . $serverInfo . '</details><details><summary><strong>Server Settings</strong></summary> ' . $serverSettings . '</details><details><summary><strong>Module Details</strong></summary> ' . $moduleInfo . '</details>';
+
+            $githubVersionsList = '';
+            $textVersionsList = '';
+            foreach($versionsDetails as $name => $details) {
+                $githubDetailsStr = "\n|" . implode('|', $details['headings']) . "|\n|------:|:-------|\n";
+                $textDetailsStr = '';
+                foreach($details['items'] as $key => $val) {
+                    $githubDetailsStr .= "|" . $key . "|" . $val . "|\n";
+                    $textDetailsStr .= $key . ': ' . $val .  "\n";
+                }
+
+                $textVersionsList .= strtoupper($name) . "\n" . $textDetailsStr . "\n\n";
+
+                if($name == 'Server Details') {
+                    $githubVersionsList .= '<strong>' . $name . '</strong>' . $githubDetailsStr;
+                }
+                else {
+                    $githubVersionsList .= '<details><summary><strong>' . $name . '</strong></summary>' . $githubDetailsStr . '</details>';
+                }
+            }
+
             $versionsList .= '
             <p>
                 <button class="tracyCopyBtn" data-clipboard-text="'.$githubVersionsList.'">
@@ -344,7 +370,8 @@ class ProcesswireInfoPanel extends BasePanel {
                     Copy plain text
                 </button>
             </p>
-            <p><textarea id="versionsListTextarea" rows="5" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="font-size:12px; width:100%; resize:vertical; padding:3px !important">'.str_replace(" <br />", "", $serverInfo . $serverSettings . $moduleInfo).'</textarea></p>';
+            <p><textarea id="versionsListTextarea" rows="5" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="font-size:12px; width:100%; resize:vertical; padding:3px !important">'.$textVersionsList.'</textarea></p>';
+
         }
 
 
