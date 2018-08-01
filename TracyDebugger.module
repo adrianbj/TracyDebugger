@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.10.25',
+            'version' => '4.10.26',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1089,7 +1089,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // Exit now if "enabled" not true from init()
         if(!$this->tracyEnabled) return;
 
-
         // USER BAR PAGE VERSIONS
         if(!static::$inAdmin && $this->wire('user')->hasPermission('tracy-page-versions') && $this->data['showUserBar'] && in_array('pageVersions', $this->data['userBarFeatures']) && !$this->wire('config')->ajax && $this->wire('user')->isLoggedin()) {
             static::$pageVersion = $this->findPageTemplateInCookie($this->wire('input')->cookie->tracyPageVersion);
@@ -2117,6 +2116,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public function getModuleConfigInputfields(array $data) {
 
+        // load ACE editor for Custom PHP panel code entry
+        $this->wire('config')->scripts->append($this->wire('config')->urls->TracyDebugger . "scripts/ace-editor/ace.js");
+        $this->wire('config')->scripts->append($this->wire('config')->urls->TracyDebugger . "scripts/config-load-ace.js");
+
         // convert PW Info panel custom links from path back to ID
         if(isset($data['customPWInfoPanelLinks'])) {
             $customPWInfoPanelLinkIds = array();
@@ -3028,6 +3031,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         });
 
         return $wrapper;
+
     }
 
 }
