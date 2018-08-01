@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.10.27',
+            'version' => '4.10.28',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -3028,6 +3028,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
             $data['customPWInfoPanelLinks'] = $customPWInfoPanelLinkPaths;
             $event->arguments(1, $data);
+        });
+
+        // if custom php panel code was changed, then scroll down to that setting field after saving
+        $this->wire('modules')->addHookAfter('saveModuleConfigData', null, function($event) {
+            if($this->wire('input')->get->name !== 'TracyDebugger') return;
+            $data = $event->arguments[1];
+            if($data['customPhpCode'] != $this->data['customPhpCode']) $this->wire('session')->redirect($this->inputUrl(true).'#wrap_Inputfield_customPhpCode');
         });
 
         return $wrapper;
