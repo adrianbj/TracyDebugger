@@ -354,10 +354,10 @@ class ProcesswireInfoPanel extends BasePanel {
                 $textVersionsList .= strtoupper($name) . "\n" . $textDetailsStr . "\n\n";
 
                 if($name == 'Server Details') {
-                    $githubVersionsList .= '<strong>' . $name . '</strong>' . $githubDetailsStr;
+                    $githubVersionsList .= "<strong>" . $name . "</strong>\n" . $githubDetailsStr;
                 }
                 else {
-                    $githubVersionsList .= '<details><summary><strong>' . $name . '</strong></summary>' . $githubDetailsStr . '</details>';
+                    $githubVersionsList .= "<details><summary><strong>" . $name . "</strong></summary>\n" . $githubDetailsStr . "</details>";
                 }
             }
 
