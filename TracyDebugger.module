@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.10.31',
+            'version' => '4.10.32',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -2116,6 +2116,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public function getModuleConfigInputfields(array $data) {
 
+        // if customPHP code was changed then session var was set to tell us to redirect to url with hash
+        if($this->wire('session')->scrolltoCustomPhp === 1) {
+            $this->wire('session')->remove('scrolltoCustomPhp');
+            $this->wire('session')->redirect($this->inputUrl(true).'#wrap_Inputfield_customPhpCode');
+        }
+
         // load ACE editor for Custom PHP panel code entry
         $this->wire('config')->scripts->append($this->wire('config')->urls->TracyDebugger . "scripts/ace-editor/ace.js");
         $this->wire('config')->scripts->append($this->wire('config')->urls->TracyDebugger . "scripts/config-load-ace.js");
@@ -2784,6 +2790,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($data['customPhpCode']) $f->attr('value', $data['customPhpCode']);
         $fieldset->add($f);
 
+        $f = $this->wire('modules')->get("InputfieldMarkup");
+        $f->attr('name', 'customPhpCodeSave');
+        $f->value = '<span class="pw-button-dropdown-wrap"><button id="Inputfield_submit_save_module_copy" class="ui-button ui-widget ui-corner-all pw-button-dropdown-main ui-state-default" name="submit_save_module" value="Submit" type="submit" data-from_id="Inputfield_submit_save_module"><span class="ui-button-text">Submit</span></button><button type="button" id="pw-dropdown-toggle-Inputfield_submit_save_module_copy" class="ui-button ui-widget ui-corner-all ui-button-text-only pw-dropdown-toggle-click pw-dropdown-toggle pw-button-dropdown-toggle ui-state-default" role="button" aria-disabled="false" data-pw-dropdown=".pw-button-dropdown-1" data-from_id="pw-dropdown-toggle-Inputfield_submit_save_module"><span class="ui-button-text"><i class="fa fa-angle-down"></i></span></button></span><br />';
+        $f->notes = __('Note: this is just an extra Submit button to make iterations of the customPHP code quicker to make. It works exactly the same as the main ones on this page.', __FILE__);
+        $fieldset->add($f);
+
         // User Switcher Panel
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
         $fieldset->label = __('User Switcher panel', __FILE__);
@@ -3010,7 +3022,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // convert PW Info panel custom links page IDs into paths so we can export settings to another PW site
         $this->wire('modules')->addHookBefore('saveModuleConfigData', null, function($event) {
-            if($this->wire('input')->get->name !== 'TracyDebugger') return;
+            if($event->arguments[0] !== 'TracyDebugger') return;
             if(!$this->wire('input')->post->customPWInfoPanelLinks[0]) return;
             $data = $event->arguments[1];
             $customPWInfoPanelLinkPaths = array();
@@ -3032,9 +3044,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // if custom php panel code was changed, then scroll down to that setting field after saving
         $this->wire('modules')->addHookAfter('saveModuleConfigData', null, function($event) {
-            if($this->wire('input')->get->name !== 'TracyDebugger') return;
+            if($event->arguments[0] !== 'TracyDebugger') return;
             $data = $event->arguments[1];
-            if($data['customPhpCode'] != $this->data['customPhpCode']) $this->wire('session')->redirect($this->inputUrl(true).'#wrap_Inputfield_customPhpCode');
+            if($data['customPhpCode'] != $this->data['customPhpCode']) $this->wire('session')->scrolltoCustomPhp = 1;
         });
 
         return $wrapper;
