@@ -298,7 +298,7 @@ class ProcesswireInfoPanel extends BasePanel {
             if(function_exists('apache_get_modules')) $apacheModules = apache_get_modules();
             foreach(array('mod_rewrite', 'mod_security') as $apacheModule) {
                 if(isset($apacheModules)) {
-                    $versionsDetails['Server Settings'][$apacheModule] = (in_array($apacheModule, $apacheModules) ? '1' : false . ($apacheModule == 'mod_security' ? '*confirmed off' : ''));
+                    $versionsDetails['Server Settings']['items'][$apacheModule] = (in_array($apacheModule, $apacheModules) ? '1' : false . ($apacheModule == 'mod_security' ? '*confirmed off' : ''));
                 }
                 // fallback if apache_get_modules() is not available
                 else {
