@@ -71,6 +71,17 @@ if(!function_exists('dump') && in_array('dump', $this->data['enabledShortcutMeth
 }
 
 /**
+ * TD::dump() shortcut dumping with maxDepth = 6 and maxLength = 999.
+ * @tracySkipLocation
+ */
+if(!function_exists('dumpBig') && in_array('dumpBig', $this->data['enabledShortcutMethods'])) {
+    function dumpBig($var, $title = NULL, array $options = NULL, $return = FALSE) {
+        if(tracyUnavailable()) return false;
+        return TD::dumpBig($var, $otions, $return);
+    }
+}
+
+/**
  * TD::timer() shortcut.
  * @tracySkipLocation
  */
@@ -171,6 +182,17 @@ if(!function_exists('d') && in_array('d', $this->data['enabledShortcutMethods'])
     function d($var, $title = NULL, array $options = NULL, $return = FALSE) {
         if(tracyUnavailable()) return false;
         return TD::dump($var, $title, $options, $return);
+    }
+}
+
+/**
+ * TD::dump() shortcut dumping with maxDepth = 6 and maxLength = 999.
+ * @tracySkipLocation
+ */
+if(!function_exists('db') && in_array('db', $this->data['enabledShortcutMethods'])) {
+    function db($var, $title = NULL, array $options = NULL, $return = FALSE) {
+        if(tracyUnavailable()) return false;
+        return TD::dumpBig($var, $title, $options, $return);
     }
 }
 

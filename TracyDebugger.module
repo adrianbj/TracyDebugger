@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.10.32',
+            'version' => '4.10.33',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1233,44 +1233,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if(!empty(static::$restrictedUserDisabledPanels) && in_array($panel, static::$restrictedUserDisabledPanels)) continue;
 
             $panelName = ucfirst($panel).'Panel';
-
+            require_once __DIR__ . '/panels/'.$panelName.'.php';
             switch($panel) {
                 case 'performance':
-                    require_once __DIR__ . '/panels/'.$panelName.'.php';
-                    break;
-                case 'captainHook':
-                case 'console':
-                case 'customPhp':
-                case 'debugMode':
-                case 'diagnostics':
-                case 'dumpsRecorder':
-                case 'eventInterceptor':
-                case 'fileEditor':
-                case 'gitInfo':
-                case 'mailInterceptor':
-                case 'methodsInfo':
-                case 'moduleDisabler':
-                case 'outputMode':
-                case 'pageRecorder':
-                case 'panelSelector':
-                case 'phpInfo':
-                case 'processwireInfo':
-                case 'processwireLogs':
-                case 'processwireVersion':
-                case 'requestInfo':
-                case 'snippetRunner':
-                case 'templateResources':
-                case 'todo':
-                case 'tracyLogs':
-                case 'tracyToggler':
-                case 'users':
-                case 'userSwitcher':
-                case 'validator':
-                    require_once __DIR__ . '/panels/'.$panelName.'.php';
-                    Debugger::getBar()->addPanel(new $panelName);
                     break;
                 case 'templatePath':
-                    require_once __DIR__ . '/panels/'.$panelName.'.php';
                     static::$templatePathOnce = $this->findPageTemplateInCookie($this->wire('input')->cookie->tracyTemplatePathOnce);
                     static::$templatePathSticky = $this->findPageTemplateInCookie($this->wire('input')->cookie->tracyTemplatePathSticky);
                     if(static::$templatePathOnce) {
@@ -1291,6 +1258,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     if(static::$templatePath != '') {
                         $this->wire('page')->template->filename = static::$templatePath;
                     }
+                    Debugger::getBar()->addPanel(new $panelName);
+                    break;
+                default:
                     Debugger::getBar()->addPanel(new $panelName);
                     break;
             }
@@ -3010,6 +2980,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->addOption('da', 'da() for TD::debugAll()');
         $f->addOption('dump', 'dump() for TD::dump()');
         $f->addOption('d', 'd() for TD::dump()');
+        $f->addOption('dumpBig', 'dumpBig() for TD::dumpBig()');
+        $f->addOption('db', 'db() for TD::dumpBig()');
         $f->addOption('fireLog', 'fireLog() for TD::fireLog()');
         $f->addOption('fl', 'fl() for TD::fireLog()');
         $f->addOption('l', 'l() for TD::log()');
