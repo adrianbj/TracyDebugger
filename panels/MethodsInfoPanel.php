@@ -84,6 +84,13 @@ class MethodsInfoPanel extends BasePanel {
                 TD::dump()<br />
             </p>
 
+            <p><strong><a href="'.$debugMethodsRootUrl.'dumpbig" target="_blank">dumpBig($var, $title = NULL, array $options = NULL, $return = FALSE)</a></strong></p>
+            <p>
+                <strong>db()</strong><br />
+                dumpBig()<br />
+                TD::dumpBig()<br />
+            </p>
+
             <p><strong><a href="'.$debugMethodsRootUrl.'firelog" target="_blank">fireLog($var)</a></strong></p>
             <p>
                 <strong>fl()</strong><br />
