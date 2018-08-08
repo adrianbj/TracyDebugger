@@ -53,7 +53,9 @@ class DiagnosticsPanel extends BasePanel {
             'Site Templates',
             'Installation Directory',
             'Install File',
+            'Index File',
             'Config File',
+            '.htaccess File',
             'Assets Directory',
             'Files Directory',
             'Cache Directory',
@@ -124,6 +126,12 @@ class DiagnosticsPanel extends BasePanel {
                 break;
             case 'Install File':
                 $path = $config->paths->root . 'install.php';
+                break;
+            case 'Index File':
+                $path = $config->paths->root . 'index.php';
+                break;
+            case '.htaccess File':
+                $path = $config->paths->root . '.htaccess';
                 break;
             case 'Config File':
                 $path = $config->paths->root . 'site/config.php';
@@ -230,6 +238,8 @@ class DiagnosticsPanel extends BasePanel {
         }
         else {
             switch ($attribute) {
+                case '.htaccess File':
+                case 'Index File':
                 case 'Root Directory':
                 case 'Wire Directory':
                 case 'Core Directory':
