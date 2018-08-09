@@ -53,7 +53,9 @@ class DiagnosticsPanel extends BasePanel {
             'Site Templates',
             'Installation Directory',
             'Install File',
+            'Index File',
             'Config File',
+            '.htaccess File',
             'Assets Directory',
             'Files Directory',
             'Cache Directory',
@@ -61,12 +63,13 @@ class DiagnosticsPanel extends BasePanel {
             'Sessions Directory'
         );
 
+        $process_owner = $this->getPHPUser(false);
         // posix_getpwuid doesn't exist on Windows so don't add Owner & Permission columns
         if(function_exists('posix_getpwuid')) {
-            $this->filesystem = $this->sectionHeader(array('Attribute', 'Path', 'Exists', 'Readable', 'Writeable', 'Permissions', 'Owner (User:Group)', 'Status', 'Notes'));
+            $this->filesystem = $this->sectionHeader(array('Attribute', 'Path', 'Exists', "Readable By<br>$process_owner", "Writeable by<br>$process_owner", 'Permissions', 'Owner (User:Group)', 'Status', 'Notes'));
         }
         else {
-            $this->filesystem = $this->sectionHeader(array('Attribute', 'Path', 'Exists', 'Readable', 'Writeable', 'Status', 'Notes'));
+            $this->filesystem = $this->sectionHeader(array('Attribute', 'Path', 'Exists', "Readable By<br>$process_owner", "Writeable by<br>$process_owner", 'Status', 'Notes'));
         }
 
         foreach($attributes as $attribute) {
@@ -123,6 +126,12 @@ class DiagnosticsPanel extends BasePanel {
                 break;
             case 'Install File':
                 $path = $config->paths->root . 'install.php';
+                break;
+            case 'Index File':
+                $path = $config->paths->root . 'index.php';
+                break;
+            case '.htaccess File':
+                $path = $config->paths->root . '.htaccess';
                 break;
             case 'Config File':
                 $path = $config->paths->root . 'site/config.php';
@@ -229,6 +238,8 @@ class DiagnosticsPanel extends BasePanel {
         }
         else {
             switch ($attribute) {
+                case '.htaccess File':
+                case 'Index File':
                 case 'Root Directory':
                 case 'Wire Directory':
                 case 'Core Directory':
@@ -260,18 +271,18 @@ class DiagnosticsPanel extends BasePanel {
         }
     }
 
-    protected function getPHPUser() {
+    protected function getPHPUser($full = true) {
         if(function_exists('exec')) {
-            return 'PHP is running as user: ' . exec('whoami');
+            return ($full) ? 'PHP is running as user: ' . exec('whoami') : exec('whoami');
         }
         else {
             $tempDir = new  WireTempDir('whoami');
             $check = file_put_contents($tempDir."/test.txt", "test");
             if(is_int($check) && $check > 0) {
-                return 'PHP appears to be running as you.';
+                return ($full) ? 'PHP appears to be running as you.' : 'You';
             }
             else {
-                return 'PHP appears to be running as another user, ie. not you.';
+                return ($full) ? 'PHP appears to be running as another user, ie. not you.' : 'Unknown';
             }
         }
     }
