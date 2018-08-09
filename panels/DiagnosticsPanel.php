@@ -66,10 +66,10 @@ class DiagnosticsPanel extends BasePanel {
         $process_owner = $this->getPHPUser(false);
         // posix_getpwuid doesn't exist on Windows so don't add Owner & Permission columns
         if(function_exists('posix_getpwuid')) {
-            $this->filesystem = $this->sectionHeader(array('Attribute', 'Path', 'Exists', "Readable By<br>$process_owner", "Writeable by<br>$process_owner", 'Permissions', 'Owner (User:Group)', 'Status', 'Notes'));
+            $this->filesystem = $this->sectionHeader(array('Attribute', 'Path', 'Exists', "Readable by<br>$process_owner", "Writeable by<br>$process_owner", 'Permissions', 'Owner (User:Group)', 'Status', 'Notes'));
         }
         else {
-            $this->filesystem = $this->sectionHeader(array('Attribute', 'Path', 'Exists', "Readable By<br>$process_owner", "Writeable by<br>$process_owner", 'Status', 'Notes'));
+            $this->filesystem = $this->sectionHeader(array('Attribute', 'Path', 'Exists', "Readable by<br>$process_owner", "Writeable by<br>$process_owner", 'Status', 'Notes'));
         }
 
         foreach($attributes as $attribute) {
