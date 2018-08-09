@@ -166,7 +166,7 @@ class DiagnosticsPanel extends BasePanel {
         // posix_getpwuid doesn't exist on Windows
         if(function_exists('posix_getpwuid')) {
             $owner = !file_exists($path) ? '' : posix_getpwuid(fileowner($path));
-            $group = !isset($owner['gid']) ? '' : posix_getgrgid($owner['gid']);
+            $group = !file_exists($path) ? '' : posix_getgrgid(filegroup($path));
         }
 
         $statusNotes = $this->getStatusNotes($attribute, $exists, $readable, $writeable, $permission);
