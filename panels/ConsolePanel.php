@@ -230,23 +230,17 @@ class ConsolePanel extends BasePanel {
                         document.getElementById("tracyConsoleContainer").style.height = (consolePanelHeight - {$consoleContainerAdjustment}) + 'px';
                         document.getElementById("tracySnippetsContainer").style.height = (consolePanelHeight - {$consoleContainerAdjustment}) + 'px';
                     }
+                    else {
+                        // reduce width of snippets panel so it fits when in window mode
+                        document.getElementById("tracySnippetsContainer").style.width = (document.getElementById("tracySnippetsContainer").offsetWidth - 15) + 'px';
+                    }
                 },
 
                 resizeAce: function(focus = true) {
                     tracyConsole.resizeContainers();
-                    var ml = Math.round(document.getElementById("tracyConsoleCode").offsetHeight / tracyConsole.tce.renderer.lineHeight);
-                    tracyConsole.tce.setOptions({
-                        maxLines: (ml - 1),
-                        minLines: (ml - 1)
-                    });
-                    tracyConsole.setEditorHeight();
-                    if(focus) tracyConsole.tce.focus();
-                },
-
-                setEditorHeight: function() {
-                    // no idea why it works to have this before changing size of div, but doesn't work if after
+                    document.getElementById("tracyConsoleEditor").style.height = '100%';
                     tracyConsole.tce.resize(true);
-                    document.getElementById("tracyConsoleEditor").style.height = document.getElementById("tracyConsoleCode").offsetHeight + 'px';
+                    if(focus) tracyConsole.tce.focus();
                 },
 
                 getSnippet: function(name) {
@@ -488,7 +482,8 @@ class ConsolePanel extends BasePanel {
             tracyJSLoader.load(tracyConsole.tracyModuleUrl + "scripts/ace-editor/ace.js", function() {
                 if(typeof ace !== "undefined") {
                     tracyConsole.tce = ace.edit("tracyConsoleEditor");
-                    tracyConsole.tce.container.style.lineHeight = '23px';
+                    tracyConsole.lineHeight = 23;
+                    tracyConsole.tce.container.style.lineHeight = tracyConsole.lineHeight + 'px';
                     tracyConsole.tce.setFontSize(13);
                     tracyConsole.tce.setShowPrintMargin(false);
                     tracyConsole.tce.\$blockScrolling = Infinity;
@@ -545,7 +540,7 @@ class ConsolePanel extends BasePanel {
                             sizes = sizes ? JSON.parse(sizes) : [40, 60];
                             var split = Split(['#tracyConsoleCode', '#tracyConsoleResult'], {
                                 direction: 'vertical',
-                                minSize: tracyConsole.tce.renderer.lineHeight,
+                                minSize: tracyConsole.lineHeight,
                                 sizes: sizes,
                                 gutterSize: 8,
                                 snapOffset: 0,
@@ -662,7 +657,7 @@ HTML;
                 </div>
 
                 <div id="tracyConsoleContainer" class="split">
-                    <div id="tracyConsoleCode" class="split" style="min-height:23px; background:#1D1F21">
+                    <div id="tracyConsoleCode" class="split" style="position:relative; min-height:23px; background:#1D1F21;">
                         <div id="tracyConsoleEditor"></div>
                     </div>
                     <div id="tracyConsoleResult" class="split" style="overflow:auto; border:1px solid #D2D2D2; padding:10px; min-height:23px">';
