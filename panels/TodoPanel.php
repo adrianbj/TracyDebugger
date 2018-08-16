@@ -57,13 +57,13 @@ class TodoPanel extends BasePanel {
             </div>';
 
         if($thisPageNumEntries > 0) {
-            $this->iconColor = '#CD1818';
+            $this->iconColor = \TracyDebugger::COLOR_ALERT;
         }
         elseif($numEntries > 0) {
-            $this->iconColor = '#FF9933';
+            $this->iconColor = \TracyDebugger::COLOR_WARN;
         }
         else {
-            $this->iconColor = '#009900';
+            $this->iconColor = \TracyDebugger::COLOR_NORMAL;
         }
 
         $this->icon = '

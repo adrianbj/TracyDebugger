@@ -17,10 +17,10 @@ class ModuleDisablerPanel extends BasePanel {
         $this->disabledModules = empty(\TracyDebugger::$disabledModules) ? array() : \TracyDebugger::$disabledModules;
 
         if(count($this->disabledModules) > 0) {
-            $this->iconColor = '#CD1818';
+            $this->iconColor = \TracyDebugger::COLOR_WARN;
         }
         else {
-            $this->iconColor = '#009900';
+            $this->iconColor = \TracyDebugger::COLOR_NORMAL;
         }
 
         $this->icon = '

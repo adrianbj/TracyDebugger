@@ -16,7 +16,7 @@ class DumpsRecorderPanel extends BasePanel {
         $this->dumpCount = is_array($items) ? count($items) : 0;
         $this->entries .= '<div>'.($this->dumpCount > 0 ? '<span id="clearDumpsRecorderButton" style="display:inline-block;float:right"><input type="submit" onclick="clearRecorderDumps()" value="Clear Dumps" /></span>' : '') . '</div><div style="clear:both; margin-bottom:5px"></div>';
         if($this->dumpCount > 0) {
-            $this->iconColor = '#CD1818';
+            $this->iconColor = \TracyDebugger::COLOR_WARN;
             $this->entries .= '
             <div class="dumpsrecorder-items">';
             foreach($items as $item) {
@@ -28,7 +28,7 @@ class DumpsRecorderPanel extends BasePanel {
             $this->entries .= '</div>';
         }
         else {
-            $this->iconColor = '#009900';
+            $this->iconColor = \TracyDebugger::COLOR_NORMAL;
             $this->entries .= 'No Dumps Recorded';
         }
 
@@ -67,7 +67,7 @@ class DumpsRecorderPanel extends BasePanel {
                 var icons = document.getElementsByClassName("dumpsRecorderIconPath");
                 i=0;
                 while(i < icons.length) {
-                    icons[i].style.fill="#009900";
+                    icons[i].style.fill="'.\TracyDebugger::COLOR_NORMAL.'";
                     i++;
                 }
                 document.getElementById("dumpsRecorderCount").innerHTML="";

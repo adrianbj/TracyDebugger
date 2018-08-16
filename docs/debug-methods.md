@@ -75,7 +75,7 @@ Also, note the link to file and line number where these `bd()` calls were trigge
 
 The default `maxDepth` and `maxLength` settings are set to 3 and 150, respectively. This ensure faster rendering performance and is often all you need. You can of course use the `$options` parameter in `bd()` calls to adjust to your exact needs, but this method provides a quick shortcut to a "deeper and longer" version that should be enough in most circumstances.
 
-Shortcut to `bd($var, $title, array('maxDepth' => 6, 'maxLength' => 999))`
+Shortcut to `bd($var, $title, array('maxDepth' => 6, 'maxLength' => 9999))`
 
 #### Parameters
 ```php
@@ -150,7 +150,7 @@ d($var, $title, $options);
 
 The default `maxDepth` and `maxLength` settings are set to 3 and 150, respectively. This ensure faster rendering performance and is often all you need. You can of course use the `$options` parameter in `d()` calls to adjust to your exact needs, but this method provides a quick shortcut to a "deeper and longer" version that should be enough in most circumstances.
 
-Shortcut to `d($var, $title, array('maxDepth' => 6, 'maxLength' => 999))`
+Shortcut to `d($var, $title, array('maxDepth' => 6, 'maxLength' => 9999))`
 
 #### Parameters
 ```php

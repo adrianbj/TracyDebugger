@@ -16,7 +16,7 @@ class EventInterceptorPanel extends BasePanel {
         $items = $this->wire('session')->tracyEventItems;
         $this->eventCount = is_array($items) ? count($items) : 0;
         if($this->eventCount > 0) {
-            $this->iconColor = $this->wire('input')->cookie->eventInterceptorHook ? '#CD1818' : '#009900';
+            $this->iconColor = $this->wire('input')->cookie->eventInterceptorHook ? \TracyDebugger::COLOR_ALERT : \TracyDebugger::COLOR_NORMAL;
             $this->entries .= '
             <div class="event-items">
                 <p><input type="submit" onclick="clearEvents()" value="Clear Events" /></p><br />';
@@ -30,11 +30,11 @@ class EventInterceptorPanel extends BasePanel {
             $this->entries .= '</div>';
         }
         elseif($this->wire('input')->cookie->eventInterceptorHook) {
-            $this->iconColor = '#FF9933';
+            $this->iconColor = \TracyDebugger::COLOR_WARN;
             $this->entries = 'No Events Intercepted';
         }
         else {
-            $this->iconColor = '#009900';
+            $this->iconColor = \TracyDebugger::COLOR_NORMAL;
             $this->entries = 'No Events Intercepted';
         }
 
@@ -74,7 +74,7 @@ class EventInterceptorPanel extends BasePanel {
                 var icons = document.getElementsByClassName("eventInterceptorIconPath");
                 i=0;
                 while(i < icons.length) {
-                    icons[i].style.fill="#009900";
+                    icons[i].style.fill="'.\TracyDebugger::COLOR_NORMAL.'";
                     i++;
                 }
 
@@ -102,10 +102,10 @@ class EventInterceptorPanel extends BasePanel {
                 }
 
                 if(status === "set") {
-                    var fillColor = "#FF9933";
+                    var fillColor = "'.\TracyDebugger::COLOR_WARN.'";
                 }
                 else if(document.getElementById("tracyEventEntries").innerHTML == "No Events Intercepted" || document.getElementById("tracyEventEntries").innerHTML.trim() == "" || status === "remove") {
-                    var fillColor = "#009900";
+                    var fillColor = "'.\TracyDebugger::COLOR_NORMAL.'";
                 }
 
                 var icons = document.getElementsByClassName("eventInterceptorIconPath");

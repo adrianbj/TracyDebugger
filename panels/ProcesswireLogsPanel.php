@@ -89,13 +89,13 @@ class ProcesswireLogsPanel extends BasePanel {
 
         // color icon based on errors/other log entries
         if($this->numErrors > 0) {
-            $this->iconColor = '#CD1818';
+            $this->iconColor = \TracyDebugger::COLOR_ALERT;
         }
         elseif($this->numOther > 0) {
-            $this->iconColor = '#FF9933';
+            $this->iconColor = \TracyDebugger::COLOR_WARN;
         }
         else {
-            $this->iconColor = '#009900';
+            $this->iconColor = \TracyDebugger::COLOR_NORMAL;
         }
 
         $this->icon = '

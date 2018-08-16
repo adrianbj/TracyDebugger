@@ -14,7 +14,7 @@ class MailInterceptorPanel extends BasePanel {
         $items = $this->wire('session')->tracyMailItems ? $this->wire('session')->tracyMailItems : array();
         $this->mailCount = count($items);
         if($this->mailCount > 0) {
-            $this->iconColor = '#CD1818';
+            $this->iconColor = \TracyDebugger::COLOR_WARN;
             $this->entries .= '
             <div class="mail-items">
                 <p>
@@ -82,7 +82,7 @@ class MailInterceptorPanel extends BasePanel {
             $this->entries .= '</div>';
         }
         else {
-            $this->iconColor = '#009900';
+            $this->iconColor = \TracyDebugger::COLOR_NORMAL;
             $this->entries = 'No emails sent';
         }
 
@@ -121,7 +121,7 @@ class MailInterceptorPanel extends BasePanel {
                 var icons = document.getElementsByClassName("emailInterceptorIconPath");
                 i=0;
                 while(i < icons.length) {
-                    icons[i].style.fill="#009900";
+                    icons[i].style.fill="'.\TracyDebugger::COLOR_NORMAL.'";
                     i++;
                 }
 

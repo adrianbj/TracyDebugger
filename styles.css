@@ -55,6 +55,11 @@ body.tracyHidden:before {
     transform: scale(1.2);
 }
 
+#tracy-debug-bar li > a[rel*="tracy-debug-panel-Tracy-info"] svg path {
+    fill: #444;
+}
+
+
 #tracy-debug .tracy-mode-peek,
 #tracy-debug .tracy-mode-float:not(.tracy-panel-resized) {
     max-width: calc(100vw - 15px) !important;

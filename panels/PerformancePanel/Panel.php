@@ -69,9 +69,9 @@ class Panel implements IBarPanel
 					. '<svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
 							 width="16px" height="16px" viewBox="40.6 40.6 16 16" enable-background="new 40.6 40.6 16 16" xml:space="preserve">
 							<g>
-								<path fill="#444444" d="M48.6,40.6c-4.4,0-8,3.6-8,8s3.6,8,8,8s8-3.6,8-8S53,40.6,48.6,40.6z M48.6,54.9c-3.5,0-6.3-2.8-6.3-6.3
+								<path fill="'.\TracyDebugger::COLOR_NORMAL.'" d="M48.6,40.6c-4.4,0-8,3.6-8,8s3.6,8,8,8s8-3.6,8-8S53,40.6,48.6,40.6z M48.6,54.9c-3.5,0-6.3-2.8-6.3-6.3
 									s2.8-6.3,6.3-6.3s6.3,2.8,6.3,6.3S52.1,54.9,48.6,54.9z"/>
-								<path fill="#444444" d="M52.7,48.3h-3.6V44c0-0.4-0.3-0.7-0.7-0.7c-0.4,0-0.7,0.3-0.7,0.7v5c0,0.4,0.3,0.7,0.7,0.7h4.3
+								<path fill="'.\TracyDebugger::COLOR_NORMAL.'" d="M52.7,48.3h-3.6V44c0-0.4-0.3-0.7-0.7-0.7c-0.4,0-0.7,0.3-0.7,0.7v5c0,0.4,0.3,0.7,0.7,0.7h4.3
 									c0.4,0,0.7-0.3,0.7-0.7C53.4,48.6,53.1,48.3,52.7,48.3z"/>
 							</g>
 						</svg>'

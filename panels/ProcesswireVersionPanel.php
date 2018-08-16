@@ -26,10 +26,10 @@ class ProcesswireVersionPanel extends BasePanel {
         $latestVersion = end($this->versions);
 
         if($latestVersion == $this->wire('config')->version) {
-            $iconColor = '#009900';
+            $iconColor = \TracyDebugger::COLOR_NORMAL;
         }
         else {
-            $iconColor = '#FF9933';
+            $iconColor = \TracyDebugger::COLOR_WARN;
         }
 
         $this->icon = '

@@ -12,10 +12,10 @@ class ConsolePanel extends BasePanel {
 
         $this->tracyIncludeCode = json_decode($this->wire('input')->cookie->tracyIncludeCode, true);
         if($this->tracyIncludeCode && $this->tracyIncludeCode['when'] !== 'off') {
-            $this->iconColor = $this->wire('input')->cookie->tracyCodeError ? '#CD1818' : '#FF9933';
+            $this->iconColor = $this->wire('input')->cookie->tracyCodeError ? \TracyDebugger::COLOR_ALERT : \TracyDebugger::COLOR_WARN;
         }
         else {
-            $this->iconColor = '#444444';
+            $this->iconColor = \TracyDebugger::COLOR_NORMAL;
         }
 
         $this->icon = '

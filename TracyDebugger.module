@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.10.35',
+            'version' => '4.10.36',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -42,6 +42,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     const COOKIE_SECRET = 'tracy-debug';
+
+    const COLOR_LIGHTGREY = '#999999';
+    const COLOR_GREEN = '#009900';
+    const COLOR_NORMAL = '#444444';
+    const COLOR_WARN = '#ff8309';
+    const COLOR_ALERT = '#cd1818';
 
     protected $data = array();
     protected $httpReferer;
@@ -1347,8 +1353,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         <div id="TracyEnableButton" title="Enable Tracy" onclick="enableTracy()">
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 44.816 44.816" style="enable-background:new 0 0 44.816 44.816;" xml:space="preserve">
                 <g>
-                    <path d="M22.404,21.173c2.126,0,3.895-1.724,3.895-3.85V3.849C26.299,1.724,24.53,0,22.404,0c-2.126,0-3.895,1.724-3.895,3.849    v13.475C18.51,19.449,20.278,21.173,22.404,21.173z" fill="#CD1818"/>
-                    <path d="M30.727,3.33c-0.481-0.2-1.03-0.147-1.466,0.142c-0.434,0.289-0.695,0.776-0.695,1.298v5.113    c0,0.56,0.301,1.076,0.784,1.354c4.192,2.407,6.918,6.884,6.918,11.999c0,7.654-6.217,13.882-13.87,13.882    c-7.654,0-13.86-6.228-13.86-13.882c0-5.113,2.813-9.589,6.931-11.997c0.478-0.279,0.773-0.794,0.773-1.348V4.769    c0-0.521-0.261-1.009-0.695-1.298c-0.435-0.29-0.984-0.342-1.466-0.142C6.257,6.593,0.845,14.276,0.845,23.236    c0,11.92,9.653,21.58,21.572,21.58c11.917,0,21.555-9.66,21.555-21.58C43.971,14.276,38.554,6.593,30.727,3.33z" fill="#CD1818"/>
+                    <path d="M22.404,21.173c2.126,0,3.895-1.724,3.895-3.85V3.849C26.299,1.724,24.53,0,22.404,0c-2.126,0-3.895,1.724-3.895,3.849    v13.475C18.51,19.449,20.278,21.173,22.404,21.173z" fill="'.self::COLOR_NORMAL.'"/>
+                    <path d="M30.727,3.33c-0.481-0.2-1.03-0.147-1.466,0.142c-0.434,0.289-0.695,0.776-0.695,1.298v5.113    c0,0.56,0.301,1.076,0.784,1.354c4.192,2.407,6.918,6.884,6.918,11.999c0,7.654-6.217,13.882-13.87,13.882    c-7.654,0-13.86-6.228-13.86-13.882c0-5.113,2.813-9.589,6.931-11.997c0.478-0.279,0.773-0.794,0.773-1.348V4.769    c0-0.521-0.261-1.009-0.695-1.298c-0.435-0.29-0.984-0.342-1.466-0.142C6.257,6.593,0.845,14.276,0.845,23.236    c0,11.92,9.653,21.58,21.572,21.58c11.917,0,21.555-9.66,21.555-21.58C43.971,14.276,38.554,6.593,30.727,3.33z" fill="'.self::COLOR_NORMAL.'"/>
                 </g>
             </svg>
         </div>';
@@ -1732,13 +1738,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public static function human_filesize($bytes) {
         if($bytes >= 500000) {
-            $color = '#CD1818';
+            $color = self::COLOR_ALERT;
         }
         elseif($bytes < 500000 && $bytes > 100000) {
-            $color = '#FF9933';
+            $color = self::COLOR_WARN;
         }
         else {
-            $color = '#999999';
+            $color = self::COLOR_LIGHTGREY;
         }
 
         if($bytes == 0) return("0 Bytes");
@@ -1756,13 +1762,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public static function formatTime($seconds) {
         if($seconds >= 1) {
-            $color = '#CD1818';
+            $color = self::COLOR_ALERT;
         }
         elseif($seconds < 1 && $seconds > 0.1) {
-            $color = '#FF9933';
+            $color = self::COLOR_WARN;
         }
         else {
-            $color = '#999999';
+            $color = self::COLOR_LIGHTGREY;
         }
 
         return '<span style="color:'.$color.'">'.round(($seconds*1000), 2) . ' ms</span>';
@@ -1795,7 +1801,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static function generatedTimeSize($panel, $seconds, $bytes) {
         \TracyDebugger::$panelGenerationTime[$panel]['time'] = $seconds;
         \TracyDebugger::$panelGenerationTime[$panel]['size'] = $bytes;
-        return '<div class="tracy-time-size">'.static::formatTime($seconds).'<span style="color: #999999;">,</span> '.static::human_filesize($bytes).'</div>';
+        return '<div class="tracy-time-size">'.static::formatTime($seconds).'<span style="color: '.self::COLOR_NORMAL.';">,</span> '.static::human_filesize($bytes).'</div>';
     }
 
 

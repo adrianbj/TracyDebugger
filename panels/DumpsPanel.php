@@ -27,7 +27,7 @@ class DumpsPanel extends BasePanel {
         $this->dumpCount = is_array($data) ? count($data) : 0;
         if(\TracyDebugger::isAdditionalBar() == 'ajax') $this->entries .= '<div>'.($this->dumpCount > 0 ? '<span id="clearDumpsButton" style="display:inline-block;float:right"><input type="submit" onclick="clearDumps()" value="Clear Dumps" /></span>' : '') . '</div><div style="clear:both; margin-bottom:5px"></div>';
         if($this->dumpCount > 0) {
-            $this->iconColor = '#CD1818';
+            $this->iconColor = \TracyDebugger::COLOR_WARN;
             $this->entries .= '
             <div class="dump-items">';
             foreach($data as $item) {
@@ -82,7 +82,7 @@ class DumpsPanel extends BasePanel {
                 var icons = document.getElementsByClassName("ajaxDumpIconPath");
                 i=0;
                 while(i < icons.length) {
-                    icons[i].style.fill="#009900";
+                    icons[i].style.fill="'.\TracyDebugger::COLOR_NORMAL.'";
                     i++;
                 }
                 document.getElementById("ajaxDumpCount").innerHTML="";

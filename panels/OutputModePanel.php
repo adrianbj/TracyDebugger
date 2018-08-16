@@ -10,8 +10,8 @@ class OutputModePanel extends BasePanel {
     protected $developmentIcon;
     protected $productionIcon;
 
-    protected $productionColor = '#009900';
-    protected $developmentColor = '#FF9933';
+    protected $productionColor = \TracyDebugger::COLOR_NORMAL;
+    protected $developmentColor = \TracyDebugger::COLOR_WARN;
 
     public function getTab() {
 

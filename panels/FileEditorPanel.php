@@ -28,10 +28,10 @@ class FileEditorPanel extends BasePanel {
         $this->tracyFileEditorFilePath = $this->wire('input')->cookie->tracyFileEditorFilePath ?: str_replace($this->wire('config')->paths->root, '', $this->p->template->filename);
 
         if(isset($_POST['tracyTestTemplateCode']) || $this->wire('input')->cookie->tracyTestFileEditor) {
-            $iconColor = '#D51616';
+            $iconColor = \TracyDebugger::COLOR_ALERT;
         }
         else {
-            $iconColor = '#444444';
+            $iconColor = \TracyDebugger::COLOR_NORMAL;
         }
 
         $this->icon = '
