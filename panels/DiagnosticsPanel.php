@@ -123,14 +123,17 @@ class DiagnosticsPanel extends BasePanel {
             'debug' => array(
                 'checker' => function (&$asset) {
                     $class = '';
-                    if (!\TracyDebugger::$isLocal) {
-                        $class = 'FAIL';
-                        $asset['notes'][] = 'This should be set to <strong>false</strong> on production machines.';
-                        $note = $this->formatSuggestion('Edit <em>site/config.php</em> to read...', '$config->debug = false;');
-                    } else {
-                        $note = 'Make sure this is set to <strong>false</strong> in production contexts.';
+                    if ($asset['original_value']) {
+                        $note  = '';
+                        if (!\TracyDebugger::$isLocal) {
+                            $class = 'FAIL';
+                            $asset['notes'][] = 'This should be set to <strong>false</strong> on production machines.';
+                            $note = $this->formatSuggestion('Edit <em>site/config.php</em> to read...', '$config->debug = false;');
+                        } else {
+                            $note = 'Make sure this is set to <strong>false</strong> in production contexts.';
+                        }
+                        $asset['notes'][] = $note;
                     }
-                    $asset['notes'][] = $note;
                     return $class;
                 }
             ),
@@ -216,7 +219,7 @@ class DiagnosticsPanel extends BasePanel {
                     $asset['notes'][] = "Consider removing world access permissions.";
                     $class = "NOTE";
                 } else {
-                    $asset['notes'][] = "Remove world access permissions for shared servers.";
+                    $asset['notes'][] = "Remove world access permissions for shared servers <em>if possible</em>.";
                     $class = 'FAIL';
                 }
                 $thing = ($asset['name'] === 'chmodFile') ? 'file' : 'directory';
