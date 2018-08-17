@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.10.36',
+            'version' => '4.11.0',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -45,7 +45,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     const COLOR_LIGHTGREY = '#999999';
     const COLOR_GREEN = '#009900';
-    const COLOR_NORMAL = '#444444';
+    const COLOR_NORMAL = '#354B60';
     const COLOR_WARN = '#ff8309';
     const COLOR_ALERT = '#cd1818';
 

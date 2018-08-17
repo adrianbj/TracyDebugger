@@ -56,7 +56,7 @@ body.tracyHidden:before {
 }
 
 #tracy-debug-bar li > a[rel*="tracy-debug-panel-Tracy-info"] svg path {
-    fill: #444;
+    fill: #354B60;
 }
 
 
