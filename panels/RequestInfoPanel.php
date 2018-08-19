@@ -481,7 +481,7 @@ class RequestInfoPanel extends BasePanel {
             $value = array();
             foreach($p->fields as $f) {
                 $value = $this->getFieldArray($p,$f);
-                $dumpedValue = Dumper::toHtml($value, array(Dumper::LIVE => true, Dumper::DEBUGINFO => \TracyDebugger::getDataValue('debugInfo'), Dumper::DEPTH => 99, Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
+                $dumpedValue = Dumper::toHtml($value, array(Dumper::LIVE => true, Dumper::DEBUGINFO => true, Dumper::DEPTH => 99, Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
                 $fieldArray['settings'] = $p->template->fieldgroup->getField($f, true)->getArray();
                 $settings = Dumper::toHtml($fieldArray['settings'], array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
 

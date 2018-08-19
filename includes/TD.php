@@ -48,7 +48,6 @@ class TD extends TracyDebugger {
         $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
         $options[Dumper::LOCATION] = Debugger::$showLocation;
-        $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
         static::dumpToBar($var, $title, $options);
     }
 
@@ -61,7 +60,6 @@ class TD extends TracyDebugger {
         $options[Dumper::DEPTH] = 99;
         $options[Dumper::TRUNCATE] = 999999;
         $options[Dumper::LOCATION] = Debugger::$showLocation;
-        $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
         $options[Dumper::LIVE] = true;
         static::dumpToBar($var, $title, $options);
     }
@@ -83,7 +81,6 @@ class TD extends TracyDebugger {
         $options[Dumper::DEPTH] = 6;
         $options[Dumper::TRUNCATE] = 9999;
         $options[Dumper::LOCATION] = Debugger::$showLocation;
-        $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
         static::dumpToBar($var, $title, $options);
     }
 
@@ -120,11 +117,12 @@ class TD extends TracyDebugger {
             if(($var instanceof Page || $var instanceof \ProcessWire\Page) && $var->id) {
                 $out .= '<span style="float:right"><a href="'.wire('config')->urls->admin.'page/edit/?id=' . $var->id . '">#'.$var->id.'</a></span>';
             }
-            $out .= '<div style="clear:both">
-
-            <div id="debugInfo_'.$classExt.'">' . Dumper::toHtml($var, $options) . '</div>';
-            $options[Dumper::DEBUGINFO] = false;
-            $out .= '<div id="fullObject_'.$classExt.'" style="display:none">' . Dumper::toHtml($var, $options) . '</div>
+            $out .= '
+            <div style="clear:both">';
+                $options[Dumper::DEBUGINFO] = true;
+                $out .= '<div id="debugInfo_'.$classExt.'">' . Dumper::toHtml($var, $options) . '</div>';
+                $options[Dumper::DEBUGINFO] = false;
+                $out .= '<div id="fullObject_'.$classExt.'" style="display:none">' . Dumper::toHtml($var, $options) . '</div>
             </div>';
         }
         else {
@@ -151,7 +149,6 @@ class TD extends TracyDebugger {
         $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
         $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
-        $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
         if($title) echo '<h2>'.$title.'</h2>';
         echo static::generateDualDump($var, $options);
     }
@@ -173,7 +170,6 @@ class TD extends TracyDebugger {
         $options[Dumper::DEPTH] = 6;
         $options[Dumper::TRUNCATE] = 9999;
         $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
-        $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
         if($title) echo '<h2>'.$title.'</h2>';
         echo static::generateDualDump($var, $options);
     }
