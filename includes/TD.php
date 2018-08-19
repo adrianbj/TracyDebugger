@@ -94,7 +94,7 @@ class TD extends TracyDebugger {
     private static function dumpToBar($var, $title = NULL, array $options = NULL) {
         $dumpItem = array();
         $dumpItem['title'] = $title;
-        $dumpItem['dump'] = Dumper::toHtml($var, $options);
+        $dumpItem['dump'] = static::generateDualDump($var, $options);
         array_push(\TracyDebugger::$dumpItems, $dumpItem);
 
         if(isset(\TracyDebugger::$showPanels) && in_array('dumpsRecorder', \TracyDebugger::$showPanels)) {
@@ -103,6 +103,36 @@ class TD extends TracyDebugger {
             wire('session')->tracyDumpsRecorderItems = $dumpsRecorderItems;
         }
     }
+
+    /**
+     * Generate debugInfo and Full Object tabbed output
+     * @tracySkipLocation
+     */
+    private static function generateDualDump($var, $options) {
+        $out = '';
+        if(method_exists($var, '__debugInfo')) {
+            $classExt = rand();
+            $out .= '
+            <ul class="dumpTabs">
+                <li id="debugInfoTab_'.$classExt.'" class="active"><a href="javascript:void(0)" onclick="toggleDumpType(\'debugInfo\', '.$classExt.')">Debug Info</a></li>
+                <li id="fullObjectTab_'.$classExt.'"><a href="javascript:void(0)" onclick="toggleDumpType(\'fullObject\', '.$classExt.')">Full Object</a></li>
+            </ul>';
+            if(($var instanceof Page || $var instanceof \ProcessWire\Page) && $var->id) {
+                $out .= '<span style="float:right"><a href="'.wire('config')->urls->admin.'page/edit/?id=' . $var->id . '">#'.$var->id.'</a></span>';
+            }
+            $out .= '<div style="clear:both">
+
+            <div id="debugInfo_'.$classExt.'">' . Dumper::toHtml($var, $options) . '</div>';
+            $options[Dumper::DEBUGINFO] = false;
+            $out .= '<div id="fullObject_'.$classExt.'" style="display:none">' . Dumper::toHtml($var, $options) . '</div>
+            </div>';
+        }
+        else {
+            $out .= Dumper::toHtml($var, $options);
+        }
+        return $out;
+    }
+
 
     /**
      * Tracy\Debugger::dump() shortcut.
@@ -123,7 +153,7 @@ class TD extends TracyDebugger {
         $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
         $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
         if($title) echo '<h2>'.$title.'</h2>';
-        echo Dumper::toHtml($var, $options);
+        echo static::generateDualDump($var, $options);
     }
 
     /**
@@ -145,7 +175,7 @@ class TD extends TracyDebugger {
         $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
         $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
         if($title) echo '<h2>'.$title.'</h2>';
-        echo Dumper::toHtml($var, $options);
+        echo static::generateDualDump($var, $options);
     }
 
     /**

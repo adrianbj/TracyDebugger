@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.11.1',
+            'version' => '4.11.2',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -234,7 +234,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "email" => '',
             "clearEmailSent" => null,
             "showFireLogger" => 1,
-            "debugInfo" => 1,
             "referencePageEdited" => 1,
             "editor" => 'subl://open/?url=file://%file&line=%line',
             "useOnlineEditor" => array(),
@@ -2265,20 +2264,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = 'Show location';
         $f->description = __('Shows the location of dump() and barDump() calls.', __FILE__);
         $f->notes = __('LOCATION_SOURCE adds tooltip with path to the file, where the function was called.'."\n".'LOCATION_LINK adds a link to the file which can be opened directly.'."\n".'LOCATION_CLASS adds a tooltip to every dumped object containing path to the file, in which the object\'s class is defined.');
-        $f->columnWidth = 50;
         $f->addOption('Tracy\Dumper::LOCATION_SOURCE', 'LOCATION_SOURCE');
         $f->addOption('Tracy\Dumper::LOCATION_LINK', 'LOCATION_LINK');
         $f->addOption('Tracy\Dumper::LOCATION_CLASS', 'LOCATION_CLASS');
         if($data['showLocation']) $f->attr('value', $data['showLocation']);
-        $fieldset->add($f);
-
-        $f = $this->wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'debugInfo');
-        $f->label = __('Use debugInfo() magic method', __FILE__);
-        $f->description = __('If a `__debugInfo()` method has been defined, it will be used instead of dumping the full object.', __FILE__);
-        $f->notes = __('This results in a smaller, cleaner dump, but you may miss some information. You can override this with the `debugInfo` option when calling `d()`, `bd()`, `fl()`, etc.', __FILE__);
-        $f->columnWidth = 50;
-        $f->attr('checked', $data['debugInfo'] == '1' ? 'checked' : '' );
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldInteger");

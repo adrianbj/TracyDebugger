@@ -56,3 +56,18 @@ window.addEventListener("beforeunload", function () {
         }
     }
  });
+
+var toggleDumpType = function(type, classExt) {
+    if(type == 'fullObject') {
+        document.getElementById('debugInfo_' + classExt).style.display = "none";
+        document.getElementById('fullObject_' + classExt).style.display = "block";
+        document.getElementById('debugInfoTab_' + classExt).classList.remove("active");
+        document.getElementById('fullObjectTab_' + classExt).classList.add("active");
+    }
+    else {
+        document.getElementById('debugInfo_' + classExt).style.display = "block";
+        document.getElementById('fullObject_' + classExt).style.display = "none";
+        document.getElementById('debugInfoTab_' + classExt).classList.add("active");
+        document.getElementById('fullObjectTab_' + classExt).classList.remove("active");
+    }
+}

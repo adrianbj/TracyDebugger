@@ -442,7 +442,7 @@ ul.pw-info-links {
 
 .pw-info-links li.with-labels {
     display: block !important;
-    padding: 1px 0 !important;
+    padding: 2px 0 !important;
     line-height: 0.7 !important;
 }
 
@@ -1267,4 +1267,46 @@ ul.pw-info-links {
     cursor: -webkit-grabbing !important;
     cursor: -moz-grabbing !important;
     cursor: grabbing !important;
+}
+
+
+ul.dumpTabs {
+    display: block;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+ul.dumpTabs li {
+    float: left;
+    padding: 2px 5px;
+    border: 1px dotted silver;
+    border-bottom: 0;
+    background: #EAF0F2;
+    color: #444;
+}
+ul.dumpTabs li.active {
+    background: #FFFFFF;
+    box-shadow: 1px 1px 0 #fff; /* covers border of dump so it looks like tab has no bottom border */
+}
+ul.dumpTabs li.active a {
+    color: #444 !important;
+}
+ul.dumpTabs li a {
+    font-size: 11px !important;
+}
+ul.dumpTabs li:hover {
+    background: #FFFFFF;
+}
+ul.dumpTabs li a:link {
+    color: #444 !important;
+}
+ul.dumpTabs li a:hover {
+    text-decoration: none !important;
+}
+ul.dumpTabs li a:active {
+    text-decoration: none;
+    background: #ffffff;
+}
+ul.dumpTabs li:not(:last-child) {
+    border-right-width: 0;
 }
