@@ -367,6 +367,7 @@ table.captainHookTable th:nth-child(3) {
     padding: .4em 2em .4em .7em !important;
     margin: 0 0 20px 0 !important;
     border: 1px solid #D2D2D2 !important;
+    border-radius: 0 !important;
 }
 
 #tracy-debug td pre.tracy-dump {
