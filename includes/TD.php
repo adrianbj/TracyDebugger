@@ -45,6 +45,7 @@ class TD extends TracyDebugger {
             $options['maxDepth'] = $options[0];
             if(isset($options[1])) $options['maxLength'] = $options[1];
         }
+        $options[Dumper::COLLAPSE] = true;
         $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
         $options[Dumper::LOCATION] = Debugger::$showLocation;
@@ -57,6 +58,7 @@ class TD extends TracyDebugger {
      */
     public static function barDumpLive($var, $title = NULL) {
         if(self::tracyUnavailable()) return false;
+        $options[Dumper::COLLAPSE] = true;
         $options[Dumper::DEPTH] = 99;
         $options[Dumper::TRUNCATE] = 999999;
         $options[Dumper::LOCATION] = Debugger::$showLocation;
@@ -78,6 +80,7 @@ class TD extends TracyDebugger {
             $options['maxDepth'] = $options[0];
             if(isset($options[1])) $options['maxLength'] = $options[1];
         }
+        $options[Dumper::COLLAPSE] = true;
         $options[Dumper::DEPTH] = 6;
         $options[Dumper::TRUNCATE] = 9999;
         $options[Dumper::LOCATION] = Debugger::$showLocation;
@@ -114,8 +117,37 @@ class TD extends TracyDebugger {
                 <li id="debugInfoTab_'.$classExt.'" class="active"><a href="javascript:void(0)" onclick="toggleDumpType(\'debugInfo\', '.$classExt.')">Debug Info</a></li>
                 <li id="fullObjectTab_'.$classExt.'"><a href="javascript:void(0)" onclick="toggleDumpType(\'fullObject\', '.$classExt.')">Full Object</a></li>
             </ul>';
-            if(($var instanceof Page || $var instanceof \ProcessWire\Page) && $var->id) {
-                $out .= '<span style="float:right"><a href="'.wire('config')->urls->admin.'page/edit/?id=' . $var->id . '">#'.$var->id.'</a></span>';
+            if($var->id) {
+                if($var instanceof User || $var instanceof \ProcessWire\User) {
+                    $type = 'users';
+                    $section = 'access';
+                }
+                elseif($var instanceof Role || $var instanceof \ProcessWire\Role) {
+                    $type = 'roles';
+                    $section = 'access';
+                }
+                elseif($var instanceof Permission || $var instanceof \ProcessWire\Permission) {
+                    $type = 'permissions';
+                    $section = 'access';
+                }
+                elseif($var instanceof Language || $var instanceof \ProcessWire\Language) {
+                    $type = 'languages';
+                    $section = 'setup';
+                }
+                elseif($var instanceof Page || $var instanceof \ProcessWire\Page) {
+                    $type = 'page';
+                    $section = '';
+                }
+                elseif($var instanceof Template || $var instanceof \ProcessWire\Template) {
+                    $type = 'template';
+                    $section = 'setup';
+                }
+                elseif($var instanceof Field || $var instanceof \ProcessWire\Field) {
+                    $type = 'field';
+                    $section = 'setup';
+                }
+
+                $out .= self::generateEditLink($var, $type, $section);
             }
             $out .= '
             <div style="clear:both">';
@@ -131,6 +163,13 @@ class TD extends TracyDebugger {
         return $out;
     }
 
+    /**
+     * Generate edit link for various PW objects.
+     * @tracySkipLocation
+     */
+    private static function generateEditLink($var, $type, $section) {
+        return '<span style="float:right"><a href="' . wire('config')->urls->admin . $section . ($section ? '/' : '') . $type . '/edit/?id=' . $var->id . '" title="Edit ' . $var->name . ' ' . $type . '">#' . $var->id . '</a></span>';
+    }
 
     /**
      * Tracy\Debugger::dump() shortcut.
@@ -146,6 +185,7 @@ class TD extends TracyDebugger {
             $options['maxDepth'] = $options[0];
             if(isset($options[1])) $options['maxLength'] = $options[1];
         }
+        $options[Dumper::COLLAPSE] = true;
         $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
         $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
@@ -167,6 +207,7 @@ class TD extends TracyDebugger {
             $options['maxDepth'] = $options[0];
             if(isset($options[1])) $options['maxLength'] = $options[1];
         }
+        $options[Dumper::COLLAPSE] = true;
         $options[Dumper::DEPTH] = 6;
         $options[Dumper::TRUNCATE] = 9999;
         $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
