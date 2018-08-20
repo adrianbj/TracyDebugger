@@ -212,7 +212,7 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     private static function generateEditLink($var, $type, $section) {
-        return '<span style="float:right"><a href="' . wire('config')->urls->admin . $section . ($section ? '/' : '') . $type . '/edit/?id=' . $var->id . '" title="Edit ' . $var->name . ' ' . $type . '">#' . $var->id . '</a></span>';
+        return '<span style="float:right"><a href="' . wire('config')->urls->admin . $section . ($section ? '/' : '') . $type . '/edit/?id=' . $var->id . '" title="Edit ' . trim($type, 's') . ': ' . $var->name . '">#' . $var->id . '</a></span>';
     }
 
     /**
