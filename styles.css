@@ -6,7 +6,7 @@
     width: 16px !important;
     margin: 0 !important;
     padding: 4px 15px 2px 6px !important;
-    background: #FFFFFF !important;
+    background: white !important;
     font-size: 13px !important;
     cursor: pointer;
     box-sizing: border-box !important;
@@ -16,10 +16,10 @@
 }
 
 /* for hiding the server type indicator bar */
+
 body.tracyHidden:before {
     display: none;
 }
-
 
 #tracy-debug * {
     font: inherit;
@@ -43,22 +43,22 @@ body.tracyHidden:before {
     padding: 1px 0 1px 0 !important;
 }
 
-#tracy-debug-bar li > a:hover {
+#tracy-debug-bar li>a:hover {
     color: black !important;
     background: #F0F3F7 !important;
 }
 
-#tracy-debug-bar li > a {
+#tracy-debug-bar li>a {
     transition: transform 0.12s;
 }
-#tracy-debug-bar li > a:hover svg {
+
+#tracy-debug-bar li>a:hover svg {
     transform: scale(1.2);
 }
 
-#tracy-debug-bar li > a[rel*="tracy-debug-panel-Tracy-info"] svg path {
+#tracy-debug-bar li>a[rel*="tracy-debug-panel-Tracy-info"] svg path {
     fill: #354B60;
 }
-
 
 #tracy-debug .tracy-mode-peek,
 #tracy-debug .tracy-mode-float:not(.tracy-panel-resized) {
@@ -74,9 +74,11 @@ body.tracyHidden:before {
     color: #125EAE !important;
     background-color: transparent !important;
 }
+
 .tracy-panel a:focus {
     color: #125EAE !important;
 }
+
 .tracy-panel * a:hover {
     background-color: transparent !important;
     color: #D82C82 !important;
@@ -104,23 +106,29 @@ body.tracyHidden:before {
     display: inline-block !important;
 }
 
-#tracy-debug ::-webkit-input-placeholder { /* Chrome/Opera/Safari */
-    color:#9aa3a6 !important;
-    text-transform: none !important;
-}
-#tracy-debug ::-moz-placeholder { /* Firefox 19+ */
-    color:#9aa3a6 !important;
-    text-transform: none !important;
-}
-#tracy-debug :-ms-input-placeholder { /* IE 10+ */
-    color:#9aa3a6 !important;
-    text-transform: none !important;
-}
-#tracy-debug :-moz-placeholder { /* Firefox 18- */
-    color:#9aa3a6 !important;
+#tracy-debug ::-webkit-input-placeholder {
+    /* Chrome/Opera/Safari */
+    color: #9aa3a6 !important;
     text-transform: none !important;
 }
 
+#tracy-debug ::-moz-placeholder {
+    /* Firefox 19+ */
+    color: #9aa3a6 !important;
+    text-transform: none !important;
+}
+
+#tracy-debug :-ms-input-placeholder {
+    /* IE 10+ */
+    color: #9aa3a6 !important;
+    text-transform: none !important;
+}
+
+#tracy-debug :-moz-placeholder {
+    /* Firefox 18- */
+    color: #9aa3a6 !important;
+    text-transform: none !important;
+}
 
 #tracy-debug h1 {
     max-width: 100% !important;
@@ -139,7 +147,8 @@ body.tracyHidden:before {
     margin: 0 !important;
 }
 
-#tracy-debug input[type="text"], #tracy-debug input[type="number"] {
+#tracy-debug input[type="text"],
+#tracy-debug input[type="number"] {
     font: normal normal 13px/1.3 Arial, sans-serif !important;
     height: 30px !important;
     width: initial !important;
@@ -154,20 +163,29 @@ body.tracyHidden:before {
     border: 0 !important;
 }
 
-#tracy-debug, #tracy-debug h2, #tracy-debug legend {
+#tracy-debug,
+#tracy-debug h2,
+#tracy-debug legend {
     font: normal normal 13px/1.3 Arial, sans-serif !important;
     font-weight: normal !important;
     color: #333333 !important;
     text-transform: none !important;
 }
 
-#tracy-debug, #tracy-debug legend, #tracy-debug p, #tracy-debug legend li, #tracy-debug select, #tracy-debug label {
+#tracy-debug,
+#tracy-debug legend,
+#tracy-debug p,
+#tracy-debug legend li,
+#tracy-debug select,
+#tracy-debug label {
     font: normal normal 13px/1.3 Arial, sans-serif !important;
     font-weight: normal !important;
     color: #333333 !important;
 }
 
-#tracy-debug textarea:focus, #tracy-debug input:focus, #tracy-debug select:focus {
+#tracy-debug textarea:focus,
+#tracy-debug input:focus,
+#tracy-debug select:focus {
     border-color: #EEEEEE !important;
 }
 
@@ -178,7 +196,6 @@ body.tracyHidden:before {
     margin: 0 !important;
     display: inline-block !important;
     padding: 3px 3px 3px 10px !important;
-
 }
 
 #tracy-debug select:not([multiple]):not([size]) {
@@ -188,8 +205,9 @@ body.tracyHidden:before {
     background: none !important;
 }
 
-#tracy-debug textarea, #tracy-debug select {
-    background-color: #FFFFFF !important;
+#tracy-debug textarea,
+#tracy-debug select {
+    background-color: white !important;
     border: 1px solid #D2D2D2 !important;
     padding-left: initial !important;
 }
@@ -197,18 +215,19 @@ body.tracyHidden:before {
 #tracy-debug input:not(.ace_search_field) {
     height: 30px !important;
     color: #333333;
-    background-color: #FFFFFF !important;
+    background-color: white !important;
     border: 1px solid #D2D2D2 !important;
     padding-left: 5px !important;
 }
 
-#tracy-debug input[type="checkbox"], #tracy-debug input[type="radio"] {
+#tracy-debug input[type="checkbox"],
+#tracy-debug input[type="radio"] {
     height: 12px !important;
 }
 
 #tracy-debug label {
     display: inline-block !important;
-    margin:0 !important;
+    margin: 0 !important;
     font-size: 13px !important;
     color: #444444 !important;
     font-weight: normal !important;
@@ -216,7 +235,7 @@ body.tracyHidden:before {
 }
 
 #tracy-debug small {
-    font-size:80% !important;
+    font-size: 80% !important;
 }
 
 #tracy-debug a {
@@ -227,11 +246,11 @@ body.tracyHidden:before {
     width: 100% !important;
     margin: 0 !important;
     box-shadow: none !important;
-    background: #FFFFFF !important;
+    background: white !important;
 }
 
 #tracy-debug table tbody tr {
-    height:25px !important;
+    height: 25px !important;
 }
 
 #tracy-debug .tracy-panel tr:hover td {
@@ -262,30 +281,32 @@ body.tracyHidden:before {
 
 #tracy-debug th {
     background: #2C3E50;
-    color: #FFFFFF !important;
+    color: white !important;
     font-size: 90%;
     font-weight: bold;
 }
 
-
-table.captainHookTable td:first-child, table.captainHookTable th:first-child {
+table.captainHookTable td:first-child,
+table.captainHookTable th:first-child {
     width: 40% !important;
 }
 
-table.captainHookTable td:nth-child(2), table.captainHookTable th:nth-child(2) {
+table.captainHookTable td:nth-child(2),
+table.captainHookTable th:nth-child(2) {
     width: 5% !important;
 }
 
-table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
-    width:65% !important;
+table.captainHookTable td:nth-child(3),
+table.captainHookTable th:nth-child(3) {
+    width: 65% !important;
 }
 
-
-#tracy-debug input[type="submit"], .tracyCopyBtn {
+#tracy-debug input[type="submit"],
+.tracyCopyBtn {
     width: initial !important;
     height: initial !important;
     display: inline-block !important;
-    background: #FFFFFF !important;
+    background: white !important;
     margin: 0 !important;
     padding: 3px !important;
     border: 1px solid #D2D2D2 !important;
@@ -298,7 +319,6 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
     color: #444444;
 }
 
-
 #tracy-debug .tracyLinkBtn {
     background: #F0F3F7 !important;
     border: 1px solid #D2D2D2 !important;
@@ -309,11 +329,10 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
 }
 
 #tracy-debug .tracyLinkBtn:hover {
-    background: #fff !important;
+    background: white !important;
     color: #2C3E50 !important;
     border-color: #b8c7d8 !important;
 }
-
 
 #tracy-debug fieldset {
     all: initial !important;
@@ -331,11 +350,12 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
 }
 
 .tracy-inner p {
-    font-size:13px !important;
+    font-size: 13px !important;
     margin: 1em 0 !important;
 }
 
-#tracy-debug td pre, #tracy-debug code {
+#tracy-debug td pre,
+#tracy-debug code {
     background: transparent !important;
     padding: .4em 2em .4em .7em !important;
     margin: 0 !important;
@@ -346,6 +366,7 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
     background: transparent !important;
     padding: .4em 2em .4em .7em !important;
     margin: 0 0 20px 0 !important;
+    border: 1px solid #D9E1EA !important;
 }
 
 #tracy-debug td pre.tracy-dump {
@@ -357,7 +378,7 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
 }
 
 .tracy-inner td.tracy-force-no-wrap {
-    white-space:nowrap !important;
+    white-space: nowrap !important;
 }
 
 .tracy-inner td.tracy-force-break {
@@ -367,22 +388,35 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
     /*word-break: break-all;*/
     /* Instead use this non-standard one: */
     /*word-break: break-word;*/
-    white-space: pre;           /* CSS 2.0 */
-    white-space: pre-wrap;      /* CSS 2.1 */
-    white-space: pre-line;      /* CSS 3.0 */
-    white-space: -pre-wrap;     /* Opera 4-6 */
-    white-space: -o-pre-wrap;   /* Opera 7 */
-    white-space: -moz-pre-wrap; /* Mozilla */
-    white-space: -hp-pre-wrap;  /* HP Printers */
-    word-wrap: break-word;      /* IE 5+ */
+    white-space: pre;
+    /* CSS 2.0 */
+    white-space: pre-wrap;
+    /* CSS 2.1 */
+    white-space: pre-line;
+    /* CSS 3.0 */
+    white-space: -pre-wrap;
+    /* Opera 4-6 */
+    white-space: -o-pre-wrap;
+    /* Opera 7 */
+    white-space: -moz-pre-wrap;
+    /* Mozilla */
+    white-space: -hp-pre-wrap;
+    /* HP Printers */
+    word-wrap: break-word;
+    /* IE 5+ */
 }
 
 .tracy-inner pre {
-    white-space: pre-wrap !important;       /* Since CSS 2.1 */
-    white-space: -moz-pre-wrap !important;  /* Mozilla, since 1999 */
-    white-space: -pre-wrap !important;      /* Opera 4-6 */
-    white-space: -o-pre-wrap !important;    /* Opera 7 */
-    word-wrap: break-word !important;       /* Internet Explorer 5.5+ */
+    white-space: pre-wrap !important;
+    /* Since CSS 2.1 */
+    white-space: -moz-pre-wrap !important;
+    /* Mozilla, since 1999 */
+    white-space: -pre-wrap !important;
+    /* Opera 4-6 */
+    white-space: -o-pre-wrap !important;
+    /* Opera 7 */
+    word-wrap: break-word !important;
+    /* Internet Explorer 5.5+ */
 }
 
 .tracy-inner a {
@@ -390,7 +424,8 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
 }
 
 /* ensure click on linked SVG icon is on the parent a */
-.tracy-inner a > svg {
+
+.tracy-inner a>svg {
     pointer-events: none;
 }
 
@@ -407,7 +442,7 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
     break-inside: avoid-column;
 }
 
-#tracy-debug-panel-PanelSelectorPanel fieldset div label > span:last-child {
+#tracy-debug-panel-PanelSelectorPanel fieldset div label>span:last-child {
     position: relative;
     top: 5px;
 }
@@ -423,7 +458,7 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
 
 .tracy-section {
     padding: 10px 0;
-    border-top: 1px dotted #CCCCCC;
+    border-top: 1px dotted #D9E1EA;
 }
 
 .tracy-toggle {
@@ -433,7 +468,7 @@ table.captainHookTable td:nth-child(3), table.captainHookTable th:nth-child(3) {
 ul.pw-info-links {
     border-top: 1px solid #CCCCCC !important;
     margin: 10px 0 0 0 !important;
-    padding:10px 0 0 0 !important;
+    padding: 10px 0 0 0 !important;
 }
 
 .pw-info-links li {
@@ -450,29 +485,35 @@ ul.pw-info-links {
     font: normal normal 13px/1.3 Arial, sans-serif !important;
     transition: transform 0.12s;
 }
+
 .pw-info-links a svg {
     margin-right: 5px !important;
 }
-.pw-info-links a:hover svg, .pw-info-links a:hover .fa {
+
+.pw-info-links a:hover svg,
+.pw-info-links a:hover .fa {
     transform: scale(1.2);
 }
-
 
 #tracy-debug input[type="text"]#tracySnippetName {
     padding: 4px 30px 4px 8px !important;
     margin: 0 !important;
     height: 29px !important;
     width: 100% !important;
-    -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
-    -moz-box-sizing: border-box;    /* Firefox, other Gecko */
-    box-sizing: border-box;         /* Opera/IE 8+ */
+    -webkit-box-sizing: border-box;
+    /* Safari/Chrome, other WebKit */
+    -moz-box-sizing: border-box;
+    /* Firefox, other Gecko */
+    box-sizing: border-box;
+    /* Opera/IE 8+ */
 }
 
 #snippetTrash {
-    visibility:hidden;
+    visibility: hidden;
 }
 
-#tracySnippets, #tracyRunnerSnippets {
+#tracySnippets,
+#tracyRunnerSnippets {
     padding: 0 !important;
     border: none !important;
 }
@@ -481,32 +522,37 @@ ul.pw-info-links {
     margin: 5px 0 0 0 !important;
     padding: 0 !important;
     height: 100% !important;
-    overflow:auto !important;
+    overflow: auto !important;
 }
 
-#tracySnippets ul, #tracyRunnerSnippets ul {
+#tracySnippets ul,
+#tracyRunnerSnippets ul {
     margin: 0 !important;
     padding: 0 !important;
 }
 
-#tracySnippets li, #tracyRunnerSnippets li {
+#tracySnippets li,
+#tracyRunnerSnippets li {
     display: block;
     padding: 0 !important;
     border-top: 1px solid #ddd;
     font: normal normal 13px/1.3 Arial, sans-serif !important;
     line-height: 18px !important;
-    position:relative !important;
+    position: relative !important;
 }
 
-#tracySnippets li:first-child, #tracyRunnerSnippets li:first-child {
+#tracySnippets li:first-child,
+#tracyRunnerSnippets li:first-child {
     border-top: none;
 }
 
-#tracySnippets li svg, #tracyRunnerSnippets li svg {
+#tracySnippets li svg,
+#tracyRunnerSnippets li svg {
     width: 100% !important;
 }
 
-#tracySnippets li > span, #tracyRunnerSnippets li > span {
+#tracySnippets li>span,
+#tracyRunnerSnippets li>span {
     display: block;
     padding: 5px 5px 5px 9px !important;
     -moz-user-select: none;
@@ -514,17 +560,19 @@ ul.pw-info-links {
     user-select: none;
 }
 
-#tracySnippets li > span:not(.trashIcon):active, #tracyRunnerSnippets li > span:not(.trashIcon):active,
+#tracySnippets li>span:not(.trashIcon):active,
+#tracyRunnerSnippets li>span:not(.trashIcon):active,
 .activeSnippet {
     background: #ebeef0 !important;
 }
 
-#tracySnippets li:hover span:not(.activeSnippet), #tracyRunnerSnippets li:hover span:not(.activeSnippet) {
+#tracySnippets li:hover span:not(.activeSnippet),
+#tracyRunnerSnippets li:hover span:not(.activeSnippet) {
     background: #F5F8F9;
 }
 
-#tracySnippets li .trashIcon:active + span {
-    color: #fff !important;
+#tracySnippets li .trashIcon:active+span {
+    color: white !important;
     background: #EA2262 !important;
 }
 
@@ -539,7 +587,7 @@ ul.pw-info-links {
 }
 
 #tracySnippets .trashIcon:active {
-    color: #fff !important;
+    color: white !important;
 }
 
 #tracySnippets .trashIcon:hover {
@@ -575,6 +623,7 @@ ul.pw-info-links {
 
 #tracy-debug #runCode:hover,
 /*#tracy-debug #clearResults:hover,*/
+
 #tracy-debug #historyBack:hover,
 #tracy-debug #historyForward:hover {
     background: #F5F8F9 !important;
@@ -601,6 +650,7 @@ ul.pw-info-links {
 #clearResults:hover {
     text-decoration: underline;
 }
+
 .arrowRight {
     transform: scaleX(-1);
     filter: flipH;
@@ -623,10 +673,12 @@ ul.pw-info-links {
     margin-right: 65px;
     font-size: 13px !important;
 }
-#tracy-debug .resizeIcons a:link, #tracy-debug .resizeIcons a:hover {
+
+#tracy-debug .resizeIcons a:link,
+#tracy-debug .resizeIcons a:hover {
     color: #2C3E50 !important;
     background: transparent !important;
-    padding:6px 8px !important;
+    padding: 6px 8px !important;
     margin: 0 !important;
 }
 
@@ -639,17 +691,19 @@ ul.pw-info-links {
     cursor: default !important;
 }
 
-#tracy-debug-panel-ConsolePanel, #tracy-debug-panel-SnippetRunnerPanel {
+#tracy-debug-panel-ConsolePanel,
+#tracy-debug-panel-SnippetRunnerPanel {
     height: 50%;
     min-height: 230px !important;
-    width:1200px;
+    width: 1200px;
     min-width: 825px !important;
     padding: 0px !important;
     margin: 0px !important;
 }
 
-#tracy-debug-panel-ConsolePanel fieldset, #tracy-debug-panel-SnippetRunnerPanel fieldset {
-    width:100% !important;
+#tracy-debug-panel-ConsolePanel fieldset,
+#tracy-debug-panel-SnippetRunnerPanel fieldset {
+    width: 100% !important;
 }
 
 #tracy-debug-panel-ConsolePanel.tracy-mode-window {
@@ -674,7 +728,7 @@ ul.pw-info-links {
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] {
     padding: 0 !important;
-    border: 2px solid rgba(0,0,0, 0.18);
+    border: 2px solid rgba(0, 0, 0, 0.18);
     border-radius: 0;
     box-shadow: none;
     background-clip: padding-box;
@@ -684,18 +738,18 @@ ul.pw-info-links {
     border: none !important;
 }
 
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] > * {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>* {
     padding: 10px 12px 11px 10px;
     margin: 0;
 }
 
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] > .tracy-inner {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>.tracy-inner {
     min-width: 400px !important;
     padding: 12px 12px 0 12px !important;
     margin: 0 0 20px 0 !important;
 }
 
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-window"] > .tracy-inner {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-window"]>.tracy-inner {
     min-width: 0 !important;
 }
 
@@ -703,11 +757,12 @@ ul.pw-info-links {
     text-decoration: none !important;
 }
 
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] > .tracy-icons {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>.tracy-icons {
     padding: 0;
     margin-right: -5px;
 }
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] > .tracy-icons a {
+
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>.tracy-icons a {
     color: #2C3E50 !important;
     padding: 3px 11px 1px;
     display: inline-block;
@@ -721,32 +776,33 @@ ul.pw-info-links {
 */
 
 /* Remove the open in popup window button from certain panels that don't work properly in popup */
+
 /*#tracy-debug-panel-ConsolePanel > .tracy-icons a:first-child,*/
-#tracy-debug-panel-TemplatePathPanel > .tracy-icons a:first-child,
-#tracy-debug-panel-EventInterceptorPanel > .tracy-icons a:first-child,
-#tracy-debug-panel-ModuleDisablerPanel > .tracy-icons a:first-child,
-#tracy-debug-panel-PageRecorderPanel > .tracy-icons a:first-child,
-#tracy-debug-panel-DumpsRecorderPanel > .tracy-icons a:first-child,
-#tracy-debug-panel-Tracy-info > .tracy-icons a:first-child,
-#tracy-debug-panel-Zarganwar-PerformancePanel-Panel > .tracy-icons a:first-child,
-#tracy-debug-panel-Tracy-dumps > .tracy-icons a:first-child,
-#tracy-debug-panel-ProcesswireVersionPanel > .tracy-icons a:first-child,
-#tracy-debug-panel-UserSwitcherPanel > .tracy-icons a:first-child,
-#tracy-debug-panel-PanelSelectorPanel > .tracy-icons a:first-child,
-#tracy-debug-panel-Tracy-errors > .tracy-icons a:first-child {
-    display:none !important;
+
+#tracy-debug-panel-TemplatePathPanel>.tracy-icons a:first-child,
+#tracy-debug-panel-EventInterceptorPanel>.tracy-icons a:first-child,
+#tracy-debug-panel-ModuleDisablerPanel>.tracy-icons a:first-child,
+#tracy-debug-panel-PageRecorderPanel>.tracy-icons a:first-child,
+#tracy-debug-panel-DumpsRecorderPanel>.tracy-icons a:first-child,
+#tracy-debug-panel-Tracy-info>.tracy-icons a:first-child,
+#tracy-debug-panel-Zarganwar-PerformancePanel-Panel>.tracy-icons a:first-child,
+#tracy-debug-panel-Tracy-dumps>.tracy-icons a:first-child,
+#tracy-debug-panel-ProcesswireVersionPanel>.tracy-icons a:first-child,
+#tracy-debug-panel-UserSwitcherPanel>.tracy-icons a:first-child,
+#tracy-debug-panel-PanelSelectorPanel>.tracy-icons a:first-child,
+#tracy-debug-panel-Tracy-errors>.tracy-icons a:first-child {
+    display: none !important;
 }
 
-
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] > .tracy-icons a[rel="close"] {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>.tracy-icons a[rel="close"] {
     float: right;
 }
 
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] > .tracy-icons a:hover {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>.tracy-icons a:hover {
     background: #e6e8eb !important;
 }
 
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] > h1 {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>h1 {
     padding-top: 5px !important;
     padding-bottom: 5px !important;
     font-size: 15px;
@@ -757,8 +813,8 @@ ul.pw-info-links {
     border-bottom: 1px solid #c9d4e1 !important;
 }
 
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] > h1 > svg,
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] > h1 > a > svg {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>h1>svg,
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>h1>a>svg {
     display: inline-block;
     vertical-align: text-bottom;
     margin-right: 2px;
@@ -767,7 +823,7 @@ ul.pw-info-links {
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] input[type="submit"],
-  #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] .tracyCopyBtn {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] .tracyCopyBtn {
     border-radius: 0 !important;
     padding: 5px 8px !important;
     border-color: rgba(44, 62, 80, 0.2) !important;
@@ -776,13 +832,13 @@ ul.pw-info-links {
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] input[type="submit"]:not([disabled="true"]),
-    #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] .tracyCopyBtn:not([disabled="true"]) {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] .tracyCopyBtn:not([disabled="true"]) {
     background: #F0F3F7 !important;
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] input[type="submit"]:hover,
-    #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] .tracyCopyBtn:hover {
-    background: #fff !important;
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] .tracyCopyBtn:hover {
+    background: white !important;
     border-color: #b8c7d8 !important;
 }
 
@@ -799,11 +855,13 @@ ul.pw-info-links {
     height: 16px !important;
 }
 
-#tracy-debug .tracy-DumpPanel h2, #tracyConsoleResult h2, #tracySnippetRunnerResult h2 {
+#tracy-debug .tracy-DumpPanel h2,
+#tracyConsoleResult h2,
+#tracySnippetRunnerResult h2 {
     font: normal normal Arial, sans-serif !important;
     font-size: 14px !important;
     margin: 0;
-    padding: 2px 8px;
+    padding: 3px 8px;
     background: #EAF0F2 !important;
     border: 1px solid #D2D2D2 !important;
     border-bottom: 0 !important;
@@ -814,214 +872,276 @@ ul.pw-info-links {
 }
 
 .tracy-file-tree a[href].active {
-    color: #FFFFFF !important;
+    color: white !important;
     background-color: #125EAE !important;
 }
 
 .tracy-time-size {
-    position:absolute;
+    position: absolute;
     bottom: 3px;
-    clear:both;
-    font-size:9px !important;
-    text-align:left !important;
+    clear: both;
+    font-size: 9px !important;
+    text-align: left !important;
 }
 
 /* clipboardjs "Copied!" tooltip */
+
 .tooltipped {
-    position:relative !important;
+    position: relative !important;
 }
+
 .tooltipped:after {
-    position:absolute !important;
-    z-index:1000000 !important;
-    display:none !important;
-    padding:5px 8px !important;
-    font:normal normal 11px/1.5 Helvetica,arial,nimbussansl,liberationsans,freesans,clean,sans-serif,"Segoe UI Emoji","Segoe UI Symbol" !important;
-    color:#fff !important;
-    text-align:center !important;
-    text-decoration:none !important;
-    text-shadow:none !important;
-    text-transform:none !important;
-    letter-spacing:normal !important;
-    word-wrap:break-word !important;
-    white-space:pre !important;
-    pointer-events:none !important;
-    content:attr(aria-label) !important;
-    background:rgba(0,0,0,0.8) !important;
-    border-radius:3px !important;
-    -webkit-font-smoothing:subpixel-antialiased !important;
+    position: absolute !important;
+    z-index: 1000000 !important;
+    display: none !important;
+    padding: 5px 8px !important;
+    font: normal normal 11px/1.5 Helvetica, arial, nimbussansl, liberationsans, freesans, clean, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol" !important;
+    color: white !important;
+    text-align: center !important;
+    text-decoration: none !important;
+    text-shadow: none !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    word-wrap: break-word !important;
+    white-space: pre !important;
+    pointer-events: none !important;
+    content: attr(aria-label) !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    border-radius: 3px !important;
+    -webkit-font-smoothing: subpixel-antialiased !important;
 }
+
 .tooltipped:before {
-    position:absolute !important;
-    z-index:1000001 !important;
-    display:none !important;
-    width:0 !important;
-    height:0 !important;
-    color:rgba(0,0,0,0.8) !important;
-    pointer-events:none !important;
-    content:"" !important;
-    border:5px solid transparent !important;
+    position: absolute !important;
+    z-index: 1000001 !important;
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    color: rgba(0, 0, 0, 0.8) !important;
+    pointer-events: none !important;
+    content: "" !important;
+    border: 5px solid transparent !important;
 }
-.tooltipped:hover:before,.tooltipped:hover:after,.tooltipped:active:before,.tooltipped:active:after,.tooltipped:focus:before,.tooltipped:focus:after {
-    display:inline-block !important;
-    text-decoration:none !important;
+
+.tooltipped:hover:before,
+.tooltipped:hover:after,
+.tooltipped:active:before,
+.tooltipped:active:after,
+.tooltipped:focus:before,
+.tooltipped:focus:after {
+    display: inline-block !important;
+    text-decoration: none !important;
 }
-.tooltipped-multiline:hover:after,.tooltipped-multiline:active:after,.tooltipped-multiline:focus:after {
-    display:table-cell !important;
+
+.tooltipped-multiline:hover:after,
+.tooltipped-multiline:active:after,
+.tooltipped-multiline:focus:after {
+    display: table-cell !important;
 }
-.tooltipped-s:after,.tooltipped-se:after,.tooltipped-sw:after {
-    top:100% !important;
-    right:50% !important;
-    margin-top:5px !important;
+
+.tooltipped-s:after,
+.tooltipped-se:after,
+.tooltipped-sw:after {
+    top: 100% !important;
+    right: 50% !important;
+    margin-top: 5px !important;
 }
-.tooltipped-s:before,.tooltipped-se:before,.tooltipped-sw:before {
-    top:auto !important;
-    right:50% !important;
-    bottom:-5px !important;
-    margin-right:-5px !important;
-    border-bottom-color:rgba(0,0,0,0.8) !important;
+
+.tooltipped-s:before,
+.tooltipped-se:before,
+.tooltipped-sw:before {
+    top: auto !important;
+    right: 50% !important;
+    bottom: -5px !important;
+    margin-right: -5px !important;
+    border-bottom-color: rgba(0, 0, 0, 0.8) !important;
 }
+
 .tooltipped-se:after {
-    right:auto !important;
-    left:50% !important;
-    margin-left:-15px !important;
+    right: auto !important;
+    left: 50% !important;
+    margin-left: -15px !important;
 }
-.tooltipped-sw:after{
-    margin-right:-15px !important;
+
+.tooltipped-sw:after {
+    margin-right: -15px !important;
 }
-.tooltipped-n:after,.tooltipped-ne:after,.tooltipped-nw:after {
-    right:50% !important;
-    bottom:100% !important;
-    margin-bottom:5px !important;
-}.tooltipped-n:before,.tooltipped-ne:before,.tooltipped-nw:before {
-    top:-5px !important;
-    right:50% !important;
-    bottom:auto !important;
-    margin-right:-5px !important;
-    border-top-color:rgba(0,0,0,0.8) !important;
-}
-.tooltipped-ne:after {
-    right:auto !important;
-    left:50% !important;
-    margin-left:-15px !important;
-}
+
+.tooltipped-n:after,
+.tooltipped-ne:after,
 .tooltipped-nw:after {
-    margin-right:-15px !important;
+    right: 50% !important;
+    bottom: 100% !important;
+    margin-bottom: 5px !important;
 }
-.tooltipped-s:after,.tooltipped-n:after {
-    -webkit-transform:translateX(50%) !important;
-    -ms-transform:translateX(50%) !important;
-    transform:translateX(50%) !important;
+
+.tooltipped-n:before,
+.tooltipped-ne:before,
+.tooltipped-nw:before {
+    top: -5px !important;
+    right: 50% !important;
+    bottom: auto !important;
+    margin-right: -5px !important;
+    border-top-color: rgba(0, 0, 0, 0.8) !important;
 }
+
+.tooltipped-ne:after {
+    right: auto !important;
+    left: 50% !important;
+    margin-left: -15px !important;
+}
+
+.tooltipped-nw:after {
+    margin-right: -15px !important;
+}
+
+.tooltipped-s:after,
+.tooltipped-n:after {
+    -webkit-transform: translateX(50%) !important;
+    -ms-transform: translateX(50%) !important;
+    transform: translateX(50%) !important;
+}
+
 .tooltipped-w:after {
-    right:100% !important;
-    bottom:50% !important;
-    margin-right:5px !important;
-    -webkit-transform:translateY(50%) !important;
-    -ms-transform:translateY(50%);transform:translateY(50%) !important;
+    right: 100% !important;
+    bottom: 50% !important;
+    margin-right: 5px !important;
+    -webkit-transform: translateY(50%) !important;
+    -ms-transform: translateY(50%);
+    transform: translateY(50%) !important;
 }
+
 .tooltipped-w:before {
-    top:50% !important;
-    bottom:50% !important;
-    left:-5px !important;
-    margin-top:-5px !important;
-    border-left-color:rgba(0,0,0,0.8) !important;
+    top: 50% !important;
+    bottom: 50% !important;
+    left: -5px !important;
+    margin-top: -5px !important;
+    border-left-color: rgba(0, 0, 0, 0.8) !important;
 }
+
 .tooltipped-e:after {
-    bottom:50% !important;
-    left:100% !important;
-    margin-left:5px !important;
-    -webkit-transform:translateY(50%) !important;
-    -ms-transform:translateY(50%) !important;
-    transform:translateY(50%) !important;
+    bottom: 50% !important;
+    left: 100% !important;
+    margin-left: 5px !important;
+    -webkit-transform: translateY(50%) !important;
+    -ms-transform: translateY(50%) !important;
+    transform: translateY(50%) !important;
 }
+
 .tooltipped-e:before {
-    top:50% !important;
-    right:-5px !important;
-    bottom:50% !important;
-    margin-top:-5px !important;
-    border-right-color:rgba(0,0,0,0.8) !important;
+    top: 50% !important;
+    right: -5px !important;
+    bottom: 50% !important;
+    margin-top: -5px !important;
+    border-right-color: rgba(0, 0, 0, 0.8) !important;
 }
+
 .tooltipped-multiline:after {
-    width:-webkit-max-content !important;
-    width:-moz-max-content !important;
-    width:max-content !important;
-    max-width:250px !important;
-    word-break:break-word !important;
-    word-wrap:normal !important;
-    white-space:pre-line !important;
-    border-collapse:separate !important;
+    width: -webkit-max-content !important;
+    width: -moz-max-content !important;
+    width: max-content !important;
+    max-width: 250px !important;
+    word-break: break-word !important;
+    word-wrap: normal !important;
+    white-space: pre-line !important;
+    border-collapse: separate !important;
 }
-.tooltipped-multiline.tooltipped-s:after,.tooltipped-multiline.tooltipped-n:after {
-    right:auto !important;
-    left:50% !important;
-    -webkit-transform:translateX(-50%) !important;
-    -ms-transform:translateX(-50%) !important;
-    transform:translateX(-50%) !important;
+
+.tooltipped-multiline.tooltipped-s:after,
+.tooltipped-multiline.tooltipped-n:after {
+    right: auto !important;
+    left: 50% !important;
+    -webkit-transform: translateX(-50%) !important;
+    -ms-transform: translateX(-50%) !important;
+    transform: translateX(-50%) !important;
 }
-.tooltipped-multiline.tooltipped-w:after,.tooltipped-multiline.tooltipped-e:after{
-    right:100%
+
+.tooltipped-multiline.tooltipped-w:after,
+.tooltipped-multiline.tooltipped-e:after {
+    right: 100%
 }
+
 @media screen and (min-width: 0\0) {
     .tooltipped-multiline:after {
-        width:250px !important;
+        width: 250px !important;
     }
 }
-.tooltipped-sticky:before,.tooltipped-sticky:after {
-    display:inline-block !important;
-}
-.tooltipped-sticky.tooltipped-multiline:after {
-    display:table-cell !important;
-}
-.fullscreen-overlay-enabled.dark-theme .tooltipped:after {
-    color:#000 !important;
-    background:rgba(255,255,255,0.8) !important;
-}
-.fullscreen-overlay-enabled.dark-theme .tooltipped .tooltipped-s:before,.fullscreen-overlay-enabled.dark-theme .tooltipped .tooltipped-se:before,.fullscreen-overlay-enabled.dark-theme .tooltipped .tooltipped-sw:before {
-    border-bottom-color:rgba(255,255,255,0.8) !important;
-}
-.fullscreen-overlay-enabled.dark-theme .tooltipped.tooltipped-n:before,.fullscreen-overlay-enabled.dark-theme .tooltipped.tooltipped-ne:before,.fullscreen-overlay-enabled.dark-theme .tooltipped.tooltipped-nw:before {
-    border-top-color:rgba(255,255,255,0.8) !important;
-}
-.fullscreen-overlay-enabled.dark-theme .tooltipped.tooltipped-e:before {
-    border-right-color:rgba(255,255,255,0.8) !important;
-}
-.fullscreen-overlay-enabled.dark-theme .tooltipped.tooltipped-w:before {
-    border-left-color:rgba(255,255,255,0.8) !important;
+
+.tooltipped-sticky:before,
+.tooltipped-sticky:after {
+    display: inline-block !important;
 }
 
+.tooltipped-sticky.tooltipped-multiline:after {
+    display: table-cell !important;
+}
+
+.fullscreen-overlay-enabled.dark-theme .tooltipped:after {
+    color: #000 !important;
+    background: rgba(255, 255, 255, 0.8) !important;
+}
+
+.fullscreen-overlay-enabled.dark-theme .tooltipped .tooltipped-s:before,
+.fullscreen-overlay-enabled.dark-theme .tooltipped .tooltipped-se:before,
+.fullscreen-overlay-enabled.dark-theme .tooltipped .tooltipped-sw:before {
+    border-bottom-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.fullscreen-overlay-enabled.dark-theme .tooltipped.tooltipped-n:before,
+.fullscreen-overlay-enabled.dark-theme .tooltipped.tooltipped-ne:before,
+.fullscreen-overlay-enabled.dark-theme .tooltipped.tooltipped-nw:before {
+    border-top-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.fullscreen-overlay-enabled.dark-theme .tooltipped.tooltipped-e:before {
+    border-right-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.fullscreen-overlay-enabled.dark-theme .tooltipped.tooltipped-w:before {
+    border-left-color: rgba(255, 255, 255, 0.8) !important;
+}
 
 /* Captain Hook comment display/hide */
+
 #ch-comment label {
-    display:block !important;
-    cursor:default !important;
+    display: block !important;
+    cursor: default !important;
 }
+
 #ch-comment label.comment {
-    color:#125EAE !important;
-    cursor:pointer !important;
+    color: #125EAE !important;
+    cursor: pointer !important;
 }
-#ch-comment label.comment:hover { text-decoration:underline }
+
+#ch-comment label.comment:hover {
+    text-decoration: underline
+}
+
 #ch-comment input[type="checkbox"] {
-    position:absolute !important;
-    left:-999em !important;
+    position: absolute !important;
+    left: -999em !important;
 }
+
 #ch-comment .hide {
-    display:block !important;
+    display: block !important;
 }
+
 #ch-comment .hide p {
-    padding:10px !important;
-    margin:0 !important;
+    padding: 10px !important;
+    margin: 0 !important;
 }
-#ch-comment input[type="checkbox"]:not(:checked) + div {
-    display:none !important;
+
+#ch-comment input[type="checkbox"]:not(:checked)+div {
+    display: none !important;
 }
 
 #validatorBody ol {
     font-size: 16px !important;
 }
 
-
 /* Splitjs styles */
-#tracyConsoleContainer > .split {
+
+#tracyConsoleContainer>.split {
     -webkit-box-sizing: border-box !important;
     -moz-box-sizing: border-box !important;
     box-sizing: border-box !important;
@@ -1039,17 +1159,18 @@ ul.pw-info-links {
 
 #tracyConsoleContainer .gutter.gutter-vertical {
     cursor: row-resize !important;
-    background-image:  url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=') !important;
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=') !important;
 }
 
-
 /* File Editor folders */
+
 /* Hide all subfolders at startup */
-.tracy-file-tree .tft-d:not(.tft-d-open) > ul {
+
+.tracy-file-tree .tft-d:not(.tft-d-open)>ul {
     display: none;
 }
 
-.tracy-file-tree > ul > li.tft-f a:before {
+.tracy-file-tree>ul>li.tft-f a:before {
     padding: 0 8px 0 6px;
 }
 
@@ -1102,7 +1223,8 @@ ul.pw-info-links {
 }
 
 .tracy-file-tree a {
-    color: #2f4248; /* neutral grey */
+    color: #2f4248;
+    /* neutral grey */
     text-decoration: none;
     display: block;
     border-bottom: 1px solid #e4ecf0;
@@ -1116,13 +1238,15 @@ ul.pw-info-links {
     font-size: 13px !important;
 }
 
-.tracy-file-tree .tft-d-open > a.active {
+.tracy-file-tree .tft-d-open>a.active {
     opacity: 1;
-    color: #9e255d /*!important;*/
+    color: #9e255d/*!important;*/
 }
-.tracy-file-tree .tft-d > a {
+
+.tracy-file-tree .tft-d>a {
     color: inherit;
 }
+
 .tracy-file-tree .tft-d a.active:after,
 .tracy-file-tree .tft-d a:hover:after {
     content: attr(data-p);
@@ -1135,6 +1259,7 @@ ul.pw-info-links {
     margin-top: 1px;
     right: 6px;
 }
+
 .tracy-file-tree .tft-d a.active:after {
     color: rgba(255, 255, 255, 1);
 }
@@ -1142,13 +1267,16 @@ ul.pw-info-links {
 .tracy-file-tree a[href] {
     padding-left: 1px;
 }
+
 .tracy-file-tree a[href]:hover {
     text-decoration: underline;
 }
+
 .tracy-file-tree li a:hover {
     color: #db1174;
     background: rgba(0, 0, 0, 0.02);
 }
+
 .tracy-file-tree a:focus {
     outline: 0;
 }
@@ -1162,7 +1290,8 @@ ul.pw-info-links {
     margin-right: 4px;
     display: inline-block !important;
 }
-.tracy-file-tree .tft-d-open > a:before {
+
+.tracy-file-tree .tft-d-open>a:before {
     /*content: '\f115'; non filled */
     content: '\f07c';
 }
@@ -1174,17 +1303,19 @@ ul.pw-info-links {
     font-size: 14px;
 }
 
-.tft-f > a {
+.tft-f>a {
     padding-left: 6px;
 }
 
 /* more filetype icons */
+
 .tracy-file-tree .ext-txt a:before {
     font-family: FontAwesome;
     content: '\f0f6';
     padding-right: 5px;
     font-size: 14px;
 }
+
 .tracy-file-tree .ext-css a:before,
 .tracy-file-tree .ext-htm a:before,
 .tracy-file-tree .ext-html a:before {
@@ -1193,6 +1324,7 @@ ul.pw-info-links {
     padding-right: 5px;
     font-size: 14px;
 }
+
 .tracy-file-tree .ext-jpg a:before,
 .tracy-file-tree .ext-gif a:before,
 .tracy-file-tree .ext-png a:before,
@@ -1211,11 +1343,13 @@ ul.pw-info-links {
     cursor: pointer;
     opacity: .6;
 }
+
 .tracy-file-tree .tft-f span:hover {
     opacity: 1;
     color: #db1174;
     text-decoration: underline;
 }
+
 .tracy-file-tree .tft-f span:before {
     content: "#";
     /*font-family: FontAwesome;*/
@@ -1225,18 +1359,42 @@ ul.pw-info-links {
 }
 
 /* Ace search */
-.ace_search { font-size:12px; line-height:normal; }
-.ace_search *, .ace_search *:after { box-sizing:content-box; }
-#tracy-debug .ace_search_field { padding-top:0; padding-bottom:0; background:#fff; border-right:0; line-height:inherit; border-color:#cbcbcb; }
-#tracy-debug .ace_search_field:focus { border-color:#cbcbcb !important; }
-#tracy-debug .ace_search input, #tracy-debug .ace_search_counter { font-family:Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace; }
 
+.ace_search {
+    font-size: 12px;
+    line-height: normal;
+}
 
-.ace_editor, .ace_editor * {
+.ace_search *,
+.ace_search *:after {
+    box-sizing: content-box;
+}
+
+#tracy-debug .ace_search_field {
+    padding-top: 0;
+    padding-bottom: 0;
+    background: white;
+    border-right: 0;
+    line-height: inherit;
+    border-color: #cbcbcb;
+}
+
+#tracy-debug .ace_search_field:focus {
+    border-color: #cbcbcb !important;
+}
+
+#tracy-debug .ace_search input,
+#tracy-debug .ace_search_counter {
+    font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+}
+
+.ace_editor,
+.ace_editor * {
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
 }
 
 /*panel rollup*/
+
 #tracy-debug .tracy-panel.tracy-mode-rollup {
     min-height: 0 !important;
     resize: none !important;
@@ -1244,31 +1402,33 @@ ul.pw-info-links {
     width: auto !important;
     min-width: unset !important;
 }
+
 #tracy-debug .tracy-panel.tracy-mode-rollup .tracy-inner,
 #tracy-debug .tracy-panel.tracy-mode-rollup .resizeIcons,
 #tracy-debug .tracy-panel.tracy-mode-rollup a[rel="window"] {
     display: none;
 }
+
 #tracy-debug .tracy-panel.tracy-mode-rollup h1 {
     border-bottom: none !important;
     border-right: 1rem solid transparent;
 }
+
 #tracy-debug .tracy-panel.tracy-mode-rollup h1 a {
     pointer-events: none;
 }
-
 
 #tracy-debug .tracy-mode-float h1:hover {
     cursor: -webkit-grab !important;
     cursor: -moz-grab !important;
     cursor: grab !important;
 }
+
 #tracy-debug .tracy-mode-float h1:hover:active {
     cursor: -webkit-grabbing !important;
     cursor: -moz-grabbing !important;
     cursor: grabbing !important;
 }
-
 
 ul.dumpTabs {
     display: block;
@@ -1276,37 +1436,50 @@ ul.dumpTabs {
     margin: 0;
     padding: 0;
 }
+
+/* edit link at the end of the dump tabs */
+
+ul.dumpTabs+span a {
+    display: inline-block;
+    padding: 3px;
+    margin-right: -4px;
+    font-size: 12px !important;
+}
+
 ul.dumpTabs li {
     float: left;
-    padding: 2px 5px;
-    border: 1px dotted silver;
+    border: 1px solid #D9E1EA;
     border-bottom: 0;
     background: #EAF0F2;
     color: #444;
 }
-ul.dumpTabs li.active {
-    background: #FFFFFF;
-    box-shadow: 1px 1px 0 #fff; /* covers border of dump so it looks like tab has no bottom border */
-}
-ul.dumpTabs li.active a {
-    color: #444 !important;
-}
+
 ul.dumpTabs li a {
-    font-size: 11px !important;
+    padding: 3px 10px;
+    font-size: 12px !important;
 }
-ul.dumpTabs li:hover {
-    background: #FFFFFF;
+
+ul.dumpTabs li a:hover {
+    /* add a darker overlay to the LI tag */
+    background: rgba(0, 0, 0, 0.04) !important;
 }
+
+ul.dumpTabs li.active a {
+    background: white !important;
+    color: #444 !important;
+    /* cover the bottom border */
+    padding-bottom: 4px;
+    margin-bottom: -1px;
+}
+
 ul.dumpTabs li a:link {
     color: #444 !important;
 }
+
 ul.dumpTabs li a:hover {
     text-decoration: none !important;
 }
-ul.dumpTabs li a:active {
-    text-decoration: none;
-    background: #ffffff;
-}
+
 ul.dumpTabs li:not(:last-child) {
     border-right-width: 0;
 }
