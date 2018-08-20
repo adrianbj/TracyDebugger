@@ -45,7 +45,6 @@ class TD extends TracyDebugger {
             $options['maxDepth'] = $options[0];
             if(isset($options[1])) $options['maxLength'] = $options[1];
         }
-        $options[Dumper::COLLAPSE] = true;
         $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
         $options[Dumper::LOCATION] = Debugger::$showLocation;
@@ -58,7 +57,6 @@ class TD extends TracyDebugger {
      */
     public static function barDumpLive($var, $title = NULL) {
         if(self::tracyUnavailable()) return false;
-        $options[Dumper::COLLAPSE] = true;
         $options[Dumper::DEPTH] = 99;
         $options[Dumper::TRUNCATE] = 999999;
         $options[Dumper::LOCATION] = Debugger::$showLocation;
@@ -80,11 +78,52 @@ class TD extends TracyDebugger {
             $options['maxDepth'] = $options[0];
             if(isset($options[1])) $options['maxLength'] = $options[1];
         }
-        $options[Dumper::COLLAPSE] = true;
         $options[Dumper::DEPTH] = 6;
         $options[Dumper::TRUNCATE] = 9999;
         $options[Dumper::LOCATION] = Debugger::$showLocation;
         static::dumpToBar($var, $title, $options);
+    }
+
+    /**
+     * Tracy\Debugger::dump() shortcut.
+     * @tracySkipLocation
+     */
+    public static function dump($var, $title = NULL, array $options = NULL, $return = FALSE) {
+        if(self::tracyUnavailable()) return false;
+        if(is_array($title)) {
+            $options = $title;
+            $title = NULL;
+        }
+        if(isset($options) && is_array($options) && !static::has_string_keys($options)) {
+            $options['maxDepth'] = $options[0];
+            if(isset($options[1])) $options['maxLength'] = $options[1];
+        }
+        $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
+        $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
+        $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
+        if($title) echo '<h2>'.$title.'</h2>';
+        echo static::generateDualDump($var, $options);
+    }
+
+    /**
+     * Tracy\Debugger::dumpBig() shortcut dumping with maxDepth = 6 and maxLength = 9999.
+     * @tracySkipLocation
+     */
+    public static function dumpBig($var, $title = NULL, array $options = NULL, $return = FALSE) {
+        if(self::tracyUnavailable()) return false;
+        if(is_array($title)) {
+            $options = $title;
+            $title = NULL;
+        }
+        if(isset($options) && is_array($options) && !static::has_string_keys($options)) {
+            $options['maxDepth'] = $options[0];
+            if(isset($options[1])) $options['maxLength'] = $options[1];
+        }
+        $options[Dumper::DEPTH] = 6;
+        $options[Dumper::TRUNCATE] = 9999;
+        $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
+        if($title) echo '<h2>'.$title.'</h2>';
+        echo static::generateDualDump($var, $options);
     }
 
     /**
@@ -109,6 +148,11 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     private static function generateDualDump($var, $options) {
+
+        // standard options for all dump/barDump variations
+        $options[Dumper::COLLAPSE] = true;
+        $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
+
         $out = '';
         if(method_exists($var, '__debugInfo')) {
             $classExt = rand();
@@ -169,50 +213,6 @@ class TD extends TracyDebugger {
      */
     private static function generateEditLink($var, $type, $section) {
         return '<span style="float:right"><a href="' . wire('config')->urls->admin . $section . ($section ? '/' : '') . $type . '/edit/?id=' . $var->id . '" title="Edit ' . $var->name . ' ' . $type . '">#' . $var->id . '</a></span>';
-    }
-
-    /**
-     * Tracy\Debugger::dump() shortcut.
-     * @tracySkipLocation
-     */
-    public static function dump($var, $title = NULL, array $options = NULL, $return = FALSE) {
-        if(self::tracyUnavailable()) return false;
-        if(is_array($title)) {
-            $options = $title;
-            $title = NULL;
-        }
-        if(isset($options) && is_array($options) && !static::has_string_keys($options)) {
-            $options['maxDepth'] = $options[0];
-            if(isset($options[1])) $options['maxLength'] = $options[1];
-        }
-        $options[Dumper::COLLAPSE] = true;
-        $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
-        $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
-        $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
-        if($title) echo '<h2>'.$title.'</h2>';
-        echo static::generateDualDump($var, $options);
-    }
-
-    /**
-     * Tracy\Debugger::dumpBig() shortcut dumping with maxDepth = 6 and maxLength = 9999.
-     * @tracySkipLocation
-     */
-    public static function dumpBig($var, $title = NULL, array $options = NULL, $return = FALSE) {
-        if(self::tracyUnavailable()) return false;
-        if(is_array($title)) {
-            $options = $title;
-            $title = NULL;
-        }
-        if(isset($options) && is_array($options) && !static::has_string_keys($options)) {
-            $options['maxDepth'] = $options[0];
-            if(isset($options[1])) $options['maxLength'] = $options[1];
-        }
-        $options[Dumper::COLLAPSE] = true;
-        $options[Dumper::DEPTH] = 6;
-        $options[Dumper::TRUNCATE] = 9999;
-        $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
-        if($title) echo '<h2>'.$title.'</h2>';
-        echo static::generateDualDump($var, $options);
     }
 
     /**
