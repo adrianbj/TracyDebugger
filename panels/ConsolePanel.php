@@ -193,7 +193,7 @@ class ConsolePanel extends BasePanel {
                                 // scroll to bottom of results
                                 var objDiv = document.getElementById("tracyConsoleResult");
                                 objDiv.scrollTop = objDiv.scrollHeight;
-                                if(!window.Tracy.Debug.panels["tracy-debug-panel-ConsolePanel"].classList.contains("tracy-mode-float")) {
+                                if(!document.getElementById("tracy-debug-panel-ConsolePanel").classList.contains("tracy-mode-float")) {
                                     window.Tracy.Debug.panels["tracy-debug-panel-ConsolePanel"].toFloat();
                                 }
                             }

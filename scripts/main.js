@@ -58,16 +58,15 @@ window.addEventListener("beforeunload", function () {
  });
 
 var toggleDumpType = function(type, classExt) {
-    if(type == 'fullObject') {
-        document.getElementById('debugInfo_' + classExt).style.display = "none";
-        document.getElementById('fullObject_' + classExt).style.display = "block";
-        document.getElementById('debugInfoTab_' + classExt).classList.remove("active");
-        document.getElementById('fullObjectTab_' + classExt).classList.add("active");
-    }
-    else {
-        document.getElementById('debugInfo_' + classExt).style.display = "block";
-        document.getElementById('fullObject_' + classExt).style.display = "none";
-        document.getElementById('debugInfoTab_' + classExt).classList.add("active");
-        document.getElementById('fullObjectTab_' + classExt).classList.remove("active");
-    }
+    var dumpTabs = document.getElementsByClassName('tracyDumpTabs_' + classExt);
+    [].forEach.call(dumpTabs, function (tab) {
+        if(tab.id.indexOf(type) === -1) {
+            document.getElementById(tab.id.replace('_', 'Tab_')).classList.remove('active');
+            document.getElementById(tab.id).style.display = "none";
+        }
+        else {
+            document.getElementById(tab.id.replace('_', 'Tab_')).classList.add('active');
+            document.getElementById(tab.id).style.display = "block";
+        }
+    });
 }

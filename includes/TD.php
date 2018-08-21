@@ -201,9 +201,9 @@ class TD extends TracyDebugger {
             $out .= '
             <div style="clear:both">';
                 $options[Dumper::DEBUGINFO] = true;
-                $out .= '<div id="debugInfo_'.$classExt.'">' . Dumper::toHtml($var, $options) . '</div>';
+                $out .= '<div id="debugInfo_'.$classExt.'" class="tracyDumpTabs_'.$classExt.'">' . Dumper::toHtml($var, $options) . '</div>';
                 $options[Dumper::DEBUGINFO] = false;
-                $out .= '<div id="fullObject_'.$classExt.'" style="display:none">' . Dumper::toHtml($var, $options) . '</div>
+                $out .= '<div id="fullObject_'.$classExt.'" class="tracyDumpTabs_'.$classExt.'" style="display:none">' . Dumper::toHtml($var, $options) . '</div>
             </div>';
         }
         else {
