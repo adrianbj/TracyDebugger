@@ -193,7 +193,9 @@ class ConsolePanel extends BasePanel {
                                 // scroll to bottom of results
                                 var objDiv = document.getElementById("tracyConsoleResult");
                                 objDiv.scrollTop = objDiv.scrollHeight;
-                                window.Tracy.Debug.panels["tracy-debug-panel-ConsolePanel"].toFloat();
+                                if(!window.Tracy.Debug.panels["tracy-debug-panel-ConsolePanel"].classList.contains("tracy-mode-float")) {
+                                    window.Tracy.Debug.panels["tracy-debug-panel-ConsolePanel"].toFloat();
+                                }
                             }
                             // this may no longer be needed since we now have our own non-Tracy fatal error / shutdown handler
                             // but maybe leave just in case? Maybe still relevant for init, ready, finished injecting?

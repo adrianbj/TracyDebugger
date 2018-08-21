@@ -102,7 +102,7 @@ class TD extends TracyDebugger {
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
         $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
         if($title) echo '<h2>'.$title.'</h2>';
-        echo static::generateDualDump($var, $options);
+        echo static::generateDump($var, $options);
     }
 
     /**
@@ -123,7 +123,7 @@ class TD extends TracyDebugger {
         $options[Dumper::TRUNCATE] = 9999;
         $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
         if($title) echo '<h2>'.$title.'</h2>';
-        echo static::generateDualDump($var, $options);
+        echo static::generateDump($var, $options);
     }
 
     /**
@@ -133,7 +133,7 @@ class TD extends TracyDebugger {
     private static function dumpToBar($var, $title = NULL, array $options = NULL) {
         $dumpItem = array();
         $dumpItem['title'] = $title;
-        $dumpItem['dump'] = static::generateDualDump($var, $options);
+        $dumpItem['dump'] = static::generateDump($var, $options);
         array_push(\TracyDebugger::$dumpItems, $dumpItem);
 
         if(isset(\TracyDebugger::$showPanels) && in_array('dumpsRecorder', \TracyDebugger::$showPanels)) {
@@ -147,7 +147,7 @@ class TD extends TracyDebugger {
      * Generate debugInfo and Full Object tabbed output
      * @tracySkipLocation
      */
-    private static function generateDualDump($var, $options) {
+    private static function generateDump($var, $options) {
 
         // standard options for all dump/barDump variations
         $options[Dumper::COLLAPSE] = true;
@@ -193,6 +193,11 @@ class TD extends TracyDebugger {
 
                 $out .= self::generateEditLink($var, $type, $section);
             }
+
+            if($var instanceof WireArray || $var instanceof \ProcessWire\WireArray) {
+                $out .= '<span style="float:right; padding: 4px 6px 3px 6px;">n = ' . $var->count() . '</span>';
+            }
+
             $out .= '
             <div style="clear:both">';
                 $options[Dumper::DEBUGINFO] = true;
