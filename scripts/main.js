@@ -60,13 +60,16 @@ window.addEventListener("beforeunload", function () {
 var toggleDumpType = function(type, classExt) {
     var dumpTabs = document.getElementsByClassName('tracyDumpTabs_' + classExt);
     [].forEach.call(dumpTabs, function (tab) {
+        var tabContentEl = document.getElementById(tab.id);
         if(tab.id.indexOf(type) === -1) {
+            window.Tracy.Toggle.toggle(tabContentEl.querySelector('.tracy-toggle'), false);
             document.getElementById(tab.id.replace('_', 'Tab_')).classList.remove('active');
-            document.getElementById(tab.id).style.display = "none";
+            tabContentEl.style.display = "none";
         }
         else {
+            window.Tracy.Toggle.toggle(tabContentEl.querySelector('.tracy-toggle'));
             document.getElementById(tab.id.replace('_', 'Tab_')).classList.add('active');
-            document.getElementById(tab.id).style.display = "block";
+            tabContentEl.style.display = "block";
         }
     });
 }

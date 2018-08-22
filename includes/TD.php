@@ -214,7 +214,7 @@ class TD extends TracyDebugger {
                     else {
                         $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
                     }
-                    $options[Dumper::COLLAPSE] = $i == 0 ? true : false;
+                    $options[Dumper::COLLAPSE] = true;
                     $out .= '<div id="'.$panel.'_'.$classExt.'" class="tracyDumpTabs_'.$classExt.'"' . ($i==0 ? '' : ' style="display:none"') . '>'.Dumper::toHtml($panel == 'iterator' && method_exists($var, 'getIterator') ? $var->getIterator() : $var, $options).'</div>';
                 }
             $out .= '</div>';
