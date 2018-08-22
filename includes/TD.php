@@ -165,7 +165,7 @@ class TD extends TracyDebugger {
                 $i++;
             }
             $out .= '</ul>';
-            if(property_exists($var, 'id') && $var->id) {
+            if(($var instanceof Wire || $var instanceof \ProcessWire\Wire) && $var->id)   {
                 if($var instanceof User || $var instanceof \ProcessWire\User) {
                     $type = 'users';
                     $section = 'access';
