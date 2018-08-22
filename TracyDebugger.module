@@ -2685,7 +2685,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldAsmSelect");
         $f->attr('name', 'dumpPanelTabs');
-        $f->label = __('Panels', __FILE__);
+        $f->label = __('Dump Tabs', __FILE__);
         $f->description = __('Select and order the tabs you want when dumping ProcessWire objects via dump/barDump methods.', __FILE__);
         $f->notes = __('The first item will be open by default.', __FILE__);
         foreach(static::$dumpPanelTabs as $name => $label) {
