@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.11.12',
+            'version' => '4.11.13',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -2282,7 +2282,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'debugInfo');
         $f->label = __('Use debugInfo() magic method', __FILE__);
         $f->description = __('If a `__debugInfo()` method has been defined, it will be used instead of dumping the full object.', __FILE__);
-        $f->notes = __('This results in a smaller, cleaner dump, but you may miss some information. You can override this with the `debugInfo` option when calling `d()`, `bd()`, `fl()`, etc.', __FILE__);
+        $f->notes = __('This results in a smaller, cleaner dump, but you may miss some information. You can override this with the `debugInfo => true/false` option when calling `d()`, `bd()`, `fl()`, etc. Note that this also affects the output in the Request Info panel\'s Field List & Values section.', __FILE__);
         $f->columnWidth = 50;
         $f->attr('checked', $data['debugInfo'] == '1' ? 'checked' : '' );
         $fieldset->add($f);

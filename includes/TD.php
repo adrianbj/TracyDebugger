@@ -201,10 +201,17 @@ class TD extends TracyDebugger {
             $out .= '
             <div style="clear:both">';
                 foreach(\TracyDebugger::getDataValue('dumpPanelTabs') as $i => $panel) {
-                    $dumpVar = $panel == 'iterator' ? $var->getIterator() : $var;
-                    $options[Dumper::DEBUGINFO] = $panel == 'fullObject' ? false : true;
+                    if($panel == 'debugInfo') {
+                        $options[Dumper::DEBUGINFO] = true;
+                    }
+                    elseif($panel == 'fullObject') {
+                        $options[Dumper::DEBUGINFO] = false;
+                    }
+                    else {
+                        $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
+                    }
                     $options[Dumper::COLLAPSE] = $i == 0 ? true : false;
-                    $out .= '<div id="'.$panel.'_'.$classExt.'" class="tracyDumpTabs_'.$classExt.'"' . ($i==0 ? '' : ' style="display:none"') . '>'.Dumper::toHtml($dumpVar, $options).'</div>';
+                    $out .= '<div id="'.$panel.'_'.$classExt.'" class="tracyDumpTabs_'.$classExt.'"' . ($i==0 ? '' : ' style="display:none"') . '>'.Dumper::toHtml($panel == 'iterator' ? $var->getIterator() : $var, $options).'</div>';
                 }
             $out .= '</div>';
         }
