@@ -154,14 +154,18 @@ class TD extends TracyDebugger {
         $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
 
         $out = '';
-        if(method_exists($var, '__debugInfo')) {
+        if(count(\TracyDebugger::getDataValue('dumpPanelTabs')) > 0 && is_object($var)) {
             $classExt = rand();
             $out .= '<ul class="dumpTabs">';
-            foreach(\TracyDebugger::getDataValue('dumpPanelTabs') as $i => $panel) {
+            $i = 0;
+            foreach(\TracyDebugger::getDataValue('dumpPanelTabs') as $panel) {
+                if($panel == 'iterator' && !method_exists($var, 'getIterator')) continue;
+                if($panel == 'debugInfo' && !method_exists($var, '__debugInfo')) continue;
                 $out .= '<li id="'.$panel.'Tab_'.$classExt.'"' . ($i == 0 ? 'class="active"' : '') . '><a href="javascript:void(0)" onclick="toggleDumpType(\''.$panel.'\', '.$classExt.')">'.\TracyDebugger::$dumpPanelTabs[$panel].'</a></li>';
+                $i++;
             }
             $out .= '</ul>';
-            if($var->id) {
+            if(property_exists($var, 'id') && $var->id) {
                 if($var instanceof User || $var instanceof \ProcessWire\User) {
                     $type = 'users';
                     $section = 'access';
@@ -211,7 +215,7 @@ class TD extends TracyDebugger {
                         $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
                     }
                     $options[Dumper::COLLAPSE] = $i == 0 ? true : false;
-                    $out .= '<div id="'.$panel.'_'.$classExt.'" class="tracyDumpTabs_'.$classExt.'"' . ($i==0 ? '' : ' style="display:none"') . '>'.Dumper::toHtml($panel == 'iterator' ? $var->getIterator() : $var, $options).'</div>';
+                    $out .= '<div id="'.$panel.'_'.$classExt.'" class="tracyDumpTabs_'.$classExt.'"' . ($i==0 ? '' : ' style="display:none"') . '>'.Dumper::toHtml($panel == 'iterator' && method_exists($var, 'getIterator') ? $var->getIterator() : $var, $options).'</div>';
                 }
             $out .= '</div>';
         }
