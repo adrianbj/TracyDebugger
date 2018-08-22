@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.11.9',
+            'version' => '4.11.10',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -218,6 +218,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "processwireInfoPanelSections" => array('apiVariables', 'coreClasses', 'configData', 'versionsList', 'adminLinks', 'documentationLinks', 'gotoId', 'processWireWebsiteSearch'),
             "debugModePanelSections" => array('pagesLoaded', 'modulesLoaded', 'hooks', 'databaseQueries', 'selectorQueries', 'timers', 'user', 'cache', 'autoload'),
             "diagnosticsPanelSections" => array('filesystemFolders'),
+            "iteratorDumpTab" => null,
             "imagesInFieldListValues" => 1,
             "snippetsPath" => 'templates',
             "userSwitcherRestricted" => null,
@@ -2670,6 +2671,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $f->addOption($name, $label);
         }
         if($data['diagnosticsPanelSections']) $f->attr('value', $data['diagnosticsPanelSections']);
+        $fieldset->add($f);
+
+        // Dumps Panel
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __('Dumps panel', __FILE__);
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'iteratorDumpTab');
+        $f->label = __('Iterator tab', __FILE__);
+        $f->description = __('Check to show an "Iterator" tab which returns the result of the ProcessWire `getIterator()` method on the dumped object.', __FILE__);
+        $f->notes = __('In the case of page objects, this inludes the values of all fields on the page.', __FILE__);
+        $f->attr('checked', $data['iteratorDumpTab'] == '1' ? 'checked' : '' );
         $fieldset->add($f);
 
         // ToDo Panel

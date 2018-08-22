@@ -158,8 +158,9 @@ class TD extends TracyDebugger {
             $classExt = rand();
             $out .= '
             <ul class="dumpTabs">
-                <li id="debugInfoTab_'.$classExt.'" class="active"><a href="javascript:void(0)" onclick="toggleDumpType(\'debugInfo\', '.$classExt.')">Debug Info</a></li>
-                <li id="fullObjectTab_'.$classExt.'"><a href="javascript:void(0)" onclick="toggleDumpType(\'fullObject\', '.$classExt.')">Full Object</a></li>
+                <li id="debugInfoTab_'.$classExt.'" class="active"><a href="javascript:void(0)" onclick="toggleDumpType(\'debugInfo\', '.$classExt.')">Debug Info</a></li>';
+                if(\TracyDebugger::getDataValue('iteratorDumpTab')) $out .= '<li id="iteratorTab_'.$classExt.'"><a href="javascript:void(0)" onclick="toggleDumpType(\'iterator\', '.$classExt.')">Iterator</a></li>';
+                $out .= '<li id="fullObjectTab_'.$classExt.'"><a href="javascript:void(0)" onclick="toggleDumpType(\'fullObject\', '.$classExt.')">Full Object</a></li>
             </ul>';
             if($var->id) {
                 if($var instanceof User || $var instanceof \ProcessWire\User) {
@@ -202,9 +203,10 @@ class TD extends TracyDebugger {
             <div style="clear:both">';
                 $options[Dumper::DEBUGINFO] = true;
                 $out .= '<div id="debugInfo_'.$classExt.'" class="tracyDumpTabs_'.$classExt.'">' . Dumper::toHtml($var, $options) . '</div>';
+                if(\TracyDebugger::getDataValue('iteratorDumpTab')) $out .= '<div id="iterator_'.$classExt.'" class="tracyDumpTabs_'.$classExt.'" style="display:none">' . Dumper::toHtml($var->getIterator(), $options) . '</div>';
                 $options[Dumper::DEBUGINFO] = false;
-                $out .= '<div id="fullObject_'.$classExt.'" class="tracyDumpTabs_'.$classExt.'" style="display:none">' . Dumper::toHtml($var, $options) . '</div>
-            </div>';
+                $out .= '<div id="fullObject_'.$classExt.'" class="tracyDumpTabs_'.$classExt.'" style="display:none">' . Dumper::toHtml($var, $options) . '</div>';
+            $out .= '</div>';
         }
         else {
             $out .= Dumper::toHtml($var, $options);

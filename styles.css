@@ -1431,11 +1431,11 @@ ul.pw-info-links {
     cursor: grabbing !important;
 }
 
-div#tracyDumpEntries {
+#tracy-debug div#tracyDumpEntries {
     position: relative;
 }
 
-ul.dumpTabs {
+#tracy-debug ul.dumpTabs {
     display: block;
     list-style: none;
     margin: 0;
@@ -1446,7 +1446,7 @@ ul.dumpTabs {
     border-bottom: none;
 }
 
-h2+ul.dumpTabs {
+#tracy-debug h2+ul.dumpTabs {
     border-top: none;
     user-select: none;
 }
@@ -1455,7 +1455,7 @@ h2+ul.dumpTabs {
     border-top: 1px solid #D2D2D2 !important;
 }
 
-ul.dumpTabs:after {
+#tracy-debug ul.dumpTabs:after {
     content: "";
     display: table;
     clear: both;
@@ -1463,25 +1463,25 @@ ul.dumpTabs:after {
 
 /* edit link at the end of the dump tabs */
 
-ul.dumpTabs+span {
+#tracy-debug ul.dumpTabs+span {
     margin-right: 1px;
     margin-top: -25px;
     user-select: none;
 }
 
-ul.dumpTabs+span a {
+#tracy-debug ul.dumpTabs+span a {
     display: inline-block;
     padding: 4px 6px 3px 6px;
     font-size: 12px !important;
 }
 
-ul.dumpTabs li {
+#tracy-debug ul.dumpTabs li {
     float: left;
     border-bottom: 0;
     color: #444;
 }
 
-ul.dumpTabs li:not(:first-child) {
+#tracy-debug ul.dumpTabs li:not(:first-child) {
     margin-left: -1px;
 }
 
@@ -1504,6 +1504,10 @@ ul.dumpTabs li:not(:first-child) {
     border-top: 1px solid #D2D2D2 !important;
 }
 
+#tracy-debug ul.dumpTabs li:not(.active):not(:first-child) a:hover {
+    border-left: 1px solid #D2D2D2 !important;
+}
+
 #tracy-debug ul.dumpTabs li.active a {
     background: white !important;
     color: #444 !important;
@@ -1515,14 +1519,14 @@ ul.dumpTabs li:not(:first-child) {
     border-left-color: #D2D2D2 !important;
 }
 
-ul.dumpTabs li a:link {
+#tracy-debug ul.dumpTabs li a:link {
     color: #444 !important;
 }
 
-ul.dumpTabs li a:hover {
+#tracy-debug ul.dumpTabs li a:hover {
     text-decoration: none !important;
 }
 
-ul.dumpTabs li:not(:last-child) {
+#tracy-debug ul.dumpTabs li:not(:last-child) {
     border-right-width: 0;
 }
