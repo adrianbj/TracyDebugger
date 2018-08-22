@@ -156,12 +156,11 @@ class TD extends TracyDebugger {
         $out = '';
         if(method_exists($var, '__debugInfo')) {
             $classExt = rand();
-            $out .= '
-            <ul class="dumpTabs">
-                <li id="debugInfoTab_'.$classExt.'" class="active"><a href="javascript:void(0)" onclick="toggleDumpType(\'debugInfo\', '.$classExt.')">Debug Info</a></li>';
-                if(\TracyDebugger::getDataValue('iteratorDumpTab')) $out .= '<li id="iteratorTab_'.$classExt.'"><a href="javascript:void(0)" onclick="toggleDumpType(\'iterator\', '.$classExt.')">Iterator</a></li>';
-                $out .= '<li id="fullObjectTab_'.$classExt.'"><a href="javascript:void(0)" onclick="toggleDumpType(\'fullObject\', '.$classExt.')">Full Object</a></li>
-            </ul>';
+            $out .= '<ul class="dumpTabs">';
+            foreach(\TracyDebugger::getDataValue('dumpPanelTabs') as $i => $panel) {
+                $out .= '<li id="'.$panel.'Tab_'.$classExt.'"' . ($i == 0 ? 'class="active"' : '') . '><a href="javascript:void(0)" onclick="toggleDumpType(\''.$panel.'\', '.$classExt.')">'.\TracyDebugger::$dumpPanelTabs[$panel].'</a></li>';
+            }
+            $out .= '</ul>';
             if($var->id) {
                 if($var instanceof User || $var instanceof \ProcessWire\User) {
                     $type = 'users';
@@ -192,7 +191,7 @@ class TD extends TracyDebugger {
                     $section = 'setup';
                 }
 
-                $out .= self::generateEditLink($var, $type, $section);
+                if(isset($type)) $out .= self::generateEditLink($var, $type, $section);
             }
 
             if($var instanceof WireArray || $var instanceof \ProcessWire\WireArray) {
@@ -201,11 +200,11 @@ class TD extends TracyDebugger {
 
             $out .= '
             <div style="clear:both">';
-                $options[Dumper::DEBUGINFO] = true;
-                $out .= '<div id="debugInfo_'.$classExt.'" class="tracyDumpTabs_'.$classExt.'">' . Dumper::toHtml($var, $options) . '</div>';
-                if(\TracyDebugger::getDataValue('iteratorDumpTab')) $out .= '<div id="iterator_'.$classExt.'" class="tracyDumpTabs_'.$classExt.'" style="display:none">' . Dumper::toHtml($var->getIterator(), $options) . '</div>';
-                $options[Dumper::DEBUGINFO] = false;
-                $out .= '<div id="fullObject_'.$classExt.'" class="tracyDumpTabs_'.$classExt.'" style="display:none">' . Dumper::toHtml($var, $options) . '</div>';
+                foreach(\TracyDebugger::getDataValue('dumpPanelTabs') as $i => $panel) {
+                    $dumpVar = $panel == 'iterator' ? $var->getIterator() : $var;
+                    $options[Dumper::DEBUGINFO] = $panel == 'fullObject' ? false : true;
+                    $out .= '<div id="'.$panel.'_'.$classExt.'" class="tracyDumpTabs_'.$classExt.'"' . ($i==0 ? '' : ' style="display:none"') . '>'.Dumper::toHtml($dumpVar, $options).'</div>';
+                }
             $out .= '</div>';
         }
         else {
