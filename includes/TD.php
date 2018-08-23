@@ -154,15 +154,11 @@ class TD extends TracyDebugger {
         $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
 
         $out = '';
-        if(count(\TracyDebugger::getDataValue('dumpPanelTabs')) > 0 && is_object($var)) {
+        if(count(\TracyDebugger::getDataValue('dumpPanelTabs')) > 0 && !is_string($var)) {
             $classExt = rand();
             $out .= '<ul class="dumpTabs">';
-            $i = 0;
-            foreach(\TracyDebugger::getDataValue('dumpPanelTabs') as $panel) {
-                if($panel == 'iterator' && !method_exists($var, 'getIterator')) continue;
-                if($panel == 'debugInfo' && !method_exists($var, '__debugInfo')) continue;
+            foreach(\TracyDebugger::getDataValue('dumpPanelTabs') as $i => $panel) {
                 $out .= '<li id="'.$panel.'Tab_'.$classExt.'"' . ($i == 0 ? 'class="active"' : '') . '><a href="javascript:void(0)" onclick="toggleDumpType(\''.$panel.'\', '.$classExt.')">'.\TracyDebugger::$dumpPanelTabs[$panel].'</a></li>';
-                $i++;
             }
             $out .= '</ul>';
             if(($var instanceof Wire || $var instanceof \ProcessWire\Wire) && $var->id)   {
