@@ -150,13 +150,14 @@ class TD extends TracyDebugger {
     private static function generateDump($var, $options) {
 
         // standard options for all dump/barDump variations
-        $options[Dumper::COLLAPSE] = true;
+        $options[Dumper::COLLAPSE] = 1;
+        $options[Dumper::COLLAPSE_COUNT] = 1;
         $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
 
         $out = '';
         if(count(\TracyDebugger::getDataValue('dumpPanelTabs')) > 0 && !is_string($var)) {
             $classExt = rand();
-            $out .= '<ul class="dumpTabs">';
+            $out .= '<ul class="tracyDumpTabs">';
             foreach(\TracyDebugger::getDataValue('dumpPanelTabs') as $i => $panel) {
                 $out .= '<li id="'.$panel.'Tab_'.$classExt.'"' . ($i == 0 ? 'class="active"' : '') . '><a href="javascript:void(0)" onclick="toggleDumpType(\''.$panel.'\', '.$classExt.')">'.\TracyDebugger::$dumpPanelTabs[$panel].'</a></li>';
             }
@@ -210,8 +211,7 @@ class TD extends TracyDebugger {
                     else {
                         $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
                     }
-                    $options[Dumper::COLLAPSE] = true;
-                    $out .= '<div id="'.$panel.'_'.$classExt.'" class="tracyDumpTabs_'.$classExt.'"' . ($i==0 ? '' : ' style="display:none"') . '>'.Dumper::toHtml($panel == 'iterator' && method_exists($var, 'getIterator') ? $var->getIterator() : $var, $options).'</div>';
+                    $out .= '<div id="'.$panel.'_'.$classExt.'" class="tracyDumpTabs_'.$classExt.'"' . ($i==0 ? '' : ' style="display:none"') . '><span class="tracyDumpsToggler tracyDumpsExpander" onclick="tracyDumpsToggler(this, true)" title="Expand All">+</span> <span class="tracyDumpsToggler tracyDumpsCollapser" onclick="tracyDumpsToggler(this, false)" title="Collapse All">–</span>'.Dumper::toHtml($panel == 'iterator' && method_exists($var, 'getIterator') ? $var->getIterator() : $var, $options).'</div>';
                 }
             $out .= '</div>';
         }

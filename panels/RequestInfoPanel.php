@@ -235,7 +235,8 @@ class RequestInfoPanel extends BasePanel {
                     </tr>';
             }
 
-            $pageInfo .= '
+            if($this->wire('page')->process == 'ProcessPageEdit') {
+                $pageInfo .= '
                 <tr>
                     <td>id</td>
                     <td><a title="Edit Page" href="'.$p->editUrl().'">'.$p->id.'</a></td>
@@ -245,73 +246,82 @@ class RequestInfoPanel extends BasePanel {
                     <td><a title="View Page" href="'.$p->url.'">'.$p->path.'</a></td>
                 </tr>
                 ';
-                if($p->template->urlSegments) {
-                    $i=1;
-                    while($i <= $this->wire('config')->maxUrlSegments) {
-                        if($this->wire('input')->urlSegment($i)) {
-                            $pageInfo .= '
-                            <tr>
-                                <td>urlSegment '.$i.'</td>
-                                <td>'.$this->wire('input')->urlSegment($i).'</td>
-                            </tr>';
-                        }
-                        $i++;
-                    }
-                }
+            }
+            else {
                 $pageInfo .= '
                 <tr>
-                    <td>template</td>
-                    <td><a title="Edit Template" href="'.$this->wire('config')->urls->admin.'setup/template/edit?id='.$p->template->id.'">'.$p->template->name.'</a>'.($p->template->label ? ' ('.($this->wire('languages') ? $p->template->getLabel($userLang) : $p->template->label).')' :'').'</td>
-                </tr>
-                <tr>
-                    <td>process</td>
-                    <td>'.$this->wire('process').'</td>
+                    <td>id</td>
+                    <td>'.$p->id.'</td>
                 </tr>';
-                if($p->parent->id) {
-                    $pageInfo .= '
-                    <tr>
-                        <td>parent</td>
-                        <td>' . ($p->parent->viewable() ? '<a title="View Parent" href="'.$p->parent->url.'">'.$this->getLanguageVersion($p->parent, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->parent, 'name', $userLang, true).'</span>') . ' (<a title="Edit Parent" href="'.$p->parent->editUrl().'">'.$p->parent->id.'</a>)</td>
-                    </tr>';
+            }
+
+            if($p->template->urlSegments) {
+                $i=1;
+                while($i <= $this->wire('config')->maxUrlSegments) {
+                    if($this->wire('input')->urlSegment($i)) {
+                        $pageInfo .= '
+                        <tr>
+                            <td>urlSegment '.$i.'</td>
+                            <td>'.$this->wire('input')->urlSegment($i).'</td>
+                        </tr>';
+                    }
+                    $i++;
                 }
+            }
+            $pageInfo .= '
+            <tr>
+                <td>template</td>
+                <td><a title="Edit Template" href="'.$this->wire('config')->urls->admin.'setup/template/edit?id='.$p->template->id.'">'.$p->template->name.'</a>'.($p->template->label ? ' ('.($this->wire('languages') ? $p->template->getLabel($userLang) : $p->template->label).')' :'').'</td>
+            </tr>
+            <tr>
+                <td>process</td>
+                <td>'.$this->wire('process').'</td>
+            </tr>';
+            if($p->parent->id) {
                 $pageInfo .= '
                 <tr>
-                    <td>rootParent</td>
-                    <td>' . ($p->rootParent->viewable() ? '<a title="View Root Parent" href="'.$p->rootParent->url.'">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang, true).'</span>') . ' (<a title="Edit Root Parent" href="'.$p->rootParent->editUrl().'">'.$p->rootParent->id.'</a>)</td>
-                </tr>
-                ';
-                $prevPage = $p->prev("include=all");
-                if($prevPage->id) {
-                    $pageInfo .= '
-                    <tr>
-                        <td>prev (sibling)</td>
-                        <td>' . ($prevPage->viewable() ? '<a title="View Prev Sibling" href="'.$prevPage->url.'">'.$this->getLanguageVersion($prevPage, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($prevPage, 'name', $userLang, true).'</span>') . ' (<a title="Edit Prev Sibling" href="'.$prevPage->editUrl().'">'.$prevPage->id.'</a>)</td>
-                    </tr>';
-                }
-                $nextPage = $p->next("include=all");
-                if($nextPage->id) {
-                    $pageInfo .= '
-                    <tr>
-                        <td>next (sibling)</td>
-                        <td>' . ($nextPage->viewable() ? '<a title="View Next Sibling" href="'.$nextPage->url.'">'.$this->getLanguageVersion($nextPage, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($nextPage, 'name', $userLang, true).'</span>') . ' (<a title="Edit Next Sibling" href="'.$nextPage->editUrl().'">'.$nextPage->id.'</a>)</td>
-                    </tr>';
-                }
+                    <td>parent</td>
+                    <td>' . ($p->parent->viewable() ? '<a title="View Parent" href="'.$p->parent->url.'">'.$this->getLanguageVersion($p->parent, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->parent, 'name', $userLang, true).'</span>') . ' (<a title="Edit Parent" href="'.$p->parent->editUrl().'">'.$p->parent->id.'</a>)</td>
+                </tr>';
+            }
+            $pageInfo .= '
+            <tr>
+                <td>rootParent</td>
+                <td>' . ($p->rootParent->viewable() ? '<a title="View Root Parent" href="'.$p->rootParent->url.'">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang, true).'</span>') . ' (<a title="Edit Root Parent" href="'.$p->rootParent->editUrl().'">'.$p->rootParent->id.'</a>)</td>
+            </tr>
+            ';
+            $prevPage = $p->prev("include=all");
+            if($prevPage->id) {
                 $pageInfo .= '
                 <tr>
-                    <td>children</td>
-                    <td>'.$p->numChildren().' <a title="Open Page Tree" href="'.$this->wire('config')->urls->admin.'page/list/?open='.$p->id.'">open tree</a> | <a title="View Children Tab" href="'.$p->editUrl().'#ProcessPageEditChildren">edit</a></td>
+                    <td>prev (sibling)</td>
+                    <td>' . ($prevPage->viewable() ? '<a title="View Prev Sibling" href="'.$prevPage->url.'">'.$this->getLanguageVersion($prevPage, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($prevPage, 'name', $userLang, true).'</span>') . ' (<a title="Edit Prev Sibling" href="'.$prevPage->editUrl().'">'.$prevPage->id.'</a>)</td>
+                </tr>';
+            }
+            $nextPage = $p->next("include=all");
+            if($nextPage->id) {
+                $pageInfo .= '
+                <tr>
+                    <td>next (sibling)</td>
+                    <td>' . ($nextPage->viewable() ? '<a title="View Next Sibling" href="'.$nextPage->url.'">'.$this->getLanguageVersion($nextPage, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($nextPage, 'name', $userLang, true).'</span>') . ' (<a title="Edit Next Sibling" href="'.$nextPage->editUrl().'">'.$nextPage->id.'</a>)</td>
+                </tr>';
+            }
+            $pageInfo .= '
+            <tr>
+                <td>children</td>
+                <td>'.$p->numChildren().' <a title="Open Page Tree" href="'.$this->wire('config')->urls->admin.'page/list/?open='.$p->id.'">open tree</a> | <a title="View Children Tab" href="'.$p->editUrl().'#ProcessPageEditChildren">edit</a></td>
+            </tr>
+            ';
+            if($p->numChildren()) {
+                $firstChild = $p->child("include=all");
+                $pageInfo .= '
+                <tr>
+                    <td>child</td>
+                    <td>' . ($firstChild->viewable() ? '<a title="View First Child" href="'.$firstChild->url.'">'.$this->getLanguageVersion($firstChild, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($firstChild, 'name', $userLang, true).'</span>') . ' (<a title="Edit First Child" href="'.$firstChild->editUrl().'">'.$firstChild->id.'</a>)</td>
                 </tr>
                 ';
-                if($p->numChildren()) {
-                    $firstChild = $p->child("include=all");
-                    $pageInfo .= '
-                    <tr>
-                        <td>child</td>
-                        <td>' . ($firstChild->viewable() ? '<a title="View First Child" href="'.$firstChild->url.'">'.$this->getLanguageVersion($firstChild, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($firstChild, 'name', $userLang, true).'</span>') . ' (<a title="Edit First Child" href="'.$firstChild->editUrl().'">'.$firstChild->id.'</a>)</td>
-                    </tr>
-                    ';
-                }
-                $pageInfo .= '
+            }
+            $pageInfo .= '
                 <tr>
                     <td>createdUser</td>
                     <td><a title="Edit User" href="'.$this->wire('config')->urls->admin.'access/users/edit/?id='.$p->modifiedUser->id.'">'.$p->createdUser->name.'</a></td>

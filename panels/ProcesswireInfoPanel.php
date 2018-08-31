@@ -370,7 +370,7 @@ class ProcesswireInfoPanel extends BasePanel {
                     Copy plain text
                 </button>
             </p>
-            <p><textarea id="versionsListTextarea" rows="5" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="font-size:12px; width:100%; resize:vertical; padding:3px !important">'.$textVersionsList.'</textarea></p>';
+            <p><textarea id="versionsListTextarea" rows="6" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="font-size:12px; width:100%; resize:vertical; padding:3px !important">'.$textVersionsList.'</textarea></p>';
 
         }
 

@@ -189,7 +189,7 @@ class ConsolePanel extends BasePanel {
                         if(xmlhttp.readyState == XMLHttpRequest.DONE) {
                             document.getElementById("tracyConsoleStatus").innerHTML = "Completed!";
                             if(xmlhttp.status == 200) {
-                                document.getElementById("tracyConsoleResult").innerHTML += tracyConsole.tryParseJSON(xmlhttp.responseText);
+                                document.getElementById("tracyConsoleResult").innerHTML += '<div style="position:relative">' + tracyConsole.tryParseJSON(xmlhttp.responseText) + '</div>';
                                 // scroll to bottom of results
                                 var objDiv = document.getElementById("tracyConsoleResult");
                                 objDiv.scrollTop = objDiv.scrollHeight;

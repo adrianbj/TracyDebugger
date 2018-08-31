@@ -238,7 +238,7 @@ body.tracyHidden:before {
     font-size: 80% !important;
 }
 
-#tracy-debug a {
+#tracy-debug:not(ul.tracyDumpTabs) a {
     border: none !important;
 }
 
@@ -1431,11 +1431,11 @@ ul.pw-info-links {
     cursor: grabbing !important;
 }
 
-#tracy-debug div#tracyDumpEntries {
+div#tracyDumpEntries {
     position: relative;
 }
 
-#tracy-debug ul.dumpTabs {
+ul.tracyDumpTabs {
     display: block;
     list-style: none;
     margin: 0;
@@ -1446,16 +1446,16 @@ ul.pw-info-links {
     border-bottom: none;
 }
 
-#tracy-debug h2+ul.dumpTabs {
+h2+ul.tracyDumpTabs {
     border-top: none;
     user-select: none;
 }
 
-#tracy-debug h2+ul.dumpTabs li.active a {
+h2+ul.tracyDumpTabs li.active a {
     border-top: 1px solid #D2D2D2 !important;
 }
 
-#tracy-debug ul.dumpTabs:after {
+ul.tracyDumpTabs:after {
     content: "";
     display: table;
     clear: both;
@@ -1463,29 +1463,29 @@ ul.pw-info-links {
 
 /* edit link at the end of the dump tabs */
 
-#tracy-debug ul.dumpTabs+span {
+ul.tracyDumpTabs+span {
     margin-right: 1px;
     margin-top: -25px;
     user-select: none;
 }
 
-#tracy-debug ul.dumpTabs+span a {
+ul.tracyDumpTabs+span a {
     display: inline-block;
     padding: 4px 6px 3px 6px;
     font-size: 12px !important;
 }
 
-#tracy-debug ul.dumpTabs li {
+ul.tracyDumpTabs li {
     float: left;
     border-bottom: 0;
     color: #444;
 }
 
-#tracy-debug ul.dumpTabs li:not(:first-child) {
+ul.tracyDumpTabs li:not(:first-child) {
     margin-left: -1px;
 }
 
-#tracy-debug ul.dumpTabs li a {
+ul.tracyDumpTabs li a {
     padding: 4px 7px;
     font-size: 12px !important;
     border: 1px solid transparent !important;
@@ -1494,39 +1494,57 @@ ul.pw-info-links {
     margin-top: -1px;
 }
 
-#tracy-debug ul.dumpTabs li:hover {
+ul.tracyDumpTabs li:hover {
     background: rgba(0, 0, 0, 0.05) !important;
 }
 
-#tracy-debug ul.dumpTabs li:not(.active) a:hover {
+ul.tracyDumpTabs li:not(.active) a:hover {
     color: #125EAE !important;
     border-right: 1px solid #D2D2D2 !important;
     border-top: 1px solid #D2D2D2 !important;
 }
 
-#tracy-debug ul.dumpTabs li:not(.active):not(:first-child) a:hover {
+ul.tracyDumpTabs li:not(.active):not(:first-child) a:hover {
     border-left: 1px solid #D2D2D2 !important;
 }
 
-#tracy-debug ul.dumpTabs li.active a {
+ul.tracyDumpTabs li.active a {
     background: white !important;
     color: #444 !important;
     border-right-color: #D2D2D2 !important;
     border-top: 1px solid #D2D2D2 !important;
 }
 
-#tracy-debug ul.dumpTabs li.active:not(:first-child) a {
+ul.tracyDumpTabs li.active:not(:first-child) a {
     border-left-color: #D2D2D2 !important;
 }
 
-#tracy-debug ul.dumpTabs li a:link {
+ul.tracyDumpTabs li a:link {
     color: #444 !important;
 }
 
-#tracy-debug ul.dumpTabs li a:hover {
+ul.tracyDumpTabs li a:hover {
     text-decoration: none !important;
 }
 
-#tracy-debug ul.dumpTabs li:not(:last-child) {
+ul.tracyDumpTabs li:not(:last-child) {
     border-right-width: 0;
+}
+
+span.tracyDumpsExpander, span.tracyDumpsCollapser {
+    position: absolute;
+    display: inline-block;
+    font-size: 14px;
+    padding: 5px 10px 10px 10px;
+    cursor: pointer;
+    user-select: none;
+}
+span.tracyDumpsExpander:hover, span.tracyDumpsCollapser:hover {
+    color: #D82C82;
+}
+span.tracyDumpsExpander {
+    right: 25px;
+}
+span.tracyDumpsCollapser {
+    right: 5px;
 }
