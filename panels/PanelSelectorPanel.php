@@ -154,7 +154,7 @@ class PanelSelectorPanel extends BasePanel {
                     if(!\TracyDebugger::getDataValue('strictMode')) {
                         $out .= '<input type="submit" onclick="toggleStrictMode()" value="' . ($this->wire('input')->cookie->tracyStrictMode ? 'Disable' : 'Enable') .' Strict Mode" />&nbsp;&nbsp;';
                     }
-                    if(\TracyDebugger::getDataValue('panelSelectorDisableButton')) {
+                    if(\TracyDebugger::getDataValue('panelSelectorTracyTogglerButton')) {
                         $out .= '<input type="submit" onclick="disableTracy()" value="Disable Tracy" />';
                     }
                     $out .= '

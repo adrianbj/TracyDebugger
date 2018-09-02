@@ -201,7 +201,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "backendPanels" => array('processwireInfo', 'requestInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'console', 'panelSelector', 'tracyToggler'),
             "restrictedUserDisabledPanels" => array(),
             "nonToggleablePanels" => array(),
-            "panelSelectorDisableButton" => 1,
+            "panelSelectorTracyTogglerButton" => 1,
             "showUserBar" => null,
             "showUserBarTracyUsers" => null,
             "userBarFeatures" => array('admin', 'editPage'),
@@ -2504,10 +2504,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'panelSelectorDisableButton');
-        $f->label = __('Add Disable/Enable Tracy button to Panel Selector.', __FILE__);
+        $f->attr('name', 'panelSelectorTracyTogglerButton');
+        $f->label = __('Add Disable/Enable (Toggler) Tracy button to Panel Selector.', __FILE__);
         $f->description = __('This allows you to disable/enable Tracy from the Panel Selector.', __FILE__);
-        $f->attr('checked', $data['panelSelectorDisableButton'] == '1' ? 'checked' : '' );
+        $f->attr('checked', $data['panelSelectorTracyTogglerButton'] == '1' ? 'checked' : '' );
         $fieldset->add($f);
 
 
