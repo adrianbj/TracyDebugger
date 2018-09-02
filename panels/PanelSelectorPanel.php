@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Panel Selector panel
- */
-
 class PanelSelectorPanel extends BasePanel {
 
     protected $icon;
@@ -142,7 +138,7 @@ class PanelSelectorPanel extends BasePanel {
                             <label style="'.($this->wire('page')->template == 'admin' && in_array($name, \TracyDebugger::$hideInAdmin) ? ' visibility:hidden;position: absolute; left: -999em;' : '').'">' .
                                 ($this->isOnce($name, $defaultPanels) ? $onceIcon .'&nbsp;' : '<span style="display:inline-block;width:18px">&nbsp;</span>') . '
                                  <span style="font-size:16px; font-weight:600"><a title="Panel Info" href="https://adrianbj.github.io/TracyDebugger/#/debug-bar?id='.str_replace(' ', '-', strtolower($label)).'" target="_blank">ℹ</a></span>
-                                <input type="checkbox" name="selectedPanels[]" ' . ($name == 'panelSelector' ? 'disabled="disabled"' : '') . ' value="'.$name.'" ' . (in_array($name, $showPanels) ? 'checked="checked"' : '') . ' /> '
+                                <input type="checkbox" name="selectedPanels[]" ' . ($name == 'panelSelector' || in_array($name, \TracyDebugger::getDataValue('nonToggleablePanels')) ? 'disabled="disabled"' : '') . ' value="'.$name.'" ' . (in_array($name, $showPanels) ? 'checked="checked"' : '') . ' /> '
                                 . $label . (in_array($name, $defaultPanels) ? '&nbsp;<strong>*</strong>' : '') . ($seconds ? '<span style="color:#999999; font-size:11px; float:right; margin-left:20px">&nbsp;' . \TracyDebugger::formatTime($seconds) . ($size ? ', '.$size : '') . '</span>' : '') . '
                             </label>';
                     }
@@ -158,7 +154,10 @@ class PanelSelectorPanel extends BasePanel {
                     if(!\TracyDebugger::getDataValue('strictMode')) {
                         $out .= '<input type="submit" onclick="toggleStrictMode()" value="' . ($this->wire('input')->cookie->tracyStrictMode ? 'Disable' : 'Enable') .' Strict Mode" />&nbsp;&nbsp;';
                     }
-                        $out .= '<input type="submit" onclick="disableTracy()" value="Disable Tracy" />
+                    if(\TracyDebugger::getDataValue('panelSelectorDisableButton')) {
+                        $out .= '<input type="submit" onclick="disableTracy()" value="Disable Tracy" />';
+                    }
+                    $out .= '
                     </span>
 
             </fieldset>' . \TracyDebugger::generatedTimeSize('panelSelector', \Tracy\Debugger::timer('panelSelector'), strlen($out)) . '

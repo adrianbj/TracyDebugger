@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.11.18',
+            'version' => '4.11.19',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -200,6 +200,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "frontendPanels" => array('processwireInfo', 'requestInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'console', 'panelSelector', 'tracyToggler'),
             "backendPanels" => array('processwireInfo', 'requestInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'console', 'panelSelector', 'tracyToggler'),
             "restrictedUserDisabledPanels" => array(),
+            "nonToggleablePanels" => array(),
+            "panelSelectorDisableButton" => 1,
             "showUserBar" => null,
             "showUserBarTracyUsers" => null,
             "userBarFeatures" => array('admin', 'editPage'),
@@ -901,7 +903,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             window.requestAnimationFrame(modifyTracyLogo);
                         } else {
                             var tracyLogo = document.getElementById("tracy-debug-logo");
-                            tracyLogo.setAttribute("title", tracyLogo.getAttribute("title") + "\n\nDouble-click to visit module settings");
+                            tracyLogo.setAttribute("title", tracyLogo.getAttribute("title") + "\n\nTracy Debugger for PW '.$this->getModuleInfo()['version'].'\nDouble-click to visit module settings");
                             tracyLogo.addEventListener("dblclick", function() {
                                 window.open("'.$this->wire('config')->urls->admin.'module/edit?name=TracyDebugger","_blank");
                             }, false);
@@ -2166,6 +2168,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         <p style="margin-left:55px"><img class="fa fa-fw" style="display:inline; vertical-align: middle; margin:0 4px" src="https://adrianbj.github.io/TracyDebugger/icons/processwire-info.svg"> <a href="http://modules.processwire.com/modules/tracy-debugger/">Recommend in the Modules Directory</a></strong></p>
         <p style="margin-left:55px"><i class="fa fa-fw fa-lg fa-life-ring"></i> <a href="https://processwire.com/talk/topic/12208-tracy-debugger/">Forum Support Thread</a></p>
         ';
+        if(isset($this->wire('config')->tracy) && is_array($this->wire('config')->tracy)) $fieldset->value .= '<p style="margin-top:35px"><i class="fa fa-fw fa-lg fa-exclamation-triangle"></i> You have specified various Tracy settings in <code>$config->tracy</code> that override settings here.</p>';
         $wrapper->add($fieldset);
 
         // Main Setup
@@ -2483,6 +2486,30 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
         if($data['restrictedUserDisabledPanels']) $f->attr('value', $data['restrictedUserDisabledPanels']);
         $fieldset->add($f);
+
+
+        // Panel Selector Panel
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __('Panel Selector panel', __FILE__);
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldAsmSelect");
+        $f->attr('name', 'nonToggleablePanels');
+        $f->label = __('Non-toggleable panels', __FILE__);
+        $f->description = __('Any selected panels will NOT be available to be toggle in the Panel Selector.', __FILE__);
+        foreach(static::$allPanels as $name => $label) {
+            $f->addOption($name, $label);
+        }
+        if($data['nonToggleablePanels']) $f->attr('value', $data['nonToggleablePanels']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'panelSelectorDisableButton');
+        $f->label = __('Add Disable/Enable Tracy button to Panel Selector.', __FILE__);
+        $f->description = __('This allows you to disable/enable Tracy from the Panel Selector.', __FILE__);
+        $f->attr('checked', $data['panelSelectorDisableButton'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
 
         // Editor Protocol Handler
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
