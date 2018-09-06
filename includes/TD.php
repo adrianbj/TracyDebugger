@@ -155,13 +155,9 @@ class TD extends TracyDebugger {
         $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
 
         $out = '';
+        $editCountLink = '';
         if(count(\TracyDebugger::getDataValue('dumpPanelTabs')) > 0 && !is_string($var)) {
             $classExt = rand();
-            $out .= '<ul class="tracyDumpTabs">';
-            foreach(\TracyDebugger::getDataValue('dumpPanelTabs') as $i => $panel) {
-                $out .= '<li id="'.$panel.'Tab_'.$classExt.'"' . ($i == 0 ? 'class="active"' : '') . '><a href="javascript:void(0)" onclick="toggleDumpType(\''.$panel.'\', '.$classExt.')">'.\TracyDebugger::$dumpPanelTabs[$panel].'</a></li>';
-            }
-            $out .= '</ul>';
             if(($var instanceof Wire || $var instanceof \ProcessWire\Wire) && $var->id)   {
                 if($var instanceof User || $var instanceof \ProcessWire\User) {
                     $type = 'users';
@@ -192,28 +188,44 @@ class TD extends TracyDebugger {
                     $section = 'setup';
                 }
 
-                if(isset($type)) $out .= self::generateEditLink($var, $type, $section);
+                if(isset($type)) $editCountLink .= self::generateEditLink($var, $type, $section);
             }
 
             if($var instanceof WireArray || $var instanceof \ProcessWire\WireArray) {
-                $out .= '<span style="float:right; padding: 4px 6px 3px 6px;">n = ' . $var->count() . '</span>';
+                $editCountLink .= '<span style="float:right; padding: 4px 6px 3px 6px;">n = ' . $var->count() . '</span>';
             }
 
-            $out .= '
-            <div style="clear:both">';
-                foreach(\TracyDebugger::getDataValue('dumpPanelTabs') as $i => $panel) {
-                    if($panel == 'debugInfo') {
-                        $options[Dumper::DEBUGINFO] = true;
-                    }
-                    elseif($panel == 'fullObject') {
-                        $options[Dumper::DEBUGINFO] = false;
-                    }
-                    else {
-                        $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
-                    }
-                    $out .= '<div id="'.$panel.'_'.$classExt.'" class="tracyDumpTabs_'.$classExt.'"' . ($i==0 ? '' : ' style="display:none"') . '><span class="tracyDumpsToggler tracyDumpsExpander" onclick="tracyDumpsToggler(this, true)" title="Expand All">+</span> <span class="tracyDumpsToggler tracyDumpsCollapser" onclick="tracyDumpsToggler(this, false)" title="Collapse All">–</span>'.Dumper::toHtml($panel == 'iterator' && method_exists($var, 'getIterator') ? $var->getIterator() : $var, $options).'</div>';
+            $tabs = '<ul class="tracyDumpTabs">';
+            $tabDivs = '<div style="clear:both">';
+            $numTabs = 0;
+            foreach(\TracyDebugger::getDataValue('dumpPanelTabs') as $i => $panel) {
+                if($panel == 'debugInfo') {
+                    $options[Dumper::DEBUGINFO] = true;
                 }
-            $out .= '</div>';
+                elseif($panel == 'fullObject') {
+                    $options[Dumper::DEBUGINFO] = false;
+                }
+                else {
+                    $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
+                }
+                $currentDump = Dumper::toHtml($panel == 'iterator' && method_exists($var, 'getIterator') ? $var->getIterator() : $var, $options);
+                if(!isset($lastDump) || (isset($lastDump) && strlen($currentDump) != strlen($lastDump))) {
+                	$numTabs++;
+                	$tabs .= '<li id="'.$panel.'Tab_'.$classExt.'"' . ($i == 0 ? 'class="active"' : '') . '><a href="javascript:void(0)" onclick="toggleDumpType(\''.$panel.'\', '.$classExt.')">'.\TracyDebugger::$dumpPanelTabs[$panel].'</a></li>';
+                	$tabDivs .= '<div id="'.$panel.'_'.$classExt.'" class="tracyDumpTabs_'.$classExt.'"' . ($i==0 ? '' : ' style="display:none"') . '><span class="tracyDumpsToggler tracyDumpsExpander" onclick="tracyDumpsToggler(this, true)" title="Expand All">+</span> <span class="tracyDumpsToggler tracyDumpsCollapser" onclick="tracyDumpsToggler(this, false)" title="Collapse All">–</span>'.$currentDump.'</div>';
+                }
+                $lastDump = $currentDump;
+
+            }
+            $tabs .= '</ul>';
+            $tabDivs .= '</div>';
+
+            if($numTabs > 1) {
+	            $out .= $tabs . $editCountLink . $tabDivs;
+	        }
+	        else {
+            	$out .= Dumper::toHtml($var, $options);
+	        }
         }
         else {
             $out .= Dumper::toHtml($var, $options);
