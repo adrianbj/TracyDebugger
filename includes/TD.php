@@ -224,7 +224,7 @@ class TD extends TracyDebugger {
 	            $out .= $tabs . $editCountLink . $tabDivs;
 	        }
 	        else {
-            	$out .= Dumper::toHtml($var, $options);
+            	$out .= $lastDump;
 	        }
         }
         else {
