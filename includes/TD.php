@@ -209,7 +209,7 @@ class TD extends TracyDebugger {
                     $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
                 }
                 $currentDump = Dumper::toHtml($panel == 'iterator' && method_exists($var, 'getIterator') ? $var->getIterator() : $var, $options);
-                if(!isset($lastDump) || (isset($lastDump) && strlen($currentDump) != strlen($lastDump))) {
+                if(!isset($lastDump) || (isset($lastDump) && $currentDump !== $lastDump)) {
                 	$numTabs++;
                 	$tabs .= '<li id="'.$panel.'Tab_'.$classExt.'"' . ($i == 0 ? 'class="active"' : '') . '><a href="javascript:void(0)" onclick="toggleDumpType(\''.$panel.'\', '.$classExt.')">'.\TracyDebugger::$dumpPanelTabs[$panel].'</a></li>';
                 	$tabDivs .= '<div id="'.$panel.'_'.$classExt.'" class="tracyDumpTabs_'.$classExt.'"' . ($i==0 ? '' : ' style="display:none"') . '><span class="tracyDumpsToggler tracyDumpsExpander" onclick="tracyDumpsToggler(this, true)" title="Expand All">+</span> <span class="tracyDumpsToggler tracyDumpsCollapser" onclick="tracyDumpsToggler(this, false)" title="Collapse All">–</span>'.$currentDump.'</div>';
