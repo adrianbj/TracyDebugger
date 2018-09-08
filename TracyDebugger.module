@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.11.22',
+            'version' => '4.11.23',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -2529,10 +2529,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $fieldset->label = __('Panel Selector panel', __FILE__);
         $wrapper->add($fieldset);
 
-        $f = $this->wire('modules')->get("InputfieldAsmSelect");
+        $f = $this->wire('modules')->get("InputfieldCheckboxes");
         $f->attr('name', 'nonToggleablePanels');
         $f->label = __('Non-toggleable panels', __FILE__);
-        $f->description = __('Any selected panels will NOT be available to be toggle in the Panel Selector.', __FILE__);
+        $f->description = __('Selected panels will NOT be toggleable in the Panel Selector.', __FILE__);
+        $f->optionColumns = 3;
         foreach(static::$allPanels as $name => $label) {
             $f->addOption($name, $label);
         }

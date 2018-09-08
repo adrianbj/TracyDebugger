@@ -1478,8 +1478,8 @@ class DiagnosticsPanel extends BasePanel {
 
         $out .= \TracyDebugger::generatedTimeSize('diagnostics', \Tracy\Debugger::timer('diagnostics'), strlen($out));
         $out .= '</div>';
-        $out .= <<<SCRIPT
-<script>
+        $out .= <<< HTML
+        <script>
             function getCookie(name) {
                 var value = "; " + document.cookie;
                 var parts = value.split("; " + name + "=");
@@ -1496,8 +1496,8 @@ class DiagnosticsPanel extends BasePanel {
                     location.reload();
                 }
             }
-</script>
-SCRIPT;
+        </script>
+HTML;
 
         return parent::loadResources() . $out;
     }
