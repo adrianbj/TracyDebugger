@@ -61,13 +61,14 @@ var toggleDumpType = function(type, classExt) {
     var dumpTabs = document.getElementsByClassName('tracyDumpTabs_' + classExt);
     [].forEach.call(dumpTabs, function (tab) {
         var tabContentEl = document.getElementById(tab.id);
+        var toggleableParent = tabContentEl.querySelector('.tracy-toggle');
         if(tab.id.indexOf(type) === -1) {
-            window.Tracy.Toggle.toggle(tabContentEl.querySelector('.tracy-toggle'), false);
+            if(toggleableParent) window.Tracy.Toggle.toggle(toggleableParent, false);
             document.getElementById(tab.id.replace('_', 'Tab_')).classList.remove('active');
             tabContentEl.style.display = "none";
         }
         else {
-            window.Tracy.Toggle.toggle(tabContentEl.querySelector('.tracy-toggle'));
+            if(toggleableParent) window.Tracy.Toggle.toggle(toggleableParent);
             document.getElementById(tab.id.replace('_', 'Tab_')).classList.add('active');
             tabContentEl.style.display = "block";
         }
