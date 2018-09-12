@@ -784,7 +784,6 @@ ul.pw-info-links {
 #tracy-debug-panel-EventInterceptorPanel>.tracy-icons a:first-child,
 #tracy-debug-panel-ModuleDisablerPanel>.tracy-icons a:first-child,
 #tracy-debug-panel-PageRecorderPanel>.tracy-icons a:first-child,
-#tracy-debug-panel-DumpsRecorderPanel>.tracy-icons a:first-child,
 #tracy-debug-panel-Tracy-info>.tracy-icons a:first-child,
 #tracy-debug-panel-Zarganwar-PerformancePanel-Panel>.tracy-icons a:first-child,
 #tracy-debug-panel-Tracy-dumps>.tracy-icons a:first-child,
@@ -854,6 +853,10 @@ ul.pw-info-links {
 .tracy-panel svg {
     width: 16px !important;
     height: 16px !important;
+}
+
+#tracyConsoleResult {
+    background: #FFFFFF !important;
 }
 
 #tracy-debug .tracy-DumpPanel h2,
@@ -1152,8 +1155,8 @@ ul.pw-info-links {
     all: unset;
     display: block !important;
     height: 8px !important;
-    background-color: #444 !important;
-    opacity: 0.35 !important;
+    background-color: #AEAEAE !important;
+    opacity: 1 !important;
     background-repeat: no-repeat !important;
     background-position: 50% !important;
 }
@@ -1531,7 +1534,8 @@ ul.tracyDumpTabs li:not(:last-child) {
     border-right-width: 0;
 }
 
-span.tracyDumpsExpander, span.tracyDumpsCollapser {
+span.tracyDumpsExpander,
+span.tracyDumpsCollapser {
     position: absolute;
     display: inline-block;
     font-size: 14px;
@@ -1539,12 +1543,60 @@ span.tracyDumpsExpander, span.tracyDumpsCollapser {
     cursor: pointer;
     user-select: none;
 }
-span.tracyDumpsExpander:hover, span.tracyDumpsCollapser:hover {
+
+span.tracyDumpsExpander:hover,
+span.tracyDumpsCollapser:hover {
     color: #D82C82;
 }
+
 span.tracyDumpsExpander {
     right: 25px;
 }
+
 span.tracyDumpsCollapser {
     right: 5px;
+}
+
+.maximizedConsole {
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    z-index: 999999;
+    opacity: 1;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: auto;
+}
+
+/* hide the fullscreen toggle until the js editor loads */
+
+#tracyConsoleContainer:not([style]) .fullscreenToggleButton {
+    display: none;
+}
+
+.fullscreenToggleButton {
+    display: block;
+    cursor: pointer;
+    padding: 6px 8px;
+    position: absolute;
+    z-index: 7;
+    right: 0;
+}
+
+.tracy-panel .fullscreenToggleButton svg {
+    width: 13px !important;
+    height: 13px !important;
+}
+
+.fullscreenToggleButton svg * {
+    fill: #999;
+}
+
+.fullscreenToggleButton:hover svg *,
+.maximizedConsole .fullscreenToggleButton svg * {
+    fill: white;
+}
+
+.noscroll {
+    overflow: hidden;
 }

@@ -54,7 +54,7 @@ class DumpsRecorderPanel extends BasePanel {
 
     public function getPanel() {
         $out = '
-        <h1>' . $this->icon . ' Dumps Recorder</h1>
+        <h1>' . $this->icon . ' Dumps Recorder</h1><span class="tracy-icons"><span class="resizeIcons"><a href="javascript:void(0)" title="halfscreen" rel="min" onclick="tracyResizePanel(\'DumpsRecorderPanel\', \'halfscreen\')">▼</a> <a href="javascript:void(0)" title="fullscreen" rel="max" onclick="tracyResizePanel(\'DumpsRecorderPanel\', \'fullscreen\')">▲</a></span></span>
 
         <script>
             function clearRecorderDumps() {

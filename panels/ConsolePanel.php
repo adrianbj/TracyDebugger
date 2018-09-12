@@ -7,7 +7,10 @@ class ConsolePanel extends BasePanel {
     protected $tracyIncludeCode;
 
     public function getTab() {
-        if(\TracyDebugger::isAdditionalBar()) return;
+        if(\TracyDebugger::isAdditionalBar()) {
+            return;
+        }
+
         \Tracy\Debugger::timer('console');
 
         $this->tracyIncludeCode = json_decode($this->wire('input')->cookie->tracyIncludeCode, true);
@@ -21,7 +24,7 @@ class ConsolePanel extends BasePanel {
         $this->icon = '
             <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
                  width="16px" height="13.7px" viewBox="439 504.1 16 13.7" enable-background="new 439 504.1 16 13.7" xml:space="preserve">
-            <path fill="'.$this->iconColor.'" d="M453.9,504.1h-13.7c-0.6,0-1.1,0.5-1.1,1.1v11.4c0,0.6,0.5,1.1,1.1,1.1h13.7c0.6,0,1.1-0.5,1.1-1.1v-11.4
+            <path fill="' . $this->iconColor . '" d="M453.9,504.1h-13.7c-0.6,0-1.1,0.5-1.1,1.1v11.4c0,0.6,0.5,1.1,1.1,1.1h13.7c0.6,0,1.1-0.5,1.1-1.1v-11.4
                 C455,504.7,454.5,504.1,453.9,504.1z M441.3,512.1l2.3-2.3l-2.3-2.3l1.1-1.1l3.4,3.4l-3.4,3.4L441.3,512.1z M450.4,513.3h-4.6v-1.1
                 h4.6V513.3z"/>
             </svg>';
@@ -58,13 +61,13 @@ class ConsolePanel extends BasePanel {
         }
 
         if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessField') {
-            $fid = (int)$this->wire('input')->get('id');
+            $fid = (int) $this->wire('input')->get('id');
         }
         else {
             $fid = null;
         }
         if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessTemplate') {
-            $tid = (int)$this->wire('input')->get('id');
+            $tid = (int) $this->wire('input')->get('id');
         }
         else {
             $tid = null;
@@ -90,7 +93,9 @@ class ConsolePanel extends BasePanel {
 
         // get snippets from DB to populate local storage
         $snippets = \TracyDebugger::getDataValue('snippets');
-        if(!$snippets) $snippets = json_encode(array());
+        if(!$snippets) {
+            $snippets = json_encode(array());
+        }
 
         $out = '<script>' . file_get_contents($this->wire("config")->paths->TracyDebugger . 'scripts/js-loader.js') . '</script>';
         $out .= '<script>' . file_get_contents($this->wire("config")->paths->TracyDebugger . 'scripts/get-query-variable.js') . '</script>';
@@ -98,6 +103,12 @@ class ConsolePanel extends BasePanel {
         // determine whether 'l' or 'line' is used for line number with current editor
         parse_str(\Tracy\Debugger::$editor, $vars);
         $lineVar = array_key_exists('l', $vars) ? 'l' : 'line';
+
+        $maximizeSvg = '<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                                 viewBox="282.8 231 16 15.2" enable-background="new 282.8 231 16 15.2" xml:space="preserve">
+                                <polygon fill="#AEAEAE" points="287.6,233.6 298.8,231 295.4,242 "/>
+                                <polygon fill="#AEAEAE" points="293.9,243.6 282.8,246.2 286.1,235.3 "/>
+                            </svg>';
 
         $out .= <<< HTML
         <script>
@@ -180,6 +191,22 @@ class ConsolePanel extends BasePanel {
                         expires.setMinutes(expires.getMinutes() + 5);
                         document.cookie = "tracyIncludeCode="+JSON.stringify(params)+";expires="+expires.toGMTString()+";path=/";
                     }
+                },
+
+                toggleFullscreen: function(maximize) {
+                    if(maximize == 'true') {
+                        document.getElementById("tracyConsoleContainer").classList.add("maximizedConsole");
+                        document.getElementById("fullscreenToggleMaximize").style.display = "none";
+                        document.getElementById("fullscreenToggleMinimize").style.display = "block";
+                        document.body.classList.add('noscroll');
+                    }
+                    else {
+                        document.getElementById("tracyConsoleContainer").classList.remove("maximizedConsole");
+                        document.getElementById("fullscreenToggleMaximize").style.display = "block";
+                        document.getElementById("fullscreenToggleMinimize").style.display = "none";
+                        document.body.classList.remove('noscroll');
+                    }
+                    tracyConsole.tce.focus();
                 },
 
                 callPhp: function(code) {
@@ -536,6 +563,16 @@ class ConsolePanel extends BasePanel {
                         tracyConsole.tce.setAutoScrollEditorIntoView(true);
                         tracyConsole.resizeAce();
 
+                        // create and append toggle fullscreen/restore buttons
+                        var toggleFullscreenButtons = document.createElement('div');
+                        toggleFullscreenButtons.innerHTML =
+                        '<span id="fullscreenToggleMaximize" title="Maximize" class="fullscreenToggleButton" onclick="tracyConsole.toggleFullscreen(\'true\')">$maximizeSvg</span>' +
+                        '<span id="fullscreenToggleMinimize" title="Restore" class="fullscreenToggleButton" style="display:none" onclick="tracyConsole.toggleFullscreen()">$maximizeSvg</span>';
+                        [].forEach.call(document.getElementsByClassName('ace_scroller'), function(el) {
+                            el.prepend(toggleFullscreenButtons);
+                        });
+
+
                         // splitjs
                         tracyJSLoader.load(tracyConsole.tracyModuleUrl + "/scripts/splitjs/split.min.js", function() {
                             var sizes = localStorage.getItem('tracyConsoleSplitSizes');
@@ -633,41 +670,39 @@ class ConsolePanel extends BasePanel {
         </script>
 HTML;
 
-
-
         $out .= '<h1>' . $this->icon . ' Console </h1><span class="tracy-icons"><span class="resizeIcons"><a href="javascript:void(0)" title="halfscreen" rel="min" onclick="tracyResizePanel(\'ConsolePanel\', \'halfscreen\')">▼</a> <a href="javascript:void(0)" title="fullscreen" rel="max" onclick="tracyResizePanel(\'ConsolePanel\', \'fullscreen\')">▲</a></span></span>
         <div class="tracy-inner">
             <div id="tracyConsoleMainContainer">
                 <legend>CTRL/CMD+Enter to Run&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ALT/OPT+Enter to Clear & Run</legend>';
-                if($this->wire('page')->template != "admin") {
-                    $out .= '<p><label><input type="checkbox" id="accessTemplateVars" /> Access to custom variables & functions from this page\'s template file and included files.</label></p>';
-                }
+        if($this->wire('page')->template != "admin") {
+            $out .= '<p><label><input type="checkbox" id="accessTemplateVars" /> Access to custom variables & functions from this page\'s template file and included files.</label></p>';
+        }
 
-            $out .= '
+        $out .= '
                 <div style="padding:10px 0">
                     <input title="Run code" type="submit" id="runCode" onclick="tracyConsole.processTracyCode()" value="Run" />&nbsp;
                     <input style="font-family: FontAwesome !important" title="Go back (CTRL+CMD+&#8593;)" id="historyBack" type="submit" onclick="tracyConsole.loadHistory(\'back\')" value="&#xf060;" />&nbsp;
                     <input style="font-family: FontAwesome !important" title="Go forward (CTRL+CMD+&#8595;)" class="arrowRight" id="historyForward" type="submit" onclick="tracyConsole.loadHistory(\'forward\')" value="&#xf060;" />
                     <input title="Clear results" type="submit" id="clearResults" onclick="tracyConsole.clearResults()" value="&#10006; Clear results" />
                     <span style="float:right;">
-                        <label title="Don\'t Run on Page Load" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'off\')" value="off" '.(!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? ' checked' : '').' /> off</label>&nbsp;
-                        <label title="Run on init" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'init\')" value="init" '.($this->tracyIncludeCode['when'] === 'init' ? ' checked' : '').' /> init</label>&nbsp;
-                        <label title="Run on ready" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'ready\')" value="ready" '.($this->tracyIncludeCode['when'] === 'ready' ? ' checked' : '').' /> ready</label>&nbsp;
-                        <label title="Run on finished" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'finished\')" value="finished" '.($this->tracyIncludeCode['when'] === 'finished' ? ' checked' : '').' /> finished</label>&nbsp;
+                        <label title="Don\'t Run on Page Load" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'off\')" value="off" ' . (!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? ' checked' : '') . ' /> off</label>&nbsp;
+                        <label title="Run on init" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'init\')" value="init" ' . ($this->tracyIncludeCode['when'] === 'init' ? ' checked' : '') . ' /> init</label>&nbsp;
+                        <label title="Run on ready" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'ready\')" value="ready" ' . ($this->tracyIncludeCode['when'] === 'ready' ? ' checked' : '') . ' /> ready</label>&nbsp;
+                        <label title="Run on finished" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'finished\')" value="finished" ' . ($this->tracyIncludeCode['when'] === 'finished' ? ' checked' : '') . ' /> finished</label>&nbsp;
                     </span>
                     <span id="tracyConsoleStatus" style="padding: 10px"></span>
                 </div>
 
                 <div id="tracyConsoleContainer" class="split">
-                    <div id="tracyConsoleCode" class="split" style="position:relative; min-height:23px; background:#1D1F21;">
+                    <div id="tracyConsoleCode" class="split" style="position:relative; min-height:23px; background:#FFFFFF;">
                         <div id="tracyConsoleEditor"></div>
                     </div>
                     <div id="tracyConsoleResult" class="split" style="overflow:auto; border:1px solid #D2D2D2; padding:10px; min-height:23px">';
-                        if($this->wire('input')->cookie->tracyCodeError) {
-                            $out .= $this->wire('input')->cookie->tracyCodeError.
-                            '<div style="border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;"></div>';
-                        }
-                    $out .= '
+        if($this->wire('input')->cookie->tracyCodeError) {
+            $out .= $this->wire('input')->cookie->tracyCodeError .
+                '<div style="border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;"></div>';
+        }
+        $out .= '
                     </div>
                 </div>
             </div>
@@ -683,7 +718,7 @@ HTML;
                 <div id="tracySnippets"></div>
             </div>
             ';
-            $out .= \TracyDebugger::generatedTimeSize('console', \Tracy\Debugger::timer('console'), strlen($out)) .
+        $out .= \TracyDebugger::generatedTimeSize('console', \Tracy\Debugger::timer('console'), strlen($out)) .
         '</div>';
 
         return parent::loadResources() . \TracyDebugger::minify($out);
