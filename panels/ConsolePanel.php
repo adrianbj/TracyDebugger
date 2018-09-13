@@ -591,6 +591,25 @@ class ConsolePanel extends BasePanel {
                                 }
                             });
 
+                            document.getElementById("tracyConsoleCode").addEventListener("keydown", function(e) {
+                                if(e.ctrlKey && e.shiftKey) {
+                                    if(e.keyCode==40||e.charCode==40) {
+                                        split.collapse(1);
+                                        tracyConsole.tce.resize(true);
+                                    }
+                                    if(e.keyCode==38||e.charCode==38) {
+                                        split.collapse(0);
+                                        tracyConsole.tce.resize(true);
+                                    }
+                                    if(e.keyCode==37||e.charCode==37) {
+                                        var sizes = localStorage.getItem('tracyConsoleSplitSizes');
+                                        sizes = sizes ? JSON.parse(sizes) : [40, 60];
+                                        split.setSizes(sizes);
+                                        tracyConsole.tce.resize(true);
+                                    }
+                                }
+                            });
+
                             // hack to remove extra gutter in Tracy window mode
                             var elements = document.getElementsByClassName('gutter');
                             while(elements.length > 1) {
