@@ -1576,11 +1576,14 @@ span.tracyDumpsCollapser {
 
 .fullscreenToggleButton {
     display: block;
-    cursor: pointer;
-    padding: 5px;
-    position: absolute;
-    z-index: 7;
-    right: 0;
+    cursor: pointer !important;
+    padding: 6px 6px 6px 8px !important;
+    margin: 0 !important;
+    position: absolute !important;
+    z-index: 7 !important;
+    right: 0 !important;
+    top: 0 !important;
+    line-height: 0 !important;
 }
 
 .tracy-panel .fullscreenToggleButton svg {

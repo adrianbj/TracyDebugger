@@ -40,7 +40,7 @@ class ConsolePanel extends BasePanel {
         $pwRoot = $this->wire('config')->urls->root;
         $tracyModuleUrl = $this->wire("config")->urls->TracyDebugger;
         $inAdmin = \TracyDebugger::$inAdmin;
-        $consoleContainerAdjustment = $inAdmin ? 130 : 170;
+        $consoleContainerAdjustment = $inAdmin ? 135 : 175;
 
         // store various $input properties so they are available to the console
         $this->wire('session')->tracyPostData = $this->wire('input')->post->getArray();
@@ -216,7 +216,7 @@ class ConsolePanel extends BasePanel {
                         if(xmlhttp.readyState == XMLHttpRequest.DONE) {
                             document.getElementById("tracyConsoleStatus").innerHTML = "Completed!";
                             if(xmlhttp.status == 200) {
-                                document.getElementById("tracyConsoleResult").innerHTML += '<div style="position:relative">' + tracyConsole.tryParseJSON(xmlhttp.responseText) + '</div>';
+                                document.getElementById("tracyConsoleResult").innerHTML += '<div style="position:relative; padding: 10px">' + tracyConsole.tryParseJSON(xmlhttp.responseText) + '</div>';
                                 // scroll to bottom of results
                                 var objDiv = document.getElementById("tracyConsoleResult");
                                 objDiv.scrollTop = objDiv.scrollHeight;
@@ -582,7 +582,7 @@ class ConsolePanel extends BasePanel {
                                 minSize: tracyConsole.lineHeight,
                                 sizes: sizes,
                                 gutterSize: 8,
-                                snapOffset: 0,
+                                snapOffset: 10,
                                 cursor: 'row-resize',
                                 onDrag: tracyConsole.resizeAce,
                                 onDragEnd: function() {
@@ -591,21 +591,27 @@ class ConsolePanel extends BasePanel {
                                 }
                             });
 
-                            document.getElementById("tracyConsoleCode").addEventListener("keydown", function(e) {
+                            document.getElementById("tracyConsoleCode").querySelector(".ace_text-input").addEventListener("keydown", function(e) {
                                 if(e.ctrlKey && e.shiftKey) {
+                                    // maybe switch to collapse() if splitjs adds support for collapse respecting minSize
+                                    // https://github.com/nathancahill/Split.js/issues/95
+                                    var containerHeight = document.getElementById('tracyConsoleContainer').offsetHeight;
+                                    collapsedPaneHeightPct = (tracyConsole.lineHeight + (8/2)) / containerHeight * 100;
                                     if(e.keyCode==40||e.charCode==40) {
-                                        split.collapse(1);
-                                        tracyConsole.tce.resize(true);
+                                        //split.collapse(1);
+                                        split.setSizes([100 - collapsedPaneHeightPct, collapsedPaneHeightPct]);
+                                        tracyConsole.resizeAce();
                                     }
                                     if(e.keyCode==38||e.charCode==38) {
-                                        split.collapse(0);
-                                        tracyConsole.tce.resize(true);
+                                        //split.collapse(0);
+                                        split.setSizes([collapsedPaneHeightPct, 100 - collapsedPaneHeightPct]);
+                                        tracyConsole.resizeAce();
                                     }
                                     if(e.keyCode==37||e.charCode==37) {
                                         var sizes = localStorage.getItem('tracyConsoleSplitSizes');
                                         sizes = sizes ? JSON.parse(sizes) : [40, 60];
                                         split.setSizes(sizes);
-                                        tracyConsole.tce.resize(true);
+                                        tracyConsole.resizeAce();
                                     }
                                 }
                             });
@@ -652,15 +658,15 @@ class ConsolePanel extends BasePanel {
                         }
 
                         // various keyboard shortcuts
-                        document.getElementById("tracyConsoleCode").addEventListener("keydown", function(e) {
+                        document.getElementById("tracyConsoleCode").querySelector(".ace_text-input").addEventListener("keydown", function(e) {
                             if(((e.keyCode==10||e.charCode==10)||(e.keyCode==13||e.charCode==13)) && (e.metaKey || e.ctrlKey || e.altKey)) {
                                 if(e.altKey) tracyConsole.clearResults();
                                 tracyConsole.processTracyCode();
                             }
-                            if((e.keyCode==38||e.charCode==38) && e.ctrlKey && e.metaKey) {
+                            if((e.keyCode==33||e.charCode==33) && e.altKey) {
                                 tracyConsole.loadHistory('back');
                             }
-                            if((e.keyCode==40||e.charCode==40) && e.ctrlKey && e.metaKey) {
+                            if((e.keyCode==34||e.charCode==34) && e.altKey) {
                                 tracyConsole.loadHistory('forward');
                             }
                         });
@@ -700,8 +706,8 @@ HTML;
         $out .= '
                 <div style="padding:10px 0">
                     <input title="Run code" type="submit" id="runCode" onclick="tracyConsole.processTracyCode()" value="Run" />&nbsp;
-                    <input style="font-family: FontAwesome !important" title="Go back (CTRL+CMD+&#8593;)" id="historyBack" type="submit" onclick="tracyConsole.loadHistory(\'back\')" value="&#xf060;" />&nbsp;
-                    <input style="font-family: FontAwesome !important" title="Go forward (CTRL+CMD+&#8595;)" class="arrowRight" id="historyForward" type="submit" onclick="tracyConsole.loadHistory(\'forward\')" value="&#xf060;" />
+                    <input style="font-family: FontAwesome !important" title="Go back (ALT+PageUp)" id="historyBack" type="submit" onclick="tracyConsole.loadHistory(\'back\')" value="&#xf060;" />&nbsp;
+                    <input style="font-family: FontAwesome !important" title="Go forward (ALT+PageDown)" class="arrowRight" id="historyForward" type="submit" onclick="tracyConsole.loadHistory(\'forward\')" value="&#xf060;" />
                     <input title="Clear results" type="submit" id="clearResults" onclick="tracyConsole.clearResults()" value="&#10006; Clear results" />
                     <span style="float:right;">
                         <label title="Don\'t Run on Page Load" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'off\')" value="off" ' . (!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? ' checked' : '') . ' /> off</label>&nbsp;
@@ -713,10 +719,10 @@ HTML;
                 </div>
 
                 <div id="tracyConsoleContainer" class="split">
-                    <div id="tracyConsoleCode" class="split" style="position:relative; min-height:23px; background:#FFFFFF;">
+                    <div id="tracyConsoleCode" class="split" style="position:relative; background:#FFFFFF;">
                         <div id="tracyConsoleEditor"></div>
                     </div>
-                    <div id="tracyConsoleResult" class="split" style="overflow:auto; border:1px solid #D2D2D2; padding:10px; min-height:23px">';
+                    <div id="tracyConsoleResult" class="split" style="overflow:auto; border:1px solid #D2D2D2;">';
         if($this->wire('input')->cookie->tracyCodeError) {
             $out .= $this->wire('input')->cookie->tracyCodeError .
                 '<div style="border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;"></div>';
