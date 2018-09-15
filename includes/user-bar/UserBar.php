@@ -5,7 +5,7 @@ $userBar = '
     div#tracyUserBar {
         '.\TracyDebugger::getDataValue("userBarTopBottom").': 0px;
         '.\TracyDebugger::getDataValue("userBarLeftRight").': 0px;
-        z-index: 19999;
+        z-index: '.\TracyDebugger::getDataValue("panelZindex").';
         position: fixed;
         margin: 0px !important;
         background: '.\TracyDebugger::getDataValue("userBarBackgroundColor").';

@@ -4,11 +4,18 @@ if(wire('user')->hasPermission('tracy-page-versions')) {
 
     $templateOptions = '';
     $countTemplateOptions=0;
+    $templateBasename = pathinfo(wire('page')->template->filename, PATHINFO_BASENAME);
+    $templateFilenames = array();
+    foreach($this->wire('templates') as $t) {
+        array_push($templateFilenames, pathinfo($t->filename, PATHINFO_BASENAME));
+    }
     foreach (new \DirectoryIterator(wire('config')->paths->templates) as $file) {
         if($file->isFile()) {
             $fileName = pathinfo($file, PATHINFO_FILENAME);
-            if(strpos($fileName, wire('page')->template->name) !== false && (strpos($fileName, '-tracy-') !== false || wire('page')->template->name == pathinfo($file, PATHINFO_FILENAME)) && strpos($fileName, '-tracytemp') === false) { // '-tracytemp' is extension from template editor panel
-                $templateOptions .= '<option value="'.$file.'"'.(pathinfo(wire('page')->template->filename, PATHINFO_BASENAME) == $file ? 'selected="selected"' : '').'>'.formatPageName($file).'</option>';
+            $baseName = pathinfo($file, PATHINFO_BASENAME);
+            if(in_array($baseName, $templateFilenames) && $templateBasename != $baseName) continue;
+            if(strpos($fileName, wire('page')->template->name) !== false && strpos($fileName, '-tracytemp') === false) { // '-tracytemp' is extension from template editor panel
+                $templateOptions .= '<option value="'.$file.'"'.($templateBasename == $file ? 'selected="selected"' : '').'>'.formatPageName($file).'</option>';
                 $countTemplateOptions++;
             }
         }
@@ -96,9 +103,8 @@ function formatPageName($name) {
         return 'Default';
     }
     else {
-        $name = str_replace('-tracy', '', $name);
         $name = str_replace(wire('page')->template->name, '', $name);
         $name = ucwords(pathinfo(str_replace('-', ' ', $name), PATHINFO_FILENAME));
-        return $name;
+        return trim($name);
     }
 }

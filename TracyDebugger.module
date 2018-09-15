@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.11.27',
+            'version' => '4.11.28',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1108,16 +1108,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public function ready() {
 
-        // Exit now if "enabled" not true from init()
-        if(!$this->tracyEnabled) return;
-
         // USER BAR PAGE VERSIONS
-        if(!static::$inAdmin && $this->wire('user')->hasPermission('tracy-page-versions') && $this->data['showUserBar'] && in_array('pageVersions', $this->data['userBarFeatures']) && !$this->wire('config')->ajax && $this->wire('user')->isLoggedin()) {
+        if(!static::$inAdmin && !$this->wire('config')->ajax && $this->wire('user')->isLoggedin() && $this->wire('user')->hasPermission('tracy-page-versions') && $this->data['showUserBar'] && in_array('pageVersions', $this->data['userBarFeatures'])) {
             static::$pageVersion = $this->findPageTemplateInCookie($this->wire('input')->cookie->tracyPageVersion);
             if(static::$pageVersion && static::$pageVersion != pathinfo($this->wire('page')->template->filename, PATHINFO_BASENAME)) {
                 static::$templatePath = static::$pageVersion;
-                unset($this->wire('input')->cookie->tracyPageVersion);
-                setcookie("tracyPageVersion", "", time()-3600, "/");
             }
             elseif(static::$pageVersion != '') {
                 // don't change as already set by dev template permission functionality
@@ -1127,22 +1122,33 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
 
             if(static::$templatePath != '') {
+                // template file
                 $this->wire('page')->template->filename = static::$templatePath;
+                // auto appended/prepended files
+                $this->replaceAutoAppendedPreprendedTemplateFiles($this->getFileSuffix(static::$templatePath));
             }
+            unset($this->wire('input')->cookie->tracyPageVersion);
+            setcookie("tracyPageVersion", "", time()-3600, "/");
         }
 
 
         // USER DEV TEMPLATES
         // if user dev template enabled and required permission exists in system,
-        // check if current user has a matching permission for the current page's template
-        $templateExt = pathinfo($this->wire('page')->template->filename, PATHINFO_EXTENSION);
+        // check if current user has a matching permission for the current page's template, or the "tracy-all-suffix" permission
         if($this->data['userDevTemplate'] && $this->wire('permissions')->get("tracy-".$this->wire('page')->template->name."-".$this->data['userDevTemplateSuffix'])->id) {
-            $devTemplateFilename = str_replace('.'.$templateExt, '-'.$this->data['userDevTemplateSuffix'].'.'.$templateExt, $this->wire('page')->template->filename);
-            if(file_exists($devTemplateFilename) && $this->superuserHasPermission("tracy-".$this->wire('page')->template->name."-".$this->data['userDevTemplateSuffix'])) {
-                $this->wire('page')->template->filename = static::$templatePath = static::$templatePathPermission = $devTemplateFilename;
+            if($this->superuserHasPermission("tracy-".$this->wire('page')->template->name."-".$this->data['userDevTemplateSuffix']) ||
+                $this->superuserHasPermission("tracy-all-".$this->data['userDevTemplateSuffix'])
+            ) {
+                // template file
+                $devTemplateFilename = $this->appendSuffixToFile($this->wire('page')->template->filename, $this->data['userDevTemplateSuffix']);
+                if(file_exists($devTemplateFilename)) $this->wire('page')->template->filename = static::$templatePath = static::$templatePathPermission = $devTemplateFilename;
+                // auto appended/prepended files
+                $this->replaceAutoAppendedPreprendedTemplateFiles($this->data['userDevTemplateSuffix']);
             }
         }
 
+        // Exit now if "enabled" not true from init()
+        if(!$this->tracyEnabled) return;
 
         if($this->allowedTracyUsers() === 'development') {
 
@@ -1285,7 +1291,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     }
 
                     if(static::$templatePath != '') {
+                        // template file
                         $this->wire('page')->template->filename = static::$templatePath;
+                        // auto appended/prepended files
+                        $this->replaceAutoAppendedPreprendedTemplateFiles($this->getFileSuffix(static::$templatePath));
                     }
                     Debugger::getBar()->addPanel(new $panelName);
                     break;
@@ -1522,6 +1531,54 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     /**
      * LOCAL HELPER FUNCTIONS
      */
+
+
+    /**
+     * Get file suffix
+     *
+     * @param string $path Full path to file
+     * @return string $suffix File's suffix
+     *
+     */
+    private function getFileSuffix($path) {
+        $path = pathinfo($path, PATHINFO_FILENAME);
+        return substr($path, strrpos($path, '-') + 1);
+    }
+
+
+    /**
+     * Append suffix to file path
+     *
+     * @param string $path Full path to file
+     * @return string $path Full path to file with new appended extension
+     *
+     */
+    private function appendSuffixToFile($path, $suffix) {
+        $templateExt = pathinfo($path, PATHINFO_EXTENSION);
+        return str_replace('.'.$templateExt, '-'.$suffix.'.'.$templateExt, $path);
+    }
+
+
+    /**
+     * Replace auto appended / prepended Template files (_main.php, _init.php etc) with "dev" versions
+     *
+     * @param string $suffix Suffix to add to filename
+     *
+     */
+    private function replaceAutoAppendedPreprendedTemplateFiles($suffix) {
+        // appendeded template file
+        if($this->wire('config')->appendTemplateFile) {
+            $devAppendedTemplateFilename = $this->appendSuffixToFile($this->wire('config')->appendTemplateFile, $suffix);
+            if(file_exists($this->wire('config')->paths->templates . $devAppendedTemplateFilename)) $this->wire('config')->appendTemplateFile = $devAppendedTemplateFilename;
+        }
+
+        // prependeded template file
+        if($this->wire('config')->prependTemplateFile) {
+            $devPrependedTemplateFilename = $this->appendSuffixToFile($this->wire('config')->prependTemplateFile, $suffix);
+            if(file_exists($this->wire('config')->paths->templates . $devPrependedTemplateFilename)) $this->wire('config')->prependTemplateFile = $devPrependedTemplateFilename;
+        }
+    }
+
 
     /**
      * Delete File

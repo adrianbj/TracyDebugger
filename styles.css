@@ -857,6 +857,7 @@ ul.pw-info-links {
 
 #tracyConsoleResult {
     background: #FFFFFF !important;
+    scroll-behavior:smooth;
 }
 
 #tracy-debug .tracy-DumpPanel h2,
@@ -1561,7 +1562,7 @@ span.tracyDumpsCollapser {
     position: fixed !important;
     left: 0;
     top: 0;
-    z-index: 999999;
+    z-index: 9999999999999;
     opacity: 1;
     width: 100% !important;
     height: 100% !important;
@@ -1601,5 +1602,5 @@ span.tracyDumpsCollapser {
 }
 
 .noscroll {
-    overflow: hidden;
+    overflow: hidden !important;
 }

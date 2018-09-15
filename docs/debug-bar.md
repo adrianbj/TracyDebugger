@@ -386,6 +386,8 @@ Provides a table of basic stats about the current page and your system.
 ## ![Template Path](icons/template-path.svg ':no-zoom')Template Path
 The template path panel allows you to temporarily choose an alternate template file for rendering the current page. It provides a list of files in the site/templates folder that match the name of the default template file, but with a "-suffix" extension. You can have several different versions and quickly test each one. You can make the change last for the browser session (sticky), or just for one reload (once). You can reset to the default template file for the current page, or all changes you may have made to other pages/template files on the site.
 
+Additionally, it automatically swaps out files included via `$config->prependTemplateFile` and `$config->appendTemplateFile` to use the same suffix at the replaced template, eg `_init-dev.php` or `_main-dev.php`
+
 Not only is this useful for debugging (especially on a live production server), but it could also be used for sharing different versions of a page among trusted users.
 
 * **Red:** The current page is using a different template file.
@@ -400,6 +402,8 @@ This is not reliant on the Template Path Panel, but its functionality is similar
 It makes it really easy to show authorized users development versions of template files. To make this work, all you need to do is enable the checkbox. Then setup a "template-****" permission and assign that to the required users.
 
 Obviously this is not the best approach for major changes (you should set up a dev subdomain for that), but I think it could be quite handy for certain site changes.
+
+Additionally, it automatically swaps out files included via `$config->prependTemplateFile` and `$config->appendTemplateFile` to use the same suffix at the replaced template, eg `_init-dev.php` or `_main-dev.php`
 
 In this screenshot, you can see the reminder detailing why the icon is orange. Currently we are not viewing a page with an alternate template, but it is letting us know that:
 

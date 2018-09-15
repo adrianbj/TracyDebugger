@@ -198,13 +198,13 @@ class ConsolePanel extends BasePanel {
                         document.getElementById("tracyConsoleContainer").classList.add("maximizedConsole");
                         document.getElementById("fullscreenToggleMaximize").style.display = "none";
                         document.getElementById("fullscreenToggleMinimize").style.display = "block";
-                        document.body.classList.add('noscroll');
+                        document.documentElement.classList.add('noscroll');
                     }
                     else {
                         document.getElementById("tracyConsoleContainer").classList.remove("maximizedConsole");
                         document.getElementById("fullscreenToggleMaximize").style.display = "block";
                         document.getElementById("fullscreenToggleMinimize").style.display = "none";
-                        document.body.classList.remove('noscroll');
+                        document.documentElement.classList.remove('noscroll');
                     }
                     tracyConsole.tce.focus();
                 },
@@ -215,11 +215,11 @@ class ConsolePanel extends BasePanel {
                     xmlhttp.onreadystatechange = function() {
                         if(xmlhttp.readyState == XMLHttpRequest.DONE) {
                             document.getElementById("tracyConsoleStatus").innerHTML = "Completed!";
+                            var resultsDiv = document.getElementById("tracyConsoleResult");
                             if(xmlhttp.status == 200) {
-                                document.getElementById("tracyConsoleResult").innerHTML += '<div style="position:relative; padding: 10px">' + tracyConsole.tryParseJSON(xmlhttp.responseText) + '</div>';
-                                // scroll to bottom of results
-                                var objDiv = document.getElementById("tracyConsoleResult");
-                                objDiv.scrollTop = objDiv.scrollHeight;
+                                resultId = Date.now();
+                                resultsDiv.innerHTML += '<div id="tracyConsoleResult_'+resultId+'" style="position:relative; padding:10px">' + tracyConsole.tryParseJSON(xmlhttp.responseText) + '</div>';
+                                document.getElementById("tracyConsoleResult_"+resultId).scrollIntoView();
                                 if(!document.getElementById("tracy-debug-panel-ConsolePanel").classList.contains("tracy-mode-float")) {
                                     window.Tracy.Debug.panels["tracy-debug-panel-ConsolePanel"].toFloat();
                                 }
@@ -233,7 +233,7 @@ class ConsolePanel extends BasePanel {
                                 var tracyBsErrorText = tracyBsErrorDiv.getElementsByTagName('h1')[0].getElementsByTagName('span')[0].innerHTML;
                                 var tracyBsErrorLineNum = tracyDebugger.getQueryVariable('{$lineVar}', tracyBsError.querySelector('[data-tracy-href]').getAttribute("data-tracy-href")) - 1;
                                 var tracyBsErrorStr = "<br />" + tracyBsErrorType + ": " + tracyBsErrorText + " on line: " + tracyBsErrorLineNum + "<br />";
-                                document.getElementById("tracyConsoleResult").innerHTML = xmlhttp.status+": " + xmlhttp.statusText + tracyBsErrorStr + "<div style='border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;'></div>";
+                                resultsDiv.innerHTML = xmlhttp.status+": " + xmlhttp.statusText + tracyBsErrorStr + "<div style='border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;'></div>";
 
                                 var expires = new Date();
                                 expires.setMinutes(expires.getMinutes() + (10 * 365 * 24 * 60));
@@ -640,6 +640,12 @@ class ConsolePanel extends BasePanel {
                         });
                         tracyConsole.observer.observe(document.getElementById("tracy-debug-panel-ConsolePanel"), config);
 
+                        // this is necessary for Safari, but not Chrome and Firefox
+                        // otherwise resizing panel container doesn't resize internal console panes
+                        document.getElementById("tracy-debug-panel-ConsolePanel").addEventListener('mousemove', function(e) {
+                            tracyConsole.resizeAce();
+                        });
+
                         window.onresize = function(event) {
                             tracyConsole.resizeAce();
                         };
@@ -700,7 +706,7 @@ HTML;
             <div id="tracyConsoleMainContainer">
                 <legend>CTRL/CMD+Enter to Run&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ALT/OPT+Enter to Clear & Run</legend>';
         if($this->wire('page')->template != "admin") {
-            $out .= '<p><label><input type="checkbox" id="accessTemplateVars" /> Access to custom variables & functions from this page\'s template file and included files.</label></p>';
+            $out .= '<p><label><input type="checkbox" id="accessTemplateVars" /> Access custom variables & functions from this page\'s template file & included files.</label></p>';
         }
 
         $out .= '
