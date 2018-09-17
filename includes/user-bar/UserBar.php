@@ -11,15 +11,21 @@ $userBar = '
         background: '.\TracyDebugger::getDataValue("userBarBackgroundColor").';
         padding: 1px;
         opacity: '.\TracyDebugger::getDataValue("userBarBackgroundOpacity").';
+        line-height: 0;
     }
     div#tracyUserBar a {
-        border:none !important;
-        cursor:pointer;
+        border: none !important;
+        cursor: pointer;
     }
     div#tracyUserBar svg {
         width: 16px !important;
         height: 16px !important;
         margin: 2px !important;
+    }
+    div#tracyUserBar span {
+        display: inline-block;
+        vertical-align: top;
+        margin-left: 2px;
     }
 </style>
 

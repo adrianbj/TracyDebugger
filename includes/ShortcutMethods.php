@@ -7,7 +7,7 @@ use Tracy\Debugger;
  */
 
 function tracyUnavailable() {
-    if(!\TracyDebugger::getDataValue('enabled') || !\TracyDebugger::allowedTracyUsers() || !class_exists('\TD')) {
+    if(!\TracyDebugger::getDataValue('enabled') || !\TracyDebugger::$allowedTracyUser || !class_exists('\TD')) {
         return true;
     }
     else {

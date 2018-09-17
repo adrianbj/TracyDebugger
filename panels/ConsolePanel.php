@@ -124,6 +124,15 @@ class ConsolePanel extends BasePanel {
                 desc: false,
                 inAdmin: "$inAdmin",
 
+                isSafari: function() {
+                    if (navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
+                        return true;
+                    }
+                    else {
+                        return false;
+                    }
+                },
+
                 disableButton: function(button) {
                     var button = document.getElementById(button);
                     button.setAttribute("disabled", true);
@@ -195,12 +204,19 @@ class ConsolePanel extends BasePanel {
 
                 toggleFullscreen: function(maximize) {
                     if(maximize == 'true') {
+                        if(this.isSafari()) {
+                            document.body.appendChild(document.getElementById("tracy-debug-panel-ConsolePanel"));
+                        }
                         document.getElementById("tracyConsoleContainer").classList.add("maximizedConsole");
                         document.getElementById("fullscreenToggleMaximize").style.display = "none";
                         document.getElementById("fullscreenToggleMinimize").style.display = "block";
                         document.documentElement.classList.add('noscroll');
                     }
                     else {
+                        if(this.isSafari()) {
+                            document.getElementById("tracy-debug").appendChild(document.getElementById("tracy-debug-panel-ConsolePanel"));
+                            tracyConsole.resizeAce();
+                        }
                         document.getElementById("tracyConsoleContainer").classList.remove("maximizedConsole");
                         document.getElementById("fullscreenToggleMaximize").style.display = "block";
                         document.getElementById("fullscreenToggleMinimize").style.display = "none";
@@ -568,9 +584,7 @@ class ConsolePanel extends BasePanel {
                         toggleFullscreenButtons.innerHTML =
                         '<span id="fullscreenToggleMaximize" title="Maximize" class="fullscreenToggleButton" onclick="tracyConsole.toggleFullscreen(\'true\')">$maximizeSvg</span>' +
                         '<span id="fullscreenToggleMinimize" title="Restore" class="fullscreenToggleButton" style="display:none" onclick="tracyConsole.toggleFullscreen()">$maximizeSvg</span>';
-                        [].forEach.call(document.getElementsByClassName('ace_scroller'), function(el) {
-                            el.prepend(toggleFullscreenButtons);
-                        });
+                        document.getElementsByClassName('ace_scroller')[0].prepend(toggleFullscreenButtons);
 
 
                         // splitjs
@@ -593,6 +607,7 @@ class ConsolePanel extends BasePanel {
 
                             document.getElementById("tracyConsoleCode").querySelector(".ace_text-input").addEventListener("keydown", function(e) {
                                 if(e.ctrlKey && e.shiftKey) {
+                                    e.preventDefault();
                                     // maybe switch to collapse() if splitjs adds support for collapse respecting minSize
                                     // https://github.com/nathancahill/Split.js/issues/95
                                     var containerHeight = document.getElementById('tracyConsoleContainer').offsetHeight;
@@ -642,9 +657,11 @@ class ConsolePanel extends BasePanel {
 
                         // this is necessary for Safari, but not Chrome and Firefox
                         // otherwise resizing panel container doesn't resize internal console panes
-                        document.getElementById("tracy-debug-panel-ConsolePanel").addEventListener('mousemove', function(e) {
-                            tracyConsole.resizeAce();
-                        });
+                        if(tracyConsole.isSafari()) {
+                            document.getElementById("tracy-debug-panel-ConsolePanel").addEventListener('mousemove', function() {
+                                tracyConsole.resizeAce();
+                            });
+                        }
 
                         window.onresize = function(event) {
                             tracyConsole.resizeAce();
@@ -666,6 +683,7 @@ class ConsolePanel extends BasePanel {
                         // various keyboard shortcuts
                         document.getElementById("tracyConsoleCode").querySelector(".ace_text-input").addEventListener("keydown", function(e) {
                             if(((e.keyCode==10||e.charCode==10)||(e.keyCode==13||e.charCode==13)) && (e.metaKey || e.ctrlKey || e.altKey)) {
+                                e.preventDefault();
                                 if(e.altKey) tracyConsole.clearResults();
                                 tracyConsole.processTracyCode();
                             }
@@ -726,7 +744,7 @@ HTML;
 
                 <div id="tracyConsoleContainer" class="split">
                     <div id="tracyConsoleCode" class="split" style="position:relative; background:#FFFFFF;">
-                        <div id="tracyConsoleEditor"></div>
+                        <div id="tracyConsoleEditor" style="min-height:23px"></div>
                     </div>
                     <div id="tracyConsoleResult" class="split" style="overflow:auto; border:1px solid #D2D2D2;">';
         if($this->wire('input')->cookie->tracyCodeError) {

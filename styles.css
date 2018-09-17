@@ -25,12 +25,8 @@ body.tracyHidden:before {
     font: inherit;
 }
 
-#tracy-debug:not(.tracy-icons):not(.tracy-label):not(.ace_editor) {
+.tracy-inner:not(.tracy-icons):not(.tracy-label):not(.ace_editor) {
     font: normal normal 13px/1.3 Arial, sans-serif !important;
-}
-
-#tracy-debug pre {
-    font-family: monospace !important;
 }
 
 #tracy-debug-bar {
@@ -99,32 +95,32 @@ body.tracyHidden:before {
     text-transform: none !important;
 }
 
-#tracy-debug input {
+.tracy-inner input {
     font: normal normal 13px/1.3 Arial, sans-serif !important;
     font-size: 13px !important;
     text-transform: none !important;
     display: inline-block !important;
 }
 
-#tracy-debug ::-webkit-input-placeholder {
+.tracy-inner ::-webkit-input-placeholder {
     /* Chrome/Opera/Safari */
     color: #9aa3a6 !important;
     text-transform: none !important;
 }
 
-#tracy-debug ::-moz-placeholder {
+.tracy-inner ::-moz-placeholder {
     /* Firefox 19+ */
     color: #9aa3a6 !important;
     text-transform: none !important;
 }
 
-#tracy-debug :-ms-input-placeholder {
+.tracy-inner :-ms-input-placeholder {
     /* IE 10+ */
     color: #9aa3a6 !important;
     text-transform: none !important;
 }
 
-#tracy-debug :-moz-placeholder {
+.tracy-inner :-moz-placeholder {
     /* Firefox 18- */
     color: #9aa3a6 !important;
     text-transform: none !important;
@@ -138,8 +134,8 @@ body.tracyHidden:before {
     user-select: none;
 }
 
-#tracy-debug input[type="checkbox"],
-#tracy-debug input[type="radio"] {
+.tracy-inner input[type="checkbox"],
+.tracy-inner input[type="radio"] {
     width: 12px !important;
     height: 12px !important;
     position: static !important;
@@ -147,8 +143,8 @@ body.tracyHidden:before {
     margin: 0 !important;
 }
 
-#tracy-debug input[type="text"],
-#tracy-debug input[type="number"] {
+.tracy-inner input[type="text"],
+.tracy-inner input[type="number"] {
     font: normal normal 13px/1.3 Arial, sans-serif !important;
     height: 30px !important;
     width: initial !important;
@@ -158,26 +154,26 @@ body.tracyHidden:before {
     border-radius: 0 !important;
 }
 
-#tracy-debug legend {
+.tracy-inner legend {
     margin: 0 !important;
     border: 0 !important;
 }
 
-#tracy-debug,
-#tracy-debug h2,
-#tracy-debug legend {
+.tracy-inner,
+.tracy-inner h2,
+.tracy-inner legend {
     font: normal normal 13px/1.3 Arial, sans-serif !important;
     font-weight: normal !important;
     color: #333333 !important;
     text-transform: none !important;
 }
 
-#tracy-debug,
-#tracy-debug legend,
-#tracy-debug p,
-#tracy-debug legend li,
-#tracy-debug select,
-#tracy-debug label {
+.tracy-inner,
+.tracy-inner legend,
+.tracy-inner p,
+.tracy-inner legend li,
+.tracy-inner select,
+.tracy-inner label {
     font: normal normal 13px/1.3 Arial, sans-serif !important;
     font-weight: normal !important;
     color: #333333 !important;
@@ -238,9 +234,9 @@ body.tracyHidden:before {
     font-size: 80% !important;
 }
 
-#tracy-debug:not(ul.tracyDumpTabs) a {
+/*#tracy-debug:not(ul.tracyDumpTabs) a {
     border: none !important;
-}
+}*/
 
 #tracy-debug table {
     width: 100% !important;
@@ -354,15 +350,19 @@ table.captainHookTable th:nth-child(3) {
     margin: 1em 0 !important;
 }
 
-#tracy-debug td pre,
-#tracy-debug code {
+.tracy-inner td pre,
+.tracy-inner code {
     background: transparent !important;
     padding: .4em 2em .4em .7em !important;
     margin: 0 !important;
     border: none !important;
 }
 
-#tracy-debug pre.tracy-dump {
+.tracy-inner pre * {
+    font-family: monospace !important;
+}
+
+pre.tracy-dump {
     background: transparent !important;
     padding: .4em 2em .4em .7em !important;
     margin: 0 0 20px 0 !important;
@@ -370,7 +370,7 @@ table.captainHookTable th:nth-child(3) {
     border-radius: 0 !important;
 }
 
-#tracy-debug td pre.tracy-dump {
+td pre.tracy-dump {
     margin: 0 !important;
 }
 
@@ -1155,6 +1155,7 @@ ul.pw-info-links {
 #tracyConsoleContainer .gutter {
     all: unset;
     display: block !important;
+    min-height: 8px !important;
     height: 8px !important;
     background-color: #AEAEAE !important;
     opacity: 1 !important;
@@ -1445,7 +1446,6 @@ ul.tracyDumpTabs {
     margin: 0;
     padding: 0;
     background: #EAF0F2;
-    padding-right: 24px;
     border: 1px solid #D2D2D2;
     border-bottom: none;
 }
@@ -1467,16 +1467,8 @@ ul.tracyDumpTabs:after {
 
 /* edit link at the end of the dump tabs */
 
-ul.tracyDumpTabs+span {
-    margin-right: 1px;
-    margin-top: -25px;
+ul.tracyDumpTabs+li {
     user-select: none;
-}
-
-ul.tracyDumpTabs+span a {
-    display: inline-block;
-    padding: 4px 6px 3px 6px;
-    font-size: 12px !important;
 }
 
 ul.tracyDumpTabs li {
@@ -1498,7 +1490,7 @@ ul.tracyDumpTabs li a {
     margin-top: -1px;
 }
 
-ul.tracyDumpTabs li:hover {
+ul.tracyDumpTabs li a:hover {
     background: rgba(0, 0, 0, 0.05) !important;
 }
 
@@ -1524,6 +1516,7 @@ ul.tracyDumpTabs li.active:not(:first-child) a {
 }
 
 ul.tracyDumpTabs li a:link {
+    text-decoration: none !important;
     color: #444 !important;
 }
 
@@ -1603,4 +1596,12 @@ span.tracyDumpsCollapser {
 
 .noscroll {
     overflow: hidden !important;
+}
+
+/* Safari hack to to make ace-editor scrollbar show
+https://github.com/ajaxorg/ace/issues/2872
+*/
+.ace_scrollbar-inner {
+    background-color: white;
+    opacity: 0.01;
 }

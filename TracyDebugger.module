@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.11.28',
+            'version' => '4.11.29',
             'autoload' => true,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -59,6 +59,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     protected static $onlineFileEditorDirPath;
     public static $inAdmin;
     public static $isLocal = false;
+    public static $allowedTracyUser = false;
     public static $tracyVersion;
     public static $dumpItems = array();
     public static $pageFinderQueries = array();
@@ -286,6 +287,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // determine if server is local dev or live
         static::$isLocal = static::isLocal();
 
+        // determine whether user is allowed to use Tracy and whether DEV or PRODUCTION
+        static::$allowedTracyUser = static::allowedTracyUser();
+
         // EARLY EXITS
 
         // if "enabled" not checked or tracyDisabled via config, we should load dummy Tracy class, TD, and shortcut methods
@@ -345,7 +349,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // clear session & cookies option in Processwire Info panel
-        // not inside $this->allowedTracyUsers() === 'development' check because it won't validate during forceLogin()
+        // not inside static::$allowedTracyUser === 'development' check because it won't validate during forceLogin()
         if($this->wire('input')->get->tracyClearSession) {
             $userName = $this->wire('user')->name;
             $this->wire('session')->logout();
@@ -372,7 +376,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $this->data['showUserBar'] &&
             count($this->data['userBarFeatures'])>0 &&
             !$this->wire('config')->ajax &&
-            ($this->allowedTracyUsers() !== 'development' || $this->data['showUserBarTracyUsers']) &&
+            (static::$allowedTracyUser !== 'development' || $this->data['showUserBarTracyUsers']) &&
             (strpos(self::inputUrl(true), DIRECTORY_SEPARATOR.'form-builder'.DIRECTORY_SEPARATOR) === false)
         ) {
             $this->addHookAfter('Page::render', $this, 'addUserBar', array('priority'=>1000));
@@ -380,7 +384,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // Various features that can be run before loading Tracy core files
-        if($this->allowedTracyUsers() === 'development') {
+        if(static::$allowedTracyUser === 'development') {
 
             // PANELS TO DISPLAY
             $configEnabledPanels = static::$inAdmin ? $this->data['backendPanels'] : $this->data['frontendPanels'];
@@ -652,7 +656,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // TRACY SETUP
         // load core tracy library
-        if($this->allowedTracyUsers()) {
+        if(static::$allowedTracyUser) {
             static::$tracyVersion = $this->data['coreBranch'];
             /*if(!file_exists(__DIR__ . '/tracy-'.static::$tracyVersion.'/src/tracy.php')) {
                 static::$tracyVersion = version_compare(phpversion(), '5.4.4', '>=') ? 'master' : 'legacy';
@@ -675,7 +679,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // CONSOLE PANEL CODE INJECTION
-        if($this->allowedTracyUsers() === 'development') {
+        if(static::$allowedTracyUser === 'development') {
             $this->insertCode('init');
             $this->addHookBefore('ProcessWire::finished', function($event) {
                 $this->insertCode('finished');
@@ -686,7 +690,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // START ENABLING TRACY
         // now that required classes above have been loaded if requested,
         // we can now exit if user not allowed
-        if(!$this->allowedTracyUsers()) return;
+        if(!static::$allowedTracyUser) return;
 
 
         // SET TRACY AS ENBALED
@@ -708,10 +712,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // TRACY MODE
-        if($this->data['outputMode'] == 'development' || $this->allowedTracyUsers() === 'development') {
+        if($this->data['outputMode'] == 'development' || static::$allowedTracyUser === 'development') {
             $outputMode = Debugger::DEVELOPMENT;
         }
-        elseif($this->data['outputMode'] == 'production' || $this->allowedTracyUsers() === 'production') {
+        elseif($this->data['outputMode'] == 'production' || static::$allowedTracyUser === 'production') {
             $outputMode = Debugger::PRODUCTION;
         }
         else {
@@ -739,7 +743,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         Debugger::$showFireLogger = $this->data['showFireLogger'];
 
-        if($this->allowedTracyUsers() === 'development') {
+        if(static::$allowedTracyUser === 'development') {
 
             // TRACY TOGGLER
             // if Tracy has been toggled "disabled" add enable button and then exit
@@ -1150,7 +1154,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // Exit now if "enabled" not true from init()
         if(!$this->tracyEnabled) return;
 
-        if($this->allowedTracyUsers() === 'development') {
+        if(static::$allowedTracyUser === 'development') {
 
             // if it's an ajax request for the File Editor feature
             if($this->wire('config')->ajax && isset($this->wire('input')->post->filePath)) {
@@ -1244,7 +1248,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // exit now if not showing debug bar or user doesn't have 'development' access
-        if(Debugger::$showBar == false || $this->allowedTracyUsers() !== 'development') return;
+        if(Debugger::$showBar == false || static::$allowedTracyUser !== 'development') return;
 
         // load base panel class
         require_once __DIR__ . '/includes/BasePanel.php';
@@ -1984,7 +1988,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * @return string|bool String is 'development' or 'production'. Bool is only for false
      *
      */
-    public static function allowedTracyUsers() {
+    public static function allowedTracyUser() {
 
         $outputMode = static::getDataValue('outputMode');
         if($outputMode == 'detect') {
@@ -2283,7 +2287,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'outputMode');
         $f->label = 'Output mode';
         $f->description = __('The DETECT option automatically switches from DEVELOPMENT to PRODUCTION mode based on whether the IP of the site is publicly accessible or not.', __FILE__);
-        $f->notes = __('In PRODUCTION mode, all errors and dumps etc are logged to file. Nothing is displayed in the browser. In DEVELOPMENT mode, the debug bar is displayed for authorized users - superusers and those with the "tracy-debugger" permission. All other users will be forced into PRODUCTION mode, regardless of this setting.', __FILE__);
+        $f->notes = __('In PRODUCTION mode, all errors and dumps etc are logged to file. Nothing is displayed in the browser. In DEVELOPMENT mode, the debug bar is displayed for authorized users - superusers and those with the `tracy-debugger` permission. All other users will be forced into PRODUCTION mode, regardless of this setting.', __FILE__);
         $f->columnWidth = 50;
         $f->required = true;
         $f->addOption('detect', 'DETECT');
@@ -2320,7 +2324,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Restrict non-superusers', __FILE__);
         $f->description = __('IP Address that non-superusers need to use TracyDebugger. Enter IP address or a PCRE regular expression to match IP address of user, eg. /^123\.456\.789\./ would match all IP addresses that started with 123.456.789.', __FILE__);
         $f->columnWidth = 33;
-        $f->notes = __('Non-superusers are already blocked unless they have the "tracy-debugger" permission. But once a user has been given the permission, this option restricts access to the listed IP address. Highly recommended for debugging live sites that you have manually set into DEVELOPMENT mode.', __FILE__);
+        $f->notes = __('Non-superusers are already blocked unless they have the `tracy-debugger` permission. But once a user has been given the permission, this option restricts access to the listed IP address. Highly recommended for debugging live sites that you have manually set into DEVELOPMENT mode.', __FILE__);
         if($data['ipAddress']) $f->attr('value', $data['ipAddress']);
         $fieldset->add($f);
 
@@ -2571,7 +2575,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = $this->wire('modules')->get("InputfieldCheckboxes");
         $f->attr('name', 'restrictedUserDisabledPanels');
         $f->label = __('Disabled panels for restricted users', __FILE__);
-        $f->description = __('Check the panels that should NOT be shown to users with the "tracy-restricted-panels" role or permission.', __FILE__);
+        $f->description = __('Check the panels that should NOT be shown to users with the `tracy-restricted-panels` role or permission.', __FILE__);
         $f->notes = __('Unchecked panels will still only be shown to restricted users if they are selected in the Front/Back-end options above.', __FILE__);
         $f->optionColumns = 3;
         foreach(static::$allPanels as $name => $label) {
@@ -3004,7 +3008,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = $this->wire('modules')->get("InputfieldText");
         $f->attr('name', 'userDevTemplateSuffix');
         $f->label = __('User dev template suffix', __FILE__);
-        $f->description = __('Template file suffix. eg "dev" will render the homepage with the "home-dev.php" template file if the user has a matching permission (prefixed with "tracy"), eg. "tracy-home-dev".', __FILE__);
+        $f->description = __('Template file suffix. eg "dev" will render the homepage with the "home-dev.php" template file if the user has a matching permission (prefixed with "tracy"), eg. `tracy-home-dev`. You can also use `tracy-all-dev` to enable for all templates if the files exist.', __FILE__);
         $f->columnWidth = 50;
         if($data['userDevTemplateSuffix']) $f->attr('value', $data['userDevTemplateSuffix']);
         $fieldset->add($f);
@@ -3027,7 +3031,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Show user bar for Tracy users', __FILE__);
         $f->showIf = "showUserBar=1";
         $f->description = __('Also show the bar to users with Tracy debug bar permission.', __FILE__);
-        $f->notes = __('Only recommended if you position this bar somewhere other than bottom right so it doesn\'t conflict with the Debug bar.', __FILE__);
+        $f->notes = __('Be sure to position this bar somewhere other than bottom right so it doesn\'t conflict with the debug bar.', __FILE__);
         $f->columnWidth = 34;
         $f->showIf = "showUserBar=1";
         $f->attr('checked', $data['showUserBarTracyUsers'] == '1' ? 'checked' : '' );
@@ -3038,7 +3042,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Features', __FILE__);
         $f->showIf = "showUserBar=1";
         $f->description = __('Determines which features are shown on the User Bar.', __FILE__);
-        $f->notes = __('The Page Versions function requires that the user has the "tracy-page-versions" permission.', __FILE__);
+        $f->notes = __('The Page Versions function requires that the user has the `tracy-page-versions` permission.', __FILE__);
         $f->columnWidth = 33;
         foreach(static::$userBarFeatures as $name => $label) {
             $f->addOption($name, $label);

@@ -19,10 +19,11 @@ Results are cached for speed, but will be updated whenever you update your Proce
 ## ![Console](icons/console.svg ':no-zoom')Console
 
 * Code highlighting and syntax checking
-* Access to all PW variables: $pages, $page, $user, etc
+* Access to all PW variables: $pages, $page, $user, $input, $fields, $templates, $modules, etc
 * Access to $field, $template, $module when viewing the settings for a field, template, or module in the ProcessWire admin
 * Access to all template defined variables and functions
 * Works with `bd()`, `d()`, `fl()`, and `l()` calls, and `echo`. `d()` is recommended in most scenarios because output will appear in the results panel below the code
+* Also works with `bdb()`, `bdl()`, and `db()` big/live variants
 * Supports PHP, HTML, or mixed HTML/PHP syntax
 * All output is generated via ajax, and so no page load required
 * Only available to superusers
@@ -30,6 +31,10 @@ Results are cached for speed, but will be updated whenever you update your Proce
 * Use CTRL+Enter or CMD+Enter or the "Run Code" button to run the code
 * In-code search & replace with CMD/CTRL+F
 * History stack
+* Fullscreen editing mode with quick toggles between: all code, all results, and the split of both.
+	* `CTRL + SHFT + ↑` - collapses code pane
+	* `CTRL + SHFT + ↓` - collapses results pane
+	* `CTRL + SHFT + ←` - to restore split to what it was before you initiated any pane collapses.
 * Snippets storage for regularly used code
 * Options to run code instead at `init`, `ready`, or `finished` - useful for testing hooks. To use this, click Run, select `init`, `ready`, or `finished` and then execute whatever action in ProcessWire that is needed to trigger the hook. An orange icon will indicate this feature is active. You can switch to `off` manually when you are done. It will also expire automatically after 5 minutes.
 
@@ -399,7 +404,7 @@ Not only is this useful for debugging (especially on a live production server), 
 ### User Dev Template Option
 This is not reliant on the Template Path Panel, but its functionality is similar and its status is integrated into the panel, so it is presented here.
 
-It makes it really easy to show authorized users development versions of template files. To make this work, all you need to do is enable the checkbox. Then setup a "template-****" permission and assign that to the required users.
+It makes it really easy to show authorized users development versions of template files. To make this work, all you need to do is enable the checkbox. Then setup a `tracy-template-****` permission and assign that to the required users.
 
 Obviously this is not the best approach for major changes (you should set up a dev subdomain for that), but I think it could be quite handy for certain site changes.
 
@@ -408,7 +413,7 @@ Additionally, it automatically swaps out files included via `$config->prependTem
 In this screenshot, you can see the reminder detailing why the icon is orange. Currently we are not viewing a page with an alternate template, but it is letting us know that:
 
 * the "User Dev Template" option is enabled in module settings
-* the "template-dev" permission exists
+* the `tracy-template-dev` (or `tracy-all-dev`) permission exists
 * the permission has been assigned to at least one user
 * there are template files with a "-dev" suffix
 

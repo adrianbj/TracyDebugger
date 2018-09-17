@@ -11,7 +11,7 @@ class TD extends TracyDebugger {
 	 */
 
     protected static function tracyUnavailable() {
-        if(!\TracyDebugger::getDataValue('enabled') || !\TracyDebugger::allowedTracyUsers() || !class_exists('\Tracy\Debugger')) {
+        if(!\TracyDebugger::getDataValue('enabled') || !\TracyDebugger::$allowedTracyUser || !class_exists('\Tracy\Debugger')) {
             return true;
         }
         else {
@@ -192,7 +192,7 @@ class TD extends TracyDebugger {
             }
 
             if($var instanceof WireArray || $var instanceof \ProcessWire\WireArray) {
-                $editCountLink .= '<span style="float:right; padding: 4px 6px 3px 6px;">n = ' . $var->count() . '</span>';
+                $editCountLink .= '<li style="float:right; padding-right:6px">n = ' . $var->count() . '</li>';
             }
 
             $tabs = '<ul class="tracyDumpTabs">';
@@ -217,11 +217,11 @@ class TD extends TracyDebugger {
                 $lastDump = $currentDump;
 
             }
-            $tabs .= '</ul>';
+            $tabs .= $editCountLink . '</ul>';
             $tabDivs .= '</div>';
 
             if($numTabs > 1) {
-	            $out .= $tabs . $editCountLink . $tabDivs;
+	            $out .= $tabs . $tabDivs;
 	        }
 	        else {
             	$out .= $lastDump;
@@ -238,7 +238,7 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     private static function generateEditLink($var, $type, $section) {
-        return '<span style="float:right"><a href="' . wire('config')->urls->admin . $section . ($section ? '/' : '') . $type . '/edit/?id=' . $var->id . '" title="Edit ' . trim($type, 's') . ': ' . $var->name . '">#' . $var->id . '</a></span>';
+        return '<li style="float:right"><a href="' . wire('config')->urls->admin . $section . ($section ? '/' : '') . $type . '/edit/?id=' . $var->id . '" title="Edit ' . trim($type, 's') . ': ' . $var->name . '">#' . $var->id . '</a></li>';
     }
 
     /**
