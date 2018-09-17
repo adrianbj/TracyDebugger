@@ -728,6 +728,8 @@ ul.pw-info-links {
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] {
+    min-width: 400px;
+    max-width: 100% !important;
     padding: 0 !important;
     border: 2px solid rgba(0, 0, 0, 0.18);
     border-radius: 0;
@@ -745,7 +747,6 @@ ul.pw-info-links {
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>.tracy-inner {
-    min-width: 400px !important;
     padding: 12px 12px 0 12px !important;
     margin: 0 0 20px 0 !important;
 }
@@ -1140,9 +1141,6 @@ ul.pw-info-links {
     display: none !important;
 }
 
-#validatorBody ol {
-    font-size: 16px !important;
-}
 
 /* Splitjs styles */
 

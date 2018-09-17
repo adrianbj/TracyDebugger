@@ -174,16 +174,11 @@ class ValidatorPanel extends BasePanel {
                 }
 
                 #validatorBody ol {
-                    width: 100% !important;
+                    width: calc(100% - 25px) !important;
                     list-style-position: inside;
-                    margin-left: 0;
-                    margin-right: 0;
-                    margin-top: 1.5em;
-                    margin-bottom: 1.5em;
-                    padding-left: 2.5em;
-                    padding-right: 2.5em;
-                    padding-top: 0;
-                    padding-bottom: 0;
+                    padding: 0 !important;
+                    margin: 25px !important;
+                    font-size: 13px !important;
                 }
 
                 #validatorBody li {
