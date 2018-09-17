@@ -28,14 +28,16 @@ Results are cached for speed, but will be updated whenever you update your Proce
 * All output is generated via ajax, and so no page load required
 * Only available to superusers
 * Caches code so it stored between page reloads, navigation to other pages, and even browser restarts
-* Use CTRL+Enter or CMD+Enter or the "Run Code" button to run the code
-* In-code search & replace with CMD/CTRL+F
+* Use CTRL + Enter or CMD + Enter or the "Run Code" button to run the code
+* In-code search & replace with CMD/CTRL + F
 * History stack
+	* ALT + PageUp - back
+	* ALT + PageDown - forward
 * Fullscreen editing mode with quick toggles between: all code, all results, and mixes of both.
-	* `CTRL + SHFT + ↑` - collapse code pane
-	* `CTRL + SHFT + ↓` - collapse results pane
-	* `CTRL + SHFT + ←` - restore split to last dragged position
-	* `CTRL + SHFT + →` - split to show all the lines of code
+	* CTRL + SHFT + ↑ - collapse code pane
+	* CTRL + SHFT + ↓ - collapse results pane
+	* CTRL + SHFT + ← - restore split to last dragged position
+	* CTRL + SHFT + → - split to show all the lines of code
 * Snippets storage for regularly used code
 * Options to run code instead at `init`, `ready`, or `finished` - useful for testing hooks. To use this, click Run, select `init`, `ready`, or `finished` and then execute whatever action in ProcessWire that is needed to trigger the hook. An orange icon will indicate this feature is active. You can switch to `off` manually when you are done. It will also expire automatically after 5 minutes.
 
@@ -149,7 +151,7 @@ For example, setting the hook to `Pages::save` and then deleting a page can resu
 * Has "Test" functionality for all files so if you make a change, it will only appear for you and not other users
 * Red icon: Test code is being rendered
 * Makes a backup of the old version each time you save a change and provides a "Restore Backup" button to instantly revert
-* Supports in-code search & replace with CMD+F
+* Supports in-code search & replace with CMD + F
 * Syntax highlighting/linting for PHP, CSS, and JS
 * This replaces the Template Editor panel, so that one has been removed
 * Handles fatal errors gracefully - this is the biggest feature in my opinion. The problem with most online file editors is that if you accidentally make a code change that results in a fatal error, it can be impossible to fix and resave because the system is not functional. This editor gets around this problem by using Tracy's custom error handling which allows debug bar panels to continue to work, so you can manually fix the problem, or click the "Restore Backup" button. Of course if you used the "Test" option, you don't even need to worry, because you are the only one to see the version with the error anyway.
@@ -273,7 +275,7 @@ bp('D');
 ## ![PHP Info](icons/php-info.svg ':no-zoom')PHP Info
 Provides all the output from PHP's `phpinfo()`. Probable best to leave disabled unless you need to check something.
 
-CTRL/CMD+F works well to find relevant entries within this panel (and all panels actually), although this seems to be browser specific. It works in Chrome and Safari, but not Firefox.
+CTRL/CMD + F works well to find relevant entries within this panel (and all panels actually), although this seems to be browser specific. It works in Chrome and Safari, but not Firefox.
 
 ![PHP Info panel](img/php-info.png)
 
