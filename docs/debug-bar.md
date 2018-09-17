@@ -31,10 +31,11 @@ Results are cached for speed, but will be updated whenever you update your Proce
 * Use CTRL+Enter or CMD+Enter or the "Run Code" button to run the code
 * In-code search & replace with CMD/CTRL+F
 * History stack
-* Fullscreen editing mode with quick toggles between: all code, all results, and the split of both.
-	* `CTRL + SHFT + ↑` - collapses code pane
-	* `CTRL + SHFT + ↓` - collapses results pane
-	* `CTRL + SHFT + ←` - to restore split to what it was before you initiated any pane collapses.
+* Fullscreen editing mode with quick toggles between: all code, all results, and mixes of both.
+	* `CTRL + SHFT + ↑` - collapse code pane
+	* `CTRL + SHFT + ↓` - collapse results pane
+	* `CTRL + SHFT + ←` - restore split to last dragged position
+	* `CTRL + SHFT + →` - split to show all the lines of code
 * Snippets storage for regularly used code
 * Options to run code instead at `init`, `ready`, or `finished` - useful for testing hooks. To use this, click Run, select `init`, `ready`, or `finished` and then execute whatever action in ProcessWire that is needed to trigger the hook. An orange icon will indicate this feature is active. You can switch to `off` manually when you are done. It will also expire automatically after 5 minutes.
 

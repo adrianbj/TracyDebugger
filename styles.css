@@ -728,7 +728,8 @@ ul.pw-info-links {
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] {
-    min-width: 400px;
+    min-width: 400px !important;
+    min-height: 300px !important;
     max-width: 100% !important;
     padding: 0 !important;
     border: 2px solid rgba(0, 0, 0, 0.18);
@@ -1145,6 +1146,7 @@ ul.pw-info-links {
 /* Splitjs styles */
 
 #tracyConsoleContainer>.split {
+    min-height: 23px !important;
     -webkit-box-sizing: border-box !important;
     -moz-box-sizing: border-box !important;
     box-sizing: border-box !important;
@@ -1165,6 +1167,7 @@ ul.pw-info-links {
     cursor: row-resize !important;
     background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=') !important;
 }
+
 
 /* File Editor folders */
 

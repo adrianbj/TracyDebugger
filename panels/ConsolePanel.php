@@ -272,8 +272,10 @@ class ConsolePanel extends BasePanel {
                     // if normal mode (not in window), then we need to make adjustment to make height a little shorter ($consoleContainerAdjustment)
                     if(!consolePanel.classList.contains('tracy-mode-window')) {
                         var consolePanelHeight = consolePanel.offsetHeight;
-                        document.getElementById("tracyConsoleContainer").style.height = (consolePanelHeight - {$consoleContainerAdjustment}) + 'px';
-                        document.getElementById("tracySnippetsContainer").style.height = (consolePanelHeight - {$consoleContainerAdjustment}) + 'px';
+                        var consoleContainerAdjustment = $consoleContainerAdjustment;
+                        if(consolePanelHeight < 400) consoleContainerAdjustment = consoleContainerAdjustment + 15;
+                        document.getElementById("tracyConsoleContainer").style.height = (consolePanelHeight - consoleContainerAdjustment) + 'px';
+                        document.getElementById("tracySnippetsContainer").style.height = (consolePanelHeight - consoleContainerAdjustment) + 'px';
                     }
                     else {
                         // reduce width of snippets panel so it fits when in window mode
@@ -611,17 +613,27 @@ class ConsolePanel extends BasePanel {
                                     // maybe switch to collapse() if splitjs adds support for collapse respecting minSize
                                     // https://github.com/nathancahill/Split.js/issues/95
                                     var containerHeight = document.getElementById('tracyConsoleContainer').offsetHeight;
-                                    collapsedPaneHeightPct = (tracyConsole.lineHeight + (8/2)) / containerHeight * 100;
+                                    collapsedCodePaneHeightPct = (tracyConsole.lineHeight + (8/2)) / containerHeight * 100;
+                                    // down
                                     if(e.keyCode==40||e.charCode==40) {
                                         //split.collapse(1);
-                                        split.setSizes([100 - collapsedPaneHeightPct, collapsedPaneHeightPct]);
+                                        split.setSizes([100 - collapsedCodePaneHeightPct, collapsedCodePaneHeightPct]);
                                         tracyConsole.resizeAce();
                                     }
+                                    // up
                                     if(e.keyCode==38||e.charCode==38) {
                                         //split.collapse(0);
-                                        split.setSizes([collapsedPaneHeightPct, 100 - collapsedPaneHeightPct]);
+                                        split.setSizes([collapsedCodePaneHeightPct, 100 - collapsedCodePaneHeightPct]);
                                         tracyConsole.resizeAce();
                                     }
+                                    // right
+                                    if(e.keyCode==39||e.charCode==39) {
+                                        var heightCodeLinesPct = (tracyConsole.tce.session.getLength() * tracyConsole.lineHeight  + (8/2)) / containerHeight * 100;
+                                        if(100 - heightCodeLinesPct < tracyConsole.lineHeight) heightCodeLinesPct = 100 - collapsedCodePaneHeightPct;
+                                        split.setSizes([heightCodeLinesPct, 100 - heightCodeLinesPct]);
+                                        tracyConsole.resizeAce();
+                                    }
+                                    // left
                                     if(e.keyCode==37||e.charCode==37) {
                                         var sizes = localStorage.getItem('tracyConsoleSplitSizes');
                                         sizes = sizes ? JSON.parse(sizes) : [40, 60];
