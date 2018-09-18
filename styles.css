@@ -282,6 +282,12 @@ body.tracyHidden:before {
     font-weight: bold;
 }
 
+
+#keyboardShortcuts table td:nth-child(1) {
+    width: 250px;
+}  
+
+
 table.captainHookTable td:first-child,
 table.captainHookTable th:first-child {
     width: 40% !important;
@@ -728,7 +734,7 @@ ul.pw-info-links {
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] {
-    min-width: 400px !important;
+    min-width: 400px;
     min-height: 300px !important;
     max-width: 100% !important;
     padding: 0 !important;
@@ -1597,6 +1603,10 @@ span.tracyDumpsCollapser {
 
 .noscroll {
     overflow: hidden !important;
+}
+
+.tracyHidden {
+    display:none;
 }
 
 /* Safari hack to to make ace-editor scrollbar show

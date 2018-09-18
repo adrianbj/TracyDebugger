@@ -29,7 +29,8 @@ if(!tracyFileEditorLoader) {
                                 el.classList.remove("active");
                             });
                             curEl.classList.add("active");
-                            tracyFileEditorLoader.loadFileEditor(tracyFileEditorLoader.getFileLineVars(curEl.search, "f"), tracyFileEditorLoader.getFileLineVars(curEl.search, "l"));
+                            queryStr = curEl.href.split('?')[1];
+                            tracyFileEditorLoader.loadFileEditor(tracyFileEditorLoader.getFileLineVars(queryStr, "f"), tracyFileEditorLoader.getFileLineVars(queryStr, "l"));
                         }
                     }
                 });

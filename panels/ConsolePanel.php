@@ -40,7 +40,7 @@ class ConsolePanel extends BasePanel {
         $pwRoot = $this->wire('config')->urls->root;
         $tracyModuleUrl = $this->wire("config")->urls->TracyDebugger;
         $inAdmin = \TracyDebugger::$inAdmin;
-        $consoleContainerAdjustment = $inAdmin ? 135 : 175;
+        $consoleContainerAdjustment = $inAdmin ? 125 : 140;
 
         // store various $input properties so they are available to the console
         $this->wire('session')->tracyPostData = $this->wire('input')->post->getArray();
@@ -202,6 +202,10 @@ class ConsolePanel extends BasePanel {
                     }
                 },
 
+                toggleKeyboardShortcuts: function() {
+                    document.getElementById("keyboardShortcuts").classList.toggle('tracyHidden');
+                },
+
                 toggleFullscreen: function(maximize) {
 
                     if(maximize == 'toggle' && !document.getElementById("tracyConsoleContainer").classList.contains('maximizedConsole')) {
@@ -280,7 +284,7 @@ class ConsolePanel extends BasePanel {
                     if(!consolePanel.classList.contains('tracy-mode-window')) {
                         var consolePanelHeight = consolePanel.offsetHeight;
                         var consoleContainerAdjustment = $consoleContainerAdjustment;
-                        if(consolePanelHeight < 400) consoleContainerAdjustment = consoleContainerAdjustment + 15;
+                        if(consolePanelHeight < 475) consoleContainerAdjustment = consoleContainerAdjustment + 15;
                         document.getElementById("tracyConsoleContainer").style.height = (consolePanelHeight - consoleContainerAdjustment) + 'px';
                         document.getElementById("tracySnippetsContainer").style.height = (consolePanelHeight - consoleContainerAdjustment) + 'px';
                     }
@@ -746,19 +750,82 @@ class ConsolePanel extends BasePanel {
         </script>
 HTML;
 
-        $out .= '<h1>' . $this->icon . ' Console </h1><span class="tracy-icons"><span class="resizeIcons"><a href="javascript:void(0)" title="halfscreen" rel="min" onclick="tracyResizePanel(\'ConsolePanel\', \'halfscreen\')">▼</a> <a href="javascript:void(0)" title="fullscreen" rel="max" onclick="tracyResizePanel(\'ConsolePanel\', \'fullscreen\')">▲</a></span></span>
+        $keyboardShortcutIcon = '
+        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+        viewBox="388 298 16 16" enable-background="new 388 298 16 16" xml:space="preserve" style="width:13px !important; height:13px !important;">
+        <path fill="'.\TracyDebugger::COLOR_NORMAL.'" d="M401.1,308.1h-1.9v-4.3h1.9c1.6,0,2.9-1.3,2.9-2.9c0-1.6-1.3-2.9-2.9-2.9c-1.6,0-2.9,1.3-2.9,2.9v1.9h-4.3v-1.9
+            c0-1.6-1.3-2.9-2.9-2.9c-1.6,0-2.9,1.3-2.9,2.9c0,1.6,1.3,2.9,2.9,2.9h1.9v4.3h-1.9c-1.6,0-2.9,1.3-2.9,2.9c0,1.6,1.3,2.9,2.9,2.9
+            c1.6,0,2.9-1.3,2.9-2.9v-1.9h4.3v1.9c0,1.6,1.3,2.9,2.9,2.9c1.6,0,2.9-1.3,2.9-2.9C404,309.4,402.7,308.1,401.1,308.1z M399.2,300.9
+            c0-1,0.8-1.9,1.9-1.9c1,0,1.9,0.8,1.9,1.9c0,1-0.8,1.9-1.9,1.9h-1.9V300.9z M390.9,302.8c-1,0-1.9-0.8-1.9-1.9c0-1,0.8-1.9,1.9-1.9
+            c1,0,1.9,0.8,1.9,1.9v1.9H390.9z M392.8,311.1c0,1-0.8,1.9-1.9,1.9c-1,0-1.9-0.8-1.9-1.9c0-1,0.8-1.9,1.9-1.9h1.9V311.1z
+                M393.9,308.1v-4.3h4.3v4.3H393.9z M401.1,312.9c-1,0-1.9-0.8-1.9-1.9v-1.9h1.9c1,0,1.9,0.8,1.9,1.9
+            C402.9,312.1,402.1,312.9,401.1,312.9z"/>
+        </svg>        
+        ';
+
+        $out .= '<h1>' . $this->icon . ' Console <span title="Keyboard Shortcuts" style="display: inline-block; margin-left: 5px; cursor: pointer" onclick="tracyConsole.toggleKeyboardShortcuts()">' . $keyboardShortcutIcon . '</span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="javascript:void(0)" title="halfscreen" rel="min" onclick="tracyResizePanel(\'ConsolePanel\', \'halfscreen\')">▼</a> <a href="javascript:void(0)" title="fullscreen" rel="max" onclick="tracyResizePanel(\'ConsolePanel\', \'fullscreen\')">▲</a></span></span>
         <div class="tracy-inner">
             <div id="tracyConsoleMainContainer">
-                <legend>CTRL/CMD+Enter to Run&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ALT/OPT+Enter to Clear & Run</legend>';
+                <div id="keyboardShortcuts" class="tracyHidden">
+                    <table>
+                        <th colspan="2">Code Execution</th>
+                        <tr>
+                            <td>CTRL/CMD + Enter</td>                        
+                            <td>Run</td>
+                        </tr>
+                        <tr>
+                            <td>ALT/OPT + Enter</td>                        
+                            <td>Clear & Run</td>
+                        </tr>
+                        </table>
+                        <br />
+                        <table>
+                        <th colspan="2">Execution History</th>
+                        <tr>
+                            <td>ALT + PageUp</td>                        
+                            <td>Back</td>
+                        </tr>
+                        <tr>
+                            <td>ALT + PageDown</td>                        
+                            <td>Forward</td>
+                        </tr>
+                        </table>
+                        <br />
+                        <table>
+                        <th colspan="2">Screen / Pane Manipulation</th>
+                        <tr>
+                            <td>CTRL + SHFT + Enter</td>
+                            <td>Toggle fullscreen</td>
+                        </tr>
+                        <tr>
+                            <td>CTRL + SHFT + ↑</td>
+                            <td>Collapse code pane</td>
+                        </tr>                                                
+                        <tr>
+                            <td>CTRL + SHFT + ↓</td>
+                            <td>Collapse results pane</td>
+                        </tr>                                                
+                        <tr>
+                            <td>CTRL + SHFT + ←</td>
+                            <td>Restore split to last dragged position</td>
+                        </tr>                                                
+                        <tr>
+                            <td>CTRL + SHFT + →</td>
+                            <td>Split to show all the lines of code</td>
+                        </tr>                                                                                                                        
+                    </table>
+                    <br />
+                </div>
+            ';
         if($this->wire('page')->template != "admin") {
-            $out .= '<p><label><input type="checkbox" id="accessTemplateVars" /> Access custom variables & functions from this page\'s template file & included files.</label></p>';
+            $out .= '<label><input type="checkbox" id="accessTemplateVars" /> Access custom variables & functions from this page\'s template file & included files.</label>';
         }
 
         $out .= '
                 <div style="padding:10px 0">
                     <input title="Run code" type="submit" id="runCode" onclick="tracyConsole.processTracyCode()" value="Run" />&nbsp;
-                    <input style="font-family: FontAwesome !important" title="Go back (ALT+PageUp)" id="historyBack" type="submit" onclick="tracyConsole.loadHistory(\'back\')" value="&#xf060;" />&nbsp;
-                    <input style="font-family: FontAwesome !important" title="Go forward (ALT+PageDown)" class="arrowRight" id="historyForward" type="submit" onclick="tracyConsole.loadHistory(\'forward\')" value="&#xf060;" />
+                    <input style="font-family: FontAwesome !important" title="Go back (ALT + PageUp)" id="historyBack" type="submit" onclick="tracyConsole.loadHistory(\'back\')" value="&#xf060;" />&nbsp;
+                    <input style="font-family: FontAwesome !important" title="Go forward (ALT + PageDown)" class="arrowRight" id="historyForward" type="submit" onclick="tracyConsole.loadHistory(\'forward\')" value="&#xf060;" />
                     <input title="Clear results" type="submit" id="clearResults" onclick="tracyConsole.clearResults()" value="&#10006; Clear results" />
                     <span style="float:right;">
                         <label title="Don\'t Run on Page Load" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'off\')" value="off" ' . (!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? ' checked' : '') . ' /> off</label>&nbsp;
