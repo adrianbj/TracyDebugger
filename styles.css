@@ -1146,7 +1146,7 @@ ul.pw-info-links {
 /* Splitjs styles */
 
 #tracyConsoleContainer>.split {
-    min-height: 23px !important;
+    min-height: 24px !important;
     -webkit-box-sizing: border-box !important;
     -moz-box-sizing: border-box !important;
     box-sizing: border-box !important;

@@ -203,6 +203,11 @@ class ConsolePanel extends BasePanel {
                 },
 
                 toggleFullscreen: function(maximize) {
+
+                    if(maximize == 'toggle' && !document.getElementById("tracyConsoleContainer").classList.contains('maximizedConsole')) {
+                        maximize = 'true';
+                    }
+
                     if(maximize == 'true') {
                         if(this.isSafari()) {
                             document.body.appendChild(document.getElementById("tracy-debug-panel-ConsolePanel"));
@@ -211,18 +216,20 @@ class ConsolePanel extends BasePanel {
                         document.getElementById("fullscreenToggleMaximize").style.display = "none";
                         document.getElementById("fullscreenToggleMinimize").style.display = "block";
                         document.documentElement.classList.add('noscroll');
+                        // hack to hide resize handle
+                        document.getElementById('tracy-debug-panel-ConsolePanel').style.resize = 'none';
                     }
                     else {
                         if(this.isSafari()) {
                             document.getElementById("tracy-debug").appendChild(document.getElementById("tracy-debug-panel-ConsolePanel"));
-                            tracyConsole.resizeAce();
                         }
                         document.getElementById("tracyConsoleContainer").classList.remove("maximizedConsole");
                         document.getElementById("fullscreenToggleMaximize").style.display = "block";
                         document.getElementById("fullscreenToggleMinimize").style.display = "none";
                         document.documentElement.classList.remove('noscroll');
+                        document.getElementById('tracy-debug-panel-ConsolePanel').style.resize = 'both';
                     }
-                    tracyConsole.tce.focus();
+                    tracyConsole.resizeAce();
                 },
 
                 callPhp: function(code) {
@@ -287,7 +294,10 @@ class ConsolePanel extends BasePanel {
                     tracyConsole.resizeContainers();
                     document.getElementById("tracyConsoleEditor").style.height = '100%';
                     tracyConsole.tce.resize(true);
-                    if(focus) tracyConsole.tce.focus();
+                    if(focus) {
+                        document.getElementById("tracy-debug-panel-ConsolePanel").classList.add('tracy-focused');
+                        tracyConsole.tce.focus();
+                    }
                 },
 
                 getSnippet: function(name) {
@@ -529,9 +539,9 @@ class ConsolePanel extends BasePanel {
             tracyJSLoader.load(tracyConsole.tracyModuleUrl + "scripts/ace-editor/ace.js", function() {
                 if(typeof ace !== "undefined") {
                     tracyConsole.tce = ace.edit("tracyConsoleEditor");
-                    tracyConsole.lineHeight = 23;
+                    tracyConsole.lineHeight = 24;
                     tracyConsole.tce.container.style.lineHeight = tracyConsole.lineHeight + 'px';
-                    tracyConsole.tce.setFontSize(13);
+                    tracyConsole.tce.setFontSize(14);
                     tracyConsole.tce.setShowPrintMargin(false);
                     tracyConsole.tce.\$blockScrolling = Infinity;
 
@@ -614,6 +624,10 @@ class ConsolePanel extends BasePanel {
                                     // https://github.com/nathancahill/Split.js/issues/95
                                     var containerHeight = document.getElementById('tracyConsoleContainer').offsetHeight;
                                     collapsedCodePaneHeightPct = (tracyConsole.lineHeight + (8/2)) / containerHeight * 100;
+                                    // enter
+                                    if((e.keyCode==10||e.charCode==10)||(e.keyCode==13||e.charCode==13)) {
+                                        tracyConsole.toggleFullscreen('toggle');
+                                    }
                                     // down
                                     if(e.keyCode==40||e.charCode==40) {
                                         //split.collapse(1);
@@ -695,7 +709,7 @@ class ConsolePanel extends BasePanel {
 
                         // various keyboard shortcuts
                         document.getElementById("tracyConsoleCode").querySelector(".ace_text-input").addEventListener("keydown", function(e) {
-                            if(((e.keyCode==10||e.charCode==10)||(e.keyCode==13||e.charCode==13)) && (e.metaKey || e.ctrlKey || e.altKey)) {
+                            if(((e.keyCode==10||e.charCode==10)||(e.keyCode==13||e.charCode==13)) && (e.metaKey || e.ctrlKey || e.altKey) && !e.shiftKey) {
                                 e.preventDefault();
                                 if(e.altKey) tracyConsole.clearResults();
                                 tracyConsole.processTracyCode();
@@ -757,7 +771,7 @@ HTML;
 
                 <div id="tracyConsoleContainer" class="split">
                     <div id="tracyConsoleCode" class="split" style="position:relative; background:#FFFFFF;">
-                        <div id="tracyConsoleEditor" style="min-height:23px"></div>
+                        <div id="tracyConsoleEditor" style="min-height:24px"></div>
                     </div>
                     <div id="tracyConsoleResult" class="split" style="overflow:auto; border:1px solid #D2D2D2;">';
         if($this->wire('input')->cookie->tracyCodeError) {
