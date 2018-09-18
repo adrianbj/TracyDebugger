@@ -814,7 +814,6 @@ HTML;
                             <td>Split to show all the lines of code</td>
                         </tr>                                                                                                                        
                     </table>
-                    <br />
                 </div>
             ';
         if($this->wire('page')->template != "admin") {
