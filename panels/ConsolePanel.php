@@ -628,9 +628,10 @@ class ConsolePanel extends BasePanel {
                                     }
                                     // right
                                     if(e.keyCode==39||e.charCode==39) {
-                                        var heightCodeLinesPct = (tracyConsole.tce.session.getLength() * tracyConsole.lineHeight  + (8/2)) / containerHeight * 100;
-                                        if(100 - heightCodeLinesPct < tracyConsole.lineHeight) heightCodeLinesPct = 100 - collapsedCodePaneHeightPct;
-                                        split.setSizes([heightCodeLinesPct, 100 - heightCodeLinesPct]);
+                                        var codeLinesHeight = (tracyConsole.tce.session.getLength() * tracyConsole.lineHeight + (8/2));
+                                        var codeLinesHeightPct = codeLinesHeight / containerHeight * 100;
+                                        if(containerHeight - codeLinesHeight < tracyConsole.lineHeight) codeLinesHeightPct = 100 - collapsedCodePaneHeightPct;
+                                        split.setSizes([codeLinesHeightPct, 100 - codeLinesHeightPct]);
                                         tracyConsole.resizeAce();
                                     }
                                     // left
