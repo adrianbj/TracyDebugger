@@ -92,8 +92,8 @@ function init_php_file_tree() {
 			for (var j = 0; j < items.length; j++) {
 				if (items[j].tagName == "A") {
 					var parser = document.createElement('a');
-					parser.href = items[j].href;
-					var currentFilePath = parser.search.replace('?f=','').replace('&l=1','');
+					queryStr = items[j].href.split('?')[1];
+					var currentFilePath = queryStr.replace('f=','').replace('&l=1','');
 					if(document.getElementById('panelTitleFilePath').innerHTML == currentFilePath) {
 						items[j].classList.add("active");
 					}

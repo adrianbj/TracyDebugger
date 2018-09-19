@@ -2,7 +2,7 @@ if(!tracyFileEditorLoader) {
     var tracyFileEditorLoader = {
 
         getFileLineVars: function (query,variable) {
-            var vars = query.replace("?","").split("&");
+            var vars = query.split("&");
             for (var i = 0; i < vars.length; i++) {
                 var pair = vars[i].split("=");
                 if (decodeURIComponent(pair[0]) == variable) {
