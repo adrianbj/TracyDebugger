@@ -241,7 +241,7 @@ HTML;
 
 HTML;
 
-        $out .= '<h1>' . $this->icon . ' Snippet Runner</h1><span class="tracy-icons"><span class="resizeIcons"><a href="javascript:void(0)" title="halfscreen" rel="min" onclick="tracyResizePanel(\'SnippetRunnerPanel\', \'halfscreen\')">▼</a> <a href="javascript:void(0)" title="fullscreen" rel="max" onclick="tracyResizePanel(\'SnippetRunnerPanel\', \'fullscreen\')">▲</a></span></span>
+        $out .= '<h1>' . $this->icon . ' Snippet Runner</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'SnippetRunnerPanel\')">+</a></span></span>
         <div class="tracy-inner">
             <div id="tracySnippetRunnerContainer">
                 <legend>Select snippet | CTRL/CMD + Enter to Run, or ALT/OPT + Enter to Clear & Run.</legend>';

@@ -595,7 +595,7 @@ class RequestInfoPanel extends BasePanel {
         // Load all the panel sections
         $isAdditionalBar = \TracyDebugger::isAdditionalBar();
         $out = '
-        <h1>' . $this->icon . ' Request Info' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1><span class="tracy-icons"><span class="resizeIcons"><a href="javascript:void(0)" title="halfscreen" rel="min" onclick="tracyResizePanel(\'RequestInfoPanel'.($isAdditionalBar ? '-'.$isAdditionalBar : '').'\', \'halfscreen\')">▼</a> <a href="javascript:void(0)" title="fullscreen" rel="max" onclick="tracyResizePanel(\'RequestInfoPanel'.($isAdditionalBar ? '-'.$isAdditionalBar : '').'\', \'fullscreen\')">▲</a></span></span>
+        <h1>' . $this->icon . ' Request Info' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'RequestInfoPanel'.($isAdditionalBar ? '-'.$isAdditionalBar : '').'\')">+</a></span></span>
         <div class="tracy-inner">
         ';
 

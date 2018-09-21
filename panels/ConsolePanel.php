@@ -283,8 +283,9 @@ class ConsolePanel extends BasePanel {
                         document.getElementById("tracySnippetsContainer").style.height = (consolePanelHeight - consoleContainerAdjustment - 5) + 'px';
                     }
                     else {
-                        // reduce width of snippets panel so it fits when in window mode
-                        document.getElementById("tracySnippetsContainer").style.width = (document.getElementById("tracySnippetsContainer").offsetWidth - 15) + 'px';
+                        document.getElementById("tracyConsoleContainer").style.height = (document.getElementById("tracyConsoleContainer").offsetHeight - 15) + 'px';
+                        document.getElementById("tracySnippetsContainer").style.height = (document.getElementById("tracySnippetsContainer").offsetHeight - 15) + 'px';
+                        document.getElementById("tracySnippetsContainer").style.width = (document.getElementById("tracySnippetsContainer").offsetWidth - 25) + 'px';
                     }
                 },
 
@@ -758,7 +759,7 @@ HTML;
         </svg>
         ';
 
-        $out .= '<h1>' . $this->icon . ' Console <span title="Keyboard Shortcuts" style="display: inline-block; margin-left: 5px; cursor: pointer" onclick="tracyConsole.toggleKeyboardShortcuts()">' . $keyboardShortcutIcon . '</span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="javascript:void(0)" title="halfscreen" rel="min" onclick="tracyResizePanel(\'ConsolePanel\', \'halfscreen\')">▼</a> <a href="javascript:void(0)" title="fullscreen" rel="max" onclick="tracyResizePanel(\'ConsolePanel\', \'fullscreen\')">▲</a></span></span>
+        $out .= '<h1>' . $this->icon . ' Console <span title="Keyboard Shortcuts" style="display: inline-block; margin-left: 5px; cursor: pointer" onclick="tracyConsole.toggleKeyboardShortcuts()">' . $keyboardShortcutIcon . '</span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'ConsolePanel\')">+</a></span></span>
         <div class="tracy-inner">
             <div id="tracyConsoleMainContainer">
                 <div id="keyboardShortcuts" class="tracyHidden">

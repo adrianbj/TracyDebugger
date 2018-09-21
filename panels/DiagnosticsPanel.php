@@ -1399,7 +1399,7 @@ class DiagnosticsPanel extends BasePanel {
                 </g>
             </svg>
             Diagnostics
-        </h1>
+        </h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'DiagnosticsPanel\')">+</a></span></span>
         <div class="tracy-inner">';
 
         $i=0;
