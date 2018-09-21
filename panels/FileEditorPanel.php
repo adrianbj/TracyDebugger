@@ -78,6 +78,8 @@ class FileEditorPanel extends BasePanel {
         $out = '<script>' . file_get_contents($this->wire("config")->paths->TracyDebugger . 'scripts/js-loader.js') . '</script>';
         $out .= '<script>' . file_get_contents($this->wire("config")->paths->TracyDebugger . 'scripts/file-editor.js') . '</script>';
 
+        $maximizeSvg = '<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="282.8 231 16 15.2" enable-background="new 282.8 231 16 15.2" xml:space="preserve"><polygon fill="#AEAEAE" points="287.6,233.6 298.8,231 295.4,242 "/><polygon fill="#AEAEAE" points="293.9,243.6 282.8,246.2 286.1,235.3 "/></svg>';
+
         $out .= <<< HTML
         <script>
 
@@ -87,6 +89,15 @@ class FileEditorPanel extends BasePanel {
                 tracyModuleUrl: "$tracyModuleUrl",
                 tracyFileEditorFilePath: "{$this->tracyFileEditorFilePath}",
                 errorMessage: "{$this->errorMessage}",
+
+                isSafari: function() {
+                    if (navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
+                        return true;
+                    }
+                    else {
+                        return false;
+                    }
+                },
 
                 getRawFileEditorCode: function() {
                     document.cookie = "tracyFileEditorFilePath=" + document.getElementById('fileEditorFilePath').value + "; path=/";
@@ -100,12 +111,45 @@ class FileEditorPanel extends BasePanel {
                     localStorage.setItem(name, JSON.stringify(tracyHistoryItem));
                 },
 
-                resizeAce: function() {
-                    var ml = Math.round((document.getElementById("tracy-debug-panel-FileEditorPanel").offsetHeight - 160) / 23);
-                    tracyFileEditor.tfe.setOptions({
-                        minLines: ml,
-                        maxLines: ml
-                    });
+                toggleFullscreen: function() {
+                    var tracyFileEditorPanel = document.getElementById('tracy-debug-panel-FileEditorPanel');
+                    if(!document.getElementById("tracyFileEditorCodeContainer").classList.contains("maximizedConsole")) {
+                        window.Tracy.Debug.panels["tracy-debug-panel-FileEditorPanel"].toFloat();
+                        // hack to hide resize handle that was showing through
+                        tracyFileEditorPanel.style.resize = 'none';
+                        if(this.isSafari()) {
+                            // Safari doesn't support position:fixed on elements outside document body
+                            // so move File Editor panel to body when in fullscreen mode
+                            document.body.appendChild(tracyFileEditorPanel);
+                        }
+                    }
+                    else {
+                        tracyFileEditorPanel.style.resize = 'both';
+                        if(this.isSafari()) {
+                            document.getElementById("tracy-debug").appendChild(tracyFileEditorPanel);
+                        }
+                    }
+                    document.getElementById("tracyFileEditorCodeContainer").classList.toggle("maximizedConsole");
+                    document.documentElement.classList.toggle('noscroll');
+                    tracyFileEditor.resizeAce();
+                },
+
+                resizeContainers: function() {
+                    var fileEditorPanel = document.getElementById("tracy-debug-panel-FileEditorPanel");
+                    if(!fileEditorPanel.classList.contains('tracy-mode-window')) {
+                        var fileEditorPanellHeight = fileEditorPanel.offsetHeight;
+                        document.getElementById("tracyFileEditorContainer").style.height = fileEditorPanellHeight - 130 + 'px';
+                    }
+                },
+
+                resizeAce: function(focus = true) {
+                    this.resizeContainers();
+                    document.getElementById("tracyFileEditorCode").style.height = '100%';
+                    tracyFileEditor.tfe.resize(true);
+                    if(focus) {
+                        document.getElementById("tracy-debug-panel-FileEditorPanel").classList.add('tracy-focused');
+                        tracyFileEditor.tfe.focus();
+                    }
                 }
 
             };
@@ -113,10 +157,17 @@ class FileEditorPanel extends BasePanel {
             tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/ace-editor/ace.js", function() {
                 if(typeof ace !== "undefined") {
                     tracyFileEditor.tfe = ace.edit("tracyFileEditorCode");
-                    tracyFileEditor.tfe.container.style.lineHeight = 1.8;
-                    tracyFileEditor.tfe.setFontSize(13);
+                    tracyFileEditor.lineHeight = 24;
+                    tracyFileEditor.tfe.container.style.lineHeight = tracyFileEditor.lineHeight + 'px';
+                    tracyFileEditor.tfe.setFontSize(14);
                     tracyFileEditor.tfe.setShowPrintMargin(false);
                     tracyFileEditor.tfe.\$blockScrolling = Infinity; //fix deprecation warning
+
+                    tracyFileEditor.tfe.on("beforeEndOperation", function() {
+                        tracyFileEditor.saveToLocalStorage('tracyFileEditor');
+                        // focus set to false to prevent breaking the Ace search box
+                        tracyFileEditor.resizeAce(false);
+                    });
 
                     tracyFileEditor.tfe.on("beforeEndOperation", function(e) {
                         tracyFileEditor.saveToLocalStorage('tracyFileEditor');
@@ -164,16 +215,45 @@ class FileEditorPanel extends BasePanel {
                         tracyFileEditor.tfe.setAutoScrollEditorIntoView(true);
                         tracyFileEditor.resizeAce();
 
-                        // checks for changes to Console panel class which indicates focus so we can focus cursor in editor
+                        // create and append toggle fullscreen/restore buttons
+                        var toggleFullscreenButton = document.createElement('div');
+                        toggleFullscreenButton.innerHTML = '<span class="fullscreenToggleButton" title="Toggle fullscreen" onclick="tracyFileEditor.toggleFullscreen()">$maximizeSvg</span>';
+                        document.getElementById("tracyFileEditorCode").querySelector('.ace_scroller').prepend(toggleFullscreenButton);
+
+                        // checks for changes to the panel
+                        var config = { attributes: true, attributeOldValue: true };
                         tracyFileEditor.observer = new MutationObserver(function(mutations) {
                             mutations.forEach(function(mutation) {
-                                if(mutation.attributeName === "class") {
-                                    tracyFileEditor.tfe.focus();
+                                // change in class indicates focus so we can focus cursor in editor
+                                if(mutation.attributeName == 'class' && mutation.oldValue !== mutation.target.className && mutation.oldValue.indexOf('tracy-focused') === -1 && mutation.target.classList.contains('tracy-focused')) {
+                                    tracyFileEditor.resizeAce();
+                                }
+                                // else if a change in style then resize but don't focus
+                                else if(mutation.attributeName == 'style') {
+                                    tracyFileEditor.resizeAce(false);
                                 }
                             });
                         });
-                        tracyFileEditor.observer.observe(document.getElementById("tracy-debug-panel-FileEditorPanel"), {
-                            attributes: true
+                        tracyFileEditor.observer.observe(document.getElementById("tracy-debug-panel-FileEditorPanel"), config);
+
+                        // this is necessary for Safari, but not Chrome and Firefox
+                        // otherwise resizing panel container doesn't resize internal panes
+                        if(tracyFileEditor.isSafari()) {
+                            document.getElementById("tracy-debug-panel-FileEditorPanel").addEventListener('mousemove', function() {
+                                tracyFileEditor.resizeAce();
+                            });
+                        }
+
+                        document.getElementById("tracyFileEditorCode").querySelector(".ace_text-input").addEventListener("keydown", function(e) {
+                            if(document.getElementById("tracy-debug-panel-FileEditorPanel").classList.contains("tracy-focused")) {
+                                if(e.ctrlKey && e.shiftKey) {
+                                    e.preventDefault();
+                                    // enter
+                                    if((e.keyCode==10||e.charCode==10)||(e.keyCode==13||e.charCode==13)) {
+                                        tracyFileEditor.toggleFullscreen();
+                                    }
+                                }
+                            }
                         });
 
                         window.onresize = function(event) {
@@ -193,21 +273,26 @@ HTML;
 
         $out .= '<h1>'.$this->icon.' File Editor: <span id="panelTitleFilePath" style="font-size:14px">'.($this->tracyFileEditorFilePath ?: 'no selected file').'</span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="javascript:void(0)" title="halfscreen" rel="min" onclick="tracyResizePanel(\'FileEditorPanel\', \'halfscreen\')">▼</a> <a href="javascript:void(0)" title="fullscreen" rel="max" onclick="tracyResizePanel(\'FileEditorPanel\', \'fullscreen\')">▲</a></span></span>
         <div class="tracy-inner">
-            <div id="tracyFoldersFiles" style="float: left; margin: 0; padding:0; width: 310px; height: calc(100vh - 150px); overflow: auto">';
+            <div id="tracyFileEditorContainer">
+                <div id="tracyFoldersFiles" style="float: left; margin: 0; padding:0; width: 310px; height: 100%; overflow: auto">';
 
-                $out .= "<div class='fe-file-tree'>";
-                $out .= $this->php_file_tree($this->wire('config')->paths->{\TracyDebugger::getDataValue('fileEditorBaseDirectory')}, $this->toArray(\TracyDebugger::getDataValue('fileEditorAllowedExtensions')));
-                $out .= "</div>";
+                    $out .= "<div class='fe-file-tree'>";
+                    $out .= $this->php_file_tree($this->wire('config')->paths->{\TracyDebugger::getDataValue('fileEditorBaseDirectory')}, $this->toArray(\TracyDebugger::getDataValue('fileEditorAllowedExtensions')));
+                    $out .= "</div>";
 
-            $out .= '
+                $out .= '
+                </div>
+                <div id="tracyFileEditorCodeContainer" style="float: left; margin: 0; padding:0; width: calc(100% - 310px); height: 100%; overflow: none">
+                    <div id="tracyFileEditorCode" style="position:relative;"></div><br />
+                </div>
             </div>
-            <div id="tracyFileEditorCodeContainer" style="float: left; width: calc(100vw - 400px) !important;">
-                <div id="tracyFileEditorCode" style="position:relative;"></div><br />
+            <br />
+            <div style="float:right">
                 <form id="tracyFileEditorSubmission" method="post" action="'.\TracyDebugger::inputUrl(true).'">
                     <fieldset>
                         <textarea id="tracyFileEditorRawCode" name="tracyFileEditorRawCode" style="display:none"></textarea>
                         <input type="hidden" id="fileEditorFilePath" name="fileEditorFilePath" value="'.$this->tracyFileEditorFilePath.'" />
-                        <div id="fileEditorButtons" style="margin-left:15px"></div>
+                        <div id="fileEditorButtons"></div>
                     </fieldset>
                 </form>
             </div>

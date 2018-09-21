@@ -79,6 +79,7 @@ class ProcesswireInfoPanel extends BasePanel {
                 function tracyClearGoToPageID(matchStatus) {
                     document.getElementById("idGoToView").href = "javascript:void(0)";
                     document.getElementById("idGoToEdit").href = "javascript:void(0)";
+                    document.getElementById("idGoToOpen").href = "javascript:void(0)";
                     document.getElementById("pageDetails").innerHTML = matchStatus;
                 }
 
@@ -98,6 +99,7 @@ class ProcesswireInfoPanel extends BasePanel {
                                         document.getElementById("pageDetails").innerHTML = "<span style=\'font-weight:bold\'>" + pageDetails.title + "</span>&nbsp;&nbsp;<a href=\''.$this->wire('config')->urls->admin.'setup/template/edit?id="  + pageDetails.template_id + "\' style=\'color:#888\'>" + pageDetails.template_name + "</a>";
                                         document.getElementById("idGoToEdit").href = "'.$this->wire('config')->urls->admin.'page/edit/?id=" + pageDetails.id;
                                         document.getElementById("idGoToView").href = pageDetails.url;
+                                        document.getElementById("idGoToOpen").href = "'.$this->wire('config')->urls->admin.'page/?open=" + pageDetails.id;
                                     }
                                     else {
                                         tracyClearGoToPageID("No match");
@@ -641,6 +643,7 @@ class ProcesswireInfoPanel extends BasePanel {
                     <input id="pageId" name="pageId" placeholder="Goto Page ID" type="text" autocomplete="off" />
                     <a onclick="tracyClosePanel(\'ProcesswireInfo\')" href="javascript:void(0)" class="tracyLinkBtn" id="idGoToView" />View</a>
                     <a onclick="tracyClosePanel(\'ProcesswireInfo\')" href="javascript:void(0)" class="tracyLinkBtn" id="idGoToEdit" />Edit</a>
+                    <a onclick="tracyClosePanel(\'ProcesswireInfo\')" href="javascript:void(0)" class="tracyLinkBtn" id="idGoToOpen" />Open</a>
                     <div id="pageDetails" style="height:15px; margin-top:6px"></div>
                 </form>
                 ';

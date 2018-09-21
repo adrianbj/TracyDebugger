@@ -173,6 +173,10 @@ HTML;
 
                 processTracySnippetRunnerCode: function() {
                     file = typeof this.loadedSnippetFile === 'undefined' ? '' : this.loadedSnippetFile;
+                    if(!file) {
+                        document.getElementById("tracySnippetRunnerResult").innerHTML = "No selected snippet file";
+                        return;
+                    }
                     document.getElementById("tracySnippetRunnerStatus").innerHTML = "<i style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></i> Processing";
                     this.callSnippetRunnerPhp(file);
                     document.getElementById('runSnippetRunnerCode').blur();
@@ -183,12 +187,11 @@ HTML;
                     xmlhttp = new XMLHttpRequest();
                     xmlhttp.onreadystatechange = function() {
                         if(xmlhttp.readyState == XMLHttpRequest.DONE) {
-                            document.getElementById("tracySnippetRunnerStatus").innerHTML = "Completed!";
+                            document.getElementById("tracySnippetRunnerStatus").innerHTML = "<em>Completed!</em>";
                             if(xmlhttp.status == 200) {
-                                document.getElementById("tracySnippetRunnerResult").innerHTML += tracySnippetRunner.tryParseJSON(xmlhttp.responseText);
-                                // scroll to bottom of results
-                                var objDiv = document.getElementById("tracySnippetRunnerResult");
-                                objDiv.scrollTop = objDiv.scrollHeight;
+                                resultId = Date.now();
+                                document.getElementById("tracySnippetRunnerResult").innerHTML += '<div id="tracySnippetRunnerResult_'+resultId+'" style="position:relative">' + tracySnippetRunner.tryParseJSON(xmlhttp.responseText) + '</div>';
+                                document.getElementById("tracySnippetRunnerResult_"+resultId).scrollIntoView();
                             }
                             else {
                                 var tracyBsError = new DOMParser().parseFromString(xmlhttp.responseText, "text/html");
@@ -225,11 +228,8 @@ HTML;
             };
 
             document.addEventListener("keydown", function(e) {
-                if(document.getElementById("tracy-debug-panel-SnippetRunnerPanel").classList.contains("tracy-focused") &&
-                    !document.getElementById("tracy-debug-panel-ConsolePanel").classList.contains("tracy-focused") &&
-                    !document.activeElement.classList.contains('ace_text-input')
-                ) {
-                    if(((e.keyCode==10||e.charCode==10)||(e.keyCode==13||e.charCode==13)) && (e.metaKey || e.ctrlKey || e.altKey)) {
+                if(document.getElementById("tracy-debug-panel-SnippetRunnerPanel").classList.contains("tracy-focused")) {
+                    if(((e.keyCode==10||e.charCode==10)||(e.keyCode==13||e.charCode==13)) && (e.metaKey || e.ctrlKey || e.altKey) && !e.shiftKey) {
                         e.preventDefault();
                         if(e.altKey) tracySnippetRunner.clearSnippetRunnerResults();
                         tracySnippetRunner.processTracySnippetRunnerCode();
@@ -241,20 +241,19 @@ HTML;
 
 HTML;
 
-        $out .= '<h1>' . $this->icon . ' Snippet Runner</h1>
+        $out .= '<h1>' . $this->icon . ' Snippet Runner</h1><span class="tracy-icons"><span class="resizeIcons"><a href="javascript:void(0)" title="halfscreen" rel="min" onclick="tracyResizePanel(\'SnippetRunnerPanel\', \'halfscreen\')">▼</a> <a href="javascript:void(0)" title="fullscreen" rel="max" onclick="tracyResizePanel(\'SnippetRunnerPanel\', \'fullscreen\')">▲</a></span></span>
         <div class="tracy-inner">
             <div id="tracySnippetRunnerContainer">
-                <legend>Select a snippet, then use CTRL/CMD+Enter to Run, or ALT/OPT+Enter to Clear & Run.</legend>';
+                <legend>Select snippet | CTRL/CMD + Enter to Run, or ALT/OPT + Enter to Clear & Run.</legend>';
         if($this->wire('page')->template != "admin") {
-            $out .= '<p><label><input type="checkbox" id="accessTemplateVars" /> Access to custom variables & functions from this page\'s template file and included files.</label></p>';
+            $out .= '<p><label><input type="checkbox" id="accessTemplateVars" /> Access custom variables & functions from this page\'s template file & included files.</label></p>';
         }
         $out .= '
-                <div id="tracyRunnerSnippetName" style="font-size: 13px"></div>
-                <div style="padding:10px 0">
-                    <input title="Run code" type="submit" id="runSnippetRunnerCode" onclick="tracySnippetRunner.processTracySnippetRunnerCode()" value="Run" />&nbsp;
-                    <input title="Clear results" type="submit" id="clearSnippetRunnerResults" onclick="tracySnippetRunner.clearSnippetRunnerResults()" value="&#10006; Clear results" />
-                    <span id="tracySnippetRunnerStatus" style="padding: 10px"></span>
-                </div>
+                <input title="Run code" type="submit" id="runSnippetRunnerCode" onclick="tracySnippetRunner.processTracySnippetRunnerCode()" value="Run" />&nbsp;
+                <input title="Clear results" type="button" class="clearResults" onclick="tracySnippetRunner.clearSnippetRunnerResults()" value="&#10006; Clear results" />
+                <span id="tracySnippetRunnerStatus" style="padding: 10px"></span>
+                <div id="tracyRunnerSnippetName" style="float:right; padding: 10px 5px 0 0; font-size: 13px"></div>
+                <br /><br />
                 <div id="tracySnippetRunnerResult" style="border: 1px solid #D2D2D2; padding: 10px;"></div>
             </div>
             <div style="float: left; margin: 0 0 0 20px; width: 265px;">
@@ -267,12 +266,13 @@ HTML;
 
         // get snippets from filesystem
         $snippets = array();
+        $snippetsPath = \TracyDebugger::getDataValue('snippetsPath').'/TracyDebugger/snippets/';
         if(method_exists($this->wire('files'), 'find')) {
-            $snippetFiles = $this->wire('files')->find($this->wire('config')->paths->site.\TracyDebugger::getDataValue('snippetsPath').'/TracyDebugger/snippets/');
+            $snippetFiles = $this->wire('files')->find($this->wire('config')->paths->site.$snippetsPath);
         }
         // fallback for older versions of PW without the $files->find() method
         else {
-            $snippetFiles = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($this->wire('config')->paths->site.\TracyDebugger::getDataValue('snippetsPath').'/TracyDebugger/snippets/'));
+            $snippetFiles = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($this->wire('config')->paths->site.$snippetsPath));
             $snippetFiles->setFlags(RecursiveDirectoryIterator::SKIP_DOTS);
         }
         $i=0;
@@ -289,7 +289,6 @@ HTML;
 
         $out .= <<< HTML
         <script>
-
             var snippets = {$snippets};
             var snippetList = "<ul id='runnerSnippetsList'>";
             for(var key in snippets) {
@@ -298,8 +297,8 @@ HTML;
                 snippetList += "<li id='"+tracySnippetRunner.makeIdFromTitle(obj.name)+"' data-modified='"+obj.modified+"'><span style='color: #125EAE; cursor: pointer' onclick='tracySnippetRunner.selectRunnerSnippet(\""+obj.name+"\", \""+obj.filename+"\");tracySnippetRunner.setActiveRunnerSnippet(this);'>" + obj.name + "</span></li>";
             }
             snippetList += "</ul>";
+            if(snippetList == "<ul id='runnerSnippetsList'></ul>") snippetList = 'There are no files in: /site/$snippetsPath';
             document.getElementById("tracyRunnerSnippets").innerHTML = snippetList;
-
         </script>
 HTML;
 

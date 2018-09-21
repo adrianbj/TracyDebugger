@@ -92,13 +92,13 @@ if(!tracyFileEditorLoader) {
                 }
                 else {
                     var panel = window.Tracy.Debug.panels["tracy-debug-panel-FileEditorPanel"];
-                    panel.focus(function() {
-                        if(panel.elem.dataset.tracyContent) {
-                            panel.init();
-                        }
-                        panel.toFloat();
-                        populateFileEditor();
-                    });
+                    if(panel.elem.dataset.tracyContent) {
+                        panel.init();
+                    }
+                    populateFileEditor();
+                    panel.toFloat();
+                    panel.focus();
+                    tracyFileEditor.resizeAce();
                 }
             }
 

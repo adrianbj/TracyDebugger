@@ -290,13 +290,13 @@ body.tracyHidden:before {
     border: 2px solid rgb(210, 210, 210);
     border-radius: 0;
     box-shadow: none;
-    background-clip: padding-box;    
+    background-clip: padding-box;
     z-index: 99999999999999 !important;
 }
 
 #keyboardShortcuts table td:nth-child(1) {
     width: 250px;
-}  
+}
 
 
 table.captainHookTable td:first-child,
@@ -343,8 +343,9 @@ table.captainHookTable th:nth-child(3) {
 
 #tracy-debug .tracyLinkBtn:hover {
     background: white !important;
-    color: #2C3E50 !important;
     border-color: #b8c7d8 !important;
+    color: #2C3E50 !important;
+    text-decoration: none !important;
 }
 
 #tracy-debug fieldset {
@@ -632,7 +633,7 @@ ul.pw-info-links {
 }
 
 #tracy-debug #runCode,
-#tracy-debug #clearResults,
+#runSnippetRunnerCode,
 #tracy-debug #historyBack,
 #tracy-debug #historyForward {
     padding: 3px 10px !important;
@@ -640,8 +641,6 @@ ul.pw-info-links {
 }
 
 #tracy-debug #runCode:hover,
-/*#tracy-debug #clearResults:hover,*/
-
 #tracy-debug #historyBack:hover,
 #tracy-debug #historyForward:hover {
     background: #F5F8F9 !important;
@@ -656,17 +655,6 @@ ul.pw-info-links {
 #tracy-debug #historyForward {
     border-top-right-radius: 0 !important;
     border-bottom-right-radius: 0 !important;
-}
-
-#tracy-debug #clearResults {
-    border-color: transparent !important;
-    /*float: right !important;*/
-    /*padding-right: 0 !important;*/
-    /*margin-left: 8px !important;*/
-}
-
-#clearResults:hover {
-    text-decoration: underline;
 }
 
 .arrowRight {
@@ -709,9 +697,14 @@ ul.pw-info-links {
     cursor: default !important;
 }
 
+#tracy-debug-panel-FileEditorPanel {
+    height: 75%;
+    width: 1400px;
+}
+
 #tracy-debug-panel-ConsolePanel,
 #tracy-debug-panel-SnippetRunnerPanel {
-    height: 50%;
+    height: 75%;
     min-height: 230px !important;
     width: 1200px;
     min-width: 825px !important;
@@ -859,10 +852,6 @@ ul.pw-info-links {
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] .tracyCopyBtn:hover {
     background: white !important;
     border-color: #b8c7d8 !important;
-}
-
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] #clearResults {
-    background: transparent !important;
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] label:hover {
@@ -1183,6 +1172,18 @@ ul.pw-info-links {
 #tracyConsoleContainer .gutter.gutter-vertical {
     cursor: row-resize !important;
     background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=') !important;
+}
+
+
+#tracy-debug input.clearResults {
+    background: none !important;
+    padding: 3px 10px !important;
+    margin-right: 5px !important;
+    border: none !important;
+    cursor: pointer;
+}
+#tracy-debug input.clearResults:hover {
+    text-decoration: underline;
 }
 
 
