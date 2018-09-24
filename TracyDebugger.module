@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.11.38',
+            'version' => '4.11.39',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -251,6 +251,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "onlineEditor" => 'tracy',
             "forceEditorLinksToTracy" => 1,
             "localRootPath" => '',
+            "codeTabSize" => 4,
+            "codeUseSoftTabs" => true,
+            "codeShowInvisibles" => true,
             "fileEditorAllowedExtensions" => 'php, module, js, css, htaccess',
             "fileEditorBaseDirectory" => 'templates',
             "enableShortcutMethods" => 1,
@@ -2667,6 +2670,43 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->description = __('Even if neither of the "Use Online Editor for Links" options are checked, if the File Editor Panel is enabled, all links will be sent to it.', __FILE__);
         $f->notes = __("RECOMMENDED: This is a handy option if you generally want links to use your code editor, but want the option to use the File Editor occasionally.\nYou can enable it (once or sticky) from the Panel selector on the debug bar without the need to change the above settings.", __FILE__);
         $f->attr('checked', $data['forceEditorLinksToTracy'] == '1' ? 'checked' : '' );
+        $fieldset->add($f);
+
+        // Code Editor settings
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->label = __('Code editor settings', __FILE__);
+        $fieldset->description = __("These settings apply to the Console panel and the File Editor panel", __FILE__);
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldInteger");
+        $f->attr('name', 'codeTabSize');
+        $f->label = __('Tab size', __FILE__);
+        $f->description = __('Number of spaces (or equivalent tab width).', __FILE__);
+        $f->columnWidth = 33;
+        $f->required = true;
+        if($data['codeTabSize']) $f->attr('value', $data['codeTabSize']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldSelect");
+        $f->attr('name', 'codeUseSoftTabs');
+        $f->label = __('Use Soft Tabs', __FILE__);
+        $f->description = __('Uses spaces rather than actual (hard) tabs.', __FILE__);
+        $f->columnWidth = 34;
+        $f->addOption(1, 'True');
+        $f->addOption(0, 'False');
+        $f->required = true;
+        if($data['codeUseSoftTabs']) $f->attr('value', $data['codeUseSoftTabs']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldSelect");
+        $f->attr('name', 'codeShowInvisibles');
+        $f->label = __('Show Invisibles', __FILE__);
+        $f->description = __('Show invisible characters like spaces, CR, and LF.', __FILE__);
+        $f->columnWidth = 33;
+        $f->addOption(1, 'True');
+        $f->addOption(0, 'False');
+        $f->required = true;
+        if($data['codeShowInvisibles']) $f->attr('value', $data['codeShowInvisibles']);
         $fieldset->add($f);
 
         // File Editor Panel

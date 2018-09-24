@@ -40,7 +40,7 @@ class ConsolePanel extends BasePanel {
         $pwRoot = $this->wire('config')->urls->root;
         $tracyModuleUrl = $this->wire("config")->urls->TracyDebugger;
         $inAdmin = \TracyDebugger::$inAdmin;
-        $consoleContainerAdjustment = $inAdmin ? 125 : 140;
+        $consoleContainerAdjustment = $inAdmin ? 120 : 145;
 
         // store various $input properties so they are available to the console
         $this->wire('session')->tracyPostData = $this->wire('input')->post->getArray();
@@ -110,6 +110,10 @@ class ConsolePanel extends BasePanel {
             <polygon fill="#AEAEAE" points="287.6,233.6 298.8,231 295.4,242 "/>
             <polygon fill="#AEAEAE" points="293.9,243.6 282.8,246.2 286.1,235.3 "/>
         </svg>';
+
+        $codeUseSoftTabs = \TracyDebugger::getDataValue('codeUseSoftTabs');
+        $codeShowInvisibles = \TracyDebugger::getDataValue('codeShowInvisibles');
+        $codeTabSize = \TracyDebugger::getDataValue('codeTabSize');
 
         $out .= <<< HTML
         <script>
@@ -278,7 +282,7 @@ class ConsolePanel extends BasePanel {
                     if(!consolePanel.classList.contains('tracy-mode-window')) {
                         var consolePanelHeight = consolePanel.offsetHeight;
                         var consoleContainerAdjustment = $consoleContainerAdjustment;
-                        if(consolePanelHeight < 475) consoleContainerAdjustment = consoleContainerAdjustment + 15;
+                        if(consolePanelHeight < 500) consoleContainerAdjustment = consoleContainerAdjustment + 15;
                         document.getElementById("tracyConsoleContainer").style.height = (consolePanelHeight - consoleContainerAdjustment) + 'px';
                         document.getElementById("tracySnippetsContainer").style.height = (consolePanelHeight - consoleContainerAdjustment - 5) + 'px';
                     }
@@ -542,6 +546,7 @@ class ConsolePanel extends BasePanel {
                     tracyConsole.tce.container.style.lineHeight = tracyConsole.lineHeight + 'px';
                     tracyConsole.tce.setFontSize(14);
                     tracyConsole.tce.setShowPrintMargin(false);
+                    tracyConsole.tce.setShowInvisibles($codeShowInvisibles);
                     tracyConsole.tce.\$blockScrolling = Infinity;
 
                     tracyConsole.tce.on("beforeEndOperation", function() {
@@ -584,6 +589,8 @@ class ConsolePanel extends BasePanel {
                         tracyConsole.tce.setOptions({
                             enableBasicAutocompletion: true,
                             enableLiveAutocompletion: true,
+                            tabSize: $codeTabSize,
+                            useSoftTabs: $codeUseSoftTabs,
                             minLines: 5
                         });
 
@@ -813,16 +820,16 @@ HTML;
                 </div>
             ';
         if($this->wire('page')->template != "admin") {
-            $out .= '<label><input type="checkbox" id="accessTemplateVars" /> Access custom variables & functions from this page\'s template file & included files.</label>';
+            $out .= '<label style="padding-bottom: 5px"><input type="checkbox" id="accessTemplateVars" /> Access custom variables & functions from this page\'s template file & included files.</label>';
         }
 
         $out .= '
-                <div style="padding:10px 0">
-                    <input title="Run code" type="submit" id="runCode" onclick="tracyConsole.processTracyCode()" value="Run" />&nbsp;
+                <div style="padding: 0 0 10px 0">
+                    <input title="Run (CTRL/CMD + Enter) | Clear & Run (ALT/OPT + Enter)" type="submit" id="runCode" onclick="tracyConsole.processTracyCode()" value="Run" />&nbsp;
                     <input style="font-family: FontAwesome !important" title="Go back (ALT + PageUp)" id="historyBack" type="submit" onclick="tracyConsole.loadHistory(\'back\')" value="&#xf060;" />&nbsp;
                     <input style="font-family: FontAwesome !important" title="Go forward (ALT + PageDown)" class="arrowRight" id="historyForward" type="submit" onclick="tracyConsole.loadHistory(\'forward\')" value="&#xf060;" />
                     <input title="Clear results" type="button" class="clearResults" onclick="tracyConsole.clearResults()" value="&#10006; Clear results" />
-                    <span style="float:right;">
+                    <span style="float:right; padding-top: 10px">
                         <label title="Don\'t Run on Page Load" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'off\')" value="off" ' . (!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? ' checked' : '') . ' /> off</label>&nbsp;
                         <label title="Run on init" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'init\')" value="init" ' . ($this->tracyIncludeCode['when'] === 'init' ? ' checked' : '') . ' /> init</label>&nbsp;
                         <label title="Run on ready" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'ready\')" value="ready" ' . ($this->tracyIncludeCode['when'] === 'ready' ? ' checked' : '') . ' /> ready</label>&nbsp;

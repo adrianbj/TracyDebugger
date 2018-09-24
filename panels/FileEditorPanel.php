@@ -80,6 +80,10 @@ class FileEditorPanel extends BasePanel {
 
         $maximizeSvg = '<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="282.8 231 16 15.2" enable-background="new 282.8 231 16 15.2" xml:space="preserve"><polygon fill="#AEAEAE" points="287.6,233.6 298.8,231 295.4,242 "/><polygon fill="#AEAEAE" points="293.9,243.6 282.8,246.2 286.1,235.3 "/></svg>';
 
+        $codeUseSoftTabs = \TracyDebugger::getDataValue('codeUseSoftTabs');
+        $codeShowInvisibles = \TracyDebugger::getDataValue('codeShowInvisibles');
+        $codeTabSize = \TracyDebugger::getDataValue('codeTabSize');
+
         $out .= <<< HTML
         <script>
 
@@ -161,6 +165,7 @@ class FileEditorPanel extends BasePanel {
                     tracyFileEditor.tfe.container.style.lineHeight = tracyFileEditor.lineHeight + 'px';
                     tracyFileEditor.tfe.setFontSize(14);
                     tracyFileEditor.tfe.setShowPrintMargin(false);
+                    tracyFileEditor.tfe.setShowInvisibles($codeShowInvisibles);
                     tracyFileEditor.tfe.\$blockScrolling = Infinity; //fix deprecation warning
 
                     tracyFileEditor.tfe.on("beforeEndOperation", function() {
@@ -209,6 +214,8 @@ class FileEditorPanel extends BasePanel {
                         tracyFileEditor.tfe.setOptions({
                             enableBasicAutocompletion: true,
                             enableLiveAutocompletion: true,
+                            tabSize: $codeTabSize,
+                            useSoftTabs: $codeUseSoftTabs,
                             minLines: 5
                         });
 
