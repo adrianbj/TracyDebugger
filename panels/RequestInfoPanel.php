@@ -492,7 +492,6 @@ class RequestInfoPanel extends BasePanel {
             foreach($p->fields as $f) {
                 $value = $this->getFieldArray($p,$f);
                 $dumpedValue = Dumper::toHtml($value, array(Dumper::LIVE => true, Dumper::DEBUGINFO => \TracyDebugger::getDataValue('debugInfo'), Dumper::DEPTH => 99, Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
-                $dumpedValue = Dumper::toHtml($value, array(Dumper::LIVE => true, Dumper::DEBUGINFO => true, Dumper::DEPTH => 99, Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
                 $fieldArray['settings'] = $p->template->fieldgroup->getField($f, true)->getArray();
                 $settings = Dumper::toHtml($fieldArray['settings'], array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
 
@@ -503,7 +502,7 @@ class RequestInfoPanel extends BasePanel {
                     "<td>".str_replace('Fieldtype', '', $f->type)."</td>" .
                     "<td>".str_replace('Inputfield', '', ($f->inputfield ? $f->inputfield : $f->inputfieldClass))."</td>" .
                     "<td>".$dumpedValue."</td>" .
-                    "<td>".$p->getFormatted($f->name)."</td>" .
+                    "<td>".$this->getFormattedValue($p, $f)."</td>" .
                     "<td>".$this->imageDetails($p, $f)."</td>" .
                     "<td>".$settings."</td>" .
                     "</tr>";
@@ -685,6 +684,20 @@ class RequestInfoPanel extends BasePanel {
         }
         $p->of($of);
         return $fieldArray;
+    }
+
+
+    private function getFormattedValue($p, $f) {
+        $of = $p->of();
+        $p->of(true);
+        try {
+            $out = $p->$f;
+        } catch (\Exception $e) {
+            $p->of(false);
+            $out = $p->$f;
+        }
+        $p->of($of);
+        return $out;
     }
 
 
