@@ -221,7 +221,7 @@ class TemplateResourcesPanel extends BasePanel {
                 "<td>".gettype($value)."</td>" .
                 "<td>".(gettype($value) == "object" ? get_class($value) : "")."</td>" .
                 "<td>".$outValue."</td>";
-                if(isset($varOut)) $out .= $varOut;
+                $out .= isset($varOut) ? $varOut : '<td></td>';
                 $out .= "</tr>";
         }
         $out .= $this->sectionEnd;
@@ -330,7 +330,8 @@ class TemplateResourcesPanel extends BasePanel {
 
         $out .= $this->resourceOutput;
 
-        $out .= \TracyDebugger::generatedTimeSize('templateResources', \Tracy\Debugger::timer('templateResources'), strlen($out));
+        $out .= \TracyDebugger::generatedTimeSize('templateResources', \Tracy\Debugger::timer('templateResources'), strlen($out)) .
+                \TracyDebugger::generatedPanelSettingsLink('templateResourcesPanel');
 
         $out .= '</div>';
 

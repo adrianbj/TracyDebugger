@@ -678,7 +678,8 @@ class ProcesswireInfoPanel extends BasePanel {
 
         }
 
-        $out .= \TracyDebugger::generatedTimeSize('processwireInfo', \Tracy\Debugger::timer('processwireInfo'), strlen($out));
+        $out .= \TracyDebugger::generatedTimeSize('processwireInfo', \Tracy\Debugger::timer('processwireInfo'), strlen($out)) .
+                \TracyDebugger::generatedPanelSettingsLink('processwireInfoPanel');
         $out .= '</div>';
 
         return parent::loadResources() . $out;

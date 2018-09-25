@@ -1476,7 +1476,8 @@ class DiagnosticsPanel extends BasePanel {
             $i++;
         }
 
-        $out .= \TracyDebugger::generatedTimeSize('diagnostics', \Tracy\Debugger::timer('diagnostics'), strlen($out));
+        $out .= \TracyDebugger::generatedTimeSize('diagnostics', \Tracy\Debugger::timer('diagnostics'), strlen($out)) .
+                \TracyDebugger::generatedPanelSettingsLink('diagnosticsPanel');
         $out .= '</div>';
         $out .= <<< HTML
         <script>

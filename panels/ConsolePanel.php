@@ -696,7 +696,9 @@ class ConsolePanel extends BasePanel {
                         }
 
                         window.onresize = function(event) {
-                            tracyConsole.resizeAce();
+                            if(document.getElementById("tracy-debug-panel-ConsolePanel").classList.contains("tracy-focused")) {
+                                tracyConsole.resizeAce();
+                            }
                         };
 
                         // build snippet list, populate local storage version from database, and show last selected snippet name
@@ -864,6 +866,7 @@ HTML;
             </div>
             ';
         $out .= \TracyDebugger::generatedTimeSize('console', \Tracy\Debugger::timer('console'), strlen($out)) .
+                \TracyDebugger::generatedPanelSettingsLink('codeEditorSettings') .
         '</div>';
 
         return parent::loadResources() . \TracyDebugger::minify($out);

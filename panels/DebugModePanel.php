@@ -369,7 +369,8 @@ class DebugModePanel extends BasePanel {
 
         }
 
-        $out .= \TracyDebugger::generatedTimeSize('debugMode', \Tracy\Debugger::timer('debugMode'), strlen($out));
+        $out .= \TracyDebugger::generatedTimeSize('debugMode', \Tracy\Debugger::timer('debugMode'), strlen($out)) .
+                \TracyDebugger::generatedPanelSettingsLink('debugModePanel');
 
         $out .= '</div>';
 

@@ -113,7 +113,7 @@ class RequestInfoPanel extends BasePanel {
                     $fieldSettings .= '
                         <tr>
                             <td>'.$k.'</td>
-                            <td>'.Dumper::toHtml($v).'</td>
+                            <td>'.Dumper::toHtml($v, array(Dumper::TRUNCATE => 999)).'</td>
                         </tr>
                     ';
                 }
@@ -122,7 +122,46 @@ class RequestInfoPanel extends BasePanel {
             }
         }
 
-        // Field API Code
+        // Field Inputfield Settings
+        if(in_array('inputFieldSettings', $panelSections) && $isPwPage) {
+            $inputFieldSettings = '';
+            if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessField') {
+                $field = $this->wire('fields')->get((int)$this->wire('input')->get('id'));
+                if($field->inputfieldClass) {
+                    $inputfield = $this->wire('modules')->get($field->inputfieldClass);
+                }
+                elseif($field->inputfield) {
+                    $inputfield = $this->wire('modules')->get($field->inputfield);
+                }
+                else {
+                    $inputfield = $this->wire('modules')->get(str_replace('Fieldtype', 'Inputfield', $field->type));
+                }
+                if($inputfield) {
+                    $inputFieldSettings = '
+                    <table>
+                        <tr>
+                            <td>id</td>
+                            <td>'.$inputfield->id.'</td>
+                        </tr>
+                        <tr>
+                            <td>type</td>
+                            <td>'.$inputfield->type.'</td>
+                        </tr>';
+                    foreach($inputfield->getArray() as $k => $v) {
+                        $inputFieldSettings .= '
+                            <tr>
+                                <td>'.$k.'</td>
+                                <td>'.Dumper::toHtml($v, array(Dumper::TRUNCATE => 999)).'</td>
+                            </tr>
+                        ';
+                    }
+                    $inputFieldSettings .= '</table>
+                    ';
+                }
+            }
+        }
+
+        // Field Code
         if(in_array('fieldCode', $panelSections) && $isPwPage) {
             if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessField') {
                 $fieldCode = '<pre>';
@@ -134,7 +173,7 @@ class RequestInfoPanel extends BasePanel {
                 foreach($field->getArray() as $k => $v) {
                     if(is_array($v)) {
                         $fieldCode .= "\t'$k' => [\n";
-                        foreach($v as $key=>$val) {
+                        foreach($v as $key => $val) {
                             $fieldCode .= "\t\t'$val',\n";
                         }
                         $fieldCode .= "\t],\n";
@@ -175,7 +214,7 @@ class RequestInfoPanel extends BasePanel {
                     $templateSettings .= '
                         <tr>
                             <td>'.$k.'</td>
-                            <td>'.Dumper::toHtml($v).'</td>
+                            <td>'.Dumper::toHtml($v, array(Dumper::TRUNCATE => 999)).'</td>
                         </tr>
                     ';
                 }
@@ -197,7 +236,7 @@ class RequestInfoPanel extends BasePanel {
                         $moduleSettings .= '
                             <tr>
                                 <td>'.$k.'</td>
-                                <td>'.Dumper::toHtml($v).'</td>
+                                <td>'.Dumper::toHtml($v, array(Dumper::TRUNCATE => 999)).'</td>
                             </tr>
                         ';
                     }
@@ -205,7 +244,7 @@ class RequestInfoPanel extends BasePanel {
                         $moduleSettings .= '
                             <tr>
                                 <td>'.$k.'</td>
-                                <td>'.Dumper::toHtml($v).'</td>
+                                <td>'.Dumper::toHtml($v, array(Dumper::TRUNCATE => 999)).'</td>
                             </tr>
                         ';
                     }
@@ -640,6 +679,7 @@ class RequestInfoPanel extends BasePanel {
 
         $out .= '<br />';
         $out .= \TracyDebugger::generatedTimeSize('requestInfo', \Tracy\Debugger::timer('requestInfo'), strlen($out));
+        $out .= \TracyDebugger::generatedPanelSettingsLink('requestInfoPanel');
         $out .= '</div>';
 
         return parent::loadResources() . $out;

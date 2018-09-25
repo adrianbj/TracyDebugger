@@ -891,6 +891,22 @@ ul.pw-info-links {
     text-align: left !important;
 }
 
+.tracy-panel-settings-link {
+    position: absolute;
+    right: 6px;
+    bottom: 4px;
+    clear: both;
+}
+
+.tracy-panel .tracy-panel-settings-link svg {
+    width: 12px !important;
+    height: 12px !important;
+}
+
+.tracy-panel-settings-link a:hover {
+    text-decoration: none !important;
+}
+
 /* clipboardjs "Copied!" tooltip */
 
 .tooltipped {

@@ -303,6 +303,7 @@ HTML;
 HTML;
 
         $out .= \TracyDebugger::generatedTimeSize('snippetRunner', \Tracy\Debugger::timer('snippetRunner'), strlen($out)) .
+                \TracyDebugger::generatedPanelSettingsLink('snippetRunnerPanel') .
         '</div>';
 
         return parent::loadResources() . $out;

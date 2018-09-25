@@ -160,7 +160,10 @@ class PanelSelectorPanel extends BasePanel {
                     $out .= '
                     </span>
 
-            </fieldset>' . \TracyDebugger::generatedTimeSize('panelSelector', \Tracy\Debugger::timer('panelSelector'), strlen($out)) . '
+            </fieldset>' .
+            \TracyDebugger::generatedTimeSize('panelSelector', \Tracy\Debugger::timer('panelSelector'), strlen($out)) .
+            \TracyDebugger::generatedPanelSettingsLink('panelSelectorPanel') .
+            '
         </div>';
 
         return parent::loadResources() . $out;

@@ -119,7 +119,8 @@ class UserSwitcherPanel extends BasePanel {
             </form>
             ';
 
-        $out .= \TracyDebugger::generatedTimeSize('userSwitcher', \Tracy\Debugger::timer('userSwitcher'), strlen($out));
+        $out .= \TracyDebugger::generatedTimeSize('userSwitcher', \Tracy\Debugger::timer('userSwitcher'), strlen($out)) .
+                \TracyDebugger::generatedPanelSettingsLink('userSwitcherPanel');
 
         $out .= '</div>';
 

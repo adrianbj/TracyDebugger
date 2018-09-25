@@ -93,7 +93,8 @@ class DumpsPanel extends BasePanel {
 
             <div id="tracyDumpEntries">' . $this->entries . '</div>';
 
-            $out .= \TracyDebugger::generatedTimeSize('dumps', \Tracy\Debugger::timer('dumps'), strlen($out));
+            $out .= \TracyDebugger::generatedTimeSize('dumps', \Tracy\Debugger::timer('dumps'), strlen($out)) .
+                    \TracyDebugger::generatedPanelSettingsLink('dumpsPanel');
 
         $out .= '
         </div>';

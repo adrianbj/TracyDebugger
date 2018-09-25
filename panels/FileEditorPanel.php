@@ -264,7 +264,9 @@ class FileEditorPanel extends BasePanel {
                         });
 
                         window.onresize = function(event) {
-                            tracyFileEditor.resizeAce();
+                            if(document.getElementById("tracy-debug-panel-FileEditorPanel").classList.contains("tracy-focused")) {
+                                tracyFileEditor.resizeAce();
+                            }
                         };
 
                     });
@@ -305,7 +307,8 @@ HTML;
             </div>
             ';
 
-            $out .= \TracyDebugger::generatedTimeSize('fileEditor', \Tracy\Debugger::timer('fileEditor'), strlen($out));
+            $out .= \TracyDebugger::generatedTimeSize('fileEditor', \Tracy\Debugger::timer('fileEditor'), strlen($out)) .
+                    \TracyDebugger::generatedPanelSettingsLink('fileEditorPanel');
 
         $out .= '
         </div>';
