@@ -243,7 +243,7 @@ class ConsolePanel extends BasePanel {
                             var resultsDiv = document.getElementById("tracyConsoleResult");
                             if(xmlhttp.status == 200) {
                                 resultId = Date.now();
-                                resultsDiv.innerHTML += '<div id="tracyConsoleResult_'+resultId+'" style="position:relative; padding:10px">' + tracyConsole.tryParseJSON(xmlhttp.responseText) + '</div>';
+                                resultsDiv.innerHTML += '<div id="tracyConsoleResult_'+resultId+'">' + tracyConsole.tryParseJSON(xmlhttp.responseText) + '</div>';
                                 document.getElementById("tracyConsoleResult_"+resultId).scrollIntoView();
                                 if(!document.getElementById("tracy-debug-panel-ConsolePanel").classList.contains("tracy-mode-float")) {
                                     window.Tracy.Debug.panels["tracy-debug-panel-ConsolePanel"].toFloat();
@@ -258,7 +258,7 @@ class ConsolePanel extends BasePanel {
                                 var tracyBsErrorText = tracyBsErrorDiv.getElementsByTagName('h1')[0].getElementsByTagName('span')[0].innerHTML;
                                 var tracyBsErrorLineNum = tracyDebugger.getQueryVariable('{$lineVar}', tracyBsError.querySelector('[data-tracy-href]').getAttribute("data-tracy-href")) - 1;
                                 var tracyBsErrorStr = "<br />" + tracyBsErrorType + ": " + tracyBsErrorText + " on line: " + tracyBsErrorLineNum + "<br />";
-                                resultsDiv.innerHTML = xmlhttp.status+": " + xmlhttp.statusText + tracyBsErrorStr + "<div style='border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;'></div>";
+                                resultsDiv.innerHTML = xmlhttp.status+": " + xmlhttp.statusText + tracyBsErrorStr + "<div style='position:relative; padding:10px; border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;'></div>";
 
                                 var expires = new Date();
                                 expires.setMinutes(expires.getMinutes() + (10 * 365 * 24 * 60));
@@ -284,7 +284,7 @@ class ConsolePanel extends BasePanel {
                         var consoleContainerAdjustment = $consoleContainerAdjustment;
                         if(consolePanelHeight < 500) consoleContainerAdjustment = consoleContainerAdjustment + 15;
                         document.getElementById("tracyConsoleContainer").style.height = (consolePanelHeight - consoleContainerAdjustment) + 'px';
-                        document.getElementById("tracySnippetsContainer").style.height = (consolePanelHeight - consoleContainerAdjustment - 5) + 'px';
+                        document.getElementById("tracySnippetsContainer").style.height = (consolePanelHeight - consoleContainerAdjustment - 15) + 'px';
                     }
                     else {
                         document.getElementById("tracyConsoleContainer").style.height = (document.getElementById("tracyConsoleContainer").offsetHeight - 15) + 'px';
@@ -842,7 +842,7 @@ HTML;
                     <div id="tracyConsoleCode" class="split" style="position:relative; background:#FFFFFF;">
                         <div id="tracyConsoleEditor" style="min-height:24px"></div>
                     </div>
-                    <div id="tracyConsoleResult" class="split" style="overflow:auto; border:1px solid #D2D2D2;">';
+                    <div id="tracyConsoleResult" class="split" style="position:relative; padding:10px; overflow:auto; border:1px solid #D2D2D2;">';
         if($this->wire('input')->cookie->tracyCodeError) {
             $out .= $this->wire('input')->cookie->tracyCodeError .
                 '<div style="border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;"></div>';
