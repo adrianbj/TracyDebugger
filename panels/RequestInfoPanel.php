@@ -122,7 +122,7 @@ class RequestInfoPanel extends BasePanel {
             }
         }
 
-        // Field Settings
+        // Field API Code
         if(in_array('fieldCode', $panelSections) && $isPwPage) {
             if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessField') {
                 $fieldCode = '<pre>';
@@ -132,13 +132,15 @@ class RequestInfoPanel extends BasePanel {
                 $fieldCode .= "\t'name' => '$field->name',\n";
                 $fieldCode .= "\t'label' => __('$field->label'),\n";
                 foreach($field->getArray() as $k => $v) {
-                    if(is_string($v)) $fieldCode .= "\t'$k' => '$v',\n";
-                    elseif(is_array($v)) {
+                    if(is_array($v)) {
                         $fieldCode .= "\t'$k' => [\n";
                         foreach($v as $key=>$val) {
                             $fieldCode .= "\t\t'$val',\n";
                         }
                         $fieldCode .= "\t],\n";
+                    }
+                    else {
+                        $fieldCode .= "\t'$k' => '$v',\n";
                     }
                 }
                 $fieldCode .= "]);\n";
