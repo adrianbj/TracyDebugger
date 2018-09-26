@@ -164,7 +164,7 @@ class RequestInfoPanel extends BasePanel {
         // Field Code
         if(in_array('fieldCode', $panelSections) && $isPwPage) {
             if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessField') {
-                $fieldCode = '<pre>';
+                $fieldCode = '<pre style="margin-bottom: 0">';
                 $fieldCode .= "\$form->add([\n";
                 $field = $this->wire('fields')->get((int)$this->wire('input')->get('id'));
                 $fieldCode .= "\t'type' => '" . (string)$field->getInputfield(new NullPage()) . "',\n";
@@ -678,8 +678,7 @@ class RequestInfoPanel extends BasePanel {
         }
 
         $out .= '<br />';
-        $out .= \TracyDebugger::generatedTimeSize('requestInfo', \Tracy\Debugger::timer('requestInfo'), strlen($out));
-        $out .= \TracyDebugger::generatedPanelSettingsLink('requestInfoPanel');
+        $out .= \TracyDebugger::generatePanelFooter('requestInfo', \Tracy\Debugger::timer('requestInfo'), strlen($out), 'requestInfoPanel');
         $out .= '</div>';
 
         return parent::loadResources() . $out;

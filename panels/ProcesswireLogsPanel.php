@@ -143,9 +143,10 @@ class ProcesswireLogsPanel extends BasePanel {
         <div class="tracy-inner">';
             $out .= $this->logEntries;
 
-            $out .= \TracyDebugger::generatedTimeSize('processwireLogs', \Tracy\Debugger::timer('processwireLogs'), strlen($out)) .
-                    \TracyDebugger::generatedPanelSettingsLink('processwireAndTracyLogsPanels') .
-        '</div>';
+            $out .= \TracyDebugger::generatePanelFooter('processwireLogs', \Tracy\Debugger::timer('processwireLogs'), strlen($out), 'processwireAndTracyLogsPanels');
+
+        $out .= '
+        </div>';
 
         return parent::loadResources() . $out;
     }

@@ -89,9 +89,11 @@ class TodoPanel extends BasePanel {
 
         <div class="tracy-inner">';
             $out .= $this->entries;
-            $out .= \TracyDebugger::generatedTimeSize('todo', \Tracy\Debugger::timer('todo'), strlen($out)) .
-                    \TracyDebugger::generatedPanelSettingsLink('todoPanel');
-        '</div>';
+
+        $out .= \TracyDebugger::generatePanelFooter('todo', \Tracy\Debugger::timer('todo'), strlen($out), 'todoPanel');
+
+        $out .= '
+        </div>';
 
         return parent::loadResources() . $out;
     }

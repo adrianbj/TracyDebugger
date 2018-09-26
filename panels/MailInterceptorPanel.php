@@ -164,7 +164,9 @@ class MailInterceptorPanel extends BasePanel {
             <br /><br />
         ';
             $out .= $this->entries;
-            $out .= \TracyDebugger::generatedTimeSize('mailInterceptor', \Tracy\Debugger::timer('mailInterceptor'), strlen($out)) . '
+            $out .= \TracyDebugger::generatePanelFooter('mailInterceptor', \Tracy\Debugger::timer('mailInterceptor'), strlen($out));
+
+        $out .= '
         </div>';
 
         return parent::loadResources() . $out;

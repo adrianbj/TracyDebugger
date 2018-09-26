@@ -307,8 +307,7 @@ HTML;
             </div>
             ';
 
-            $out .= \TracyDebugger::generatedTimeSize('fileEditor', \Tracy\Debugger::timer('fileEditor'), strlen($out)) .
-                    \TracyDebugger::generatedPanelSettingsLink('fileEditorPanel');
+            $out .= \TracyDebugger::generatePanelFooter('fileEditor', \Tracy\Debugger::timer('fileEditor'), strlen($out), 'fileEditorPanel');
 
         $out .= '
         </div>';

@@ -59,7 +59,7 @@ class PageRecorderPanel extends BasePanel {
 
             $out .= $this->recordedPages;
 
-            $out .= \TracyDebugger::generatedTimeSize('pageRecorder', \Tracy\Debugger::timer('pageRecorder'), strlen($out));
+            $out .= \TracyDebugger::generatePanelFooter('pageRecorder', \Tracy\Debugger::timer('pageRecorder'), strlen($out));
 
             $out .= '
         </div>';

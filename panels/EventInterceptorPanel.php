@@ -139,7 +139,7 @@ class EventInterceptorPanel extends BasePanel {
             <br /><br />
             <div id="tracyEventEntries">'.$this->entries.'</div>';
 
-            $out .= \TracyDebugger::generatedTimeSize('eventInterceptor', \Tracy\Debugger::timer('eventInterceptor'), strlen($out));
+            $out .= \TracyDebugger::generatePanelFooter('eventInterceptor', \Tracy\Debugger::timer('eventInterceptor'), strlen($out));
 
             $out .= '
         </div>';

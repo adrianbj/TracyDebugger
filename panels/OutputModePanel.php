@@ -74,7 +74,10 @@ class OutputModePanel extends BasePanel {
             }
 
             $out .= '</p>';
-            $out .= \TracyDebugger::generatedTimeSize('outputMode', \Tracy\Debugger::timer('outputMode'), strlen($out)) . '
+
+            $out .= \TracyDebugger::generatePanelFooter('outputMode', \Tracy\Debugger::timer('outputMode'), strlen($out));
+
+        $out .= '
         </div>';
 
         return parent::loadResources() . $out;

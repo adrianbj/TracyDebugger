@@ -38,7 +38,7 @@ class GitInfoPanel extends BasePanel
      */
     function getPanel() {
         if($this->isUnderVersionControl()) {
-            $title = '<h1>' . $this->icon . ' Git Info</h1>';
+            $out = '<h1>' . $this->icon . ' Git Info</h1>';
             $warning = '';
             $cntTable = '';
 
@@ -62,13 +62,13 @@ class GitInfoPanel extends BasePanel
                 $cntTable .= '<tr><td>Tags</td><td> ' . $this->getTags() . ' </td></tr>';
             }
 
-            $content = '<div class="tracy-inner tracy-InfoPanel"><table><tbody>' .
+            $out .= '<div class="tracy-inner tracy-InfoPanel"><table><tbody>' .
                 $cntTable .
                 '</tbody></table>';
 
-            $content .= \TracyDebugger::generatedTimeSize('gitInfo', \Tracy\Debugger::timer('gitInfo'), strlen($content)) . '</div>';
+            $out .= \TracyDebugger::generatePanelFooter('gitInfo', \Tracy\Debugger::timer('gitInfo'), strlen($out)) . '</div>';
 
-            return parent::loadResources() . $title . $content;
+            return parent::loadResources() . $out;
         }
     }
 

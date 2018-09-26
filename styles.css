@@ -482,6 +482,7 @@ td pre.tracy-dump {
 
 .tracy-toggle {
     font-size: 13px !important;
+    padding-bottom: 5px !important;
 }
 
 ul.pw-info-links {
@@ -883,19 +884,24 @@ ul.pw-info-links {
     background-color: #125EAE !important;
 }
 
-.tracy-time-size {
+.tracy-panel-footer {
     position: absolute;
-    bottom: 3px;
-    clear: both;
+    height: 15px;
+    bottom: 0 !important;
     font-size: 9px !important;
-    text-align: left !important;
+}
+
+.tracy-time-size {
+    position: relative;
+    display: inline-block;
+    vertical-align: bottom !important;
+    padding-bottom: 0 !important;
 }
 
 .tracy-panel-settings-link {
-    position: absolute;
-    right: 6px;
-    bottom: 4px;
-    clear: both;
+    position: relative;
+    display: inline-block;
+    margin-right: 7px;
 }
 
 .tracy-panel .tracy-panel-settings-link svg {

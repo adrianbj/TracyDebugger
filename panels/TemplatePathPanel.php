@@ -165,7 +165,7 @@ class TemplatePathPanel extends BasePanel {
                 </legend>';
             }
 
-        $out .= \TracyDebugger::generatedTimeSize('templatePath', \Tracy\Debugger::timer('templatePath'), strlen($out));
+        $out .= \TracyDebugger::generatePanelFooter('templatePath', \Tracy\Debugger::timer('templatePath'), strlen($out));
 
         $out .= '</div>';
 

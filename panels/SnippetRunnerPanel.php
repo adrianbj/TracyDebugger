@@ -302,9 +302,10 @@ HTML;
         </script>
 HTML;
 
-        $out .= \TracyDebugger::generatedTimeSize('snippetRunner', \Tracy\Debugger::timer('snippetRunner'), strlen($out)) .
-                \TracyDebugger::generatedPanelSettingsLink('snippetRunnerPanel') .
-        '</div>';
+        $out .= \TracyDebugger::generatePanelFooter('snippetRunner', \Tracy\Debugger::timer('snippetRunner'), strlen($out), 'snippetRunnerPanel');
+
+        $out .= '
+        </div>';
 
         return parent::loadResources() . $out;
     }

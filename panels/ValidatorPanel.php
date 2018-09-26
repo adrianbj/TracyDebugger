@@ -485,7 +485,7 @@ class ValidatorPanel extends BasePanel {
             $out .= '<div id="validatorBody"><h2>Sorry, but there was a problem accessing the validation server at '.$this->validatorUrl.'</h2><h2>'.$validatorLink.'</h2></div>';
         }
 
-        $out .= \TracyDebugger::generatedTimeSize('validator', \Tracy\Debugger::timer('validator'), strlen($out));
+        $out .= \TracyDebugger::generatePanelFooter('validator', \Tracy\Debugger::timer('validator'), strlen($out));
 
         $out .= '</div>';
 

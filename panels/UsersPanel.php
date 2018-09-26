@@ -169,9 +169,10 @@ class UsersPanel extends BasePanel {
                 $out .= '<p><strong>All allowed users are Superusers</strong></p><p>If you want to allow other users, give them the "tracy-debugger" permission, and preferably also restrict via IP Address in the module config settings.</p>';
             }
 
-        $out .= \TracyDebugger::generatedTimeSize('users', \Tracy\Debugger::timer('users'), strlen($out));
+        $out .= \TracyDebugger::generatePanelFooter('users', \Tracy\Debugger::timer('users'), strlen($out));
 
-        $out .= '</div>';
+        $out .= '
+        </div>';
 
         return parent::loadResources() . $out;
     }

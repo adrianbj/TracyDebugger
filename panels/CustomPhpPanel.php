@@ -40,9 +40,7 @@ class CustomPhpPanel extends BasePanel {
         $config = $this->wire('config');
         $out .= eval(\TracyDebugger::getDataValue('customPhpCode'));
 
-        $out .= \TracyDebugger::generatedTimeSize('customPhp', \Tracy\Debugger::timer('customPhp'), strlen($out)) .
-                \TracyDebugger::generatedPanelSettingsLink('customPhpPanel');
-
+        $out .= \TracyDebugger::generatePanelFooter('customPhp', \Tracy\Debugger::timer('customPhp'), strlen($out), 'customPhpPanel');
         $out .= '
         </div>';
 

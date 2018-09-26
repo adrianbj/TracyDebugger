@@ -126,7 +126,7 @@ class CaptainHookPanel extends BasePanel {
             $lastSection = $currentSection;
         }
 
-        $out .= \TracyDebugger::generatedTimeSize('captainHook', \Tracy\Debugger::timer('captainHook'), strlen($out));
+        $out .= \TracyDebugger::generatePanelFooter('captainHook', \Tracy\Debugger::timer('captainHook'), strlen($out));
         $out .= '
         </div>';
 

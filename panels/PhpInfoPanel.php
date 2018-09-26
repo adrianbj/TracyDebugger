@@ -108,7 +108,7 @@ class PhpInfoPanel extends BasePanel {
             <br />
             <div id="phpinfoBody">'.$phpInfo.'</div>';
 
-            $out .= \TracyDebugger::generatedTimeSize('phpInfo', \Tracy\Debugger::timer('phpInfo'), strlen($out));
+            $out .= \TracyDebugger::generatePanelFooter('phpInfo', \Tracy\Debugger::timer('phpInfo'), strlen($out));
         $out .= '</div>
         ';
 

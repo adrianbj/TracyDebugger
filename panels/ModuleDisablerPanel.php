@@ -133,7 +133,12 @@ class ModuleDisablerPanel extends BasePanel {
                         $out .= '<legend>There are no modules installed that can be disabled.</legend>';
                     }
                 }
-            $out .= '</fieldset>' . \TracyDebugger::generatedTimeSize('moduleDisabler', \Tracy\Debugger::timer('moduleDisabler'), strlen($out)) . '
+
+            $out .= '</fieldset>';
+
+            $out .= \TracyDebugger::generatePanelFooter('moduleDisabler', \Tracy\Debugger::timer('moduleDisabler'), strlen($out));
+
+        $out .= '
         </div>';
 
         return parent::loadResources() . $out;

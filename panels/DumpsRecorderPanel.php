@@ -79,7 +79,7 @@ class DumpsRecorderPanel extends BasePanel {
 
             <div id="tracyDumpEntries">' . $this->entries . '</div>';
 
-            $out .= \TracyDebugger::generatedTimeSize('dumpsRecorder', \Tracy\Debugger::timer('dumpsRecorder'), strlen($out));
+        $out .= \TracyDebugger::generatePanelFooter('dumpsRecorder', \Tracy\Debugger::timer('dumpsRecorder'), strlen($out), 'dumpsPanel');
 
         $out .= '
         </div>';

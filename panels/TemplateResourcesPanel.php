@@ -330,10 +330,10 @@ class TemplateResourcesPanel extends BasePanel {
 
         $out .= $this->resourceOutput;
 
-        $out .= \TracyDebugger::generatedTimeSize('templateResources', \Tracy\Debugger::timer('templateResources'), strlen($out)) .
-                \TracyDebugger::generatedPanelSettingsLink('templateResourcesPanel');
+        $out .= \TracyDebugger::generatePanelFooter('templateResources', \Tracy\Debugger::timer('templateResources'), strlen($out), 'templateResourcesPanel');
 
-        $out .= '</div>';
+        $out .= '
+        </div>';
 
         return parent::loadResources() . $out;
     }

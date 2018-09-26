@@ -264,9 +264,11 @@ class TracyLogsPanel extends BasePanel {
                     </form>
                 </p>';
             }
-            $out .= \TracyDebugger::generatedTimeSize('tracyLogs', \Tracy\Debugger::timer('tracyLogs'), strlen($out)) .
-                    \TracyDebugger::generatedPanelSettingsLink('processwireAndTracyLogsPanels') .
-        '</div>';
+
+            $out .= \TracyDebugger::generatePanelFooter('tracyLogs', \Tracy\Debugger::timer('tracyLogs'), strlen($out), 'processwireAndTracyLogsPanels');
+
+        $out .= '
+        </div>';
 
         return parent::loadResources() . $out;
     }

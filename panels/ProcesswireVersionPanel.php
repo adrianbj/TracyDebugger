@@ -71,7 +71,8 @@ class ProcesswireVersionPanel extends BasePanel {
                 </form>
             </fieldset>';
 
-            $out .= \TracyDebugger::generatedTimeSize('processwireVersion', \Tracy\Debugger::timer('processwireVersion'), strlen($out));
+            $out .= \TracyDebugger::generatePanelFooter('processwireVersion', \Tracy\Debugger::timer('processwireVersion'), strlen($out));
+
         $out .= '
         </div>';
 

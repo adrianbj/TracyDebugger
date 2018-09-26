@@ -865,9 +865,8 @@ HTML;
                 <div id="tracySnippets"></div>
             </div>
             ';
-        $out .= \TracyDebugger::generatedTimeSize('console', \Tracy\Debugger::timer('console'), strlen($out)) .
-                \TracyDebugger::generatedPanelSettingsLink('codeEditorSettings') .
-        '</div>';
+        $out .= \TracyDebugger::generatePanelFooter('console', \Tracy\Debugger::timer('console'), strlen($out), 'codeEditorSettings');
+        $out .= '</div>';
 
         return parent::loadResources() . \TracyDebugger::minify($out);
 
