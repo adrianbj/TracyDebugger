@@ -636,13 +636,41 @@ class ConsolePanel extends BasePanel {
                                         if(e.keyCode==40||e.charCode==40) {
                                             //split.collapse(1);
                                             split.setSizes([100 - collapsedCodePaneHeightPct, collapsedCodePaneHeightPct]);
-                                            tracyConsole.resizeAce();
+                                        }
+                                        // page down
+                                        if(e.keyCode==34||e.charCode==34) {
+                                            var sizes = localStorage.getItem('tracyConsoleSplitSizes');
+                                            sizes = split.getSizes();
+                                            if(100 - collapsedCodePaneHeightPct - 5 > sizes[0]) {
+                                                sizes[1] = sizes[1] - (tracyConsole.lineHeight + (8/2)) / containerHeight * 100;
+                                                sizes[0] = 100 - sizes[1];
+                                            }
+                                            else {
+                                                sizes[0] = 100 - collapsedCodePaneHeightPct;
+                                                sizes[1] = collapsedCodePaneHeightPct;
+                                            }
+                                            split.setSizes(sizes);
+                                            localStorage.setItem('tracyConsoleSplitSizes', JSON.stringify(split.getSizes()));
                                         }
                                         // up
                                         if(e.keyCode==38||e.charCode==38) {
                                             //split.collapse(0);
                                             split.setSizes([collapsedCodePaneHeightPct, 100 - collapsedCodePaneHeightPct]);
-                                            tracyConsole.resizeAce();
+                                        }
+                                        // page up
+                                        if(e.keyCode==33||e.charCode==33) {
+                                            var sizes = localStorage.getItem('tracyConsoleSplitSizes');
+                                            sizes = split.getSizes();
+                                            if(sizes[1] < 100 - collapsedCodePaneHeightPct - 5) {
+                                                sizes[0] = sizes[0] - (tracyConsole.lineHeight + (8/2)) / containerHeight * 100;
+                                                sizes[1] = 100 - sizes[0];
+                                            }
+                                            else {
+                                                sizes[0] = collapsedCodePaneHeightPct;
+                                                sizes[1] = 100 - collapsedCodePaneHeightPct;
+                                            }
+                                            split.setSizes(sizes);
+                                            localStorage.setItem('tracyConsoleSplitSizes', JSON.stringify(split.getSizes()));
                                         }
                                         // right
                                         if(e.keyCode==39||e.charCode==39) {
@@ -650,14 +678,12 @@ class ConsolePanel extends BasePanel {
                                             var codeLinesHeightPct = codeLinesHeight / containerHeight * 100;
                                             if(containerHeight - codeLinesHeight < tracyConsole.lineHeight) codeLinesHeightPct = 100 - collapsedCodePaneHeightPct;
                                             split.setSizes([codeLinesHeightPct, 100 - codeLinesHeightPct]);
-                                            tracyConsole.resizeAce();
                                         }
                                         // left
                                         if(e.keyCode==37||e.charCode==37) {
                                             var sizes = localStorage.getItem('tracyConsoleSplitSizes');
                                             sizes = sizes ? JSON.parse(sizes) : [40, 60];
                                             split.setSizes(sizes);
-                                            tracyConsole.resizeAce();
                                         }
                                     }
                                 }
@@ -817,6 +843,14 @@ HTML;
                         <tr>
                             <td>CTRL + SHFT + →</td>
                             <td>Split to show all the lines of code</td>
+                        </tr>
+                        <tr>
+                            <td>CTRL + SHFT + PageUp</td>
+                            <td>One less line in code pane (saves as dragged position)</td>
+                        </tr>
+                        <tr>
+                            <td>CTRL + SHFT + PageDown</td>
+                            <td>One more line in code pane (saves as dragged position)</td>
                         </tr>
                     </table>
                 </div>
