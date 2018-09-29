@@ -37,10 +37,12 @@ Results are cached for speed, but will be updated whenever you update your Proce
 	* CTRL + SHFT + Enter | toggle fullscreen mode
 	* CTRL + SHFT + ↑ | collapse code pane
 	* CTRL + SHFT + ↓ | collapse results pane
-	* CTRL + SHFT + ← | restore split to last dragged position
+	* CTRL + SHFT + ← | restore split to last saved position
 	* CTRL + SHFT + → | split to show all the lines of code
-	* CTRL + SHFT + PageUp	| one less line in code pane (saves as dragged position)
-	* CTRL + SHFT + PageDown | one more line in code pane (saves as dragged position)
+	* CTRL + SHFT + PageUp	| one less row in code pane (saves position)
+	* CTRL + SHFT + PageDown | one more row in code pane (saves position)
+	* SHFT + Enter | Expand to fit all code and add new line (saves position)
+	* SHFT + Backspace | Contract to fit all code and remove line (saves position)
 * Snippets storage for regularly used code
 * Options to run code instead at `init`, `ready`, or `finished` - useful for testing hooks. To use this, click Run, select `init`, `ready`, or `finished` and then execute whatever action in ProcessWire that is needed to trigger the hook. An orange icon will indicate this feature is active. You can switch to `off` manually when you are done. It will also expire automatically after 5 minutes.
 

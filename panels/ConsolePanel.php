@@ -605,16 +605,33 @@ class ConsolePanel extends BasePanel {
                         // splitjs
                         tracyJSLoader.load(tracyConsole.tracyModuleUrl + "/scripts/splitjs/split.min.js", function() {
                             var sizes = localStorage.getItem('tracyConsoleSplitSizes');
+                            var consoleGutterSize = 8;
                             sizes = sizes ? JSON.parse(sizes) : [40, 60];
                             var split = Split(['#tracyConsoleCode', '#tracyConsoleResult'], {
                                 direction: 'vertical',
                                 minSize: tracyConsole.lineHeight,
                                 sizes: sizes,
-                                gutterSize: 8,
+                                gutterSize: consoleGutterSize,
                                 snapOffset: 10,
                                 cursor: 'row-resize',
                                 onDrag: tracyConsole.resizeAce,
                                 onDragEnd: function() {
+                                    //snap to row height
+                                    sizes = split.getSizes();
+                                    var containerHeight = document.getElementById('tracyConsoleContainer').offsetHeight;
+                                    var codePaneHeight = (sizes[0] / 100 * containerHeight) - (consoleGutterSize/2);
+                                    var dividerPosition = codePaneHeight / tracyConsole.lineHeight;
+                                    var nstring = (dividerPosition + ""),
+                                    narray  = nstring.split("."),
+                                    result  = "0." + ( narray.length > 1 ? narray[1] : "0" );
+                                    if(result >= 0.5) codePaneHeight = codePaneHeight + tracyConsole.lineHeight;
+                                    codePaneHeight = codePaneHeight - tracyConsole.lineHeight;
+                                    codePaneHeight = Math.ceil(codePaneHeight / tracyConsole.lineHeight) * tracyConsole.lineHeight;
+                                    sizes[0] = (codePaneHeight + (consoleGutterSize/2)) / containerHeight * 100;
+                                    sizes[1] = 100 - sizes[0];
+                                    split.setSizes(sizes);
+
+                                    // save split
                                     localStorage.setItem('tracyConsoleSplitSizes', JSON.stringify(split.getSizes()));
                                     tracyConsole.tce.focus();
                                 }
@@ -622,28 +639,50 @@ class ConsolePanel extends BasePanel {
 
                             document.getElementById("tracyConsoleCode").querySelector(".ace_text-input").addEventListener("keydown", function(e) {
                                 if(document.getElementById("tracy-debug-panel-ConsolePanel").classList.contains("tracy-focused")) {
+                                    // shift enter - expand to fit all code while still adding new line and save
+                                    // shift backspace - delete line and row in code pane and save
+                                    if(e.shiftKey && ((e.keyCode==13||e.charCode==13) || (e.keyCode==8||e.charCode==8))) {
+                                        var numLines = tracyConsole.tce.session.getLength();
+                                        if(e.keyCode==13||e.charCode==13) numLines++;
+                                        var containerHeight = document.getElementById('tracyConsoleContainer').offsetHeight;
+                                        collapsedCodePaneHeightPct = (tracyConsole.lineHeight + (consoleGutterSize/2)) / containerHeight * 100;
+                                        var codeLinesHeight = (numLines * tracyConsole.lineHeight + (consoleGutterSize/2));
+                                        var codeLinesHeightPct = codeLinesHeight / containerHeight * 100;
+                                        if(containerHeight - codeLinesHeight < tracyConsole.lineHeight) codeLinesHeightPct = 100 - collapsedCodePaneHeightPct;
+                                        split.setSizes([codeLinesHeightPct, 100 - codeLinesHeightPct]);
+                                        localStorage.setItem('tracyConsoleSplitSizes', JSON.stringify(split.getSizes()));
+                                    }
+
                                     if(e.ctrlKey && e.shiftKey) {
                                         e.preventDefault();
                                         // maybe switch to collapse() if splitjs adds support for collapse respecting minSize
                                         // https://github.com/nathancahill/Split.js/issues/95
                                         var containerHeight = document.getElementById('tracyConsoleContainer').offsetHeight;
-                                        collapsedCodePaneHeightPct = (tracyConsole.lineHeight + (8/2)) / containerHeight * 100;
-                                        // enter
+                                        collapsedCodePaneHeightPct = (tracyConsole.lineHeight + (consoleGutterSize/2)) / containerHeight * 100;
+
+                                        // enter - toggle fullscreen
                                         if((e.keyCode==10||e.charCode==10)||(e.keyCode==13||e.charCode==13)) {
                                             tracyConsole.toggleFullscreen();
                                         }
-                                        // down
+                                        // down - maximize code pane
                                         if(e.keyCode==40||e.charCode==40) {
                                             //split.collapse(1);
                                             split.setSizes([100 - collapsedCodePaneHeightPct, collapsedCodePaneHeightPct]);
                                         }
-                                        // page down
+                                        // up - minimize code pane
+                                        if(e.keyCode==38||e.charCode==38) {
+                                            //split.collapse(0);
+                                            split.setSizes([collapsedCodePaneHeightPct, 100 - collapsedCodePaneHeightPct]);
+                                        }
+                                        // page down - add new row to code pane and save
                                         if(e.keyCode==34||e.charCode==34) {
-                                            var sizes = localStorage.getItem('tracyConsoleSplitSizes');
                                             sizes = split.getSizes();
                                             if(100 - collapsedCodePaneHeightPct - 5 > sizes[0]) {
-                                                sizes[1] = sizes[1] - (tracyConsole.lineHeight + (8/2)) / containerHeight * 100;
-                                                sizes[0] = 100 - sizes[1];
+                                                var codePaneHeight = (sizes[0] / 100 * containerHeight) - (consoleGutterSize/2);
+                                                codePaneHeight = codePaneHeight + tracyConsole.lineHeight;
+                                                codePaneHeight = Math.ceil(codePaneHeight / tracyConsole.lineHeight) * tracyConsole.lineHeight;
+                                                sizes[0] = (codePaneHeight + (consoleGutterSize/2)) / containerHeight * 100;
+                                                sizes[1] = 100 - sizes[0];
                                             }
                                             else {
                                                 sizes[0] = 100 - collapsedCodePaneHeightPct;
@@ -652,17 +691,14 @@ class ConsolePanel extends BasePanel {
                                             split.setSizes(sizes);
                                             localStorage.setItem('tracyConsoleSplitSizes', JSON.stringify(split.getSizes()));
                                         }
-                                        // up
-                                        if(e.keyCode==38||e.charCode==38) {
-                                            //split.collapse(0);
-                                            split.setSizes([collapsedCodePaneHeightPct, 100 - collapsedCodePaneHeightPct]);
-                                        }
-                                        // page up
+                                        // page up - remove row from code pane and save
                                         if(e.keyCode==33||e.charCode==33) {
-                                            var sizes = localStorage.getItem('tracyConsoleSplitSizes');
-                                            sizes = split.getSizes();
+                                            var sizes = split.getSizes();
                                             if(sizes[1] < 100 - collapsedCodePaneHeightPct - 5) {
-                                                sizes[0] = sizes[0] - (tracyConsole.lineHeight + (8/2)) / containerHeight * 100;
+                                                var codePaneHeight = (sizes[0] / 100 * containerHeight) - (consoleGutterSize/2);
+                                                codePaneHeight = codePaneHeight - tracyConsole.lineHeight;
+                                                codePaneHeight = Math.ceil(codePaneHeight / tracyConsole.lineHeight) * tracyConsole.lineHeight;
+                                                sizes[0] = (codePaneHeight + (consoleGutterSize/2)) / containerHeight * 100;
                                                 sizes[1] = 100 - sizes[0];
                                             }
                                             else {
@@ -672,14 +708,14 @@ class ConsolePanel extends BasePanel {
                                             split.setSizes(sizes);
                                             localStorage.setItem('tracyConsoleSplitSizes', JSON.stringify(split.getSizes()));
                                         }
-                                        // right
+                                        // right - expand to fit all code
                                         if(e.keyCode==39||e.charCode==39) {
-                                            var codeLinesHeight = (tracyConsole.tce.session.getLength() * tracyConsole.lineHeight + (8/2));
+                                            var codeLinesHeight = (tracyConsole.tce.session.getLength() * tracyConsole.lineHeight + (consoleGutterSize/2));
                                             var codeLinesHeightPct = codeLinesHeight / containerHeight * 100;
                                             if(containerHeight - codeLinesHeight < tracyConsole.lineHeight) codeLinesHeightPct = 100 - collapsedCodePaneHeightPct;
                                             split.setSizes([codeLinesHeightPct, 100 - codeLinesHeightPct]);
                                         }
-                                        // left
+                                        // left - restore last saved pane split position
                                         if(e.keyCode==37||e.charCode==37) {
                                             var sizes = localStorage.getItem('tracyConsoleSplitSizes');
                                             sizes = sizes ? JSON.parse(sizes) : [40, 60];
@@ -687,6 +723,7 @@ class ConsolePanel extends BasePanel {
                                         }
                                     }
                                 }
+                                tracyConsole.resizeAce();
                             });
 
                             // hack to remove extra gutter in Tracy window mode
@@ -838,7 +875,7 @@ HTML;
                         </tr>
                         <tr>
                             <td>CTRL + SHFT + ←</td>
-                            <td>Restore split to last dragged position</td>
+                            <td>Restore split to last saved position</td>
                         </tr>
                         <tr>
                             <td>CTRL + SHFT + →</td>
@@ -846,11 +883,19 @@ HTML;
                         </tr>
                         <tr>
                             <td>CTRL + SHFT + PageUp</td>
-                            <td>One less line in code pane (saves as dragged position)</td>
+                            <td>One less row in code pane (saves position)</td>
                         </tr>
                         <tr>
                             <td>CTRL + SHFT + PageDown</td>
-                            <td>One more line in code pane (saves as dragged position)</td>
+                            <td>One more row in code pane (saves position)</td>
+                        </tr>
+                        <tr>
+                            <td>SHFT + Enter</td>
+                            <td>Expand to fit all code and add new line (saves position)</td>
+                        </tr>
+                        <tr>
+                            <td>SHFT + Backspace</td>
+                            <td>Contract to fit all code and remove line (saves position)</td>
                         </tr>
                     </table>
                 </div>
