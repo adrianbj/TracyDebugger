@@ -192,7 +192,7 @@ class TD extends TracyDebugger {
             }
 
             if($var instanceof WireArray || $var instanceof \ProcessWire\WireArray) {
-                $editCountLink .= '<li style="float:right; padding-right:6px">n = ' . $var->count() . '</li>';
+                $editCountLink .= '<li class="tracyEditLinkCount">n = ' . $var->count() . '</li>';
             }
 
             $tabs = '<ul class="tracyDumpTabs">';

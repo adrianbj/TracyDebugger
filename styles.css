@@ -1516,6 +1516,11 @@ ul.tracyDumpTabs li:not(:first-child) {
     margin-left: -1px;
 }
 
+ul.tracyDumpTabs li.tracyEditLinkCount {
+    float:right;
+    padding: 3px 7px;
+}
+
 ul.tracyDumpTabs li a {
     padding: 4px 7px;
     font-size: 12px !important;
