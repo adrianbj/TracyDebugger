@@ -114,6 +114,7 @@ class ConsolePanel extends BasePanel {
         $codeUseSoftTabs = \TracyDebugger::getDataValue('codeUseSoftTabs');
         $codeShowInvisibles = \TracyDebugger::getDataValue('codeShowInvisibles');
         $codeTabSize = \TracyDebugger::getDataValue('codeTabSize');
+        $customSnippetsUrl = \TracyDebugger::getDataValue('customSnippetsUrl');
 
         $out .= <<< HTML
         <script>
@@ -128,6 +129,7 @@ class ConsolePanel extends BasePanel {
                 loadedSnippetCode: null,
                 desc: false,
                 inAdmin: "$inAdmin",
+                customSnippetsUrl: "$customSnippetsUrl",
 
                 isSafari: function() {
                     if (navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
@@ -582,7 +584,14 @@ class ConsolePanel extends BasePanel {
                             snippetManager.register(getCodeSnippets(), "php-inline");
                         });
 
-                        // this triggers the autocomplete popup with any character entered
+                        if(tracyConsole.customSnippetsUrl !== '') {
+                            tracyJSLoader.load(tracyConsole.customSnippetsUrl, function() {
+                                var snippetManager = ace.require("ace/snippets").snippetManager;
+                                snippetManager.register(getCustomCodeSnippets(), "php-inline");
+                            });
+                        }
+
+                        // this triggers the autocomplete popup with any letter(a-zA-Z) entered
                         // this is needed because enableLiveAutocompletion: true breaks snippet matching
                         tracyConsole.tce.commands.on("afterExec", function(e){
                             if (e.command.name == "insertstring" && /[a-zA-Z]+$/.test(e.args)) {

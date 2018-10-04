@@ -83,6 +83,7 @@ class FileEditorPanel extends BasePanel {
         $codeUseSoftTabs = \TracyDebugger::getDataValue('codeUseSoftTabs');
         $codeShowInvisibles = \TracyDebugger::getDataValue('codeShowInvisibles');
         $codeTabSize = \TracyDebugger::getDataValue('codeTabSize');
+        $customSnippetsUrl = \TracyDebugger::getDataValue('customSnippetsUrl');
 
         $out .= <<< HTML
         <script>
@@ -93,6 +94,7 @@ class FileEditorPanel extends BasePanel {
                 tracyModuleUrl: "$tracyModuleUrl",
                 tracyFileEditorFilePath: "{$this->tracyFileEditorFilePath}",
                 errorMessage: "{$this->errorMessage}",
+                customSnippetsUrl: "$customSnippetsUrl",
 
                 isSafari: function() {
                     if (navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
@@ -224,10 +226,17 @@ class FileEditorPanel extends BasePanel {
 
                         tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/code-snippets.js", function() {
                             var snippetManager = ace.require("ace/snippets").snippetManager;
-                            snippetManager.register(getCodeSnippets(), "php");
+                            snippetManager.register(getCodeSnippets(), mode);
                         });
 
-                        // this triggers the autocomplete popup with any character entered
+                        if(tracyFileEditor.customSnippetsUrl !== '') {
+                            tracyJSLoader.load(tracyFileEditor.customSnippetsUrl, function() {
+                                var snippetManager = ace.require("ace/snippets").snippetManager;
+                                snippetManager.register(getCustomCodeSnippets(), "php");
+                            });
+                        }
+
+                        // this triggers the autocomplete popup with any letter(a-zA-Z) entered
                         // this is needed because enableLiveAutocompletion: true breaks snippet matching
                         tracyFileEditor.tfe.commands.on("afterExec", function(e){
                             if (e.command.name == "insertstring" && /[a-zA-Z]+$/.test(e.args)) {
