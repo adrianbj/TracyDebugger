@@ -1,9 +1,5 @@
 <?php
 
-/**
- * User Switcher panel
- */
-
 class UserSwitcherPanel extends BasePanel {
 
     protected $icon;

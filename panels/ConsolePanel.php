@@ -40,7 +40,7 @@ class ConsolePanel extends BasePanel {
         $pwRoot = $this->wire('config')->urls->root;
         $tracyModuleUrl = $this->wire("config")->urls->TracyDebugger;
         $inAdmin = \TracyDebugger::$inAdmin;
-        $consoleContainerAdjustment = $inAdmin ? 120 : 145;
+        $containerAdjustment = $inAdmin ? 70 : 155;
 
         // store various $input properties so they are available to the console
         $this->wire('session')->tracyPostData = $this->wire('input')->post->getArray();
@@ -243,7 +243,7 @@ class ConsolePanel extends BasePanel {
                             var resultsDiv = document.getElementById("tracyConsoleResult");
                             if(xmlhttp.status == 200) {
                                 resultId = Date.now();
-                                resultsDiv.innerHTML += '<div id="tracyConsoleResult_'+resultId+'">' + tracyConsole.tryParseJSON(xmlhttp.responseText) + '</div>';
+                                resultsDiv.innerHTML += '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.tryParseJSON(xmlhttp.responseText) + '</div>';
                                 document.getElementById("tracyConsoleResult_"+resultId).scrollIntoView();
                                 if(!document.getElementById("tracy-debug-panel-ConsolePanel").classList.contains("tracy-mode-float")) {
                                     window.Tracy.Debug.panels["tracy-debug-panel-ConsolePanel"].toFloat();
@@ -258,7 +258,7 @@ class ConsolePanel extends BasePanel {
                                 var tracyBsErrorText = tracyBsErrorDiv.getElementsByTagName('h1')[0].getElementsByTagName('span')[0].innerHTML;
                                 var tracyBsErrorLineNum = tracyDebugger.getQueryVariable('{$lineVar}', tracyBsError.querySelector('[data-tracy-href]').getAttribute("data-tracy-href")) - 1;
                                 var tracyBsErrorStr = "<br />" + tracyBsErrorType + ": " + tracyBsErrorText + " on line: " + tracyBsErrorLineNum + "<br />";
-                                resultsDiv.innerHTML = xmlhttp.status+": " + xmlhttp.statusText + tracyBsErrorStr + "<div style='position:relative; padding:10px; border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;'></div>";
+                                resultsDiv.innerHTML = xmlhttp.status+": " + xmlhttp.statusText + tracyBsErrorStr + "<div style='position:relative; border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;'></div>";
 
                                 var expires = new Date();
                                 expires.setMinutes(expires.getMinutes() + (10 * 365 * 24 * 60));
@@ -276,25 +276,7 @@ class ConsolePanel extends BasePanel {
                     xmlhttp.send("tracyConsole=1&accessTemplateVars="+accessTemplateVars+"&pid={$p->id}&fid={$fid}&tid={$tid}&mid={$mid}&code="+encodeURIComponent(code));
                 },
 
-                resizeContainers: function() {
-                    var consolePanel = document.getElementById("tracy-debug-panel-ConsolePanel");
-                    // if normal mode (not in window), then we need to make adjustment to make height a little shorter
-                    if(!consolePanel.classList.contains('tracy-mode-window')) {
-                        var consolePanelHeight = consolePanel.offsetHeight;
-                        var consoleContainerAdjustment = $consoleContainerAdjustment;
-                        if(consolePanelHeight < 500) consoleContainerAdjustment = consoleContainerAdjustment + 15;
-                        document.getElementById("tracyConsoleContainer").style.height = (consolePanelHeight - consoleContainerAdjustment) + 'px';
-                        document.getElementById("tracySnippetsContainer").style.height = (consolePanelHeight - consoleContainerAdjustment - 15) + 'px';
-                    }
-                    else {
-                        document.getElementById("tracyConsoleContainer").style.height = (document.getElementById("tracyConsoleContainer").offsetHeight - 15) + 'px';
-                        document.getElementById("tracySnippetsContainer").style.height = (document.getElementById("tracySnippetsContainer").offsetHeight - 15) + 'px';
-                        document.getElementById("tracySnippetsContainer").style.width = (document.getElementById("tracySnippetsContainer").offsetWidth - 25) + 'px';
-                    }
-                },
-
                 resizeAce: function(focus = true) {
-                    tracyConsole.resizeContainers();
                     document.getElementById("tracyConsoleEditor").style.height = '100%';
                     tracyConsole.tce.resize(true);
                     if(focus) {
@@ -588,11 +570,52 @@ class ConsolePanel extends BasePanel {
 
                         tracyConsole.tce.setOptions({
                             enableBasicAutocompletion: true,
-                            enableLiveAutocompletion: true,
+                            enableSnippets: true,
+                            //enableLiveAutocompletion: true,
                             tabSize: $codeTabSize,
                             useSoftTabs: $codeUseSoftTabs,
                             minLines: 5
                         });
+
+                        tracyJSLoader.load(tracyConsole.tracyModuleUrl + "scripts/code-snippets.js", function() {
+                            var snippetManager = ace.require("ace/snippets").snippetManager;
+                            snippetManager.register(getCodeSnippets(), "php-inline");
+                        });
+
+                        // this triggers the autocomplete popup with any character entered
+                        // this is needed because enableLiveAutocompletion: true breaks snippet matching
+                        tracyConsole.tce.commands.on("afterExec", function(e){
+                            if (e.command.name == "insertstring" && /[a-zA-Z]+$/.test(e.args)) {
+                                tracyConsole.tce.execCommand("startAutocomplete");
+                            }
+                        });
+
+                        tracyConsole.tce.commands.addCommands([
+                            {
+                                name: "increaseFontSize",
+                                bindKey: "Ctrl-=|Ctrl-+",
+                                exec: function(editor) {
+                                    var size = parseInt(tracyConsole.tce.getFontSize(), 10) || 12;
+                                    editor.setFontSize(size + 1);
+                                }
+                            },
+                            {
+                                name: "decreaseFontSize",
+                                bindKey: "Ctrl+-|Ctrl-_",
+                                exec: function(editor) {
+                                    var size = parseInt(editor.getFontSize(), 10) || 12;
+                                    editor.setFontSize(Math.max(size - 1 || 1));
+                                }
+                            },
+                            {
+                                name: "resetFontSize",
+                                bindKey: "Ctrl+0|Ctrl-Numpad0",
+                                exec: function(editor) {
+                                    editor.setFontSize(14);
+                                }
+                            }
+                        ]);
+
 
                         tracyConsole.tce.setAutoScrollEditorIntoView(true);
                         tracyConsole.resizeAce();
@@ -616,11 +639,12 @@ class ConsolePanel extends BasePanel {
                                 cursor: 'row-resize',
                                 onDrag: tracyConsole.resizeAce,
                                 onDragEnd: function() {
-                                    //snap to row height
+                                    // snap to row height
                                     sizes = split.getSizes();
                                     var containerHeight = document.getElementById('tracyConsoleContainer').offsetHeight;
                                     var codePaneHeight = (sizes[0] / 100 * containerHeight) - (consoleGutterSize/2);
                                     var dividerPosition = codePaneHeight / tracyConsole.lineHeight;
+                                    var lineHeightPct = (tracyConsole.lineHeight + (consoleGutterSize/2)) / containerHeight * 100;
                                     var nstring = (dividerPosition + ""),
                                     narray  = nstring.split("."),
                                     result  = "0." + ( narray.length > 1 ? narray[1] : "0" );
@@ -628,7 +652,13 @@ class ConsolePanel extends BasePanel {
                                     codePaneHeight = codePaneHeight - tracyConsole.lineHeight;
                                     codePaneHeight = Math.ceil(codePaneHeight / tracyConsole.lineHeight) * tracyConsole.lineHeight;
                                     sizes[0] = (codePaneHeight + (consoleGutterSize/2)) / containerHeight * 100;
+                                    // reset sizes if somehow dragged to less than minSize setting
+                                    if(sizes[0] < lineHeightPct) sizes[0] = lineHeightPct;
                                     sizes[1] = 100 - sizes[0];
+                                    if(sizes[1] < lineHeightPct) {
+                                        sizes[1] = lineHeightPct;
+                                        sizes[0] = 100 - sizes[1];
+                                    }
                                     split.setSizes(sizes);
 
                                     // save split
@@ -677,9 +707,9 @@ class ConsolePanel extends BasePanel {
                                         // page down - add new row to code pane and save
                                         if(e.keyCode==34||e.charCode==34) {
                                             sizes = split.getSizes();
-                                            if(100 - collapsedCodePaneHeightPct - 5 > sizes[0]) {
+                                            if(sizes[1] > collapsedCodePaneHeightPct) {
                                                 var codePaneHeight = (sizes[0] / 100 * containerHeight) - (consoleGutterSize/2);
-                                                codePaneHeight = codePaneHeight + tracyConsole.lineHeight;
+                                                codePaneHeight = Math.round(codePaneHeight + tracyConsole.lineHeight);
                                                 codePaneHeight = Math.ceil(codePaneHeight / tracyConsole.lineHeight) * tracyConsole.lineHeight;
                                                 sizes[0] = (codePaneHeight + (consoleGutterSize/2)) / containerHeight * 100;
                                                 sizes[1] = 100 - sizes[0];
@@ -694,9 +724,9 @@ class ConsolePanel extends BasePanel {
                                         // page up - remove row from code pane and save
                                         if(e.keyCode==33||e.charCode==33) {
                                             var sizes = split.getSizes();
-                                            if(sizes[1] < 100 - collapsedCodePaneHeightPct - 5) {
+                                            if(sizes[0] > collapsedCodePaneHeightPct) {
                                                 var codePaneHeight = (sizes[0] / 100 * containerHeight) - (consoleGutterSize/2);
-                                                codePaneHeight = codePaneHeight - tracyConsole.lineHeight;
+                                                codePaneHeight = Math.round(codePaneHeight - tracyConsole.lineHeight);
                                                 codePaneHeight = Math.ceil(codePaneHeight / tracyConsole.lineHeight) * tracyConsole.lineHeight;
                                                 sizes[0] = (codePaneHeight + (consoleGutterSize/2)) / containerHeight * 100;
                                                 sizes[1] = 100 - sizes[0];
@@ -833,119 +863,127 @@ HTML;
 
         $out .= '<h1>' . $this->icon . ' Console <span title="Keyboard Shortcuts" style="display: inline-block; margin-left: 5px; cursor: pointer" onclick="tracyConsole.toggleKeyboardShortcuts()">' . $keyboardShortcutIcon . '</span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'ConsolePanel\')">+</a></span></span>
         <div class="tracy-inner">
-            <div id="tracyConsoleMainContainer">
-                <div id="keyboardShortcuts" class="tracyHidden">
-                    <table>
-                        <th colspan="2">Code Execution</th>
-                        <tr>
-                            <td>CTRL/CMD + Enter</td>
-                            <td>Run</td>
-                        </tr>
-                        <tr>
-                            <td>ALT/OPT + Enter</td>
-                            <td>Clear & Run</td>
-                        </tr>
-                        </table>
-                        <br />
+
+            <div style="height: calc(100% - ' . $containerAdjustment . 'px)">
+
+                <div id="tracyConsoleMainContainer" style="position: relative; height: 100%">
+                    <div id="keyboardShortcuts" class="tracyHidden">
                         <table>
-                        <th colspan="2">Execution History</th>
-                        <tr>
-                            <td>ALT + PageUp</td>
-                            <td>Back</td>
-                        </tr>
-                        <tr>
-                            <td>ALT + PageDown</td>
-                            <td>Forward</td>
-                        </tr>
+                            <th colspan="2">Code Execution</th>
+                            <tr>
+                                <td>CTRL/CMD + Enter</td>
+                                <td>Run</td>
+                            </tr>
+                            <tr>
+                                <td>ALT/OPT + Enter</td>
+                                <td>Clear & Run</td>
+                            </tr>
+                            </table>
+                            <br />
+                            <table>
+                            <th colspan="2">Execution History</th>
+                            <tr>
+                                <td>ALT + PageUp</td>
+                                <td>Back</td>
+                            </tr>
+                            <tr>
+                                <td>ALT + PageDown</td>
+                                <td>Forward</td>
+                            </tr>
+                            </table>
+                            <br />
+                            <table>
+                            <th colspan="2">Screen / Pane Manipulation</th>
+                            <tr>
+                                <td>CTRL + SHFT + Enter</td>
+                                <td>Toggle fullscreen</td>
+                            </tr>
+                            <tr>
+                                <td>CTRL + SHFT + ↑</td>
+                                <td>Collapse code pane</td>
+                            </tr>
+                            <tr>
+                                <td>CTRL + SHFT + ↓</td>
+                                <td>Collapse results pane</td>
+                            </tr>
+                            <tr>
+                                <td>CTRL + SHFT + ←</td>
+                                <td>Restore split to last saved position</td>
+                            </tr>
+                            <tr>
+                                <td>CTRL + SHFT + →</td>
+                                <td>Split to show all the lines of code</td>
+                            </tr>
+                            <tr>
+                                <td>CTRL + SHFT + PageUp</td>
+                                <td>One less row in code pane (saves position)</td>
+                            </tr>
+                            <tr>
+                                <td>CTRL + SHFT + PageDown</td>
+                                <td>One more row in code pane (saves position)</td>
+                            </tr>
+                            <tr>
+                                <td>SHFT + Enter</td>
+                                <td>Expand to fit all code and add new line (saves position)</td>
+                            </tr>
+                            <tr>
+                                <td>SHFT + Backspace</td>
+                                <td>Contract to fit all code and remove line (saves position)</td>
+                            </tr>
                         </table>
-                        <br />
-                        <table>
-                        <th colspan="2">Screen / Pane Manipulation</th>
-                        <tr>
-                            <td>CTRL + SHFT + Enter</td>
-                            <td>Toggle fullscreen</td>
-                        </tr>
-                        <tr>
-                            <td>CTRL + SHFT + ↑</td>
-                            <td>Collapse code pane</td>
-                        </tr>
-                        <tr>
-                            <td>CTRL + SHFT + ↓</td>
-                            <td>Collapse results pane</td>
-                        </tr>
-                        <tr>
-                            <td>CTRL + SHFT + ←</td>
-                            <td>Restore split to last saved position</td>
-                        </tr>
-                        <tr>
-                            <td>CTRL + SHFT + →</td>
-                            <td>Split to show all the lines of code</td>
-                        </tr>
-                        <tr>
-                            <td>CTRL + SHFT + PageUp</td>
-                            <td>One less row in code pane (saves position)</td>
-                        </tr>
-                        <tr>
-                            <td>CTRL + SHFT + PageDown</td>
-                            <td>One more row in code pane (saves position)</td>
-                        </tr>
-                        <tr>
-                            <td>SHFT + Enter</td>
-                            <td>Expand to fit all code and add new line (saves position)</td>
-                        </tr>
-                        <tr>
-                            <td>SHFT + Backspace</td>
-                            <td>Contract to fit all code and remove line (saves position)</td>
-                        </tr>
-                    </table>
-                </div>
-            ';
-        if($this->wire('page')->template != "admin") {
-            $out .= '<label style="padding-bottom: 5px"><input type="checkbox" id="accessTemplateVars" /> Access custom variables & functions from this page\'s template file & included files.</label>';
-        }
-
-        $out .= '
-                <div style="padding: 0 0 10px 0">
-                    <input title="Run (CTRL/CMD + Enter) | Clear & Run (ALT/OPT + Enter)" type="submit" id="runCode" onclick="tracyConsole.processTracyCode()" value="Run" />&nbsp;
-                    <input style="font-family: FontAwesome !important" title="Go back (ALT + PageUp)" id="historyBack" type="submit" onclick="tracyConsole.loadHistory(\'back\')" value="&#xf060;" />&nbsp;
-                    <input style="font-family: FontAwesome !important" title="Go forward (ALT + PageDown)" class="arrowRight" id="historyForward" type="submit" onclick="tracyConsole.loadHistory(\'forward\')" value="&#xf060;" />
-                    <input title="Clear results" type="button" class="clearResults" onclick="tracyConsole.clearResults()" value="&#10006; Clear results" />
-                    <span style="float:right; padding-top: 10px">
-                        <label title="Don\'t Run on Page Load" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'off\')" value="off" ' . (!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? ' checked' : '') . ' /> off</label>&nbsp;
-                        <label title="Run on init" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'init\')" value="init" ' . ($this->tracyIncludeCode['when'] === 'init' ? ' checked' : '') . ' /> init</label>&nbsp;
-                        <label title="Run on ready" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'ready\')" value="ready" ' . ($this->tracyIncludeCode['when'] === 'ready' ? ' checked' : '') . ' /> ready</label>&nbsp;
-                        <label title="Run on finished" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'finished\')" value="finished" ' . ($this->tracyIncludeCode['when'] === 'finished' ? ' checked' : '') . ' /> finished</label>&nbsp;
-                    </span>
-                    <span id="tracyConsoleStatus" style="padding: 10px"></span>
-                </div>
-
-                <div id="tracyConsoleContainer" class="split">
-                    <div id="tracyConsoleCode" class="split" style="position:relative; background:#FFFFFF;">
-                        <div id="tracyConsoleEditor" style="min-height:24px"></div>
                     </div>
-                    <div id="tracyConsoleResult" class="split" style="position:relative; padding:10px; overflow:auto; border:1px solid #D2D2D2;">';
-        if($this->wire('input')->cookie->tracyCodeError) {
-            $out .= $this->wire('input')->cookie->tracyCodeError .
-                '<div style="border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;"></div>';
-        }
-        $out .= '
+
+                ';
+            if(!$inAdmin) {
+                $out .= '
+                    <label style="padding-bottom: 5px"><input type="checkbox" id="accessTemplateVars" /> Access custom variables & functions from this page\'s template file & included files.</label>';
+            }
+
+                $out .= '
+                    <div style="padding: 0 0 10px 0">
+                        <input title="Run (CTRL/CMD + Enter) | Clear & Run (ALT/OPT + Enter)" type="submit" id="runCode" onclick="tracyConsole.processTracyCode()" value="Run" />&nbsp;
+                        <input style="font-family: FontAwesome !important" title="Go back (ALT + PageUp)" id="historyBack" type="submit" onclick="tracyConsole.loadHistory(\'back\')" value="&#xf060;" />&nbsp;
+                        <input style="font-family: FontAwesome !important" title="Go forward (ALT + PageDown)" class="arrowRight" id="historyForward" type="submit" onclick="tracyConsole.loadHistory(\'forward\')" value="&#xf060;" />
+                        <input title="Clear results" type="button" class="clearResults" onclick="tracyConsole.clearResults()" value="&#10006; Clear results" />
+                        <span style="float:right; padding-top: 10px">
+                            <label title="Don\'t Run on Page Load" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'off\')" value="off" ' . (!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? ' checked' : '') . ' /> off</label>&nbsp;
+                            <label title="Run on init" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'init\')" value="init" ' . ($this->tracyIncludeCode['when'] === 'init' ? ' checked' : '') . ' /> init</label>&nbsp;
+                            <label title="Run on ready" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'ready\')" value="ready" ' . ($this->tracyIncludeCode['when'] === 'ready' ? ' checked' : '') . ' /> ready</label>&nbsp;
+                            <label title="Run on finished" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'finished\')" value="finished" ' . ($this->tracyIncludeCode['when'] === 'finished' ? ' checked' : '') . ' /> finished</label>&nbsp;
+                        </span>
+                        <span id="tracyConsoleStatus" style="padding: 10px"></span>
+                    </div>
+
+                    <div id="tracyConsoleContainer" class="split" style="height: 100%">
+                        <div id="tracyConsoleCode" class="split" style="position:relative; background:#FFFFFF;">
+                            <div id="tracyConsoleEditor" style="min-height:24px"></div>
+                        </div>
+                        <div id="tracyConsoleResult" class="split" style="position:relative; padding:0 10px; overflow:auto; border:1px solid #D2D2D2;">';
+                if($this->wire('input')->cookie->tracyCodeError) {
+                    $out .= '<div style="padding: 10px 0">' . $this->wire('input')->cookie->tracyCodeError . '</div>' .
+                            '<div style="padding: 10px; border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;"></div>';
+                }
+                $out .= '
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div id="tracySnippetsContainer" style="float: left; margin: 0 0 0 20px; width: 265px;">
-                <div style="padding-bottom:5px">
-                    Sort: <a href="#" onclick="tracyConsole.sortList(\'alphabetical\')">alphabetical</a>&nbsp;|&nbsp;<a href="#" onclick="tracyConsole.sortList(\'chronological\')">chronological</a>
+                <div id="tracySnippetsContainer" style="position: relative; float: left; margin: 0 0 0 20px; width: 265px; height: 100%">
+                    <div style="padding-bottom:5px">
+                        Sort: <a href="#" onclick="tracyConsole.sortList(\'alphabetical\')">alphabetical</a>&nbsp;|&nbsp;<a href="#" onclick="tracyConsole.sortList(\'chronological\')">chronological</a>
+                    </div>
+                    <div style="position: relative; width:100% !important;">
+                        <input type="text" id="tracySnippetName" placeholder="Snippet name..." />
+                        <input id="saveSnippet" type="submit" onclick="tracyConsole.saveSnippet()" value="&#128190;" title="Save snippet" />
+                    </div>
+                    <div id="tracySnippets"></div>
                 </div>
-                <div style="position: relative; width:100% !important;">
-                    <input type="text" id="tracySnippetName" placeholder="Snippet name..." />
-                    <input id="saveSnippet" type="submit" onclick="tracyConsole.saveSnippet()" value="&#128190;" title="Save snippet" />
-                </div>
-                <div id="tracySnippets"></div>
+
             </div>
             ';
         $out .= \TracyDebugger::generatePanelFooter('console', \Tracy\Debugger::timer('console'), strlen($out), 'codeEditorSettings');
-        $out .= '</div>';
+        $out .= '
+        </div>';
 
         return parent::loadResources() . \TracyDebugger::minify($out);
 

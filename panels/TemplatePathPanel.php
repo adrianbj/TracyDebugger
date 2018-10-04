@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Panel Selector panel
- */
-
 class TemplatePathPanel extends BasePanel {
 
     protected $icon;
@@ -11,6 +7,7 @@ class TemplatePathPanel extends BasePanel {
     protected $templateOptions;
 
     public function getTab() {
+
         if(\TracyDebugger::isAdditionalBar()) return;
         \Tracy\Debugger::timer('templatePath');
 

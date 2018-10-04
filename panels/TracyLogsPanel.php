@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Tracy logs panel
- */
-
 class TracyLogsPanel extends BasePanel {
 
     protected $icon;

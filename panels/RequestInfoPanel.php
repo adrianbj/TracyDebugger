@@ -385,17 +385,47 @@ class RequestInfoPanel extends BasePanel {
                 </tr>
                 <tr>
                     <td>Hidden (status)</td>
-                    <td>'. ($p->isHidden() ? "&#10004;" : "&#x2718;") .'</td>
+                    <td>'. ($p->isHidden() ? "✔" : "✘") .'</td>
                 </tr>
                 <tr>
                     <td>Unpublished (status)</td>
-                    <td>'. ($p->isUnpublished() ? "&#10004;" : "&#x2718;") .'</td>
+                    <td>'. ($p->isUnpublished() ? "✔" : "✘") .'</td>
                 </tr>
                 <tr>
                     <td>Locked (status)</td>
-                    <td>'. ($p->is(Page::statusLocked) ? "&#10004;" : "&#x2718;") .'</td>
+                    <td>'. ($p->is(Page::statusLocked) ? "✔" : "✘") .'</td>
                 </tr>
             </table>';
+        }
+
+        // Page permissions
+        if(in_array('pageInfo', $panelSections) && $isPwPage) {
+            $pagePermissions = $this->sectionHeader(array('', 'view', 'edit', 'add', 'publish', 'list', 'move', 'sort', 'delete', 'trash', 'restore'));
+            $pagePermissionsArr = array('viewable', 'editable', 'addable', 'publishable', 'listable', 'moveable', 'sortable', 'deleteable', 'trashable', 'restorable');
+
+
+            // current user
+            $pagePermissions .= '<tr><td><strong>' . $this->wire('user')->name . '</strong></td>';
+            foreach($pagePermissionsArr as $permission) {
+                $pagePermissions .= '<td style="text-align: center;">' . ($p->$permission() ? '✔' : '') . '</td>';
+            }
+
+            // all roles
+            $currentUser = $this->wire('user');
+            foreach($this->wire('roles') as $role) {
+                $fakeUser = new User();
+                $fakeUser->addRole($role);
+                $this->wire('users')->setCurrentUser($fakeUser);
+
+                $pagePermissions .= '<tr><td>' . $role->name . '</td>';
+                foreach($pagePermissionsArr as $permission) {
+                    $pagePermissions .= '<td style="text-align: center;">' . ($p->$permission() ? '✔' : '') . '</td>';
+                }
+                $pagePermissions .= '</tr>';
+            }
+            $pagePermissions .= $sectionEnd;
+
+            $this->wire('users')->setCurrentUser($currentUser);
         }
 
         // Language info
@@ -403,7 +433,7 @@ class RequestInfoPanel extends BasePanel {
         if($this->wire('languages') && in_array('languageInfo', $panelSections) && $isPwPage) {
             $languageInfo .= '<table><tr><th>language</th><th>id</th><th>title</th><th>name</th><th>active</th></tr>';
             foreach($this->wire('languages') as $language) {
-                $languageInfo .= '<tr><td>' . $language->title . ' ('.$language->name.')</td><td><a title="Edit Language" href="'.$this->wire('config')->urls->admin.'/setup/languages/edit/?id='.$language->id.'">'.$language->id.'</a></td><td>' . $this->getLanguageVersion($p, 'title', $language) . '</td><td>' . $this->getLanguageVersion($p, 'name', $language) . '</td><td>' . ($language->isDefaultLanguage ? 'default' : ($p->get("status{$language->id}") ? "&#10004;" : "&#x2718;")) . '</td></tr>';
+                $languageInfo .= '<tr><td>' . $language->title . ' ('.$language->name.')</td><td><a title="Edit Language" href="'.$this->wire('config')->urls->admin.'/setup/languages/edit/?id='.$language->id.'">'.$language->id.'</a></td><td>' . $this->getLanguageVersion($p, 'title', $language) . '</td><td>' . $this->getLanguageVersion($p, 'name', $language) . '</td><td>' . ($language->isDefaultLanguage ? 'default' : ($p->get("status{$language->id}") ? "✔" : "✘")) . '</td></tr>';
             }
             $languageInfo .= '</table>';
         }

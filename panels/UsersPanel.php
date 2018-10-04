@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Allowed Non-Superusers panel
- */
-
 class UsersPanel extends BasePanel {
 
     protected $icon;

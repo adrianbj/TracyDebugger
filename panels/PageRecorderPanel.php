@@ -1,4 +1,5 @@
 <?php
+
 use Tracy\Dumper;
 
 class PageRecorderPanel extends BasePanel {

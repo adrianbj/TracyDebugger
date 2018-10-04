@@ -1,8 +1,5 @@
 <?php
 
-/**
- * Snippet Runner panel
- */
 class SnippetRunnerPanel extends BasePanel {
 
     protected $icon;

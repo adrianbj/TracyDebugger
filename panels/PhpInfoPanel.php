@@ -1,9 +1,5 @@
 <?php
 
-/**
- * PHP Info panel
- */
-
 class PhpInfoPanel extends BasePanel {
 
     public function getTab() {
@@ -23,24 +19,6 @@ class PhpInfoPanel extends BasePanel {
         </span>
         ';
     }
-
-    protected function sectionHeader($columnNames = array()) {
-        $out = '
-        <div>
-            <table>
-                <thead>
-                    <tr>';
-                        foreach($columnNames as $columnName) {
-                            $out .= '<th>'.$columnName.'</th>';
-                        }
-                    $out .= '
-                    </tr>
-                </thead>
-            <tbody>
-        ';
-        return $out;
-    }
-
 
     function removeElementsByTagName($tagName, $document) {
         $nodeList = $document->getElementsByTagName($tagName);

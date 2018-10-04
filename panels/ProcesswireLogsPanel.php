@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Processwire logs panel
- */
-
 class ProcesswireLogsPanel extends BasePanel {
 
     protected $icon;

@@ -1,14 +1,11 @@
 <?php
 
-/**
- * Tracy Toggler panel
- */
-
 class TracyTogglerPanel extends BasePanel {
 
     protected $icon;
 
     public function getTab() {
+
         if(\TracyDebugger::isAdditionalBar()) return;
         \Tracy\Debugger::timer('tracyToggler');
 

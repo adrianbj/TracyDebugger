@@ -8,6 +8,7 @@ class TodoPanel extends BasePanel {
     protected $todoTypes = array('todo', 'fixme', 'pending', 'xxx', 'hack', 'bug');
 
     public function getTab() {
+
         if(\TracyDebugger::isAdditionalBar()) return;
         \Tracy\Debugger::timer('todo');
 

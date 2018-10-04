@@ -211,13 +211,56 @@ class FileEditorPanel extends BasePanel {
                                 tracyFileEditor.tfe.gotoLine(1, 0);
                             }
                         }
+
+
                         tracyFileEditor.tfe.setOptions({
                             enableBasicAutocompletion: true,
-                            enableLiveAutocompletion: true,
+                            enableSnippets: true,
+                            //enableLiveAutocompletion: true,
                             tabSize: $codeTabSize,
                             useSoftTabs: $codeUseSoftTabs,
                             minLines: 5
                         });
+
+                        tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/code-snippets.js", function() {
+                            var snippetManager = ace.require("ace/snippets").snippetManager;
+                            snippetManager.register(getCodeSnippets(), "php");
+                        });
+
+                        // this triggers the autocomplete popup with any character entered
+                        // this is needed because enableLiveAutocompletion: true breaks snippet matching
+                        tracyFileEditor.tfe.commands.on("afterExec", function(e){
+                            if (e.command.name == "insertstring" && /[a-zA-Z]+$/.test(e.args)) {
+                                tracyFileEditor.tfe.execCommand("startAutocomplete");
+                            }
+                        });
+
+                        tracyFileEditor.tfe.commands.addCommands([
+                            {
+                                name: "increaseFontSize",
+                                bindKey: "Ctrl-=|Ctrl-+",
+                                exec: function(editor) {
+                                    var size = parseInt(tracyFileEditor.tfe.getFontSize(), 10) || 12;
+                                    editor.setFontSize(size + 1);
+                                }
+                            },
+                            {
+                                name: "decreaseFontSize",
+                                bindKey: "Ctrl+-|Ctrl-_",
+                                exec: function(editor) {
+                                    var size = parseInt(editor.getFontSize(), 10) || 12;
+                                    editor.setFontSize(Math.max(size - 1 || 1));
+                                }
+                            },
+                            {
+                                name: "resetFontSize",
+                                bindKey: "Ctrl+0|Ctrl-Numpad0",
+                                exec: function(editor) {
+                                    editor.setFontSize(14);
+                                }
+                            }
+                        ]);
+
 
                         tracyFileEditor.tfe.setAutoScrollEditorIntoView(true);
                         tracyFileEditor.resizeAce();

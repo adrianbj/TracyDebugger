@@ -154,7 +154,8 @@ class TD extends TracyDebugger {
         $options[Dumper::COLLAPSE_COUNT] = 1;
         $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
 
-        $out = '';
+        $out = '<div style="margin: 10px 0">';
+
         $editCountLink = '';
         if(count(\TracyDebugger::getDataValue('dumpPanelTabs')) > 0 && !is_string($var)) {
             $classExt = rand();
@@ -188,7 +189,7 @@ class TD extends TracyDebugger {
                     $section = 'setup';
                 }
 
-                if(isset($type)) $editCountLink .= self::generateEditLink($var, $type, $section);
+                if(isset($type)) $editCountLink .= self::generateEditViewLinks($var, $type, $section);
             }
 
             if($var instanceof WireArray || $var instanceof \ProcessWire\WireArray) {
@@ -208,7 +209,7 @@ class TD extends TracyDebugger {
                 else {
                     $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
                 }
-                $currentDump = Dumper::toHtml($panel == 'iterator' && method_exists($var, 'getIterator') ? $var->getIterator() : $var, $options);
+                $currentDump = Dumper::toHtml($panel == 'iterator' && method_exists($var, 'getIterator') ? self::humanize($var->getIterator()) : $var, $options);
                 if(!isset($lastDump) || (isset($lastDump) && $currentDump !== $lastDump)) {
                 	$numTabs++;
                 	$tabs .= '<li id="'.$panel.'Tab_'.$classExt.'"' . ($i == 0 ? 'class="active"' : '') . '><a href="javascript:void(0)" onclick="toggleDumpType(\''.$panel.'\', '.$classExt.')">'.\TracyDebugger::$dumpPanelTabs[$panel].'</a></li>';
@@ -226,19 +227,36 @@ class TD extends TracyDebugger {
 	        else {
             	$out .= $lastDump;
 	        }
+
         }
         else {
             $out .= Dumper::toHtml($var, $options);
         }
+
+        $out .= '</div>';
+
         return $out;
+    }
+
+    /**
+     * Generate human readable datetime and user->id to name str.
+     * @tracySkipLocation
+     */
+    private static function humanize($arrayObject) {
+        if(isset($arrayObject['created'])) $arrayObject['created'] = $arrayObject['created'] . ' (' . date('Y-m-d H:i:s', $arrayObject['created']) . ')';
+        if(isset($arrayObject['modified'])) $arrayObject['modified'] = $arrayObject['modified'] . ' (' . date('Y-m-d H:i:s', $arrayObject['modified']) . ')';
+        if(isset($arrayObject['published'])) $arrayObject['published'] = $arrayObject['published'] . ' (' . date('Y-m-d H:i:s', $arrayObject['published']) . ')';
+        if(isset($arrayObject['created_users_id'])) $arrayObject['created_users_id'] = $arrayObject['created_users_id'] . ' (' . wire('users')->get($arrayObject['created_users_id'])->name . ')';
+        if(isset($arrayObject['modified_users_id'])) $arrayObject['modified_users_id'] = $arrayObject['modified_users_id'] . ' (' . wire('users')->get($arrayObject['modified_users_id'])->name . ')';
+        return $arrayObject;
     }
 
     /**
      * Generate edit link for various PW objects.
      * @tracySkipLocation
      */
-    private static function generateEditLink($var, $type, $section) {
-        return '<li style="float:right"><a href="' . wire('config')->urls->admin . $section . ($section ? '/' : '') . $type . '/edit/?id=' . $var->id . '" title="Edit ' . trim($type, 's') . ': ' . $var->name . '">#' . $var->id . '</a></li>';
+    private static function generateEditViewLinks($var, $type, $section) {
+        return '<li style="float:right"><a href="' . wire('config')->urls->admin . $section . ($section ? '/' : '') . $type . '/edit/?id=' . $var->id . '" title="Edit ' . trim($type, 's') . ': ' . $var->name . '">#' . $var->id . '</a>' . ($type == 'page' && $var->viewable() ? '<a href="' . $var->url . '" title="View ' . trim($type, 's') . ': ' . $var->path . '" class="' . (method_exists($var, 'hasStatus') && $var->hasStatus('unpublished') ? 'pageUnpublished' : '') . (method_exists($var, 'hasStatus') && $var->hasStatus('hidden') ? 'pageHidden' : '') . '">' : '<span class="pageTitle">') . ((strlen($var->get('title|name')) > 20) ? substr($var->get('title|name'),0,19).'…' : $var->get('title|name')) . ($type == 'page' && $var->viewable() ? '</a>' : '</span>') . '</li>';
     }
 
     /**

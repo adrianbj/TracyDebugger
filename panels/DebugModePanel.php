@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Custom PW panel
- */
-
 use \Tracy\Dumper;
 
 class DebugModePanel extends BasePanel {

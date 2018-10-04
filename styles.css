@@ -383,7 +383,7 @@ table.captainHookTable th:nth-child(3) {
 pre.tracy-dump {
     background: transparent !important;
     padding: .4em 2em .4em .7em !important;
-    margin: 0 0 20px 0 !important;
+    margin: 0 0 10px 0 !important;
     border: 1px solid #D2D2D2 !important;
     border-radius: 0 !important;
 }
@@ -1557,7 +1557,6 @@ ul.tracyDumpTabs li.active:not(:first-child) a {
 
 ul.tracyDumpTabs li a:link {
     text-decoration: none !important;
-    color: #444 !important;
 }
 
 ul.tracyDumpTabs li a:hover {
@@ -1566,6 +1565,16 @@ ul.tracyDumpTabs li a:hover {
 
 ul.tracyDumpTabs li:not(:last-child) {
     border-right-width: 0;
+}
+
+ul.tracyDumpTabs li span.pageTitle {
+    padding: 4px 7px;
+}
+ul.tracyDumpTabs li a.pageUnpublished {
+    text-decoration:line-through !important;
+}
+ul.tracyDumpTabs li a.pageHidden {
+    opacity:0.6;
 }
 
 span.tracyDumpsExpander,
@@ -1601,6 +1610,7 @@ span.tracyDumpsCollapser {
     height: 100% !important;
     overflow: auto;
 }
+
 
 /* hide the fullscreen toggle until the js editor loads */
 

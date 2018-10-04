@@ -6,6 +6,7 @@ class ProcesswireVersionPanel extends BasePanel {
     protected $versions;
 
     public function getTab() {
+
         if(\TracyDebugger::isAdditionalBar()) return;
         \Tracy\Debugger::timer('processwireVersion');
 

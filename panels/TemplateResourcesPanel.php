@@ -13,6 +13,7 @@ class TemplateResourcesPanel extends BasePanel {
     protected $warn = 0;
 
     public function getTab() {
+
         if(\TracyDebugger::isAdditionalBar()) return;
         \Tracy\Debugger::timer('templateResources');
 

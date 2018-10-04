@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Custom PW panel
- */
-
 class CustomPhpPanel extends BasePanel {
 
     protected $icon;

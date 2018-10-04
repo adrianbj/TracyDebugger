@@ -1,27 +1,27 @@
 <?php
 
-use Tracy\IBarPanel;
-
-/**
- * Method Info panel
- */
-
 class MethodsInfoPanel extends BasePanel {
+
+    protected $icon;
+
     public function getTab() {
+
         if(\TracyDebugger::isAdditionalBar()) return;
         \Tracy\Debugger::timer('methodsInfo');
 
-        return '
-        <span title="Methods Info">
+        $this->icon = '
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="16px" height="16px" viewBox="0 0 16 16">
                 <path fill="'.\TracyDebugger::COLOR_NORMAL.'" d="M2.1 3.1c0.2 1.3 0.4 1.6 0.4 2.9 0 0.8-1.5 1.5-1.5 1.5v1c0 0 1.5 0.7 1.5 1.5 0 1.3-0.2 1.6-0.4 2.9-0.3 2.1 0.8 3.1 1.8 3.1s2.1 0 2.1 0v-2c0 0-1.8 0.2-1.8-1 0-0.9 0.2-0.9 0.4-2.9 0.1-0.9-0.5-1.6-1.1-2.1 0.6-0.5 1.2-1.1 1.1-2-0.3-2-0.4-2-0.4-2.9 0-1.2 1.8-1.1 1.8-1.1v-2c0 0-1 0-2.1 0s-2.1 1-1.8 3.1z"/>
                 <path fill="'.\TracyDebugger::COLOR_NORMAL.'" d="M13.9 3.1c-0.2 1.3-0.4 1.6-0.4 2.9 0 0.8 1.5 1.5 1.5 1.5v1c0 0-1.5 0.7-1.5 1.5 0 1.3 0.2 1.6 0.4 2.9 0.3 2.1-0.8 3.1-1.8 3.1s-2.1 0-2.1 0v-2c0 0 1.8 0.2 1.8-1 0-0.9-0.2-0.9-0.4-2.9-0.1-0.9 0.5-1.6 1.1-2.1-0.6-0.5-1.2-1.1-1.1-2 0.2-2 0.4-2 0.4-2.9 0-1.2-1.8-1.1-1.8-1.1v-2c0 0 1 0 2.1 0s2.1 1 1.8 3.1z"/>
             </svg>
-            ' . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Methods Info' : '') . '
+        ';
+
+        return '
+        <span title="Methods Info">
+            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Methods Info' : '') . '
         </span>
         ';
     }
-
 
 
     public function getPanel() {
@@ -29,15 +29,8 @@ class MethodsInfoPanel extends BasePanel {
         $docsUrl = 'https://adrianbj.github.io/TracyDebugger';
         $debugMethodsRootUrl = $docsUrl . '/#/debug-methods?id=';
 
-        // panel title
-        $out = '
-        <h1>
-            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="16px" height="16px" viewBox="0 0 16 16">
-                <path fill="'.\TracyDebugger::COLOR_NORMAL.'" d="M2.1 3.1c0.2 1.3 0.4 1.6 0.4 2.9 0 0.8-1.5 1.5-1.5 1.5v1c0 0 1.5 0.7 1.5 1.5 0 1.3-0.2 1.6-0.4 2.9-0.3 2.1 0.8 3.1 1.8 3.1s2.1 0 2.1 0v-2c0 0-1.8 0.2-1.8-1 0-0.9 0.2-0.9 0.4-2.9 0.1-0.9-0.5-1.6-1.1-2.1 0.6-0.5 1.2-1.1 1.1-2-0.3-2-0.4-2-0.4-2.9 0-1.2 1.8-1.1 1.8-1.1v-2c0 0-1 0-2.1 0s-2.1 1-1.8 3.1z"/>
-                <path fill="'.\TracyDebugger::COLOR_NORMAL.'" d="M13.9 3.1c-0.2 1.3-0.4 1.6-0.4 2.9 0 0.8 1.5 1.5 1.5 1.5v1c0 0-1.5 0.7-1.5 1.5 0 1.3 0.2 1.6 0.4 2.9 0.3 2.1-0.8 3.1-1.8 3.1s-2.1 0-2.1 0v-2c0 0 1.8 0.2 1.8-1 0-0.9-0.2-0.9-0.4-2.9-0.1-0.9 0.5-1.6 1.1-2.1-0.6-0.5-1.2-1.1-1.1-2 0.2-2 0.4-2 0.4-2.9 0-1.2-1.8-1.1-1.8-1.1v-2c0 0 1 0 2.1 0s2.1 1 1.8 3.1z"/>
-            </svg>
-            Methods Info
-        </h1>
+        $out = '<h1>' . $this->icon . ' Methods Info</h1>
+
         <div class="tracy-inner">
             <p><a href="'.$docsUrl.'" target="_blank"><button class="tracyCopyBtn">TracyDebugger Docs</button></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://tracy.nette.org/" target="_blank"><button class="tracyCopyBtn">Tracy Docs</button></a></p>
             <br />

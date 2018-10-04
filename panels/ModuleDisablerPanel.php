@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Module Selector Panel
- */
-
 class ModuleDisablerPanel extends BasePanel {
 
     protected $icon;
@@ -39,7 +35,6 @@ class ModuleDisablerPanel extends BasePanel {
             </span>
         ';
     }
-
 
 
     public function getPanel() {

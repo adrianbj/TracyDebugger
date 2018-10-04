@@ -1,12 +1,5 @@
 <?php
 
-/**
- * Custom PW panel
- *
- * Attempts to analyse the way PW is setup and offer helpful tips for securing/correcting the installation.
- *
- */
-
 class DiagnosticsPanel extends BasePanel {
 
     protected static $iconColor;

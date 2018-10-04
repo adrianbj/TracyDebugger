@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Validator panel
- */
-
 class ValidatorPanel extends BasePanel {
 
     protected $icon;

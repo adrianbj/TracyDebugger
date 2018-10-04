@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Output Mode panel
- */
-
 class OutputModePanel extends BasePanel {
 
     protected $outputMode;
@@ -55,7 +51,6 @@ class OutputModePanel extends BasePanel {
         </span>
         ';
     }
-
 
 
     public function getPanel() {
