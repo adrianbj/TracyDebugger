@@ -401,14 +401,15 @@ class RequestInfoPanel extends BasePanel {
         // Page permissions
         if(in_array('pageInfo', $panelSections) && $isPwPage) {
 
-            $pagePermissions = $this->sectionHeader(array('', 'view', 'edit', 'add', 'publish', 'list', 'move', 'sort', 'delete', 'trash'));
-            if(version_compare($this->wire('config')->version, '3.0.107') >= 0) array_push($pagePermissions, 'restore');
-            $pagePermissionsArr = array('viewable', 'editable', 'addable', 'publishable', 'listable', 'moveable', 'sortable', 'deleteable', 'trashable');
-            if(version_compare($this->wire('config')->version, '3.0.107') >= 0) array_push($pagePermissionsArr, 'restorable');
+            $pagePermissionsLabels = array('', 'view', 'edit', 'add', 'publish', 'list', 'move', 'sort', 'delete', 'trash');
+            if(version_compare($this->wire('config')->version, '3.0.107') >= 0) array_push($pagePermissionsLabels, 'restore');
+            $pagePermissions = $this->sectionHeader($pagePermissionsLabels);
+            $pagePermissionsPerms = array('viewable', 'editable', 'addable', 'publishable', 'listable', 'moveable', 'sortable', 'deleteable', 'trashable');
+            if(version_compare($this->wire('config')->version, '3.0.107') >= 0) array_push($pagePermissionsPerms, 'restorable');
 
             // current user
             $pagePermissions .= '<tr><td><strong>' . $this->wire('user')->name . '</strong></td>';
-            foreach($pagePermissionsArr as $permission) {
+            foreach($pagePermissionsPerms as $permission) {
                 $pagePermissions .= '<td style="text-align: center;">' . ($p->$permission() ? '✔' : '') . '</td>';
             }
 
@@ -420,7 +421,7 @@ class RequestInfoPanel extends BasePanel {
                 $this->wire('users')->setCurrentUser($fakeUser);
 
                 $pagePermissions .= '<tr><td>' . $role->name . '</td>';
-                foreach($pagePermissionsArr as $permission) {
+                foreach($pagePermissionsPerms as $permission) {
                     $pagePermissions .= '<td style="text-align: center;">' . ($p->$permission() ? '✔' : '') . '</td>';
                 }
                 $pagePermissions .= '</tr>';
