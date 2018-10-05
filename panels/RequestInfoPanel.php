@@ -402,10 +402,12 @@ class RequestInfoPanel extends BasePanel {
         if(in_array('pageInfo', $panelSections) && $isPwPage) {
 
             $pagePermissionsLabels = array('', 'view', 'edit', 'add', 'publish', 'list', 'move', 'sort', 'delete', 'trash');
-            if(version_compare($this->wire('config')->version, '3.0.107') >= 0) array_push($pagePermissionsLabels, 'restore');
-            $pagePermissions = $this->sectionHeader($pagePermissionsLabels);
             $pagePermissionsPerms = array('viewable', 'editable', 'addable', 'publishable', 'listable', 'moveable', 'sortable', 'deleteable', 'trashable');
-            if(version_compare($this->wire('config')->version, '3.0.107') >= 0) array_push($pagePermissionsPerms, 'restorable');
+            if(version_compare($this->wire('config')->version, '3.0.107') >= 0) {
+                array_push($pagePermissionsLabels, 'restore');
+                array_push($pagePermissionsPerms, 'restorable');
+            }
+            $pagePermissions = $this->sectionHeader($pagePermissionsLabels);
 
             // current user
             $pagePermissions .= '<tr><td><strong>' . $this->wire('user')->name . '</strong></td>';
