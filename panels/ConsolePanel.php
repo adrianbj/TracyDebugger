@@ -573,31 +573,22 @@ class ConsolePanel extends BasePanel {
                         tracyConsole.tce.setOptions({
                             enableBasicAutocompletion: true,
                             enableSnippets: true,
-                            //enableLiveAutocompletion: true,
+                            enableLiveAutocompletion: true,
                             tabSize: $codeTabSize,
                             useSoftTabs: $codeUseSoftTabs,
                             minLines: 5
                         });
 
                         tracyJSLoader.load(tracyConsole.tracyModuleUrl + "scripts/code-snippets.js", function() {
-                            var snippetManager = ace.require("ace/snippets").snippetManager;
-                            snippetManager.register(getCodeSnippets(), "php-inline");
+                            tracyConsole.snippetManager = ace.require("ace/snippets").snippetManager;
+                            tracyConsole.snippetManager.register(getCodeSnippets(), "php-inline");
                         });
 
                         if(tracyConsole.customSnippetsUrl !== '') {
                             tracyJSLoader.load(tracyConsole.customSnippetsUrl, function() {
-                                var snippetManager = ace.require("ace/snippets").snippetManager;
-                                snippetManager.register(getCustomCodeSnippets(), "php-inline");
+                                tracyConsole.snippetManager.register(getCustomCodeSnippets(), "php-inline");
                             });
                         }
-
-                        // this triggers the autocomplete popup with any letter(a-zA-Z) entered
-                        // this is needed because enableLiveAutocompletion: true breaks snippet matching
-                        tracyConsole.tce.commands.on("afterExec", function(e){
-                            if (e.command.name == "insertstring" && /[a-zA-Z]+$/.test(e.args)) {
-                                tracyConsole.tce.execCommand("startAutocomplete");
-                            }
-                        });
 
                         tracyConsole.tce.commands.addCommands([
                             {

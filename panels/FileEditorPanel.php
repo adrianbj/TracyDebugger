@@ -194,8 +194,8 @@ class FileEditorPanel extends BasePanel {
                     // in ext-modelist.js I have added "inc" to PHP and "latte" to Twig
                     tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/ace-editor/ext-modelist.js", function() {
                         tracyFileEditor.modelist = ace.require("ace/ext/modelist");
-                        var mode = tracyFileEditor.modelist.getModeForPath(tracyFileEditor.tracyFileEditorFilePath).mode;
-                        tracyFileEditor.tfe.session.setMode(mode);
+                        tracyFileEditor.mode = tracyFileEditor.modelist.getModeForPath(tracyFileEditor.tracyFileEditorFilePath).mode;
+                        tracyFileEditor.tfe.session.setMode(tracyFileEditor.mode);
                     });
 
                     // set autocomplete and other options
@@ -218,31 +218,22 @@ class FileEditorPanel extends BasePanel {
                         tracyFileEditor.tfe.setOptions({
                             enableBasicAutocompletion: true,
                             enableSnippets: true,
-                            //enableLiveAutocompletion: true,
+                            enableLiveAutocompletion: true,
                             tabSize: $codeTabSize,
                             useSoftTabs: $codeUseSoftTabs,
                             minLines: 5
                         });
 
                         tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/code-snippets.js", function() {
-                            var snippetManager = ace.require("ace/snippets").snippetManager;
-                            snippetManager.register(getCodeSnippets(), mode);
+                            tracyFileEditor.snippetManager = ace.require("ace/snippets").snippetManager;
+                            tracyFileEditor.snippetManager.register(getCodeSnippets(), tracyFileEditor.mode.replace('ace/mode/', ''));
                         });
 
                         if(tracyFileEditor.customSnippetsUrl !== '') {
                             tracyJSLoader.load(tracyFileEditor.customSnippetsUrl, function() {
-                                var snippetManager = ace.require("ace/snippets").snippetManager;
-                                snippetManager.register(getCustomCodeSnippets(), "php");
+                                tracyFileEditor.snippetManager.register(getCustomCodeSnippets(), "php");
                             });
                         }
-
-                        // this triggers the autocomplete popup with any letter(a-zA-Z) entered
-                        // this is needed because enableLiveAutocompletion: true breaks snippet matching
-                        tracyFileEditor.tfe.commands.on("afterExec", function(e){
-                            if (e.command.name == "insertstring" && /[a-zA-Z]+$/.test(e.args)) {
-                                tracyFileEditor.tfe.execCommand("startAutocomplete");
-                            }
-                        });
 
                         tracyFileEditor.tfe.commands.addCommands([
                             {
