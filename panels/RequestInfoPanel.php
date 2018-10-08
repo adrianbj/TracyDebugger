@@ -127,15 +127,7 @@ class RequestInfoPanel extends BasePanel {
             $inputFieldSettings = '';
             if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessField') {
                 $field = $this->wire('fields')->get((int)$this->wire('input')->get('id'));
-                if($field->inputfieldClass) {
-                    $inputfield = $this->wire('modules')->get($field->inputfieldClass);
-                }
-                elseif($field->inputfield) {
-                    $inputfield = $this->wire('modules')->get($field->inputfield);
-                }
-                else {
-                    $inputfield = $this->wire('modules')->get(str_replace('Fieldtype', 'Inputfield', $field->type));
-                }
+                $inputfield = $field->getInputfield(new NullPage());
                 if($inputfield) {
                     $inputFieldSettings = '
                     <table>
