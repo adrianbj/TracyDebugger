@@ -85,6 +85,10 @@ class FileEditorPanel extends BasePanel {
         $codeTabSize = \TracyDebugger::getDataValue('codeTabSize');
         $customSnippetsUrl = \TracyDebugger::getDataValue('customSnippetsUrl');
 
+        $aceTheme = \TracyDebugger::getDataValue('aceTheme');
+        $codeFontSize = \TracyDebugger::getDataValue('codeFontSize');
+        $codeLineHeight = \TracyDebugger::getDataValue('codeLineHeight');
+
         $out .= <<< HTML
         <script>
 
@@ -95,6 +99,9 @@ class FileEditorPanel extends BasePanel {
                 tracyFileEditorFilePath: "{$this->tracyFileEditorFilePath}",
                 errorMessage: "{$this->errorMessage}",
                 customSnippetsUrl: "$customSnippetsUrl",
+                aceTheme: "$aceTheme",
+                codeFontSize: $codeFontSize,
+                codeLineHeight: $codeLineHeight,
 
                 isSafari: function() {
                     if (navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
@@ -140,17 +147,7 @@ class FileEditorPanel extends BasePanel {
                     tracyFileEditor.resizeAce();
                 },
 
-                resizeContainers: function() {
-                    var fileEditorPanel = document.getElementById("tracy-debug-panel-FileEditorPanel");
-                    if(!fileEditorPanel.classList.contains('tracy-mode-window')) {
-                        var fileEditorPanellHeight = fileEditorPanel.offsetHeight;
-                        document.getElementById("tracyFileEditorContainer").style.height = fileEditorPanellHeight - 130 + 'px';
-                    }
-                },
-
                 resizeAce: function(focus = true) {
-                    this.resizeContainers();
-                    document.getElementById("tracyFileEditorCode").style.height = '100%';
                     tracyFileEditor.tfe.resize(true);
                     if(focus) {
                         document.getElementById("tracy-debug-panel-FileEditorPanel").classList.add('tracy-focused');
@@ -163,9 +160,9 @@ class FileEditorPanel extends BasePanel {
             tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/ace-editor/ace.js", function() {
                 if(typeof ace !== "undefined") {
                     tracyFileEditor.tfe = ace.edit("tracyFileEditorCode");
-                    tracyFileEditor.lineHeight = 24;
+                    tracyFileEditor.lineHeight = tracyFileEditor.codeLineHeight;
                     tracyFileEditor.tfe.container.style.lineHeight = tracyFileEditor.lineHeight + 'px';
-                    tracyFileEditor.tfe.setFontSize(14);
+                    tracyFileEditor.tfe.setFontSize(tracyFileEditor.codeFontSize);
                     tracyFileEditor.tfe.setShowPrintMargin(false);
                     tracyFileEditor.tfe.setShowInvisibles($codeShowInvisibles);
                     tracyFileEditor.tfe.\$blockScrolling = Infinity; //fix deprecation warning
@@ -188,7 +185,7 @@ class FileEditorPanel extends BasePanel {
                     });
 
                     // set theme
-                    tracyFileEditor.tfe.setTheme("ace/theme/tomorrow_night");
+                    tracyFileEditor.tfe.setTheme("ace/theme/" + tracyFileEditor.aceTheme);
 
                     // set mode appropriately
                     // in ext-modelist.js I have added "inc" to PHP and "latte" to Twig
@@ -325,28 +322,27 @@ HTML;
 
         $out .= '<h1>'.$this->icon.' File Editor: <span id="panelTitleFilePath" style="font-size:14px">'.($this->tracyFileEditorFilePath ?: 'no selected file').'</span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'FileEditorPanel\')">+</a></span></span>
         <div class="tracy-inner">
-            <div id="tracyFileEditorContainer">
-                <div id="tracyFoldersFiles" style="float: left; margin: 0; padding:0; width: 310px; height: 100%; overflow: auto">';
-
-                    $out .= "<div class='fe-file-tree'>";
-                    $out .= $this->php_file_tree($this->wire('config')->paths->{\TracyDebugger::getDataValue('fileEditorBaseDirectory')}, $this->toArray(\TracyDebugger::getDataValue('fileEditorAllowedExtensions')));
-                    $out .= "</div>";
-
-                $out .= '
+            <div id="tracyFileEditorContainer" style="height: 100%;">
+                <div style="float: left; height: calc(100% - 38px);">
+                    <div id="tracyFoldersFiles" style="margin: 0; padding:0; width: 310px; height: 100%; overflow: auto">';
+                        $out .= "<div class='fe-file-tree'>";
+                        $out .= $this->php_file_tree($this->wire('config')->paths->{\TracyDebugger::getDataValue('fileEditorBaseDirectory')}, $this->toArray(\TracyDebugger::getDataValue('fileEditorAllowedExtensions')));
+                        $out .= "</div>";
+                    $out .= '
+                    </div>
+                    <div style="padding: 10px 12px 0 0; float:right">
+                        <form id="tracyFileEditorSubmission" style="padding: 0; margin: 0; method="post" action="'.\TracyDebugger::inputUrl(true).'">
+                            <fieldset>
+                                <textarea id="tracyFileEditorRawCode" name="tracyFileEditorRawCode" style="display:none"></textarea>
+                                <input type="hidden" id="fileEditorFilePath" name="fileEditorFilePath" value="'.$this->tracyFileEditorFilePath.'" />
+                                <div id="fileEditorButtons"></div>
+                            </fieldset>
+                        </form>
+                    </div>
                 </div>
                 <div id="tracyFileEditorCodeContainer" style="float: left; margin: 0; padding:0; width: calc(100% - 310px); height: 100%; overflow: none">
-                    <div id="tracyFileEditorCode" style="position:relative;"></div><br />
+                    <div id="tracyFileEditorCode" style="position:relative; height: 100%"></div>
                 </div>
-            </div>
-            <br />
-            <div style="float:right">
-                <form id="tracyFileEditorSubmission" method="post" action="'.\TracyDebugger::inputUrl(true).'">
-                    <fieldset>
-                        <textarea id="tracyFileEditorRawCode" name="tracyFileEditorRawCode" style="display:none"></textarea>
-                        <input type="hidden" id="fileEditorFilePath" name="fileEditorFilePath" value="'.$this->tracyFileEditorFilePath.'" />
-                        <div id="fileEditorButtons"></div>
-                    </fieldset>
-                </form>
             </div>
             ';
 

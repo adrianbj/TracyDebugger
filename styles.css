@@ -693,6 +693,7 @@ ul.pw-info-links {
 
 #tracy-debug-panel-FileEditorPanel {
     height: 75%;
+    min-height: 300px !important;
     width: 1400px;
 }
 
@@ -894,8 +895,10 @@ ul.pw-info-links {
 .tracy-time-size {
     position: relative;
     display: inline-block;
-    vertical-align: bottom !important;
-    padding-bottom: 0 !important;
+    vertical-align: top !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    top: 2px !important;
 }
 
 .tracy-panel-settings-link {
@@ -1168,7 +1171,6 @@ ul.pw-info-links {
 /* Splitjs styles */
 
 #tracyConsoleContainer>.split {
-    min-height: 24px !important;
     -webkit-box-sizing: border-box !important;
     -moz-box-sizing: border-box !important;
     box-sizing: border-box !important;
@@ -1176,9 +1178,9 @@ ul.pw-info-links {
 
 #tracyConsoleContainer .gutter {
     all: unset;
-    display: block !important;
     min-height: 8px !important;
-    height: 8px !important;
+    max-height: 8px !important;
+    display: block !important;
     background-color: #AEAEAE !important;
     opacity: 1 !important;
     background-repeat: no-repeat !important;

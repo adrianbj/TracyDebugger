@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.12.4',
+            'version' => '4.12.5',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -253,9 +253,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "onlineEditor" => 'tracy',
             "forceEditorLinksToTracy" => 1,
             "localRootPath" => '',
+            "aceTheme" => 'tomorrow_night',
+            "codeFontSize" => 14,
+            "codeLineHeight" => 24,
+            "codeShowInvisibles" => true,
             "codeTabSize" => 4,
             "codeUseSoftTabs" => true,
-            "codeShowInvisibles" => true,
             "customSnippetsUrl" => '',
             "fileEditorAllowedExtensions" => 'php, module, js, css, htaccess',
             "fileEditorBaseDirectory" => 'templates',
@@ -2723,24 +2726,45 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $fieldset->description = __("These settings apply to the Console panel and the File Editor panel", __FILE__);
         $wrapper->add($fieldset);
 
-        $f = $this->wire('modules')->get("InputfieldInteger");
-        $f->attr('name', 'codeTabSize');
-        $f->label = __('Tab size', __FILE__);
-        $f->description = __('Number of spaces (or equivalent tab width).', __FILE__);
+        $f = $this->wire('modules')->get("InputfieldSelect");
+        $f->attr('name', 'aceTheme');
+        $f->label = __('Theme', __FILE__);
         $f->columnWidth = 33;
+        $themes = array();
+        foreach (new \DirectoryIterator(wire('config')->paths->$this.'scripts/ace-editor/') as $file) {
+            if($file->isFile()) {
+                $baseName = $file->getBasename('.js');
+                if(strpos($baseName, 'theme-') !== false) {
+                    array_push($themes, str_replace('theme-', '', $baseName));
+                }
+            }
+        }
+        asort($themes);
+        foreach($themes as $theme) {
+            $f->addOption($theme);
+        }
         $f->required = true;
-        if($data['codeTabSize']) $f->attr('value', $data['codeTabSize']);
+        if($data['aceTheme']) $f->attr('value', $data['aceTheme']);
         $fieldset->add($f);
 
-        $f = $this->wire('modules')->get("InputfieldSelect");
-        $f->attr('name', 'codeUseSoftTabs');
-        $f->label = __('Use Soft Tabs', __FILE__);
-        $f->description = __('Uses spaces rather than actual (hard) tabs.', __FILE__);
+        $f = $this->wire('modules')->get("InputfieldInteger");
+        $f->attr('name', 'codeFontSize');
+        $f->label = __('Font size', __FILE__);
+        $f->description = __('In pixels.', __FILE__);
+        $f->notes = __('If you change the font size you must also set the "Line height" to an appropriate value relative to the font size.', __FILE__);
         $f->columnWidth = 34;
-        $f->addOption(1, 'True');
-        $f->addOption(0, 'False');
         $f->required = true;
-        if($data['codeUseSoftTabs']) $f->attr('value', $data['codeUseSoftTabs']);
+        if($data['codeFontSize']) $f->attr('value', $data['codeFontSize']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldInteger");
+        $f->attr('name', 'codeLineHeight');
+        $f->label = __('Line height', __FILE__);
+        $f->description = __('In pixels.', __FILE__);
+        $f->notes = __('You must set this to an appropriate value relative to the font size.', __FILE__);
+        $f->columnWidth = 33;
+        $f->required = true;
+        if($data['codeLineHeight']) $f->attr('value', $data['codeLineHeight']);
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldSelect");
@@ -2752,6 +2776,26 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->addOption(0, 'False');
         $f->required = true;
         if($data['codeShowInvisibles']) $f->attr('value', $data['codeShowInvisibles']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldInteger");
+        $f->attr('name', 'codeTabSize');
+        $f->label = __('Tab size', __FILE__);
+        $f->description = __('Number of spaces (or equivalent tab width).', __FILE__);
+        $f->columnWidth = 34;
+        $f->required = true;
+        if($data['codeTabSize']) $f->attr('value', $data['codeTabSize']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldSelect");
+        $f->attr('name', 'codeUseSoftTabs');
+        $f->label = __('Use Soft Tabs', __FILE__);
+        $f->description = __('Uses spaces rather than actual (hard) tabs.', __FILE__);
+        $f->columnWidth = 33;
+        $f->addOption(1, 'True');
+        $f->addOption(0, 'False');
+        $f->required = true;
+        if($data['codeUseSoftTabs']) $f->attr('value', $data['codeUseSoftTabs']);
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldURL");

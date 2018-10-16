@@ -40,7 +40,8 @@ class ConsolePanel extends BasePanel {
         $pwRoot = $this->wire('config')->urls->root;
         $tracyModuleUrl = $this->wire("config")->urls->TracyDebugger;
         $inAdmin = \TracyDebugger::$inAdmin;
-        $containerAdjustment = $inAdmin ? 70 : 155;
+        $consoleAdjustment = $inAdmin ? 0 : 20;
+        $snippetsAdjustment = $inAdmin ? 20 : 0;
 
         // store various $input properties so they are available to the console
         $this->wire('session')->tracyPostData = $this->wire('input')->post->getArray();
@@ -115,6 +116,9 @@ class ConsolePanel extends BasePanel {
         $codeShowInvisibles = \TracyDebugger::getDataValue('codeShowInvisibles');
         $codeTabSize = \TracyDebugger::getDataValue('codeTabSize');
         $customSnippetsUrl = \TracyDebugger::getDataValue('customSnippetsUrl');
+        $aceTheme = \TracyDebugger::getDataValue('aceTheme');
+        $codeFontSize = \TracyDebugger::getDataValue('codeFontSize');
+        $codeLineHeight = \TracyDebugger::getDataValue('codeLineHeight');
 
         $out .= <<< HTML
         <script>
@@ -128,8 +132,10 @@ class ConsolePanel extends BasePanel {
                 historyCount: localStorage.getItem("tracyConsoleHistoryCount"),
                 loadedSnippetCode: null,
                 desc: false,
-                inAdmin: "$inAdmin",
                 customSnippetsUrl: "$customSnippetsUrl",
+                aceTheme: "$aceTheme",
+                codeFontSize: $codeFontSize,
+                lineHeight: $codeLineHeight,
 
                 isSafari: function() {
                     if (navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
@@ -279,7 +285,6 @@ class ConsolePanel extends BasePanel {
                 },
 
                 resizeAce: function(focus = true) {
-                    document.getElementById("tracyConsoleEditor").style.height = '100%';
                     tracyConsole.tce.resize(true);
                     if(focus) {
                         window.Tracy.Debug.panels["tracy-debug-panel-ConsolePanel"].focus();
@@ -526,9 +531,8 @@ class ConsolePanel extends BasePanel {
             tracyJSLoader.load(tracyConsole.tracyModuleUrl + "scripts/ace-editor/ace.js", function() {
                 if(typeof ace !== "undefined") {
                     tracyConsole.tce = ace.edit("tracyConsoleEditor");
-                    tracyConsole.lineHeight = 24;
                     tracyConsole.tce.container.style.lineHeight = tracyConsole.lineHeight + 'px';
-                    tracyConsole.tce.setFontSize(14);
+                    tracyConsole.tce.setFontSize(tracyConsole.codeFontSize);
                     tracyConsole.tce.setShowPrintMargin(false);
                     tracyConsole.tce.setShowInvisibles($codeShowInvisibles);
                     tracyConsole.tce.\$blockScrolling = Infinity;
@@ -548,7 +552,7 @@ class ConsolePanel extends BasePanel {
                     });
 
                     // set theme
-                    tracyConsole.tce.setTheme("ace/theme/tomorrow_night");
+                    tracyConsole.tce.setTheme("ace/theme/" + tracyConsole.aceTheme);
 
                     // set mode to php
                     tracyConsole.tce.session.setMode({path:"ace/mode/php", inline:true});
@@ -579,11 +583,13 @@ class ConsolePanel extends BasePanel {
                             minLines: 5
                         });
 
+                        // included PW snippets
+                        tracyConsole.snippetManager = ace.require("ace/snippets").snippetManager;
                         tracyJSLoader.load(tracyConsole.tracyModuleUrl + "scripts/code-snippets.js", function() {
-                            tracyConsole.snippetManager = ace.require("ace/snippets").snippetManager;
                             tracyConsole.snippetManager.register(getCodeSnippets(), "php-inline");
                         });
 
+                        // custom snippets URL
                         if(tracyConsole.customSnippetsUrl !== '') {
                             tracyJSLoader.load(tracyConsole.customSnippetsUrl, function() {
                                 tracyConsole.snippetManager.register(getCustomCodeSnippets(), "php-inline");
@@ -628,41 +634,23 @@ class ConsolePanel extends BasePanel {
                         // splitjs
                         tracyJSLoader.load(tracyConsole.tracyModuleUrl + "/scripts/splitjs/split.min.js", function() {
                             var sizes = localStorage.getItem('tracyConsoleSplitSizes');
-                            var consoleGutterSize = 8;
+                            tracyConsole.consoleGutterSize = 8;
+                            tracyConsole.minSize = tracyConsole.lineHeight;
                             sizes = sizes ? JSON.parse(sizes) : [40, 60];
-                            var split = Split(['#tracyConsoleCode', '#tracyConsoleResult'], {
+                            tracyConsole.split = Split(['#tracyConsoleCode', '#tracyConsoleResult'], {
                                 direction: 'vertical',
-                                minSize: tracyConsole.lineHeight,
-                                sizes: sizes,
-                                gutterSize: consoleGutterSize,
-                                snapOffset: 10,
                                 cursor: 'row-resize',
+                                sizes: sizes,
+                                minSize: tracyConsole.minSize,
+                                expandToMin: true,
+                                gutterSize: tracyConsole.consoleGutterSize,
+                                snapOffset: 10,
+                                dragInterval: tracyConsole.lineHeight,
+                                gutterAlign: 'end',
                                 onDrag: tracyConsole.resizeAce,
                                 onDragEnd: function() {
-                                    // snap to row height
-                                    sizes = split.getSizes();
-                                    var containerHeight = document.getElementById('tracyConsoleContainer').offsetHeight;
-                                    var codePaneHeight = (sizes[0] / 100 * containerHeight) - (consoleGutterSize/2);
-                                    var dividerPosition = codePaneHeight / tracyConsole.lineHeight;
-                                    var lineHeightPct = (tracyConsole.lineHeight + (consoleGutterSize/2)) / containerHeight * 100;
-                                    var nstring = (dividerPosition + ""),
-                                    narray  = nstring.split("."),
-                                    result  = "0." + ( narray.length > 1 ? narray[1] : "0" );
-                                    if(result >= 0.5) codePaneHeight = codePaneHeight + tracyConsole.lineHeight;
-                                    codePaneHeight = codePaneHeight - tracyConsole.lineHeight;
-                                    codePaneHeight = Math.ceil(codePaneHeight / tracyConsole.lineHeight) * tracyConsole.lineHeight;
-                                    sizes[0] = (codePaneHeight + (consoleGutterSize/2)) / containerHeight * 100;
-                                    // reset sizes if somehow dragged to less than minSize setting
-                                    if(sizes[0] < lineHeightPct) sizes[0] = lineHeightPct;
-                                    sizes[1] = 100 - sizes[0];
-                                    if(sizes[1] < lineHeightPct) {
-                                        sizes[1] = lineHeightPct;
-                                        sizes[0] = 100 - sizes[1];
-                                    }
-                                    split.setSizes(sizes);
-
                                     // save split
-                                    localStorage.setItem('tracyConsoleSplitSizes', JSON.stringify(split.getSizes()));
+                                    localStorage.setItem('tracyConsoleSplitSizes', JSON.stringify(tracyConsole.split.getSizes()));
                                     tracyConsole.tce.focus();
                                 }
                             });
@@ -675,81 +663,75 @@ class ConsolePanel extends BasePanel {
                                         var numLines = tracyConsole.tce.session.getLength();
                                         if(e.keyCode==13||e.charCode==13) numLines++;
                                         var containerHeight = document.getElementById('tracyConsoleContainer').offsetHeight;
-                                        collapsedCodePaneHeightPct = (tracyConsole.lineHeight + (consoleGutterSize/2)) / containerHeight * 100;
-                                        var codeLinesHeight = (numLines * tracyConsole.lineHeight + (consoleGutterSize/2));
+                                        collapsedCodePaneHeightPct = (tracyConsole.lineHeight + (tracyConsole.consoleGutterSize/2)) / containerHeight * 100;
+                                        var codeLinesHeight = (numLines * tracyConsole.lineHeight + (tracyConsole.consoleGutterSize/2));
                                         var codeLinesHeightPct = codeLinesHeight / containerHeight * 100;
                                         if(containerHeight - codeLinesHeight < tracyConsole.lineHeight) codeLinesHeightPct = 100 - collapsedCodePaneHeightPct;
-                                        split.setSizes([codeLinesHeightPct, 100 - codeLinesHeightPct]);
-                                        localStorage.setItem('tracyConsoleSplitSizes', JSON.stringify(split.getSizes()));
+                                        tracyConsole.split.setSizes([codeLinesHeightPct, 100 - codeLinesHeightPct]);
+                                        localStorage.setItem('tracyConsoleSplitSizes', JSON.stringify(tracyConsole.split.getSizes()));
                                     }
 
                                     if(e.ctrlKey && e.shiftKey) {
                                         e.preventDefault();
-                                        // maybe switch to collapse() if splitjs adds support for collapse respecting minSize
-                                        // https://github.com/nathancahill/Split.js/issues/95
                                         var containerHeight = document.getElementById('tracyConsoleContainer').offsetHeight;
-                                        collapsedCodePaneHeightPct = (tracyConsole.lineHeight + (consoleGutterSize/2)) / containerHeight * 100;
+                                        collapsedCodePaneHeightPct = (tracyConsole.lineHeight + (tracyConsole.consoleGutterSize/2)) / containerHeight * 100;
 
                                         // enter - toggle fullscreen
                                         if((e.keyCode==10||e.charCode==10)||(e.keyCode==13||e.charCode==13)) {
                                             tracyConsole.toggleFullscreen();
                                         }
-                                        // down - maximize code pane
+                                        // down - maximize code pane (collapse results pane)
                                         if(e.keyCode==40||e.charCode==40) {
-                                            //split.collapse(1);
-                                            split.setSizes([100 - collapsedCodePaneHeightPct, collapsedCodePaneHeightPct]);
+                                            tracyConsole.split.collapse(1);
                                         }
                                         // up - minimize code pane
                                         if(e.keyCode==38||e.charCode==38) {
-                                            //split.collapse(0);
-                                            split.setSizes([collapsedCodePaneHeightPct, 100 - collapsedCodePaneHeightPct]);
+                                            tracyConsole.split.collapse(0);
                                         }
                                         // page down - add new row to code pane and save
                                         if(e.keyCode==34||e.charCode==34) {
-                                            sizes = split.getSizes();
-                                            if(sizes[1] > collapsedCodePaneHeightPct) {
-                                                var codePaneHeight = (sizes[0] / 100 * containerHeight) - (consoleGutterSize/2);
+                                            sizes = tracyConsole.split.getSizes();
+                                            if(sizes[1] > collapsedCodePaneHeightPct + tracyConsole.consoleGutterSize) {
+                                                var codePaneHeight = (sizes[0] / 100 * containerHeight) - (tracyConsole.consoleGutterSize/2);
                                                 codePaneHeight = Math.round(codePaneHeight + tracyConsole.lineHeight);
                                                 codePaneHeight = Math.ceil(codePaneHeight / tracyConsole.lineHeight) * tracyConsole.lineHeight;
-                                                sizes[0] = (codePaneHeight + (consoleGutterSize/2)) / containerHeight * 100;
+                                                sizes[0] = codePaneHeight / containerHeight * 100;
                                                 sizes[1] = 100 - sizes[0];
+                                                tracyConsole.split.setSizes(sizes);
                                             }
                                             else {
-                                                sizes[0] = 100 - collapsedCodePaneHeightPct;
-                                                sizes[1] = collapsedCodePaneHeightPct;
+                                                tracyConsole.split.collapse(1);
                                             }
-                                            split.setSizes(sizes);
-                                            localStorage.setItem('tracyConsoleSplitSizes', JSON.stringify(split.getSizes()));
+                                            localStorage.setItem('tracyConsoleSplitSizes', JSON.stringify(tracyConsole.split.getSizes()));
                                         }
                                         // page up - remove row from code pane and save
                                         if(e.keyCode==33||e.charCode==33) {
-                                            var sizes = split.getSizes();
-                                            if(sizes[0] > collapsedCodePaneHeightPct) {
-                                                var codePaneHeight = (sizes[0] / 100 * containerHeight) - (consoleGutterSize/2);
+                                            var sizes = tracyConsole.split.getSizes();
+                                            if(sizes[0] > collapsedCodePaneHeightPct + tracyConsole.consoleGutterSize) {
+                                                var codePaneHeight = (sizes[0] / 100 * containerHeight) - (tracyConsole.consoleGutterSize/2);
                                                 codePaneHeight = Math.round(codePaneHeight - tracyConsole.lineHeight);
                                                 codePaneHeight = Math.ceil(codePaneHeight / tracyConsole.lineHeight) * tracyConsole.lineHeight;
-                                                sizes[0] = (codePaneHeight + (consoleGutterSize/2)) / containerHeight * 100;
+                                                sizes[0] = codePaneHeight / containerHeight * 100;
                                                 sizes[1] = 100 - sizes[0];
+                                                tracyConsole.split.setSizes(sizes);
                                             }
                                             else {
-                                                sizes[0] = collapsedCodePaneHeightPct;
-                                                sizes[1] = 100 - collapsedCodePaneHeightPct;
+                                                tracyConsole.split.collapse(0);
                                             }
-                                            split.setSizes(sizes);
-                                            localStorage.setItem('tracyConsoleSplitSizes', JSON.stringify(split.getSizes()));
+                                            localStorage.setItem('tracyConsoleSplitSizes', JSON.stringify(tracyConsole.split.getSizes()));
                                         }
                                         // right - expand to fit all code
                                         if(e.keyCode==39||e.charCode==39) {
-                                            var codeLinesHeight = (tracyConsole.tce.session.getLength() * tracyConsole.lineHeight + (consoleGutterSize/2));
+                                            var codeLinesHeight = (tracyConsole.tce.session.getLength() * tracyConsole.lineHeight + (tracyConsole.consoleGutterSize/2));
                                             var codeLinesHeightPct = codeLinesHeight / containerHeight * 100;
                                             if(containerHeight - codeLinesHeight < tracyConsole.lineHeight) codeLinesHeightPct = 100 - collapsedCodePaneHeightPct;
-                                            split.setSizes([codeLinesHeightPct, 100 - codeLinesHeightPct]);
+                                            tracyConsole.split.setSizes([codeLinesHeightPct, 100 - codeLinesHeightPct]);
                                         }
                                         // left - restore last saved pane split position
                                         if(e.keyCode==37||e.charCode==37) {
                                             var sizes = localStorage.getItem('tracyConsoleSplitSizes');
                                             sizes = sizes ? JSON.parse(sizes) : [40, 60];
-                                            split.setSizes(sizes);
+                                            tracyConsole.split.setSizes(sizes);
                                         }
                                     }
                                 }
@@ -768,6 +750,20 @@ class ConsolePanel extends BasePanel {
                         var config = { attributes: true, attributeOldValue: true };
                         tracyConsole.observer = new MutationObserver(function(mutations) {
                             mutations.forEach(function(mutation) {
+
+                                // if split is less than minSize then collapse it (which will expand it to minSize)
+                                // this is mostly for resizing of the entire panel
+                                if(tracyConsole.split) {
+                                    var containerHeight = document.getElementById('tracyConsoleContainer').offsetHeight;
+                                    var sizes = tracyConsole.split.getSizes();
+                                    if(sizes[0] * containerHeight / 100 < tracyConsole.minSize - (tracyConsole.consoleGutterSize/2)) {
+                                        tracyConsole.split.collapse(0);
+                                    }
+                                    else if(sizes[1] * containerHeight / 100 < tracyConsole.minSize - (tracyConsole.consoleGutterSize/2)) {
+                                        tracyConsole.split.collapse(1);
+                                    }
+                                }
+
                                 // change in class indicates focus so we can focus cursor in editor
                                 if(mutation.attributeName == 'class' && mutation.oldValue !== mutation.target.className && mutation.oldValue.indexOf('tracy-focused') === -1 && mutation.target.classList.contains('tracy-focused')) {
                                     tracyConsole.resizeAce();
@@ -864,9 +860,9 @@ HTML;
         $out .= '<h1>' . $this->icon . ' Console <span title="Keyboard Shortcuts" style="display: inline-block; margin-left: 5px; cursor: pointer" onclick="tracyConsole.toggleKeyboardShortcuts()">' . $keyboardShortcutIcon . '</span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'ConsolePanel\')">+</a></span></span>
         <div class="tracy-inner">
 
-            <div style="height: calc(100% - ' . $containerAdjustment . 'px)">
+            <div style="position: relative; height: calc(100% - ' . (45 + $consoleAdjustment) . 'px)">
 
-                <div id="tracyConsoleMainContainer" style="position: relative; height: 100%">
+                <div id="tracyConsoleMainContainer" style="position: absolute; height: 100%">
                     <div id="keyboardShortcuts" class="tracyHidden">
                         <table>
                             <th colspan="2">Code Execution</th>
@@ -954,9 +950,9 @@ HTML;
                         <span id="tracyConsoleStatus" style="padding: 10px"></span>
                     </div>
 
-                    <div id="tracyConsoleContainer" class="split" style="height: 100%">
-                        <div id="tracyConsoleCode" class="split" style="position:relative; background:#FFFFFF;">
-                            <div id="tracyConsoleEditor" style="min-height:24px"></div>
+                    <div id="tracyConsoleContainer" class="split" style="height: 100%; min-height: '.$codeLineHeight.'px">
+                        <div id="tracyConsoleCode" class="split" style="position: relative; background: #FFFFFF;">
+                            <div id="tracyConsoleEditor" style="height: 100%; min-height: '.$codeLineHeight.'px"></div>
                         </div>
                         <div id="tracyConsoleResult" class="split" style="position:relative; padding:0 10px; overflow:auto; border:1px solid #D2D2D2;">';
                 if($this->wire('input')->cookie->tracyCodeError) {
@@ -968,7 +964,7 @@ HTML;
                     </div>
                 </div>
 
-                <div id="tracySnippetsContainer" style="position: relative; float: left; margin: 0 0 0 20px; width: 265px; height: 100%">
+                <div id="tracySnippetsContainer" style="position: absolute; right:0; margin: 0 0 0 20px; width: 265px; height: calc(100% - ' . $snippetsAdjustment . 'px)">
                     <div style="padding-bottom:5px">
                         Sort: <a href="#" onclick="tracyConsole.sortList(\'alphabetical\')">alphabetical</a>&nbsp;|&nbsp;<a href="#" onclick="tracyConsole.sortList(\'chronological\')">chronological</a>
                     </div>
