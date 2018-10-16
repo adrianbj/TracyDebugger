@@ -132,6 +132,7 @@ class ConsolePanel extends BasePanel {
                 historyCount: localStorage.getItem("tracyConsoleHistoryCount"),
                 loadedSnippetCode: null,
                 desc: false,
+                inAdmin: "$inAdmin",
                 customSnippetsUrl: "$customSnippetsUrl",
                 aceTheme: "$aceTheme",
                 codeFontSize: $codeFontSize,
@@ -874,9 +875,9 @@ HTML;
                                 <td>ALT/OPT + Enter</td>
                                 <td>Clear & Run</td>
                             </tr>
-                            </table>
-                            <br />
-                            <table>
+                        </table>
+                        <br />
+                        <table>
                             <th colspan="2">Execution History</th>
                             <tr>
                                 <td>ALT + PageUp</td>
@@ -886,9 +887,9 @@ HTML;
                                 <td>ALT + PageDown</td>
                                 <td>Forward</td>
                             </tr>
-                            </table>
-                            <br />
-                            <table>
+                        </table>
+                        <br />
+                        <table>
                             <th colspan="2">Screen / Pane Manipulation</th>
                             <tr>
                                 <td>CTRL + SHFT + Enter</td>
@@ -927,8 +928,19 @@ HTML;
                                 <td>Contract to fit all code and remove line (saves position)</td>
                             </tr>
                         </table>
+                        <br />
+                        <table>
+                            <th colspan="2">Miscellaneous</th>
+                            <tr>
+                                <td>CTRL + +</td>
+                                <td>Font Size Increase</td>
+                            </tr>
+                            <tr>
+                                <td>CTRL + -</td>
+                                <td>Font Size Decrease</td>
+                            </tr>
+                        </table>
                     </div>
-
                 ';
             if(!$inAdmin) {
                 $out .= '
