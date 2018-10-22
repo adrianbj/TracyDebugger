@@ -64,6 +64,7 @@ body.tracyHidden:before {
 
 .tracy-panel {
     box-sizing: border-box !important;
+    max-height: calc(100% - 20px) !important;
 }
 
 .tracy-panel a:link {

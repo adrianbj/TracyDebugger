@@ -558,8 +558,6 @@ class RequestInfoPanel extends BasePanel {
             $fieldsListValues = $this->sectionHeader(array('id', 'name', 'label', 'type', 'inputfieldType/class', 'unformatted', 'formatted', 'image details', 'settings'));
             $value = array();
             foreach($p->fields as $f) {
-                $value = $this->getFieldArray($p,$f);
-                $dumpedValue = Dumper::toHtml($value, array(Dumper::LIVE => true, Dumper::DEBUGINFO => \TracyDebugger::getDataValue('debugInfo'), Dumper::DEPTH => 99, Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
                 $fieldArray['settings'] = $p->template->fieldgroup->getField($f, true)->getArray();
                 $settings = Dumper::toHtml($fieldArray['settings'], array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
 
@@ -569,8 +567,8 @@ class RequestInfoPanel extends BasePanel {
                     "<td>$f->label</td>" .
                     "<td>".str_replace('Fieldtype', '', $f->type)."</td>" .
                     "<td>".str_replace('Inputfield', '', ($f->inputfield ? $f->inputfield : $f->inputfieldClass))."</td>" .
-                    "<td>".$dumpedValue."</td>" .
-                    "<td>".$this->getFormattedValue($p, $f)."</td>" .
+                    "<td>".$this->generateOutput($p, $f, false)."</td>" .
+                    "<td>".$this->generateOutput($p, $f, true)."</td>" .
                     "<td>".$this->imageDetails($p, $f)."</td>" .
                     "<td>".$settings."</td>" .
                     "</tr>";
@@ -699,9 +697,9 @@ class RequestInfoPanel extends BasePanel {
                 </a>&nbsp;';
             }
             if(isset($templateFileEditorLink) && $templateFileEditorLink != '') {
-                $out .= $templateFileEditorLink . '&nbsp;
-                </div>';
+                $out .= $templateFileEditorLink . '&nbsp';
             }
+            $out .= '</div>';
         }
 
         $out .= '<br />';
@@ -712,59 +710,14 @@ class RequestInfoPanel extends BasePanel {
     }
 
 
-    private function getFieldArray(Page $p, $f) {
-        $of = $p->of();
-        $p->of(false);
-        $fieldArray = '';
-        if($f->type == "FieldtypeFieldsetTabOpen"
-           || $f->type == "FieldtypeFieldsetTabClose"
-           || $f->type == "FieldtypeFieldsetOpen"
-           || $f->type == "FieldtypePassword"
-           || $f->type == "FieldtypeFieldsetClose") return false;
-
-        if($f->type instanceof FieldtypeRepeater) {
-            if(is_object($p->$f) && count($p->$f)) {
-                $fieldArray = array();
-                foreach($p->$f as $o) $fieldArray[$o->id] = $o->getIterator();
-            }
-        }
-        elseif($f->type instanceof FieldtypePage) {
-            if(is_object($p->$f) && count($p->$f)) {
-                $fieldArray = array();
-                if($p->$f instanceof PageArray) {
-                    foreach($p->$f as $o) $fieldArray[$o->id] = $o->getIterator();
-                }
-                else {
-                    if($p->$f) $fieldArray[$p->$f->id] = $p->$f->getIterator();
-                        else $fieldArray = '';
-                }
-            }
-            else {
-                $fieldArray = $p->$f;
-            }
-        }
-        elseif($f->type instanceof FieldtypeFile) {
-            $fieldArray = array();
-            $fieldArray = $p->$f->getIterator();
+    private function generateOutput($p, $f, $outputFormatting) {
+        $value = $outputFormatting ? $p->getFormatted($f->name) : $p->getUnformatted($f->name);
+        if(is_string($value) && $outputFormatting) {
+            $out = substr($value, 0, \TracyDebugger::getDataValue('maxLength')) . (strlen($value) > 99 ? '... ('.strlen($value).')' : '');
         }
         else {
-            $fieldArray = $p->$f ?: '';
+            $out = Dumper::toHtml($value, array(Dumper::LIVE => true, Dumper::DEBUGINFO => \TracyDebugger::getDataValue('debugInfo'), Dumper::DEPTH => 99, Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
         }
-        $p->of($of);
-        return $fieldArray;
-    }
-
-
-    private function getFormattedValue($p, $f) {
-        $of = $p->of();
-        $p->of(true);
-        try {
-            $out = $p->$f;
-        } catch (\Exception $e) {
-            $p->of(false);
-            $out = $p->$f;
-        }
-        $p->of($of);
         return $out;
     }
 
