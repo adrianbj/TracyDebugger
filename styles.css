@@ -59,12 +59,11 @@ body.tracyHidden:before {
 #tracy-debug .tracy-mode-peek,
 #tracy-debug .tracy-mode-float:not(.tracy-panel-resized) {
     max-width: calc(100vw - 15px) !important;
-    max-height: calc(100vh - 22px) !important;
+    max-height: calc(100vh - 44px) !important;
 }
 
 .tracy-panel {
     box-sizing: border-box !important;
-    max-height: calc(100% - 20px) !important;
 }
 
 .tracy-panel a:link {

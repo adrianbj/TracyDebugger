@@ -4,8 +4,7 @@ function tracyResizePanel(panel) {
     tracyPanel.elem.classList.add('tracy-panel-resized');
     tracyPanel.elem.dataset.tracyContent = true; // hack to satisy condition in Tracy's restorePosition() method
     var maximizedPanelSettings = JSON.parse(localStorage.getItem(panel.id + '-maximizedSettings'));
-    var panelSettings = JSON.parse(localStorage.getItem(panel.id));
-    if(maximizedPanelSettings && panelSettings) {
+    if(maximizedPanelSettings) {
         localStorage.setItem(panel.id, localStorage.getItem(panel.id + '-maximizedSettings'));
         tracyPanel.restorePosition();
         localStorage.removeItem(panel.id + '-maximizedSettings');
@@ -14,9 +13,9 @@ function tracyResizePanel(panel) {
         tracyPanel.savePosition();
         localStorage.setItem(panel.id + '-maximizedSettings', JSON.stringify(JSON.parse(localStorage.getItem(panel.id))));
         panel.style.left = '0px';
-        panel.style.width = 'calc(100vw - 15px)';
+        panel.style.width = window.clientHeight < window.scrollHeight ? 'calc(100vw - 15px)' : '100vw';
         panel.style.top = '0px';
-        panel.style.height = 'calc(100vh - 22px)';
+        panel.style.height = 'calc(100vh - 44px)';
     }
 }
 
