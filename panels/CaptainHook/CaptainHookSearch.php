@@ -85,7 +85,6 @@ class CaptainHookSearch {
                     if($nextStringIsClass) {
                         $nextStringIsClass = false;
                         $className = $token[1];
-                        //if(strpos($file, '/modules/') !== false && !wire('modules')->isInstalled($className)) return;
                     }
                     if($nextStringIsExtends) {
                         $nextStringIsExtends = false;
