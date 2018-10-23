@@ -104,8 +104,8 @@ class CaptainHookSearch {
                             $files['hooks'][$name]['rawname'] = $name;
                             if(strpos($comment, '#pw-internal') === false && strpos($file, 'wire') !== false) {
                                 if(wire('modules')->isInstalled('ProcessWireAPI')) {
-                                    $ApiModuleId = wire('modules')->getModuleID("ProcessWireAPI");
-                                    $files['hooks'][$name]['name'] = "<a href='".wire('pages')->get("process=$ApiModuleId")->url.'methods/'.self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $name . "</a>";
+                                    $apiModuleId = wire('modules')->getModuleID("ProcessWireAPI");
+                                    $files['hooks'][$name]['name'] = "<a href='".wire('pages')->get("process=$apiModuleId")->url.'methods/'.self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $name . "</a>";
                                 }
                                 elseif(strpos($file, 'modules') === false) {
                                     $files['hooks'][$name]['name'] = "<a href='https://processwire.com/api/ref/".self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $name . "</a>";

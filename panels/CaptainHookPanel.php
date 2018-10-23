@@ -6,11 +6,13 @@ class CaptainHookPanel extends BasePanel {
     protected $apiBaseUrl;
 
     public function __construct() {
-        if(wire('modules')->isInstalled('ProcessWireAPI')) {
-            $ApiModuleId = wire('modules')->getModuleID("ProcessWireAPI");
-            $this->apiBaseUrl = wire('pages')->get("process=$ApiModuleId")->url.'methods/';
+        if($this->wire('modules')->isInstalled('ProcessWireAPI')) {
+            $apiModuleInstalled = true;
+            $apiModuleId = $this->wire('modules')->getModuleID("ProcessWireAPI");
+            $this->apiBaseUrl = $this->wire('pages')->get("process=$apiModuleId")->url.'methods/';
         }
         else {
+            $apiModuleInstalled = false;
             $this->apiBaseUrl = 'https://processwire.com/api/ref/';
         }
     }
@@ -127,7 +129,7 @@ HTML;
             if($currentSection !== $lastSection) $out .= '<h3>'.$currentSection.'</h3>';
             $out .= '
             <a href="#" rel="'.$name.'" class="tracy-toggle tracy-collapsed">'.str_replace($segments[0].'/'.$segments[1].'/', '', $label).'</a>
-            <div style="padding-left:10px" id="'.$name.'" class="tracy-collapsed"><p>'.(isset($info['classname']) && (!in_array('site', $segments) || wire('modules')->isInstalled('ProcessWireAPI')) ? '<a href="'.$this->apiBaseUrl.$this->convertNamesToUrls($info['classname']).'/">'.$info['classname'].'</a> ' : $info['classname']).(isset($info['extends']) ? ' extends <a href="'.$this->apiBaseUrl.$this->convertNamesToUrls($info['extends']).'/">'.$info['extends'].'</a>' : '').'</p>'.$this->buildHookTable($info).'</div><br />';
+            <div style="padding-left:10px" id="'.$name.'" class="tracy-collapsed"><p>'.(isset($info['classname']) && (!in_array('site', $segments) || $this->apiModuleInstalled) ? '<a href="'.$this->apiBaseUrl.$this->convertNamesToUrls($info['classname']).'/">'.$info['classname'].'</a> ' : $info['classname']).(isset($info['extends']) ? ' extends <a href="'.$this->apiBaseUrl.$this->convertNamesToUrls($info['extends']).'/">'.$info['extends'].'</a>' : '').'</p>'.$this->buildHookTable($info).'</div><br />';
             $lastSection = $currentSection;
         }
 
