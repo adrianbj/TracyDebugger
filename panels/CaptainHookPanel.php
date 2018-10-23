@@ -48,7 +48,9 @@ class CaptainHookPanel extends BasePanel {
     public function getPanel() {
 
         $out = '
-        <h1>' . $this->icon . ' Captain Hook</h1>
+        <h1>' . $this->icon . ' Captain Hook</h1>';
+
+        $out .= <<< HTML
 
         <script>
             function removeA(arr) {
@@ -88,9 +90,12 @@ class CaptainHookPanel extends BasePanel {
                     }
                 });
                 groupShow = !groupShow;
+                window.Tracy.Debug.panels["tracy-debug-panel-CaptainHookPanel"].reposition();
             }
         </script>
+HTML;
 
+        $out .= '
         <div class="tracy-inner">
             <p><input type="submit" id="toggleAll" onclick="toggleHooks()" value="Toggle All" /></p>
         ';
