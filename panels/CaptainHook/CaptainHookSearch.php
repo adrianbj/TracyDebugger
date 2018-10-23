@@ -4,8 +4,6 @@ ini_set('memory_limit', -1);
 
 class CaptainHookSearch {
 
-    //protected static $hookNames = array();
-
     public static function getHooks($root, $excludeFilenames = array()) {
 
         $filenamesArray = self::getPHPFilenames($root, $excludeFilenames);
@@ -98,37 +96,35 @@ class CaptainHookSearch {
                         if(strpos($token[1], '___') !== false) {
                             $methodName = str_replace('___', '', $token[1]);
                             $name = $className . '::' . $methodName;
-                            //if(!in_array($name, self::$hookNames)) {
-                                if(!$lastStringWasComment) $comment = '';
-                                //self::$hookNames[] = $name;
-                                $files['filename'] = $file;
-                                $files['classname'] = $className;
-                                $files['extends'] = $extendsClassName;
-                                $files['hooks'][$name]['rawname'] = $name;
-                                if(strpos($comment, '#pw-internal') === false && strpos($file, 'wire') !== false) {
-                                    if(wire('modules')->isInstalled('ProcessWireAPI')) {
-                                        $ApiModuleId = wire('modules')->getModuleID("ProcessWireAPI");
-                                        $files['hooks'][$name]['name'] = "<a href='".wire('pages')->get("process=$ApiModuleId")->url.'methods/'.self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $name . "</a>";
-                                    }
-                                    elseif(strpos($file, 'modules') === false) {
-                                        $files['hooks'][$name]['name'] = "<a href='https://processwire.com/api/ref/".self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $name . "</a>";
-                                    }
-                                    else {
-                                        $files['hooks'][$name]['name'] = $name;
-                                    }
+
+                            if(!$lastStringWasComment) $comment = '';
+                            $files['filename'] = $file;
+                            $files['classname'] = $className;
+                            $files['extends'] = $extendsClassName;
+                            $files['hooks'][$name]['rawname'] = $name;
+                            if(strpos($comment, '#pw-internal') === false && strpos($file, 'wire') !== false) {
+                                if(wire('modules')->isInstalled('ProcessWireAPI')) {
+                                    $ApiModuleId = wire('modules')->getModuleID("ProcessWireAPI");
+                                    $files['hooks'][$name]['name'] = "<a href='".wire('pages')->get("process=$ApiModuleId")->url.'methods/'.self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $name . "</a>";
+                                }
+                                elseif(strpos($file, 'modules') === false) {
+                                    $files['hooks'][$name]['name'] = "<a href='https://processwire.com/api/ref/".self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $name . "</a>";
                                 }
                                 else {
                                     $files['hooks'][$name]['name'] = $name;
                                 }
+                            }
+                            else {
+                                $files['hooks'][$name]['name'] = $name;
+                            }
 
-                                $files['hooks'][$name]['lineNumber'] = $token[2];
-                                $files['hooks'][$name]['line'] = "
-                                    <div id='ch-comment'>
-                                        <label class='".($lastStringWasComment ? 'comment' : '')."' for='".$name."'>".self::getFunctionLine($lines[($token[2]-1)])." </label>
-                                        <input type='checkbox' id='".$name."'>
-                                        <div class='hide'>".nl2br(htmlentities($comment))."</div>
-                                    </div>";
-                            //}
+                            $files['hooks'][$name]['lineNumber'] = $token[2];
+                            $files['hooks'][$name]['line'] = "
+                                <div id='ch-comment'>
+                                    <label class='".($lastStringWasComment ? 'comment' : '')."' for='".$name."'>".self::getFunctionLine($lines[($token[2]-1)])." </label>
+                                    <input type='checkbox' id='".$name."'>
+                                    <div class='hide'>".nl2br(htmlentities($comment))."</div>
+                                </div>";
                         }
                     }
                     if($secondLastStringWasThis && $lastStringWasObjectOperator) {
@@ -162,16 +158,13 @@ class CaptainHookSearch {
                         $lastStringWasAddHook = false;
                         $lastStringWasComment = false;
                         $name = str_replace(array("'", '"'), "", $token[1]);
-                        //if(!in_array($name, self::$hookNames)) {
-                            //self::$hookNames[] = $name;
-                            $files['filename'] = $file;
-                            $files['classname'] = $className;
-                            $files['extends'] = $extendsClassName;
-                            $files['hooks'][$name]['rawname'] = $name;
-                            $files['hooks'][$name]['name'] = $name;
-                            $files['hooks'][$name]['lineNumber'] = $token[2];
-                            $files['hooks'][$name]['line'] = self::strip_comments(trim($lines[($token[2]-1)]));
-                        //}
+                        $files['filename'] = $file;
+                        $files['classname'] = $className;
+                        $files['extends'] = $extendsClassName;
+                        $files['hooks'][$name]['rawname'] = $name;
+                        $files['hooks'][$name]['name'] = $name;
+                        $files['hooks'][$name]['lineNumber'] = $token[2];
+                        $files['hooks'][$name]['line'] = self::strip_comments(trim($lines[($token[2]-1)]));
                     }
                     break;
             }
@@ -180,12 +173,6 @@ class CaptainHookSearch {
         // sort hooks by class and method within each file
         if(isset($files['hooks']) && is_array($files['hooks'])) {
             asort($files['hooks']);
-            // simple asort seems to work fine, using the first key (rawname) from the array, but if problems, then switch to below
-            /*usort($files['hooks'], function($a, $b) {
-                $a = str_replace('::', '', $a['rawname']);
-                $b = str_replace('::', '', $b['rawname']);
-                return strnatcmp($a, $b);
-            });*/
         }
         return $files;
     }

@@ -117,3 +117,10 @@ var  tdToggle = function(el, show) {
     el.classList.toggle('tracy-collapsed', !show);
     dest.classList.toggle('tracy-collapsed', !show);
 }
+
+// reposition panel if comment opened (for Captain Hook and API Explorer panels)
+document.addEventListener("click", filterEventHandler(".comment", function (e) {
+    setTimeout(function(){
+        window.Tracy.Debug.panels[e.filterdTarget.closest('.tracy-panel').id].reposition();
+    }, 250);
+}));
