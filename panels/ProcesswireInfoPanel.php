@@ -9,9 +9,9 @@ class ProcesswireInfoPanel extends BasePanel {
     protected $newTab;
 
     public function __construct() {
-        if(wire('modules')->isInstalled('ProcessWireAPI')) {
-            $ApiModuleId = wire('modules')->getModuleID("ProcessWireAPI");
-            $this->apiBaseUrl = wire('pages')->get("process=$ApiModuleId")->url.'methods/';
+        if($this->wire('modules')->isInstalled('ProcessWireAPI')) {
+            $apiModuleId = $this->wire('modules')->getModuleID("ProcessWireAPI");
+            $this->apiBaseUrl = $this->wire('pages')->get("process=$apiModuleId")->url.'methods/';
         }
         else {
             $this->apiBaseUrl = 'https://processwire.com/api/ref/';

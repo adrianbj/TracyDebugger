@@ -314,6 +314,25 @@ table.captainHookTable th:nth-child(3) {
     width: 65% !important;
 }
 
+table.apiExplorerTable td:first-child,
+table.apiExplorerTable th:first-child {
+    width: 15% !important;
+}
+
+table.apiExplorerTable td:nth-child(2),
+table.apiExplorerTable th:nth-child(2) {
+    width: 5% !important;
+}
+
+table.apiExplorerTable td:nth-child(3),
+table.apiExplorerTable th:nth-child(3) {
+    width: 35% !important;
+}
+table.apiExplorerTable td:nth-child(4),
+table.apiExplorerTable th:nth-child(4) {
+    width: 55% !important;
+}
+
 #tracy-debug input[type="submit"],
 .tracyCopyBtn {
     width: initial !important;
@@ -1133,7 +1152,7 @@ ul.pw-info-links {
     border-left-color: rgba(255, 255, 255, 0.8) !important;
 }
 
-/* Captain Hook comment display/hide */
+/* Captain Hook / API Explorer comment display/hide */
 
 #ch-comment label {
     display: block !important;
@@ -1141,6 +1160,7 @@ ul.pw-info-links {
 }
 
 #ch-comment label.comment {
+    padding-top: 4px !important;
     color: #125EAE !important;
     cursor: pointer !important;
 }

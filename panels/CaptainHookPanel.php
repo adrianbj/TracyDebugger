@@ -133,7 +133,7 @@ HTML;
             $lastSection = $currentSection;
         }
 
-        $out .= \TracyDebugger::generatePanelFooter('captainHook', \Tracy\Debugger::timer('captainHook'), strlen($out));
+        $out .= \TracyDebugger::generatePanelFooter('captainHook', \Tracy\Debugger::timer('captainHook'), strlen($out), 'captainHookPanel');
         $out .= '
         </div>';
 
@@ -148,8 +148,12 @@ HTML;
                 <tr>
                     <td>'.$hook['name'].'</td>
                     <td>'.\TracyDebugger::createEditorLink($info['filename'], $hook['lineNumber'], $hook['lineNumber']).'</td>
-                    <td class="tracy-force-no-wrap">' . $hook['line'] . '</td>
-                </tr>';
+                    <td class="tracy-force-no-wrap">' . $hook['line'] . '</td>';
+                    if(\TracyDebugger::getDataValue('captainHookShowDescription') && isset($hook['description'])) {
+                        $out .= '<td class="tracy-force-no-wrap">' . $hook['description'] . '</td>';
+                    }
+                $out .=
+                '</tr>';
         }
         $out .= '
             </table>

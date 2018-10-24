@@ -57,7 +57,7 @@ class CaptainHookSearch {
         $lastStringWasAddHook = false;
         $className = null;
         $extendsClassName = null;
-        $comment = null;
+        $docComment = null;
 
         $files = array();
         foreach($tokens as $token) {
@@ -73,7 +73,7 @@ class CaptainHookSearch {
                     break;
 
                 case T_DOC_COMMENT:
-                    $comment = $token[1];
+                    $docComment = $token[1];
                     $lastStringWasComment = true;
                     break;
 
@@ -96,12 +96,12 @@ class CaptainHookSearch {
                             $methodName = str_replace('___', '', $token[1]);
                             $name = $className . '::' . $methodName;
 
-                            if(!$lastStringWasComment) $comment = '';
+                            if(!$lastStringWasComment) $docComment = '';
                             $files['filename'] = $file;
                             $files['classname'] = $className;
                             $files['extends'] = $extendsClassName;
                             $files['hooks'][$name]['rawname'] = $name;
-                            if(strpos($comment, '#pw-internal') === false && strpos($file, 'wire') !== false) {
+                            if(strpos($docComment, '#pw-internal') === false && strpos($file, 'wire') !== false) {
                                 if(wire('modules')->isInstalled('ProcessWireAPI')) {
                                     $apiModuleId = wire('modules')->getModuleID("ProcessWireAPI");
                                     $files['hooks'][$name]['name'] = "<a href='".wire('pages')->get("process=$apiModuleId")->url.'methods/'.self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $name . "</a>";
@@ -118,12 +118,36 @@ class CaptainHookSearch {
                             }
 
                             $files['hooks'][$name]['lineNumber'] = $token[2];
-                            $files['hooks'][$name]['line'] = "
+
+                            $methodStr = self::getFunctionLine($lines[($token[2]-1)]);
+
+                            if(\TracyDebugger::getDataValue('captainHookToggleDocComment')) {
+                                $commentStr = "
                                 <div id='ch-comment'>
-                                    <label class='".($lastStringWasComment ? 'comment' : '')."' for='".$name."'>".self::getFunctionLine($lines[($token[2]-1)])." </label>
+                                    <label class='".($lastStringWasComment ? 'comment' : '')."' for='".$name."'>".$methodStr." </label>
                                     <input type='checkbox' id='".$name."'>
-                                    <div class='hide'>".nl2br(htmlentities($comment))."</div>
+                                    <div class='hide'>".nl2br(htmlentities($docComment))."</div>
                                 </div>";
+                                $files['hooks'][$name]['line'] = $commentStr;
+                            }
+                            else {
+                                $files['hooks'][$name]['line'] = $methodStr;
+                            }
+
+                            if(\TracyDebugger::getDataValue('captainHookShowDescription')) {
+                                // get the comment
+                                preg_match('#^/\*\*(.*)\*/#s', $docComment, $comment);
+                                if(isset($comment[0])) $comment = trim($comment[0]);
+                                // get all the lines and strip the * from the first character
+                                if(is_string($comment)) {
+                                    preg_match_all('#^\s*\*(.*)#m', $comment, $commentLines);
+                                    $files['hooks'][$name]['description'] = isset($commentLines[1][0]) && is_string($commentLines[1][0]) ? nl2br(htmlentities(trim($commentLines[1][0]))) : '';
+                                }
+                                else {
+                                    $files['hooks'][$name]['description'] = '';
+                                }
+                            }
+
                         }
                     }
                     if($secondLastStringWasThis && $lastStringWasObjectOperator) {
