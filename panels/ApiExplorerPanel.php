@@ -1,5 +1,7 @@
 <?php
 
+use Tracy\Dumper;
+
 class ApiExplorerPanel extends BasePanel {
 
     protected $icon;
@@ -102,7 +104,7 @@ HTML;
             ksort($apiVars);
             foreach($apiVars as $key => $value) {
                 $r = new \ReflectionObject($this->wire()->$key);
-                $apiVariables += $this->buildMethodArray($r, $key);
+                $apiVariables += $this->buildItemsArray($r, $key);
             }
         }
 
@@ -110,7 +112,7 @@ HTML;
         foreach($apiVariables as $var => $methods) {
             $out .= '
             <a href="#" rel="'.$var.'" class="tracy-toggle tracy-collapsed">$'.$var.'</a>
-            <div style="padding-left:10px" id="'.$var.'" class="tracy-collapsed">' . $this->buildMethodTable($var, $methods) . '</div><br />';
+            <div style="padding-left:10px" id="'.$var.'" class="tracy-collapsed">' . $this->buildTable($var, $methods) . '</div><br />';
         }
 
 
@@ -180,7 +182,7 @@ HTML;
                 else {
                     continue;
                 }
-                $coreClasses += $this->buildMethodArray($r, $class);
+                $coreClasses += $this->buildItemsArray($r, $class);
             }
         }
 
@@ -189,7 +191,7 @@ HTML;
         foreach($coreClasses as $class => $methods) {
             $out .= '
             <a href="#" rel="'.$class.'" class="tracy-toggle tracy-collapsed">'.$class.'</a>
-            <div style="padding-left:10px" id="'.$class.'" class="tracy-collapsed">' . $this->buildMethodTable($class, $methods) . '</div><br />';
+            <div style="padding-left:10px" id="'.$class.'" class="tracy-collapsed">' . $this->buildTable($class, $methods) . '</div><br />';
         }
 
 
@@ -201,7 +203,8 @@ HTML;
     }
 
 
-    private function buildMethodArray($r, $key) {
+    private function buildItemsArray($r, $key) {
+        $items = array();
         $methods = $r->getMethods();
 
         usort($methods, function($a, $b) {
@@ -209,6 +212,49 @@ HTML;
             $bStripped = str_replace(array('___','__'), '', $b->name);
             return $aStripped > $bStripped;
         });
+
+        $properties = array();
+        if(isset($this->wire($key)->data) && is_array($this->wire($key)->data)) {
+
+            if($key == 'page') {
+                if(\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
+                    ($this->wire('process') == 'ProcessPageEdit' ||
+                        $this->wire('process') == 'ProcessUser' ||
+                        $this->wire('process') == 'ProcessRole' ||
+                        $this->wire('process') == 'ProcessPermission'
+                    )
+                ) {
+                    $p = $this->wire('process')->getPage();
+                }
+                else {
+                    $p = $this->wire('page');
+                }
+
+                if(is_null($p)) {
+                    $p = $this->wire('page');
+                }
+
+                $properties = Page::$baseProperties;
+            }
+            else {
+                $properties = $this->wire($key)->data;
+            }
+        }
+
+        uksort($properties, "strnatcasecmp");
+
+
+        foreach($properties as $k => $v) {
+            $name = $k;
+            $items[$key][$name]['name'] = $name;
+            $items[$key][$name]['lineNumber'] = '';
+            $items[$key][$name]['filename'] = '';
+            $items[$key][$name]['comment'] = "$" . strtolower($key) . '->' . str_replace('___', '', $name);
+            $value = $key == 'page' ? $p->$k : $v;
+            if(\TracyDebugger::getDataValue('apiExplorerShowDescription')) {
+                $items[$key][$name]['description'] = Dumper::toHtml($value, array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
+            }
+        }
 
         foreach($methods as $m) {
             $name = $m->name;
@@ -221,25 +267,25 @@ HTML;
 
             if(strpos($docComment, '#pw-internal') === false && strpos($filename, 'wire') !== false) {
                 if($this->apiModuleInstalled || strpos($filename, 'modules') === false) {
-                    $methodArray[$key][$name]['name'] = "<a href='".$this->apiBaseUrl.self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $name . "</a>";
+                    $items[$key][$name.'()']['name'] = "<a href='".$this->apiBaseUrl.self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $name . "</a>";
                 }
                 else {
-                    $methodArray[$key][$name]['name'] = $name;
+                    $items[$key][$name.'()']['name'] = $name;
                 }
             }
             else {
-                $methodArray[$key][$name]['name'] = $name;
+                $items[$key][$name.'()']['name'] = $name;
             }
 
-            $methodArray[$key][$name]['lineNumber'] = $r->getMethod($name)->getStartLine();
-            $methodArray[$key][$name]['filename'] = $filename;
+            $items[$key][$name.'()']['lineNumber'] = $r->getMethod($name)->getStartLine();
+            $items[$key][$name.'()']['filename'] = $filename;
             $i=0;
             foreach($r->getMethod($name)->getParameters() as $param) {
-                $methodArray[$key][$name]['params'][$i] = ($param->isOptional() ? '<em>' : '') . '$' . $param->getName() . ($param->isOptional() ? '</em>' : '');
+                $items[$key][$name.'()']['params'][$i] = ($param->isOptional() ? '<em>' : '') . '$' . $param->getName() . ($param->isOptional() ? '</em>' : '');
                 $i++;
             }
 
-            $methodStr = "$" . strtolower($key) . '->' . str_replace('___', '', $name) . (isset($methodArray[$key][$name]['params']) ? ' (' . implode(', ', $methodArray[$key][$name]['params']) . ')' : '');
+            $methodStr = "$" . strtolower($key) . '->' . str_replace('___', '', $name) . (isset($items[$key][$name]['params']) ? ' (' . implode(', ', $items[$key][$name]['params']) . ')' : '');
 
             if(\TracyDebugger::getDataValue('apiExplorerToggleDocComment')) {
                 $commentStr = "
@@ -247,12 +293,12 @@ HTML;
                     <label class='".($docComment != '' ? 'comment' : '') . "' for='".$key."_".$name."'>".$methodStr."</label>
                     <input type='checkbox' id='".$key."_".$name."'>
                     <div class='hide'>";
-                $methodArray[$key][$name]['comment'] = $commentStr . "\n\n" . nl2br(htmlentities($docComment)) .
+                $items[$key][$name.'()']['comment'] = $commentStr . "\n\n" . nl2br(htmlentities($docComment)) .
                         "</div>
                     </div>";
             }
             else {
-                $methodArray[$key][$name]['comment'] = $methodStr;
+                $items[$key][$name.'()']['comment'] = $methodStr;
             }
 
             if(\TracyDebugger::getDataValue('apiExplorerShowDescription')) {
@@ -262,25 +308,33 @@ HTML;
                 // get all the lines and strip the * from the first character
                 if(is_string($comment)) {
                     preg_match_all('#^\s*\*(.*)#m', $comment, $commentLines);
-                    $methodArray[$key][$name]['description'] = isset($commentLines[1][0]) && is_string($commentLines[1][0]) ? nl2br(htmlentities(trim($commentLines[1][0]))) : '';
+                    $items[$key][$name.'()']['description'] = isset($commentLines[1][0]) && is_string($commentLines[1][0]) ? nl2br(htmlentities(trim($commentLines[1][0]))) : '';
                 }
                 else {
-                    $methodArray[$key][$name]['description'] = '';
+                    $items[$key][$name.'()']['description'] = '';
                 }
             }
 
         }
 
-        return $methodArray;
+        return $items;
 
     }
 
 
-    private function buildMethodTable($var, $methods) {
+    private function buildTable($var, $items) {
         $out = '
             <table class="apiExplorerTable">';
-        $i = 0;
-        foreach($methods as $method => $info) {
+        $i=0;
+        $methodsSection = false;
+        foreach($items as $item => $info) {
+            if(strpos($item, '()') !== false && !$methodsSection) {
+                $methodsSection = true;
+                $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">$'.strtolower($var).' methods</th>';
+            }
+            elseif($i == 0) {
+                $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">$'.strtolower($var).' properties</th>';
+            }
             $out .= '
                 <tr>
                     <td>'.$info['name'].'</td>
