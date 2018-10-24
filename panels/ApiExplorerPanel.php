@@ -216,43 +216,38 @@ HTML;
         $properties = array();
         if(isset($this->wire($key)->data) && is_array($this->wire($key)->data)) {
 
-            if($key == 'page') {
-                if(\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
-                    ($this->wire('process') == 'ProcessPageEdit' ||
-                        $this->wire('process') == 'ProcessUser' ||
-                        $this->wire('process') == 'ProcessRole' ||
-                        $this->wire('process') == 'ProcessPermission'
-                    )
-                ) {
-                    $p = $this->wire('process')->getPage();
+            $classDocComment = $r->getDocComment();
+            // get the comment
+            preg_match('#^/\*\*(.*)\*/#s', $classDocComment, $comment);
+            if(isset($comment[0])) $comment = trim($comment[0]);
+            // get all the lines and strip the * from the first character
+            if(is_string($comment)) {
+                preg_match_all('#^\s*\*(.*)#m', $comment, $commentLines);
+                $propertiesList = array();
+                foreach($commentLines[1] as $c) {
+                    if(strpos($c, '@property') !== false) {
+                        preg_match_all('#(\$[A-Za-z]+)(?:\s)([A-Za-z`\$->\'’()\s]+)#', $c, $varName);
+                        if(isset($varName[1][0])) $propertiesList[$varName[1][0]] = $varName[2][0];
+                    }
                 }
-                else {
-                    $p = $this->wire('page');
-                }
-
-                if(is_null($p)) {
-                    $p = $this->wire('page');
-                }
-
-                $properties = Page::$baseProperties;
             }
-            else {
-                $properties = $this->wire($key)->data;
+
+            //$properties = Page::$baseProperties;
+            foreach($propertiesList as $prop => $desc) {
+                $properties[str_replace('$', '', $prop)] = $desc;
             }
+
         }
 
         uksort($properties, "strnatcasecmp");
 
-
-        foreach($properties as $k => $v) {
-            $name = $k;
+        foreach($properties as $name => $desc) {
             $items[$key][$name]['name'] = $name;
             $items[$key][$name]['lineNumber'] = '';
             $items[$key][$name]['filename'] = '';
             $items[$key][$name]['comment'] = "$" . strtolower($key) . '->' . str_replace('___', '', $name);
-            $value = $key == 'page' ? $p->$k : $v;
             if(\TracyDebugger::getDataValue('apiExplorerShowDescription')) {
-                $items[$key][$name]['description'] = Dumper::toHtml($value, array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
+                $items[$key][$name]['description'] = is_string($desc) ? $desc : Dumper::toHtml($desc, array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
             }
         }
 
