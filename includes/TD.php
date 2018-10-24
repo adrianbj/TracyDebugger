@@ -154,7 +154,7 @@ class TD extends TracyDebugger {
         $options[Dumper::COLLAPSE_COUNT] = 1;
         $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
 
-        $out = '<div style="margin: 10px 0">';
+        $out = '<div style="margin: 0 0 10px 0">';
 
         $editCountLink = '';
         if(count(\TracyDebugger::getDataValue('dumpPanelTabs')) > 0 && !is_string($var)) {
