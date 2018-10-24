@@ -43,6 +43,9 @@ class CaptainHookSearch {
 
 
     public static function getHooksInFile($file) {
+
+        $newTab = \TracyDebugger::getDataValue('linksNewTab') ? 'target="_blank"' : '';
+
         $lines = file($file);
         $source = implode('', $lines);
         $str = preg_replace('/\s+/', ' ', $source);
@@ -104,10 +107,10 @@ class CaptainHookSearch {
                             if(strpos($docComment, '#pw-internal') === false && strpos($file, 'wire') !== false) {
                                 if(wire('modules')->isInstalled('ProcessWireAPI')) {
                                     $apiModuleId = wire('modules')->getModuleID("ProcessWireAPI");
-                                    $files['hooks'][$name]['name'] = "<a href='".wire('pages')->get("process=$apiModuleId")->url.'methods/'.self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $name . "</a>";
+                                    $files['hooks'][$name]['name'] = "<a ".$newTab." href='".wire('pages')->get("process=$apiModuleId")->url.'methods/'.self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $name . "</a>";
                                 }
                                 elseif(strpos($file, 'modules') === false) {
-                                    $files['hooks'][$name]['name'] = "<a href='https://processwire.com/api/ref/".self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $name . "</a>";
+                                    $files['hooks'][$name]['name'] = "<a ".$newTab." href='https://processwire.com/api/ref/".self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $name . "</a>";
                                 }
                                 else {
                                     $files['hooks'][$name]['name'] = $name;

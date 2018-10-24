@@ -17,6 +17,7 @@ class ApiExplorerPanel extends BasePanel {
             $apiModuleInstalled = false;
             $this->apiBaseUrl = 'https://processwire.com/api/ref/';
         }
+        $this->newTab = \TracyDebugger::getDataValue('linksNewTab') ? 'target="_blank"' : '';
     }
 
     public function getTab() {
@@ -40,7 +41,7 @@ class ApiExplorerPanel extends BasePanel {
     public function getPanel() {
 
         $out = '
-        <h1>' . $this->icon . ' API Explorer</h1>';
+        <h1>' . $this->icon . ' API Explorer</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'ApiExplorerPanel\')">+</a></span></span>';
 
         $out .= <<< HTML
 
@@ -262,7 +263,7 @@ HTML;
 
             if(strpos($docComment, '#pw-internal') === false && strpos($filename, 'wire') !== false) {
                 if($this->apiModuleInstalled || strpos($filename, 'modules') === false) {
-                    $items[$key][$name.'()']['name'] = "<a href='".$this->apiBaseUrl.self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $name . "</a>";
+                    $items[$key][$name.'()']['name'] = "<a ".$this->newTab." href='".$this->apiBaseUrl.self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $name . "</a>";
                 }
                 else {
                     $items[$key][$name.'()']['name'] = $name;

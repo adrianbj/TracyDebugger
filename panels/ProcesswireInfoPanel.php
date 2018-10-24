@@ -190,7 +190,7 @@ class ProcesswireInfoPanel extends BasePanel {
                 }
                 ksort($apiVars);
                 foreach($apiVars as $key => $value) {
-                    $apiVariables .= "\n<tr><td><a href='".$this->apiBaseUrl.strtolower(preg_replace('/([a-z])([A-Z])/', '$1-$2', $key))."/'>\$$key</a></td>" .
+                    $apiVariables .= "\n<tr><td><a " . $this->newTab . " href='".$this->apiBaseUrl.strtolower(preg_replace('/([a-z])([A-Z])/', '$1-$2', $key))."/'>\$$key</a></td>" .
                         "<td>" . get_class($value) . "</td></tr>";
                 }
             }
@@ -257,7 +257,7 @@ class ProcesswireInfoPanel extends BasePanel {
             $currentType = '';
             foreach($classTypes as $type => $classes) {
                 foreach($classes as $class) {
-                    $coreClasses .= "\n<tr><td>".($currentType !== $type ? $type : '')."</td><td><a href='".$this->apiBaseUrl.strtolower(preg_replace('/([a-z])([A-Z])/', '$1-$2', $class))."/'>".$class."</a></td></tr>";
+                    $coreClasses .= "\n<tr><td>".($currentType !== $type ? $type : '')."</td><td><a " . $this->newTab . " href='".$this->apiBaseUrl.strtolower(preg_replace('/([a-z])([A-Z])/', '$1-$2', $class))."/'>".$class."</a></td></tr>";
                     $currentType = $type;
                 }
             }

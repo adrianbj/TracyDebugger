@@ -15,6 +15,7 @@ class CaptainHookPanel extends BasePanel {
             $apiModuleInstalled = false;
             $this->apiBaseUrl = 'https://processwire.com/api/ref/';
         }
+        $this->newTab = \TracyDebugger::getDataValue('linksNewTab') ? 'target="_blank"' : '';
     }
 
     public function getTab() {
@@ -50,7 +51,7 @@ class CaptainHookPanel extends BasePanel {
     public function getPanel() {
 
         $out = '
-        <h1>' . $this->icon . ' Captain Hook</h1>';
+        <h1>' . $this->icon . ' Captain Hook</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'CaptainHookPanel\')">+</a></span></span>';
 
         $out .= <<< HTML
 
@@ -129,7 +130,7 @@ HTML;
             if($currentSection !== $lastSection) $out .= '<h3>'.$currentSection.'</h3>';
             $out .= '
             <a href="#" rel="'.$name.'" class="tracy-toggle tracy-collapsed">'.str_replace($segments[0].'/'.$segments[1].'/', '', $label).'</a>
-            <div style="padding-left:10px" id="'.$name.'" class="tracy-collapsed"><p>'.(isset($info['classname']) && (!in_array('site', $segments) || $this->apiModuleInstalled) ? '<a href="'.$this->apiBaseUrl.$this->convertNamesToUrls($info['classname']).'/">'.$info['classname'].'</a> ' : $info['classname']).(isset($info['extends']) ? ' extends <a href="'.$this->apiBaseUrl.$this->convertNamesToUrls($info['extends']).'/">'.$info['extends'].'</a>' : '').'</p>'.$this->buildHookTable($info).'</div><br />';
+            <div style="padding-left:10px" id="'.$name.'" class="tracy-collapsed"><p>'.(isset($info['classname']) && (!in_array('site', $segments) || $this->apiModuleInstalled) ? '<a '.$this->newTab.' href="'.$this->apiBaseUrl.$this->convertNamesToUrls($info['classname']).'/">'.$info['classname'].'</a> ' : $info['classname']).(isset($info['extends']) ? ' extends <a '.$this->newTab.' href="'.$this->apiBaseUrl.$this->convertNamesToUrls($info['extends']).'/">'.$info['extends'].'</a>' : '').'</p>'.$this->buildHookTable($info).'</div><br />';
             $lastSection = $currentSection;
         }
 

@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.13.2',
+            'version' => '4.13.3',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -224,6 +224,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "styleAdminColors" => "\nlocal|#FF9933\n*.local|#FF9933\n*.dev|#FF9933\ndev.*|#FF9933\n*.test|#FF9933\nstaging.*|#8b0066\n*.com|#009900",
             "styleAdminType" => "default",
             "showPWInfoPanelIconLabels" => 1,
+            "linksNewTab" => null,
             "pWInfoPanelLinksNewTab" => null,
             "customPWInfoPanelLinks" => array(11, 16, 22, 21, 29, 30, 31, 304),
             "captainHookShowDescription" => 1,
@@ -2459,7 +2460,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Send data to FireLogger', __FILE__);
         $f->description = __('When checked, certain errors and `fl()` calls will be sent to FireLogger in the browser console.', __FILE__);
         $f->notes = __('If you are running on nginx and don\'t have access to adjust `fastcgi_buffers` and `fastcgi_buffer_size` settings, you may want to uncheck this to avoid 502 bad gateway errors because of `upstream sent too big header while reading response header from upstream` issues.', __FILE__);
-        $f->columnWidth = 50;
         $f->attr('checked', $data['showFireLogger'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
@@ -2470,6 +2470,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->notes = __('Highly recommended unless you have a reason not to do this.', __FILE__);
         $f->columnWidth = 50;
         $f->attr('checked', $data['referencePageEdited'] == '1' ? 'checked' : '');
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'linksNewTab');
+        $f->label = __('Open links in new tab', __FILE__);
+        $f->description = __('Makes links open in a new browser tab.', __FILE__);
+        $f->notes = __('This is used by links such as those in the Captain Hook and API Explorer panels.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['linksNewTab'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
         // Error Logging Settings
