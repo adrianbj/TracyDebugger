@@ -281,7 +281,7 @@ HTML;
                 $i++;
             }
 
-            $methodStr = "$" . strtolower($key) . '->' . str_replace('___', '', $name) . (isset($items[$key][$name.'()']['params']) ? ' (' . implode(', ', $items[$key][$name.'()']['params']) . ')' : '');
+            $methodStr = "$" . strtolower($key) . '->' . str_replace('___', '', $name) . '(' . (isset($items[$key][$name.'()']['params']) ? implode(', ', $items[$key][$name.'()']['params']) : '') . ')';
 
             if(\TracyDebugger::getDataValue('apiExplorerToggleDocComment')) {
                 $commentStr = "
