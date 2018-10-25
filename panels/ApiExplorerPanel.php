@@ -116,78 +116,33 @@ HTML;
             <div style="padding-left:10px" id="'.$var.'" class="tracy-collapsed">' . $this->buildTable($var, $methods) . '</div><br />';
         }
 
-
-        // Core classes
-        $classTypes = array(
-            'Primary' => array(
-                'Wire',
-                'WireData',
-                'WireArray',
-            ),
-            'Pages' => array(
-                'Page',
-                'NullPage',
-                'User',
-                'Role',
-                'Permission',
-            ),
-            'Arrays' => array(
-                'WireArray',
-                'PageArray',
-                'PaginatedArray',
-            ),
-            'Modules' => array(
-                'Module',
-                'Fieldtype',
-                'Inputfield',
-                'Process',
-                'Textformatter',
-            ),
-
-            'Files & Images' => array(
-                'Pagefile',
-                'Pagefiles',
-                'Pageimage',
-                'Pageimages',
-                'PagefilesManager',
-            ),
-            'Fields & Templates' => array(
-                'Field',
-                'Fieldgroup',
-                'Template',
-            ),
-            'Additional' => array(
-                'HookEvent',
-                'InputfieldWrapper',
-                'WireHttp',
-                'WireMail',
-                'SessionCSRF',
-                'ProcessWire',
-                'PagesType',
-                'Selector',
-                'Selectors',
-                'WireDatabaseBackup',
-                'MarkupPagerNav',
-            )
-        );
-
-        $coreClasses = array();
-        foreach($classTypes as $type => $classes) {
-            foreach($classes as $class) {
-                if(class_exists("\ProcessWire\\$class")) {
-                    $r = new \ReflectionClass("\ProcessWire\\$class");
-                }
-                elseif(class_exists($class)) {
-                    $r = new \ReflectionClass($class);
-                }
-                else {
-                    continue;
-                }
-                $coreClasses += $this->buildItemsArray($r, $class);
-            }
+        // Core classes without API variable
+        $classes = array();
+        $coreFiles = scandir($this->wire('config')->paths->core);
+        foreach($coreFiles as $file) {
+            array_push($classes, pathinfo($file, PATHINFO_FILENAME));
         }
 
-        $out .= '<h3>Core Classes</h3>';
+        $coreClasses = array();
+        foreach($classes as $class) {
+
+            // don't include classes with an API object variable
+            if(array_key_exists(lcfirst($class), $apiVars)) continue;
+
+            if(class_exists("\ProcessWire\\$class")) {
+                $r = new \ReflectionClass("\ProcessWire\\$class");
+            }
+            elseif(class_exists($class)) {
+                $r = new \ReflectionClass($class);
+            }
+            else {
+                continue;
+            }
+            $coreClasses += $this->buildItemsArray($r, $class);
+        }
+
+
+        $out .= '<h3>Core Classes (without PW variable)</h3>';
         ksort($coreClasses);
         foreach($coreClasses as $class => $methods) {
             $out .= '
@@ -251,10 +206,13 @@ HTML;
                 $items[$key][$name]['description'] = is_string($desc) ? $desc : Dumper::toHtml($desc, array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
             }
         }
-
+        $i = 0;
         foreach($methods as $m) {
             $name = $m->name;
             if(!$r->getMethod($name)->isPublic()) continue;
+
+            // if method is inherited, then don't display
+            if(!\TracyDebugger::getDataValue('apiExplorerIncludeInheritedMethods') && strcasecmp(str_replace('ProcessWire\\', '', $m->getDeclaringClass()->getName()), $key)) continue;
 
             $docComment = $r->getMethod($name)->getDocComment();
             $filename = $r->getMethod($name)->getFilename();
