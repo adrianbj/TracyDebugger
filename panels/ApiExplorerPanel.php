@@ -126,21 +126,23 @@ HTML;
         $coreClasses = array();
         foreach($classes as $class) {
 
-            // don't include classes with an API object variable
-            if(array_key_exists(lcfirst($class), $apiVars)) continue;
-
-            if(class_exists("\ProcessWire\\$class")) {
-                $r = new \ReflectionClass("\ProcessWire\\$class");
-            }
-            elseif(class_exists($class)) {
-                $r = new \ReflectionClass($class);
+            // for classes with an API object variable, provide an methods/properties array
+            if(array_key_exists(lcfirst($class), $apiVars)) {
+                $coreClasses += array($class => array());
             }
             else {
-                continue;
+                if(class_exists("\ProcessWire\\$class")) {
+                    $r = new \ReflectionClass("\ProcessWire\\$class");
+                }
+                elseif(class_exists($class)) {
+                    $r = new \ReflectionClass($class);
+                }
+                else {
+                    continue;
+                }
+                $coreClasses += $this->buildItemsArray($r, $class);
             }
-            $coreClasses += $this->buildItemsArray($r, $class);
         }
-
 
         $out .= '<h3>Core Classes (without PW variable)</h3>';
         ksort($coreClasses);
@@ -181,7 +183,7 @@ HTML;
             $propertiesList = array();
             foreach($commentLines[1] as $c) {
                 if(strpos($c, '@property') !== false) {
-                    preg_match_all('#(\$[A-Za-z]+)(?:\s)([A-Za-z`\$->\'’()\s]+)#', $c, $varName);
+                    preg_match_all('/(\$[A-Za-z]+)(?:\s)([#A-Za-z`\$->\'’()\s]+)/', $c, $varName);
                     if(isset($varName[1][0])) $propertiesList[$varName[1][0]] = $varName[2][0];
                 }
             }
@@ -199,9 +201,14 @@ HTML;
             $items[$key][$name]['name'] = $name;
             $items[$key][$name]['lineNumber'] = '';
             $items[$key][$name]['filename'] = '';
-            $items[$key][$name]['comment'] = "$" . strtolower($key) . '->' . str_replace('___', '', $name);
+            $items[$key][$name]['comment'] = "$" . lcfirst($key) . '->' . str_replace('___', '', $name);
             if(\TracyDebugger::getDataValue('apiExplorerShowDescription')) {
-                $items[$key][$name]['description'] = is_string($desc) ? $desc : Dumper::toHtml($desc, array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
+                if(substr($desc, 0, 1) === '#') {
+                    $items[$key][$name]['description'] = '';
+                }
+                else {
+                    $items[$key][$name]['description'] = is_string($desc) ? $desc : Dumper::toHtml($desc, array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
+                }
             }
         }
         $i = 0;
@@ -242,7 +249,7 @@ HTML;
                 $i++;
             }
 
-            $methodStr = "$" . strtolower($key) . '->' . str_replace('___', '', $name) . '(' . (isset($items[$key][$name.'()']['params']) ? implode(', ', $items[$key][$name.'()']['params']) : '') . ')';
+            $methodStr = "$" . lcfirst($key) . '->' . str_replace('___', '', $name) . '(' . (isset($items[$key][$name.'()']['params']) ? implode(', ', $items[$key][$name.'()']['params']) : '') . ')';
 
             if(\TracyDebugger::getDataValue('apiExplorerToggleDocComment')) {
                 $commentStr = "
@@ -282,15 +289,18 @@ HTML;
     private function buildTable($var, $items) {
         $out = '
             <table class="apiExplorerTable">';
+
+        if(empty($items)) return 'See <strong>$'.lcfirst($var).'</strong> api variable above for the properties and methods for this class';
+
         $i=0;
         $methodsSection = false;
         foreach($items as $item => $info) {
             if(strpos($item, '()') !== false && !$methodsSection) {
                 $methodsSection = true;
-                $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">$'.strtolower($var).' methods</th>';
+                $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">$'.lcfirst($var).' methods</th>';
             }
             elseif($i == 0) {
-                $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">$'.strtolower($var).' properties</th>';
+                $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">$'.lcfirst($var).' properties</th>';
             }
             $out .= '
                 <tr>
