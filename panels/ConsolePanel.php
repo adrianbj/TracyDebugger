@@ -753,15 +753,23 @@ class ConsolePanel extends BasePanel {
                             mutations.forEach(function(mutation) {
 
                                 // if split is less than minSize then collapse it (which will expand it to minSize)
+                                // else restore to stored sizes
                                 // this is mostly for resizing of the entire panel
                                 if(tracyConsole.split) {
                                     var containerHeight = document.getElementById('tracyConsoleContainer').offsetHeight;
                                     var sizes = tracyConsole.split.getSizes();
+                                    if(sizes[0] < 0 || sizes[1] < 0) {
+                                        sizes = localStorage.getItem('tracyConsoleSplitSizes');
+                                        sizes = sizes ? JSON.parse(sizes) : [40, 60];
+                                    }
                                     if(sizes[0] * containerHeight / 100 < tracyConsole.minSize - (tracyConsole.consoleGutterSize/2)) {
                                         tracyConsole.split.collapse(0);
                                     }
                                     else if(sizes[1] * containerHeight / 100 < tracyConsole.minSize - (tracyConsole.consoleGutterSize/2)) {
                                         tracyConsole.split.collapse(1);
+                                    }
+                                    else {
+                                        tracyConsole.split.setSizes(sizes);
                                     }
                                 }
 
