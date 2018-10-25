@@ -169,30 +169,28 @@ HTML;
             return $aStripped > $bStripped;
         });
 
+        // get runtime properties from doc comment
         $properties = array();
-        if(isset($this->wire($key)->data) && is_array($this->wire($key)->data)) {
-
-            $classDocComment = $r->getDocComment();
-            // get the comment
-            preg_match('#^/\*\*(.*)\*/#s', $classDocComment, $comment);
-            if(isset($comment[0])) $comment = trim($comment[0]);
-            // get all the lines and strip the * from the first character
-            if(is_string($comment)) {
-                preg_match_all('#^\s*\*(.*)#m', $comment, $commentLines);
-                $propertiesList = array();
-                foreach($commentLines[1] as $c) {
-                    if(strpos($c, '@property') !== false) {
-                        preg_match_all('#(\$[A-Za-z]+)(?:\s)([A-Za-z`\$->\'’()\s]+)#', $c, $varName);
-                        if(isset($varName[1][0])) $propertiesList[$varName[1][0]] = $varName[2][0];
-                    }
+        $classDocComment = $r->getDocComment();
+        // get the comment
+        preg_match('#^/\*\*(.*)\*/#s', $classDocComment, $comment);
+        if(isset($comment[0])) $comment = trim($comment[0]);
+        // get all the lines and strip the * from the first character
+        if(is_string($comment)) {
+            preg_match_all('#^\s*\*(.*)#m', $comment, $commentLines);
+            $propertiesList = array();
+            foreach($commentLines[1] as $c) {
+                if(strpos($c, '@property') !== false) {
+                    preg_match_all('#(\$[A-Za-z]+)(?:\s)([A-Za-z`\$->\'’()\s]+)#', $c, $varName);
+                    if(isset($varName[1][0])) $propertiesList[$varName[1][0]] = $varName[2][0];
                 }
             }
+        }
 
-            //$properties = Page::$baseProperties;
+        if(isset($propertiesList)) {
             foreach($propertiesList as $prop => $desc) {
                 $properties[str_replace('$', '', $prop)] = $desc;
             }
-
         }
 
         uksort($properties, "strnatcasecmp");
