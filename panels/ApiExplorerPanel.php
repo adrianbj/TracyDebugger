@@ -212,7 +212,12 @@ HTML;
             if(!$r->getMethod($name)->isPublic()) continue;
 
             // if method is inherited, then don't display
-            if(!\TracyDebugger::getDataValue('apiExplorerIncludeInheritedMethods') && strcasecmp(str_replace('ProcessWire\\', '', $m->getDeclaringClass()->getName()), $key)) continue;
+            $declaringClassName = str_replace('ProcessWire\\', '', $m->getDeclaringClass()->getName());
+            if(!\TracyDebugger::getDataValue('apiExplorerIncludeInheritedMethods')) {
+                if(strcasecmp($key, 'Wire') !== 0 && strcasecmp($declaringClassName, 'Wire') == 0) continue;
+                if(strcasecmp($key, 'WireData') !== 0 && strcasecmp($declaringClassName, 'WireData') == 0) continue;
+                if(strcasecmp($key, 'WireArray') !== 0 && strcasecmp($declaringClassName, 'WireArray') == 0) continue;
+            }
 
             $docComment = $r->getMethod($name)->getDocComment();
             $filename = $r->getMethod($name)->getFilename();

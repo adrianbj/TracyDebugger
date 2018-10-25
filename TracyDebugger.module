@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.13.4',
+            'version' => '4.13.5',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -2906,7 +2906,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'apiExplorerIncludeInheritedMethods');
-        $f->label = __('Include inherited methods', __FILE__);
+        $f->label = __('Include Wire/WireData/WireArray inherited methods', __FILE__);
         $f->description = __('This will show also all inherited methods for each object/class.', __FILE__);
         $f->notes = __('This dramatically increases the size of this panel.', __FILE__);
         $f->columnWidth = 34;
