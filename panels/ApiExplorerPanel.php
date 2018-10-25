@@ -110,15 +110,17 @@ HTML;
         }
 
         $out .= '<h3>Variables</h3>';
+        ksort($apiVariables);
         foreach($apiVariables as $var => $methods) {
             $out .= '
             <a href="#" rel="'.$var.'" class="tracy-toggle tracy-collapsed">$'.$var.'</a>
             <div style="padding-left:10px" id="'.$var.'" class="tracy-collapsed">' . $this->buildTable($var, $methods) . '</div><br />';
         }
 
+
         // Core classes without API variable
         $classes = array();
-        $coreFiles = scandir($this->wire('config')->paths->core);
+        $coreFiles = preg_grep('/^([^.])/', scandir($this->wire('config')->paths->core));
         foreach($coreFiles as $file) {
             array_push($classes, pathinfo($file, PATHINFO_FILENAME));
         }
@@ -131,6 +133,8 @@ HTML;
                 $coreClasses += array($class => array());
             }
             else {
+                if(!preg_match("/^[A-Z]/", $class)) continue;
+
                 if(class_exists("\ProcessWire\\$class")) {
                     $r = new \ReflectionClass("\ProcessWire\\$class");
                 }
@@ -172,7 +176,7 @@ HTML;
         });
 
         // get runtime properties from doc comment
-        $properties = array();
+        $runtimeProperties = array();
         $classDocComment = $r->getDocComment();
         // get the comment
         preg_match('#^/\*\*(.*)\*/#s', $classDocComment, $comment);
@@ -183,7 +187,7 @@ HTML;
             $propertiesList = array();
             foreach($commentLines[1] as $c) {
                 if(strpos($c, '@property') !== false) {
-                    preg_match_all('/(\$[A-Za-z]+)(?:\s)([#A-Za-z`\$->\'’()\s]+)/', $c, $varName);
+                    preg_match_all('/(\$[A-Za-z]+)(?:\s)([#A-Za-z`\$->\'’()\s{}]+)/', $c, $varName);
                     if(isset($varName[1][0])) $propertiesList[$varName[1][0]] = $varName[2][0];
                 }
             }
@@ -191,32 +195,28 @@ HTML;
 
         if(isset($propertiesList)) {
             foreach($propertiesList as $prop => $desc) {
-                $properties[str_replace('$', '', $prop)] = $desc;
+                $runtimeProperties[str_replace('$', '', $prop)] = $desc;
             }
         }
 
-        uksort($properties, "strnatcasecmp");
+        uksort($runtimeProperties, "strnatcasecmp");
 
-        foreach($properties as $name => $desc) {
+        foreach($runtimeProperties as $name => $desc) {
             $items[$key][$name]['name'] = $name;
             $items[$key][$name]['lineNumber'] = '';
             $items[$key][$name]['filename'] = '';
             $items[$key][$name]['comment'] = "$" . lcfirst($key) . '->' . str_replace('___', '', $name);
             if(\TracyDebugger::getDataValue('apiExplorerShowDescription')) {
-                if(substr($desc, 0, 1) === '#') {
-                    $items[$key][$name]['description'] = '';
-                }
-                else {
-                    $items[$key][$name]['description'] = is_string($desc) ? $desc : Dumper::toHtml($desc, array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
-                }
+                $items[$key][$name]['description'] = is_string($desc) ? $desc : Dumper::toHtml($desc, array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
             }
         }
-        $i = 0;
+
+        // methods from reflection
         foreach($methods as $m) {
             $name = $m->name;
             if(!$r->getMethod($name)->isPublic()) continue;
 
-            // if method is inherited, then don't display
+            // if method is inherited from Wire/WireData/WireArray, then don't display
             $declaringClassName = str_replace('ProcessWire\\', '', $m->getDeclaringClass()->getName());
             if(!\TracyDebugger::getDataValue('apiExplorerIncludeInheritedMethods')) {
                 if(strcasecmp($key, 'Wire') !== 0 && strcasecmp($declaringClassName, 'Wire') == 0) continue;
