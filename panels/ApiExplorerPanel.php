@@ -69,7 +69,6 @@ class ApiExplorerPanel extends BasePanel {
                     if(groupShow) {
                         if(el.classList.contains("tracy-collapsed")) {
                             el.classList.toggle("tracy-collapsed", !groupShow);
-                            //manuallyOpened.remove(elId);
                             removeA(manuallyOpened, elId);
                         }
                         else {
@@ -169,13 +168,6 @@ HTML;
         $items = array();
         $methods = $r->getMethods();
 
-        usort($methods, function($a, $b) {
-            $aStripped = str_replace(array('___','__', '_'), '', $a->name);
-            $bStripped = str_replace(array('___','__', '_'), '', $b->name);
-            return $aStripped > $bStripped;
-        });
-
-
         // get runtime properties from doc comment
         $classDocComment = $r->getDocComment();
         // get the comment
@@ -218,6 +210,7 @@ HTML;
 
 
         // methods from reflection
+        $methodsList = array();
         foreach($methods as $m) {
             $name = $m->name;
             if(!$r->getMethod($name)->isPublic()) continue;
@@ -237,25 +230,25 @@ HTML;
 
             if(strpos($docComment, '#pw-internal') === false && strpos($filename, 'wire') !== false) {
                 if($this->apiModuleInstalled || strpos($filename, 'modules') === false) {
-                    $items[$key][$name.'()']['name'] = "<a ".$this->newTab." href='".$this->apiBaseUrl.self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $name . "</a>";
+                    $methodsList[$name.'()']['name'] = "<a ".$this->newTab." href='".$this->apiBaseUrl.self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $name . "</a>";
                 }
                 else {
-                    $items[$key][$name.'()']['name'] = $name;
+                    $methodsList[$name.'()']['name'] = $name;
                 }
             }
             else {
-                $items[$key][$name.'()']['name'] = $name;
+                $methodsList[$name.'()']['name'] = $name;
             }
 
-            $items[$key][$name.'()']['lineNumber'] = $r->getMethod($name)->getStartLine();
-            $items[$key][$name.'()']['filename'] = $filename;
+            $methodsList[$name.'()']['lineNumber'] = $r->getMethod($name)->getStartLine();
+            $methodsList[$name.'()']['filename'] = $filename;
             $i=0;
             foreach($r->getMethod($name)->getParameters() as $param) {
-                $items[$key][$name.'()']['params'][$i] = ($param->isOptional() ? '<em>' : '') . '$' . $param->getName() . ($param->isOptional() ? '</em>' : '');
+                $methodsList[$name.'()']['params'][$i] = ($param->isOptional() ? '<em>' : '') . '$' . $param->getName() . ($param->isOptional() ? '</em>' : '');
                 $i++;
             }
 
-            $methodStr = "$" . lcfirst($key) . '->' . str_replace('___', '', $name) . '(' . (isset($items[$key][$name.'()']['params']) ? implode(', ', $items[$key][$name.'()']['params']) : '') . ')';
+            $methodStr = "$" . lcfirst($key) . '->' . str_replace('___', '', $name) . '(' . (isset($methodsList[$name.'()']['params']) ? implode(', ', $methodsList[$name.'()']['params']) : '') . ')';
 
             if(\TracyDebugger::getDataValue('apiExplorerToggleDocComment')) {
                 $commentStr = "
@@ -263,12 +256,12 @@ HTML;
                     <label class='".($docComment != '' ? 'comment' : '') . "' for='".$key."_".$name."'>".$methodStr."</label>
                     <input type='checkbox' id='".$key."_".$name."'>
                     <div class='hide'>";
-                $items[$key][$name.'()']['comment'] = $commentStr . "\n\n" . nl2br(htmlentities($docComment)) .
+                $methodsList[$name.'()']['comment'] = $commentStr . "\n\n" . nl2br(htmlentities($docComment)) .
                         "</div>
                     </div>";
             }
             else {
-                $items[$key][$name.'()']['comment'] = $methodStr;
+                $methodsList[$name.'()']['comment'] = $methodStr;
             }
 
             if(\TracyDebugger::getDataValue('apiExplorerShowDescription')) {
@@ -279,16 +272,14 @@ HTML;
                 if(is_string($comment)) {
                     preg_match_all('#^\s*\*(.*)#m', $comment, $commentLines);
                     if(isset($commentLines[1][0])) $desc = preg_replace('/#([^#\s]+)/', '', $commentLines[1][0]);
-                    $items[$key][$name.'()']['description'] = isset($desc) && is_string($desc) ? nl2br(htmlentities(trim($desc))) : '';
+                    $methodsList[$name.'()']['description'] = isset($desc) && is_string($desc) ? nl2br(htmlentities(trim($desc))) : '';
                 }
                 else {
-                    $items[$key][$name.'()']['description'] = '';
+                    $methodsList[$name.'()']['description'] = '';
                 }
             }
 
         }
-
-
 
         // get runtime methods from doc comment
         $classDocComment = $r->getDocComment();
@@ -298,11 +289,10 @@ HTML;
         // get all the lines and strip the * from the first character
         if(is_string($comment)) {
             preg_match_all('#^\s*\*(.*)#m', $comment, $commentLines);
-            $methodsList = array();
             foreach($commentLines[1] as $c) {
                 if(strpos($c, '@method') !== false) {
                     preg_match('/(.*)(?:\s)([A-Za-z_]+)(\([^)]*\))(?:\s+)(.*)$/U', $c, $varName);
-                    if(isset($varName[2][0])) {
+                    if(isset($varName[2]) && !array_key_exists($varName[2], $methodsList)) {
                         $methodsList[$varName[2].'()']['name'] = $varName[2];
                         $methodsList[$varName[2].'()']['params'] = explode(', ', str_replace(array('(', ')'), '', $varName[3]));
                         $methodsList[$varName[2].'()']['description'] = preg_replace('/#([^#\s]+)/', '', $varName[4]);
@@ -312,12 +302,25 @@ HTML;
         }
 
         if(isset($methodsList)) {
-            uksort($methodsList, "strnatcasecmp");
+
+            uksort($methodsList, function($a, $b) {
+                $aStripped = str_replace(array('___','__', '_'), '', $a);
+                $bStripped = str_replace(array('___','__', '_'), '', $b);
+                return $aStripped > $bStripped;
+            });
+
             foreach($methodsList as $name => $info) {
                 $items[$key][$name]['name'] = $name;
-                $items[$key][$name]['lineNumber'] = '';
-                $items[$key][$name]['filename'] = '';
-                $items[$key][$name]['comment'] = "$" . lcfirst($key) . '->' . str_replace(array('___', '()'), '', $name) . '(' . (isset($info['params']) ? implode(', ', $info['params']) : '') . ')';
+                $items[$key][$name]['lineNumber'] = isset($info['lineNumber']) ? $info['lineNumber'] : '';
+                $items[$key][$name]['filename'] = isset($info['filename']) ? $info['filename'] : '';
+                if(isset($info['comment'])) {
+                    $methodStr = $info['comment'];
+                }
+                else {
+                    $methodStr = "$" . lcfirst($key) . '->' . str_replace(array('___', '()'), '', $name) . '(' . (isset($info['params']) ? implode(', ', $info['params']) : '') . ')';
+                }
+                $items[$key][$name]['comment'] = $methodStr;
+
                 if(\TracyDebugger::getDataValue('apiExplorerShowDescription')) {
                     if(substr($info['description'], 0, 1) === '#') {
                         $items[$key][$name]['description'] = '';
