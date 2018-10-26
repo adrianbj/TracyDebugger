@@ -187,8 +187,8 @@ HTML;
             $propertiesList = array();
             foreach($commentLines[1] as $c) {
                 if(strpos($c, '@property') !== false) {
-                    preg_match_all('/(\$[A-Za-z]+)(?:\s)([#A-Za-z`\$->\'’()\s{}]+)/', $c, $varName);
-                    if(isset($varName[1][0])) $propertiesList[$varName[1][0]] = $varName[2][0];
+                    preg_match('/(\$[A-Za-z]+)(?:\s)([#A-Za-z`\$->\'’()\s{}]+)/', $c, $varName);
+                    if(isset($varName[1])) $propertiesList[$varName[1]] = $varName[2];
                 }
             }
         }
@@ -286,7 +286,6 @@ HTML;
 
 
         // get runtime methods from doc comment
-        $runtimeMethods = array();
         $classDocComment = $r->getDocComment();
         // get the comment
         preg_match('#^/\*\*(.*)\*/#s', $classDocComment, $comment);
@@ -297,32 +296,31 @@ HTML;
             $methodsList = array();
             foreach($commentLines[1] as $c) {
                 if(strpos($c, '@method') !== false) {
-                    preg_match_all('/(?:\s)([A-Za-z|]+)(?:\s)([$A-Za-z\s]+)(\(.*?\))([A-Za-z`\$->\'’(){}=\s]+)/', $c, $varName);
-                    if(isset($varName[2][0])) $methodsList[$varName[2][0].'()'] = $varName[4][0];
+                    preg_match('/(.*)(?:\s)([$A-Za-z_\s]+)(\(.*?\))(?:\s+)(.*)/', $c, $varName);
+                    if(isset($varName[2][0])) {
+                        $methodsList[$varName[2].'()']['name'] = $varName[2];
+                        $methodsList[$varName[2].'()']['params'] = str_replace(array('(', ')'), '', $varName[3]);
+                        $methodsList[$varName[2].'()']['description'] = preg_replace('/#([^#\s]+)/', '', $varName[4]);
+                    }
                 }
             }
         }
 
         if(isset($methodsList)) {
-            foreach($methodsList as $method => $desc) {
-                $desc = preg_replace('/#([^#\s]+)/', '', $desc);
-                $runtimeMethods[str_replace('$', '', $method)] = $desc;
-            }
-        }
-
-        uksort($runtimeMethods, "strnatcasecmp");
-
-        foreach($runtimeMethods as $name => $desc) {
-            $items[$key][$name]['name'] = $name;
-            $items[$key][$name]['lineNumber'] = '';
-            $items[$key][$name]['filename'] = '';
-            $items[$key][$name]['comment'] = "$" . lcfirst($key) . '->' . str_replace('___', '', $name);
-            if(\TracyDebugger::getDataValue('apiExplorerShowDescription')) {
-                if(substr($desc, 0, 1) === '#') {
-                    $items[$key][$name]['description'] = '';
-                }
-                else {
-                    $items[$key][$name]['description'] = is_string($desc) ? $desc : Dumper::toHtml($desc, array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
+            uksort($methodsList, "strnatcasecmp");
+            foreach($methodsList as $name => $info) {
+                $items[$key][$name]['name'] = $name;
+                $items[$key][$name]['params'] = $info['params'];
+                $items[$key][$name]['lineNumber'] = '';
+                $items[$key][$name]['filename'] = '';
+                $items[$key][$name]['comment'] = "$" . lcfirst($key) . '->' . str_replace('___', '', $name);
+                if(\TracyDebugger::getDataValue('apiExplorerShowDescription')) {
+                    if(substr($info['description'], 0, 1) === '#') {
+                        $items[$key][$name]['description'] = '';
+                    }
+                    else {
+                        $items[$key][$name]['description'] = $info['description'];
+                    }
                 }
             }
         }
