@@ -207,6 +207,7 @@ HTML;
             $items[$key][$name]['filename'] = '';
             $items[$key][$name]['comment'] = "$" . lcfirst($key) . '->' . str_replace('___', '', $name);
             if(\TracyDebugger::getDataValue('apiExplorerShowDescription')) {
+                $desc = preg_replace('/#([^#\s]+)/', '', $desc);
                 $items[$key][$name]['description'] = is_string($desc) ? $desc : Dumper::toHtml($desc, array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
             }
         }
@@ -272,13 +273,58 @@ HTML;
                 // get all the lines and strip the * from the first character
                 if(is_string($comment)) {
                     preg_match_all('#^\s*\*(.*)#m', $comment, $commentLines);
-                    $items[$key][$name.'()']['description'] = isset($commentLines[1][0]) && is_string($commentLines[1][0]) ? nl2br(htmlentities(trim($commentLines[1][0]))) : '';
+                    if(isset($commentLines[1][0])) $desc = preg_replace('/#([^#\s]+)/', '', $commentLines[1][0]);
+                    $items[$key][$name.'()']['description'] = isset($desc) && is_string($desc) ? nl2br(htmlentities(trim($desc))) : '';
                 }
                 else {
                     $items[$key][$name.'()']['description'] = '';
                 }
             }
 
+        }
+
+
+
+        // get runtime methods from doc comment
+        $runtimeMethods = array();
+        $classDocComment = $r->getDocComment();
+        // get the comment
+        preg_match('#^/\*\*(.*)\*/#s', $classDocComment, $comment);
+        if(isset($comment[0])) $comment = trim($comment[0]);
+        // get all the lines and strip the * from the first character
+        if(is_string($comment)) {
+            preg_match_all('#^\s*\*(.*)#m', $comment, $commentLines);
+            $methodsList = array();
+            foreach($commentLines[1] as $c) {
+                if(strpos($c, '@method') !== false) {
+                    preg_match_all('/(?:\s)([A-Za-z|]+)(?:\s)([$A-Za-z\s]+)(\(.*?\))([A-Za-z`\$->\'’(){}=\s]+)/', $c, $varName);
+                    if(isset($varName[2][0])) $methodsList[$varName[2][0].'()'] = $varName[4][0];
+                }
+            }
+        }
+
+        if(isset($methodsList)) {
+            foreach($methodsList as $method => $desc) {
+                $desc = preg_replace('/#([^#\s]+)/', '', $desc);
+                $runtimeMethods[str_replace('$', '', $method)] = $desc;
+            }
+        }
+
+        uksort($runtimeMethods, "strnatcasecmp");
+
+        foreach($runtimeMethods as $name => $desc) {
+            $items[$key][$name]['name'] = $name;
+            $items[$key][$name]['lineNumber'] = '';
+            $items[$key][$name]['filename'] = '';
+            $items[$key][$name]['comment'] = "$" . lcfirst($key) . '->' . str_replace('___', '', $name);
+            if(\TracyDebugger::getDataValue('apiExplorerShowDescription')) {
+                if(substr($desc, 0, 1) === '#') {
+                    $items[$key][$name]['description'] = '';
+                }
+                else {
+                    $items[$key][$name]['description'] = is_string($desc) ? $desc : Dumper::toHtml($desc, array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
+                }
+            }
         }
 
         return $items;
@@ -304,7 +350,7 @@ HTML;
             }
             $out .= '
                 <tr>
-                    <td>'.$info['name'].'</td>
+                    <td>'.str_replace('()', '', $info['name']).'</td>
                     <td>'.\TracyDebugger::createEditorLink($info['filename'], $info['lineNumber'], $info['lineNumber']).'</td>
                     <td class="tracy-force-no-wrap">' . $info['comment'] . '</td>';
                 if(\TracyDebugger::getDataValue('apiExplorerShowDescription') && isset($info['description'])) {
