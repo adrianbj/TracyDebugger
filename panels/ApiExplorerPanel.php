@@ -293,7 +293,17 @@ HTML;
                 if(strpos($c, '@method') !== false) {
                     preg_match('/(.*)(?:\s)([A-Za-z_]+)(\([^)]*\))(?:\s+)(.*)$/U', $c, $varName);
                     if(isset($varName[2]) && !array_key_exists($varName[2], $methodsList)) {
-                        $methodsList[$varName[2].'()']['name'] = $varName[2];
+                        if(strpos($varName[4], '#pw-internal') === false) {
+                            if($this->apiModuleInstalled || strpos($filename, 'modules') === false) {
+                                $methodsList[$varName[2].'()']['name'] = "<a ".$this->newTab." href='".$this->apiBaseUrl.self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $varName[2] . "</a>";
+                            }
+                            else {
+                                $methodsList[$varName[2].'()']['name'] = $varName[2];
+                            }
+                        }
+                        else {
+                            $methodsList[$varName[2].'()']['name'] = $varName[2];
+                        }
                         $methodsList[$varName[2].'()']['params'] = explode(', ', str_replace(array('(', ')'), '', $varName[3]));
                         $methodsList[$varName[2].'()']['description'] = preg_replace('/#([^#\s]+)/', '', $varName[4]);
                     }
@@ -310,7 +320,7 @@ HTML;
             });
 
             foreach($methodsList as $name => $info) {
-                $items[$key][$name]['name'] = $name;
+                $items[$key][$name]['name'] = $info['name'];
                 $items[$key][$name]['lineNumber'] = isset($info['lineNumber']) ? $info['lineNumber'] : '';
                 $items[$key][$name]['filename'] = isset($info['filename']) ? $info['filename'] : '';
                 if(isset($info['comment'])) {
