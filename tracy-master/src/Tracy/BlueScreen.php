@@ -96,7 +96,7 @@ class BlueScreen
 		if ($handle = @fopen($file, 'x')) {
 			ob_start(); // double buffer prevents sending HTTP headers in some PHP
 			ob_start(function ($buffer) use ($handle) { fwrite($handle, $buffer); }, 4096);
-			$this->renderTemplate($exception, __DIR__ . '/assets/BlueScreen/page.phtml');
+			$this->renderTemplate($exception, __DIR__ . '/assets/BlueScreen/page.phtml', false);
 			ob_end_flush();
 			ob_end_clean();
 			fclose($handle);
@@ -104,7 +104,7 @@ class BlueScreen
 	}
 
 
-	private function renderTemplate($exception, $template)
+	private function renderTemplate($exception, $template, $toScreen = true)
 	{
 		$messageHtml = preg_replace(
 			'#\'\S[^\']*\S\'|"\S[^"]*\S"#U',
@@ -126,12 +126,13 @@ class BlueScreen
 				Dumper::LOCATION => Dumper::LOCATION_CLASS,
 			]);
 		};
-		$nonce = Helpers::getNonce();
 		$css = array_map('file_get_contents', array_merge([
 			__DIR__ . '/assets/BlueScreen/bluescreen.css',
 		], Debugger::$customCssFiles));
 		$css = preg_replace('#\s+#u', ' ', implode($css));
-		$actions = $this->renderActions($exception);
+
+		$nonce = $toScreen ? Helpers::getNonce() : null;
+		$actions = $toScreen ? $this->renderActions($exception) : [];
 
 		require $template;
 	}
@@ -185,10 +186,24 @@ class BlueScreen
 			$actions[] = $ex->tracyAction;
 		}
 
+		if (preg_match('# ([\'"])(\w{3,}(?:\\\\\w{3,})+)\\1#i', $ex->getMessage(), $m)) {
+			$class = $m[2];
+			if (
+				!class_exists($class) && !interface_exists($class) && !trait_exists($class)
+				&& ($file = Helpers::guessClassFile($class)) && !is_file($file)
+			) {
+				$actions[] = [
+					'link' => Helpers::editorUri($file, 1, 'create'),
+					'label' => 'create class',
+				];
+			}
+		}
+
 		if (preg_match('# ([\'"])((?:/|[a-z]:[/\\\\])\w[^\'"]+\.\w{2,5})\\1#i', $ex->getMessage(), $m)) {
+			$file = $m[2];
 			$actions[] = [
-				'link' => Helpers::editorUri($m[2], 1, $tmp = is_file($m[2]) ? 'open' : 'create'),
-				'label' => $tmp . ' file',
+				'link' => Helpers::editorUri($file, 1, $label = is_file($file) ? 'open' : 'create'),
+				'label' => $label . ' file',
 			];
 		}
 

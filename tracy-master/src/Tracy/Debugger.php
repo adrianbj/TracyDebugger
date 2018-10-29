@@ -395,6 +395,8 @@ class Debugger
 			error_reporting(E_ALL);
 		}
 
+		$message = Helpers::improveError($message, $context);
+
 		if ($severity === E_RECOVERABLE_ERROR || $severity === E_USER_ERROR) {
 			if (Helpers::findTrace(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), '*::__toString')) {
 				$previous = isset($context['e']) && ($context['e'] instanceof \Exception || $context['e'] instanceof \Throwable) ? $context['e'] : null;

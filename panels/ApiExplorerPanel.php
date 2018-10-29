@@ -147,7 +147,7 @@ HTML;
             }
         }
 
-        $out .= '<h3>Core Classes (without PW variable)</h3>';
+        $out .= '<h3>Core Classes</h3>';
         ksort($coreClasses);
         foreach($coreClasses as $class => $methods) {
             $out .= '
@@ -166,50 +166,9 @@ HTML;
 
     private function buildItemsArray($r, $key) {
         $items = array();
-        $methods = $r->getMethods();
-
-        // get runtime properties from doc comment
-        $classDocComment = $r->getDocComment();
-        // get the comment
-        preg_match('#^/\*\*(.*)\*/#s', $classDocComment, $comment);
-        if(isset($comment[0])) $comment = trim($comment[0]);
-        // get all the lines and strip the * from the first character
-        if(is_string($comment)) {
-            preg_match_all('#^\s*\*(.*)#m', $comment, $commentLines);
-            $propertiesList = array();
-            foreach($commentLines[1] as $c) {
-                if(strpos($c, '@property') !== false) {
-                    preg_match('/(?:@property)(?:\s)(?:\S*)(?:\s)(\$*[A-Za-z_]+)(?:\s)([#A-Za-z`\$->\'’()\s{}]+)/', $c, $varName);
-                    if(isset($varName[1])) {
-                        $propertiesList[str_replace('$', '', $varName[1])]['name'] = str_replace('$', '', $varName[1]);
-                        $propertiesList[str_replace('$', '', $varName[1])]['description'] = $varName[2];
-                    }
-                }
-            }
-        }
-
-        if(isset($propertiesList)) {
-
-            uksort($propertiesList, function($a, $b) {
-                $aStripped = str_replace(array('___','__', '_'), '', $a);
-                $bStripped = str_replace(array('___','__', '_'), '', $b);
-                return $aStripped > $bStripped;
-            });
-
-            foreach($propertiesList as $name => $info) {
-                $items[$key][$name]['name'] = $name;
-                $items[$key][$name]['lineNumber'] = '';
-                $items[$key][$name]['filename'] = '';
-                $items[$key][$name]['comment'] = "$" . lcfirst($key) . '->' . str_replace('___', '', $name);
-                if(\TracyDebugger::getDataValue('apiExplorerShowDescription')) {
-                    $desc = preg_replace('/#([^#\s]+)/', '', $info['description']);
-                    $items[$key][$name]['description'] = $desc;
-                }
-            }
-        }
-
 
         // methods from reflection
+        $methods = $r->getMethods();
         $methodsList = array();
         foreach($methods as $m) {
             $name = $m->name;
@@ -228,7 +187,7 @@ HTML;
             $className = $key;
             $methodName = str_replace(array('___', '__'), '', $name);
 
-            if(strpos($docComment, '#pw-internal') === false && strpos($filename, 'wire') !== false) {
+            if(strpos($filename, 'wire') !== false) {
                 if($this->apiModuleInstalled || strpos($filename, 'modules') === false) {
                     $methodsList[$name.'()']['name'] = "<a ".$this->newTab." href='".$this->apiBaseUrl.self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $name . "</a>";
                 }
@@ -292,14 +251,9 @@ HTML;
             foreach($commentLines[1] as $c) {
                 if(strpos($c, '@method') !== false) {
                     preg_match('/(.*)(?:\s)([A-Za-z_]+)(\([^)]*\))(?:\s+)(.*)$/U', $c, $varName);
-                    if(isset($varName[2]) && !array_key_exists($varName[2], $methodsList)) {
-                        if(strpos($varName[4], '#pw-internal') === false) {
-                            if($this->apiModuleInstalled || strpos($filename, 'modules') === false) {
-                                $methodsList[$varName[2].'()']['name'] = "<a ".$this->newTab." href='".$this->apiBaseUrl.self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $varName[2] . "</a>";
-                            }
-                            else {
-                                $methodsList[$varName[2].'()']['name'] = $varName[2];
-                            }
+                    if(isset($varName[2]) && !array_key_exists($varName[2].'()', $methodsList) && !array_key_exists('_'.$varName[2].'()', $methodsList) && !array_key_exists('__'.$varName[2].'()', $methodsList) && !array_key_exists('___'.$varName[2].'()', $methodsList)) {
+                        if($this->apiModuleInstalled || strpos($filename, 'modules') === false) {
+                            $methodsList[$varName[2].'()']['name'] = "<a ".$this->newTab." href='".$this->apiBaseUrl.self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $varName[2] . "</a>";
                         }
                         else {
                             $methodsList[$varName[2].'()']['name'] = $varName[2];
@@ -342,26 +296,87 @@ HTML;
             }
         }
 
+        // get runtime properties from doc comment
+        $classDocComment = $r->getDocComment();
+        // get the comment
+        preg_match('#^/\*\*(.*)\*/#s', $classDocComment, $comment);
+        if(isset($comment[0])) $comment = trim($comment[0]);
+        // get all the lines and strip the * from the first character
+        if(is_string($comment)) {
+            preg_match_all('#^\s*\*(.*)#m', $comment, $commentLines);
+            $propertiesList = array();
+            foreach($commentLines[1] as $c) {
+                if(strpos($c, '@property') !== false) {
+                    preg_match('/(?:@property)(?:\s)(?:\S*)(?:\s)(\$*[A-Za-z_]+)(?:\s)([#A-Za-z`\$->\'’()\s{}]+)/', $c, $varName);
+                    if(isset($varName[1])) {
+                        $propertiesList[str_replace('$', '', $varName[1])]['name'] = str_replace('$', '', $varName[1]);
+                        $propertiesList[str_replace('$', '', $varName[1])]['description'] = $varName[2];
+                    }
+                }
+            }
+        }
+
+        if(isset($propertiesList)) {
+
+            uksort($propertiesList, function($a, $b) {
+                $aStripped = str_replace(array('___','__', '_'), '', $a);
+                $bStripped = str_replace(array('___','__', '_'), '', $b);
+                return $aStripped > $bStripped;
+            });
+
+            foreach($propertiesList as $name => $info) {
+                $items[$key][$name]['name'] = $name;
+                $items[$key][$name]['lineNumber'] = '';
+                $items[$key][$name]['filename'] = '';
+                $items[$key][$name]['comment'] = "$" . lcfirst($key) . '->' . str_replace('___', '', $name);
+                if(\TracyDebugger::getDataValue('apiExplorerShowDescription')) {
+                    $desc = preg_replace('/#([^#\s]+)/', '', $info['description']);
+                    $items[$key][$name]['description'] = $desc;
+                }
+            }
+        }
+
         return $items;
 
     }
 
 
     private function buildTable($var, $items) {
+
+        $class = is_object($this->wire($var)) ? get_class($this->wire($var)) : $var;
+        $className = is_object($this->wire($var)) ? '$'.lcfirst($var) : $var;
+
+        if(class_exists("\ProcessWire\\$class")) {
+            $r = new \ReflectionClass("\ProcessWire\\$class");
+        }
+        elseif(class_exists($class)) {
+            $r = new \ReflectionClass($class);
+        }
+        $filename = $r->getfilename();
+
         $out = '
-            <table class="apiExplorerTable">';
+        <table class="apiExplorerTable">';
+
+        $out .= '
+        <th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">$'.lcfirst($var).' links</th>
+        <tr>
+            <td colspan="3"><a '.$this->newTab.' href="'.$this->apiBaseUrl.self::convertNamesToUrls(str_replace('$', '', $className)).'/">' . $className . '</a></td>';
+
+        $out .= '
+                <td>'.\TracyDebugger::createEditorLink($filename, 1, str_replace($this->wire('config')->paths->root, '', '/'.$filename)).'</td>
+            </tr>';
 
         if(empty($items)) return 'See <strong>$'.lcfirst($var).'</strong> api variable above for the properties and methods for this class';
 
         $i=0;
-        $methodsSection = false;
+        $propertiesSection = false;
         foreach($items as $item => $info) {
-            if(strpos($item, '()') !== false && !$methodsSection) {
-                $methodsSection = true;
-                $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">$'.lcfirst($var).' methods</th>';
+            if(strpos($item, '()') === false && !$propertiesSection) {
+                $propertiesSection = true;
+                $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">$'.lcfirst($var).' properties</th>';
             }
             elseif($i == 0) {
-                $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">$'.lcfirst($var).' properties</th>';
+                $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">$'.lcfirst($var).' methods</th>';
             }
             $out .= '
                 <tr>
