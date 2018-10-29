@@ -30,7 +30,7 @@ class TemplateResourcesPanel extends BasePanel {
             $includedFilesOut .= $this->sectionHeader(array('Path'));
             foreach(\TracyDebugger::$includedFiles as $key => $path) {
                 $functions[] = $this->get_defined_resources_in_file($path);
-                $path = $this->removeCompilerFromPath($path);
+                $path = \TracyDebugger::removeCompilerFromPath($path);
                 $path = \TracyDebugger::forwardSlashPath($path);
                 $includedFilesOut .= "\n<tr>" .
                     '<td>'.\TracyDebugger::createEditorLink($path, 1, str_replace($this->wire('config')->paths->root, '/', $path), 'Edit File').'</td>' .
@@ -77,7 +77,7 @@ class TemplateResourcesPanel extends BasePanel {
                     $funcNames[] = strtolower($name);
                     if(in_array(strtolower($name), array_map('strtolower', str_replace('processwire\\', '', array_values(\TracyDebugger::$templateFuncs))))) {
                         if(isset($details['file'])) {
-                            $path = $this->removeCompilerFromPath($details['file']);
+                            $path = \TracyDebugger::removeCompilerFromPath($details['file']);
                             $path = \TracyDebugger::forwardSlashPath($path);
                             if(isset($this->resourceCounts[$name]) && $this->resourceCounts[$name] === 1) {
                                 $warn = true;
@@ -116,7 +116,7 @@ class TemplateResourcesPanel extends BasePanel {
         $this->resourceOutput .= '<h3>Other Searched Files</h3><p>When checking for more than one occurrence of a resource</p>';
         $this->resourceOutput .= $this->sectionHeader(array('Path'));
         foreach($this->searchedFiles as $path) {
-            if(!in_array($path, array_map(array($this, 'removeCompilerFromPath'), \TracyDebugger::$includedFiles))) {
+            if(!in_array($path, array_map(array('\TracyDebugger', 'removeCompilerFromPath'), \TracyDebugger::$includedFiles))) {
                 $path = \TracyDebugger::forwardSlashPath($path);
                 $this->resourceOutput .= "\n<tr>" .
                     '<td>'.\TracyDebugger::createEditorLink($path, 1, str_replace($this->wire('config')->paths->root, '/', $path), 'Edit File').'</td>' .
@@ -195,7 +195,7 @@ class TemplateResourcesPanel extends BasePanel {
                 $varOut = "<td>";
                 $i=1;
                 foreach($this->variables['$'.$var] as $item) {
-                    $path = $this->removeCompilerFromPath($item['file']);
+                    $path = \TracyDebugger::removeCompilerFromPath($item['file']);
                     $path = \TracyDebugger::forwardSlashPath($path);
                     $fileLines[$var][str_replace($this->wire('config')->paths->root, '/', $path)]['lines'][] = \TracyDebugger::createEditorLink($path, $item['line'], $item['line']);
                     $i++;
@@ -309,10 +309,6 @@ class TemplateResourcesPanel extends BasePanel {
         return $resourceCounts;
     }
 
-    protected function removeCompilerFromPath($path) {
-        $compilerCachePath = isset($this->wire('config')->fileCompilerOptions['cachePath']) ? $this->wire('config')->fileCompilerOptions['cachePath'] : $this->wire('config')->paths->cache . 'FileCompiler/';
-        return str_replace($compilerCachePath, $this->wire('config')->paths->root, $path);
-    }
 
     public function getPanel() {
 

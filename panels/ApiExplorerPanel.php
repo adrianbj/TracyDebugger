@@ -142,10 +142,10 @@ HTML;
     private function buildClasses($folder) {
 
         if(strpos($folder, '/site/modules') !== false) {
-            $classType = 'site module';
+            $classType = 'siteModule';
         }
         elseif(strpos($folder, 'modules') !== false) {
-            $classType = 'core module';
+            $classType = 'coreModule';
         }
         else {
             $classType = 'core';
@@ -392,7 +392,7 @@ HTML;
             <td colspan="3"><a '.$this->newTab.' href="'.$this->apiBaseUrl.self::convertNamesToUrls(str_replace('$', '', $className)).'/">' . $className . '</a></td>';
 
         $out .= '
-                <td>'.\TracyDebugger::createEditorLink($filename, 1, str_replace($this->wire('config')->paths->root, '', '/'.$filename)).'</td>
+                <td>'.\TracyDebugger::createEditorLink(\TracyDebugger::removeCompilerFromPath($filename), 1, str_replace($this->wire('config')->paths->root, '', '/'.\TracyDebugger::removeCompilerFromPath($filename))).'</td>
             </tr>';
 
         if(empty($items)) return 'See <strong>$'.lcfirst($var).'</strong> api variable above for the properties and methods for this class';
@@ -410,7 +410,7 @@ HTML;
             $out .= '
                 <tr>
                     <td>'.str_replace('()', '', $info['name']).'</td>
-                    <td>'.\TracyDebugger::createEditorLink($info['filename'], $info['lineNumber'], $info['lineNumber']).'</td>
+                    <td>'.\TracyDebugger::createEditorLink(\TracyDebugger::removeCompilerFromPath($info['filename']), $info['lineNumber'], $info['lineNumber']).'</td>
                     <td class="tracy-force-no-wrap">' . $info['comment'] . '</td>';
                 if(\TracyDebugger::getDataValue('apiExplorerShowDescription') && isset($info['description'])) {
                     $out .= '
