@@ -86,8 +86,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $hideInAdmin = array('validator', 'templateResources', 'templatePath');
     public static $pageHtml;
     public static $processWireInfoSections = array(
-        'apiVariables' => 'API Variables',
-        'coreClasses' => 'Core Classes',
         'configData' => 'Config Data',
         'versionsList' => 'Versions List',
         'adminLinks' => 'Admin Links',
