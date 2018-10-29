@@ -395,8 +395,6 @@ class Debugger
 			error_reporting(E_ALL);
 		}
 
-		$message = Helpers::improveError($message, $context);
-
 		if ($severity === E_RECOVERABLE_ERROR || $severity === E_USER_ERROR) {
 			if (Helpers::findTrace(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), '*::__toString')) {
 				$previous = isset($context['e']) && ($context['e'] instanceof \Exception || $context['e'] instanceof \Throwable) ? $context['e'] : null;
@@ -434,7 +432,7 @@ class Debugger
 			self::exceptionHandler($e);
 		}
 
-		$message = 'PHP ' . Helpers::errorTypeToString($severity) . ": $message";
+		$message = 'PHP ' . Helpers::errorTypeToString($severity) . ': ' . Helpers::improveError($message, $context);
 		$count = &self::getBar()->getPanel('Tracy:errors')->data["$file|$line|$message"];
 
 		if ($count++) { // repeated error
