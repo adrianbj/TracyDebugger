@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.13.9',
+            'version' => '4.13.10',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -230,6 +230,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "apiExplorerIncludeInheritedMethods" => null,
             "apiExplorerShowDescription" => 1,
             "apiExplorerToggleDocComment" => null,
+            "apiExplorerModuleClasses" => array(),
             "requestInfoPanelSections" => array('moduleSettings', 'templateSettings', 'fieldSettings', 'pageInfo', 'pagePermissions', 'languageInfo', 'templateInfo', 'fieldsListValues', 'serverRequest', 'inputGet', 'inputPost', 'inputCookie', 'session', 'editLinks'),
             "processwireInfoPanelSections" => array('apiVariables', 'coreClasses', 'configData', 'versionsList', 'adminLinks', 'documentationLinks', 'gotoId', 'processWireWebsiteSearch'),
             "debugModePanelSections" => array('pagesLoaded', 'modulesLoaded', 'hooks', 'databaseQueries', 'selectorQueries', 'timers', 'user', 'cache', 'autoload'),
@@ -2906,7 +2907,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'apiExplorerIncludeInheritedMethods');
         $f->label = __('Include Wire/WireData/WireArray inherited methods', __FILE__);
         $f->description = __('This will show also all inherited methods for each object/class.', __FILE__);
-        $f->notes = __('This dramatically increases the size of this panel.', __FILE__);
+        $f->notes = __('This significantly increases the size of this panel.', __FILE__);
         $f->columnWidth = 34;
         $f->attr('checked', $data['apiExplorerIncludeInheritedMethods'] == '1' ? 'checked' : '');
         $fieldset->add($f);
@@ -2915,7 +2916,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'apiExplorerToggleDocComment');
         $f->label = __('Toggle method doc comment', __FILE__);
         $f->description = __('This will toggle the entire doc comment block if you click on the method column.', __FILE__);
-        $f->notes = __('This dramatically increases the size of this panel.', __FILE__);
+        $f->notes = __('This significantly increases the size of this panel.', __FILE__);
         $f->columnWidth = 34;
         $f->attr('checked', $data['apiExplorerToggleDocComment'] == '1' ? 'checked' : '');
         $fieldset->add($f);
@@ -2928,6 +2929,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('checked', $data['apiExplorerShowDescription'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
+        $f = $this->wire('modules')->get("InputfieldCheckboxes");
+        $f->attr('name', 'apiExplorerModuleClasses');
+        $f->label = __('Module classes', __FILE__);
+        $f->description = __('Select module classes that you also want diplayed.', __FILE__);
+        $f->notes = __('The options will significantly increase the size of this panel.', __FILE__);
+        $f->addOption('coreModules', 'Core modules');
+        $f->addOption('siteModules', 'Site modules');
+        if($data['apiExplorerModuleClasses']) $f->attr('value', $data['apiExplorerModuleClasses']);
+        $fieldset->add($f);
+
         // Captain Hook Panel
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
         $fieldset->attr('name+id', 'captainHookPanel');
@@ -2938,7 +2949,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'captainHookToggleDocComment');
         $f->label = __('Toggle method doc comment', __FILE__);
         $f->description = __('This will toggle the entire doc comment block if you click on the method column.', __FILE__);
-        $f->notes = __('This dramatically increases the size of this panel.', __FILE__);
+        $f->notes = __('This significantly increases the size of this panel.', __FILE__);
         $f->columnWidth = 50;
         $f->attr('checked', $data['captainHookToggleDocComment'] == '1' ? 'checked' : '');
         $fieldset->add($f);

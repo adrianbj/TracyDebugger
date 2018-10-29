@@ -4,8 +4,10 @@ use Tracy\Dumper;
 
 class ApiExplorerPanel extends BasePanel {
 
-    protected $icon;
-    protected $apiBaseUrl;
+    private $icon;
+    private $apiBaseUrl;
+    private $apiVars;
+    private $allClassesArr = array();
 
     public function __construct() {
         if($this->wire('modules')->isInstalled('ProcessWireAPI')) {
@@ -96,15 +98,15 @@ HTML;
         $apiVariables = array();
         $pwVars = $this->wire('config')->version >= 2.8 ? $this->wire('all') : $this->wire()->fuel;
         if(is_object($pwVars)) {
-            $apiVars = array();
+            $this->apiVars = array();
             foreach($pwVars as $key => $value) {
                 if(!is_object($value)) continue;
-                $apiVars[$key] = $value;
+                $this->apiVars[$key] = $value;
             }
-            ksort($apiVars);
-            foreach($apiVars as $key => $value) {
+            ksort($this->apiVars);
+            foreach($this->apiVars as $key => $value) {
                 $r = new \ReflectionObject($this->wire()->$key);
-                $apiVariables += $this->buildItemsArray($r, $key);
+                $apiVariables += $this->buildItemsArray($r, $key, 'variables');
             }
         }
 
@@ -116,45 +118,18 @@ HTML;
             <div style="padding-left:10px" id="'.$var.'" class="tracy-collapsed">' . $this->buildTable($var, $methods) . '</div><br />';
         }
 
+        // Core classes
+        $out .= $this->buildClasses($this->wire('config')->paths->core);
 
-        // Core classes without API variable
-        $classes = array();
-        $coreFiles = preg_grep('/^([^.])/', scandir($this->wire('config')->paths->core));
-        foreach($coreFiles as $file) {
-            array_push($classes, pathinfo($file, PATHINFO_FILENAME));
+        // Core module classes
+        if(in_array('coreModules', \TracyDebugger::getDataValue('apiExplorerModuleClasses'))) {
+            $out .= $this->buildClasses($this->wire('config')->paths->modules);
         }
 
-        $coreClasses = array();
-        foreach($classes as $class) {
-
-            // for classes with an API object variable, provide an methods/properties array
-            if(array_key_exists(lcfirst($class), $apiVars)) {
-                $coreClasses += array($class => array());
-            }
-            else {
-                if(!preg_match("/^[A-Z]/", $class)) continue;
-
-                if(class_exists("\ProcessWire\\$class")) {
-                    $r = new \ReflectionClass("\ProcessWire\\$class");
-                }
-                elseif(class_exists($class)) {
-                    $r = new \ReflectionClass($class);
-                }
-                else {
-                    continue;
-                }
-                $coreClasses += $this->buildItemsArray($r, $class);
-            }
+        // Site module classes
+        if(in_array('siteModules', \TracyDebugger::getDataValue('apiExplorerModuleClasses'))) {
+            $out .= $this->buildClasses($this->wire('config')->paths->siteModules);
         }
-
-        $out .= '<h3>Core Classes</h3>';
-        ksort($coreClasses);
-        foreach($coreClasses as $class => $methods) {
-            $out .= '
-            <a href="#" rel="'.$class.'" class="tracy-toggle tracy-collapsed">'.$class.'</a>
-            <div style="padding-left:10px" id="'.$class.'" class="tracy-collapsed">' . $this->buildTable($class, $methods) . '</div><br />';
-        }
-
 
         $out .= \TracyDebugger::generatePanelFooter('apiExplorer', \Tracy\Debugger::timer('apiExplorer'), strlen($out), 'apiExplorerPanel');
         $out .= '
@@ -164,7 +139,61 @@ HTML;
     }
 
 
-    private function buildItemsArray($r, $key) {
+    private function buildClasses($folder) {
+
+        if(strpos($folder, '/site/modules') !== false) {
+            $classType = 'site module';
+        }
+        elseif(strpos($folder, 'modules') !== false) {
+            $classType = 'core module';
+        }
+        else {
+            $classType = 'core';
+        }
+
+        $classes = array();
+        foreach(preg_grep('/^([^.])/', scandir($folder)) as $file) {
+            array_push($classes, pathinfo($file, PATHINFO_FILENAME));
+        }
+
+        $classesArr = array();
+        foreach($classes as $class) {
+            if(!in_array($class, $this->allClassesArr)) {
+                // for classes with an API object variable, provide an empty methods/properties array
+                if(array_key_exists(lcfirst($class), $this->apiVars)) {
+                    $classesArr += array($class => array());
+                }
+                else {
+                    if(!preg_match("/^[A-Z]/", $class)) continue;
+
+                    if(class_exists("\ProcessWire\\$class")) {
+                        $r = new \ReflectionClass("\ProcessWire\\$class");
+                    }
+                    elseif(class_exists($class)) {
+                        $r = new \ReflectionClass($class);
+                    }
+                    else {
+                        continue;
+                    }
+                    $classesArr += $this->buildItemsArray($r, $class, $classType);
+                }
+                array_push($this->allClassesArr, $class);
+            }
+        }
+
+        $out = '<h3>' . ucfirst($classType) . ' classes</h3>';
+        ksort($classesArr);
+        foreach($classesArr as $class => $methods) {
+            $out .= '
+            <a href="#" rel="'.$class.'" class="tracy-toggle tracy-collapsed">'.$class.'</a>
+            <div style="padding-left:10px" id="'.$class.'" class="tracy-collapsed">' . $this->buildTable($class, $methods) . '</div><br />';
+        }
+
+        return $out;
+    }
+
+
+    private function buildItemsArray($r, $key, $type) {
         $items = array();
 
         // methods from reflection
@@ -207,7 +236,7 @@ HTML;
                 $i++;
             }
 
-            $methodStr = "$" . lcfirst($key) . '->' . str_replace('___', '', $name) . '(' . (isset($methodsList[$name.'()']['params']) ? implode(', ', $methodsList[$name.'()']['params']) : '') . ')';
+            $methodStr = "$" . ($type == 'coreModule' || $type == 'siteModule' ? 'modules->get(\''.$key.'\')' : lcfirst($key)) . '->' . str_replace('___', '', $name) . '(' . (isset($methodsList[$name.'()']['params']) ? implode(', ', $methodsList[$name.'()']['params']) : '') . ')';
 
             if(\TracyDebugger::getDataValue('apiExplorerToggleDocComment')) {
                 $commentStr = "
@@ -250,7 +279,7 @@ HTML;
             preg_match_all('#^\s*\*(.*)#m', $comment, $commentLines);
             foreach($commentLines[1] as $c) {
                 if(strpos($c, '@method') !== false) {
-                    preg_match('/(.*)(?:\s)([A-Za-z_]+)(\([^)]*\))(?:\s+)(.*)$/U', $c, $varName);
+                    preg_match('/(.*)(?:\s)([A-Za-z_]+)(\(.*\)\s*)(?:\s+)(.*)$/U', $c, $varName);
                     if(isset($varName[2]) && !array_key_exists($varName[2].'()', $methodsList) && !array_key_exists('_'.$varName[2].'()', $methodsList) && !array_key_exists('__'.$varName[2].'()', $methodsList) && !array_key_exists('___'.$varName[2].'()', $methodsList)) {
                         if($this->apiModuleInstalled || strpos($filename, 'modules') === false) {
                             $methodsList[$varName[2].'()']['name'] = "<a ".$this->newTab." href='".$this->apiBaseUrl.self::convertNamesToUrls($className)."/".self::convertNamesToUrls($methodName)."/'>" . $varName[2] . "</a>";
@@ -258,7 +287,7 @@ HTML;
                         else {
                             $methodsList[$varName[2].'()']['name'] = $varName[2];
                         }
-                        $methodsList[$varName[2].'()']['params'] = explode(', ', str_replace(array('(', ')'), '', $varName[3]));
+                        $methodsList[$varName[2].'()']['params'] = explode(', ', $varName[3]);
                         $methodsList[$varName[2].'()']['description'] = preg_replace('/#([^#\s]+)/', '', $varName[4]);
                     }
                 }
@@ -281,7 +310,7 @@ HTML;
                     $methodStr = $info['comment'];
                 }
                 else {
-                    $methodStr = "$" . lcfirst($key) . '->' . str_replace(array('___', '()'), '', $name) . '(' . (isset($info['params']) ? implode(', ', $info['params']) : '') . ')';
+                    $methodStr = "$" . lcfirst($key) . '->' . str_replace(array('___', '()'), '', $name) . (isset($info['params']) ? implode(', ', $info['params']) : '');
                 }
                 $items[$key][$name]['comment'] = $methodStr;
 
