@@ -88,34 +88,51 @@ class RequestInfoPanel extends BasePanel {
 
         // Field Settings
         if(in_array('fieldSettings', $panelSections) && $isPwPage) {
-            $fieldSettings = '';
             if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessField') {
                 $field = $this->wire('fields')->get((int)$this->wire('input')->get('id'));
-                $fieldSettings = '
-                <table>
-                    <tr>
-                        <td>label</td>
-                        <td>'.$field->label.'</td>
-                    </tr>
-                    <tr>
-                        <td>name</td>
-                        <td>'.$field->name.'</td>
-                    </tr>
-                    <tr>
-                        <td>id</td>
-                        <td>'.$field->id.'</td>
-                    </tr>
-                    <tr>
-                        <td>type</td>
-                        <td>'.$field->type.'</td>
-                    </tr>';
-                foreach($field->getArray() as $k => $v) {
+                $fieldSettings = '<table>';
+                if(method_exists($field, 'getExportData')) {
+                    foreach($field->getExportData() as $k => $v) {
+                        $fieldSettings .= '
+                            <tr>
+                                <td>'.$k.'</td>
+                                <td>'.Dumper::toHtml($v, array(Dumper::TRUNCATE => 999)).'</td>
+                            </tr>
+                        ';
+                    }
+                }
+                // older version of PW that doesn't have getExportData() method
+                else {
                     $fieldSettings .= '
                         <tr>
-                            <td>'.$k.'</td>
-                            <td>'.Dumper::toHtml($v, array(Dumper::TRUNCATE => 999)).'</td>
+                            <td>label</td>
+                            <td>'.$field->label.'</td>
                         </tr>
-                    ';
+                        <tr>
+                            <td>name</td>
+                            <td>'.$field->name.'</td>
+                        </tr>
+                        <tr>
+                            <td>id</td>
+                            <td>'.$field->id.'</td>
+                        </tr>
+                        <tr>
+                            <td>type</td>
+                            <td>'.$field->type.'</td>
+                        </tr>
+                        <tr>
+                            <td>flags</td>
+                            <td>'.$field->flags.'</td>
+                        </tr>
+                        ';
+                    foreach($field->getArray() as $k => $v) {
+                        $fieldSettings .= '
+                            <tr>
+                                <td>'.$k.'</td>
+                                <td>'.Dumper::toHtml($v, array(Dumper::TRUNCATE => 999)).'</td>
+                            </tr>
+                        ';
+                    }
                 }
                 $fieldSettings .= '</table>
                 ';
@@ -157,12 +174,18 @@ class RequestInfoPanel extends BasePanel {
         if(in_array('fieldCode', $panelSections) && $isPwPage) {
             if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessField') {
                 $fieldCode = '<pre style="margin-bottom: 0">';
-                $fieldCode .= "\$form->add([\n";
+                $fieldCode .= "[\n";
                 $field = $this->wire('fields')->get((int)$this->wire('input')->get('id'));
-                $fieldCode .= "\t'type' => '" . (string)$field->getInputfield(new NullPage()) . "',\n";
-                $fieldCode .= "\t'name' => '$field->name',\n";
-                $fieldCode .= "\t'label' => __('$field->label'),\n";
-                foreach($field->getArray() as $k => $v) {
+                if(method_exists($field, 'getExportData')) {
+                    $fieldDataArr = $field->getExportData();
+                }
+                else {
+                    $fieldCode .= "\t'type' => '" . (string)$field->getInputfield(new NullPage()) . "',\n";
+                    $fieldCode .= "\t'name' => '$field->name',\n";
+                    $fieldCode .= "\t'label' => __('$field->label'),\n";
+                    $fieldDataArr = $field->getArray();
+                }
+                foreach($fieldDataArr as $k => $v) {
                     if(is_array($v)) {
                         $fieldCode .= "\t'$k' => [\n";
                         foreach($v as $key => $val) {
@@ -174,7 +197,7 @@ class RequestInfoPanel extends BasePanel {
                         $fieldCode .= "\t'$k' => '$v',\n";
                     }
                 }
-                $fieldCode .= "]);\n";
+                $fieldCode .= "]\n";
                 $fieldCode .= '</pre>';
             }
         }
