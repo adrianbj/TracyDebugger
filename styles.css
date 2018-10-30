@@ -459,6 +459,7 @@ td pre.tracy-dump {
 
 .tracy-inner a {
     display: inline-block;
+    border: none !important;
 }
 
 /* ensure click on linked SVG icon is on the parent a */
