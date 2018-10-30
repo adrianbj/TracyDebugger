@@ -174,27 +174,31 @@ class RequestInfoPanel extends BasePanel {
         if(in_array('fieldCode', $panelSections) && $isPwPage) {
             if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessField') {
                 $fieldCode = '<pre style="margin-bottom: 0">';
-                $fieldCode .= "[\n";
                 $field = $this->wire('fields')->get((int)$this->wire('input')->get('id'));
+                $fieldCode .= "[\n";
                 if(method_exists($field, 'getExportData')) {
-                    $fieldDataArr = $field->getExportData();
+                    $fieldExportData = $field->getExportData();
+                    unset($fieldExportData['id']);
+                    $fieldCode .= $this->wire('sanitizer')->entities(ltrim(rtrim(ltrim(str_replace(':', ' =>', wireEncodeJSON($fieldExportData, true, true)), "{"), "}"), "\n"));
                 }
+                // older version of PW that doesn't have getExportData() method
                 else {
                     $fieldCode .= "\t'type' => '" . (string)$field->getInputfield(new NullPage()) . "',\n";
                     $fieldCode .= "\t'name' => '$field->name',\n";
                     $fieldCode .= "\t'label' => __('$field->label'),\n";
+                    $fieldCode .= "\t'flags' => '$field->flags',\n";
                     $fieldDataArr = $field->getArray();
-                }
-                foreach($fieldDataArr as $k => $v) {
-                    if(is_array($v)) {
-                        $fieldCode .= "\t'$k' => [\n";
-                        foreach($v as $key => $val) {
-                            $fieldCode .= "\t\t'$val',\n";
+                    foreach($fieldDataArr as $k => $v) {
+                        if(is_array($v)) {
+                            $fieldCode .= "\t'$k' => [\n";
+                            foreach($v as $key => $val) {
+                                $fieldCode .= "\t\t'".$this->wire('sanitizer')->entities($val)."',\n";
+                            }
+                            $fieldCode .= "\t],\n";
                         }
-                        $fieldCode .= "\t],\n";
-                    }
-                    else {
-                        $fieldCode .= "\t'$k' => '$v',\n";
+                        else {
+                            $fieldCode .= "\t'$k' => '".$this->wire('sanitizer')->entities($v)."',\n";
+                        }
                     }
                 }
                 $fieldCode .= "]\n";
@@ -204,39 +208,57 @@ class RequestInfoPanel extends BasePanel {
 
         // Template Settings
         if(in_array('templateSettings', $panelSections) && $isPwPage) {
-            $templateSettings = '';
             if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessTemplate') {
                 $template = $this->wire('templates')->get((int)$this->wire('input')->get('id'));
-                $templateSettings = '
-                <table>
-                    <tr>
-                        <td>label</td>
-                        <td>'.$template->label.'</td>
-                    </tr>
-                    <tr>
-                        <td>name</td>
-                        <td>'.$template->name.'</td>
-                    </tr>
-                    <tr>
-                        <td>id</td>
-                        <td>'.$template->id.'</td>
-                    </tr>
-                    <tr>
-                        <td>type</td>
-                        <td>'.$template->type.'</td>
-                    </tr>';
-                foreach($template->getArray() as $k => $v) {
+                $templateSettings = '<table>';
+                if(method_exists($template, 'getExportData')) {
+                    foreach($template->getExportData() as $k => $v) {
+                        $templateSettings .= '
+                            <tr>
+                                <td>'.$k.'</td>
+                                <td>'.Dumper::toHtml($v, array(Dumper::TRUNCATE => 999)).'</td>
+                            </tr>
+                        ';
+                    }
+                }
+                // older version of PW that doesn't have getExportData() method
+                else {
                     $templateSettings .= '
                         <tr>
-                            <td>'.$k.'</td>
-                            <td>'.Dumper::toHtml($v, array(Dumper::TRUNCATE => 999)).'</td>
+                            <td>label</td>
+                            <td>'.$template->label.'</td>
                         </tr>
-                    ';
+                        <tr>
+                            <td>name</td>
+                            <td>'.$template->name.'</td>
+                        </tr>
+                        <tr>
+                            <td>id</td>
+                            <td>'.$template->id.'</td>
+                        </tr>
+                        <tr>
+                            <td>type</td>
+                            <td>'.$template->type.'</td>
+                        </tr>
+                        <tr>
+                            <td>flags</td>
+                            <td>'.$template->flags.'</td>
+                        </tr>
+                        ';
+                    foreach($template->getArray() as $k => $v) {
+                        $templateSettings .= '
+                            <tr>
+                                <td>'.$k.'</td>
+                                <td>'.Dumper::toHtml($v, array(Dumper::TRUNCATE => 999)).'</td>
+                            </tr>
+                        ';
+                    }
                 }
                 $templateSettings .= '</table>
                 ';
             }
         }
+
 
         // Module Settings
         if(in_array('moduleSettings', $panelSections) && $isPwPage) {
