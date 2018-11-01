@@ -7,7 +7,7 @@ class ProcessTracyAdminer extends Process {
             'summary' => __('Adminer page for TracyDebugger.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '1.0.0',
+            'version' => '1.0.1',
             'autoload' => false,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4, TracyDebugger',
@@ -15,8 +15,7 @@ class ProcessTracyAdminer extends Process {
             'page' => array(
                 'name' => 'adminer',
                 'parent' => 'setup',
-                'title' => 'Adminer',
-                'status' => 'hidden'
+                'title' => 'Adminer'
             )
         );
     }
