@@ -711,6 +711,12 @@ ul.pw-info-links {
     cursor: default !important;
 }
 
+#tracy-debug-panel-AdminerPanel {
+    height: 75%;
+    min-height: 300px !important;
+    width: 1400px;
+}
+
 #tracy-debug-panel-FileEditorPanel {
     height: 75%;
     min-height: 300px !important;

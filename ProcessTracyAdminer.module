@@ -1,0 +1,59 @@
+<?php
+
+class ProcessTracyAdminer extends Process {
+    public static function getModuleInfo() {
+        return array(
+            'title' => __('Process Tracy Adminer', __FILE__),
+            'summary' => __('Adminer page for TracyDebugger.', __FILE__),
+            'author' => 'Adrian Jones',
+            'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
+            'version' => '1.0.0',
+            'autoload' => false,
+            'singular' => true,
+            'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4, TracyDebugger',
+            'icon' => 'database',
+            'page' => array(
+                'name' => 'adminer',
+                'parent' => 'setup',
+                'title' => 'Adminer',
+                'status' => 'hidden'
+            )
+        );
+    }
+
+
+    public function init() {
+    }
+
+    public function ___execute() {
+
+        function adminer_object($tracyPath = null) {
+
+            require_once './panels/Adminer/plugins/plugin.php';
+
+            foreach (glob(__DIR__.'/panels/Adminer/plugins/*.php') as $filename) {
+                require_once $filename;
+            }
+
+            $tracySettings = wire('modules')->getModuleConfigData('TracyDebugger');
+            $themeColor = isset($tracySettings['adminerThemeColor']) ? $tracySettings['adminerThemeColor'] : 'blue';
+
+            $plugins = [
+                new AdminerFrames,
+                new AdminerDatabaseHide(["mysql", "information_schema", "performance_schema"]),
+                new AdminerProcessWireLogin(wire('config')->dbHost, wire('config')->dbUser, wire('config')->dbPass, wire('config')->dbName),
+                new AdminerTablesFilter(),
+                new AdminerSimpleMenu(),
+                new AdminerCollations(),
+                new AdminerJsonPreview(),
+                new AdminerTheme("default-".$themeColor)
+            ];
+
+            return new AdminerPlugin($plugins);
+        }
+
+        include './panels/Adminer/adminer-4.6.3-mysql.php';
+        exit;
+    }
+
+}

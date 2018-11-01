@@ -32,10 +32,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.13.13',
+            'version' => '4.14.0',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
+            'installs' => array('ProcessTracyAdminer'),
             'icon' => 'bug',
         );
     }
@@ -136,6 +137,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'fullObject' => 'Full Object'
     );
     public static $allPanels = array(
+        'adminer' => 'Adminer',
         'apiExplorer' => 'API Explorer',
         'captainHook' => 'Captain Hook',
         'console' => 'Console',
@@ -227,6 +229,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "customPWInfoPanelLinks" => array(11, 16, 22, 21, 29, 30, 31, 304),
             "captainHookShowDescription" => 1,
             "captainHookToggleDocComment" => null,
+            "adminerThemeColor" => 'blue',
             "apiExplorerIncludeInheritedMethods" => null,
             "apiExplorerShowDescription" => 1,
             "apiExplorerToggleDocComment" => null,
@@ -341,6 +344,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             !static::$inAdmin &&
             strpos(self::inputUrl(true), DIRECTORY_SEPARATOR.'form-builder'.DIRECTORY_SEPARATOR) !== false)
                 return;
+
+        // adminer iframe
+        if(strpos(self::inputUrl(true), 'adminer') !== false)
+            return;
 
         // don't init Tracy for @soma's PageEditSoftLock polling on Page Edit
         if(strpos(self::inputUrl(), 'checkpagelock') !== false) return;
@@ -1281,7 +1288,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // LOAD SPECIFIED PANELS
         foreach(static::$showPanels as $panel) {
             if(static::$inAdmin && in_array($panel, static::$hideInAdmin)) continue;
-            if(($panel == 'console' || $panel == 'snippetRunner' || $panel == 'fileEditor') && !$this->wire('user')->isSuperuser()) continue;
+            if(($panel == 'console' || $panel == 'snippetRunner' || $panel == 'fileEditor' || $panel == 'adminer') && !$this->wire('user')->isSuperuser()) continue;
             if($panel == 'userSwitcher') {
                 if(isset($this->data['userSwitchSession'])) $userSwitchSession = $this->data['userSwitchSession'];
                 if(!$this->wire('user')->isSuperuser() && (!$this->wire('session')->tracyUserSwitcherId || (isset($userSwitchSession[$this->wire('session')->tracyUserSwitcherId]) && $userSwitchSession[$this->wire('session')->tracyUserSwitcherId] <= time()))) continue;
@@ -2901,6 +2908,22 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('checked', $data['pWInfoPanelLinksNewTab'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
+        // Adminer Panel
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->attr('name+id', 'adminerPanel');
+        $fieldset->label = __('Adminer panel', __FILE__);
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldSelect");
+        $f->attr('name', 'adminerThemeColor');
+        $f->label = __('Theme color', __FILE__);
+        $f->addOption('blue', 'Blue');
+        $f->addOption('green', 'Green');
+        $f->addOption('orange', 'Orange');
+        $f->required = true;
+        if($data['adminerThemeColor']) $f->attr('value', $data['adminerThemeColor']);
+        $fieldset->add($f);
+
         // API Explorer Panel
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
         $fieldset->attr('name+id', 'apiExplorerPanel');
@@ -3415,6 +3438,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         return $wrapper;
 
+    }
+
+    public function ___upgrade($fromVersion, $toVersion) {
+        if(!$this->wire('modules')->isInstalled('ProcessTracyAdminer')) {
+            $this->wire('modules')->install('ProcessTracyAdminer');
+        }
     }
 
 }
