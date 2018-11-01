@@ -29,7 +29,7 @@ class AdminerPanel extends BasePanel {
         $out = '
         <h1>' . $this->icon . ' Adminer</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'AdminerPanel\')">+</a></span></span>
         <div class="tracy-inner" style="padding: 0 !important">
-            <iframe src="'.$adminerUrl.'?db='.$this->wire('config')->dbName.'" style="width:100%; height:calc(100% - 5px); border: none; padding:0; margin:0;"></iframe>';
+            <iframe src="'.$adminerUrl.'?username=&db='.$this->wire('config')->dbName.'" style="width:100%; height:calc(100% - 5px); border: none; padding:0; margin:0;"></iframe>';
 
         $out .= '<div style="padding-left:5px">'.\TracyDebugger::generatePanelFooter('adminer', \Tracy\Debugger::timer('adminer'), strlen($out), 'adminerPanel').'</div>';
         $out .= '
