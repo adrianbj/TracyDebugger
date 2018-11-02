@@ -7,7 +7,7 @@ class ProcessTracyAdminer extends Process {
             'summary' => __('Adminer page for TracyDebugger.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '1.0.1',
+            'version' => '1.0.2',
             'autoload' => false,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4, TracyDebugger',
@@ -20,13 +20,12 @@ class ProcessTracyAdminer extends Process {
         );
     }
 
-
-    public function init() {
-    }
-
     public function ___execute() {
 
-        function adminer_object($tracyPath = null) {
+        error_reporting(0);
+        ini_set('display_errors', 0);
+
+        function adminer_object() {
 
             require_once './panels/Adminer/plugins/plugin.php';
 
@@ -36,7 +35,7 @@ class ProcessTracyAdminer extends Process {
 
             $tracySettings = wire('modules')->getModuleConfigData('TracyDebugger');
             $themeColor = isset($tracySettings['adminerThemeColor']) ? $tracySettings['adminerThemeColor'] : 'blue';
-	        $port = wire('config')->dbPort ? ':' . wire('config')->dbPort : '';
+            $port = wire('config')->dbPort ? ':' . wire('config')->dbPort : '';
 
             $plugins = [
                 new AdminerFrames,
