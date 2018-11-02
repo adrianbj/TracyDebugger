@@ -36,11 +36,12 @@ class ProcessTracyAdminer extends Process {
 
             $tracySettings = wire('modules')->getModuleConfigData('TracyDebugger');
             $themeColor = isset($tracySettings['adminerThemeColor']) ? $tracySettings['adminerThemeColor'] : 'blue';
+	        $port = wire('config')->dbPort ? ':' . wire('config')->dbPort : '';
 
             $plugins = [
                 new AdminerFrames,
                 new AdminerDatabaseHide(["mysql", "information_schema", "performance_schema"]),
-                new AdminerProcessWireLogin(wire('config')->dbHost, wire('config')->dbUser, wire('config')->dbPass, wire('config')->dbName),
+                new AdminerProcessWireLogin(wire('config')->dbHost . $port, wire('config')->dbUser, wire('config')->dbPass, wire('config')->dbName),
                 new AdminerTablesFilter(),
                 new AdminerSimpleMenu(),
                 new AdminerCollations(),
