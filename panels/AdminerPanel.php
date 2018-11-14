@@ -27,9 +27,18 @@ class AdminerPanel extends BasePanel {
         $adminerUrl = $this->wire('pages')->get("process=$adminerModuleId")->url;
 
         $out = '
-        <h1>' . $this->icon . ' Adminer</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'AdminerPanel\')">+</a></span></span>
-        <div class="tracy-inner" style="padding: 0 !important">
-            <iframe src="'.$adminerUrl.'?db='.$this->wire('config')->dbName.'" style="width:100%; height:calc(100% - 5px); border: none; padding:0; margin:0;"></iframe>';
+        <h1>' . $this->icon . ' Adminer</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'AdminerPanel\')">+</a></span></span>';
+
+        if($this->wire('modules')->isInstalled("ProcessTracyAdminer")) {
+            $out .= '
+            <div class="tracy-inner" style="padding: 0 !important">
+                <iframe src="'.$adminerUrl.'" style="width:100%; height:calc(100% - 5px); border: none; padding:0; margin:0;"></iframe>';
+        }
+        else {
+            $out .= '
+            <div class="tracy-inner">
+                <p>This panel is not available because the ProcessTracyAdminer module has not been installed.</p>';
+        }
 
         $out .= '<div style="padding-left:5px">'.\TracyDebugger::generatePanelFooter('adminer', \Tracy\Debugger::timer('adminer'), strlen($out), 'adminerPanel').'</div>';
         $out .= '

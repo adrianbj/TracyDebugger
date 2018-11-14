@@ -4,8 +4,9 @@ $_GET['username'] = ''; // triggers autologin
 
 class AdminerProcessWireLogin {
 
-	public function __construct($server = false, $name = false, $pass = false) {
+	public function __construct($server = false, $db = false, $name = false, $pass = false) {
 		$this->server = $server;
+		$this->db = $db;
 		$this->name = $name;
 		$this->pass = $pass;
 	}
@@ -17,6 +18,10 @@ class AdminerProcessWireLogin {
 
 	function login() {
 		return true;
+	}
+
+	function databases($flush = true) {
+		return [$this->db];
 	}
 
 }

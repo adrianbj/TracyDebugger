@@ -25,6 +25,8 @@ class ProcessTracyAdminer extends Process {
         error_reporting(0);
         ini_set('display_errors', 0);
 
+        $_GET['db'] = $this->wire('config')->dbName;
+
         function adminer_object() {
 
             require_once './panels/Adminer/plugins/plugin.php';
@@ -39,8 +41,7 @@ class ProcessTracyAdminer extends Process {
 
             $plugins = [
                 new AdminerFrames,
-                new AdminerDatabaseHide(["mysql", "information_schema", "performance_schema"]),
-                new AdminerProcessWireLogin(wire('config')->dbHost . $port, wire('config')->dbUser, wire('config')->dbPass, wire('config')->dbName),
+                new AdminerProcessWireLogin(wire('config')->dbHost . $port, wire('config')->dbName, wire('config')->dbUser, wire('config')->dbPass, wire('config')->dbName),
                 new AdminerTablesFilter(),
                 new AdminerSimpleMenu(),
                 new AdminerCollations(),
