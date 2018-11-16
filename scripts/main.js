@@ -64,7 +64,7 @@ window.addEventListener("beforeunload", function () {
     }
  });
 
-var toggleDumpType = function(type, classExt) {
+var toggleDumpType = function(el, type, classExt) {
     var dumpTabs = document.getElementsByClassName('tracyDumpTabs_' + classExt);
     [].forEach.call(dumpTabs, function (tab) {
         var tabContentEl = document.getElementById(tab.id);
@@ -80,6 +80,7 @@ var toggleDumpType = function(type, classExt) {
             tabContentEl.style.display = "block";
         }
     });
+    window.Tracy.Debug.panels[el.closest('.tracy-panel').id].reposition();
 }
 
 function tracyDumpsToggler(el, show) {
@@ -88,6 +89,7 @@ function tracyDumpsToggler(el, show) {
         if(i>0 || i==0 && item.classList.contains('tracy-collapsed')) tdToggle(item, show);
         i++;
     });
+    window.Tracy.Debug.panels[el.closest('.tracy-panel').id].reposition();
 };
 
 // this is a copy of the Tracy core toggle() function but without the creation of the tracy-toggle event to make it faster
