@@ -1313,6 +1313,11 @@ ul.pw-info-links {
     color: #9e255d/*!important;*/
 }
 
+.tracy-file-tree .tft-d-no-editable-files {
+    opacity: 0.5;
+    color: #9e255d/*!important;*/
+}
+
 .tracy-file-tree .tft-d>a {
     color: inherit;
 }

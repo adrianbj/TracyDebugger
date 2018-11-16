@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.14.6',
+            'version' => '4.14.7',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -269,7 +269,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "codeTabSize" => 4,
             "codeUseSoftTabs" => true,
             "customSnippetsUrl" => '',
-            "fileEditorAllowedExtensions" => 'php, module, js, css, htaccess',
+            "fileEditorAllowedExtensions" => 'php, module, js, css, txt, log, htaccess',
             "fileEditorBaseDirectory" => 'templates',
             "enableShortcutMethods" => 1,
             "enabledShortcutMethods" => array('debugAll', 'da', 'dump', 'd', 'barDump', 'bd', 'barDumpBig', 'bdb', 'barDumpLive', 'bdl', 'l', 'timer', 't', 'fireLog', 'fl', 'addBreakpoint', 'bp', 'templateVars', 'tv')
@@ -2860,7 +2860,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'fileEditorAllowedExtensions');
         $f->label = __('Allowed extensions', __FILE__);
         $f->description = __('List of extensions that can be opened in the editor. Fewer extensions results in better performance in the File Editor Panel.', __FILE__);
-        $f->notes = __('Initially configured for: php, module, js, css, htaccess', __FILE__);
+        $f->notes = __('Initially configured for: php, module, js, css, txt, log, htaccess', __FILE__);
         $f->columnWidth = 50;
         if($data['fileEditorAllowedExtensions']) $f->attr('value', $data['fileEditorAllowedExtensions']);
         $fieldset->add($f);

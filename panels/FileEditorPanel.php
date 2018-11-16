@@ -436,7 +436,7 @@ HTML;
 
                 if(@is_dir("$directory/$file")) {
                     $subtree = $this->php_file_tree_dir("$directory/$file", $extensions, $extFilter, "$parent/$file"); // no need to urlencode parent/file
-                    $tree .= "<li class='tft-d'><a data-p='".($subtree == '' ? 'no editable files' : '')."'>$fileName</a>";
+                    $tree .= "<li title='".($subtree == '' ? 'no editable files' : '')."' class='tft-d".($subtree == '' ? ' tft-d-no-editable-files' : '')."'><a data-p='".($subtree == '' ? 'no editable files' : '')."'>$fileName</a>";
                     //$tree .= "<li class='tft-d'><a data-p='$dirPath'>$fileName</a>";
                     $tree .= $subtree;
                     $tree .= "</li>";
