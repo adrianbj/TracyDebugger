@@ -1,0 +1,3 @@
+.logout input[type=submit] {
+	display: none !important;
+}
