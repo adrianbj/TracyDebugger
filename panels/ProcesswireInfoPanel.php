@@ -5,19 +5,7 @@ use Tracy\Dumper;
 class ProcesswireInfoPanel extends BasePanel {
 
     protected $icon;
-    protected $apiBaseUrl;
     protected $newTab;
-
-    public function __construct() {
-        if($this->wire('modules')->isInstalled('ProcessWireAPI')) {
-            $apiModuleId = $this->wire('modules')->getModuleID("ProcessWireAPI");
-            $this->apiBaseUrl = $this->wire('pages')->get("process=$apiModuleId")->url.'methods/';
-        }
-        else {
-            $this->apiBaseUrl = 'https://processwire.com/api/ref/';
-        }
-        $this->newTab = \TracyDebugger::getDataValue('pWInfoPanelLinksNewTab') ? 'target="_blank"' : '';
-    }
 
     public function getTab() {
         if(\TracyDebugger::isAdditionalBar()) return;

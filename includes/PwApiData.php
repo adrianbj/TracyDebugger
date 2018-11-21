@@ -4,6 +4,19 @@ class TracyPwApiData extends WireData {
 
     private $n = 0;
 
+    public function __construct() {
+        if($this->wire('modules')->isInstalled('ProcessWireAPI')) {
+            $apiModuleInstalled = true;
+            $apiModuleId = $this->wire('modules')->getModuleID("ProcessWireAPI");
+            $this->apiBaseUrl = $this->wire('pages')->get("process=$apiModuleId")->url.'methods/';
+        }
+        else {
+            $apiModuleInstalled = false;
+            $this->apiBaseUrl = 'https://processwire.com/api/ref/';
+        }
+        $this->newTab = \TracyDebugger::getDataValue('linksNewTab') ? 'target="_blank"' : '';
+    }
+
     public function getVariables() {
         $apiVars = array();
         $apiVariables = array();
