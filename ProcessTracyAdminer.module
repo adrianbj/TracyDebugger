@@ -1,6 +1,6 @@
 <?php
 
-class ProcessTracyAdminer extends Process {
+class ProcessTracyAdminer extends Process implements Module, ConfigurableModule {
     public static function getModuleInfo() {
         return array(
             'title' => __('Process Tracy Adminer', __FILE__),
@@ -20,6 +20,30 @@ class ProcessTracyAdminer extends Process {
         );
     }
 
+
+   /**
+     * Default configuration for module
+     *
+     */
+    static public function getDefaultData() {
+        return array(
+            "themeColor" => 'blue',
+            "jsonMaxTextLength" => 500
+        );
+    }
+
+
+    /**
+     * Populate the default config data
+     *
+     */
+    public function __construct() {
+        foreach(self::getDefaultData() as $key => $value) {
+            $this->$key = $value;
+        }
+    }
+
+
     public function ___execute() {
 
         error_reporting(0);
@@ -32,11 +56,13 @@ class ProcessTracyAdminer extends Process {
             require_once './panels/Adminer/plugins/plugin.php';
 
             foreach (glob(__DIR__.'/panels/Adminer/plugins/*.php') as $filename) {
-                require_once $filename;
+                require_once $filename;/*NoCompile*/
             }
 
-            $tracySettings = wire('modules')->getModuleConfigData('TracyDebugger');
-            $themeColor = isset($tracySettings['adminerThemeColor']) ? $tracySettings['adminerThemeColor'] : 'blue';
+            $data = wire('modules')->getModuleConfigData('ProcessTracyAdminer');
+            $themeColor = isset($data['themeColor']) ? $data['themeColor'] : 'blue';
+            $jsonMaxTextLength = isset($data['jsonMaxTextLength']) ? $data['jsonMaxTextLength'] : 200;
+
             $port = wire('config')->dbPort ? ':' . wire('config')->dbPort : '';
 
             $plugins = [
@@ -45,15 +71,47 @@ class ProcessTracyAdminer extends Process {
                 new AdminerTablesFilter(),
                 new AdminerSimpleMenu(),
                 new AdminerCollations(),
-                new AdminerJsonPreview(),
+                new AdminerJsonPreview(0, true, true, $jsonMaxTextLength),
                 new AdminerTheme("default-".$themeColor)
             ];
 
             return new AdminerPlugin($plugins);
         }
 
-        include './panels/Adminer/adminer-4.6.3-mysql.php';
+        require_once './panels/Adminer/adminer-4.6.3-mysql.php';/*NoCompile*/
         exit;
+    }
+
+    /**
+     * Return an InputfieldWrapper of Inputfields used to configure the class
+     *
+     * @param array $data Array of config values indexed by field name
+     * @return InputfieldsWrapper
+     *
+     */
+    public function getModuleConfigInputfields(array $data) {
+
+        $wrapper = new InputfieldWrapper();
+
+        $f = $this->wire('modules')->get("InputfieldSelect");
+        $f->attr('name', 'themeColor');
+        $f->label = __('Theme color', __FILE__);
+        $f->addOption('blue', 'Blue');
+        $f->addOption('green', 'Green');
+        $f->addOption('orange', 'Orange');
+        $f->required = true;
+        if($this->data['themeColor']) $f->attr('value', $this->data['themeColor']);
+        $wrapper->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'jsonMaxTextLength');
+        $f->label = __('JSON max text length', __FILE__);
+        $f->required = true;
+        if($this->data['jsonMaxTextLength']) $f->attr('value', $this->data['jsonMaxTextLength']);
+        $wrapper->add($f);
+
+        return $wrapper;
+
     }
 
 }

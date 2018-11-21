@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.14.7',
+            'version' => '4.14.8',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -63,6 +63,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $allowedTracyUser = false;
     public static $tracyVersion;
     public static $dumpItems = array();
+    public static $autocompleteArr = array();
     public static $pageFinderQueries = array();
     public static $templateVars = array();
     public static $templateConsts = array();
@@ -229,7 +230,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "customPWInfoPanelLinks" => array(11, 16, 22, 21, 29, 30, 31, 304),
             "captainHookShowDescription" => 1,
             "captainHookToggleDocComment" => null,
-            "adminerThemeColor" => 'blue',
             "apiExplorerIncludeInheritedMethods" => null,
             "apiExplorerShowDescription" => 1,
             "apiExplorerToggleDocComment" => null,
@@ -2914,14 +2914,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $fieldset->label = __('Adminer panel', __FILE__);
         $wrapper->add($fieldset);
 
-        $f = $this->wire('modules')->get("InputfieldSelect");
-        $f->attr('name', 'adminerThemeColor');
-        $f->label = __('Theme color', __FILE__);
-        $f->addOption('blue', 'Blue');
-        $f->addOption('green', 'Green');
-        $f->addOption('orange', 'Orange');
-        $f->required = true;
-        if($data['adminerThemeColor']) $f->attr('value', $data['adminerThemeColor']);
+        $f = $this->wire('modules')->get("InputfieldMarkup");
+        $f->attr('name', 'adminerSettings');
+        $f->value = 'Adminer settings are available <a href="'.$this->wire('config')->urls->admin.'module/edit?name=ProcessTracyAdminer">here</a>.';
         $fieldset->add($f);
 
         // API Explorer Panel
