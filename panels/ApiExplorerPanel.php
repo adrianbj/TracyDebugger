@@ -94,9 +94,9 @@ HTML;
             <p><input type="submit" id="toggleAll" onclick="toggleVars()" value="Toggle All" /></p>
         ';
 
+        require_once __DIR__ . '/../includes/PwApiData.php';
+        $this->tracyPwApiData = new TracyPwApiData();
         if(empty(\TracyDebugger::$allApiVars)) {
-            require_once __DIR__ . '/../includes/PwApiData.php';
-            $this->tracyPwApiData = new TracyPwApiData();
             \TracyDebugger::$allApiVars = $this->tracyPwApiData->getVariables();
         }
 
