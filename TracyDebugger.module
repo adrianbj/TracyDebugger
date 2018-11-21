@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.14.10',
+            'version' => '4.14.11',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -64,6 +64,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $tracyVersion;
     public static $dumpItems = array();
     public static $autocompleteArr = array();
+    public static $allApiVars = array();
     public static $pageFinderQueries = array();
     public static $templateVars = array();
     public static $templateConsts = array();
@@ -269,6 +270,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "codeTabSize" => 4,
             "codeUseSoftTabs" => true,
             "customSnippetsUrl" => '',
+            "pwAutocompletions" => 1,
             "fileEditorAllowedExtensions" => 'php, module, js, css, txt, log, htaccess',
             "fileEditorBaseDirectory" => 'templates',
             "enableShortcutMethods" => 1,
@@ -2821,6 +2823,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->addOption(0, 'False');
         $f->required = true;
         if($data['codeUseSoftTabs']) $f->attr('value', $data['codeUseSoftTabs']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'pwAutocompletions');
+        $f->label = __('ProcessWire autocompletions', __FILE__);
+        $f->description = __('Adds PW methods, properties, and page fields to the editor autocompletions.', __FILE__);
+        $f->notes = __('This add approximately 200KB to the payload of the Console and File Editor panels.', __FILE__);
+        $f->attr('checked', $data['pwAutocompletions'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldURL");

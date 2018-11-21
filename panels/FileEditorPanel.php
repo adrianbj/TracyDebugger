@@ -2,10 +2,11 @@
 
 class FileEditorPanel extends BasePanel {
 
-    protected $icon;
-    protected $tracyFileEditorFilePath;
-    protected $errorMessage = null;
-    protected $encoding = 'auto';
+    private $icon;
+    private $tracyFileEditorFilePath;
+    private $errorMessage = null;
+    private $encoding = 'auto';
+    private $tracyPwApiData;
 
     public function getTab() {
 
@@ -89,6 +90,28 @@ class FileEditorPanel extends BasePanel {
         $codeFontSize = \TracyDebugger::getDataValue('codeFontSize');
         $codeLineHeight = \TracyDebugger::getDataValue('codeLineHeight');
 
+        if(\TracyDebugger::getDataValue('pwAutocompletions')) {
+            if(empty(\TracyDebugger::$autocompleteArr)) {
+                require_once __DIR__ . '/../includes/PwApiData.php';
+                $this->tracyPwApiData = new TracyPwApiData();
+                \TracyDebugger::$allApiVars = $this->tracyPwApiData->getVariables();
+            }
+
+            // page fields
+            $i = count(\TracyDebugger::$autocompleteArr);
+            foreach($this->p->fields as $field) {
+                \TracyDebugger::$autocompleteArr[$i]['name'] = '$page->'.$field;
+                \TracyDebugger::$autocompleteArr[$i]['meta'] = 'PW ' . str_replace('Fieldtype', '', $field->type) . ' field';
+                \TracyDebugger::$autocompleteArr[$i]['docHTML'] = $field->description;
+                $i++;
+            }
+
+            $apiVariables = json_encode(\TracyDebugger::$autocompleteArr);
+        }
+        else {
+            $apiVariables = json_encode(array());
+        }
+
         $out .= <<< HTML
         <script>
 
@@ -99,6 +122,7 @@ class FileEditorPanel extends BasePanel {
                 tracyFileEditorFilePath: "{$this->tracyFileEditorFilePath}",
                 errorMessage: "{$this->errorMessage}",
                 customSnippetsUrl: "$customSnippetsUrl",
+                apiVariables: $apiVariables,
                 aceTheme: "$aceTheme",
                 codeFontSize: $codeFontSize,
                 codeLineHeight: $codeLineHeight,
@@ -221,11 +245,29 @@ class FileEditorPanel extends BasePanel {
                             minLines: 5
                         });
 
+                        // all PW variable completers
+                        if(tracyFileEditor.apiVariables.length > 0) {
+                            var staticWordCompleter = {
+                                getCompletions: function(editor, session, pos, prefix, callback) {
+                                    callback(null, tracyFileEditor.apiVariables.map(function(word) {
+                                        return {
+                                            value: word.name,
+                                            meta: word.meta,
+                                            docHTML: word.docHTML
+                                        };
+                                    }));
+                                }
+                            };
+                            tracyFileEditor.tfe.completers.push(staticWordCompleter);
+                        }
+
+                        // included PW snippets
                         tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/code-snippets.js", function() {
                             tracyFileEditor.snippetManager = ace.require("ace/snippets").snippetManager;
                             tracyFileEditor.snippetManager.register(getCodeSnippets(), tracyFileEditor.mode.replace('ace/mode/', ''));
                         });
 
+                        // custom snippets URL
                         if(tracyFileEditor.customSnippetsUrl !== '') {
                             tracyJSLoader.load(tracyFileEditor.customSnippetsUrl, function() {
                                 tracyFileEditor.snippetManager.register(getCustomCodeSnippets(), "php");

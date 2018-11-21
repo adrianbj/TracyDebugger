@@ -2,9 +2,10 @@
 
 class ConsolePanel extends BasePanel {
 
-    protected $icon;
-    protected $iconColor;
-    protected $tracyIncludeCode;
+    private $icon;
+    private $iconColor;
+    private $tracyIncludeCode;
+    private $tracyPwApiData;
 
     public function getTab() {
         if(\TracyDebugger::isAdditionalBar()) {
@@ -34,6 +35,7 @@ class ConsolePanel extends BasePanel {
             ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Console' : '') . '
         </span>';
     }
+
 
     public function getPanel() {
 
@@ -116,6 +118,29 @@ class ConsolePanel extends BasePanel {
         $codeShowInvisibles = \TracyDebugger::getDataValue('codeShowInvisibles');
         $codeTabSize = \TracyDebugger::getDataValue('codeTabSize');
         $customSnippetsUrl = \TracyDebugger::getDataValue('customSnippetsUrl');
+
+        if(\TracyDebugger::getDataValue('pwAutocompletions')) {
+            if(empty(\TracyDebugger::$autocompleteArr)) {
+                require_once __DIR__ . '/../includes/PwApiData.php';
+                $this->tracyPwApiData = new TracyPwApiData();
+                \TracyDebugger::$allApiVars = $this->tracyPwApiData->getVariables();
+            }
+
+            // page fields
+            $i = count(\TracyDebugger::$autocompleteArr);
+            foreach($p->fields as $field) {
+                \TracyDebugger::$autocompleteArr[$i]['name'] = '$page->'.$field;
+                \TracyDebugger::$autocompleteArr[$i]['meta'] = 'PW ' . str_replace('Fieldtype', '', $field->type) . ' field';
+                \TracyDebugger::$autocompleteArr[$i]['docHTML'] = $field->description;
+                $i++;
+            }
+
+            $apiVariables = json_encode(\TracyDebugger::$autocompleteArr);
+        }
+        else {
+            $apiVariables = json_encode(array());
+        }
+
         $aceTheme = \TracyDebugger::getDataValue('aceTheme');
         $codeFontSize = \TracyDebugger::getDataValue('codeFontSize');
         $codeLineHeight = \TracyDebugger::getDataValue('codeLineHeight');
@@ -134,6 +159,7 @@ class ConsolePanel extends BasePanel {
                 desc: false,
                 inAdmin: "$inAdmin",
                 customSnippetsUrl: "$customSnippetsUrl",
+                apiVariables: $apiVariables,
                 aceTheme: "$aceTheme",
                 codeFontSize: $codeFontSize,
                 lineHeight: $codeLineHeight,
@@ -583,6 +609,22 @@ class ConsolePanel extends BasePanel {
                             useSoftTabs: $codeUseSoftTabs,
                             minLines: 5
                         });
+
+                        // all PW variable completers
+                        if(tracyConsole.apiVariables.length > 0) {
+                            var staticWordCompleter = {
+                                getCompletions: function(editor, session, pos, prefix, callback) {
+                                    callback(null, tracyConsole.apiVariables.map(function(word) {
+                                        return {
+                                            value: word.name,
+                                            meta: word.meta,
+                                            docHTML: word.docHTML
+                                        };
+                                    }));
+                                }
+                            };
+                            tracyConsole.tce.completers.push(staticWordCompleter);
+                        }
 
                         // included PW snippets
                         tracyConsole.snippetManager = ace.require("ace/snippets").snippetManager;
