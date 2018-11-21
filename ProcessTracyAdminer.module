@@ -56,7 +56,7 @@ class ProcessTracyAdminer extends Process implements Module, ConfigurableModule 
             require_once './panels/Adminer/plugins/plugin.php';
 
             foreach (glob(__DIR__.'/panels/Adminer/plugins/*.php') as $filename) {
-                require_once $filename;/*NoCompile*/
+                require_once $filename/*NoCompile*/;
             }
 
             $data = wire('modules')->getModuleConfigData('ProcessTracyAdminer');
@@ -78,7 +78,7 @@ class ProcessTracyAdminer extends Process implements Module, ConfigurableModule 
             return new AdminerPlugin($plugins);
         }
 
-        require_once './panels/Adminer/adminer-4.6.3-mysql.php';/*NoCompile*/
+        require_once __DIR__ . '/panels/Adminer/adminer-4.6.3-mysql.php'/*NoCompile*/;
         exit;
     }
 
