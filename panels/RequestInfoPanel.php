@@ -600,19 +600,28 @@ class RequestInfoPanel extends BasePanel {
 
         // Fields List & Values
         if(in_array('fieldsListValues', $panelSections) && $isPwPage) {
-            $fieldsListValues = $this->sectionHeader(array('id', 'name', 'label', 'type', 'inputfieldType/class', 'unformatted', 'formatted', 'image details', 'settings'));
+
+            if($this->wire('modules')->isInstalled("ProcessTracyAdminer")) {
+                $adminerModuleId = $this->wire('modules')->getModuleID("ProcessTracyAdminer");
+                $adminerUrl = $this->wire('pages')->get("process=$adminerModuleId")->url;
+                $fieldsListValues = $this->sectionHeader(array('id', 'name', 'label', 'type', 'inputfieldType/class', 'Adminer', 'unformatted', 'formatted', 'image details', 'settings'));
+            }
+            else {
+                $fieldsListValues = $this->sectionHeader(array('id', 'name', 'label', 'type', 'inputfieldType/class', 'unformatted', 'formatted', 'image details', 'settings'));
+            }
+
             $value = array();
             foreach($p->fields as $f) {
                 $fieldArray['settings'] = $p->template->fieldgroup->getField($f, true)->getArray();
                 $settings = Dumper::toHtml($fieldArray['settings'], array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
-
                 $fieldsListValues .= "\n<tr>" .
                     "<td>$f->id</td>" .
                     '<td><a title="Edit Field" href="'.$this->wire('config')->urls->admin.'setup/field/edit?id='.$f->id.'">'.$f->name.'</a></td>' .
                     "<td>$f->label</td>" .
                     "<td>".str_replace('Fieldtype', '', $f->type)."</td>" .
-                    "<td>".str_replace('Inputfield', '', ($f->inputfield ? $f->inputfield : $f->inputfieldClass))."</td>" .
-                    "<td>".$this->generateOutput($p, $f, false)."</td>" .
+                    "<td>".str_replace('Inputfield', '', ($f->inputfield ? $f->inputfield : $f->inputfieldClass))."</td>";
+                    if(isset($adminerUrl)) $fieldsListValues .= "<td><a href='".$adminerUrl."?username=&db=".$this->wire('config')->dbName."&edit=field_".$f->name."&where%5Bpages_id%5D=".$p->id."'>edit</a></td>";
+                    $fieldsListValues .= "<td>".$this->generateOutput($p, $f, false)."</td>" .
                     "<td>".$this->generateOutput($p, $f, true)."</td>" .
                     "<td>".$this->imageDetails($p, $f)."</td>" .
                     "<td>".$settings."</td>" .
