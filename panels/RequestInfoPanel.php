@@ -51,6 +51,16 @@ class RequestInfoPanel extends BasePanel {
 
     public function getPanel() {
 
+        if($this->wire('modules')->isInstalled("ProcessTracyAdminer")) {
+            $adminerModuleId = $this->wire('modules')->getModuleID("ProcessTracyAdminer");
+            $adminerUrl = $this->wire('pages')->get("process=$adminerModuleId")->url;
+            $adminerIcon = '
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="304.4 284.4 11.7 16">
+                <path fill="'.\TracyDebugger::COLOR_NORMAL.'" d="M304.4 294.8v2.3c.3 1.3 2.7 2.3 5.8 2.3s5.7-1 5.9-2.3v-2.3c-1 .8-3.1 1.4-6 1.4-2.8 0-4.8-.6-5.7-1.4zM310.7 291.9h-1.2c-1.7-.1-3.1-.3-4-.7-.4-.2-.9-.4-1.1-.6v2.4c.7.8 2.9 1.5 5.8 1.5 3 0 5.1-.7 5.8-1.5v-2.4c-.3.2-.7.5-1.1.6-1.1.4-2.5.6-4.2.7zM310.1 285.6c-3.5 0-5.5 1.1-5.8 2.3v.7c.7.8 2.9 1.5 5.8 1.5s5.1-.7 5.8-1.5v-.6c-.3-1.3-2.3-2.4-5.8-2.4z"/>
+            </svg>
+            ';
+        }
+
         if(\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
             ($this->wire('process') == 'ProcessPageEdit' ||
                 $this->wire('process') == 'ProcessUser' ||
@@ -89,8 +99,12 @@ class RequestInfoPanel extends BasePanel {
         // Field Settings
         if(in_array('fieldSettings', $panelSections) && $isPwPage) {
             if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessField') {
+                $fieldSettings = '';
                 $field = $this->wire('fields')->get((int)$this->wire('input')->get('id'));
-                $fieldSettings = '<table>';
+                if(isset($adminerUrl)) {
+                    $fieldSettings .= '<a title="Edit in Adminer" style="padding-bottom:5px" href="'.$adminerUrl.'?edit=fields&where%5Bid%5D='.$field->id.'">'.$adminerIcon.'</a>';
+                }
+                $fieldSettings .= '<table>';
                 if(method_exists($field, 'getExportData')) {
                     foreach($field->getExportData() as $k => $v) {
                         $fieldSettings .= '
@@ -209,8 +223,12 @@ class RequestInfoPanel extends BasePanel {
         // Template Settings
         if(in_array('templateSettings', $panelSections) && $isPwPage) {
             if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessTemplate') {
+                $templateSettings = '';
                 $template = $this->wire('templates')->get((int)$this->wire('input')->get('id'));
-                $templateSettings = '<table>';
+                if(isset($adminerUrl)) {
+                    $templateSettings .= '<a title="Edit in Adminer" style="padding-bottom:5px" href="'.$adminerUrl.'?edit=templates&where%5Bid%5D='.$template->id.'">'.$adminerIcon.'</a>';
+                }
+                $templateSettings .= '<table>';
                 if(method_exists($template, 'getExportData')) {
                     foreach($template->getExportData() as $k => $v) {
                         $templateSettings .= '
@@ -262,12 +280,15 @@ class RequestInfoPanel extends BasePanel {
 
         // Module Settings
         if(in_array('moduleSettings', $panelSections) && $isPwPage) {
-            $moduleSettings = '';
             if($this->wire('input')->get('name') && $this->wire('page')->process == 'ProcessModule') {
+                $moduleSettings = '';
                 $moduleName = $this->wire('sanitizer')->name($this->wire('input')->get('name'));
                 if($this->wire('modules')->isInstalled($moduleName)) {
                     $moduleObject = $this->wire('modules')->getModule($moduleName, array('noInit' => true));
-                    $moduleSettings = '
+                    if(isset($adminerUrl)) {
+                        $moduleSettings .= '<a title="Edit in Adminer" style="padding-bottom:5px" href="'.$adminerUrl.'?edit=modules&where%5Bclass%5D='.$moduleName.'">'.$adminerIcon.'</a>';
+                    }
+                    $moduleSettings .= '
                     <table>';
                     foreach($this->wire('modules')->getModuleInfoVerbose($moduleName) as $k => $v) {
                         $moduleSettings .= '
@@ -294,7 +315,11 @@ class RequestInfoPanel extends BasePanel {
 
         // Page info
         if(in_array('pageInfo', $panelSections) && $isPwPage) {
-            $pageInfo = '
+            $pageInfo = '';
+            if(isset($adminerUrl)) {
+                $pageInfo .= '<a title="Edit in Adminer" style="padding-bottom:5px" href="'.$adminerUrl.'?edit=pages&where%5Bid%5D='.$p->id.'">'.$adminerIcon.'</a>';
+            }
+            $pageInfo .= '
             <table>
                 <tr>
                     <td>title</td>
@@ -512,6 +537,7 @@ class RequestInfoPanel extends BasePanel {
         if(isset($templateFilePath) && $templateFilePath != '') $templateFileEditorLink = \TracyDebugger::createEditorLink($templateFilePath, 1, $templateFileEditorLinkIcon, 'Edit ' . pathinfo($templateFilePath, PATHINFO_BASENAME));
 
         if(in_array('templateInfo', $panelSections) && $isPwPage) {
+            $templateInfo = '';
             // posix_getpwuid doesn't exist on Windows
             if(function_exists('posix_getpwuid')) {
                 if(isset($templateFilePath)) {
@@ -528,7 +554,11 @@ class RequestInfoPanel extends BasePanel {
                 $template = $p->template;
             }
 
-            $templateInfo = '
+            if(isset($adminerUrl)) {
+                $templateInfo .= '<a title="Edit in Adminer" style="padding-bottom:5px" href="'.$adminerUrl.'?edit=templates&where%5Bid%5D='.$template->id.'">'.$adminerIcon.'</a>';
+            }
+
+            $templateInfo .= '
             <table>
                 <tr>
                     <td>label</td>
@@ -601,9 +631,7 @@ class RequestInfoPanel extends BasePanel {
         // Fields List & Values
         if(in_array('fieldsListValues', $panelSections) && $isPwPage) {
 
-            if($this->wire('modules')->isInstalled("ProcessTracyAdminer")) {
-                $adminerModuleId = $this->wire('modules')->getModuleID("ProcessTracyAdminer");
-                $adminerUrl = $this->wire('pages')->get("process=$adminerModuleId")->url;
+            if(isset($adminerUrl)) {
                 $fieldsListValues = $this->sectionHeader(array('id', 'name', 'label', 'type', 'inputfieldType/class', 'Adminer', 'unformatted', 'formatted', 'image details', 'settings'));
             }
             else {
@@ -620,7 +648,7 @@ class RequestInfoPanel extends BasePanel {
                     "<td>$f->label</td>" .
                     "<td>".str_replace('Fieldtype', '', $f->type)."</td>" .
                     "<td>".str_replace('Inputfield', '', ($f->inputfield ? $f->inputfield : $f->inputfieldClass))."</td>";
-                    if(isset($adminerUrl)) $fieldsListValues .= "<td><a href='".$adminerUrl."?username=&db=".$this->wire('config')->dbName."&edit=field_".$f->name."&where%5Bpages_id%5D=".$p->id."'>edit</a></td>";
+                    if(isset($adminerUrl)) $fieldsListValues .= "<td><a href='".$adminerUrl."?edit=field_".$f->name."&where%5Bpages_id%5D=".$p->id."'>edit</a></td>";
                     $fieldsListValues .= "<td>".$this->generateOutput($p, $f, false)."</td>" .
                     "<td>".$this->generateOutput($p, $f, true)."</td>" .
                     "<td>".$this->imageDetails($p, $f)."</td>" .
