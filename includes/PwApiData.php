@@ -95,7 +95,7 @@ class TracyPwApiData extends WireData {
                 $methodsList[$name.'()']['comment'] = $methodStr;
             }
 
-            if(\TracyDebugger::getDataValue('apiExplorerShowDescription')) {
+            if(\TracyDebugger::getDataValue('apiExplorerShowDescription') || \TracyDebugger::getDataValue('captainHookShowDescription') || \TracyDebugger::getDataValue('codeShowDescription')) {
                 // get the comment
                 preg_match('#^/\*\*(.*)\*/#s', $docComment, $comment);
                 if(isset($comment[0])) $comment = trim($comment[0]);
@@ -163,15 +163,15 @@ class TracyPwApiData extends WireData {
                 }
                 $items[$key][$name]['comment'] = $methodStr;
 
-                if(\TracyDebugger::getDataValue('apiExplorerShowDescription')) {
+                if(\TracyDebugger::getDataValue('apiExplorerShowDescription') || \TracyDebugger::getDataValue('captainHookShowDescription') || \TracyDebugger::getDataValue('codeShowDescription')) {
                     if(substr($info['description'], 0, 1) === '#') {
-                        if($type == 'variables') {
+                        if(\TracyDebugger::getDataValue('codeShowDescription') && $type == 'variables') {
                             \TracyDebugger::$autocompleteArr[$this->n]['docHTML'] = '';
                         }
                         $items[$key][$name]['description'] = '';
                     }
                     else {
-                        if($type == 'variables') {
+                        if(\TracyDebugger::getDataValue('codeShowDescription') && $type == 'variables') {
                             \TracyDebugger::$autocompleteArr[$this->n]['docHTML'] = isset($desc) && is_string($desc) ? nl2br(trim($info['description'])) . "\n" . (isset($info['params']) ? '('.implode(', ', $info['params']).')' : '') : '';
                         }
                         $items[$key][$name]['description'] = $info['description'];
@@ -220,9 +220,9 @@ class TracyPwApiData extends WireData {
                 $items[$key][$name]['lineNumber'] = '';
                 $items[$key][$name]['filename'] = '';
                 $items[$key][$name]['comment'] = "$" . lcfirst($key) . '->' . str_replace('___', '', $name);
-                if(\TracyDebugger::getDataValue('apiExplorerShowDescription')) {
+                if(\TracyDebugger::getDataValue('apiExplorerShowDescription') || \TracyDebugger::getDataValue('captainHookShowDescription') || \TracyDebugger::getDataValue('codeShowDescription')) {
                     $desc = preg_replace('/#([^#\s]+)/', '', $info['description']);
-                    if($type == 'variables') {
+                    if(\TracyDebugger::getDataValue('codeShowDescription') && $type == 'variables') {
                         \TracyDebugger::$autocompleteArr[$this->n]['docHTML'] = isset($desc) && is_string($desc) ? nl2br(htmlentities(trim($desc))) : '';
                     }
                     $items[$key][$name]['description'] = $desc;

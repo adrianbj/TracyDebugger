@@ -102,7 +102,7 @@ class FileEditorPanel extends BasePanel {
             foreach($this->p->fields as $field) {
                 \TracyDebugger::$autocompleteArr[$i]['name'] = '$page->'.$field;
                 \TracyDebugger::$autocompleteArr[$i]['meta'] = 'PW ' . str_replace('Fieldtype', '', $field->type) . ' field';
-                \TracyDebugger::$autocompleteArr[$i]['docHTML'] = $field->description;
+                if(\TracyDebugger::getDataValue('codeShowDescription')) \TracyDebugger::$autocompleteArr[$i]['docHTML'] = $field->description;
                 $i++;
             }
 
