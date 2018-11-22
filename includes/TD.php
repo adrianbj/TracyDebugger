@@ -198,7 +198,7 @@ class TD extends TracyDebugger {
 
             $tabs = '<ul class="tracyDumpTabs">';
             $tabDivs = '<div style="clear:both">';
-            $expandCollapseAll = '<span class="tracyDumpsToggler tracyDumpsExpander" onclick="tracyDumpsToggler(this, true)" title="Expand All">+</span> <span class="tracyDumpsToggler tracyDumpsCollapser" onclick="tracyDumpsToggler(this, false)" title="Collapse All">–</span>';
+            $expandCollapseAll = is_string($var) || is_null($var) ? '' : '<span class="tracyDumpsToggler tracyDumpsExpander" onclick="tracyDumpsToggler(this, true)" title="Expand All">+</span> <span class="tracyDumpsToggler tracyDumpsCollapser" onclick="tracyDumpsToggler(this, false)" title="Collapse All">–</span>';
             $numTabs = 0;
             foreach(\TracyDebugger::getDataValue('dumpPanelTabs') as $i => $panel) {
                 if($panel == 'debugInfo') {
