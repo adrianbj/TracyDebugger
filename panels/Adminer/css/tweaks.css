@@ -1,3 +1,9 @@
 .logout input[type=submit] {
 	display: none !important;
 }
+
+.adminerPwLogo {
+	display: inline-block;
+	float:left;
+    padding: 13px 0 0 10px;
+}

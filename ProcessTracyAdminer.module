@@ -67,7 +67,7 @@ class ProcessTracyAdminer extends Process implements Module, ConfigurableModule 
 
             $plugins = [
                 new AdminerFrames,
-                new AdminerProcessWireLogin(wire('config')->dbHost . $port, wire('config')->dbName, wire('config')->dbUser, wire('config')->dbPass, wire('config')->dbName),
+                new AdminerProcessWireLogin(wire('config')->urls->admin, wire('config')->dbHost . $port, wire('config')->dbName, wire('config')->dbUser, wire('config')->dbPass, wire('config')->dbName),
                 new AdminerTablesFilter(),
                 new AdminerSimpleMenu(),
                 new AdminerCollations(),
