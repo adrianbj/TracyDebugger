@@ -153,8 +153,8 @@ if($user->isSuperuser()) {
     }
     echo '
     <div style="border-top: 1px dotted #cccccc; color:#A9ABAB; border-bottom: 1px solid #cccccc; color:#A9ABAB; font-size: 10px; padding: 3px; margin: 10px 0 0 0;">' .
-        round((\Tracy\Debugger::timer('consoleCode')*1000), 2) . 'ms, ' .
-        number_format((memory_get_usage() - $initialMemory) / 1000000, 2, '.', ' ') . ' MB
+        \TracyDebugger::formatTime(\Tracy\Debugger::timer('consoleCode'), false) . ', ' .
+        \TracyDebugger::human_filesize((memory_get_usage() - $initialMemory), false) . '
     </div>';
 
     // fix for updating AJAX bar

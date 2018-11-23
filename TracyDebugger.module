@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.14.18',
+            'version' => '4.14.19',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1864,12 +1864,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * @return string Formatted size with units and colored font
      *
      */
-    public static function human_filesize($bytes) {
-        if($bytes >= 500000) {
-            $color = self::COLOR_ALERT;
-        }
-        elseif($bytes < 500000 && $bytes > 100000) {
-            $color = self::COLOR_WARN;
+    public static function human_filesize($bytes, $color = true) {
+        if($color === true) {
+            if($bytes >= 500000) {
+                $color = self::COLOR_ALERT;
+            }
+            elseif($bytes < 500000 && $bytes > 100000) {
+                $color = self::COLOR_WARN;
+            }
+            else {
+                $color = self::COLOR_LIGHTGREY;
+            }
         }
         else {
             $color = self::COLOR_LIGHTGREY;
@@ -1888,12 +1893,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * @return string Formatted time in milliseconds with units and colored font
      *
      */
-    public static function formatTime($seconds) {
-        if($seconds >= 1) {
-            $color = self::COLOR_ALERT;
-        }
-        elseif($seconds < 1 && $seconds > 0.1) {
-            $color = self::COLOR_WARN;
+    public static function formatTime($seconds, $color = true) {
+        if($color === true) {
+            if($seconds >= 1) {
+                $color = self::COLOR_ALERT;
+            }
+            elseif($seconds < 1 && $seconds > 0.1) {
+                $color = self::COLOR_WARN;
+            }
+            else {
+                $color = self::COLOR_LIGHTGREY;
+            }
         }
         else {
             $color = self::COLOR_LIGHTGREY;
