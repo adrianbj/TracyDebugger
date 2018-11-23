@@ -27,7 +27,7 @@ HTML;
 
     public function getPanel() {
 
-        $tracyModuleUrl = $this->wire("config")->urls->TracyDebugger;
+        $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
 
         // store various $input properties so they are available to the snippets
         $this->wire('session')->tracyPostData = $this->wire('input')->post->getArray();
@@ -66,8 +66,8 @@ HTML;
             $mid = null;
         }
 
-        $out = '<script>' . file_get_contents($this->wire("config")->paths->TracyDebugger . 'scripts/js-loader.js') . '</script>';
-        $out .= '<script>' . file_get_contents($this->wire("config")->paths->TracyDebugger . 'scripts/get-query-variable.js') . '</script>';
+        $out = '<script>' . file_get_contents($this->wire('config')->paths->TracyDebugger . 'scripts/js-loader.js') . '</script>';
+        $out .= '<script>' . file_get_contents($this->wire('config')->paths->TracyDebugger . 'scripts/get-query-variable.js') . '</script>';
 
         // determine whether 'l' or 'line' is used for line number with current editor
         parse_str(\Tracy\Debugger::$editor, $vars);

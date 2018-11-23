@@ -35,10 +35,10 @@ foreach($this->data['userBarFeatures'] as $barFeature) {
     require_once __DIR__ . '/UserBar'.ucfirst($barFeature).'.php';
 }
 
-$user = wire('user');
-$page = wire('page');
-$pages = wire('pages');
-$config = wire('config');
+$user = $this->wire('user');
+$page = $this->wire('page');
+$pages = $this->wire('pages');
+$config = $this->wire('config');
 $iconColor = \TracyDebugger::getDataValue("userBarIconColor");
 $userBar .= eval($this->data['userBarCustomFeatures']);
 

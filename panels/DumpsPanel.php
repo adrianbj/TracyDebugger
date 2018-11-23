@@ -15,11 +15,11 @@ class DumpsPanel extends BasePanel {
         $this->data = \TracyDebugger::$dumpItems;
 
         if(\TracyDebugger::isAdditionalBar() == 'ajax') {
-            $dumpItemsAjax = wire('session')->tracyDumpItemsAjax ?: array();
+            $dumpItemsAjax = $this->wire('session')->tracyDumpItemsAjax ?: array();
             foreach($this->data as $item) {
                 array_push($dumpItemsAjax, $item);
             }
-            wire('session')->tracyDumpItemsAjax = $data = $dumpItemsAjax;
+            $this->wire('session')->tracyDumpItemsAjax = $data = $dumpItemsAjax;
         }
         else {
             $data = $this->data;

@@ -40,7 +40,7 @@ class ConsolePanel extends BasePanel {
     public function getPanel() {
 
         $pwRoot = $this->wire('config')->urls->root;
-        $tracyModuleUrl = $this->wire("config")->urls->TracyDebugger;
+        $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
         $inAdmin = \TracyDebugger::$inAdmin;
         $consoleAdjustment = $inAdmin ? 0 : 20;
         $snippetsAdjustment = $inAdmin ? 20 : 0;
@@ -100,8 +100,8 @@ class ConsolePanel extends BasePanel {
             $snippets = json_encode(array());
         }
 
-        $out = '<script>' . file_get_contents($this->wire("config")->paths->TracyDebugger . 'scripts/js-loader.js') . '</script>';
-        $out .= '<script>' . file_get_contents($this->wire("config")->paths->TracyDebugger . 'scripts/get-query-variable.js') . '</script>';
+        $out = '<script>' . file_get_contents($this->wire('config')->paths->TracyDebugger . 'scripts/js-loader.js') . '</script>';
+        $out .= '<script>' . file_get_contents($this->wire('config')->paths->TracyDebugger . 'scripts/get-query-variable.js') . '</script>';
 
         // determine whether 'l' or 'line' is used for line number with current editor
         parse_str(\Tracy\Debugger::$editor, $vars);

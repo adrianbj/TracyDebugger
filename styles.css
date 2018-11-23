@@ -218,6 +218,7 @@ body.tracyHidden:before {
 
 #tracy-debug input[type="checkbox"],
 #tracy-debug input[type="radio"] {
+    vertical-align: middle !important;
     height: 12px !important;
 }
 
@@ -387,12 +388,15 @@ table.apiExplorerTable th:nth-child(4) {
     margin: 1em 0 !important;
 }
 
-.tracy-inner td pre,
-.tracy-inner code {
+.tracy-inner td pre {
     background: transparent !important;
     padding: .4em 2em .4em .7em !important;
     margin: 0 !important;
     border: none !important;
+}
+
+#tracy-debug code {
+    font: 11pt/1.5 monospace !important;
 }
 
 .tracy-inner pre * {

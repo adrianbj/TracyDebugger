@@ -146,7 +146,7 @@ class DiagnosticsPanel extends BasePanel {
 
         foreach ($assets as $setting => &$asset) {
             $asset['name']           = $setting;
-            $asset['original_value'] = wire('config')->get($setting);
+            $asset['original_value'] = $this->wire('config')->get($setting);
             $asset['value']          = $asset['original_value'];
             $asset['notes']          = array();
         }
@@ -841,7 +841,7 @@ class DiagnosticsPanel extends BasePanel {
         $puser_matches_owner = $puser === $asset['owner'];
         $puser_matches_group = $puser === $asset['group'];
         $rule = isset($asset['writable_rule']) ? strtolower($asset['writable_rule']) : '';
-        $has_upgrade_module = wire('modules')->isInstalled('ProcessWireUpgrade');
+        $has_upgrade_module = $this->wire('modules')->isInstalled('ProcessWireUpgrade');
         $is_config = isset($asset['is_config']) && $asset['is_config'];
 
         if ('pass-note-alt-session-handler' == $rule) {

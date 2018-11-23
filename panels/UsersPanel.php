@@ -99,7 +99,7 @@ class UsersPanel extends BasePanel {
             <br />';
 
             $out .= '
-            <h2>Allowed Non-Superusers and Roles</h2>';
+            <h2>Allowed Non-superusers and Roles</h2>';
             if($this->numNonSuperusers>0) {
                 $out .= '
                     <p>
@@ -132,7 +132,7 @@ class UsersPanel extends BasePanel {
                 $checkIpAddress = \TracyDebugger::checkIpAddress();
 
                 if($checkIpAddress['ipAddress'] != '') {
-                    $out .= '<p>Access for Non-Superusers is currently restricted to: ' . $checkIpAddress['ipAddress'] . '</p>';
+                    $out .= '<p>Access for non-superusers is currently restricted to: ' . $checkIpAddress['ipAddress'] . '</p>';
                     if(!$checkIpAddress['ipAddressAllowed']) {
                         $out .= '
                         <p>
@@ -162,7 +162,7 @@ class UsersPanel extends BasePanel {
                 }
             }
             else {
-                $out .= '<p><strong>All allowed users are Superusers</strong></p><p>If you want to allow other users, give them the "tracy-debugger" permission, and preferably also restrict via IP Address in the module config settings.</p>';
+                $out .= '<p><strong>All allowed users are superusers</strong></p><p>If you want to allow other users, give them the "tracy-debugger" permission, and preferably also restrict via IP Address in the module config settings.</p>';
             }
 
         $out .= \TracyDebugger::generatePanelFooter('users', \Tracy\Debugger::timer('users'), strlen($out));

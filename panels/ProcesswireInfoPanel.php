@@ -83,7 +83,7 @@ class ProcesswireInfoPanel extends BasePanel {
         $PwVersion = $this->wire('config')->version;
         $panelSections = \TracyDebugger::getDataValue('processwireInfoPanelSections');
 
-        $out = '<script>' . file_get_contents($this->wire("config")->paths->TracyDebugger . 'scripts/js-loader.js') . '</script>';
+        $out = '<script>' . file_get_contents($this->wire('config')->paths->TracyDebugger . 'scripts/js-loader.js') . '</script>';
 
         if(in_array('gotoId', $panelSections)) {
             $out .= '
