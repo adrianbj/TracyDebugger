@@ -170,7 +170,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'tracyLogs' => 'Tracy Logs',
         'userSwitcher' => 'User Switcher',
         'users' => 'Users',
-        'validator' => 'Validator'
+        'validator' => 'Validator',
+        'helloWorld' => 'Hello World',
+        'webHooks' => 'Webhooks',
     );
     public static $userBarFeatures = array(
         'admin' => 'Admin',
@@ -297,6 +299,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * Initialize the module
      */
     public function init() {
+        // handle webhook requests
+        $this->wire->addHookBefore("Page::render", $this, "webHookLogger");
 
         // merge in settings from config.php file
         if(isset($this->wire('config')->tracy) && is_array($this->wire('config')->tracy)) {
@@ -3224,6 +3228,31 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
         if($data['userSwitcherRestricted']) $f->attr('value', $data['userSwitcherRestricted']);
         $fieldset->add($f);
+        
+        // webhooks panel
+        $wrapper->add([
+            'type' => 'fieldset',
+            'label' => 'WebHooksPanel',
+            'id' => 'WebHooksPanel',
+            'name' => 'WebHooksPanel',
+            'children' => [
+                [
+                    'type' => 'AsmSelect',
+                    'name' => 'webhooktemplates',
+                    'label' => __('Enabled Templates'),
+                ],[
+                    'type' => 'integer',
+                    'name' => 'maxLogs',
+                    'description' => __('How many requests do you want to keep in the cache?'),
+                    'value' => isset($data['maxLogs']) ? $data['maxLogs'] : 10,
+                ],
+            ],
+        ]);
+        $f = $wrapper->getChildByName('webhooktemplates');
+        foreach($this->wire->templates as $tpl) {
+            $f->addOption($tpl->id, $tpl->name);
+        }
+        $f->value = $data['webhooktemplates'];
 
         // Server Type Indicator
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
@@ -3465,6 +3494,95 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         return $wrapper;
 
+    }
+
+    /**
+     * attach the webhook logger via hook
+     *
+     * @param HookEvent $event
+     * @return void
+     */
+    public function webHookLogger(HookEvent $event) {
+        $page = $event->object;
+
+        // if this template is not in the list of enabled templates we exit early
+        if(!in_array($page->template->id, $this->webhooktemplates)) return;
+
+        // setup some necessary variables
+        $dir = $this->wire->config->paths->cache . $this->className . "/WebHookLogger";
+        $this->wire->files->mkdir($dir);
+        $id = uniqid();
+        $file = "$dir/$id.json";
+      
+        // log this request
+        $log = (object)[
+          'time' => time(),
+          'url' => $this->wire->input->url(true),
+          // get url via server variables
+          // the pw built in httpUrl method does replace the actual host with one of the hosts in $config
+          'httpUrl' => ($this->wire->config->https ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]",
+          'page' => $event->object->id,
+          'html' => $event->return,
+          'headers' => getallheaders(),
+          'input' => file_get_contents('php://input'),
+        ];
+        file_put_contents($file, json_encode($log));
+
+        // do the cleanup
+        $this->webHookCleanup($dir);
+    }
+
+    /**
+     * keep the webhooklogger cache directory clean
+     *
+     * @return void
+     */
+    private function webHookCleanup($dir) {
+        $files = [];
+        foreach($this->wire->files->find($dir) as $file) {
+            $files[filemtime($file) . "_" . uniqid()] = $file;
+        }
+        ksort($files);
+        $files = array_reverse($files);
+        $i = 1;
+        foreach($files as $key=>$file) {
+            if($i>$this->maxLogs) unlink($file);
+            $i++;
+        }
+    }
+
+    /**
+     * get webhook data by request id
+     *
+     * @param string $id
+     * @return void
+     */
+    public function getWebHookData($id) {
+        $dir = $this->wire->config->paths->cache . $this->className . "/WebHookLogger";
+        $file = "$dir/$id.json";
+        if(is_file($file)) {
+            $data = json_decode(file_get_contents($file));
+            $data->id = $id;
+            $info = (object)pathinfo($file);
+            $time = date("d.m.Y H:i:s", $data->time); // todo: international?
+
+            // if input data is json we decode it
+            if($this->isJson($data->input)) $data->inputParsed = json_decode($data->input);
+
+            return $data;
+        }
+        return false;
+    }
+
+    /**
+     * is the provided string a valid json string?
+     *
+     * @param string $string
+     * @return boolean
+     */
+    private function isJson($string) {
+        json_decode($string);
+        return (json_last_error() == JSON_ERROR_NONE);
     }
 
 }
