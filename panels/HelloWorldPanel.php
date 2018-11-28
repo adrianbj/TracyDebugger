@@ -1,8 +1,8 @@
 <?php
 /**
  * Tracy Debugger Hello World Panel
- * 
- * To make your panel visible you have to add it to your public static $allPanels array in TracyDebugger.module
+ *
+ * To make your panel visible you have to add it to the public static $allPanels array in TracyDebugger.module
  * See also https://tracy.nette.org/en/extensions for docs about tracy panels
  *
  * @author Bernhard Baumrock, 24.11.2018
@@ -12,7 +12,7 @@
 class HelloWorldPanel extends BasePanel {
 
     // settings
-    private $name = 'helloworld';
+    private $name = 'helloWorld';
     private $label = 'Hello World';
 
     // the svg icon shown in the bar and in the panel header
@@ -36,16 +36,16 @@ class HelloWorldPanel extends BasePanel {
      */
     public function getPanel() {
         $out = "<h1>{$this->icon} {$this->label}</h1>";
-        
+
         // example of a maximize button
         $out .= '<span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'' . $this->className . '\')">+</a></span></span>';
 
         // panel body
         $out .= '<div class="tracy-inner">';
             $out .= $this->label;
-            $out .= \TracyDebugger::generatePanelFooter($this->name, \Tracy\Debugger::timer($this->name), strlen($out), 'yourSettingsFieldId');
+            $out .= \TracyDebugger::generatePanelFooter($this->name, \Tracy\Debugger::timer($this->name), strlen($out), 'yourSettingsFieldsetId');
         $out .= '</div>';
-        
+
         return parent::loadResources() . $out;
     }
 

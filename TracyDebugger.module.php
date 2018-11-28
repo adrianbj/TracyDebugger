@@ -150,6 +150,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'eventInterceptor' => 'Event Interceptor',
         'fileEditor' => 'File Editor',
         'gitInfo' => 'Git Info',
+        'helloWorld' => 'Hello World',
         'mailInterceptor' => 'Mail Interceptor',
         'methodsInfo' => 'Methods Info',
         'moduleDisabler' => 'Module Disabler',
@@ -171,8 +172,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'userSwitcher' => 'User Switcher',
         'users' => 'Users',
         'validator' => 'Validator',
-        'helloWorld' => 'Hello World',
-        'webHooks' => 'Webhooks',
+        'webhooks' => 'Webhooks'
     );
     public static $userBarFeatures = array(
         'admin' => 'Admin',
@@ -242,6 +242,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "debugModePanelSections" => array('pagesLoaded', 'modulesLoaded', 'hooks', 'databaseQueries', 'selectorQueries', 'timers', 'user', 'cache', 'autoload'),
             "diagnosticsPanelSections" => array('filesystemFolders'),
             "dumpPanelTabs" => array('debugInfo', 'fullObject'),
+            "webhooksMaxLogs" => 10,
+            "webhooksReturnType" => 'array',
             "imagesInFieldListValues" => 1,
             "snippetsPath" => 'templates',
             "userSwitcherRestricted" => null,
@@ -277,7 +279,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "fileEditorAllowedExtensions" => 'php, module, js, css, txt, log, htaccess',
             "fileEditorBaseDirectory" => 'templates',
             "enableShortcutMethods" => 1,
-            "enabledShortcutMethods" => array('debugAll', 'da', 'dump', 'd', 'barDump', 'bd', 'barDumpBig', 'bdb', 'barDumpLive', 'bdl', 'l', 'timer', 't', 'fireLog', 'fl', 'addBreakpoint', 'bp', 'templateVars', 'tv')
+            "enabledShortcutMethods" => array('addBreakpoint', 'bp', 'barDump', 'bd', 'barDumpBig', 'bdb', 'barDumpLive', 'bdl', 'debugAll', 'da', 'dump', 'd', 'dumpBig', 'db', 'fireLog', 'fl', 'getWebhooksDataById', 'l', 'templateVars', 'tv', 'timer', 't')
         );
     }
 
@@ -299,8 +301,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * Initialize the module
      */
     public function init() {
-        // handle webhook requests
-        $this->wire->addHookBefore("Page::render", $this, "webHookLogger");
 
         // merge in settings from config.php file
         if(isset($this->wire('config')->tracy) && is_array($this->wire('config')->tracy)) {
@@ -314,6 +314,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // determine whether user is allowed to use Tracy and whether DEV or PRODUCTION
         static::$allowedTracyUser = static::allowedTracyUser();
+
+        $this->tracyCacheDir = $this->wire('config')->paths->cache . 'TracyDebugger/';
+
+        // WEBHOOKS
+        // handle webhook requests
+        $this->wire()->addHookAfter('Page::render', $this, 'webhooksLogger');
+
 
         // EARLY EXITS
 
@@ -408,7 +415,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             (static::$allowedTracyUser !== 'development' || $this->data['showUserBarTracyUsers']) &&
             (strpos(self::inputUrl(true), DIRECTORY_SEPARATOR.'form-builder'.DIRECTORY_SEPARATOR) === false)
         ) {
-            $this->addHookAfter('Page::render', $this, 'addUserBar', array('priority'=>1000));
+            $this->wire()->addHookAfter('Page::render', $this, 'addUserBar', array('priority'=>1000));
         }
 
 
@@ -439,10 +446,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             if(in_array('debugMode', static::$showPanels)) {
                 // Selectors for Debug Mode panel
-                $this->addHookBefore('PageFinder::getQuery', null, function($event) {
+                $this->wire()->addHookBefore('PageFinder::getQuery', null, function($event) {
                     $this->timerkey = Debug::timer();
                 });
-                $this->addHookAfter('PageFinder::getQuery', null, function($event) {
+                $this->wire()->addHookAfter('PageFinder::getQuery', null, function($event) {
                     $event->setArgument(2, Debug::timer($this->timerkey));
                     static::$pageFinderQueries[] = $event;
                 });
@@ -472,7 +479,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 static::$showPanels[] = 'panelSelector';
             }
 
-
             // ProcessWire Info panel early redirects
             // logout
             if($this->wire('input')->get->tracyLogout) {
@@ -484,7 +490,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $this->wire('session')->tracyLoginUrl = $this->httpReferer;
             }
             if($this->wire('session')->tracyLoginUrl) {
-                $this->addHookAfter('Session::loginSuccess', function(HookEvent $event) {
+                $this->wire()->addHookAfter('Session::loginSuccess', function(HookEvent $event) {
                     $this->wire('session')->redirect($this->wire('session')->tracyLoginUrl);
                 });
             }
@@ -574,10 +580,32 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 }
             }
 
+            // WEBHOOKS
+            // enable/disable page logging
+            if($this->wire('input')->post->tracyWebhooksEnableLogging || $this->wire('input')->post->tracyWebhooksDisableLogging) {
+                $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
+                if($this->wire('input')->post->tracyWebhooksEnableLogging) {
+                    if(!isset($configData['webhooksPages'])) $configData['webhooksPages'] = array();
+                    array_push($configData['webhooksPages'], $this->wire('input')->post->webhooksLogPageId);
+                }
+                else {
+                    if(($key = array_search($this->wire('input')->post->webhooksLogPageId, $configData['webhooksPages'])) !== false) {
+                        unset($configData['webhooksPages'][$key]);
+                    }
+                    $data = $this->wire('cache')->get("tracyWebhooks_id_*_page_".$this->wire('input')->post->webhooksLogPageId);
+                    if(count($data) > 0) {
+                        foreach($data as $id => $datum) {
+                            $this->wire('cache')->delete($id);
+                        }
+                    }
+                }
+                $this->wire('modules')->saveModuleConfigData($this->wire('modules')->get("TracyDebugger"), $configData);
+                $this->wire('session')->redirect($this->httpReferer);
+            }
+
 
             // MODULES DISABLER
             //set up backup directory/file - outside conditional so they are available for cleanup when panel is disabled
-            $this->tracyCacheDir = $this->wire('config')->paths->cache . 'TracyDebugger/';
             $this->modulesDbBackupFilename = 'modulesBackup.sql';
             if(in_array('moduleDisabler', static::$showPanels) && $this->wire('config')->debug && $this->wire('config')->advanced) {
                 // if modules DB was just restored, clear the cookie
@@ -710,7 +738,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // CONSOLE PANEL CODE INJECTION
         if(static::$allowedTracyUser === 'development') {
             $this->insertCode('init');
-            $this->addHookBefore('ProcessWire::finished', function($event) {
+            $this->wire()->addHookBefore('ProcessWire::finished', function($event) {
                 $this->insertCode('finished');
             });
         }
@@ -778,7 +806,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             // if Tracy has been toggled "disabled" add enable button and then exit
             if($this->wire('input')->cookie->tracyDisabled == 1) {
                 if(Debugger::$showBar && !$this->wire('config')->ajax) {
-                    $this->addHookAfter('Page::render', $this, 'addEnableButton', array('priority'=>1000));
+                    $this->wire()->addHookAfter('Page::render', $this, 'addEnableButton', array('priority'=>1000));
                 }
                 // Tracy not enabled so exit now
                 $this->tracyEnabled = false;
@@ -867,7 +895,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 // add settings link on double-click to "TRACY" icon
                 // replace "close" icon link with "hide" and "unhide" links
                 // add esc key event handler to close all panels
-                $this->addHookAfter('Page::render', function($event) {
+                $this->wire()->addHookAfter('Page::render', function($event) {
                     $tracyErrors = Debugger::getBar()->getPanel('Tracy:errors');
                     if(!is_array($tracyErrors->data) || count($tracyErrors->data) === 0) {
                         if(($this->data['hideDebugBar'] && !$this->wire('input')->cookie->tracyShow) || $this->wire('input')->cookie->tracyHidden == 1) {
@@ -997,6 +1025,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             }
 
+            // WEBHOOKS
+            // add new webhook methods to $page
+            $this->wire()->addHook('Page::getWebhooksData', $this, 'getWebhooksData');
+            $this->wire()->addHook('Page::findWebhooksData', $this, 'findWebhooksData');
 
             // MAIL INTERCEPTOR
             // if mail panel items were cleared, clear them from the session variable
@@ -1007,23 +1039,23 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
             // mail panel intercept hook
             if(in_array('mailInterceptor', static::$showPanels)) {
-                $this->addHookBefore('WireMail::send', $this, 'interceptEmails');
+                $this->wire()->addHookBefore('WireMail::send', $this, 'interceptEmails');
             }
 
             // CAPTAIN HOOK
             // update cache on module install
             // not wrapped in: if(in_array('captainHook', static::$showPanels)) because this wouldn't work for "once" enabled
-            $this->addHookAfter('Modules::install', $this, 'deleteHookCache');
-            $this->addHookAfter('Modules::uninstall', $this, 'deleteHookCache');
-            $this->addHookAfter('Modules::refresh', $this, 'deleteHookCache');
-            $this->addHookAfter('Modules::moduleVersionChanged', $this, 'deleteHookCache');
-            $this->addHookAfter('SystemUpdater::coreVersionChange', $this, 'deleteHookCache');
+            $this->wire()->addHookAfter('Modules::install', $this, 'deleteHookCache');
+            $this->wire()->addHookAfter('Modules::uninstall', $this, 'deleteHookCache');
+            $this->wire()->addHookAfter('Modules::refresh', $this, 'deleteHookCache');
+            $this->wire()->addHookAfter('Modules::moduleVersionChanged', $this, 'deleteHookCache');
+            $this->wire()->addHookAfter('SystemUpdater::coreVersionChange', $this, 'deleteHookCache');
 
 
             if(!static::$inAdmin) {
                 // VALIDATOR
                 if(in_array('validator', static::$showPanels)) {
-                    $this->addHookAfter('Page::render', $this, 'getPageHtml', array('priority'=>1000));
+                    $this->wire()->addHookAfter('Page::render', $this, 'getPageHtml', array('priority'=>1000));
                 }
 
                 // TEMPLATE RESOURCES
@@ -1031,7 +1063,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     $functions = get_defined_functions();
                     \TracyDebugger::$initialFuncs = $functions['user'];
                     \TracyDebugger::$initialConsts = get_defined_constants();
-                    $this->addHookBefore('TemplateFile::render', function($event) {
+                    $this->wire()->addHookBefore('TemplateFile::render', function($event) {
                         // exclude template rendering from Hanna code because it breaks gathering of all template resources
                         if(!$event->object->hanna) {
                             $event->object->setAppendFilename(__DIR__ . '/includes/GetTemplateResources.php');
@@ -1052,10 +1084,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if(in_array('eventInterceptor', static::$showPanels) && $this->wire('input')->cookie->eventInterceptorHook) {
                 $this->hookSettings = json_decode($this->wire('input')->cookie->eventInterceptorHook, true);
                 if($this->hookSettings['when'] == 'before') {
-                    $this->addHookBefore($this->hookSettings['hook'], $this, 'interceptEvent');
+                    $this->wire()->addHookBefore($this->hookSettings['hook'], $this, 'interceptEvent');
                 }
                 else {
-                    $this->addHookAfter($this->hookSettings['hook'], $this, 'interceptEvent');
+                    $this->wire()->addHookAfter($this->hookSettings['hook'], $this, 'interceptEvent');
                 }
             }
 
@@ -1081,7 +1113,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             // PAGE RECORDER
             // page recorder hook
             if(in_array('pageRecorder', static::$showPanels)) {
-                $this->addHookAfter('Pages::added', $this, 'recordPage');
+                $this->wire()->addHookAfter('Pages::added', $this, 'recordPage');
             }
 
 
@@ -1122,11 +1154,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($this->wire('modules')->isInstalled('SessionHandlerDB') && Debugger::$showBar) {
 
             // ensure Tracy can show additional bars when SessionHandlerDB module is installed and debugbar is showing
-            $this->addHookBefore('ProcessWire::finished', $this, 'sessionHandlerDBAjaxFix');
+            $this->wire()->addHookBefore('ProcessWire::finished', $this, 'sessionHandlerDBAjaxFix');
 
             // ensure Tracy can show Redirect bars when SessionHandlerDB module is installed and debugbar is showing
             if(!$this->wire('config')->disableTracySHDBRedirectFix) {
-                $this->addHookBefore('Session::redirect', function($event) {
+                $this->wire()->addHookBefore('Session::redirect', function($event) {
                     $url = $event->arguments[0];
                     $http301 = isset($event->arguments[1]) ? $event->arguments[1] : true;
                     if($http301) header("HTTP/1.1 301 Moved Permanently");
@@ -1236,7 +1268,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             $rawCode = base64_decode($this->wire('input')->post->tracyFileEditorRawCode);
 
                             // backup old version to Tracy cache directory
-                            $cachePath = $this->wire('config')->paths->cache . 'TracyDebugger/' . $this->wire('input')->post->fileEditorFilePath;
+                            $cachePath = $this->tracyCacheDir . $this->wire('input')->post->fileEditorFilePath;
                             if(!is_dir($cachePath)) if(!wireMkdir(pathinfo($cachePath, PATHINFO_DIRNAME), true)) {
                                 throw new WireException("Unable to create cache path: $cachePath");
                             }
@@ -1254,7 +1286,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 // if file editor restore
                 if($this->wire('input')->post->tracyRestoreFileEditorBackup) {
                     $this->filePath = $this->wire('config')->paths->root . ($this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor);
-                    $this->cachePath = $this->wire('config')->paths->cache . 'TracyDebugger/' . ($this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor);
+                    $this->cachePath = $this->tracyCacheDir . ($this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor);
                     copy($this->cachePath, $this->filePath);
                     unlink($this->cachePath);
                     $this->wire('session')->redirect($this->httpReferer);
@@ -1809,7 +1841,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $$key = $value;
         }
         $page = $pages->get((int)$options['pid']);
-        $consoleCodeFile = $this->wire('config')->paths->cache . 'TracyDebugger/consoleCode.php';
+        $consoleCodeFile = $this->tracyCacheDir . 'consoleCode.php';
         if(file_exists($consoleCodeFile)) {
             require_once($consoleCodeFile);
         }
@@ -1821,8 +1853,129 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     /**
+     * attach the webhooks logger via hook
+     *
+     * @param HookEvent $event
+     * @return void
+     */
+    public function webhooksLogger(HookEvent $event) {
+        $page = $event->object;
+
+        // if this page is not in the list of enabled pages we exit early
+        if(!isset($this->data['webhooksPages']) || !in_array($page->id, $this->data['webhooksPages'])) return;
+
+        $id = uniqid();
+        $allHeaders = getallheaders();
+
+        // log this request
+        $log = (object)[
+            'id' => $id,
+            'request_method' => $_SERVER['REQUEST_METHOD'],
+            'time' => time(),
+            'url' => $this->wire('input')->url(true),
+            // get url via server variables
+            // the pw built in httpUrl method does replace the actual host with one of the hosts in $config
+            'httpUrl' => ($this->wire('config')->https ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]",
+            'page' => $page->id,
+            'html' => $event->return,
+            'headers' => $allHeaders,
+            'post' => $_POST,
+            'get' => $_GET,
+            'input' => file_get_contents('php://input')
+        ];
+        $this->wire('cache')->save('tracyWebhooks_id_'.$id.'_page_'.$page->id, json_encode($log));
+
+        // do the cleanup to limit entries to max logs setting
+        $data = $this->wire('cache')->get("tracyWebhooks_id_*_page_{$page->id}");
+        if(count($data) > $this->data['webhooksMaxLogs']) {
+            reset($data);
+            $this->wire('cache')->delete(key($data));
+        }
+    }
+
+
+    /**
+     * get last webhook datum for $page
+     *
+     * @param HookEvent $event
+     * @return $data
+     */
+    public function getWebhooksData(HookEvent $event) {
+        $page = $event->object;
+        $event->return = $this->_getWebhooksData($page->id);
+    }
+
+
+    /**
+     * get webhook data for $page
+     *
+     * @param HookEvent $event
+     * @return $data
+     */
+    public function findWebhooksData(HookEvent $event) {
+        $page = $event->object;
+        $event->return = $this->_getWebhooksData($page->id, true);
+    }
+
+
+    /**
+     * get webhook data for $page
+     *
+     * @param int $pid
+     * @param bool $all
+     * @return $data
+     */
+    private function _getWebhooksData($pid, $all = false) {
+        $data = $this->wire('cache')->get("tracyWebhooks_id_*_page_$pid");
+        if(!empty($data)) {
+            if($this->data['webhooksReturnType'] == 'object') $data = json_decode(json_encode($data), false);
+            if(!$all) {
+                $data = $this->jsonDecodeInput(end($data));
+            }
+            else {
+                $data = array_map(array($this, 'jsonDecodeInput'), $data);
+            }
+        }
+        return $data;
+    }
+
+
+    /**
+     * decode json data
+     *
+     * @param string $data
+     * @return array $data
+     */
+    public static function jsonDecodeInput($data) {
+        $returnType = self::getDataValue('webhooksReturnType');
+        $input = $returnType == 'object' ? $data->input : $data['input'];
+        if(self::isJson($input)) {
+            if($returnType == 'object') {
+                $data->inputParsed = json_decode($data->input, false);
+            }
+            else {
+                $data['inputParsed'] = json_decode($data['input'], true);
+            }
+        }
+        return $data;
+    }
+
+
+    /**
      * PUBLIC STATIC HELPER FUNCTIONS
      */
+
+
+    /**
+     * is the provided string a valid json string?
+     *
+     * @param string $string
+     * @return boolean
+     */
+    public static function isJson($string) {
+        json_decode($string);
+        return (json_last_error() == JSON_ERROR_NONE);
+    }
 
 
     /**
@@ -2235,7 +2388,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // this is here instead of ProcessWire::finished because this works if test version has fatal error
         if(isset($_COOKIE['tracyTestFileEditor'])) {
             $this->filePath = $this->wire('config')->paths->root . ($this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor);
-            $this->cachePath = $this->wire('config')->paths->cache . 'TracyDebugger/' . ($this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor);
+            $this->cachePath = $this->tracyCacheDir . ($this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor);
             if(file_exists($this->cachePath)) {
                 copy($this->cachePath, $this->filePath);
                 unlink($this->cachePath);
@@ -2945,15 +3098,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $fieldset->add($f);
 
         // Adminer Panel
-        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->attr('name+id', 'adminerPanel');
-        $fieldset->label = __('Adminer panel', __FILE__);
-        $wrapper->add($fieldset);
+        if($this->wire('modules')->isInstalled('ProcessTracyAdminer')) {
+            $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+            $fieldset->attr('name+id', 'adminerPanel');
+            $fieldset->label = __('Adminer panel', __FILE__);
+            $wrapper->add($fieldset);
 
-        $f = $this->wire('modules')->get("InputfieldMarkup");
-        $f->attr('name', 'adminerSettings');
-        $f->value = 'Adminer settings are available <a href="'.$this->wire('config')->urls->admin.'module/edit?name=ProcessTracyAdminer">here</a>.';
-        $fieldset->add($f);
+            $f = $this->wire('modules')->get("InputfieldMarkup");
+            $f->attr('name', 'adminerSettings');
+            $f->value = 'Adminer settings are available <a href="'.$this->wire('config')->urls->admin.'module/edit?name=ProcessTracyAdminer">here</a>.';
+            $fieldset->add($f);
+        }
 
         // API Explorer Panel
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
@@ -2962,12 +3117,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $wrapper->add($fieldset);
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'apiExplorerIncludeInheritedMethods');
-        $f->label = __('Include Wire/WireData/WireArray inherited methods', __FILE__);
-        $f->description = __('This will show also all inherited methods for each object/class.', __FILE__);
-        $f->notes = __('This significantly increases the size of this panel.', __FILE__);
-        $f->columnWidth = 34;
-        $f->attr('checked', $data['apiExplorerIncludeInheritedMethods'] == '1' ? 'checked' : '');
+        $f->attr('name', 'apiExplorerShowDescription');
+        $f->label = __('Show description', __FILE__);
+        $f->description = __('This will show the first line from the doc comment in its own column.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['apiExplorerShowDescription'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
@@ -2975,16 +3129,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Toggle method doc comment', __FILE__);
         $f->description = __('This will toggle the entire doc comment block if you click on the method column.', __FILE__);
         $f->notes = __('This significantly increases the size of this panel.', __FILE__);
-        $f->columnWidth = 34;
+        $f->columnWidth = 50;
         $f->attr('checked', $data['apiExplorerToggleDocComment'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'apiExplorerShowDescription');
-        $f->label = __('Show description', __FILE__);
-        $f->description = __('This will show the first line from the doc comment in its own column.', __FILE__);
-        $f->columnWidth = 33;
-        $f->attr('checked', $data['apiExplorerShowDescription'] == '1' ? 'checked' : '');
+        $f->attr('name', 'apiExplorerIncludeInheritedMethods');
+        $f->label = __('Include Wire/WireData/WireArray inherited methods', __FILE__);
+        $f->description = __('This will show also all inherited methods for each object/class.', __FILE__);
+        $f->notes = __('This significantly increases the size of this panel.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['apiExplorerIncludeInheritedMethods'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldCheckboxes");
@@ -2992,6 +3147,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Module classes', __FILE__);
         $f->description = __('Select module classes that you also want diplayed.', __FILE__);
         $f->notes = __('The options will significantly increase the size of this panel.', __FILE__);
+        $f->columnWidth = 50;
         $f->addOption('coreModules', 'Core modules');
         $f->addOption('siteModules', 'Site modules');
         if($data['apiExplorerModuleClasses']) $f->attr('value', $data['apiExplorerModuleClasses']);
@@ -3004,20 +3160,20 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $wrapper->add($fieldset);
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'captainHookShowDescription');
+        $f->label = __('Show description', __FILE__);
+        $f->description = __('This will show the first line from the doc comment in its own column.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['captainHookShowDescription'] == '1' ? 'checked' : '');
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'captainHookToggleDocComment');
         $f->label = __('Toggle method doc comment', __FILE__);
         $f->description = __('This will toggle the entire doc comment block if you click on the method column.', __FILE__);
         $f->notes = __('This significantly increases the size of this panel.', __FILE__);
         $f->columnWidth = 50;
         $f->attr('checked', $data['captainHookToggleDocComment'] == '1' ? 'checked' : '');
-        $fieldset->add($f);
-
-        $f = $this->wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'captainHookShowDescription');
-        $f->label = __('Show description', __FILE__);
-        $f->description = __('This will show the first line from the doc comment in its own column.', __FILE__);
-        $f->columnWidth = 50;
-        $f->attr('checked', $data['captainHookShowDescription'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
         // Request Info Panel
@@ -3228,31 +3384,28 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
         if($data['userSwitcherRestricted']) $f->attr('value', $data['userSwitcherRestricted']);
         $fieldset->add($f);
-        
-        // webhooks panel
-        $wrapper->add([
-            'type' => 'fieldset',
-            'label' => 'WebHooksPanel',
-            'id' => 'WebHooksPanel',
-            'name' => 'WebHooksPanel',
-            'children' => [
-                [
-                    'type' => 'AsmSelect',
-                    'name' => 'webhooktemplates',
-                    'label' => __('Enabled Templates'),
-                ],[
-                    'type' => 'integer',
-                    'name' => 'maxLogs',
-                    'description' => __('How many requests do you want to keep in the cache?'),
-                    'value' => isset($data['maxLogs']) ? $data['maxLogs'] : 10,
-                ],
-            ],
-        ]);
-        $f = $wrapper->getChildByName('webhooktemplates');
-        foreach($this->wire->templates as $tpl) {
-            $f->addOption($tpl->id, $tpl->name);
-        }
-        $f->value = $data['webhooktemplates'];
+
+        // Webhooks Panel
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->attr('name+id', 'webhooksPanel');
+        $fieldset->label = __('Webhooks panel', __FILE__);
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldInteger");
+        $f->attr('name', 'webhooksMaxLogs');
+        $f->label = __('Maximum number of logged requests', __FILE__);
+        $f->description = __('Number of requests to be kept for each page.', __FILE__);
+        $f->attr('value', $data['webhooksMaxLogs']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldRadios");
+        $f->attr('name', 'webhooksReturnType');
+        $f->label = __('Output type', __FILE__);
+        $f->description = __('This determines whether the logged data is returned as an object or an array.', __FILE__);
+        $f->addOption('array', 'Array');
+        $f->addOption('object', 'Object');
+        if($data['webhooksReturnType']) $f->attr('value', $data['webhooksReturnType']);
+        $fieldset->add($f);
 
         // Server Type Indicator
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
@@ -3455,6 +3608,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->addOption('db', 'db() for TD::dumpBig()');
         $f->addOption('fireLog', 'fireLog() for TD::fireLog()');
         $f->addOption('fl', 'fl() for TD::fireLog()');
+        $f->addOption('getWebhooksDataById', 'getWebhooksDataById() for TD::getWebhooksDataById()');
         $f->addOption('l', 'l() for TD::log()');
         $f->addOption('templateVars', 'templateVars() for TD::templateVars()');
         $f->addOption('tv', 'tv() for TD::templateVars()');
@@ -3494,95 +3648,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         return $wrapper;
 
-    }
-
-    /**
-     * attach the webhook logger via hook
-     *
-     * @param HookEvent $event
-     * @return void
-     */
-    public function webHookLogger(HookEvent $event) {
-        $page = $event->object;
-
-        // if this template is not in the list of enabled templates we exit early
-        if(!in_array($page->template->id, $this->webhooktemplates)) return;
-
-        // setup some necessary variables
-        $dir = $this->wire->config->paths->cache . $this->className . "/WebHookLogger";
-        $this->wire->files->mkdir($dir);
-        $id = uniqid();
-        $file = "$dir/$id.json";
-      
-        // log this request
-        $log = (object)[
-          'time' => time(),
-          'url' => $this->wire->input->url(true),
-          // get url via server variables
-          // the pw built in httpUrl method does replace the actual host with one of the hosts in $config
-          'httpUrl' => ($this->wire->config->https ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]",
-          'page' => $event->object->id,
-          'html' => $event->return,
-          'headers' => getallheaders(),
-          'input' => file_get_contents('php://input'),
-        ];
-        file_put_contents($file, json_encode($log));
-
-        // do the cleanup
-        $this->webHookCleanup($dir);
-    }
-
-    /**
-     * keep the webhooklogger cache directory clean
-     *
-     * @return void
-     */
-    private function webHookCleanup($dir) {
-        $files = [];
-        foreach($this->wire->files->find($dir) as $file) {
-            $files[filemtime($file) . "_" . uniqid()] = $file;
-        }
-        ksort($files);
-        $files = array_reverse($files);
-        $i = 1;
-        foreach($files as $key=>$file) {
-            if($i>$this->maxLogs) unlink($file);
-            $i++;
-        }
-    }
-
-    /**
-     * get webhook data by request id
-     *
-     * @param string $id
-     * @return void
-     */
-    public function getWebHookData($id) {
-        $dir = $this->wire->config->paths->cache . $this->className . "/WebHookLogger";
-        $file = "$dir/$id.json";
-        if(is_file($file)) {
-            $data = json_decode(file_get_contents($file));
-            $data->id = $id;
-            $info = (object)pathinfo($file);
-            $time = date("d.m.Y H:i:s", $data->time); // todo: international?
-
-            // if input data is json we decode it
-            if($this->isJson($data->input)) $data->inputParsed = json_decode($data->input);
-
-            return $data;
-        }
-        return false;
-    }
-
-    /**
-     * is the provided string a valid json string?
-     *
-     * @param string $string
-     * @return boolean
-     */
-    private function isJson($string) {
-        json_decode($string);
-        return (json_last_error() == JSON_ERROR_NONE);
     }
 
 }

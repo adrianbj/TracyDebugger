@@ -311,6 +311,27 @@ class TD extends TracyDebugger {
         return \TracyDebugger::templateVars((array) $vars);
     }
 
+    /**
+     * get webhook data by request id
+     *
+     * @param string $id
+     * @return $data
+     */
+    public static function getWebhooksDataById($id) {
+        $data = wire('cache')->get("tracyWebhooks_id_$id*");
+        if(!empty($data)) {
+            if(\TracyDebugger::getDataValue('webhooksReturnType') == 'object') $data = json_decode(json_encode($data), false);
+            return \TracyDebugger::jsonDecodeInput(end($data));
+        }
+        return false;
+    }
+
+    /**
+     * check if array has string keys
+     *
+     * @param array $array
+     * @return bool
+     */
     private static function has_string_keys(array $array) {
         return count(array_filter(array_keys($array), 'is_string')) > 0;
     }

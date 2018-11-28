@@ -125,6 +125,17 @@ if(!function_exists('templateVars') && in_array('templateVars', $this->data['ena
     }
 }
 
+/**
+ * TD::getWebhooksDataById() shortcut.
+ * @tracySkipLocation
+ */
+if(!function_exists('getWebhooksDataById') && in_array('getWebhooksDataById', $this->data['enabledShortcutMethods'])) {
+    function getWebhooksDataById($id) {
+        if(tracyUnavailable()) return false;
+        return TD::getWebhooksDataById($id);
+    }
+}
+
 
 /**
  * really short alias methods for really lazy typists :)
