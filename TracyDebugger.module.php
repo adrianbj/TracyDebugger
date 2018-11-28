@@ -320,6 +320,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // WEBHOOKS
         // handle webhook requests
         $this->wire()->addHookAfter('Page::render', $this, 'webhooksLogger');
+        // attach $page->getRequestObject() to the $page object
+        $this->wire()->addHook('Page::getRequestObject', $this, 'getRequestObject');
 
 
         // EARLY EXITS
@@ -1864,26 +1866,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // if this page is not in the list of enabled pages we exit early
         if(!isset($this->data['webhooksPages']) || !in_array($page->id, $this->data['webhooksPages'])) return;
 
-        $id = uniqid();
-        $allHeaders = getallheaders();
-
         // log this request
-        $log = (object)[
-            'id' => $id,
-            'request_method' => $_SERVER['REQUEST_METHOD'],
-            'time' => time(),
-            'url' => $this->wire('input')->url(true),
-            // get url via server variables
-            // the pw built in httpUrl method does replace the actual host with one of the hosts in $config
-            'httpUrl' => ($this->wire('config')->https ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]",
-            'page' => $page->id,
-            'html' => $event->return,
-            'headers' => $allHeaders,
-            'post' => $_POST,
-            'get' => $_GET,
-            'input' => file_get_contents('php://input')
-        ];
-        $this->wire('cache')->save('tracyWebhooks_id_'.$id.'_page_'.$page->id, json_encode($log));
+        $log = $page->getRequestObject();
+        $log->html = $event->return;
+        $this->wire('cache')->save('tracyWebhooks_id_' . $log->id . '_page_' . $page->id, json_encode($log));
 
         // do the cleanup to limit entries to max logs setting
         $data = $this->wire('cache')->get("tracyWebhooks_id_*_page_{$page->id}");
@@ -1891,6 +1877,31 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             reset($data);
             $this->wire('cache')->delete(key($data));
         }
+    }
+
+    /**
+     * get a standardized object of the current request
+     *
+     * @param HookEvent $event
+     * @return void
+     */
+    public function getRequestObject($event) {
+        $page = $event->object;
+        $event->return = (object)[
+            'id' => uniqid(),
+            'request_method' => $_SERVER['REQUEST_METHOD'],
+            'time' => time(),
+            'url' => $this->wire('input')->url(true),
+            // get url via server variables
+            // the pw built in httpUrl method does replace the actual host with one of the hosts in $config
+            'httpUrl' => ($this->wire('config')->https ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]",
+            'page' => $page->id,
+            'html' => null,
+            'headers' => getallheaders(),
+            'post' => $_POST,
+            'get' => $_GET,
+            'input' => file_get_contents('php://input')
+        ];
     }
 
 
