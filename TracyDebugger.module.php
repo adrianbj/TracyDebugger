@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.15.1',
+            'version' => '4.15.2',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -319,9 +319,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // REQUEST LOGGER
-        // log requests
-        $this->wire()->addHookAfter('Page::render', $this, 'requestLogger');
-        // attach $page->getRequestObject() to the $page object
+        // add getRequestData() method to the $page object
+        // before Tracy enabled check in case this method is used in a template file
         $this->wire()->addHook('Page::getRequestData', $this, 'getRequestData');
 
 
@@ -350,6 +349,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // determine if we are in the admin / backend
         static::$inAdmin = $this->inAdmin();
 
+
+        // log requests for Request Logger
+        $this->wire()->addHookAfter('Page::render', $this, 'requestLogger');
 
         // modals
         if(in_array('regularModal', $this->data['hideDebugBarModals']) && $this->wire('input')->get->modal == '1') return;
@@ -583,7 +585,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 }
             }
 
-            // requestLogger
+            // REQUEST LOGGER
             // enable/disable page logging
             if($this->wire('input')->post->tracyRequestLoggerEnableLogging || $this->wire('input')->post->tracyRequestLoggerDisableLogging) {
                 $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
