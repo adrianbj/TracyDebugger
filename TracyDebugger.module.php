@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.14.19',
+            'version' => '4.15.1',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -172,7 +172,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'userSwitcher' => 'User Switcher',
         'users' => 'Users',
         'validator' => 'Validator',
-        'webhooks' => 'Webhooks'
+        'requestLogger' => 'Request Logger'
     );
     public static $userBarFeatures = array(
         'admin' => 'Admin',
@@ -242,8 +242,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "debugModePanelSections" => array('pagesLoaded', 'modulesLoaded', 'hooks', 'databaseQueries', 'selectorQueries', 'timers', 'user', 'cache', 'autoload'),
             "diagnosticsPanelSections" => array('filesystemFolders'),
             "dumpPanelTabs" => array('debugInfo', 'fullObject'),
-            "webhooksMaxLogs" => 10,
-            "webhooksReturnType" => 'array',
+            "requestLoggerMaxLogs" => 10,
+            "requestLoggerReturnType" => 'array',
             "imagesInFieldListValues" => 1,
             "snippetsPath" => 'templates',
             "userSwitcherRestricted" => null,
@@ -279,7 +279,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "fileEditorAllowedExtensions" => 'php, module, js, css, txt, log, htaccess',
             "fileEditorBaseDirectory" => 'templates',
             "enableShortcutMethods" => 1,
-            "enabledShortcutMethods" => array('addBreakpoint', 'bp', 'barDump', 'bd', 'barDumpBig', 'bdb', 'barDumpLive', 'bdl', 'debugAll', 'da', 'dump', 'd', 'dumpBig', 'db', 'fireLog', 'fl', 'getWebhooksDataById', 'l', 'templateVars', 'tv', 'timer', 't')
+            "enabledShortcutMethods" => array('addBreakpoint', 'bp', 'barDump', 'bd', 'barDumpBig', 'bdb', 'barDumpLive', 'bdl', 'debugAll', 'da', 'dump', 'd', 'dumpBig', 'db', 'fireLog', 'fl', 'l', 'templateVars', 'tv', 'timer', 't')
         );
     }
 
@@ -317,11 +317,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $this->tracyCacheDir = $this->wire('config')->paths->cache . 'TracyDebugger/';
 
-        // WEBHOOKS
-        // handle webhook requests
-        $this->wire()->addHookAfter('Page::render', $this, 'webhooksLogger');
+
+        // REQUEST LOGGER
+        // log requests
+        $this->wire()->addHookAfter('Page::render', $this, 'requestLogger');
         // attach $page->getRequestObject() to the $page object
-        $this->wire()->addHook('Page::getRequestObject', $this, 'getRequestObject');
+        $this->wire()->addHook('Page::getRequestData', $this, 'getRequestData');
 
 
         // EARLY EXITS
@@ -582,19 +583,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 }
             }
 
-            // WEBHOOKS
+            // requestLogger
             // enable/disable page logging
-            if($this->wire('input')->post->tracyWebhooksEnableLogging || $this->wire('input')->post->tracyWebhooksDisableLogging) {
+            if($this->wire('input')->post->tracyRequestLoggerEnableLogging || $this->wire('input')->post->tracyRequestLoggerDisableLogging) {
                 $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
-                if($this->wire('input')->post->tracyWebhooksEnableLogging) {
-                    if(!isset($configData['webhooksPages'])) $configData['webhooksPages'] = array();
-                    array_push($configData['webhooksPages'], $this->wire('input')->post->webhooksLogPageId);
+                if($this->wire('input')->post->tracyRequestLoggerEnableLogging) {
+                    if(!isset($configData['requestLoggerPages'])) $configData['requestLoggerPages'] = array();
+                    array_push($configData['requestLoggerPages'], $this->wire('input')->post->requestLoggerLogPageId);
                 }
                 else {
-                    if(($key = array_search($this->wire('input')->post->webhooksLogPageId, $configData['webhooksPages'])) !== false) {
-                        unset($configData['webhooksPages'][$key]);
+                    if(($key = array_search($this->wire('input')->post->requestLoggerLogPageId, $configData['requestLoggerPages'])) !== false) {
+                        unset($configData['requestLoggerPages'][$key]);
                     }
-                    $data = $this->wire('cache')->get("tracyWebhooks_id_*_page_".$this->wire('input')->post->webhooksLogPageId);
+                    $data = $this->wire('cache')->get("tracyRequestLogger_id_*_page_".$this->wire('input')->post->requestLoggerLogPageId);
                     if(count($data) > 0) {
                         foreach($data as $id => $datum) {
                             $this->wire('cache')->delete($id);
@@ -1026,11 +1027,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 }
 
             }
-
-            // WEBHOOKS
-            // add new webhook methods to $page
-            $this->wire()->addHook('Page::getWebhooksData', $this, 'getWebhooksData');
-            $this->wire()->addHook('Page::findWebhooksData', $this, 'findWebhooksData');
 
             // MAIL INTERCEPTOR
             // if mail panel items were cleared, clear them from the session variable
@@ -1855,27 +1851,29 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     /**
-     * attach the webhooks logger via hook
+     * attach the RequestLogger via hook
      *
      * @param HookEvent $event
      * @return void
      */
-    public function webhooksLogger(HookEvent $event) {
+    public function requestLogger(HookEvent $event) {
         $page = $event->object;
 
         // if this page is not in the list of enabled pages we exit early
-        if(!isset($this->data['webhooksPages']) || !in_array($page->id, $this->data['webhooksPages'])) return;
+        if(!isset($this->data['requestLoggerPages']) || !in_array($page->id, $this->data['requestLoggerPages'])) return;
 
         // log this request
-        $log = $page->getRequestObject();
-        $log->html = $event->return;
-        $this->wire('cache')->save('tracyWebhooks_id_' . $log->id . '_page_' . $page->id, json_encode($log));
+        $data = $page->getRequestData();
+        $data = json_decode(json_encode($data), true);
+        $data = $this->jsonDecodeInput($data);
+        $data['html'] = $event->return;
+        $this->wire('cache')->save("tracyRequestLogger_id_{$data['id']}_page_{$page->id}", json_encode($data));
 
         // do the cleanup to limit entries to max logs setting
-        $data = $this->wire('cache')->get("tracyWebhooks_id_*_page_{$page->id}");
-        if(count($data) > $this->data['webhooksMaxLogs']) {
-            reset($data);
-            $this->wire('cache')->delete(key($data));
+        $allData = $this->wire('cache')->get("tracyRequestLogger_id_*_page_{$page->id}");
+        if(count($allData) > $this->data['requestLoggerMaxLogs']) {
+            reset($allData);
+            $this->wire('cache')->delete(key($allData));
         }
     }
 
@@ -1883,71 +1881,76 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * get a standardized object of the current request
      *
      * @param HookEvent $event
-     * @return void
+     * @return array | object
      */
-    public function getRequestObject($event) {
+    public function getRequestData($event) {
         $page = $event->object;
-        $event->return = (object)[
-            'id' => uniqid(),
-            'request_method' => $_SERVER['REQUEST_METHOD'],
-            'time' => time(),
-            'url' => $this->wire('input')->url(true),
-            // get url via server variables
-            // the pw built in httpUrl method does replace the actual host with one of the hosts in $config
-            'httpUrl' => ($this->wire('config')->https ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]",
-            'page' => $page->id,
-            'html' => null,
-            'headers' => getallheaders(),
-            'post' => $_POST,
-            'get' => $_GET,
-            'input' => file_get_contents('php://input')
-        ];
+        if(isset($event->arguments[0]) && $event->arguments[0] !== false) {
+            // get all logged requests for $page
+            if($event->arguments[0] === 'all') {
+                $data = $this->_getRequestLoggerData($page->id, true);
+            }
+            // get logged request by ID
+            elseif(!is_bool($event->arguments[0])) {
+                $data = $this->_getRequestLoggerData($event->arguments[0]);
+            }
+            // get last logged request for $page
+            elseif($event->arguments[0] === true) {
+                $data = $this->_getRequestLoggerData($page->id);
+            }
+        }
+        // get current request for $page
+        else {
+            $data = array(
+                'id' => uniqid(),
+                'requestMethod' => $_SERVER['REQUEST_METHOD'],
+                'remoteHost' => isset($_SERVER['REMOTE_HOST']) ? $_SERVER['REMOTE_HOST'] : null,
+                'remoteAddress' => $_SERVER['REMOTE_ADDR'],
+                'time' => time(),
+                'url' => $this->wire('input')->url(true),
+                // get url via server variables
+                // the pw built in httpUrl method replaces the actual host with one of the hosts in $config
+                'httpUrl' => ($this->wire('config')->https ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]",
+                'page' => $page->id,
+                'html' => null,
+                'headers' => getallheaders(),
+                'post' => $_POST,
+                'get' => $_GET,
+                'input' => file_get_contents('php://input')
+            );
+        }
+        if($this->data['requestLoggerReturnType'] == 'object') $data = json_decode(json_encode($data), false);
+        $event->return = $data;
     }
 
 
     /**
-     * get last webhook datum for $page
-     *
-     * @param HookEvent $event
-     * @return $data
-     */
-    public function getWebhooksData(HookEvent $event) {
-        $page = $event->object;
-        $event->return = $this->_getWebhooksData($page->id);
-    }
-
-
-    /**
-     * get webhook data for $page
-     *
-     * @param HookEvent $event
-     * @return $data
-     */
-    public function findWebhooksData(HookEvent $event) {
-        $page = $event->object;
-        $event->return = $this->_getWebhooksData($page->id, true);
-    }
-
-
-    /**
-     * get webhook data for $page
+     * get logged request data
      *
      * @param int $pid
      * @param bool $all
      * @return $data
      */
-    private function _getWebhooksData($pid, $all = false) {
-        $data = $this->wire('cache')->get("tracyWebhooks_id_*_page_$pid");
+    private function _getRequestLoggerData($id, $all = false) {
+        // $id is an integer, so it's a page ID
+        if(is_int($id)) {
+            $data = $this->wire('cache')->get("tracyRequestLogger_id_*_page_$id");
+        }
+        // it's a logged request ID
+        else {
+            $data = wire('cache')->get("tracyRequestLogger_id_$id*");
+
+        }
         if(!empty($data)) {
-            if($this->data['webhooksReturnType'] == 'object') $data = json_decode(json_encode($data), false);
             if(!$all) {
                 $data = $this->jsonDecodeInput(end($data));
             }
             else {
                 $data = array_map(array($this, 'jsonDecodeInput'), $data);
             }
+            return $data;
         }
-        return $data;
+        return null;
     }
 
 
@@ -1958,15 +1961,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * @return array $data
      */
     public static function jsonDecodeInput($data) {
-        $returnType = self::getDataValue('webhooksReturnType');
-        $input = $returnType == 'object' ? $data->input : $data['input'];
-        if(self::isJson($input)) {
-            if($returnType == 'object') {
-                $data->inputParsed = json_decode($data->input, false);
-            }
-            else {
-                $data['inputParsed'] = json_decode($data['input'], true);
-            }
+        if(self::isJson($data['input'])) {
+            $data['inputParsed'] = json_decode($data['input'], true);
         }
         return $data;
     }
@@ -3396,26 +3392,26 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($data['userSwitcherRestricted']) $f->attr('value', $data['userSwitcherRestricted']);
         $fieldset->add($f);
 
-        // Webhooks Panel
+        // requestLogger Panel
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->attr('name+id', 'webhooksPanel');
-        $fieldset->label = __('Webhooks panel', __FILE__);
+        $fieldset->attr('name+id', 'requestLoggerPanel');
+        $fieldset->label = __('Request Logger panel', __FILE__);
         $wrapper->add($fieldset);
 
         $f = $this->wire('modules')->get("InputfieldInteger");
-        $f->attr('name', 'webhooksMaxLogs');
+        $f->attr('name', 'requestLoggerMaxLogs');
         $f->label = __('Maximum number of logged requests', __FILE__);
         $f->description = __('Number of requests to be kept for each page.', __FILE__);
-        $f->attr('value', $data['webhooksMaxLogs']);
+        $f->attr('value', $data['requestLoggerMaxLogs']);
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldRadios");
-        $f->attr('name', 'webhooksReturnType');
+        $f->attr('name', 'requestLoggerReturnType');
         $f->label = __('Output type', __FILE__);
         $f->description = __('This determines whether the logged data is returned as an object or an array.', __FILE__);
         $f->addOption('array', 'Array');
         $f->addOption('object', 'Object');
-        if($data['webhooksReturnType']) $f->attr('value', $data['webhooksReturnType']);
+        if($data['requestLoggerReturnType']) $f->attr('value', $data['requestLoggerReturnType']);
         $fieldset->add($f);
 
         // Server Type Indicator
@@ -3619,7 +3615,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->addOption('db', 'db() for TD::dumpBig()');
         $f->addOption('fireLog', 'fireLog() for TD::fireLog()');
         $f->addOption('fl', 'fl() for TD::fireLog()');
-        $f->addOption('getWebhooksDataById', 'getWebhooksDataById() for TD::getWebhooksDataById()');
         $f->addOption('l', 'l() for TD::log()');
         $f->addOption('templateVars', 'templateVars() for TD::templateVars()');
         $f->addOption('tv', 'tv() for TD::templateVars()');

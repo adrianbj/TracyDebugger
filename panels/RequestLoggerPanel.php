@@ -1,6 +1,6 @@
 <?php
 /**
- * Tracy Debugger Webhooks Panel
+ * Tracy Debugger requestLogger Panel
  *
  * @author Bernhard Baumrock, 24.11.2018
  * @license Licensed under MIT
@@ -8,14 +8,14 @@
  */
 
 use \Tracy\Dumper;
-class WebhooksPanel extends BasePanel {
+class RequestLoggerPanel extends BasePanel {
 
     // settings
-    private $name = 'webhooks';
-    private $label = 'Webhooks';
+    private $name = 'requestLogger';
+    private $label = 'Request Logger';
     private $p;
-    protected $hookData = array();
-    protected $webhooksPages = array();
+    protected $requestData = array();
+    protected $requestLoggerPages = array();
 
     // the svg icon shown in the bar and in the panel header
     private $icon = '';
@@ -34,10 +34,10 @@ class WebhooksPanel extends BasePanel {
             $this->p = $this->wire('page');
         }
 
-        $this->hookData = $this->wire('cache')->get("tracyWebhooks_id_*_page_{$this->p->id}");
+        $this->requestData = $this->wire('cache')->get("tracyRequestLogger_id_*_page_{$this->p->id}");
 
-        $this->webhooksPages = \TracyDebugger::getDataValue('webhooksPages') ?: array();
-        if(isset($this->webhooksPages) && in_array($this->p->id, $this->webhooksPages)) {
+        $this->requestLoggerPages = \TracyDebugger::getDataValue('requestLoggerPages') ?: array();
+        if(isset($this->requestLoggerPages) && in_array($this->p->id, $this->requestLoggerPages)) {
             $this->iconColor = \TracyDebugger::COLOR_WARN;
         }
         else {
@@ -52,7 +52,7 @@ class WebhooksPanel extends BasePanel {
         </svg>
         ';
 
-        return "<span title='{$this->label}'>{$this->icon}</span>" . (count($this->hookData) > 0 ? ' ' . count($this->hookData) : '');
+        return "<span title='{$this->label}'>{$this->icon}</span>" . (count($this->requestData) > 0 ? ' ' . count($this->requestData) : '');
     }
 
     /**
@@ -66,7 +66,7 @@ class WebhooksPanel extends BasePanel {
         // panel body
         $out .= '<div class="tracy-inner">';
             $out .= $this->getDumps();
-            $out .= \TracyDebugger::generatePanelFooter($this->name, \Tracy\Debugger::timer($this->name), strlen($out), 'webhooksPanel');
+            $out .= \TracyDebugger::generatePanelFooter($this->name, \Tracy\Debugger::timer($this->name), strlen($out), 'requestLoggerPanel');
         $out .= '</div>';
 
         return parent::loadResources() . $out;
@@ -86,18 +86,17 @@ class WebhooksPanel extends BasePanel {
         $this->wire('users')->setCurrentUser($guest);
         $publicEndpoint = true;
 
-        if(count($this->hookData) > 0) {
-            foreach($this->hookData as $datum) {
+        if(count($this->requestData) > 0) {
+            foreach($this->requestData as $datum) {
                 $time = date("Y-m-d H:i:s", $datum['time']);
-                $requestMethod = isset($datum['request_method']) ? $datum['request_method'] . ' @ ' : '';
-                $out .= "<h2>$requestMethod $time | #{$datum['id']}</h2>";
-                if(\TracyDebugger::getDataValue('webhooksReturnType') == 'object') $datum = json_decode(json_encode($datum), false);
+                $out .= "<h2 style='white-space: nowrap;'>{$datum['requestMethod']} @ $time | " . ($datum['remoteHost'] ?: $datum['remoteAddress']) . " | #{$datum['id']}</h2>";
                 $datum = \TracyDebugger::jsonDecodeInput($datum);
+                if(\TracyDebugger::getDataValue('requestLoggerReturnType') == 'object') $datum = json_decode(json_encode($datum), false);
                 $out .= Dumper::toHtml($datum, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
             }
         }
         elseif($this->p->viewable()) {
-            $out .= '<p>There are no webhooks logged for this page.' . (!in_array($this->p->id, $this->webhooksPages) ? ' Logging is not currently enabled.' : '') . '</p>';
+            $out .= '<p>There are no requests logged for this page.' . (!in_array($this->p->id, $this->requestLoggerPages) ? ' Logging is not currently enabled.' : '') . '</p>';
         }
         else {
             $publicEndpoint = false;
@@ -106,31 +105,31 @@ class WebhooksPanel extends BasePanel {
 
         if($publicEndpoint) {
             $out .= '<p>';
-            if(!in_array($this->p->id, $this->webhooksPages)) {
+            if(!in_array($this->p->id, $this->requestLoggerPages)) {
                 $out .= '
                 <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'">
-                    <input type="hidden" name="webhooksLogPageId" value="'.$this->p->id.'" />
-                    <input type="submit" name="tracyWebhooksEnableLogging" value="Enable logging on this page" />
+                    <input type="hidden" name="requestLoggerLogPageId" value="'.$this->p->id.'" />
+                    <input type="submit" name="tracyRequestLoggerEnableLogging" value="Enable logging on this page" />
                 </form>
                 ';
             }
             else {
                 $out .= '
                 <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to disable logging on this page and clear logged data?\');">
-                    <input type="hidden" name="webhooksLogPageId" value="'.$this->p->id.'" />
-                    <input type="submit" name="tracyWebhooksDisableLogging" value="Disable logging & clear data" />
+                    <input type="hidden" name="requestLoggerLogPageId" value="'.$this->p->id.'" />
+                    <input type="submit" name="tracyRequestLoggerDisableLogging" value="Disable logging & clear data" />
                 </form>
                 ';
             }
             $out .= '</p>';
         }
 
-        if(count($this->webhooksPages) > 0) {
+        if(count($this->requestLoggerPages) > 0) {
             $out .= '
-            <a href="#" rel="otherWebHooksPages" class="tracy-toggle tracy-collapsed">Pages with logging enabled</a>
-            <div id="otherWebHooksPages" class="tracy-collapsed">
+            <a href="#" rel="otherRequestLoggerPages" class="tracy-toggle tracy-collapsed">Pages with logging enabled</a>
+            <div id="otherRequestLoggerPages" class="tracy-collapsed">
                 <ul>';
-                foreach($this->webhooksPages as $pid) {
+                foreach($this->requestLoggerPages as $pid) {
                     $p = $this->wire('pages')->get($pid);
                     $out .= '<li><a href="'.$p->editUrl.'">'.$p->title.'</a></li>';
                 }
