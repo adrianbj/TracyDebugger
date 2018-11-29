@@ -202,7 +202,7 @@ HTML;
         $out .= '
         <th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">$'.lcfirst($var).' links</th>
         <tr>
-            <td colspan="3"><a '.$this->newTab.' href="'.$this->apiBaseUrl.$this->tracyPwApiData->convertNamesToUrls(str_replace('$', '', $className)).'/">' . $className . '</a></td>';
+            <td colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '3' : '2').'"><a '.$this->newTab.' href="'.$this->apiBaseUrl.$this->tracyPwApiData->convertNamesToUrls(str_replace('$', '', $className)).'/">' . $className . '</a></td>';
 
         $out .= '
                 <td>'.\TracyDebugger::createEditorLink(\TracyDebugger::removeCompilerFromPath($filename), 1, str_replace($this->wire('config')->paths->root, '', '/'.\TracyDebugger::removeCompilerFromPath($filename))).'</td>

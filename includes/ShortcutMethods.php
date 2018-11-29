@@ -125,7 +125,6 @@ if(!function_exists('templateVars') && in_array('templateVars', $this->data['ena
     }
 }
 
-
 /**
  * really short alias methods for really lazy typists :)
  */
