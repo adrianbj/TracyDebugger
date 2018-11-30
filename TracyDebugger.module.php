@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.15.3',
+            'version' => '4.15.4',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -242,6 +242,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "debugModePanelSections" => array('pagesLoaded', 'modulesLoaded', 'hooks', 'databaseQueries', 'selectorQueries', 'timers', 'user', 'cache', 'autoload'),
             "diagnosticsPanelSections" => array('filesystemFolders'),
             "dumpPanelTabs" => array('debugInfo', 'fullObject'),
+            "requestMethods" => array('GET', 'POST', 'PUT', 'DELETE', 'PATCH'),
             "requestLoggerMaxLogs" => 10,
             "requestLoggerReturnType" => 'array',
             "imagesInFieldListValues" => 1,
@@ -351,7 +352,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // log requests for Request Logger
-        $this->wire()->addHookAfter('Page::render', $this, 'requestLogger');
+        $this->wire()->addHookAfter('Page::render', $this, 'logRequests');
+        $this->wire()->addHookAfter('Page::logRequests', $this, 'logRequests');
 
         // modals
         if(in_array('regularModal', $this->data['hideDebugBarModals']) && $this->wire('input')->get->modal == '1') return;
@@ -1853,16 +1855,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     /**
-     * attach the RequestLogger via hook
+     * attach logRequests via hook
      *
      * @param HookEvent $event
      * @return void
      */
-    public function requestLogger(HookEvent $event) {
+    public function logRequests(HookEvent $event) {
         $page = $event->object;
 
-        // if this page is not in the list of enabled pages we exit early
+        // exits
         if(!isset($this->data['requestLoggerPages']) || !in_array($page->id, $this->data['requestLoggerPages'])) return;
+        if(!in_array($_SERVER['REQUEST_METHOD'], $this->data['requestMethods'])) return;
 
         // log this request
         $data = $page->getRequestData();
@@ -1880,7 +1883,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     }
 
     /**
-     * get a standardized object of the current request
+     * get a standardized array or object of the current request
      *
      * @param HookEvent $event
      * @return array | object
@@ -1912,7 +1915,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 'url' => $this->wire('input')->url(true),
                 // get url via server variables
                 // the pw built in httpUrl method replaces the actual host with one of the hosts in $config
-                'httpUrl' => ($this->wire('config')->https ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]",
+                'httpUrl' => ($this->wire('config')->https ? "https" : "http") . "://".$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'],
                 'page' => $page->id,
                 'html' => null,
                 'headers' => getallheaders(),
@@ -1921,7 +1924,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 'input' => file_get_contents('php://input')
             );
         }
-        if($this->data['requestLoggerReturnType'] == 'object') $data = json_decode(json_encode($data), false);
+        if(!empty($data)) {
+            foreach($data as $id => $datum) {
+                if($page->id === 27 && !\TracyDebugger::$inAdmin && $datum['httpUrl'] !== ($this->wire('config')->https ? "https" : "http") . "://".$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI']) {
+                    unset($data[$id]);
+                }
+            }
+            if($this->data['requestLoggerReturnType'] == 'object') $data = json_decode(json_encode($data), false);
+        }
+        else {
+            $data = array();
+        }
         $event->return = $data;
     }
 
@@ -3399,6 +3412,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $fieldset->attr('name+id', 'requestLoggerPanel');
         $fieldset->label = __('Request Logger panel', __FILE__);
         $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldCheckboxes");
+        $f->attr('name', 'requestMethods');
+        $f->label = __('Request methods', __FILE__);
+        $f->description = __('Which request methods to log.', __FILE__);
+        $f->notes = __('It may be useful to disable GET so that normal page visits are ignored.', __FILE__);
+        $f->addOption('GET');
+        $f->addOption('POST');
+        $f->addOption('PUT');
+        $f->addOption('DELETE');
+        $f->addOption('PATCH');
+        if($data['requestMethods']) $f->attr('value', $data['requestMethods']);
+        $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldInteger");
         $f->attr('name', 'requestLoggerMaxLogs');

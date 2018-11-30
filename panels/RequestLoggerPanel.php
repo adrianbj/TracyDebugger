@@ -34,7 +34,7 @@ class RequestLoggerPanel extends BasePanel {
             $this->p = $this->wire('page');
         }
 
-        $this->requestData = $this->wire('cache')->get("tracyRequestLogger_id_*_page_{$this->p->id}");
+        $this->requestData = $this->p->getRequestData('all');
 
         $this->requestLoggerPages = \TracyDebugger::getDataValue('requestLoggerPages') ?: array();
         if(isset($this->requestLoggerPages) && in_array($this->p->id, $this->requestLoggerPages)) {
