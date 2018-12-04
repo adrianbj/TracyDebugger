@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.15.5',
+            'version' => '4.15.6',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1871,7 +1871,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // log this request
         $data = $page->getRequestData();
         $data = json_decode(json_encode($data), true);
-        $data = $this->jsonDecodeInput($data);
         $data['html'] = $event->return;
         $this->wire('cache')->save("tracyRequestLogger_id_{$data['id']}_page_{$page->id}", json_encode($data));
 
@@ -1907,6 +1906,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
         // get current request for $page
         else {
+            $input = file_get_contents('php://input');
             $data = array(
                 'id' => uniqid(),
                 'requestMethod' => $_SERVER['REQUEST_METHOD'],
@@ -1919,10 +1919,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 'httpUrl' => ($this->wire('config')->https ? "https" : "http") . "://".$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'],
                 'page' => $page->id,
                 'html' => null,
-                'headers' => getallheaders(),
+                'headers' => $this->getallheaders(),
                 'post' => $_POST,
                 'get' => $_GET,
-                'input' => file_get_contents('php://input')
+                'input' => $input,
+                'inputParsed' => self::isJson($input) ? json_decode($input, true) : null
             );
         }
         if(!empty($data)) {
@@ -1959,10 +1960,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
         if(!empty($data)) {
             if(!$all) {
-                $data = $this->jsonDecodeInput(end($data));
-            }
-            else {
-                $data = array_map(array($this, 'jsonDecodeInput'), $data);
+                $data = end($data);
             }
             return $data;
         }
@@ -1971,16 +1969,24 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     /**
-     * decode json data
+     * get logged request data
      *
-     * @param string $data
-     * @return array $data
+     * Use this instead of PHP's getallheaders() because it is not available with PHP-FPM
+     * Even when it is available, the case of parameters is inconsistent
+     * This version standardizes the case of return associative keys
+     *
+     * @return $allHeaders
      */
-    public static function jsonDecodeInput($data) {
-        if(self::isJson($data['input'])) {
-            $data['inputParsed'] = json_decode($data['input'], true);
+    private function getallheaders() {
+
+        $allHeaders = array();
+        foreach($_SERVER as $name => $value) {
+            if($name != 'HTTP_MOD_REWRITE' && (substr($name, 0, 5) == 'HTTP_' || $name == 'CONTENT_LENGTH' || $name == 'CONTENT_TYPE')) {
+                $name = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', str_replace('HTTP_', '', $name)))));
+                $allHeaders[$name] = $value;
+            }
         }
-        return $data;
+        return $allHeaders;
     }
 
 
