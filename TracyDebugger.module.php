@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.15.6',
+            'version' => '4.15.7',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1971,22 +1971,33 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     /**
      * get logged request data
      *
-     * Use this instead of PHP's getallheaders() because it is not available with PHP-FPM
-     * Even when it is available, the case of parameters is inconsistent
-     * This version standardizes the case of return associative keys
+     * Use this instead of PHP's getallheaders() because it is not available with PHP-FPM and nginx
+     * Even when it is available, the case of keys is inconsistent so use this modified from: https://github.com/ralouphie/getallheaders
+     * as it standardizes the case of returned keys
      *
-     * @return $allHeaders
+     * @return $headers
      */
     private function getallheaders() {
-
-        $allHeaders = array();
+        $headers = array();
+        $addHeaders = array('CONTENT_LENGTH', 'CONTENT_TYPE', 'CONTENT_MD5');
+        $removeHeaders = array('HTTP_MOD_REWRITE');
         foreach($_SERVER as $name => $value) {
-            if($name != 'HTTP_MOD_REWRITE' && (substr($name, 0, 5) == 'HTTP_' || $name == 'CONTENT_LENGTH' || $name == 'CONTENT_TYPE')) {
+            if(!in_array($name, $removeHeaders) && (substr($name, 0, 5) == 'HTTP_' || in_array($name, $addHeaders))) {
                 $name = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', str_replace('HTTP_', '', $name)))));
-                $allHeaders[$name] = $value;
+                $headers[$name] = $value;
             }
         }
-        return $allHeaders;
+        if (!isset($headers['Authorization'])) {
+            if (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+                $headers['Authorization'] = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+            } elseif (isset($_SERVER['PHP_AUTH_USER'])) {
+                $basic_pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
+                $headers['Authorization'] = 'Basic ' . base64_encode($_SERVER['PHP_AUTH_USER'] . ':' . $basic_pass);
+            } elseif (isset($_SERVER['PHP_AUTH_DIGEST'])) {
+                $headers['Authorization'] = $_SERVER['PHP_AUTH_DIGEST'];
+            }
+        }
+        return $headers;
     }
 
 

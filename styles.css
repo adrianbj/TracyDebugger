@@ -352,6 +352,10 @@ table.apiExplorerTable th:nth-child(4) {
     color: #444444;
 }
 
+button.tracyCopyBtn:focus {
+    outline:none;
+}
+
 #tracy-debug .tracyLinkBtn {
     background: #F0F3F7 !important;
     border: 1px solid #D2D2D2 !important;

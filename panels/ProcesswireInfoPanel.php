@@ -190,7 +190,7 @@ class ProcesswireInfoPanel extends BasePanel {
             <script>
                 tracyJSLoader.load("'.$this->wire('config')->urls->TracyDebugger.'scripts/clipboardjs/clipboard.min.js", function() {
                     tracyJSLoader.load("'.$this->wire('config')->urls->TracyDebugger.'scripts/clipboardjs/tooltips.js", function() {
-                        var versionsClipboard=new Clipboard(".tracyCopyBtn");
+                        var versionsClipboard=new ClipboardJS(".tracyCopyBtn");
                         versionsClipboard.on("success",function(e){e.clearSelection();showTooltip(e.trigger,"Copied!");});versionsClipboard.on("error",function(e){showTooltip(e.trigger,fallbackMessage(e.action));});
                     });
                 });
