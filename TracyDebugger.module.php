@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.15.7',
+            'version' => '4.15.8',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1871,14 +1871,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // log this request
         $data = $page->getRequestData();
         $data = json_decode(json_encode($data), true);
-        $data['html'] = $event->return;
-        $this->wire('cache')->save("tracyRequestLogger_id_{$data['id']}_page_{$page->id}", json_encode($data));
+        if(!empty($data)) {
+            $data['html'] = $event->return;
+            $this->wire('cache')->save("tracyRequestLogger_id_{$data['id']}_page_{$page->id}", json_encode($data));
 
-        // do the cleanup to limit entries to max logs setting
-        $allData = $this->wire('cache')->get("tracyRequestLogger_id_*_page_{$page->id}");
-        if(count($allData) > $this->data['requestLoggerMaxLogs']) {
-            reset($allData);
-            $this->wire('cache')->delete(key($allData));
+            // do the cleanup to limit entries to max logs setting
+            $allData = $this->wire('cache')->get("tracyRequestLogger_id_*_page_{$page->id}");
+            if(count($allData) > $this->data['requestLoggerMaxLogs']) {
+                reset($allData);
+                $this->wire('cache')->delete(key($allData));
+            }
         }
     }
 
@@ -1903,6 +1905,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             elseif($event->arguments[0] === true) {
                 $data = $this->_getRequestLoggerData($page->id);
             }
+
+            // remove logged entries for PW 404 page if they don't have the same URL as current page
+            if(!empty($data)) {
+                foreach($data as $id => $datum) {
+                    if($page->id === $this->wire('config')->http404PageID && !\TracyDebugger::$inAdmin && $datum['httpUrl'] !== ($this->wire('config')->https ? "https" : "http") . "://".$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI']) {
+                        unset($data[$id]);
+                    }
+                }
+            }
         }
         // get current request for $page
         else {
@@ -1926,17 +1937,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 'inputParsed' => self::isJson($input) ? json_decode($input, true) : null
             );
         }
-        if(!empty($data)) {
-            foreach($data as $id => $datum) {
-                if($page->id === 27 && !\TracyDebugger::$inAdmin && $datum['httpUrl'] !== ($this->wire('config')->https ? "https" : "http") . "://".$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI']) {
-                    unset($data[$id]);
-                }
-            }
-            if($this->data['requestLoggerReturnType'] == 'object') $data = json_decode(json_encode($data), false);
+
+        if(isset($event->arguments[1]) && $event->arguments[1] === true) {
+            // intentionally blank - don't modify $data from being array
         }
-        else {
-            $data = array();
+        elseif($this->data['requestLoggerReturnType'] == 'object') {
+            $data = json_decode(json_encode($data), false);
         }
+
         $event->return = $data;
     }
 
@@ -1964,7 +1972,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
             return $data;
         }
-        return null;
+        return array();
     }
 
 

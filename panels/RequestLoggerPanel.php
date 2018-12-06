@@ -14,8 +14,8 @@ class RequestLoggerPanel extends BasePanel {
     private $name = 'requestLogger';
     private $label = 'Request Logger';
     private $p;
-    protected $requestData = array();
-    protected $requestLoggerPages = array();
+    private $requestData = array();
+    private $requestLoggerPages = array();
 
     // the svg icon shown in the bar and in the panel header
     private $icon = '';
@@ -34,8 +34,7 @@ class RequestLoggerPanel extends BasePanel {
             $this->p = $this->wire('page');
         }
 
-        $this->requestData = $this->p->getRequestData('all');
-
+        $this->requestData = $this->p->getRequestData('all', true); // true forces array
         $this->requestLoggerPages = \TracyDebugger::getDataValue('requestLoggerPages') ?: array();
         if(isset($this->requestLoggerPages) && in_array($this->p->id, $this->requestLoggerPages)) {
             $this->iconColor = \TracyDebugger::COLOR_WARN;
@@ -65,7 +64,7 @@ class RequestLoggerPanel extends BasePanel {
 
         // panel body
         $out .= '<div class="tracy-inner">';
-            $out .= $this->getDumps();
+            $out .= $this->generateRequestDumps();
             $out .= \TracyDebugger::generatePanelFooter($this->name, \Tracy\Debugger::timer($this->name), strlen($out), 'requestLoggerPanel');
         $out .= '</div>';
 
@@ -73,11 +72,11 @@ class RequestLoggerPanel extends BasePanel {
     }
 
     /**
-     * getDumps
+     * Generate Request Dumps
      *
      * @return string
      */
-    public function getDumps() {
+    private function generateRequestDumps() {
 
         $out = '<div class="tracy-DumpPanel">';
 
