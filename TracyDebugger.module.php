@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.15.8',
+            'version' => '4.15.9',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -349,6 +349,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // determine if we are in the admin / backend
         static::$inAdmin = $this->inAdmin();
+
+        // include the codeProcessor (console / snippetRunner) after ready to it has access to any properties/methods added by other modules
+        $this->wire()->addHookAfter('ProcessWire::ready', $this, 'codeProcessor');
 
 
         // log requests for Request Logger
@@ -1380,14 +1383,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         require_once __DIR__ . '/panels/'.$panelName.'.php';
         Debugger::getBar()->addPanel(new $panelName);
 
-
-        // CONSOLE & SNIPPETS RUNNER PANELS
-        // if it's an ajax request from the Tracy Console or Snippet Runner panels for code execution, then process and return
-        if($this->wire('config')->ajax && ($this->wire('input')->post->tracyConsole == 1 || $this->wire('input')->post->tracySnippetRunner == 1)) {
-            require_once(__DIR__ . '/includes/CodeProcessor.php');
-            return;
-        }
-
         // if it's an ajax request from the Tracy Console panel snippets, then process and return
         if($this->wire('config')->ajax && $this->wire('input')->post->tracysnippets == 1) {
             require_once(__DIR__ . '/includes/ConsoleSnippets.php');
@@ -1400,6 +1395,24 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     /**
      * FUNCTIONS CALLED FROM HOOKS
      */
+
+
+    /**
+     * Hook after ProcessWire::ready()
+     *
+     * Process code from Console and Snippet Runner panels
+     *
+     * @param HookEvent $event
+     *
+     */
+    protected function codeProcessor() {
+        // if it's an ajax request from the Tracy Console or Snippet Runner panels for code execution, then process and return
+        if($this->wire('config')->ajax && ($this->wire('input')->post->tracyConsole == 1 || $this->wire('input')->post->tracySnippetRunner == 1)) {
+            require_once(__DIR__ . '/includes/CodeProcessor.php');
+            return;
+        }
+
+    }
 
 
     /**
