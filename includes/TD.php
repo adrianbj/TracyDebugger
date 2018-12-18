@@ -159,7 +159,7 @@ class TD extends TracyDebugger {
         $editCountLink = '';
         if(count(\TracyDebugger::getDataValue('dumpPanelTabs')) > 0 && !is_string($var)) {
             $classExt = rand();
-            if(($var instanceof Wire || $var instanceof \ProcessWire\Wire) && $var->id)   {
+            if(($var instanceof Wire || $var instanceof \ProcessWire\Wire) && isset($var->id))   {
                 if($var instanceof User || $var instanceof \ProcessWire\User) {
                     $type = 'users';
                     $section = 'access';
