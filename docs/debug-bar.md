@@ -29,7 +29,7 @@ Results are cached for speed, but will be updated whenever you update your Proce
 
 * Class::method (first column) links to ProcessWire API docs, either on processwire.com or locally if you have the API Explorer module installed
 * Line number (second column) links to the method in your code editor, or via the File Editor Panel or the ProcessFileEdit module
-* Method definition (third column) toggles the docblock open/closed
+* Method / property summary (third column) which can optionally toggle the full docblock
 
 ![API Explorer Panel](img/api-explorer.png)
 
@@ -42,7 +42,7 @@ Results are cached for speed, but will be updated whenever you update your Proce
 
 * Class::method (first column) links to ProcessWire API docs, either on processwire.com or locally if you have the API Explorer module installed
 * Line number (second column) links to the method in your code editor, or via the File Editor Panel or the ProcessFileEdit module
-* Method definition (third column) toggles the docblock open/closed
+* Method summary (third column) which can optionally toggle the full docblock
 
 ![Captain Hook Panel](img/captain-hook.png)
 
