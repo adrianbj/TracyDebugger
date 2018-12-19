@@ -52,6 +52,7 @@ Results are cached for speed, but will be updated whenever you update your Proce
 
 * Code highlighting and syntax checking
 * Access to all PW variables: $pages, $page, $user, $input, $fields, $templates, $modules, etc
+* Autocomplete for all PW methods and properties.
 * Access to $field, $template, $module when viewing the settings for a field, template, or module in the ProcessWire admin
 * Access to all template defined variables and functions
 * Works with `bd()`, `d()`, `fl()`, and `l()` calls, and `echo`. `d()` is recommended in most scenarios because output will appear in the results panel below the code
