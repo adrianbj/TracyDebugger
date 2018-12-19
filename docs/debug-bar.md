@@ -27,9 +27,9 @@ Generates a searchable list of all methods and properties in your ProcessWire in
 
 Results are cached for speed, but will be updated whenever you update your ProcessWire version or install a new module.
 
-* Class::method (first column) links to ProcessWire API docs, either on processwire.com or locally if you have the API Explorer module installed
-* Line number (second column) links to the method in your code editor, or via the File Editor Panel or the ProcessFileEdit module
-* Method / property summary (third column) which can optionally toggle the full docblock
+* Class::method links to ProcessWire API docs, either on processwire.com or locally if you have the API Explorer module installed
+* Line number links to the method in your code editor, or via the File Editor Panel or the ProcessFileEdit module
+* Method / property summary which can optionally toggle the full docblock
 
 ![API Explorer Panel](img/api-explorer.png)
 
@@ -40,9 +40,9 @@ Generates a list of hookable methods in your ProcessWire install, including site
 
 Results are cached for speed, but will be updated whenever you update your ProcessWire version or install a new module.
 
-* Class::method (first column) links to ProcessWire API docs, either on processwire.com or locally if you have the API Explorer module installed
-* Line number (second column) links to the method in your code editor, or via the File Editor Panel or the ProcessFileEdit module
-* Method summary (third column) which can optionally toggle the full docblock
+* Method/ Property links to ProcessWire API docs, either on processwire.com or locally if you have the API Explorer module installed
+* Line number links to the method in your code editor, or via the File Editor Panel or the ProcessFileEdit module
+* Method summary which can optionally toggle the full docblock
 
 ![Captain Hook Panel](img/captain-hook.png)
 
@@ -406,6 +406,47 @@ This section is only available when viewing the settings page for a field in the
 This section is only available when viewing the settings page for a module in the admin
 
 ![Request Info panel - Module Settings](img/request-info-module-settings.png)
+
+
+***
+
+## ![Request Logger](icons/request-logger.svg ':no-zoom') Request Logger
+
+This panel logs incoming requests to your pages. In particular, this can be used to log webhook requests and you can use logged requests in your code while developing so you don't need to continually trigger them. Very handy if you waiting on a response from a payment gateway :)
+
+1. In the PW admin, edit the page you want to log incoming requests for.
+2. Open the Request Logger panel.
+3. Click the "Enable logging on this page" button.
+
+![Request Logger enable dialog](img/request-logger-enable-dialog.png)
+
+4. Send a request to that page. This may be something like a confirmation of payment webhook call from Paypal etc.
+
+5. Reload the edit page in the PW admin to see the logged request. The reason we say to edit the page, rather than visit it on the frontend is because visiting the page would result in a logged request.
+
+![Request Logger results](img/request-logger-results.png)
+
+Note that you can easily test incoming requests using the Postman app (https://www.getpostman.com/). You can choose POST or GET and under "Body" you'll want to specify Raw / JSON
+
+![Request Logger results](img/request-logger-postman.png)
+
+You'll notice the json supplied in the Postman Body is what shows up in the Request Logger panel under "input" and "inputParsed".
+
+This is all well and good, but here's where the magic really comes in 🙂 There is a new getRequestData() method added to $page so you can get the logged data in your code. You can get logged requests by:
+
+ID (shown in the title of the logged entry in the Request Logger panel)
+ALL requests (an array of all logged requests for the page)
+The last logged request by passing "true"
+The current live request
+This allows you to have access to the data sent by the webhook without constantly having to trigger it each time - ie no need to continually make test payments over and over as you refine and debug the your scripts that consume/parse this data! You can even make use of $page->getRequestData() in your final live code if you want - this does not rely on Tracy being enabled - it just has to be installed. So you could potentially execute one request and then use the "true" option while testing, and then when you're ready to go live, you can remove the "true" so it returns the live request.
+
+There is a config setting to determine whether this method returns an array or an object.
+
+![Request Logger results](img/request-logger-api-calls.png)
+
+You can also use this panel on non-ProcessWire pages, so if you use a php script like payment_confirmation.php in the root of your site, so long as it bootstraps PW (include ./index.php), it will let you log and retrieve request data. The only catch is that you need to trigger the logging manually by adding `$page->logRequests();` to the script file.
+
+In the config settings you can define which types of request methods are logged: GET, POST, PUT, DELETE, PATCH. By default, all are checked, but I think in most cases unchecking GET is probably helpful as it will prevent page views from being logged.
 
 
 ***
