@@ -793,12 +793,21 @@ class RequestInfoPanel extends BasePanel {
 
 
     private function generateOutput($p, $f, $outputFormatting) {
+        $out = '';
         $value = $outputFormatting ? $p->getFormatted($f->name) : $p->getUnformatted($f->name);
         if(is_string($value) && $outputFormatting) {
-            $out = substr($value, 0, \TracyDebugger::getDataValue('maxLength')) . (strlen($value) > 99 ? '... ('.strlen($value).')' : '');
+            $out .= substr($value, 0, \TracyDebugger::getDataValue('maxLength')) . (strlen($value) > 99 ? '... ('.strlen($value).')' : '');
         }
         else {
-            $out = Dumper::toHtml($value, array(Dumper::LIVE => true, Dumper::DEBUGINFO => \TracyDebugger::getDataValue('debugInfo'), Dumper::DEPTH => 99, Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
+            // trycatch is to prevent panel errors if an image is missing
+            // log the error to the Tracy error logs instead
+            try {
+                $out .= Dumper::toHtml($value, array(Dumper::LIVE => true, Dumper::DEBUGINFO => \TracyDebugger::getDataValue('debugInfo'), Dumper::DEPTH => 99, Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
+            }
+            catch(Exception $e) {
+                \TD::log($e);
+                $out .= $e;
+            }
         }
         return $out;
     }

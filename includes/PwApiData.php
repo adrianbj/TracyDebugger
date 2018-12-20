@@ -192,10 +192,10 @@ class TracyPwApiData extends WireData {
             $propertiesList = array();
             foreach($commentLines[1] as $c) {
                 if(strpos($c, '@property') !== false) {
-                    preg_match('/(?:@property)(?:\s)(?:\S*)(?:\s)(\$*[A-Za-z_]+)(?:\s)([#A-Za-z`\$->\'’()\s{}]+)/', $c, $varName);
-                    if(isset($varName[1])) {
-                        $propertiesList[str_replace('$', '', $varName[1])]['name'] = str_replace('$', '', $varName[1]);
-                        $propertiesList[str_replace('$', '', $varName[1])]['description'] = $varName[2];
+                    preg_match('/@property(-read|-write|\s)\s*([^\s]+)\s+(\$[_a-zA-Z0-9]+)(.*)$/m', $c, $varName);
+                    if(isset($varName[3])) {
+                        $propertiesList[str_replace('$', '', $varName[3])]['name'] = str_replace('$', '', $varName[3]);
+                        $propertiesList[str_replace('$', '', $varName[3])]['description'] = $varName[4];
                     }
                 }
             }
@@ -204,8 +204,8 @@ class TracyPwApiData extends WireData {
         if(isset($propertiesList)) {
 
             uksort($propertiesList, function($a, $b) {
-                $aStripped = str_replace(array('___','__', '_'), '', $a);
-                $bStripped = str_replace(array('___','__', '_'), '', $b);
+                $aStripped = str_replace(array('___','__', '_'), '', strtolower($a));
+                $bStripped = str_replace(array('___','__', '_'), '', strtolower($b));
                 return $aStripped > $bStripped;
             });
 
