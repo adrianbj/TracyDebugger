@@ -33,41 +33,45 @@ class PageFilesPanel extends BasePanel {
         $this->missingFiles = $this->getMissingFiles($this->p);
         $numFiles = count($this->files, COUNT_RECURSIVE) - count($this->files);
 
-        foreach($this->files as $pid => $files) {
-            if(!$files) continue;
-            $p = $this->wire('pages')->get($pid);
-            $repeaterFieldName = strpos($p->template->name, 'repeater_') !== false ? ' ('.substr($p->template->name, 9).')' : '';
-            if(isset($currentPID)) $this->filesList .= '</div>';
-            if(!isset($currentPID) || $pid !== $currentPID) {
-                $this->filesList .= '
-                    <h2>#'.$pid . ' ' . $repeaterFieldName.'</h2>
-                    <div class="tracyPageFilesPage">
-                ';
-            }
-
-            foreach($files as $file) {
-                $pageFile = $this->getPagefileFromPath($file, $p);
-                if(!$pageFile) {
-                    $style = 'color: ' . \TracyDebugger::COLOR_WARN;
-                    $fileField = '';
-                    $this->orphanFiles[] = $p->filesManager()->path . $file;
-                }
-                else {
-                    $style = '';
-                    $fileField = ' ('.$pageFile->field->name.')';
-                }
-                $this->filesList .= '<a style="'.$style.' !important" href="'.$p->filesManager()->url.$file.'">'.$file.'</a>'.$fileField.'<br />';
-            }
-
-            if(isset($this->missingFiles[$pid])) {
-                foreach($this->missingFiles[$pid] as $missingFile) {
-                    $this->filesList .= '<span style="color: ' . \TracyDebugger::COLOR_ALERT . ' !important">'.pathinfo($missingFile['filename'], PATHINFO_BASENAME).' ('.$missingFile['field'].')<br />';
-                }
-            }
-
-            $currentPID = $pid;
+        if($numFiles == 0) {
+            $this->filesList .= '<p>There are no files associated with this page.';
         }
-        $this->filesList .= '</div>';
+        else {
+            foreach($this->files as $pid => $files) {
+                $p = $this->wire('pages')->get($pid);
+                $repeaterFieldName = strpos($p->template->name, 'repeater_') !== false ? ' ('.substr($p->template->name, 9).')' : '';
+                if(isset($currentPID)) $this->filesList .= '</div>';
+                if(!isset($currentPID) || $pid !== $currentPID) {
+                    $this->filesList .= '
+                        <h2>#'.$pid . ' ' . $repeaterFieldName.'</h2>
+                        <div class="tracyPageFilesPage">
+                    ';
+                }
+
+                foreach($files as $file) {
+                    $pageFile = $this->getPagefileFromPath($file, $p);
+                    if(!$pageFile) {
+                        $style = 'color: ' . \TracyDebugger::COLOR_WARN;
+                        $fileField = '';
+                        $this->orphanFiles[] = $p->filesManager()->path . $file;
+                    }
+                    else {
+                        $style = '';
+                        $fileField = ' ('.$pageFile->field->name.')';
+                    }
+                    $this->filesList .= '<a style="'.$style.' !important" href="'.$p->filesManager()->url.$file.'">'.$file.'</a>'.$fileField.'<br />';
+                }
+
+                if(isset($this->missingFiles[$pid])) {
+                    foreach($this->missingFiles[$pid] as $missingFile) {
+                        $this->filesList .= '<span style="color: ' . \TracyDebugger::COLOR_ALERT . ' !important">'.pathinfo($missingFile['filename'], PATHINFO_BASENAME).' ('.$missingFile['field'].')<br />';
+                    }
+                }
+
+                $currentPID = $pid;
+            }
+            $this->filesList .= '</div>';
+        }
 
         if(count($this->missingFiles) > 0) {
             $iconColor = \TracyDebugger::COLOR_ALERT;
@@ -86,7 +90,12 @@ class PageFilesPanel extends BasePanel {
         </svg>
         ';
 
-        return "<span title='{$this->label}'>{$this->icon} ".(count($this->missingFiles) > 0 ? count($this->missingFiles) .'/' : '').(count($this->orphanFiles) > 0 ? count($this->orphanFiles) .'/' : '').($numFiles > 0 ? $numFiles : '')."</span>";
+        $orphanMissingCounts = '';
+        if(count($this->missingFiles) > 0 || count($this->orphanFiles) > 0) {
+            $orphanMissingCounts = count($this->missingFiles) . '/' . count($this->orphanFiles) . '/';
+        }
+
+        return "<span title='{$this->label}'>{$this->icon} ".$orphanMissingCounts.($numFiles > 0 ? $numFiles : '')."</span>";
     }
 
     /**
