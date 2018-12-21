@@ -9,6 +9,7 @@ class PageFilesPanel extends BasePanel {
     private $files = array();
     private $filesList;
     private $orphanFiles = array();
+    private $missingFiles = array();
     private $numFiles;
     private $p = false;
 
@@ -28,8 +29,8 @@ class PageFilesPanel extends BasePanel {
 
         if(!$this->p) return;
 
-        $this->files += $this->getFiles($this->p);
-
+        $this->files = $this->getDiskFiles($this->p);
+        $this->missingFiles = $this->getMissingFiles($this->p);
         $numFiles = count($this->files, COUNT_RECURSIVE) - count($this->files);
 
         foreach($this->files as $pid => $files) {
@@ -45,7 +46,7 @@ class PageFilesPanel extends BasePanel {
             }
 
             foreach($files as $file) {
-                $pageFile = $this->getPageimageOrPagefileFromPath($file, $p);
+                $pageFile = $this->getPagefileFromPath($file, $p);
                 if(!$pageFile) {
                     $style = 'color: ' . \TracyDebugger::COLOR_WARN;
                     $fileField = '';
@@ -57,18 +58,35 @@ class PageFilesPanel extends BasePanel {
                 }
                 $this->filesList .= '<a style="'.$style.' !important" href="'.$p->filesManager()->url.$file.'">'.$file.'</a>'.$fileField.'<br />';
             }
+
+            if(isset($this->missingFiles[$pid])) {
+                foreach($this->missingFiles[$pid] as $missingFile) {
+                    $this->filesList .= '<span style="color: ' . \TracyDebugger::COLOR_ALERT . ' !important">'.pathinfo($missingFile['filename'], PATHINFO_BASENAME).' ('.$missingFile['field'].')<br />';
+                }
+            }
+
             $currentPID = $pid;
         }
         $this->filesList .= '</div>';
 
+        if(count($this->missingFiles) > 0) {
+            $iconColor = \TracyDebugger::COLOR_ALERT;
+        }
+        elseif(count($this->orphanFiles) > 0) {
+            $iconColor = \TracyDebugger::COLOR_WARN;
+        }
+        else {
+            $iconColor = \TracyDebugger::COLOR_NORMAL;
+        }
+
         // the svg icon shown in the bar and in the panel header
         $this->icon = '
-        <svg xmlns="http://www.w3.org/2000/svg" width="20.6" height="17" viewBox="385.7 297.5 20.6 17">
-            <path stroke="'.(count($this->orphanFiles) > 0 ? \TracyDebugger::COLOR_WARN : \TracyDebugger::COLOR_NORMAL).'" stroke-miterlimit="10" d="M405 303.2h-1.1v-2c0-.5-.4-.9-.9-.9h-8.1l-1.6-2.3h-6.1c-.5 0-.9.4-.9.9v14.3c0 .2.1.4.2.5.2.2.4.3.7.3h14.6c.4 0 .7-.3.8-.6l3.3-9.2v-.1c-.1-.5-.4-.9-.9-.9zm-18.1-4.3c0-.1.1-.2.2-.2h5.8l1.6 2.3h8.4c.1 0 .2.1.2.2v2h-12.8-.1c-.3.1-.6.3-.7.6l-2.7 7.4v-12.3zm14.9 14.3c0 .1-.1.1-.2.1H387c-.1 0-.1 0-.1-.1 0 0-.1-.1 0-.1l3.3-9.1c0-.1.1-.1.2-.1H405c.1 0 .2.2.2.3l-3.4 9z"/>
+        <svg xmlns="http://www.w3.org/2000/svg" width="23.3" height="16" viewBox="244.4 248 23.3 16">
+            <path fill="'.$iconColor.'" d="M267.6 255.2l-3.2 8.8h-17.6l3.3-8.8c.3-.7 1.2-1.4 2-1.4h14.5c.8 0 1.2.6 1 1.4zm-21.8 7.3l3-7.9c.5-1.3 1.9-2.3 3.3-2.3h12.7c0-.8-.7-1.5-1.5-1.5h-10.2l-1.5-2.9h-5.8c-.8 0-1.5.7-1.5 1.5V261c.1.9.7 1.5 1.5 1.5z"/>
         </svg>
         ';
 
-        return "<span title='{$this->label}'>{$this->icon} ".(count($this->orphanFiles) > 0 ? count($this->orphanFiles) .'/' : '').($numFiles > 0 ? $numFiles : '')."</span>";
+        return "<span title='{$this->label}'>{$this->icon} ".(count($this->missingFiles) > 0 ? count($this->missingFiles) .'/' : '').(count($this->orphanFiles) > 0 ? count($this->orphanFiles) .'/' : '').($numFiles > 0 ? $numFiles : '')."</span>";
     }
 
     /**
@@ -109,13 +127,14 @@ class PageFilesPanel extends BasePanel {
      * @param Page
      * @return array $files fullpaths to files
      */
-    private function getFiles($p) {
+    private function getDiskFiles($p) {
         $files = array();
         foreach($p->fields as $f) {
+
             // this is for nested repeaters
             if($f && $f->type instanceof FieldTypeRepeater) {
                 foreach($p->$f as $subpage) {
-                    $files += $this->getFiles($subpage);
+                    $files += $this->getDiskFiles($subpage);
 
                 }
             }
@@ -130,16 +149,13 @@ class PageFilesPanel extends BasePanel {
 
      /**
      * Returns Pageimage or Pagefile object from file path
-     * getPageimageOrPagefileFromPath('/site/assets/files/1234/file.jpg'); // returns either Pageimage or Pagefile object
-     * getPageimageOrPagefileFromPath('/site/assets/files/1234/file.txt'); // returns Pagefile object
-     * getPageimageOrPagefileFromPath('/site/assets/files/1234/none.txt'); // returns null
      *
      * @param string $filename full path to the file eg. /site/assets/files/1234/file.jpg
      * @param Page|null $page if null, page will be contructed based on id present in the file path
      * @return Pagefile|Pageimage|null
      *
      */
-    private function getPageimageOrPagefileFromPath($filename, $page = null) {
+    private function getPagefileFromPath($filename, $page = null) {
 
         if(is_null($page)) {
             $id = (int) explode('/', str_replace(wire('config')->urls->files, '', $filename))[0];
@@ -174,6 +190,37 @@ class PageFilesPanel extends BasePanel {
 
         return null; // no match
 
+    }
+
+
+    /**
+     * Returns all
+     */
+    private function getMissingFiles($p) {
+        $files = array();
+        $p_of = $p->of();
+        $p->of(false);
+        foreach($p as $field => $item) {
+            $f = $this->wire('fields')->get($field);
+            // this is for nested repeaters
+            if($item && $f && $f->type instanceof FieldTypeRepeater) {
+                foreach($p->$f as $subpage) {
+                    $files += $this->getMissingFiles($subpage);
+                }
+            }
+            elseif($item && $f && $f->type instanceof FieldTypeFile) {
+                $i=0;
+                foreach($item as $file) {
+                    if(!file_exists($file->filename)) {
+                        $files[$p->id][$i]['filename'] = $file->filename;
+                        $files[$p->id][$i]['field'] = $f->name;
+                        $i++;
+                    }
+                }
+            }
+        }
+        $p->of($p_of);
+        return $files;
     }
 
 

@@ -713,6 +713,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 foreach(explode('|', $this->wire('input')->post->orphanPaths) as $filePath) {
                     if(file_exists($filePath)) unlink($filePath);
                 }
+                $this->wire('session')->redirect($this->httpReferer);
             }
 
 
