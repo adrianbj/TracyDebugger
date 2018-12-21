@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.15.12',
+            'version' => '4.16.0',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -155,6 +155,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'methodsInfo' => 'Methods Info',
         'moduleDisabler' => 'Module Disabler',
         'outputMode' => 'Output Mode',
+        'pageFiles' => 'Page Files',
         'pageRecorder' => 'Page Recorder',
         'panelSelector' => 'Panel Selector',
         'performance' => 'Performance',
@@ -549,7 +550,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     }
                     // save session ID and expiry time in module config settings
                     $this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId] = time() + ($this->wire('input')->post->userSwitchSessionLength * 60);
-                    $this->wire('modules')->saveModuleConfigData('TracyDebugger', $this->data);
+                    $this->wire('modules')->saveModuleConfigData($this, $this->data);
                 }
                 // if logout button clicked
                 if($this->wire('input')->post->logoutUserSwitcher && $this->wire('session')->CSRF->validate()) {
@@ -568,7 +569,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 elseif($this->wire('input')->post->endSessionUserSwitcher && $this->wire('session')->CSRF->validate()) {
                     $this->wire('session')->remove("tracyUserSwitcherId");
                     unset($this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId]);
-                    $this->wire('modules')->saveModuleConfigData('TracyDebugger', $this->data);
+                    $this->wire('modules')->saveModuleConfigData($this, $this->data);
                     $this->wire('session')->redirect($this->httpReferer);
                 }
                 // if session not expired, switch to requested user
@@ -609,7 +610,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                         }
                     }
                 }
-                $this->wire('modules')->saveModuleConfigData($this->wire('modules')->get("TracyDebugger"), $configData);
+                $this->wire('modules')->saveModuleConfigData($this, $configData);
                 $this->wire('session')->redirect($this->httpReferer);
             }
 
@@ -706,6 +707,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
 
 
+            // PAGE FILES
+            // delete orphaned files if requested
+            if($this->wire('input')->post->deleteOrphanFiles && $this->wire('input')->post->orphanPaths) {
+                foreach(explode('|', $this->wire('input')->post->orphanPaths) as $filePath) {
+                    if(file_exists($filePath)) unlink($filePath);
+                }
+            }
+
+
             // PAGE RECORDER
             // trash / clear recorded pages if requested
             if($this->wire('input')->post->trashRecordedPages || $this->wire('input')->post->clearRecordedPages) {
@@ -715,7 +725,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     }
                 }
                 unset($this->data['recordedPages']);
-                $this->wire('modules')->saveModuleConfigData('TracyDebugger', $this->data);
+                $this->wire('modules')->saveModuleConfigData($this, $this->data);
                 $this->wire('session')->redirect($this->httpReferer);
             }
 
@@ -1594,7 +1604,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $p = $event->arguments(0);
         if($p->is("has_parent=".$this->wire('config')->adminRootPageID)) return;
         $this->data['recordedPages'][] = $p->id;
-        $this->wire('modules')->saveModuleConfigData('TracyDebugger', $this->data);
+        $this->wire('modules')->saveModuleConfigData($this, $this->data);
     }
 
 
