@@ -9,6 +9,7 @@ class PageFilesPanel extends BasePanel {
     private $p = false;
     private $missingFiles = array();
     private $orphanFiles = array();
+    private $numMissingFiles = 0;
     private $filesListStr;
 
     /**
@@ -30,7 +31,6 @@ class PageFilesPanel extends BasePanel {
         $diskFiles = $this->getDiskFiles($this->p);
         $pageFiles = $this->getPageFiles($this->p);
         $numDiskFiles = count($diskFiles, COUNT_RECURSIVE) - count($diskFiles);
-        $numMissingFiles = 0;
 
         if($numDiskFiles == 0) {
             $this->filesListStr .= '<p>There are no files associated with this page.';
@@ -45,13 +45,14 @@ class PageFilesPanel extends BasePanel {
                     array_push($pageFilesBasenames[$pid], $basename);
                     $fileFields[$pid][$basename] = $file['field'];
                     if(!in_array($basename, $diskFiles[$pid])) {
-                        $numMissingFiles++;
+                        $this->numMissingFiles++;
                         array_push($this->missingFiles[$pid], $file);
                     }
                 }
             }
 
             foreach($diskFiles as $pid => $files) {
+                if(empty($files) && !isset($this->missingFiles[$pid])) continue;
                 $p = $this->wire('pages')->get($pid);
                 $repeaterFieldName = strpos($p->template->name, 'repeater_') !== false ? ' ('.substr($p->template->name, 9).')' : '';
                 if(isset($currentPID)) $this->filesListStr .= '</div>';
@@ -86,7 +87,7 @@ class PageFilesPanel extends BasePanel {
             $this->filesListStr .= '</div>';
         }
 
-        if($numMissingFiles > 0) {
+        if($this->numMissingFiles > 0) {
             $iconColor = \TracyDebugger::COLOR_ALERT;
         }
         elseif(count($this->orphanFiles) > 0) {
@@ -104,8 +105,8 @@ class PageFilesPanel extends BasePanel {
         ';
 
         $orphanMissingCounts = '';
-        if($numMissingFiles > 0 || count($this->orphanFiles) > 0) {
-            $orphanMissingCounts = $numMissingFiles . '/' . count($this->orphanFiles) . '/';
+        if($this->numMissingFiles > 0 || count($this->orphanFiles) > 0) {
+            $orphanMissingCounts = $this->numMissingFiles . '/' . count($this->orphanFiles) . '/';
         }
 
         return "<span title='{$this->label}'>{$this->icon} ".$orphanMissingCounts.($numDiskFiles > 0 ? $numDiskFiles : '')."</span>";
@@ -127,11 +128,22 @@ class PageFilesPanel extends BasePanel {
 
         if($numOrphanFiles > 0) {
             $out .= '
-            <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete all the highlighted files?\');">
+            <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete all the orange highlighted orphan files?\');">
                 <input type="hidden" name="orphanPaths" value="'.implode('|', $this->orphanFiles).'" />
-                <input type="submit" name="deleteOrphanFiles" value="Delete '.$numOrphanFiles.' Orphan'._n('', 's', $numOrphanFiles).'" />
-            </form>
-            <br /><br />';
+                <input type="submit" name="deleteOrphanFiles" value="Delete '.$numOrphanFiles.' orphan'._n('', 's', $numOrphanFiles).'" />
+            </form>&nbsp&nbsp;';
+        }
+
+        if($this->numMissingFiles > 0) {
+            $out .= '
+            <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete all the red highlighted missing pagefiles?\');">
+                <input type="hidden" name="missingPaths" value="'.urlencode(json_encode($this->missingFiles)).'" />
+                <input type="submit" name="deleteMissingFiles" value="Delete '.$this->numMissingFiles.' missing pagefile'._n('', 's', $this->numMissingFiles).'" />
+            </form>';
+        }
+
+        if($numOrphanFiles > 0 || $this->numMissingFiles > 0) {
+            $out .= '<br /><br />';
         }
 
         $out .= '<div id="tracyPageFilesList">'.$this->filesListStr.'</div>';

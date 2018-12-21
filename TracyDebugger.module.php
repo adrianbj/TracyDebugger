@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.16.2',
+            'version' => '4.16.3',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -712,6 +712,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if($this->wire('input')->post->deleteOrphanFiles && $this->wire('input')->post->orphanPaths) {
                 foreach(explode('|', $this->wire('input')->post->orphanPaths) as $filePath) {
                     if(file_exists($filePath)) unlink($filePath);
+                }
+                $this->wire('session')->redirect($this->httpReferer);
+            }
+            // delete missing pagefiles if requested
+            if($this->wire('input')->post->deleteMissingFiles && $this->wire('input')->post->missingPaths) {
+                foreach(json_decode(urldecode($this->wire('input')->post->missingPaths), true) as $pid => $files) {
+                    $p = $this->wire('pages')->get($pid);
+                    foreach($files as $file) {
+                        $pagefile = $p->{$file['field']}->get(pathinfo($file['filename'], PATHINFO_BASENAME));
+                        $p->{$file['field']}->delete($pagefile);
+                        $p->save($file['field']);
+                    }
                 }
                 $this->wire('session')->redirect($this->httpReferer);
             }
