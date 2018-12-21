@@ -28,21 +28,12 @@ class PageFilesPanel extends BasePanel {
 
         if(!$this->p) return;
 
-        $filesDir = $this->p->filesManager()->path;
-        $this->files[$this->p->id] = array_slice(scandir($filesDir), 2);
-
-        foreach($this->p->fields as $f) {
-            if($f->type instanceof FieldtypeRepeater) {
-                foreach($this->p->$f as $subpage) {
-                    $filesDir = $subpage->filesManager()->path;
-                    $this->files[$subpage->id] = array_slice(scandir($filesDir), 2);
-                }
-            }
-        }
+        $this->files += $this->getFiles($this->p);
 
         $numFiles = count($this->files, COUNT_RECURSIVE) - count($this->files);
 
         foreach($this->files as $pid => $files) {
+            if(!$files) continue;
             $p = $this->wire('pages')->get($pid);
             $repeaterFieldName = strpos($p->template->name, 'repeater_') !== false ? ' ('.substr($p->template->name, 9).')' : '';
             if(isset($currentPID)) $this->filesList .= '</div>';
@@ -52,6 +43,7 @@ class PageFilesPanel extends BasePanel {
                     <div class="tracyPageFilesPage">
                 ';
             }
+
             foreach($files as $file) {
                 $pageFile = $this->getPageimageOrPagefileFromPath($file, $p);
                 if(!$pageFile) {
@@ -108,6 +100,31 @@ class PageFilesPanel extends BasePanel {
         $out .= '</div>';
 
         return parent::loadResources() . $out;
+    }
+
+
+    /**
+     * Return files from page's assets/files folder
+     *
+     * @param Page
+     * @return array $files fullpaths to files
+     */
+    private function getFiles($p) {
+        $files = array();
+        foreach($p->fields as $f) {
+            // this is for nested repeaters
+            if($f && $f->type instanceof FieldTypeRepeater) {
+                foreach($p->$f as $subpage) {
+                    $files += $this->getFiles($subpage);
+
+                }
+            }
+            else {
+                $filesDir = $p->filesManager()->path;
+                $files[$p->id] = array_slice(scandir($filesDir), 2);
+            }
+        }
+        return $files;
     }
 
 
