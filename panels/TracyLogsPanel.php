@@ -251,7 +251,7 @@ class TracyLogsPanel extends BasePanel {
         $out = '<h1>' . $this->icon . ' Tracy Logs' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>
 
         <div class="tracy-inner">';
-            $out .= $this->logEntries . '<br />';
+            $out .= $this->logEntries;
             if($this->numLogEntries > 0) {
                 $out .= '
                 <p>

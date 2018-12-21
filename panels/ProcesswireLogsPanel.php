@@ -5,6 +5,7 @@ class ProcesswireLogsPanel extends BasePanel {
     protected $icon;
     protected $iconColor;
     protected $logEntries;
+    protected $numLogEntries = 0;
     protected $numErrors = 0;
     protected $numOther = 0;
 
@@ -23,7 +24,11 @@ class ProcesswireLogsPanel extends BasePanel {
          */
 
         $logs = $this->wire('log')->getLogs();
-        if(empty($logs)) {
+        if($logs === null) {
+            $this->logEntries .= 'Logs directory is not readable.';
+        }
+        elseif(count($logs) == 0) {
+            $this->numLogEntries = 0;
             $this->logEntries .= 'There are no logs in the ProcessWire logs directory.';
         }
         else {
@@ -55,6 +60,7 @@ class ProcesswireLogsPanel extends BasePanel {
                             $this->numOther++;
                         }
                     }
+                    $this->numLogEntries++;
                 }
             }
 
@@ -138,6 +144,15 @@ class ProcesswireLogsPanel extends BasePanel {
 
         <div class="tracy-inner">';
             $out .= $this->logEntries;
+
+            if($this->numLogEntries > 0) {
+                $out .= '
+                <p>
+                    <form method="post" action="'.\TracyDebugger::inputUrl(true).'">
+                        <input type="submit" name="deleteProcessWireLogs" value="Delete All Logs" />
+                    </form>
+                </p>';
+            }
 
             $out .= \TracyDebugger::generatePanelFooter('processwireLogs', \Tracy\Debugger::timer('processwireLogs'), strlen($out), 'processwireAndTracyLogsPanels');
 

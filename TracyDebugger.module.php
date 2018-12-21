@@ -776,6 +776,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $this->tracyEnabled = true;
 
 
+        // PROCESSWIRE LOGS
+        // delete ProcessWire logs if requested
+        if($this->wire('input')->post->deleteProcessWireLogs) {
+            $files = glob($this->wire('config')->paths->logs.'*');
+            foreach($files as $file) {
+                if(is_file($file)) {
+                    unlink($file);
+                }
+            }
+        }
+
+
         // TRACY LOGS
         // Tracy log folder path
         $logFolder = $this->wire('config')->paths->logs.'tracy';
