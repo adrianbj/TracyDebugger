@@ -6,12 +6,10 @@ class PageFilesPanel extends BasePanel {
     private $icon;
     private $name = 'pageFiles';
     private $label = 'Page Files';
-    private $files = array();
-    private $filesList;
-    private $orphanFiles = array();
-    private $missingFiles = array();
-    private $numFiles;
     private $p = false;
+    private $missingFiles = array();
+    private $orphanFiles = array();
+    private $filesListStr;
 
     /**
      * define the tab for the panel in the debug bar
@@ -29,51 +27,66 @@ class PageFilesPanel extends BasePanel {
 
         if(!$this->p) return;
 
-        $this->files = $this->getDiskFiles($this->p);
-        $this->missingFiles = $this->getMissingFiles($this->p);
-        $numFiles = count($this->files, COUNT_RECURSIVE) - count($this->files);
+        $diskFiles = $this->getDiskFiles($this->p);
+        $pageFiles = $this->getPageFiles($this->p);
+        $numDiskFiles = count($diskFiles, COUNT_RECURSIVE) - count($diskFiles);
+        $numMissingFiles = 0;
 
-        if($numFiles == 0) {
-            $this->filesList .= '<p>There are no files associated with this page.';
+        if($numDiskFiles == 0) {
+            $this->filesListStr .= '<p>There are no files associated with this page.';
         }
         else {
-            foreach($this->files as $pid => $files) {
+            foreach($pageFiles as $pid => $files) {
+                $pageFilesBasenames[$pid] = array();
+                $fileFields[$pid] = array();
+                $this->missingFiles[$pid] = array();
+                foreach($files as $file) {
+                    $basename = pathinfo($file['filename'], PATHINFO_BASENAME);
+                    array_push($pageFilesBasenames[$pid], $basename);
+                    $fileFields[$pid][$basename] = $file['field'];
+                    if(!in_array($basename, $diskFiles[$pid])) {
+                        $numMissingFiles++;
+                        array_push($this->missingFiles[$pid], $file);
+                    }
+                }
+            }
+
+            foreach($diskFiles as $pid => $files) {
                 $p = $this->wire('pages')->get($pid);
                 $repeaterFieldName = strpos($p->template->name, 'repeater_') !== false ? ' ('.substr($p->template->name, 9).')' : '';
-                if(isset($currentPID)) $this->filesList .= '</div>';
+                if(isset($currentPID)) $this->filesListStr .= '</div>';
                 if(!isset($currentPID) || $pid !== $currentPID) {
-                    $this->filesList .= '
+                    $this->filesListStr .= '
                         <h2>#'.$pid . ' ' . $repeaterFieldName.'</h2>
                         <div class="tracyPageFilesPage">
                     ';
                 }
 
                 foreach($files as $file) {
-                    $pageFile = $this->getPagefileFromPath($file, $p);
-                    if(!$pageFile) {
+                    if(isset($pageFilesBasenames[$pid]) && in_array($file, $pageFilesBasenames[$pid])) {
+                        $style = '';
+                        $fileField = ' ('.$fileFields[$pid][$file].')';
+                    }
+                    else {
                         $style = 'color: ' . \TracyDebugger::COLOR_WARN;
                         $fileField = '';
                         $this->orphanFiles[] = $p->filesManager()->path . $file;
                     }
-                    else {
-                        $style = '';
-                        $fileField = ' ('.$pageFile->field->name.')';
-                    }
-                    $this->filesList .= '<a style="'.$style.' !important" href="'.$p->filesManager()->url.$file.'">'.$file.'</a>'.$fileField.'<br />';
+                    $this->filesListStr .= '<a style="'.$style.' !important" href="'.$p->filesManager()->url.$file.'">'.$file.'</a>'.$fileField.'<br />';
                 }
 
                 if(isset($this->missingFiles[$pid])) {
                     foreach($this->missingFiles[$pid] as $missingFile) {
-                        $this->filesList .= '<span style="color: ' . \TracyDebugger::COLOR_ALERT . ' !important">'.pathinfo($missingFile['filename'], PATHINFO_BASENAME).' ('.$missingFile['field'].')<br />';
+                        $this->filesListStr .= '<span style="color: ' . \TracyDebugger::COLOR_ALERT . ' !important">'.pathinfo($missingFile['filename'], PATHINFO_BASENAME).' ('.$missingFile['field'].')<br />';
                     }
                 }
 
                 $currentPID = $pid;
             }
-            $this->filesList .= '</div>';
+            $this->filesListStr .= '</div>';
         }
 
-        if(count($this->missingFiles) > 0) {
+        if($numMissingFiles > 0) {
             $iconColor = \TracyDebugger::COLOR_ALERT;
         }
         elseif(count($this->orphanFiles) > 0) {
@@ -91,11 +104,11 @@ class PageFilesPanel extends BasePanel {
         ';
 
         $orphanMissingCounts = '';
-        if(count($this->missingFiles) > 0 || count($this->orphanFiles) > 0) {
-            $orphanMissingCounts = count($this->missingFiles) . '/' . count($this->orphanFiles) . '/';
+        if($numMissingFiles > 0 || count($this->orphanFiles) > 0) {
+            $orphanMissingCounts = $numMissingFiles . '/' . count($this->orphanFiles) . '/';
         }
 
-        return "<span title='{$this->label}'>{$this->icon} ".$orphanMissingCounts.($numFiles > 0 ? $numFiles : '')."</span>";
+        return "<span title='{$this->label}'>{$this->icon} ".$orphanMissingCounts.($numDiskFiles > 0 ? $numDiskFiles : '')."</span>";
     }
 
     /**
@@ -121,7 +134,7 @@ class PageFilesPanel extends BasePanel {
             <br /><br />';
         }
 
-        $out .= '<div id="tracyPageFilesList">'.$this->filesList.'</div>';
+        $out .= '<div id="tracyPageFilesList">'.$this->filesListStr.'</div>';
 
         $out .= \TracyDebugger::generatePanelFooter($this->name, \Tracy\Debugger::timer($this->name), strlen($out), 'yourSettingsFieldsetId');
         $out .= '</div>';
@@ -138,17 +151,15 @@ class PageFilesPanel extends BasePanel {
      */
     private function getDiskFiles($p) {
         $files = array();
+        $filesDir = $p->filesManager()->path;
         foreach($p->fields as $f) {
-
             // this is for nested repeaters
             if($f && $f->type instanceof FieldTypeRepeater) {
                 foreach($p->$f as $subpage) {
                     $files += $this->getDiskFiles($subpage);
-
                 }
             }
             else {
-                $filesDir = $p->filesManager()->path;
                 $files[$p->id] = array_slice(scandir($filesDir), 2);
             }
         }
@@ -156,57 +167,15 @@ class PageFilesPanel extends BasePanel {
     }
 
 
-     /**
-     * Returns Pageimage or Pagefile object from file path
-     *
-     * @param string $filename full path to the file eg. /site/assets/files/1234/file.jpg
-     * @param Page|null $page if null, page will be contructed based on id present in the file path
-     * @return Pagefile|Pageimage|null
-     *
-     */
-    private function getPagefileFromPath($filename, $page = null) {
-
-        if(is_null($page)) {
-            $id = (int) explode('/', str_replace(wire('config')->urls->files, '', $filename))[0];
-            $page = wire('pages')->get($id);
-        }
-
-        if(!$page->id) return null; // throw new WireException('Invalid page id');
-
-        $basename = basename($filename);
-
-        // get file field types, that includes image file type
-        $field = new Field();
-        $field->type = wire('modules')->get('FieldtypeFile');
-        $fieldtypes = $field->type->getCompatibleFieldtypes($field)->getItems();
-        $selector = 'type=' . implode('|', array_keys($fieldtypes));
-
-        foreach($page->fields->find($selector) as $field) {
-            $files = $page->getUnformatted($field->name);
-            if($files) {
-                $file = $files[$basename];
-                if($file) return $file; // match found, return Pagefile or Pageimage
-
-                //check for image variations
-                foreach($files as $file) {
-                    if($file instanceof Pageimage) {
-                        $variation = $file->getVariations()->get($basename);
-                        if($variation) return $variation; // match found, return Pageimage
-                    }
-                }
-            }
-        }
-
-        return null; // no match
-
-    }
-
-
     /**
-     * Returns all
+     * Returns all pagefiles, including variations
+     *
+     * @param Page
+     * @return array $files Page ID keyed array of paths and field names
      */
-    private function getMissingFiles($p) {
+    private function getPageFiles($p) {
         $files = array();
+        $i=0;
         $p_of = $p->of();
         $p->of(false);
         foreach($p as $field => $item) {
@@ -214,16 +183,20 @@ class PageFilesPanel extends BasePanel {
             // this is for nested repeaters
             if($item && $f && $f->type instanceof FieldTypeRepeater) {
                 foreach($p->$f as $subpage) {
-                    $files += $this->getMissingFiles($subpage);
+                    $files += $this->getPageFiles($subpage);
                 }
             }
             elseif($item && $f && $f->type instanceof FieldTypeFile) {
-                $i=0;
                 foreach($item as $file) {
-                    if(!file_exists($file->filename)) {
-                        $files[$p->id][$i]['filename'] = $file->filename;
-                        $files[$p->id][$i]['field'] = $f->name;
-                        $i++;
+                    $files[$p->id][$i]['filename'] = $file->filename;
+                    $files[$p->id][$i]['field'] = $f->name;
+                    $i++;
+                    if($file instanceof Pageimage) {
+                        foreach($file->getVariations() as $var) {
+                            $files[$p->id][$i]['filename'] = $var->filename;
+                            $files[$p->id][$i]['field'] = $f->name;
+                            $i++;
+                        }
                     }
                 }
             }
