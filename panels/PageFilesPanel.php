@@ -148,7 +148,7 @@ class PageFilesPanel extends BasePanel {
 
         $out .= '<div id="tracyPageFilesList">'.$this->filesListStr.'</div>';
 
-        $out .= \TracyDebugger::generatePanelFooter($this->name, \Tracy\Debugger::timer($this->name), strlen($out), 'yourSettingsFieldsetId');
+        $out .= \TracyDebugger::generatePanelFooter($this->name, \Tracy\Debugger::timer($this->name), strlen($out));
         $out .= '</div>';
 
         return parent::loadResources() . $out;
