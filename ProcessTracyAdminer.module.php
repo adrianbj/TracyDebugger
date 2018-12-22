@@ -72,6 +72,7 @@ class ProcessTracyAdminer extends Process implements Module, ConfigurableModule 
                 new AdminerSimpleMenu(),
                 new AdminerCollations(),
                 new AdminerJsonPreview(0, true, true, $jsonMaxTextLength),
+                new AdminerDumpJson,
                 new AdminerTheme("default-".$themeColor)
             ];
 
