@@ -55,36 +55,41 @@ class PageFilesPanel extends BasePanel {
                 if(empty($files) && !isset($this->missingFiles[$pid])) continue;
                 $p = $this->wire('pages')->get($pid);
                 $repeaterFieldName = strpos($p->template->name, 'repeater_') !== false ? ' ('.substr($p->template->name, 9).')' : '';
-                if(isset($currentPID)) $this->filesListStr .= '</div>';
+                if(isset($currentPID)) $this->filesListStr .= '</table></div>';
                 if(!isset($currentPID) || $pid !== $currentPID) {
                     $this->filesListStr .= '
-                        <h2>#'.$pid . ' ' . $repeaterFieldName.'</h2>
+                        <h2><strong>#'.$pid . '</strong> ' . $repeaterFieldName.'</h2>
                         <div class="tracyPageFilesPage">
+                            <table>
+                                <th>Filename</th><th>Field</th>
                     ';
                 }
 
                 foreach($files as $file) {
+
                     if(isset($pageFilesBasenames[$pid]) && in_array($file, $pageFilesBasenames[$pid])) {
                         $style = '';
-                        $fileField = ' ('.$fileFields[$pid][$file].')';
+                        $fileField = $fileFields[$pid][$file];
                     }
                     else {
                         $style = 'color: ' . \TracyDebugger::COLOR_WARN;
                         $fileField = '';
                         $this->orphanFiles[] = $p->filesManager()->path . $file;
                     }
-                    $this->filesListStr .= '<a style="'.$style.' !important" href="'.$p->filesManager()->url.$file.'">'.$file.'</a>'.$fileField.'<br />';
+                    $this->filesListStr .= '<tr><td><a style="'.$style.' !important" href="'.$p->filesManager()->url.$file.'">'.$file.'</a></td><td style="width: 1px">'.$fileField.'</td></tr>';
                 }
 
                 if(isset($this->missingFiles[$pid])) {
                     foreach($this->missingFiles[$pid] as $missingFile) {
-                        $this->filesListStr .= '<span style="color: ' . \TracyDebugger::COLOR_ALERT . ' !important">'.pathinfo($missingFile['filename'], PATHINFO_BASENAME).' ('.$missingFile['field'].')<br />';
+                        $this->filesListStr .= '<tr><td><span style="color: ' . \TracyDebugger::COLOR_ALERT . ' !important">'.pathinfo($missingFile['filename'], PATHINFO_BASENAME).'</td><td>'.$missingFile['field'].'</td></tr>';
                     }
                 }
 
                 $currentPID = $pid;
             }
-            $this->filesListStr .= '</div>';
+            $this->filesListStr .= '
+                </table>
+            </div>';
         }
 
         if($this->numMissingFiles > 0) {
@@ -130,7 +135,7 @@ class PageFilesPanel extends BasePanel {
             $out .= '
             <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete all the orange highlighted orphan files?\');">
                 <input type="hidden" name="orphanPaths" value="'.implode('|', $this->orphanFiles).'" />
-                <input type="submit" name="deleteOrphanFiles" value="Delete '.$numOrphanFiles.' orphan'._n('', 's', $numOrphanFiles).'" />
+                <input type="submit" style="color:'.\TracyDebugger::COLOR_WARN.' !important; color: #FFFFFF" name="deleteOrphanFiles" value="Delete '.$numOrphanFiles.' orphan'._n('', 's', $numOrphanFiles).'" />
             </form>&nbsp&nbsp;';
         }
 
@@ -138,7 +143,7 @@ class PageFilesPanel extends BasePanel {
             $out .= '
             <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete all the red highlighted missing pagefiles?\');">
                 <input type="hidden" name="missingPaths" value="'.urlencode(json_encode($this->missingFiles)).'" />
-                <input type="submit" name="deleteMissingFiles" value="Delete '.$this->numMissingFiles.' missing pagefile'._n('', 's', $this->numMissingFiles).'" />
+                <input type="submit" style="color:'.\TracyDebugger::COLOR_ALERT.' !important; color: #FFFFFF" name="deleteMissingFiles" value="Delete '.$this->numMissingFiles.' missing pagefile'._n('', 's', $this->numMissingFiles).'" />
             </form>';
         }
 

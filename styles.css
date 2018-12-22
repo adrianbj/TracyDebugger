@@ -913,7 +913,7 @@ ul.pw-info-links {
 
 .tracyPageFilesPage {
     background: transparent !important;
-    padding: .4em 2em .4em .7em !important;
+    padding: 10px !important;
     margin: 0 0 10px 0 !important;
     border: 1px solid #D2D2D2 !important;
     border-radius: 0 !important;
