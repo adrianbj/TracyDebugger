@@ -257,6 +257,22 @@ Indicates which mode Tracy is in - DEVELOPMENT or PRODUCTION - this is determine
 
 ***
 
+## ![Page Files](icons/page-files.svg ':no-zoom')Page Files
+Shows (and links) to all the files that belong to the current page (including those in repeater items and even nested repeaters).
+
+It warns (orange) about files that are orphans - these are files that are in the /site/assets/files/xxxx folder for the page, but which don't belong to any of the file/image fields on the page.
+
+It alerts (red) you of files which are missing from the /site/assets/files/xxxx folder but are referenced by one of the file/image fields on the page. Obviously missing files are more important and critical than orphans, so they are red as an alert, rather than a warning.
+
+The icon on the debug bar tells you how many files there are and how many are orphans and how many are missing.
+
+There are "Delete Orphans" and "Delete Missing" buttons for easy cleanup.
+
+Note that the results are divided up into page IDs, starting with the ID of the page you are currently viewing/editing and followed by pages for any repeater field items. It also shows the name of the field that each file belongs to (except the orange orphans because obviously these don't belong to a field).
+
+![Page Files panel](img/page-files.png)
+
+***
 
 ## ![Page Recorder](icons/page-recorder.svg ':no-zoom')Page Recorder
 This panel records the ID of all pages added whenever it is enabled (so this is one you'll want off by default and just enabled via "Sticky" when you need it).
