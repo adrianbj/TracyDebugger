@@ -6,7 +6,7 @@
 
 Integrates and extends Nette's Tracy debugging tool
 
-30+ custom tools designed for effective ProcessWire debugging and lightning fast development
+35+ custom tools designed for effective ProcessWire debugging and lightning fast development
 
 ![Tracy Debug Bar Kitchen Sink](https://adrianbj.github.io/TracyDebugger/img/debug-bar-kitchen-sink.png "Tracy Debug Bar")
 

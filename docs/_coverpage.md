@@ -6,7 +6,7 @@
 
 Integrates and extends Nette's Tracy debugging tool
 
-30+ custom tools designed for effective ProcessWire debugging and lightning fast development
+35+ custom tools designed for effective ProcessWire debugging and lightning fast development
 
 <br />
 
