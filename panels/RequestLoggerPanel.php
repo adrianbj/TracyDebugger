@@ -66,7 +66,7 @@ class RequestLoggerPanel extends BasePanel {
         $out .= '<div class="tracy-inner">';
             $out .= $this->generateRequestDumps();
             $out .= \TracyDebugger::generatePanelFooter($this->name, \Tracy\Debugger::timer($this->name), strlen($out), 'requestLoggerPanel');
-        $out .= '</div>';
+        $out .= '<br /></div>';
 
         return parent::loadResources() . $out;
     }

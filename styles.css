@@ -25,6 +25,10 @@ body.tracyHidden:before {
     font: inherit;
 }
 
+.tracy-inner {
+    height: 100% !important;
+}
+
 .tracy-inner:not(.tracy-icons):not(.tracy-label):not(.ace_editor) {
     font: normal normal 13px/1.3 Arial, sans-serif !important;
 }

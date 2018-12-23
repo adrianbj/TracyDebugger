@@ -83,7 +83,6 @@ class PhpInfoPanel extends BasePanel {
                 #phpinfoBody td {border: 1px solid #000 !important;}
                 #phpinfoBody th {border: 1px solid #000 !important; color:#000 !important;}
             </style>
-            <br />
             <div id="phpinfoBody">'.$phpInfo.'</div>';
 
             $out .= \TracyDebugger::generatePanelFooter('phpInfo', \Tracy\Debugger::timer('phpInfo'), strlen($out));
