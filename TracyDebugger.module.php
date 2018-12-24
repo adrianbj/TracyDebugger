@@ -1082,14 +1082,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $this->wire()->addHookBefore('WireMail::send', $this, 'interceptEmails');
             }
 
-            // CAPTAIN HOOK
-            // update cache on module install
-            // not wrapped in: if(in_array('captainHook', static::$showPanels)) because this wouldn't work for "once" enabled
-            $this->wire()->addHookAfter('Modules::install', $this, 'deleteHookCache');
-            $this->wire()->addHookAfter('Modules::uninstall', $this, 'deleteHookCache');
-            $this->wire()->addHookAfter('Modules::refresh', $this, 'deleteHookCache');
-            $this->wire()->addHookAfter('Modules::moduleVersionChanged', $this, 'deleteHookCache');
-            $this->wire()->addHookAfter('SystemUpdater::coreVersionChange', $this, 'deleteHookCache');
+            // TRACY CACHES
+            // update caches on module install
+            $this->wire()->addHookAfter('Modules::install', $this, 'deleteTracyCaches');
+            $this->wire()->addHookAfter('Modules::uninstall', $this, 'deleteTracyCaches');
+            $this->wire()->addHookAfter('Modules::refresh', $this, 'deleteTracyCaches');
+            $this->wire()->addHookAfter('Modules::moduleVersionChanged', $this, 'deleteTracyCaches');
+            $this->wire()->addHookAfter('SystemUpdater::coreVersionChange', $this, 'deleteTracyCaches');
 
 
             if(!static::$inAdmin) {
@@ -1576,17 +1575,21 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     /**
-     * Hook after Module::install
+     * Hook after Module::install, uninstall, refresh, upgrade and core upgrade
      *
-     * Delete the existing Captain Hook cache when installing a module
+     * Delete existing Tracy caches
      *
      * @param HookEvent $event
      *
      */
-    protected function deleteHookCache($event) {
-        $this->wire('cache')->delete('TracyCaptainHook');
+    protected function deleteTracyCaches($event) {
+        $this->deleteCache('TracyCaptainHook');
+        $this->deleteCache('TracyApiData');
     }
 
+    private function deleteCache($cache) {
+        $this->wire('cache')->delete($cache);
+    }
 
     /**
      * Hook before various
@@ -3752,11 +3755,20 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $event->arguments(1, $data);
         });
 
-        // if custom php panel code was changed, then scroll down to that setting field after saving
         $this->wire('modules')->addHookAfter('saveModuleConfigData', null, function($event) {
             if($event->arguments[0] !== 'TracyDebugger') return;
             $data = $event->arguments[1];
+
+            // if custom php panel code was changed, then scroll down to that setting field after saving
             if($data['customPhpCode'] != $this->data['customPhpCode']) $this->wire('session')->scrolltoCustomPhp = 1;
+
+            // if Captain Hook settings changed we need to delete the cached copy
+            if(
+                $data['captainHookShowDescription'] != $this->data['captainHookShowDescription'] ||
+                $data['captainHookToggleDocComment'] != $this->data['captainHookToggleDocComment']
+            ) {
+                $this->deleteCache('TracyCaptainHook');
+            }
         });
 
         return $wrapper;
