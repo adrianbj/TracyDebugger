@@ -120,6 +120,7 @@ HTML;
 
         $hooks = unserialize($cachedHooks);
         $lastSection = null;
+        $sections = array();
         foreach($hooks as $file => $info) {
             $name = pathinfo($info['filename'], PATHINFO_FILENAME);
             $label = str_replace($this->wire('config')->paths->root, '', $info['filename']);
@@ -127,12 +128,18 @@ HTML;
             $path = parse_url($label, PHP_URL_PATH);
             $segments = explode('/', $path);
             $currentSection = ucfirst($segments[0]) . ' ' . ucfirst($segments[1]);
-            if($currentSection !== $lastSection) $out .= '<h3>'.$currentSection.'</h3>';
-            $out .= '
+            $currentSectionIndex = str_replace(' ', '_', strtolower($currentSection));
+            if($currentSection !== $lastSection) {
+                $sections[$currentSectionIndex] = '';
+                $sections[$currentSectionIndex] .= '<h3>'.$currentSection.'</h3>';
+            }
+            $sections[$currentSectionIndex] .= '
             <a href="#" rel="'.$name.'" class="tracy-toggle tracy-collapsed">'.str_replace($segments[0].'/'.$segments[1].'/', '', $label).'</a>
             <div style="padding-left:10px" id="'.$name.'" class="tracy-collapsed"><p>'.(isset($info['classname']) && (!in_array('site', $segments) || $this->apiModuleInstalled) ? '<a '.$this->newTab.' href="'.$this->apiBaseUrl.$this->convertNamesToUrls($info['classname']).'/">'.$info['classname'].'</a> ' : $info['classname']).(isset($info['extends']) ? ' extends <a '.$this->newTab.' href="'.$this->apiBaseUrl.$this->convertNamesToUrls($info['extends']).'/">'.$info['extends'].'</a>' : '').'</p>'.$this->buildHookTable($info).'</div><br />';
             $lastSection = $currentSection;
         }
+
+        $out .= $sections['wire_core'] . $sections['wire_modules'] . $sections['site_modules'];
 
         $out .= \TracyDebugger::generatePanelFooter('captainHook', \Tracy\Debugger::timer('captainHook'), strlen($out), 'captainHookPanel');
         $out .= '
