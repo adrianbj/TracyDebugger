@@ -105,9 +105,9 @@ HTML;
 
         $cacheName = 'TracyCaptainHook';
         $cachedHooks = $this->wire('cache')->get($cacheName);
-        $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
 
-        if(!$cachedHooks || !isset($configData['hooksPwVersion']) || $this->wire('config')->version != $configData['hooksPwVersion']) {
+        if(!$cachedHooks || \TracyDebugger::getDataValue('hooksPwVersion') === null || $this->wire('config')->version != \TracyDebugger::getDataValue('hooksPwVersion')) {
+            $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
             $configData['hooksPwVersion'] = $this->wire('config')->version;
             $this->wire('modules')->saveModuleConfigData($this->wire('modules')->get("TracyDebugger"), $configData);
             require_once $this->wire('config')->paths->TracyDebugger . 'panels/CaptainHook/GenerateHtml.php';
