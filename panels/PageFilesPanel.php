@@ -172,7 +172,9 @@ class PageFilesPanel extends BasePanel {
         foreach($p->fields as $f) {
             // this is for nested repeaters
             if($f && $f->type instanceof FieldTypeRepeater) {
-                foreach($p->$f as $subpage) {
+                $repeaterValue = $p->{$f->name};
+                if($repeaterValue instanceof Page) $repeaterValue = array($repeaterValue);
+                foreach($repeaterValue as $subpage) {
                     $files += $this->getDiskFiles($subpage);
                 }
             }
@@ -199,7 +201,9 @@ class PageFilesPanel extends BasePanel {
             $f = $this->wire('fields')->get($field);
             // this is for nested repeaters
             if($item && $f && $f->type instanceof FieldTypeRepeater) {
-                foreach($p->$f as $subpage) {
+                $repeaterValue = $p->{$f->name};
+                if($repeaterValue instanceof Page) $repeaterValue = array($repeaterValue);
+                foreach($repeaterValue as $subpage) {
                     $files += $this->getPageFiles($subpage);
                 }
             }
