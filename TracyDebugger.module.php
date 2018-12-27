@@ -2685,7 +2685,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'strictModeAjax');
         $f->label = __('Strict mode AJAX only', __FILE__);
         $f->description = __('Check to enable strict mode only for AJAX calls.', __FILE__);
-        $f->notes = __('Because Tracy intercepts notices and warnings, these will no longer be returned with the AJAX response which may result in a "success" reponse, rather than "failure". Notices and warnings from an AJAX call will be displayed in the AJAX bar\'s Errors panel, but you still might prefer this option as it provides a more prominent indication of failure.', __FILE__);
+        $f->notes = __('Because Tracy intercepts notices and warnings, these will no longer be returned with the AJAX response which may result in a "success" response, rather than "failure". Notices and warnings from an AJAX call will be displayed in the AJAX bar\'s Errors panel, but you still might prefer this option as it provides a more prominent indication of failure.', __FILE__);
         $f->showIf="strictMode!='1'";
         $f->columnWidth = 34;
         $f->attr('checked', $data['strictModeAjax'] == '1' ? 'checked' : '');
