@@ -105,7 +105,7 @@ HTML;
         foreach(\TracyDebugger::$allApiData['variables'] as $var => $methods) {
             $out .= '
             <a href="#" rel="'.$var.'" class="tracy-toggle tracy-collapsed">$'.$var.'</a>
-            <div style="padding-left:10px" id="'.$var.'" class="tracy-collapsed">' . $this->buildTable($var, $methods) . '</div><br />';
+            <div style="padding-left:10px" id="'.$var.'" class="tracy-collapsed">' . $this->buildTable($var, $methods, 'variables') . '</div><br />';
         }
 
         // Core classes
@@ -134,16 +134,17 @@ HTML;
         foreach(\TracyDebugger::getApiData($type) as $class => $methods) {
             $out .= '
             <a href="#" rel="'.$class.'" class="tracy-toggle tracy-collapsed">'.$class.'</a>
-            <div style="padding-left:10px" id="'.$class.'" class="tracy-collapsed">' . $this->buildTable($class, $methods) . '</div><br />';
+            <div style="padding-left:10px" id="'.$class.'" class="tracy-collapsed">' . $this->buildTable($class, $methods, $type) . '</div><br />';
         }
         return $out;
     }
 
 
-    private function buildTable($var, $items) {
+    private function buildTable($var, $items, $type) {
 
         $class = is_object($this->wire($var)) ? get_class($this->wire($var)) : $var;
         $className = is_object($this->wire($var)) ? '$'.lcfirst($var) : $var;
+        $varTitle = $type == 'variables' ? '$'.lcfirst($var) : $var;
 
         if(class_exists("\ProcessWire\\$class")) {
             $r = new \ReflectionClass("\ProcessWire\\$class");
@@ -157,7 +158,7 @@ HTML;
         <table class="apiExplorerTable">';
 
         $out .= '
-        <th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">$'.lcfirst($var).' links</th>
+        <th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">'.$varTitle.' links</th>
         <tr>
             <td colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '3' : '2').'"><a '.$this->newTab.' href="'.$this->apiBaseUrl.$this->convertNamesToUrls(str_replace('$', '', $className)).'/">' . $className . '</a></td>';
 
@@ -172,10 +173,10 @@ HTML;
         foreach($items as $item => $info) {
             if(strpos($item, '()') === false && !$propertiesSection) {
                 $propertiesSection = true;
-                $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">$'.lcfirst($var).' properties</th>';
+                $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">'.$varTitle.' properties</th>';
             }
             elseif($i == 0) {
-                $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">$'.lcfirst($var).' methods</th>';
+                $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">'.$varTitle.' methods</th>';
             }
 
             $name = $info['name'];
