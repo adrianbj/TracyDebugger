@@ -269,7 +269,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "onlineEditor" => 'tracy',
             "forceEditorLinksToTracy" => 1,
             "localRootPath" => '',
-            "aceTheme" => 'tomorrow_night',
+            "aceTheme" => 'tomorrow_night_bright',
             "codeFontSize" => 14,
             "codeLineHeight" => 24,
             "codeShowInvisibles" => true,
