@@ -22,7 +22,7 @@ class TracyPwApiData extends WireData {
                 $apiData = $this->getClasses($type, $this->wire('config')->paths->$typeDir);
             }
             $apiData = serialize($apiData);
-            $this->wire('cache')->save($cacheName, $apiData, "2010-04-08 03:10:10");
+            $this->wire('cache')->save($cacheName, $apiData, WireCache::expireNever);
         }
         return unserialize($apiData);
     }

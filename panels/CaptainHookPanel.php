@@ -115,7 +115,7 @@ HTML;
             // sort by filename with Wire Core, Wire Modules, & Site Modules sections
             uasort($hooks, function($a, $b) { return $a['filename']>$b['filename']; });
             $cachedHooks = serialize($hooks);
-            $this->wire('cache')->save($cacheName, $cachedHooks, "2010-04-08 03:10:10");
+            $this->wire('cache')->save($cacheName, $cachedHooks, WireCache::expireNever);
         }
 
         $hooks = unserialize($cachedHooks);
