@@ -64,7 +64,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $tracyVersion;
     public static $dumpItems = array();
     public static $autocompleteArr = array();
-    public static $allApiVars = array();
+    public static $allApiData = array();
+    public static $allApiClassesArr = array();
     public static $pageFinderQueries = array();
     public static $templateVars = array();
     public static $templateConsts = array();
@@ -234,7 +235,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "customPWInfoPanelLinks" => array(11, 16, 22, 21, 29, 30, 31, 304),
             "captainHookShowDescription" => 1,
             "captainHookToggleDocComment" => null,
-            "apiExplorerIncludeInheritedMethods" => null,
             "apiExplorerShowDescription" => 1,
             "apiExplorerToggleDocComment" => null,
             "apiExplorerModuleClasses" => array(),
@@ -1584,7 +1584,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     protected function deleteTracyCaches($event) {
         $this->deleteCache('TracyCaptainHook');
-        $this->deleteCache('TracyApiData');
+        $this->deleteCache('TracyApiData.*');
     }
 
     private function deleteCache($cache) {
@@ -2465,6 +2465,23 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     /**
+     * Get API data by type
+     *
+     * @param string type: variables | core | coreModules | siteModules
+     * @return array api data
+     *
+     */
+    public static function getApiData($type) {
+        if(!isset(self::$allApiData[$type])) {
+            require_once __DIR__ . '/includes/PwApiData.php';
+            $tracyPwApiData = new TracyPwApiData();
+            self::$allApiData[$type] = $tracyPwApiData->getApiData($type);
+        }
+        return self::$allApiData[$type];
+    }
+
+
+    /**
      * Renames files and folders appending -$n as required for the Processwire Versions panel.
      *
      * @param string Old Path
@@ -2579,7 +2596,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $wrapper = new InputfieldWrapper();
 
-        // Main Setup
+        // Various Links
         $fieldset = $this->wire('modules')->get("InputfieldMarkup");
         $fieldset->label = __(' ', __FILE__);
         $fieldset->value = '
@@ -3237,21 +3254,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('checked', $data['apiExplorerToggleDocComment'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
-        $f = $this->wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'apiExplorerIncludeInheritedMethods');
-        $f->label = __('Include Wire/WireData/WireArray inherited methods', __FILE__);
-        $f->description = __('This will show also all inherited methods for each object/class.', __FILE__);
-        $f->notes = __('This significantly increases the size of this panel.', __FILE__);
-        $f->columnWidth = 50;
-        $f->attr('checked', $data['apiExplorerIncludeInheritedMethods'] == '1' ? 'checked' : '');
-        $fieldset->add($f);
-
         $f = $this->wire('modules')->get("InputfieldCheckboxes");
         $f->attr('name', 'apiExplorerModuleClasses');
         $f->label = __('Module classes', __FILE__);
         $f->description = __('Select module classes that you also want diplayed.', __FILE__);
-        $f->notes = __('The options will significantly increase the size of this panel.', __FILE__);
-        $f->columnWidth = 50;
+        $f->notes = __('These options will significantly increase the size of this panel.', __FILE__);
         $f->addOption('coreModules', 'Core modules');
         $f->addOption('siteModules', 'Site modules');
         if($data['apiExplorerModuleClasses']) $f->attr('value', $data['apiExplorerModuleClasses']);
@@ -3762,13 +3769,30 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             // if custom php panel code was changed, then scroll down to that setting field after saving
             if($data['customPhpCode'] != $this->data['customPhpCode']) $this->wire('session')->scrolltoCustomPhp = 1;
 
-            // if Captain Hook settings changed we need to delete the cached copy
-            if(
-                $data['captainHookShowDescription'] != $this->data['captainHookShowDescription'] ||
-                $data['captainHookToggleDocComment'] != $this->data['captainHookToggleDocComment']
-            ) {
-                $this->deleteCache('TracyCaptainHook');
+            // if certain settings are changed we need to delete the cached copy
+            $changedSettings = array(
+                'TracyCaptainHook' => array(
+                    'captainHookShowDescription',
+                    'captainHookToggleDocComment'
+                ),
+                'TracyApiData.*' => array(
+                    'apiExplorerShowDescription',
+                    'apiExplorerToggleDocComment',
+                    'apiExplorerIncludeInheritedMethods',
+                    'apiExplorerModuleClasses'
+                )
+            );
+            foreach($changedSettings as $cache => $settings) {
+                $deleteCache = false;
+                foreach($settings as $setting) {
+                    if($data[$setting] != $this->data[$setting]) {
+                        $deleteCache = true;
+                        break;
+                    }
+                }
+                if($deleteCache) $this->deleteCache($cache);
             }
+
         });
 
         return $wrapper;

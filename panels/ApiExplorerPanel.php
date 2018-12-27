@@ -6,8 +6,8 @@ class ApiExplorerPanel extends BasePanel {
 
     private $icon;
     private $apiBaseUrl;
-    private $allClassesArr = array();
     private $tracyPwApiData;
+
 
     public function __construct() {
         if($this->wire('modules')->isInstalled('ProcessWireAPI')) {
@@ -21,6 +21,7 @@ class ApiExplorerPanel extends BasePanel {
         }
         $this->newTab = \TracyDebugger::getDataValue('linksNewTab') ? 'target="_blank"' : '';
     }
+
 
     public function getTab() {
 
@@ -39,6 +40,7 @@ class ApiExplorerPanel extends BasePanel {
             $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;API Explorer' : '') . '
         </span>';
     }
+
 
     public function getPanel() {
 
@@ -94,31 +96,29 @@ HTML;
             <p><input type="submit" id="toggleAll" onclick="toggleVars()" value="Toggle All" /></p>
         ';
 
-        require_once __DIR__ . '/../includes/PwApiData.php';
-        $this->tracyPwApiData = new TracyPwApiData();
-        if(empty(\TracyDebugger::$allApiVars)) {
-            \TracyDebugger::$allApiVars = $this->tracyPwApiData->getVariables();
-        }
+        // get API data
+        $allApiData['variables'] = \TracyDebugger::getApiData('variables');
 
+        // variables
         $out .= '<h3>Variables</h3>';
-        ksort(\TracyDebugger::$allApiVars);
-        foreach(\TracyDebugger::$allApiVars as $var => $methods) {
+        ksort(\TracyDebugger::$allApiData['variables']);
+        foreach(\TracyDebugger::$allApiData['variables'] as $var => $methods) {
             $out .= '
             <a href="#" rel="'.$var.'" class="tracy-toggle tracy-collapsed">$'.$var.'</a>
             <div style="padding-left:10px" id="'.$var.'" class="tracy-collapsed">' . $this->buildTable($var, $methods) . '</div><br />';
         }
 
         // Core classes
-        $out .= $this->buildClasses($this->wire('config')->paths->core);
+        $out .= $this->buildClasses('core');
 
         // Core module classes
         if(in_array('coreModules', \TracyDebugger::getDataValue('apiExplorerModuleClasses'))) {
-            $out .= $this->buildClasses($this->wire('config')->paths->modules);
+            $out .= $this->buildClasses('coreModules');
         }
 
         // Site module classes
         if(in_array('siteModules', \TracyDebugger::getDataValue('apiExplorerModuleClasses'))) {
-            $out .= $this->buildClasses($this->wire('config')->paths->siteModules);
+            $out .= $this->buildClasses('siteModules');
         }
 
         $out .= \TracyDebugger::generatePanelFooter('apiExplorer', \Tracy\Debugger::timer('apiExplorer'), strlen($out), 'apiExplorerPanel');
@@ -129,56 +129,13 @@ HTML;
     }
 
 
-    private function buildClasses($folder) {
-
-        if(strpos($folder, '/site/modules') !== false) {
-            $classType = 'siteModule';
-        }
-        elseif(strpos($folder, 'modules') !== false) {
-            $classType = 'coreModule';
-        }
-        else {
-            $classType = 'core';
-        }
-
-        $classes = array();
-        foreach(preg_grep('/^([^.])/', scandir($folder)) as $file) {
-            array_push($classes, pathinfo($file, PATHINFO_FILENAME));
-        }
-
-        $classesArr = array();
-        foreach($classes as $class) {
-            if(!in_array($class, $this->allClassesArr)) {
-                // for classes with an API object variable, provide an empty methods/properties array
-                if(array_key_exists(lcfirst($class), array_keys(\TracyDebugger::$allApiVars))) {
-                    $classesArr += array($class => array());
-                }
-                else {
-                    if(!preg_match("/^[A-Z]/", $class)) continue;
-
-                    if(class_exists("\ProcessWire\\$class")) {
-                        $r = new \ReflectionClass("\ProcessWire\\$class");
-                    }
-                    elseif(class_exists($class)) {
-                        $r = new \ReflectionClass($class);
-                    }
-                    else {
-                        continue;
-                    }
-                    $classesArr += $this->tracyPwApiData->buildItemsArray($r, $class, $classType);
-                }
-                array_push($this->allClassesArr, $class);
-            }
-        }
-
-        $out = '<h3>' . ucfirst($classType) . ' classes</h3>';
-        ksort($classesArr);
-        foreach($classesArr as $class => $methods) {
+    private function buildClasses($type) {
+        $out = '<h3>' . ucfirst($type) . ' classes</h3>';
+        foreach(\TracyDebugger::getApiData($type) as $class => $methods) {
             $out .= '
             <a href="#" rel="'.$class.'" class="tracy-toggle tracy-collapsed">'.$class.'</a>
             <div style="padding-left:10px" id="'.$class.'" class="tracy-collapsed">' . $this->buildTable($class, $methods) . '</div><br />';
         }
-
         return $out;
     }
 
@@ -202,7 +159,7 @@ HTML;
         $out .= '
         <th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">$'.lcfirst($var).' links</th>
         <tr>
-            <td colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '3' : '2').'"><a '.$this->newTab.' href="'.$this->apiBaseUrl.$this->tracyPwApiData->convertNamesToUrls(str_replace('$', '', $className)).'/">' . $className . '</a></td>';
+            <td colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '3' : '2').'"><a '.$this->newTab.' href="'.$this->apiBaseUrl.$this->convertNamesToUrls(str_replace('$', '', $className)).'/">' . $className . '</a></td>';
 
         $out .= '
                 <td>'.\TracyDebugger::createEditorLink(\TracyDebugger::removeCompilerFromPath($filename), 1, str_replace($this->wire('config')->paths->root, '', '/'.\TracyDebugger::removeCompilerFromPath($filename))).'</td>
@@ -220,9 +177,18 @@ HTML;
             elseif($i == 0) {
                 $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">$'.lcfirst($var).' methods</th>';
             }
+
+            $name = $info['name'];
+            $methodName = str_replace(array('___', '__'), '', $name);
+            if(strpos($info['filename'], 'wire') !== false) {
+                if($this->apiModuleInstalled || strpos($filename, 'modules') === false) {
+                    $name = "<a ".$this->newTab." href='".$this->apiBaseUrl.$this->convertNamesToUrls(str_replace('$', '', $className))."/".$this->convertNamesToUrls($methodName)."/'>" . $name . "</a>";
+                }
+            }
+
             $out .= '
                 <tr>
-                    <td>'.str_replace('()', '', $info['name']).'</td>
+                    <td>'.str_replace('()', '', $name).'</td>
                     <td>'.\TracyDebugger::createEditorLink(\TracyDebugger::removeCompilerFromPath($info['filename']), $info['lineNumber'], $info['lineNumber']).'</td>
                     <td class="tracy-force-no-wrap">' . $info['comment'] . '</td>';
                 if(\TracyDebugger::getDataValue('apiExplorerShowDescription') && isset($info['description'])) {
@@ -237,6 +203,10 @@ HTML;
             </table>
         ';
         return $out;
+    }
+
+    private static function convertNamesToUrls($str) {
+        return trim(strtolower(preg_replace('/([A-Z])/', '-$1', $str)), '-');
     }
 
 }

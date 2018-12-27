@@ -91,25 +91,37 @@ class FileEditorPanel extends BasePanel {
         $codeLineHeight = \TracyDebugger::getDataValue('codeLineHeight');
 
         if(\TracyDebugger::getDataValue('pwAutocompletions')) {
-            if(empty(\TracyDebugger::$autocompleteArr)) {
-                require_once __DIR__ . '/../includes/PwApiData.php';
-                $this->tracyPwApiData = new TracyPwApiData();
-                \TracyDebugger::$allApiVars = $this->tracyPwApiData->getVariables();
+            $i=0;
+            foreach(\TracyDebugger::getApiData('variables') as $key => $vars) {
+                foreach($vars as $name => $params) {
+                    if(strpos($name, '()') !== false) {
+                        $pwAutocompleteArr[$i]['name'] = "$$key->" . str_replace('___', '', $name) . (method_exists($this->wire()->$key, $name) ? '()' : '');
+                        $pwAutocompleteArr[$i]['meta'] = 'PW method';
+                    }
+                    else {
+                        $pwAutocompleteArr[$i]['name'] = "$$key->" . str_replace('___', '', $name);
+                        $pwAutocompleteArr[$i]['meta'] = 'PW property';
+                    }
+                    if(\TracyDebugger::getDataValue('codeShowDescription')) {
+                        $pwAutocompleteArr[$i]['docHTML'] = $params['description'] . "\n" . (isset($params['params']) ? '('.implode(', ', $params['params']).')' : '');
+                    }
+                    $i++;
+                }
             }
 
             // page fields
-            $i = count(\TracyDebugger::$autocompleteArr);
-            foreach($this->p->fields as $field) {
-                \TracyDebugger::$autocompleteArr[$i]['name'] = '$page->'.$field;
-                \TracyDebugger::$autocompleteArr[$i]['meta'] = 'PW ' . str_replace('Fieldtype', '', $field->type) . ' field';
-                if(\TracyDebugger::getDataValue('codeShowDescription')) \TracyDebugger::$autocompleteArr[$i]['docHTML'] = $field->description;
+            $i = count($pwAutocompleteArr);
+            foreach($p->fields as $field) {
+                $pwAutocompleteArr[$i]['name'] = '$page->'.$field;
+                $pwAutocompleteArr[$i]['meta'] = 'PW ' . str_replace('Fieldtype', '', $field->type) . ' field';
+                if(\TracyDebugger::getDataValue('codeShowDescription')) $pwAutocompleteArr[$i]['docHTML'] = $field->description;
                 $i++;
             }
 
-            $apiVariables = json_encode(\TracyDebugger::$autocompleteArr);
+            $pwAutocomplete = json_encode($pwAutocompleteArr);
         }
         else {
-            $apiVariables = json_encode(array());
+            $pwAutocomplete = json_encode(array());
         }
 
         $out .= <<< HTML
@@ -122,7 +134,7 @@ class FileEditorPanel extends BasePanel {
                 tracyFileEditorFilePath: "{$this->tracyFileEditorFilePath}",
                 errorMessage: "{$this->errorMessage}",
                 customSnippetsUrl: "$customSnippetsUrl",
-                apiVariables: $apiVariables,
+                pwAutocomplete: $pwAutocomplete,
                 aceTheme: "$aceTheme",
                 codeFontSize: $codeFontSize,
                 codeLineHeight: $codeLineHeight,
@@ -246,10 +258,10 @@ class FileEditorPanel extends BasePanel {
                         });
 
                         // all PW variable completers
-                        if(tracyFileEditor.apiVariables.length > 0) {
+                        if(tracyFileEditor.pwAutocomplete.length > 0) {
                             var staticWordCompleter = {
                                 getCompletions: function(editor, session, pos, prefix, callback) {
-                                    callback(null, tracyFileEditor.apiVariables.map(function(word) {
+                                    callback(null, tracyFileEditor.pwAutocomplete.map(function(word) {
                                         return {
                                             value: word.name,
                                             meta: word.meta,

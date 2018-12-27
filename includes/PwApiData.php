@@ -3,26 +3,37 @@
 class TracyPwApiData extends WireData {
 
     private $n = 0;
+    private $pwVars = array();
 
-    public function __construct() {
-        if($this->wire('modules')->isInstalled('ProcessWireAPI')) {
-            $apiModuleInstalled = true;
-            $apiModuleId = $this->wire('modules')->getModuleID("ProcessWireAPI");
-            $this->apiBaseUrl = $this->wire('pages')->get("process=$apiModuleId")->url.'methods/';
+
+    public function getApiData($type) {
+        $cacheName = 'TracyApiData.'.$type;
+        $apiData = $this->wire('cache')->get($cacheName);
+
+        if(!$apiData || \TracyDebugger::getDataValue('apiDataVersion') === null || $this->wire('config')->version != \TracyDebugger::getDataValue('apiDataVersion')) {
+            $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
+            $configData['apiDataVersion'] = $this->wire('config')->version;
+            $this->wire('modules')->saveModuleConfigData($this->wire('modules')->get("TracyDebugger"), $configData);
+            if($type == 'variables') {
+                $apiData = $this->getVariables();
+            }
+            else {
+                $typeDir = $type == 'coreModules' ? 'modules' : $type;
+                $apiData = $this->getClasses($type, $this->wire('config')->paths->$typeDir);
+            }
+            $apiData = serialize($apiData);
+            $this->wire('cache')->save($cacheName, $apiData, "2010-04-08 03:10:10");
         }
-        else {
-            $apiModuleInstalled = false;
-            $this->apiBaseUrl = 'https://processwire.com/api/ref/';
-        }
-        $this->newTab = \TracyDebugger::getDataValue('linksNewTab') ? 'target="_blank"' : '';
+        return unserialize($apiData);
     }
 
-    public function getVariables() {
+
+    private function getVariables() {
         $apiVars = array();
         $apiVariables = array();
-        $pwVars = $this->wire('config')->version >= 2.8 ? $this->wire('all') : $this->wire()->fuel;
-        if(is_object($pwVars)) {
-            foreach($pwVars as $key => $value) {
+        $this->pwVars = $this->wire('config')->version >= 2.8 ? $this->wire('all') : $this->wire()->fuel;
+        if(is_object($this->pwVars)) {
+            foreach($this->pwVars as $key => $value) {
                 if(!is_object($value)) continue;
                 $apiVars[$key] = $value;
             }
@@ -36,7 +47,45 @@ class TracyPwApiData extends WireData {
     }
 
 
-    public function buildItemsArray($r, $key, $type) {
+    private function getClasses($type, $folder) {
+
+        $classes = array();
+        foreach(preg_grep('/^([^.])/', scandir($folder)) as $file) {
+            array_push($classes, pathinfo($file, PATHINFO_FILENAME));
+        }
+
+        $classesArr = array();
+        foreach($classes as $class) {
+            if(!in_array($class, \TracyDebugger::$allApiClassesArr)) {
+                if($type == 'coreModules' && strpos($folder, 'modules') === false) continue;
+                // for classes with an API object variable, provide an empty methods/properties array
+                if(array_key_exists(lcfirst($class), \TracyDebugger::$allApiData['variables'])) {
+                    $classesArr += array($class => array());
+                }
+                else {
+                    if(!preg_match("/^[A-Z]/", $class)) continue;
+
+                    if(class_exists("\ProcessWire\\$class")) {
+                        $r = new \ReflectionClass("\ProcessWire\\$class");
+                    }
+                    elseif(class_exists($class)) {
+                        $r = new \ReflectionClass($class);
+                    }
+                    else {
+                        continue;
+                    }
+                    $classesArr += $this->buildItemsArray($r, $class, $type);
+                }
+                array_push(\TracyDebugger::$allApiClassesArr, $class);
+            }
+        }
+        ksort($classesArr);
+        return $classesArr;
+    }
+
+
+    private function buildItemsArray($r, $class, $type) {
+
         $items = array();
 
         // methods from reflection
@@ -48,29 +97,13 @@ class TracyPwApiData extends WireData {
 
             // if method is inherited from Wire/WireData/WireArray, then don't display
             $declaringClassName = str_replace('ProcessWire\\', '', $m->getDeclaringClass()->getName());
-            if(!\TracyDebugger::getDataValue('apiExplorerIncludeInheritedMethods')) {
-                if(strcasecmp($key, 'Wire') !== 0 && strcasecmp($declaringClassName, 'Wire') == 0) continue;
-                if(strcasecmp($key, 'WireData') !== 0 && strcasecmp($declaringClassName, 'WireData') == 0) continue;
-                if(strcasecmp($key, 'WireArray') !== 0 && strcasecmp($declaringClassName, 'WireArray') == 0) continue;
-            }
+            if(strcasecmp($class, 'Wire') !== 0 && strcasecmp($declaringClassName, 'Wire') == 0) continue;
+            if(strcasecmp($class, 'WireData') !== 0 && strcasecmp($declaringClassName, 'WireData') == 0) continue;
+            if(strcasecmp($class, 'WireArray') !== 0 && strcasecmp($declaringClassName, 'WireArray') == 0) continue;
 
             $docComment = $r->getMethod($name)->getDocComment();
             $filename = $r->getMethod($name)->getFilename();
-            $className = $key;
-            $methodName = str_replace(array('___', '__'), '', $name);
-
-            if(strpos($filename, 'wire') !== false) {
-                if($this->apiModuleInstalled || strpos($filename, 'modules') === false) {
-                    $methodsList[$name.'()']['name'] = "<a ".$this->newTab." href='".$this->apiBaseUrl.$this->convertNamesToUrls($className)."/".$this->convertNamesToUrls($methodName)."/'>" . $name . "</a>";
-                }
-                else {
-                    $methodsList[$name.'()']['name'] = $name;
-                }
-            }
-            else {
-                $methodsList[$name.'()']['name'] = $name;
-            }
-
+            $methodsList[$name.'()']['name'] = $name;
             $methodsList[$name.'()']['lineNumber'] = $r->getMethod($name)->getStartLine();
             $methodsList[$name.'()']['filename'] = $filename;
             $i=0;
@@ -79,13 +112,13 @@ class TracyPwApiData extends WireData {
                 $i++;
             }
 
-            $methodStr = "$" . ($type == 'coreModule' || $type == 'siteModule' ? 'modules->get(\''.$key.'\')' : lcfirst($key)) . '->' . str_replace('___', '', $name) . '(' . (isset($methodsList[$name.'()']['params']) ? implode(', ', $methodsList[$name.'()']['params']) : '') . ')';
+            $methodStr = "$" . ($type == 'coreModules' || $type == 'siteModules' ? 'modules->get(\''.$class.'\')' : lcfirst($class)) . '->' . str_replace('___', '', $name) . '(' . (isset($methodsList[$name.'()']['params']) ? implode(', ', $methodsList[$name.'()']['params']) : '') . ')';
 
             if(\TracyDebugger::getDataValue('apiExplorerToggleDocComment')) {
                 $commentStr = "
                 <div id='ch-comment'>
-                    <label class='".($docComment != '' ? 'comment' : '') . "' for='".$key."_".$name."'>".$methodStr."</label>
-                    <input type='checkbox' id='".$key."_".$name."'>
+                    <label class='".($docComment != '' ? 'comment' : '') . "' for='".$class."_".$name."'>".$methodStr."</label>
+                    <input type='checkbox' id='".$class."_".$name."'>
                     <div class='hide'>";
                 $methodsList[$name.'()']['comment'] = $commentStr . "\n\n" . nl2br(htmlentities($docComment)) .
                         "</div>
@@ -95,7 +128,7 @@ class TracyPwApiData extends WireData {
                 $methodsList[$name.'()']['comment'] = $methodStr;
             }
 
-            if(\TracyDebugger::getDataValue('apiExplorerShowDescription') || \TracyDebugger::getDataValue('captainHookShowDescription') || \TracyDebugger::getDataValue('codeShowDescription')) {
+            if(\TracyDebugger::getDataValue('apiExplorerShowDescription') || \TracyDebugger::getDataValue('codeShowDescription')) {
                 // get the comment
                 preg_match('#^/\*\*(.*)\*/#s', $docComment, $comment);
                 if(isset($comment[0])) $comment = trim($comment[0]);
@@ -124,12 +157,7 @@ class TracyPwApiData extends WireData {
                 if(strpos($c, '@method') !== false) {
                     preg_match('/(.*)(?:\s)([A-Za-z_]+)(\(.*\)\s*)(?:\s+)(.*)$/U', $c, $varName);
                     if(isset($varName[2]) && !array_key_exists($varName[2].'()', $methodsList) && !array_key_exists('_'.$varName[2].'()', $methodsList) && !array_key_exists('__'.$varName[2].'()', $methodsList) && !array_key_exists('___'.$varName[2].'()', $methodsList)) {
-                        if($this->apiModuleInstalled || strpos($filename, 'modules') === false) {
-                            $methodsList[$varName[2].'()']['name'] = "<a ".$this->newTab." href='".$this->apiBaseUrl.$this->convertNamesToUrls($className)."/".$this->convertNamesToUrls($methodName)."/'>" . $varName[2] . "</a>";
-                        }
-                        else {
-                            $methodsList[$varName[2].'()']['name'] = $varName[2];
-                        }
+                        $methodsList[$varName[2].'()']['name'] = $varName[2];
                         $methodsList[$varName[2].'()']['params'] = explode(', ', $varName[3]);
                         $methodsList[$varName[2].'()']['description'] = preg_replace('/#([^#\s]+)/', '', $varName[4]);
                     }
@@ -147,34 +175,24 @@ class TracyPwApiData extends WireData {
 
             foreach($methodsList as $name => $info) {
 
-                if($type == 'variables') {
-                    \TracyDebugger::$autocompleteArr[$this->n]['name'] = "$$key->" . str_replace('___', '', $name) . (method_exists($this->wire()->$key, $name) ? '()' : '');
-                    \TracyDebugger::$autocompleteArr[$this->n]['meta'] = 'PW method';
-                }
-
-                $items[$key][$name]['name'] = $info['name'];
-                $items[$key][$name]['lineNumber'] = isset($info['lineNumber']) ? $info['lineNumber'] : '';
-                $items[$key][$name]['filename'] = isset($info['filename']) ? $info['filename'] : '';
+                $items[$class][$name]['name'] = $info['name'];
+                $items[$class][$name]['params'] = isset($info['params']) ? $info['params'] : array();
+                $items[$class][$name]['lineNumber'] = isset($info['lineNumber']) ? $info['lineNumber'] : '';
+                $items[$class][$name]['filename'] = isset($info['filename']) ? $info['filename'] : '';
                 if(isset($info['comment'])) {
                     $methodStr = $info['comment'];
                 }
                 else {
-                    $methodStr = "$" . lcfirst($key) . '->' . str_replace(array('___', '()'), '', $name) . (isset($info['params']) ? implode(', ', $info['params']) : '');
+                    $methodStr = "$" . lcfirst($class) . '->' . str_replace(array('___', '()'), '', $name) . (isset($info['params']) ? implode(', ', $info['params']) : '');
                 }
-                $items[$key][$name]['comment'] = $methodStr;
+                $items[$class][$name]['comment'] = $methodStr;
 
-                if(\TracyDebugger::getDataValue('apiExplorerShowDescription') || \TracyDebugger::getDataValue('captainHookShowDescription') || \TracyDebugger::getDataValue('codeShowDescription')) {
+                if(\TracyDebugger::getDataValue('apiExplorerShowDescription') || \TracyDebugger::getDataValue('codeShowDescription')) {
                     if(substr($info['description'], 0, 1) === '#') {
-                        if(\TracyDebugger::getDataValue('codeShowDescription') && $type == 'variables') {
-                            \TracyDebugger::$autocompleteArr[$this->n]['docHTML'] = '';
-                        }
-                        $items[$key][$name]['description'] = '';
+                        $items[$class][$name]['description'] = '';
                     }
                     else {
-                        if(\TracyDebugger::getDataValue('codeShowDescription') && $type == 'variables') {
-                            \TracyDebugger::$autocompleteArr[$this->n]['docHTML'] = isset($desc) && is_string($desc) ? nl2br(trim($info['description'])) . "\n" . (isset($info['params']) ? '('.implode(', ', $info['params']).')' : '') : '';
-                        }
-                        $items[$key][$name]['description'] = $info['description'];
+                        $items[$class][$name]['description'] = $info['description'];
                     }
                 }
                 if($type == 'variables') $this->n++;
@@ -211,21 +229,13 @@ class TracyPwApiData extends WireData {
 
             foreach($propertiesList as $name => $info) {
 
-                if($type == 'variables') {
-                    \TracyDebugger::$autocompleteArr[$this->n]['name'] = "$$key->" . str_replace('___', '', $name);
-                    \TracyDebugger::$autocompleteArr[$this->n]['meta'] = 'PW property';
-                }
-
-                $items[$key][$name]['name'] = $name;
-                $items[$key][$name]['lineNumber'] = '';
-                $items[$key][$name]['filename'] = '';
-                $items[$key][$name]['comment'] = "$" . lcfirst($key) . '->' . str_replace('___', '', $name);
-                if(\TracyDebugger::getDataValue('apiExplorerShowDescription') || \TracyDebugger::getDataValue('captainHookShowDescription') || \TracyDebugger::getDataValue('codeShowDescription')) {
+                $items[$class][$name]['name'] = $name;
+                $items[$class][$name]['lineNumber'] = '';
+                $items[$class][$name]['filename'] = '';
+                $items[$class][$name]['comment'] = "$" . lcfirst($class) . '->' . str_replace('___', '', $name);
+                if(\TracyDebugger::getDataValue('apiExplorerShowDescription') || \TracyDebugger::getDataValue('codeShowDescription')) {
                     $desc = preg_replace('/#([^#\s]+)/', '', $info['description']);
-                    if(\TracyDebugger::getDataValue('codeShowDescription') && $type == 'variables') {
-                        \TracyDebugger::$autocompleteArr[$this->n]['docHTML'] = isset($desc) && is_string($desc) ? nl2br(htmlentities(trim($desc))) : '';
-                    }
-                    $items[$key][$name]['description'] = $desc;
+                    $items[$class][$name]['description'] = $desc;
                 }
                 if($type == 'variables') $this->n++;
             }
@@ -234,7 +244,6 @@ class TracyPwApiData extends WireData {
         return $items;
 
     }
-
 
     public static function convertNamesToUrls($str) {
         return trim(strtolower(preg_replace('/([A-Z])/', '-$1', $str)), '-');
