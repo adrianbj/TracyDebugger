@@ -21,10 +21,11 @@ class TracyPwApiData extends WireData {
                 $typeDir = $type == 'coreModules' ? 'modules' : $type;
                 $apiData = $this->getClasses($type, $this->wire('config')->paths->$typeDir);
             }
-            $apiData = serialize($apiData);
+            // tilde hack for this: https://github.com/processwire/processwire-issues/issues/775
+            $apiData = '~'.json_encode($apiData);
             $this->wire('cache')->save($cacheName, $apiData, WireCache::expireNever);
         }
-        return unserialize($apiData);
+        return json_decode(ltrim($apiData, '~'), true);
     }
 
 

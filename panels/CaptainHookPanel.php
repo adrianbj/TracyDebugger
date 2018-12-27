@@ -104,9 +104,9 @@ HTML;
         ';
 
         $cacheName = 'TracyCaptainHook';
-        $cachedHooks = $this->wire('cache')->get($cacheName);
+        $hooks = $this->wire('cache')->get($cacheName);
 
-        if(!$cachedHooks || \TracyDebugger::getDataValue('hooksPwVersion') === null || $this->wire('config')->version != \TracyDebugger::getDataValue('hooksPwVersion')) {
+        if(!$hooks || \TracyDebugger::getDataValue('hooksPwVersion') === null || $this->wire('config')->version != \TracyDebugger::getDataValue('hooksPwVersion')) {
             $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
             $configData['hooksPwVersion'] = $this->wire('config')->version;
             $this->wire('modules')->saveModuleConfigData($this->wire('modules')->get("TracyDebugger"), $configData);
@@ -114,11 +114,12 @@ HTML;
             $hooks = $this->hooks;
             // sort by filename with Wire Core, Wire Modules, & Site Modules sections
             uasort($hooks, function($a, $b) { return $a['filename']>$b['filename']; });
-            $cachedHooks = serialize($hooks);
-            $this->wire('cache')->save($cacheName, $cachedHooks, WireCache::expireNever);
+            // tilde hack for this: https://github.com/processwire/processwire-issues/issues/775
+            $hooks = '~'.json_encode($hooks);
+            $this->wire('cache')->save($cacheName, $hooks, WireCache::expireNever);
         }
+        $hooks = json_decode(ltrim($hooks, '~'), true);
 
-        $hooks = unserialize($cachedHooks);
         $lastSection = null;
         $sections = array();
         foreach($hooks as $file => $info) {
