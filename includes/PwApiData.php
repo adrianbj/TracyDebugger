@@ -5,12 +5,12 @@ class TracyPwApiData extends WireData {
     private $n = 0;
     private $pwVars = array();
 
-
     public function getApiData($type) {
         $cacheName = 'TracyApiData.'.$type;
         $apiData = $this->wire('cache')->get($cacheName);
 
         if(!$apiData || \TracyDebugger::getDataValue('apiDataVersion') === null || $this->wire('config')->version != \TracyDebugger::getDataValue('apiDataVersion')) {
+            $cachedData = json_decode(ltrim($apiData, '~'), true);
             $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
             $configData['apiDataVersion'] = $this->wire('config')->version;
             $this->wire('modules')->saveModuleConfigData($this->wire('modules')->get("TracyDebugger"), $configData);
@@ -21,6 +21,22 @@ class TracyPwApiData extends WireData {
                 $typeDir = $type == 'coreModules' ? 'modules' : $type;
                 $apiData = $this->getClasses($type, $this->wire('config')->paths->$typeDir);
             }
+
+            // if PW core version has changed, populate the "TracyApiChanges" data cache
+            if($cachedData && \TracyDebugger::getDataValue('apiDataVersion') !== null && $this->wire('config')->version != \TracyDebugger::getDataValue('apiDataVersion')) {
+                \TracyDebugger::$apiChanges['cachedVersion'] = \TracyDebugger::getDataValue('apiDataVersion');
+                foreach($apiData as $class => $methods) {
+                    $i=0;
+                    foreach($methods as $method => $params) {
+                        if(!isset($cachedData[$class]) ||!array_key_exists($method, $cachedData[$class])) {
+                            \TracyDebugger::$apiChanges[$type][$class][$i] = $method;
+                            $i++;
+                        }
+                    }
+                }
+                $this->wire('cache')->save('TracyApiChanges', '~'.json_encode(\TracyDebugger::$apiChanges), WireCache::expireNever);
+            }
+
             // tilde hack for this: https://github.com/processwire/processwire-issues/issues/775
             $apiData = '~'.json_encode($apiData);
             $this->wire('cache')->save($cacheName, $apiData, WireCache::expireNever);
@@ -112,7 +128,6 @@ class TracyPwApiData extends WireData {
                 $methodsList[$name.'()']['params'][$i] = ($param->isOptional() ? '<em>' : '') . '$' . $param->getName() . ($param->isOptional() ? '</em>' : '');
                 $i++;
             }
-
             $methodStr = "$" . ($type == 'coreModules' || $type == 'siteModules' ? 'modules->get(\''.$class.'\')' : lcfirst($class)) . '->' . str_replace('___', '', $name) . '(' . (isset($methodsList[$name.'()']['params']) ? implode(', ', $methodsList[$name.'()']['params']) : '') . ')';
 
             if(\TracyDebugger::getDataValue('apiExplorerToggleDocComment')) {

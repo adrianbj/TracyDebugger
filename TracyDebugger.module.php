@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.16.6',
+            'version' => '4.16.7',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -66,6 +66,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $autocompleteArr = array();
     public static $allApiData = array();
     public static $allApiClassesArr = array();
+    public static $apiChanges = array();
     public static $pageFinderQueries = array();
     public static $templateVars = array();
     public static $templateConsts = array();
@@ -523,9 +524,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             // don't add in_array(static::$showPanels) check because that won't be true if enabled ONCE due to multiple redirects waiting for $this->wire('config')->version to update
             if(($this->wire('input')->post->tracyPwVersion && $this->wire('input')->post->tracyPwVersion != $this->wire('config')->version) || $this->wire('session')->tracyPwVersion) {
                 $this->wire('session')->tracyPwVersion = $this->wire('session')->tracyPwVersion ?: $this->wire('input')->post->tracyPwVersion;
+                $this->updater = $this->wire('modules')->get('SystemUpdater');
                 while($this->wire('session')->tracyPwVersion != $this->wire('config')->version) {
                     sleep(1);
-                    $this->wire('session')->redirect($this->httpReferer . (strpos($this->httpReferer, '?') !== false ? '&' : '?') . 'tracyModulesRefresh=1');
+                    $this->wire('session')->redirect($this->httpReferer);
                 }
                 $this->wire('session')->remove('tracyPwVersion');
             }
@@ -1083,12 +1085,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
 
             // TRACY CACHES
-            // update caches on module install
+            // delete caches on module changes so they will be updated
             $this->wire()->addHookAfter('Modules::install', $this, 'deleteTracyCaches');
             $this->wire()->addHookAfter('Modules::uninstall', $this, 'deleteTracyCaches');
-            $this->wire()->addHookAfter('Modules::refresh', $this, 'deleteTracyCaches');
             $this->wire()->addHookAfter('Modules::moduleVersionChanged', $this, 'deleteTracyCaches');
-            $this->wire()->addHookAfter('SystemUpdater::coreVersionChange', $this, 'deleteTracyCaches');
 
 
             if(!static::$inAdmin) {
@@ -1575,7 +1575,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     /**
-     * Hook after Module::install, uninstall, refresh, upgrade and core upgrade
+     * Hook after Module::install, uninstall, or version change
      *
      * Delete existing Tracy caches
      *

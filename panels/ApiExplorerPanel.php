@@ -100,26 +100,56 @@ HTML;
         $allApiData['variables'] = \TracyDebugger::getApiData('variables');
 
         // variables
-        $out .= '<h3>Variables</h3>';
+        $currentApiOut = '<h3>Variables</h3>';
         ksort(\TracyDebugger::$allApiData['variables']);
         foreach(\TracyDebugger::$allApiData['variables'] as $var => $methods) {
-            $out .= '
+            $currentApiOut .= '
             <a href="#" rel="'.$var.'" class="tracy-toggle tracy-collapsed">$'.$var.'</a>
             <div style="padding-left:10px" id="'.$var.'" class="tracy-collapsed">' . $this->buildTable($var, $methods, 'variables') . '</div><br />';
         }
 
         // Core classes
-        $out .= $this->buildClasses('core');
+        $currentApiOut .= $this->buildClasses('core');
 
         // Core module classes
         if(in_array('coreModules', \TracyDebugger::getDataValue('apiExplorerModuleClasses'))) {
-            $out .= $this->buildClasses('coreModules');
+            $currentApiOut .= $this->buildClasses('coreModules');
         }
 
         // Site module classes
         if(in_array('siteModules', \TracyDebugger::getDataValue('apiExplorerModuleClasses'))) {
-            $out .= $this->buildClasses('siteModules');
+            $currentApiOut .= $this->buildClasses('siteModules');
         }
+
+        //get API changes
+        $apiChangesOut = '';
+        $apiChanges = $this->wire('cache')->get('TracyApiChanges');
+        $apiChanges = json_decode(ltrim($apiChanges, '~'), true);
+        if(is_array($apiChanges) && count($apiChanges) > 1) {
+            foreach($apiChanges as $type => $classes) {
+                if($type == 'cachedVersion') {
+                    $apiChangesOut .= '
+                    <a href="#" rel="new-since" class="tracy-toggle tracy-collapsed">
+                        <span style="font-size: 15px; font-weight: bold">NEW SINCE v'.$classes.'</span>
+                    </a>
+                    <div style="padding-left:10px" id="new-since" class="tracy-collapsed">
+                    ';
+                    continue;
+                }
+                if(!isset($currentType) || $currentType !== $type) {
+                    $apiChangesOut .= '<h3>'.ucfirst($type).($type == 'variables' ? '' : ' classes').'</h3>';
+                }
+                foreach($classes as $class => $methods) {
+                    foreach($methods as $method) {
+                        $apiChangesOut .= ($type == 'variables' ? '$' : '').$class.'->'.$method .'<br />';
+                    }
+                }
+                $currentType = $type;
+            }
+            $apiChangesOut .= '</div><br /><br /><span style="font-size: 15px; font-weight: bold">CURRENT v'.$this->wire('config')->version.'</span>';
+        }
+
+        $out .= $apiChangesOut . $currentApiOut;
 
         $out .= \TracyDebugger::generatePanelFooter('apiExplorer', \Tracy\Debugger::timer('apiExplorer'), strlen($out), 'apiExplorerPanel');
         $out .= '
