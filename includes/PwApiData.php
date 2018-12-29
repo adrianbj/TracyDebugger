@@ -65,12 +65,10 @@ class TracyPwApiData extends WireData {
 
 
     private function getClasses($type, $folder) {
-
         $classes = array();
         foreach(preg_grep('/^([^.])/', scandir($folder)) as $file) {
             array_push($classes, pathinfo($file, PATHINFO_FILENAME));
         }
-
         $classesArr = array();
         foreach($classes as $class) {
             if(!in_array($class, \TracyDebugger::$allApiClassesArr)) {

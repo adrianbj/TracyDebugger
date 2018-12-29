@@ -94,29 +94,21 @@ HTML;
         $out .= '
         <div class="tracy-inner">';
 
-        // get API data
-        $allApiData['variables'] = \TracyDebugger::getApiData('variables');
 
         // variables
-        $currentApiOut = '<h3>Variables</h3>';
-        ksort(\TracyDebugger::$allApiData['variables']);
-        foreach(\TracyDebugger::$allApiData['variables'] as $var => $methods) {
-            $currentApiOut .= '
-            <a href="#" rel="'.$var.'" class="tracy-toggle tracy-collapsed">$'.$var.'</a>
-            <div style="padding-left:10px" id="'.$var.'" class="tracy-collapsed">' . $this->buildTable($var, $methods, 'variables') . '</div><br />';
-        }
+        $currentApiOut = $this->buildTypes('variables');
 
         // Core classes
-        $currentApiOut .= $this->buildClasses('core');
+        $currentApiOut .= $this->buildTypes('core');
 
         // Core module classes
         if(in_array('coreModules', \TracyDebugger::getDataValue('apiExplorerModuleClasses'))) {
-            $currentApiOut .= $this->buildClasses('coreModules');
+            $currentApiOut .= $this->buildTypes('coreModules');
         }
 
         // Site module classes
         if(in_array('siteModules', \TracyDebugger::getDataValue('apiExplorerModuleClasses'))) {
-            $currentApiOut .= $this->buildClasses('siteModules');
+            $currentApiOut .= $this->buildTypes('siteModules');
         }
 
         //get API changes
@@ -157,11 +149,11 @@ HTML;
     }
 
 
-    private function buildClasses($type) {
-        $out = '<h3>' . ucfirst($type) . ' classes</h3>';
+    private function buildTypes($type) {
+        $out = '<h3>' . ucfirst($type).($type == 'variables' ? '' : ' classes').'</h3>';
         foreach(\TracyDebugger::getApiData($type) as $class => $methods) {
             $out .= '
-            <a href="#" rel="'.$class.'" class="tracy-toggle tracy-collapsed">'.$class.'</a>
+            <a href="#" rel="'.$class.'" class="tracy-toggle tracy-collapsed">'.($type == 'variables' ? '$' : '').$class.'</a>
             <div style="padding-left:10px" id="'.$class.'" class="tracy-collapsed">' . $this->buildTable($class, $methods, $type) . '</div><br />';
         }
         return $out;
