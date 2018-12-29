@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.16.7',
+            'version' => '4.16.8',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -524,7 +524,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             // don't add in_array(static::$showPanels) check because that won't be true if enabled ONCE due to multiple redirects waiting for $this->wire('config')->version to update
             if(($this->wire('input')->post->tracyPwVersion && $this->wire('input')->post->tracyPwVersion != $this->wire('config')->version) || $this->wire('session')->tracyPwVersion) {
                 $this->wire('session')->tracyPwVersion = $this->wire('session')->tracyPwVersion ?: $this->wire('input')->post->tracyPwVersion;
-                $this->updater = $this->wire('modules')->get('SystemUpdater');
                 while($this->wire('session')->tracyPwVersion != $this->wire('config')->version) {
                     sleep(1);
                     $this->wire('session')->redirect($this->httpReferer);
@@ -1072,6 +1071,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             }
 
+
+            // UPDATE CACHED API DATA on core version change
+            $this->wire()->addHookBefore('SystemUpdater::coreVersionChange', null, function($event) {
+                foreach(array('variables', 'core', 'coreModules') as $type) {
+                    self::getApiData($type);
+                }
+            });
+
+
             // MAIL INTERCEPTOR
             // if mail panel items were cleared, clear them from the session variable
             if($this->wire('input')->cookie->tracyClearMailItems || (!in_array('mailInterceptor', static::$showPanels) && $this->wire('session')->tracyMailItems)) {
@@ -1089,7 +1097,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $this->wire()->addHookAfter('Modules::install', $this, 'deleteTracyCaches');
             $this->wire()->addHookAfter('Modules::uninstall', $this, 'deleteTracyCaches');
             $this->wire()->addHookAfter('Modules::moduleVersionChanged', $this, 'deleteTracyCaches');
-
 
             if(!static::$inAdmin) {
                 // VALIDATOR
@@ -1356,7 +1363,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // load base panel class
         require_once __DIR__ . '/includes/BasePanel.php';
 
-
         // load File Editor panel if Tracy online editor is selected
         if(static::$useOnlineEditor && static::$onlineEditor == 'tracy' && !in_array('fileEditor', static::$showPanels)) {
             array_push(static::$showPanels, 'fileEditor');
@@ -1583,6 +1589,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     protected function deleteTracyCaches($event) {
+        // don't delete caches if it's a core module update because if you're in the admin this deletes them
+        // and the system update will trigger generation of new caches anyway. Without this check, the "New Since" in the
+        // API Explorer panel no longer had access to the cached API data.
+        if($event->method == 'moduleVersionChanged') {
+            $info = $this->modules->getModuleInfoVerbose($event->arguments[0]);
+            if($info['core']) return;
+        }
         $this->deleteCache('TracyCaptainHook');
         $this->deleteCache('TracyApiData.*');
     }

@@ -94,19 +94,18 @@ HTML;
         $out .= '
         <div class="tracy-inner">';
 
-
         // variables
         $currentApiOut = $this->buildTypes('variables');
 
-        // Core classes
+        // core classes
         $currentApiOut .= $this->buildTypes('core');
 
-        // Core module classes
+        // core module classes
         if(in_array('coreModules', \TracyDebugger::getDataValue('apiExplorerModuleClasses'))) {
             $currentApiOut .= $this->buildTypes('coreModules');
         }
 
-        // Site module classes
+        // site module classes
         if(in_array('siteModules', \TracyDebugger::getDataValue('apiExplorerModuleClasses'))) {
             $currentApiOut .= $this->buildTypes('siteModules');
         }
@@ -225,6 +224,7 @@ HTML;
         ';
         return $out;
     }
+
 
     private static function convertNamesToUrls($str) {
         return trim(strtolower(preg_replace('/([A-Z])/', '-$1', $str)), '-');
