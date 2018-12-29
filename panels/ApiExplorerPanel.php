@@ -92,9 +92,7 @@ class ApiExplorerPanel extends BasePanel {
 HTML;
 
         $out .= '
-        <div class="tracy-inner">
-            <p><input type="submit" id="toggleAll" onclick="toggleVars()" value="Toggle All" /></p>
-        ';
+        <div class="tracy-inner">';
 
         // get API data
         $allApiData['variables'] = \TracyDebugger::getApiData('variables');
@@ -149,7 +147,7 @@ HTML;
             $apiChangesOut .= '</div><br /><br /><span style="font-size: 15px; font-weight: bold">CURRENT v'.$this->wire('config')->version.'</span>';
         }
 
-        $out .= $apiChangesOut . $currentApiOut;
+        $out .= $apiChangesOut . '<p><input type="submit" id="toggleAll" onclick="toggleVars()" value="Toggle All" /></p>' . $currentApiOut;
 
         $out .= \TracyDebugger::generatePanelFooter('apiExplorer', \Tracy\Debugger::timer('apiExplorer'), strlen($out), 'apiExplorerPanel');
         $out .= '
