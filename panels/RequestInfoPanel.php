@@ -648,7 +648,7 @@ class RequestInfoPanel extends BasePanel {
                     "<td>$f->label</td>" .
                     "<td>".str_replace('Fieldtype', '', $f->type)."</td>" .
                     "<td>".str_replace('Inputfield', '', ($f->inputfield ? $f->inputfield : $f->inputfieldClass))."</td>";
-                    if(isset($adminerUrl)) $fieldsListValues .= "<td><a href='".$adminerUrl."?edit=field_".$f->name."&where%5Bpages_id%5D=".$p->id."'>edit</a></td>";
+                    if(isset($adminerUrl)) $fieldsListValues .= "<td><a href='".$adminerUrl."?edit=field_".$f->name."&where%5Bpages_id%5D=".$p->id."'>".$adminerIcon."</a></td>";
                     $fieldsListValues .= "<td>".$this->generateOutput($p, $f, false)."</td>" .
                     "<td>".$this->generateOutput($p, $f, true)."</td>" .
                     "<td>".$this->imageDetails($p, $f)."</td>" .

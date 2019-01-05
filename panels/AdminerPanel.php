@@ -25,6 +25,51 @@ class AdminerPanel extends BasePanel {
 
         $adminerModuleId = $this->wire('modules')->getModuleID("ProcessTracyAdminer");
         $adminerUrl = $this->wire('pages')->get("process=$adminerModuleId")->url;
+        $contextLink = '';
+
+        if(\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
+            ($this->wire('process') == 'ProcessPageEdit' ||
+                $this->wire('process') == 'ProcessUser' ||
+                $this->wire('process') == 'ProcessRole' ||
+                $this->wire('process') == 'ProcessPermission'
+            )
+        ) {
+            $p = $this->wire('process')->getPage();
+        }
+        elseif($this->wire('process') == 'ProcessPageView') {
+            $p = $this->wire('page');
+        }
+
+        if(isset($p)) {
+            $contextLink = '&edit=pages&where%5Bid%5D='.$p->id;
+        }
+        elseif($this->wire('process') == 'ProcessPageList') {
+            $contextLink = '&select=pages';
+        }
+        elseif($this->wire('page')->process == 'ProcessField') {
+            if($this->wire('input')->get('id')) {
+                $contextLink = '&edit=fields&where%5Bid%5D='.(int)$this->wire('input')->get('id');
+            }
+            else {
+                $contextLink = '&select=fields';
+            }
+        }
+        elseif($this->wire('page')->process == 'ProcessTemplate') {
+            if($this->wire('input')->get('id')) {
+                $contextLink = '&edit=templates&where%5Bid%5D='.(int)$this->wire('input')->get('id');
+            }
+            else {
+                $contextLink = '&select=templates';
+            }
+        }
+        elseif($this->wire('page')->process == 'ProcessModule') {
+            if($this->wire('input')->get('name')) {
+                $contextLink = '&edit=modules&where%5Bclass%5D='.$this->wire('sanitizer')->name($this->wire('input')->get('name'));
+            }
+            else {
+                $contextLink = '&select=modules';
+            }
+        }
 
         $out = '
         <h1>' . $this->icon . ' Adminer</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'AdminerPanel\')">+</a></span></span>';
@@ -32,7 +77,7 @@ class AdminerPanel extends BasePanel {
         if($this->wire('modules')->isInstalled("ProcessTracyAdminer")) {
             $out .= '
             <div class="tracy-inner" style="padding: 0 !important">
-                <iframe src="'.$adminerUrl.'" style="width:100%; height:calc(100% - 5px); border: none; padding:0; margin:0;"></iframe>';
+                <iframe src="'.$adminerUrl.'?iframe=1'.$contextLink.'" style="width:100%; height:calc(100% - 5px); border: none; padding:0; margin:0;"></iframe>';
         }
         else {
             $out .= '
