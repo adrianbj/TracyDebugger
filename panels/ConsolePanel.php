@@ -519,6 +519,7 @@ class ConsolePanel extends BasePanel {
 
                 loadSnippet: function(name) {
                     this.loadedSnippetCode = this.getSnippet(name);
+                    this.setActiveSnippet(name);
                     this.tce.setValue(decodeURIComponent(this.loadedSnippetCode));
                     localStorage.setItem("tracyConsoleSelectedSnippet", name);
                     document.getElementById("tracySnippetName").value = name;
