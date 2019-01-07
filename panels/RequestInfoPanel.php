@@ -427,7 +427,7 @@ class RequestInfoPanel extends BasePanel {
             $pageInfo .= '
                 <tr>
                     <td>createdUser</td>
-                    <td><a title="Edit User" href="'.$this->wire('config')->urls->admin.'access/users/edit/?id='.$p->modifiedUser->id.'">'.$p->createdUser->name.'</a></td>
+                    <td>'.$p->createdUser->name.' (<a title="Edit User" href="'.$this->wire('config')->urls->admin.'access/users/edit/?id='.$p->createdUser->id.'">'.$p->createdUser->id.'</a>)</td>
                 </tr>
                 <tr>
                     <td>created</td>
@@ -439,7 +439,7 @@ class RequestInfoPanel extends BasePanel {
                 </tr>
                 <tr>
                     <td>modifiedUser</td>
-                    <td><a title="Edit User" href="'.$this->wire('config')->urls->admin.'access/users/edit/?id='.$p->modifiedUser->id.'">'.$p->modifiedUser->name.'</a></td>
+                    <td>'.$p->modifiedUser->name.' (<a title="Edit User" href="'.$this->wire('config')->urls->admin.'access/users/edit/?id='.$p->modifiedUser->id.'">'.$p->modifiedUser->id.'</a>)</td>
                 </tr>
                 <tr>
                     <td>modified</td>
