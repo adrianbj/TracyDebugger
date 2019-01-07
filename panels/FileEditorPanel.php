@@ -111,7 +111,7 @@ class FileEditorPanel extends BasePanel {
 
             // page fields
             $i = count($pwAutocompleteArr);
-            foreach($p->fields as $field) {
+            foreach($this->p->fields as $field) {
                 $pwAutocompleteArr[$i]['name'] = '$page->'.$field;
                 $pwAutocompleteArr[$i]['meta'] = 'PW ' . str_replace('Fieldtype', '', $field->type) . ' field';
                 if(\TracyDebugger::getDataValue('codeShowDescription')) $pwAutocompleteArr[$i]['docHTML'] = $field->description;
