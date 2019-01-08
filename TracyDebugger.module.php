@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.16.14',
+            'version' => '4.16.15',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -190,8 +190,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     static public function getDefaultData() {
         return array(
             "enabled" => 1,
-            //"coreBranch" => version_compare(phpversion(), '5.4.4', '>=') ? 'master' : 'legacy',
-            "coreBranch" => 'master',
             "superuserForceDevelopment" => null,
             "guestForceDevelopmentLocal" => null,
             "ipAddress" => null,
@@ -748,16 +746,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // TRACY SETUP
         // load core tracy library
         if(static::$allowedTracyUser) {
-            static::$tracyVersion = $this->data['coreBranch'];
-            /*if(!file_exists(__DIR__ . '/tracy-'.static::$tracyVersion.'/src/tracy.php')) {
-                static::$tracyVersion = version_compare(phpversion(), '5.4.4', '>=') ? 'master' : 'legacy';
-            }*/
-            if(!file_exists(__DIR__ . '/tracy-'.static::$tracyVersion.'/src/tracy.php')) {
-                require_once __DIR__ . '/tracy-'.static::$tracyVersion.'/src/tracy.php';
-            }
-            else {
-                require_once __DIR__ . '/tracy-master/src/tracy.php';
-            }
+            require_once __DIR__ . '/tracy-master/src/tracy.php';
         }
         else {
             // if user not allowed then load dummy class to prevent "class not found" errors when
@@ -2644,19 +2633,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->columnWidth = 50;
         $f->attr('checked', $data['enabled'] == '1' ? 'checked' : '');
         $fieldset->add($f);
-
-/*
-        $f = $this->wire('modules')->get("InputfieldSelect");
-        $f->attr('name', 'coreBranch');
-        $f->label = 'Core Tracy Branch';
-        $f->description = __('Which version of the Tracy core to use. Master (dev) requires PHP 5.4.4+ and will be automatically selected if your PHP version is sufficient.', __FILE__);
-        $f->columnWidth = 50;
-        $f->required = true;
-        $f->addOption('master', 'Master');
-        $f->addOption('legacy', 'Legacy (for PHP < 5.4.4)');
-        if($data['coreBranch']) $f->attr('value', $data['coreBranch']);
-        $fieldset->add($f);
-*/
 
         $f = $this->wire('modules')->get("InputfieldSelect");
         $f->attr('name', 'outputMode');
