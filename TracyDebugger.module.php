@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.16.13',
+            'version' => '4.16.14',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -752,7 +752,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             /*if(!file_exists(__DIR__ . '/tracy-'.static::$tracyVersion.'/src/tracy.php')) {
                 static::$tracyVersion = version_compare(phpversion(), '5.4.4', '>=') ? 'master' : 'legacy';
             }*/
-            require_once __DIR__ . '/tracy-'.static::$tracyVersion.'/src/tracy.php';
+            if(!file_exists(__DIR__ . '/tracy-'.static::$tracyVersion.'/src/tracy.php')) {
+                require_once __DIR__ . '/tracy-'.static::$tracyVersion.'/src/tracy.php';
+            }
+            else {
+                require_once __DIR__ . '/tracy-master/src/tracy.php';
+            }
         }
         else {
             // if user not allowed then load dummy class to prevent "class not found" errors when
