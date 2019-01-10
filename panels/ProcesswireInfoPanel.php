@@ -138,14 +138,14 @@ class ProcesswireInfoPanel extends BasePanel {
             $out .= '
             <script>
                 function searchPw(form) {
-                    if(form.section.value == "github") {
+                    if(form.section.value == "Github") {
                         window.open("https://github.com/processwire/processwire/search?utf8=✓&q="+form.pwquery.value);
                     }
-                    else if(form.section.value == "modules") {
-                        window.open("https://www.google.com/search?q=site:modules.processwire.com "+form.pwquery.value);
+                    else if(form.section.value == "Forum") {
+                        window.open("https://www.google.com/search?q=site:processwire.com/talk/ "+form.pwquery.value);
                     }
                     else {
-                        window.open("https://www.google.com/search?q=site:processwire.com"+form.section.value+" "+form.pwquery.value);
+                        window.open("https://processwire.com/search/?t="+form.section.value+"&q="+form.pwquery.value);
                     }
                     return false;
                 }
@@ -501,7 +501,7 @@ class ProcesswireInfoPanel extends BasePanel {
                 $linkTitle = 'Support Forum';
                 $out .= '
                 <li ' . ($withLabels ? ' class="with-labels"' : '') . '>
-                    <a onclick="tracyClosePanel(\'ProcesswireInfo\')" href="https://www.processwire.com/talk/" '.$this->newTab.(!$withLabels ? ' title="'.$linkTitle.'"' : '').'>
+                    <a onclick="tracyClosePanel(\'ProcesswireInfo\')" href="https://processwire.com/talk/" '.$this->newTab.(!$withLabels ? ' title="'.$linkTitle.'"' : '').'>
                         <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 317.452 317.452" style="enable-background:new 0 0 317.452 317.452;" xml:space="preserve" width="16px" height="16px">
                             <path d="M158.726,0C71.064,0,0,71.064,0,158.726s71.064,158.726,158.726,158.726s158.726-71.064,158.726-158.726     S246.388,0,158.726,0z M226.751,158.726c0,37.573-30.453,68.025-68.025,68.025s-68.025-30.453-68.025-68.025     s30.453-68.025,68.025-68.025S226.751,121.153,226.751,158.726z M158.726,22.675c29.364,0,56.212,9.728,78.433,25.555     l-32.743,32.743c-13.424-8.05-28.888-12.948-45.69-12.948s-32.267,4.898-45.69,12.948L80.293,48.23     C102.514,32.403,129.362,22.675,158.726,22.675z M22.675,158.726c0-29.364,9.728-56.212,25.555-78.433l32.72,32.72     c-8.027,13.446-12.925,28.911-12.925,45.713s4.898,32.267,12.948,45.69l-32.72,32.72     C32.403,214.938,22.675,188.09,22.675,158.726z M158.726,294.777c-29.364,0-56.212-9.728-78.433-25.555l32.72-32.72     c13.446,8.027,28.911,12.925,45.713,12.925s32.267-4.898,45.69-12.925l32.72,32.72     C214.938,285.049,188.09,294.777,158.726,294.777z M269.222,237.159l-32.72-32.743c8.027-13.424,12.925-28.888,12.925-45.69     s-4.898-32.267-12.925-45.69l32.72-32.72c15.827,22.199,25.555,49.046,25.555,78.411S285.049,214.938,269.222,237.159z" fill="'.\TracyDebugger::COLOR_NORMAL.'"/>
                         </svg>'.
@@ -510,7 +510,7 @@ class ProcesswireInfoPanel extends BasePanel {
                 $linkTitle = 'Documentation';
                 $out .= '
                 <li ' . ($withLabels ? ' class="with-labels"' : '') . '>
-                    <a onclick="tracyClosePanel(\'ProcesswireInfo\')" href="https://www.processwire.com/docs/" '.$this->newTab.(!$withLabels ? ' title="'.$linkTitle.'"' : '').'>
+                    <a onclick="tracyClosePanel(\'ProcesswireInfo\')" href="https://processwire.com/docs/" '.$this->newTab.(!$withLabels ? ' title="'.$linkTitle.'"' : '').'>
                         <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 459.319 459.319" style="enable-background:new 0 0 459.319 459.319;" xml:space="preserve">
                             <path d="M94.924,366.674h312.874c0.958,0,1.886-0.136,2.778-0.349c0.071,0,0.13,0.012,0.201,0.012   c6.679,0,12.105-5.42,12.105-12.104V12.105C422.883,5.423,417.456,0,410.777,0h-2.955H114.284H94.941   c-32.22,0-58.428,26.214-58.428,58.425c0,0.432,0.085,0.842,0.127,1.259c-0.042,29.755-0.411,303.166-0.042,339.109   c-0.023,0.703-0.109,1.389-0.109,2.099c0,30.973,24.252,56.329,54.757,58.245c0.612,0.094,1.212,0.183,1.847,0.183h317.683   c6.679,0,12.105-5.42,12.105-12.105v-45.565c0-6.68-5.427-12.105-12.105-12.105s-12.105,5.426-12.105,12.105v33.461H94.924   c-18.395,0-33.411-14.605-34.149-32.817c0.018-0.325,0.077-0.632,0.071-0.963c-0.012-0.532-0.03-1.359-0.042-2.459   C61.862,380.948,76.739,366.674,94.924,366.674z M103.178,58.425c0-6.682,5.423-12.105,12.105-12.105s12.105,5.423,12.105,12.105   V304.31c0,6.679-5.423,12.105-12.105,12.105s-12.105-5.427-12.105-12.105V58.425z" fill="'.\TracyDebugger::COLOR_NORMAL.'"/>
                         </svg>'.
@@ -565,12 +565,12 @@ class ProcesswireInfoPanel extends BasePanel {
                     <input id="pwquery" name="pwquery" placeholder="Search ProcessWire" type="text" style="width:205px !important" />
                     <input type="submit" name="pwsearch" value="Search" />
                     <div style="padding: 12px 0 0 0; font-size: 13px">
-                        <label><input type="radio" name="section" value="/api/ref/"> API</label>&nbsp;&nbsp;
-                        <label><input type="radio" name="section" value="github"> Github</label>&nbsp;&nbsp;
-                        <label><input type="radio" name="section" value="/talk/"> Forums</label>&nbsp;&nbsp;
-                        <label><input type="radio" name="section" value="/blog/"> Blog</label>&nbsp;&nbsp;
-                        <label><input type="radio" name="section" value="modules"> Modules</label>&nbsp;&nbsp;
-                        <label><input type="radio" name="section" value="/" checked> All PW</label>
+                        <label><input type="radio" name="section" value="API"> API</label>&nbsp;&nbsp;
+                        <label><input type="radio" name="section" value="Forum"> Forums</label>&nbsp;&nbsp;
+                        <label><input type="radio" name="section" value="Blog"> Blog</label>&nbsp;&nbsp;
+                        <label><input type="radio" name="section" value="Modules"> Modules</label>&nbsp;&nbsp;
+                        <label><input type="radio" name="section" value="Github"> Github</label>&nbsp;&nbsp;
+                        <label><input type="radio" name="section" checked> All PW</label>
                     </div>
                 </form>
                 ';
