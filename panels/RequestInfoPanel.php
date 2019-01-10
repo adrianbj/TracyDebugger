@@ -284,30 +284,33 @@ class RequestInfoPanel extends BasePanel {
                 $moduleSettings = '';
                 $moduleName = $this->wire('sanitizer')->name($this->wire('input')->get('name'));
                 if($this->wire('modules')->isInstalled($moduleName)) {
-                    $moduleObject = $this->wire('modules')->getModule($moduleName, array('noInit' => true));
+                    $moduleInfo = $this->wire('modules')->getModuleInfoVerbose($moduleName);
+                    $moduleConfigData = $this->wire('modules')->getModuleConfigData($moduleName);
+                    $moduleObject = $this->wire('modules')->getModule($moduleName, array('noInit' => true))->getArray();
+                    ksort($moduleConfigData);
+                    ksort($moduleObject);
                     if(isset($adminerUrl)) {
                         $moduleSettings .= '<a title="Edit in Adminer" style="padding-bottom:5px" href="'.$adminerUrl.'?edit=modules&where%5Bclass%5D='.$moduleName.'">'.$adminerIcon.'</a>';
                     }
-                    $moduleSettings .= '
-                    <table>';
-                    foreach($this->wire('modules')->getModuleInfoVerbose($moduleName) as $k => $v) {
+                    foreach(array(
+                        'getModuleInfoVerbose()' => $moduleInfo,
+                        'getConfig()' => $moduleConfigData,
+                        'getModule()' => $moduleObject
+                    ) as $type => $settings) {
                         $moduleSettings .= '
-                            <tr>
-                                <td>'.$k.'</td>
-                                <td>'.Dumper::toHtml($v, array(Dumper::TRUNCATE => 999)).'</td>
-                            </tr>
-                        ';
-                    }
-                    foreach($moduleObject as $k => $v) {
+                        <p><table>
+                            <th colspan="2">'.$type.'</th>';
+                                foreach($settings as $k => $v) {
+                                    $moduleSettings .= '
+                                        <tr>
+                                            <td>'.$k.'</td>
+                                            <td>'.Dumper::toHtml($v, array(Dumper::TRUNCATE => 999)).'</td>
+                                        </tr>
+                                    ';
+                                }
                         $moduleSettings .= '
-                            <tr>
-                                <td>'.$k.'</td>
-                                <td>'.Dumper::toHtml($v, array(Dumper::TRUNCATE => 999)).'</td>
-                            </tr>
-                        ';
+                        </table></p>';
                     }
-                    $moduleSettings .= '</table>
-                    ';
                 }
             }
         }
