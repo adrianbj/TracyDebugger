@@ -69,19 +69,21 @@ class ApiExplorerPanel extends BasePanel {
                 var innerPanel = panel.getElementsByClassName("tracy-inner")[0];
                 var sections = innerPanel.getElementsByTagName("div");
                 Array.prototype.forEach.call(sections, function(el) {
-                    elId = el.getAttribute("id");
-                    if(groupShow) {
-                        if(el.classList.contains("tracy-collapsed")) {
-                            el.classList.toggle("tracy-collapsed", !groupShow);
-                            removeA(manuallyOpened, elId);
+                    if(!el.classList.contains("new-since")) {
+                        elId = el.getAttribute("id");
+                        if(groupShow) {
+                            if(el.classList.contains("tracy-collapsed")) {
+                                el.classList.toggle("tracy-collapsed", !groupShow);
+                                removeA(manuallyOpened, elId);
+                            }
+                            else {
+                                if(manuallyOpened.indexOf(elId) === -1) manuallyOpened.push(elId);
+                            }
                         }
                         else {
-                            if(manuallyOpened.indexOf(elId) === -1) manuallyOpened.push(elId);
-                        }
-                    }
-                    else {
-                        if(manuallyOpened.indexOf(elId) === -1) {
-                            el.classList.toggle("tracy-collapsed", !groupShow);
+                            if(manuallyOpened.indexOf(elId) === -1) {
+                                el.classList.toggle("tracy-collapsed", !groupShow);
+                            }
                         }
                     }
                 });
@@ -118,10 +120,10 @@ HTML;
             foreach($apiChanges as $type => $classes) {
                 if($type == 'cachedVersion') {
                     $apiChangesOut .= '
-                    <a href="#" rel="new-since" class="tracy-toggle tracy-collapsed">
+                    <a href="#" rel="new-since" class="tracy-toggle tracy-collapsed new-since">
                         <span style="font-size: 15px; font-weight: bold">NEW SINCE v'.$classes.'</span>
                     </a>
-                    <div style="padding-left:10px" id="new-since" class="tracy-collapsed">
+                    <div style="padding-left:10px" id="new-since" class="tracy-collapsed new-since">
                     ';
                     continue;
                 }
