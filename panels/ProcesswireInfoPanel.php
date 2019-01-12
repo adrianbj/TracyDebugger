@@ -145,7 +145,7 @@ class ProcesswireInfoPanel extends BasePanel {
                         window.open("https://www.google.com/search?q=site:processwire.com/talk/ "+form.pwquery.value);
                     }
                     else {
-                        window.open("https://processwire.com/search/?t="+form.section.value+"&q="+form.pwquery.value);
+                        window.open("https://processwire.com/search/?"+(form.section.value != "on" ? "t="+form.section.value+"&" : "") + "q="+form.pwquery.value);
                     }
                     return false;
                 }
