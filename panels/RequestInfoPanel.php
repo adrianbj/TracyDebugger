@@ -285,8 +285,8 @@ class RequestInfoPanel extends BasePanel {
                 $moduleName = $this->wire('sanitizer')->name($this->wire('input')->get('name'));
                 if($this->wire('modules')->isInstalled($moduleName)) {
                     $moduleInfo = $this->wire('modules')->getModuleInfoVerbose($moduleName);
-                    $moduleConfigData = $this->wire('modules')->getModuleConfigData($moduleName);
-                    $moduleObject = $this->wire('modules')->getModule($moduleName, array('noInit' => true))->getArray();
+                    $moduleConfigData = $this->wire('modules')->getModuleConfigData($moduleName) ?: array();
+                    $moduleObject = $this->wire('modules')->getModule($moduleName, array('noInit' => true))->getArray() ?: array();
                     ksort($moduleConfigData);
                     ksort($moduleObject);
                     if(isset($adminerUrl)) {
