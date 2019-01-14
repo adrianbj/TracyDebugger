@@ -153,9 +153,7 @@ HTML;
     private function buildTypes($type) {
         $out = '<h3>' . ucfirst($type).($type == 'variables' ? '' : ' classes').'</h3>';
         foreach(\TracyDebugger::getApiData($type) as $class => $methods) {
-            $out .= '
-            <a href="#" rel="'.$class.'" class="tracy-toggle tracy-collapsed">'.($type == 'variables' ? '$' : '').$class.'</a>
-            <div style="padding-left:10px" id="'.$class.'" class="tracy-collapsed">' . $this->buildTable($class, $methods, $type) . '</div><br />';
+            $out .= $this->buildTable($class, $methods, $type);
         }
         return $out;
     }
@@ -173,58 +171,71 @@ HTML;
         elseif(class_exists($class)) {
             $r = new \ReflectionClass($class);
         }
-        $filename = $r->getfilename();
 
-        $out = '
-        <table class="apiExplorerTable">';
+        if(isset($r)) {
+            $filename = $r->getfilename();
 
-        $out .= '
-        <th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">'.$varTitle.' links</th>
-        <tr>
-            <td colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '3' : '2').'"><a '.$this->newTab.' href="'.$this->apiBaseUrl.$this->convertNamesToUrls(str_replace('$', '', $className)).'/">' . $className . '</a></td>';
-
-        $out .= '
-                <td>'.\TracyDebugger::createEditorLink(\TracyDebugger::removeCompilerFromPath($filename), 1, str_replace($this->wire('config')->paths->root, '', '/'.\TracyDebugger::removeCompilerFromPath($filename))).'</td>
-            </tr>';
-
-        if(empty($items)) return 'See <strong>$'.lcfirst($var).'</strong> api variable above for the properties and methods for this class';
-
-        $i=0;
-        $propertiesSection = false;
-        foreach($items as $item => $info) {
-            if(strpos($item, '()') === false && !$propertiesSection) {
-                $propertiesSection = true;
-                $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">'.$varTitle.' properties</th>';
-            }
-            elseif($i == 0) {
-                $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">'.$varTitle.' methods</th>';
-            }
-
-            $name = $info['name'];
-            $methodName = str_replace(array('___', '__'), '', $name);
-            if(strpos($info['filename'], 'wire') !== false) {
-                if($this->apiModuleInstalled || strpos($filename, 'modules') === false) {
-                    $name = "<a ".$this->newTab." href='".$this->apiBaseUrl.$this->convertNamesToUrls(str_replace('$', '', $className))."/".$this->convertNamesToUrls($methodName)."/'>" . $name . "</a>";
-                }
-            }
+            $out = '
+            <table class="apiExplorerTable">';
 
             $out .= '
-                <tr>
-                    <td>'.str_replace('()', '', $name).'</td>
-                    <td>'.\TracyDebugger::createEditorLink(\TracyDebugger::removeCompilerFromPath($info['filename']), $info['lineNumber'], $info['lineNumber']).'</td>
-                    <td class="tracy-force-no-wrap">' . $info['comment'] . '</td>';
-                if(\TracyDebugger::getDataValue('apiExplorerShowDescription') && isset($info['description'])) {
+            <th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">'.$varTitle.' links</th>
+            <tr>
+                <td colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '3' : '2').'"><a '.$this->newTab.' href="'.$this->apiBaseUrl.$this->convertNamesToUrls(str_replace('$', '', $className)).'/">' . $className . '</a></td>';
+
+            $out .= '
+                    <td>'.\TracyDebugger::createEditorLink(\TracyDebugger::removeCompilerFromPath($filename), 1, str_replace($this->wire('config')->paths->root, '', '/'.\TracyDebugger::removeCompilerFromPath($filename))).'</td>
+                </tr>';
+
+            if(empty($items)) {
+                $out = 'See <strong>$'.lcfirst($var).'</strong> api variable above for the properties and methods for this class';
+            }
+            else {
+                $i=0;
+                $propertiesSection = false;
+                foreach($items as $item => $info) {
+                    if(strpos($item, '()') === false && !$propertiesSection) {
+                        $propertiesSection = true;
+                        $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">'.$varTitle.' properties</th>';
+                    }
+                    elseif($i == 0) {
+                        $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">'.$varTitle.' methods</th>';
+                    }
+
+                    $name = $info['name'];
+                    $methodName = str_replace(array('___', '__'), '', $name);
+                    if(strpos($info['filename'], 'wire') !== false) {
+                        if($this->apiModuleInstalled || strpos($filename, 'modules') === false) {
+                            $name = "<a ".$this->newTab." href='".$this->apiBaseUrl.$this->convertNamesToUrls(str_replace('$', '', $className))."/".$this->convertNamesToUrls($methodName)."/'>" . $name . "</a>";
+                        }
+                    }
+
                     $out .= '
-                    <td class="tracy-force-no-wrap">' . $info['description'] . '</td>';
+                        <tr>
+                            <td>'.str_replace('()', '', $name).'</td>
+                            <td>'.\TracyDebugger::createEditorLink(\TracyDebugger::removeCompilerFromPath($info['filename']), $info['lineNumber'], $info['lineNumber']).'</td>
+                            <td class="tracy-force-no-wrap">' . $info['comment'] . '</td>';
+                        if(\TracyDebugger::getDataValue('apiExplorerShowDescription') && isset($info['description'])) {
+                            $out .= '
+                            <td class="tracy-force-no-wrap">' . $info['description'] . '</td>';
+                        }
+                    $out .=
+                        '</tr>';
+                        $i++;
                 }
-            $out .=
-                '</tr>';
-                $i++;
+                $out .= '
+                    </table>
+                ';
+            }
+
+            return '
+            <a href="#" rel="'.$var.'" class="tracy-toggle tracy-collapsed">'.($type == 'variables' ? '$' : '').$var.'</a>
+            <div style="padding-left:10px" id="'.$var.'" class="tracy-collapsed">' . $out . '</div><br />';
         }
-        $out .= '
-            </table>
-        ';
-        return $out;
+        else {
+            return '';
+        }
+
     }
 
 
