@@ -159,7 +159,7 @@ class TD extends TracyDebugger {
         $editCountLink = '';
         if(count(\TracyDebugger::getDataValue('dumpPanelTabs')) > 0 && !is_string($var)) {
             $classExt = rand();
-            if(($var instanceof Wire || $var instanceof \ProcessWire\Wire) && isset($var->id)) {
+            if(($var instanceof Wire || $var instanceof \ProcessWire\Wire)) {
                 if($var instanceof User || $var instanceof \ProcessWire\User) {
                     $type = 'users';
                     $section = 'access';
@@ -187,6 +187,10 @@ class TD extends TracyDebugger {
                 elseif($var instanceof Field || $var instanceof \ProcessWire\Field) {
                     $type = 'field';
                     $section = 'setup';
+                }
+                elseif($var instanceof Module || $var instanceof \ProcessWire\Module) {
+                    $type = 'module';
+                    $section = '';
                 }
 
                 if(isset($type)) $editCountLink .= self::generateEditViewLinks($var, $type, $section);
@@ -257,7 +261,12 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     private static function generateEditViewLinks($var, $type, $section) {
-        return '<li style="float:right"><a href="' . wire('config')->urls->admin . $section . ($section ? '/' : '') . $type . '/edit/?id=' . $var->id . '" title="Edit ' . trim($type, 's') . ': ' . $var->name . '">#' . $var->id . '</a>' . ($type == 'page' && $var->viewable() ? '<a href="' . $var->url . '" title="View ' . trim($type, 's') . ': ' . $var->path . '" class="' . (method_exists($var, 'hasStatus') && $var->hasStatus('unpublished') ? 'pageUnpublished' : '') . (method_exists($var, 'hasStatus') && $var->hasStatus('hidden') ? 'pageHidden' : '') . '">' : '<span class="pageTitle">') . ((strlen($var->get('title|name')) > 20) ? substr($var->get('title|name'),0,19).'…' : $var->get('title|name')) . ($type == 'page' && $var->viewable() ? '</a>' : '</span>') . '</li>';
+        if($var->id === 0) {
+            return;
+        }
+        else {
+            return '<li style="float:right"><a href="' . wire('config')->urls->admin . $section . ($section ? '/' : '') . $type . '/edit/?' . ($type == 'module' ? 'name=' . $var->className : 'id=' . $var->id) . '" title="Edit ' . trim($type, 's') . ': ' . $var->name . '">#' . ($type=='module' ? $var->className : $var->id) . '</a>' . ($type == 'page' && $var->viewable() ? '<a href="' . $var->url . '" title="View ' . trim($type, 's') . ': ' . $var->path . '" class="' . (method_exists($var, 'hasStatus') && $var->hasStatus('unpublished') ? 'pageUnpublished' : '') . (method_exists($var, 'hasStatus') && $var->hasStatus('hidden') ? 'pageHidden' : '') . '">' : '<span class="pageTitle">') . ((strlen($var->get('title|name')) > 20) ? substr($var->get('title|name'),0,19).'…' : $var->get('title|name')) . ($type == 'page' && $var->viewable() ? '</a>' : '</span>') . '</li>';
+        }
     }
 
     /**
