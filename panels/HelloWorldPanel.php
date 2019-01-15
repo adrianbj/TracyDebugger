@@ -28,7 +28,7 @@ class HelloWorldPanel extends BasePanel {
     public function getTab() {
         if(\TracyDebugger::isAdditionalBar()) return;
         \Tracy\Debugger::timer($this->name);
-        return "<span title='{$this->label}'>{$this->icon}</span>";
+        return "<span title='{$this->label}'>{$this->icon} ".(\TracyDebugger::getDataValue('showPanelLabels') ? $this->label : '')."</span>";
     }
 
     /**

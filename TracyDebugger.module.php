@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.16.20',
+            'version' => '4.17.0',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -141,6 +141,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'fullObject' => 'Full Object'
     );
     public static $allPanels = array(
+        'adminActions' => 'Admin Actions',
         'adminer' => 'Adminer',
         'apiExplorer' => 'API Explorer',
         'captainHook' => 'Captain Hook',
@@ -741,6 +742,45 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $this->wire('session')->redirect($this->httpReferer);
             }
 
+
+            // ADMIN ACTIONS
+            if($this->wire('user')->isSuperuser()) {
+                // delete children
+                if($this->wire('input')->post->deleteChildren) {
+                    foreach($this->wire('pages')->get((int)$this->wire('input')->post->adminActionsId)->children("include=all") as $child) {
+                        $child->delete(true);
+                    }
+                }
+                // delete template
+                if($this->wire('input')->post->deleteTemplate) {
+                    foreach($this->wire('pages')->find("template=".(int)$this->wire('input')->post->adminActionsId.", include=all") as $p) {
+                        $p->delete();
+                    }
+                    $template = $this->wire('templates')->get((int)$this->wire('input')->post->adminActionsId);
+                    $this->wire('templates')->delete($template);
+                    $templateName = $template->name;
+                    $fieldgroup = $this->wire('fieldgroups')->get($templateName);
+                    $this->wire('fieldgroups')->delete($fieldgroup);
+                    $this->wire('session')->redirect($this->wire('config')->urls->admin);
+                }
+                // delete field
+                if($this->wire('input')->post->deleteField) {
+                    $field = $this->wire('fields')->get((int)$this->wire('input')->post->adminActionsId);
+                    foreach($this->wire('templates') as $template) {
+                        if(!$template->hasField($field)) continue;
+                        $template->fields->remove($field);
+                        $template->fields->save();
+                    }
+                    $this->wire('fields')->delete($field);
+                    $this->wire('session')->redirect($this->wire('config')->urls->admin.'setup/field');
+                }
+                // change field type
+                if($this->wire('input')->post->changeFieldType) {
+                    $field = $this->wire('fields')->get((int)$this->wire('input')->post->adminActionsId);
+                    $field->type = $this->wire('input')->post->changeFieldType;
+                    $field->save();
+                }
+            }
         }
 
         // TRACY SETUP
@@ -1367,7 +1407,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         foreach(static::$showPanels as $panel) {
             if(!array_key_exists($panel, static::$allPanels)) continue;
             if(static::$inAdmin && in_array($panel, static::$hideInAdmin)) continue;
-            if(($panel == 'console' || $panel == 'snippetRunner' || $panel == 'fileEditor' || $panel == 'adminer') && !$this->wire('user')->isSuperuser()) continue;
+            if(($panel == 'console' || $panel == 'snippetRunner' || $panel == 'fileEditor' || $panel == 'adminer' || $panel == 'adminActions') && !$this->wire('user')->isSuperuser()) continue;
             if($panel == 'userSwitcher') {
                 if(isset($this->data['userSwitchSession'])) $userSwitchSession = $this->data['userSwitchSession'];
                 if(!$this->wire('user')->isSuperuser() && (!$this->wire('session')->tracyUserSwitcherId || (isset($userSwitchSession[$this->wire('session')->tracyUserSwitcherId]) && $userSwitchSession[$this->wire('session')->tracyUserSwitcherId] <= time()))) continue;

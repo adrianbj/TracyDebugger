@@ -51,7 +51,7 @@ class RequestLoggerPanel extends BasePanel {
         </svg>
         ';
 
-        return "<span title='{$this->label}'>{$this->icon}</span>" . (count($this->requestData) > 0 ? ' ' . count($this->requestData) : '');
+        return "<span title='{$this->label}'>{$this->icon}</span>" . (\TracyDebugger::getDataValue('showPanelLabels') ? $this->label : '') . (count($this->requestData) > 0 ? ' ' . count($this->requestData) : '');
     }
 
     /**

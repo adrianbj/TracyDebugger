@@ -114,7 +114,7 @@ class PageFilesPanel extends BasePanel {
             $orphanMissingCounts = $this->numMissingFiles . '/' . count($this->orphanFiles) . '/';
         }
 
-        return "<span title='{$this->label}'>{$this->icon} ".$orphanMissingCounts.($numDiskFiles > 0 ? $numDiskFiles : '')."</span>";
+        return "<span title='{$this->label}'>{$this->icon}".(\TracyDebugger::getDataValue('showPanelLabels') ? $this->label : '')." ".$orphanMissingCounts.($numDiskFiles > 0 ? $numDiskFiles : '')."</span>";
     }
 
     /**
