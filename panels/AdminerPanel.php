@@ -43,6 +43,24 @@ class AdminerPanel extends BasePanel {
         if(isset($p)) {
             $contextLink = '&edit=pages&where%5Bid%5D='.$p->id;
         }
+        elseif($this->wire('process') == 'ProcessLanguage') {
+            if($this->wire('input')->get('id')) {
+                $contextLink = '&edit=pages&where%5Bid%5D='.(int)$this->wire('input')->get('id');
+            }
+            else {
+                $languagePage = $this->wire('pages')->get('/admin/setup/languages/');
+                $contextLink = '&select=pages&columns%5B0%5D%5Bfun%5D=&columns%5B0%5D%5Bcol%5D=&where%5B0%5D%5Bcol%5D=parent_id&where%5B0%5D%5Bop%5D=%3D&where%5B0%5D%5Bval%5D='.$languagePage->id.'&where%5B01%5D%5Bcol%5D=&where%5B01%5D%5Bop%5D=%3D&where%5B01%5D%5Bval%5D=&order%5B0%5D=&limit=50&text_length=100';
+            }
+        }
+        elseif($this->wire('process') == 'ProcessUser') {
+            $contextLink = '&select=pages&columns%5B0%5D%5Bfun%5D=&columns%5B0%5D%5Bcol%5D=&where%5B0%5D%5Bcol%5D=parent_id&where%5B0%5D%5Bop%5D=%3D&where%5B0%5D%5Bval%5D='.$this->wire('config')->usersPageID.'&where%5B01%5D%5Bcol%5D=&where%5B01%5D%5Bop%5D=%3D&where%5B01%5D%5Bval%5D=&order%5B0%5D=&limit=50&text_length=100';
+        }
+        elseif($this->wire('process') == 'ProcessRole') {
+            $contextLink = '&select=pages&columns%5B0%5D%5Bfun%5D=&columns%5B0%5D%5Bcol%5D=&where%5B0%5D%5Bcol%5D=parent_id&where%5B0%5D%5Bop%5D=%3D&where%5B0%5D%5Bval%5D='.$this->wire('config')->rolesPageID.'&where%5B01%5D%5Bcol%5D=&where%5B01%5D%5Bop%5D=%3D&where%5B01%5D%5Bval%5D=&order%5B0%5D=&limit=50&text_length=100';
+        }
+        elseif($this->wire('process') == 'ProcessPermission') {
+            $contextLink = '&select=pages&columns%5B0%5D%5Bfun%5D=&columns%5B0%5D%5Bcol%5D=&where%5B0%5D%5Bcol%5D=parent_id&where%5B0%5D%5Bop%5D=%3D&where%5B0%5D%5Bval%5D='.$this->wire('config')->permissionsPageID.'&where%5B01%5D%5Bcol%5D=&where%5B01%5D%5Bop%5D=%3D&where%5B01%5D%5Bval%5D=&order%5B0%5D=&limit=50&text_length=100';
+        }
         elseif($this->wire('process') == 'ProcessPageList') {
             $contextLink = '&select=pages';
         }
@@ -68,6 +86,33 @@ class AdminerPanel extends BasePanel {
             }
             else {
                 $contextLink = '&select=modules';
+            }
+        }
+        elseif($this->wire('page')->process == 'ProcessHannaCode') {
+            if($this->wire('input')->get('id')) {
+                $contextLink = '&edit=hanna_code&where%5Bid%5D='.$this->wire('sanitizer')->name($this->wire('input')->get('id'));
+            }
+            else {
+                $contextLink = '&select=hanna_code';
+            }
+        }
+        elseif($this->wire('page')->process == 'ProcessChangelog') {
+            $contextLink = '&select=process_changelog&order=timestamp&desc=1';
+        }
+        elseif($this->wire('page')->process == 'ProcessLoginHistory') {
+            $contextLink = '&select=process_login_history&order=login_timestamp&desc=1';
+        }
+        elseif($this->wire('page')->process == 'ProcessFormBuilder') {
+            if (strpos(\TracyDebugger::inputUrl(), 'listEntries') !== false) {
+                $contextLink = '&edit=forms_entries&where%5Bid%5D='.$this->wire('sanitizer')->name($this->wire('input')->get('id'));
+            }
+            else {
+                if($this->wire('input')->get('id')) {
+                    $contextLink = '&edit=forms&where%5Bid%5D='.$this->wire('sanitizer')->name($this->wire('input')->get('id'));
+                }
+                else {
+                    $contextLink = '&select=forms';
+                }
             }
         }
 
