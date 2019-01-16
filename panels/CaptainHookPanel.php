@@ -106,7 +106,8 @@ HTML;
         $cacheName = 'TracyCaptainHook';
         $hooks = $this->wire('cache')->get($cacheName);
 
-        if(!$hooks || \TracyDebugger::getDataValue('hooksPwVersion') === null || $this->wire('config')->version != \TracyDebugger::getDataValue('hooksPwVersion')) {
+        // unserialize check is in case someone is upgrading from old version of Tracy that used to serialize hook data
+        if(!$hooks || @unserialize($hooks) !== false || \TracyDebugger::getDataValue('hooksPwVersion') === null || $this->wire('config')->version != \TracyDebugger::getDataValue('hooksPwVersion')) {
             $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
             $configData['hooksPwVersion'] = $this->wire('config')->version;
             $this->wire('modules')->saveModuleConfigData($this->wire('modules')->get("TracyDebugger"), $configData);

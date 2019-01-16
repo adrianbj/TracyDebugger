@@ -104,7 +104,7 @@ class AdminerPanel extends BasePanel {
         }
         elseif($this->wire('page')->process == 'ProcessFormBuilder') {
             if (strpos(\TracyDebugger::inputUrl(), 'listEntries') !== false) {
-                $contextLink = '&edit=forms_entries&where%5Bid%5D='.$this->wire('sanitizer')->name($this->wire('input')->get('id'));
+                $contextLink = '&select=forms_entries&order=created&desc=1';
             }
             else {
                 if($this->wire('input')->get('id')) {
