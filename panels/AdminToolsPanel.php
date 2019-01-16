@@ -1,10 +1,10 @@
 <?php
 
-class AdminActionsPanel extends BasePanel {
+class AdminToolsPanel extends BasePanel {
 
     protected $icon;
-    private $name = 'adminActions';
-    private $label = 'Admin Actions';
+    private $name = 'adminTools';
+    private $label = 'Admin Tools';
 
     public function getTab() {
 
@@ -49,14 +49,14 @@ class AdminActionsPanel extends BasePanel {
             if($p->template != 'admin' && $p->hasChildren()) {
                 $out .= '
                 <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete all children of this page?\');">
-                    <input type="hidden" name="adminActionsId" value="'.$p->id.'" />
+                    <input type="hidden" name="adminToolsId" value="'.$p->id.'" />
                     <input type="submit" name="deleteChildren" value="Delete all children" />
                 </form>';
             }
             elseif($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessTemplate') {
                 $out .= '
                 <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete this template and all associated pages?\');">
-                    <input type="hidden" name="adminActionsId" value="'.(int)$this->wire('input')->get('id').'" />
+                    <input type="hidden" name="adminToolsId" value="'.(int)$this->wire('input')->get('id').'" />
                     <input type="submit" name="deleteTemplate" value="Delete template" />
                 </form>';
             }
@@ -65,14 +65,14 @@ class AdminActionsPanel extends BasePanel {
                 $out .= '
                 <p>
                     <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete this field and remove it from all templates/pages?\');">
-                        <input type="hidden" name="adminActionsId" value="'.(int)$this->wire('input')->get('id').'" />
+                        <input type="hidden" name="adminToolsId" value="'.(int)$this->wire('input')->get('id').'" />
                         <input type="submit" name="deleteField" value="Delete field" />
                     </form>
                 </p>';
                 $out .= '
                 <p>
                     <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to change the type of this field?\');">
-                        <input type="hidden" name="adminActionsId" value="'.(int)$this->wire('input')->get('id').'" />
+                        <input type="hidden" name="adminToolsId" value="'.(int)$this->wire('input')->get('id').'" />
                         <select type="submit" name="changeFieldType">';
                             foreach($this->wire('fieldtypes')->sort('name') as $fieldtype) {
                                 $out .= '<option value="'.$fieldtype.'"'.($f->type === $fieldtype ? " selected='selected'" : "").'>'.str_replace('Fieldtype', '', $fieldtype).'</option>';
@@ -83,7 +83,7 @@ class AdminActionsPanel extends BasePanel {
                 </p>';
             }
             else {
-                $out .= 'No available actions.';
+                $out .= 'No available tools.';
             }
 
 
