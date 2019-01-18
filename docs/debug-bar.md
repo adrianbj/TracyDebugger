@@ -3,6 +3,33 @@ The debug bar shows non-fatal errors, dumps, and provides access to all the cust
 
 ![Tracy Debug Bar Kitchen Sink](img/debug-bar-kitchen-sink.png 'Tracy Debug Bar')
 
+## ![Admin Tools](icons/admin-tools.svg ':no-zoom')Admin Tools
+ The available actions are context sensitive so you only get tools that are relevant to where you are in the admin (or frontend in some cases).
+
+Current tools are:
+
+*Delete field*
+If you're on the edit interface for a field, this action will let you delete a field even if it is already added to templates, so you don't have to deal with the "This field may not be deleted because it is in use by one or more templates." notice you get when trying to delete the field.
+
+*Change field type*
+Again, if you're on the edit interface for a field, this lets you change the field to any installed field type. This ignores the compatible field type check that you are normally subject to. This is probably not good to use if you already have page data in this field, but it's really handy when you have already set up a field and added it to templates but decide you want to change its type to a non-compatible type.
+
+![Admin Tools Fields](admin-tools-fields.png)
+
+*Delete template*
+Like the delete field, this bypasses the "This template may not be deleted" because there are pages already using it. This takes care of deleting any pages using the template and then deletes the template, all with one click.
+
+![Admin Tools Templates](admin-tools-templates.png)
+
+*Delete all children*
+This lets you delete all children of the current page without deleting the page itself which can be very helpful when you're testing API creation of page and you have forgotten to enable Tracy's Page Recorder panel.
+
+![Admin Tools Pages](admin-tools-pages.png)
+
+Hopefully it goes without saying that these can be extremely de﻿structive and bypass core protections against data loss so use with extreme caution. Each action has a confirmation dialog that you must confirm to reduce any accidental clicks and the entire panel is restricted to superusers only, but you must still use with extreme caution.
+
+***
+
 ## ![Adminer](icons/adminer.svg ':no-zoom')Adminer
 Adminer is a MySQL database management tool similar to PHPMyAdmin.
 
