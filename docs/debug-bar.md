@@ -14,17 +14,17 @@ If you're on the edit interface for a field, this action will let you delete a f
 *Change field type*
 Again, if you're on the edit interface for a field, this lets you change the field to any installed field type. This ignores the compatible field type check that you are normally subject to. This is probably not good to use if you already have page data in this field, but it's really handy when you have already set up a field and added it to templates but decide you want to change its type to a non-compatible type.
 
-![Admin Tools Fields](admin-tools-fields.png)
+![Admin Tools Fields](img/admin-tools-fields.png)
 
 *Delete template*
 Like the delete field, this bypasses the "This template may not be deleted" because there are pages already using it. This takes care of deleting any pages using the template and then deletes the template, all with one click.
 
-![Admin Tools Templates](admin-tools-templates.png)
+![Admin Tools Templates](img/admin-tools-templates.png)
 
 *Delete all children*
 This lets you delete all children of the current page without deleting the page itself which can be very helpful when you're testing API creation of page and you have forgotten to enable Tracy's Page Recorder panel.
 
-![Admin Tools Pages](admin-tools-pages.png)
+![Admin Tools Pages](img/admin-tools-pages.png)
 
 Hopefully it goes without saying that these can be extremely de﻿structive and bypass core protections against data loss so use with extreme caution. Each action has a confirmation dialog that you must confirm to reduce any accidental clicks and the entire panel is restricted to superusers only, but you must still use with extreme caution.
 
