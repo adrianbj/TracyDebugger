@@ -8,7 +8,6 @@ class ApiExplorerPanel extends BasePanel {
     private $apiBaseUrl;
     private $tracyPwApiData;
 
-
     public function __construct() {
         if($this->wire('modules')->isInstalled('ProcessWireAPI')) {
             $apiModuleInstalled = true;
@@ -102,6 +101,9 @@ HTML;
         // core classes
         $currentApiOut .= $this->buildTypes('core');
 
+        // procedural functions
+        $currentApiOut .= $this->buildTypes('proceduralFunctions');
+
         // core module classes
         if(in_array('coreModules', \TracyDebugger::getDataValue('apiExplorerModuleClasses'))) {
             $currentApiOut .= $this->buildTypes('coreModules');
@@ -111,6 +113,7 @@ HTML;
         if(in_array('siteModules', \TracyDebugger::getDataValue('apiExplorerModuleClasses'))) {
             $currentApiOut .= $this->buildTypes('siteModules');
         }
+
 
         //get API changes
         $apiChangesOut = '';
@@ -128,7 +131,7 @@ HTML;
                     continue;
                 }
                 if(!isset($currentType) || $currentType !== $type) {
-                    $apiChangesOut .= '<h3>'.ucfirst($type).($type == 'variables' ? '' : ' classes').'</h3>';
+                    $apiChangesOut .= '<h3>' . ucfirst(strtolower(preg_replace('/([a-z0-9])([A-Z])/', "$1 $2", $type))) .($type == 'variables' || $type == 'proceduralFunctions' ? '' : ' classes').'</h3>';
                 }
                 foreach($classes as $class => $methods) {
                     foreach($methods as $method) {
@@ -151,7 +154,7 @@ HTML;
 
 
     private function buildTypes($type) {
-        $out = '<h3>' . ucfirst($type).($type == 'variables' ? '' : ' classes').'</h3>';
+        $out = '<h3>' . ucfirst(strtolower(preg_replace('/([a-z0-9])([A-Z])/', "$1 $2", $type))) .($type == 'variables' || $type == 'proceduralFunctions' ? '' : ' classes').'</h3>';
         foreach(\TracyDebugger::getApiData($type) as $class => $methods) {
             $out .= $this->buildTable($class, $methods, $type);
         }
@@ -161,8 +164,19 @@ HTML;
 
     private function buildTable($var, $items, $type) {
 
-        $class = is_object($this->wire($var)) ? get_class($this->wire($var)) : $var;
-        $className = is_object($this->wire($var)) ? '$'.lcfirst($var) : $var;
+        if(is_object($this->wire($var))) {
+            $class = get_class($this->wire($var));
+            $className =  '$'.lcfirst($var);
+        }
+        elseif($var == 'FunctionsAPI') {
+            $class = 'Functions';
+            $className = 'Functions';
+        }
+        else {
+            $class = $var;
+            $className = $var;
+        }
+
         $varTitle = $type == 'variables' ? '$'.lcfirst($var) : $var;
 
         if(class_exists("\ProcessWire\\$class")) {
@@ -172,69 +186,64 @@ HTML;
             $r = new \ReflectionClass($class);
         }
 
-        if(isset($r)) {
-            $filename = $r->getfilename();
+        $filename = isset($r) ? $r->getfilename() : $this->wire('config')->paths->core . $var . '.php';
 
-            $out = '
-            <table class="apiExplorerTable">';
+        $out = '
+        <table class="apiExplorerTable">';
 
-            $out .= '
-            <th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">'.$varTitle.' links</th>
-            <tr>
-                <td colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '3' : '2').'"><a '.$this->newTab.' href="'.$this->apiBaseUrl.$this->convertNamesToUrls(str_replace('$', '', $className)).'/">' . $className . '</a></td>';
+        $out .= '
+        <th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">'.$varTitle.' links</th>
+        <tr>
+            <td colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '3' : '2').'"><a '.$this->newTab.' href="'.$this->apiBaseUrl.$this->convertNamesToUrls(str_replace('$', '', $className)).'/">' . $className . '</a></td>';
 
-            $out .= '
-                    <td>'.\TracyDebugger::createEditorLink(\TracyDebugger::removeCompilerFromPath($filename), 1, str_replace($this->wire('config')->paths->root, '', '/'.\TracyDebugger::removeCompilerFromPath($filename))).'</td>
-                </tr>';
+        $out .= '
+                <td>'.\TracyDebugger::createEditorLink(\TracyDebugger::removeCompilerFromPath($filename), 1, str_replace($this->wire('config')->paths->root, '', '/'.\TracyDebugger::removeCompilerFromPath($filename))).'</td>
+            </tr>';
 
-            if(empty($items)) {
-                $out = 'See <strong>$'.lcfirst($var).'</strong> api variable above for the properties and methods for this class';
-            }
-            else {
-                $i=0;
-                $propertiesSection = false;
-                foreach($items as $item => $info) {
-                    if(strpos($item, '()') === false && !$propertiesSection) {
-                        $propertiesSection = true;
-                        $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">'.$varTitle.' properties</th>';
-                    }
-                    elseif($i == 0) {
-                        $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">'.$varTitle.' methods</th>';
-                    }
-
-                    $name = $info['name'];
-                    $methodName = str_replace(array('___', '__'), '', $name);
-                    if(strpos($info['filename'], 'wire') !== false) {
-                        if($this->apiModuleInstalled || strpos($filename, 'modules') === false) {
-                            $name = "<a ".$this->newTab." href='".$this->apiBaseUrl.$this->convertNamesToUrls(str_replace('$', '', $className))."/".$this->convertNamesToUrls($methodName)."/'>" . $name . "</a>";
-                        }
-                    }
-
-                    $out .= '
-                        <tr>
-                            <td>'.str_replace('()', '', $name).'</td>
-                            <td>'.\TracyDebugger::createEditorLink(\TracyDebugger::removeCompilerFromPath($info['filename']), $info['lineNumber'], $info['lineNumber']).'</td>
-                            <td class="tracy-force-no-wrap">' . $info['comment'] . '</td>';
-                        if(\TracyDebugger::getDataValue('apiExplorerShowDescription') && isset($info['description'])) {
-                            $out .= '
-                            <td class="tracy-force-no-wrap">' . $info['description'] . '</td>';
-                        }
-                    $out .=
-                        '</tr>';
-                        $i++;
-                }
-                $out .= '
-                    </table>
-                ';
-            }
-
-            return '
-            <a href="#" rel="'.$var.'" class="tracy-toggle tracy-collapsed">'.($type == 'variables' ? '$' : '').$var.'</a>
-            <div style="padding-left:10px" id="'.$var.'" class="tracy-collapsed">' . $out . '</div><br />';
+        if(empty($items)) {
+            $out = 'See <strong>$'.lcfirst($class).'</strong> api variable above for the properties and methods for this class';
         }
         else {
-            return '';
+            $i=0;
+            $propertiesSection = false;
+            foreach($items as $item => $info) {
+                if(strpos($item, '()') === false && !$propertiesSection) {
+                    $propertiesSection = true;
+                    $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">'.$varTitle. ($class == 'Functions' ? '' : ' properties').'</th>';
+                }
+                elseif($i == 0) {
+                    $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">'.$varTitle.' methods</th>';
+                }
+
+                $name = $info['name'];
+                $methodName = str_replace(array('___', '__'), '', $name);
+                if(strpos($filename, 'wire') !== false) {
+                    if($this->apiModuleInstalled || strpos($filename, 'modules') === false) {
+                        $name = "<a ".$this->newTab." href='".$this->apiBaseUrl.$this->convertNamesToUrls(str_replace('$', '', $className))."/".$this->convertNamesToUrls($methodName)."/'>" . $name . "</a>";
+                    }
+                }
+
+                $out .= '
+                    <tr>
+                        <td>'.str_replace('()', '', $name).'</td>
+                        <td>'.\TracyDebugger::createEditorLink(\TracyDebugger::removeCompilerFromPath($filename), $info['lineNumber'], $info['lineNumber']).'</td>
+                        <td class="tracy-force-no-wrap">' . (isset($info['comment']) ? $info['comment'] : '') . '</td>';
+                    if(\TracyDebugger::getDataValue('apiExplorerShowDescription') && isset($info['description'])) {
+                        $out .= '
+                        <td class="tracy-force-no-wrap">' . $info['description'] . '</td>';
+                    }
+                $out .=
+                    '</tr>';
+                    $i++;
+            }
+            $out .= '
+                </table>
+            ';
         }
+
+        return '
+        <a href="#" rel="'.$var.'" class="tracy-toggle tracy-collapsed">'.($type == 'variables' ? '$' : '').$var.'</a>
+        <div style="padding-left:10px" id="'.$var.'" class="tracy-collapsed">' . $out . '</div><br />';
 
     }
 

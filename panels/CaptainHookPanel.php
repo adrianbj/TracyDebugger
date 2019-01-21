@@ -103,23 +103,7 @@ HTML;
             <p><input type="submit" id="toggleAll" onclick="toggleHooks()" value="Toggle All" /></p>
         ';
 
-        $cacheName = 'TracyCaptainHook';
-        $hooks = $this->wire('cache')->get($cacheName);
-
-        // unserialize check is in case someone is upgrading from old version of Tracy that used to serialize hook data
-        if(!$hooks || @unserialize($hooks) !== false || \TracyDebugger::getDataValue('hooksPwVersion') === null || $this->wire('config')->version != \TracyDebugger::getDataValue('hooksPwVersion')) {
-            $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
-            $configData['hooksPwVersion'] = $this->wire('config')->version;
-            $this->wire('modules')->saveModuleConfigData($this->wire('modules')->get("TracyDebugger"), $configData);
-            require_once $this->wire('config')->paths->TracyDebugger . 'panels/CaptainHook/GenerateHtml.php';
-            $hooks = $this->hooks;
-            // sort by filename with Wire Core, Wire Modules, & Site Modules sections
-            uasort($hooks, function($a, $b) { return $a['filename']>$b['filename']; });
-            // tilde hack for this: https://github.com/processwire/processwire-issues/issues/775
-            $hooks = '~'.json_encode($hooks);
-            $this->wire('cache')->save($cacheName, $hooks, WireCache::expireNever);
-        }
-        $hooks = json_decode(ltrim($hooks, '~'), true);
+        $hooks = \TracyDebugger::getApiData('hooks');
 
         $lastSection = null;
         $sections = array();
@@ -153,12 +137,21 @@ HTML;
     private function buildHookTable($info) {
         $out = '
             <table class="captainHookTable">';
-        foreach($info['hooks'] as $hook) {
+        foreach($info['pwFunctions'] as $hook) {
+
+            $name = $hook['name'];
+            $methodName = str_replace(array('___', '__'), '', $name);
+            if(strpos($hook['comment'], '#pw-internal') === false && strpos($info['filename'], 'wire') !== false) {
+                if($this->apiModuleInstalled || strpos($info['filename'], 'modules') === false) {
+                    $name = "<a ".$this->newTab." href='".$this->apiBaseUrl.$this->convertNamesToUrls(str_replace('$', '', $info['classname']))."/".$this->convertNamesToUrls($hook['rawname'])."/'>" . $name . "</a>";
+                }
+            }
+
             $out .= '
                 <tr>
-                    <td>'.$hook['name'].'</td>
+                    <td>'.$name.'</td>
                     <td>'.\TracyDebugger::createEditorLink($info['filename'], $hook['lineNumber'], $hook['lineNumber']).'</td>
-                    <td class="tracy-force-no-wrap">' . $hook['line'] . '</td>';
+                    <td class="tracy-force-no-wrap">' . $hook['comment'] . '</td>';
                     if(\TracyDebugger::getDataValue('captainHookShowDescription') && isset($hook['description'])) {
                         $out .= '<td class="tracy-force-no-wrap">' . $hook['description'] . '</td>';
                     }

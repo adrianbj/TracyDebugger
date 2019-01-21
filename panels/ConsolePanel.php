@@ -138,6 +138,18 @@ class ConsolePanel extends BasePanel {
                 }
             }
 
+            $i=0;
+            foreach(\TracyDebugger::getApiData('proceduralFunctions') as $key => $vars) {
+                foreach($vars as $name => $params) {
+                    $pwAutocompleteArr[$i]['name'] = $name . '()';
+                    $pwAutocompleteArr[$i]['meta'] = 'PW function';
+                    if(\TracyDebugger::getDataValue('codeShowDescription')) {
+                        $pwAutocompleteArr[$i]['docHTML'] = $params['description'] . "\n" . (isset($params['params']) && !empty($params['params']) ? '('.implode(', ', $params['params']).')' : '');
+                    }
+                    $i++;
+                }
+            }
+
             // page fields
             $i = count($pwAutocompleteArr);
             foreach($p->fields as $field) {

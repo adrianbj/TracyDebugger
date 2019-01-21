@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.17.4',
+            'version' => '4.17.5',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1630,7 +1630,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $info = $this->modules->getModuleInfoVerbose($event->arguments[0]);
             if($info['core']) return;
         }
-        $this->deleteCache('TracyCaptainHook');
         $this->deleteCache('TracyApiData.*');
     }
 
@@ -3805,14 +3804,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             // if certain settings are changed we need to delete the cached copy
             $changedSettings = array(
-                'TracyCaptainHook' => array(
-                    'captainHookShowDescription',
-                    'captainHookToggleDocComment'
-                ),
                 'TracyApiData.*' => array(
+                    'codeShowDescription',
                     'apiExplorerShowDescription',
                     'apiExplorerToggleDocComment',
-                    'apiExplorerModuleClasses'
+                    'apiExplorerModuleClasses',
+                    'captainHookShowDescription',
+                    'captainHookToggleDocComment'
                 )
             );
             foreach($changedSettings as $cache => $settings) {

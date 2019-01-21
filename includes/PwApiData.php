@@ -17,6 +17,17 @@ class TracyPwApiData extends WireData {
             if($type == 'variables') {
                 $apiData = $this->getVariables();
             }
+            elseif($type == 'hooks') {
+                // make sure /wire/ is first so that duplicate addHook instances are excluded from /site/ and not /wire/ files
+                $apiData = array_merge(
+                    $this->getApiHooks(wire('config')->paths->root.'wire/'),
+                    $this->getApiHooks(wire('config')->paths->siteModules)
+                );
+            }
+            elseif($type == 'proceduralFunctions') {
+                $apiData = array('Functions' => $this->getProceduralFunctions('Functions')['pwFunctions']);
+                $apiData += array('FunctionsAPI' => $this->getProceduralFunctions('FunctionsAPI')['pwFunctions']);
+            }
             else {
                 $typeDir = $type == 'coreModules' ? 'modules' : $type;
                 $apiData = $this->getClasses($type, $this->wire('config')->paths->$typeDir);
@@ -98,9 +109,28 @@ class TracyPwApiData extends WireData {
         return $classesArr;
     }
 
+    private function getProceduralFunctions($file) {
+        $proceduralFunctionsArr = array();
+        $proceduralFunctionsArr += $this->getFunctionsInFile($this->wire('config')->paths->core . $file . '.php');
+        return $proceduralFunctionsArr;
+    }
+
+    private function getApiHooks($root) {
+        $filenamesArray = $this->getPHPFilenames($root);
+        $hooks = array();
+
+        foreach($filenamesArray as $filename) {
+            if($hooksInFile = $this->getFunctionsInFile($filename, true)) {
+                $hooks[] = $hooksInFile;
+            }
+        }
+
+        // sort by filename with Wire Core, Wire Modules, & Site Modules sections
+        uasort($hooks, function($a, $b) { return $a['filename']>$b['filename']; });
+        return $hooks;
+    }
 
     private function buildItemsArray($r, $class, $type) {
-
         $items = array();
 
         // methods from reflection
@@ -156,7 +186,6 @@ class TracyPwApiData extends WireData {
                     $methodsList[$name.'()']['description'] = '';
                 }
             }
-
         }
 
         // get runtime methods from doc comment
@@ -256,8 +285,217 @@ class TracyPwApiData extends WireData {
         }
 
         return $items;
-
     }
+
+
+    private function getPHPFilenames($root, $excludeFilenames = array()) {
+        $fileNamePattern = "/\.(php|module)$/";
+
+        $iter = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($root, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST,
+            RecursiveIteratorIterator::CATCH_GET_CHILD // Ignore "Permission denied"
+        );
+
+        $paths = array();
+        foreach($iter as $path => $dir) {
+            // '/.' check is for site module backups - SKIP_DOTS above is not excluding these
+            if(!$dir->isDir() && strpos(str_replace(wire('config')->paths->root, '', $path), DIRECTORY_SEPARATOR.'.') === false && preg_match($fileNamePattern, $path) && !in_array(basename($path), $excludeFilenames) ) {
+                $paths[] = $path;
+            }
+        }
+
+        return $paths;
+    }
+
+
+    private function getFunctionsInFile($file, $hooks = false) {
+        $newTab = \TracyDebugger::getDataValue('linksNewTab') ? 'target="_blank"' : '';
+
+        $lines = file($file);
+        $source = implode('', $lines);
+        $str = preg_replace('/\s+/', ' ', $source);
+        if($hooks && strpos($str, 'function ___') === false && strpos($str, 'addHook') === false) return;
+        $tokens = token_get_all($source);
+        $nextStringIsFunc = false;
+        $nextStringIsClass = false;
+        $nextStringIsExtends = false;
+        $lastStringWasThis = false;
+        $secondLastStringWasThis = false;
+        $lastStringWasObjectOperator = false;
+        $lastStringWasAddHook = false;
+        $className = null;
+        $extendsClassName = null;
+        $docComment = null;
+
+        $files = array();
+        foreach($tokens as $token) {
+            switch($token[0]) {
+                case T_CLASS:
+                    $nextStringIsClass = true;
+                    $lastStringWasComment = false;
+                    break;
+
+                case T_EXTENDS:
+                    $nextStringIsExtends = true;
+                    $lastStringWasComment = false;
+                    break;
+
+                case T_DOC_COMMENT:
+                    $docComment = $token[1];
+                    $lastStringWasComment = true;
+                    break;
+
+                case T_FUNCTION:
+                    $nextStringIsFunc = true;
+                    break;
+
+                case T_STRING:
+                    if($nextStringIsClass) {
+                        $nextStringIsClass = false;
+                        $className = $token[1];
+                    }
+                    if($nextStringIsExtends) {
+                        $nextStringIsExtends = false;
+                        $extendsClassName = $token[1];
+                    }
+                    if($nextStringIsFunc) {
+                        $nextStringIsFunc = false;
+                        if(!$hooks || ($hooks && strpos($token[1], '___') !== false)) {
+                            $methodName = str_replace('___', '', $token[1]);
+                            $name = ($hooks ? $className . '::' : '') . $methodName;
+
+                            if(!$lastStringWasComment) $docComment = '';
+                            $files['filename'] = $file;
+                            $files['classname'] = $className;
+                            $files['extends'] = $extendsClassName;
+                            $files['pwFunctions'][$name]['rawname'] = $methodName;
+                            $files['pwFunctions'][$name]['name'] = $name;
+                            $files['pwFunctions'][$name]['lineNumber'] = $token[2];
+
+                            $methodStr = ltrim(self::getFunctionLine($lines[($token[2]-1)]), 'function');
+                            if(
+                                ($hooks && \TracyDebugger::getDataValue('captainHookToggleDocComment')) ||
+                                (!$hooks && \TracyDebugger::getDataValue('apiExplorerToggleDocComment'))
+                            ) {
+                                $commentStr = "
+                                <div id='ch-comment'>
+                                    <label class='".($lastStringWasComment ? 'comment' : '')."' for='".$name."'>".$methodStr." </label>
+                                    <input type='checkbox' id='".$name."'>
+                                    <div class='hide'>".nl2br(htmlentities($docComment))."</div>
+                                </div>";
+                                $files['pwFunctions'][$name]['comment'] = $commentStr;
+                            }
+                            else {
+                                $files['pwFunctions'][$name]['comment'] = $methodStr;
+                            }
+
+                            if(
+                                ($hooks && \TracyDebugger::getDataValue('captainHookShowDescription')) ||
+                                (!$hooks && (\TracyDebugger::getDataValue('apiExplorerShowDescription') || \TracyDebugger::getDataValue('codeShowDescription')))
+                            ) {
+                                // get the comment
+                                preg_match('#^/\*\*(.*)\*/#s', $docComment, $comment);
+                                if(isset($comment[0])) $comment = trim($comment[0]);
+                                // get all the lines and strip the * from the first character
+                                if(is_string($comment)) {
+                                    preg_match_all('#^\s*\*(.*)#m', $comment, $commentLines);
+                                    $files['pwFunctions'][$name]['description'] = isset($commentLines[1][0]) && is_string($commentLines[1][0]) ? nl2br(htmlentities(trim($commentLines[1][0]))) : '';
+                                }
+                                else {
+                                    $files['pwFunctions'][$name]['description'] = '';
+                                }
+                            }
+
+                        }
+                    }
+                    if($secondLastStringWasThis && $lastStringWasObjectOperator) {
+                        $secondLastStringWasThis = false;
+                        $lastStringWasObjectOperator = false;
+                        if($token[1] == 'addHook') {
+                            $lastStringWasAddHook = true;
+                        }
+                    }
+                    break;
+
+                case T_VARIABLE:
+                    if(strpos($token[1], '$this') !== false) {
+                        $lastStringWasThis = true;
+                        $lastStringWasComment = false;
+                        $lastString = $token[1];
+                    }
+                    break;
+
+                case T_OBJECT_OPERATOR:
+                    if($lastStringWasThis) {
+                        $lastStringWasThis = false;
+                        $lastStringWasComment = false;
+                        $secondLastStringWasThis = true;
+                        $lastStringWasObjectOperator = true;
+                    }
+                    break;
+
+                case T_CONSTANT_ENCAPSED_STRING:
+                    if($lastStringWasAddHook) {
+                        $lastStringWasAddHook = false;
+                        $lastStringWasComment = false;
+                        $name = str_replace(array("'", '"'), "", $token[1]);
+                        $files['filename'] = $file;
+                        $files['classname'] = $className;
+                        $files['extends'] = $extendsClassName;
+                        $files['pwFunctions'][$name]['rawname'] = $name;
+                        $files['pwFunctions'][$name]['name'] = $name;
+                        $files['pwFunctions'][$name]['lineNumber'] = $token[2];
+                        $files['pwFunctions'][$name]['comment'] = self::strip_comments(trim($lines[($token[2]-1)]));
+                    }
+                    break;
+            }
+
+        }
+        // case insensitive sort functions by class and method within each file
+        if(isset($files['pwFunctions']) && is_array($files['pwFunctions'])) {
+            uksort($files['pwFunctions'], function($a, $b) {
+                $aLower = strtolower($a);
+                $bLower = strtolower($b);
+                return $aLower > $bLower;
+            });
+        }
+        return $files;
+    }
+
+
+    private static function strip_comments($source) {
+        $commentTokens = array(T_COMMENT, T_DOC_COMMENT);
+        $tokens = token_get_all('<?php ' . $source);
+        $newStr = '';
+        foreach($tokens as $token) {
+            if(is_array($token)) {
+                if(in_array($token[0], $commentTokens))
+                    continue;
+                $token = $token[1];
+            }
+            $newStr .= $token;
+        }
+        return $newStr;
+    }
+
+
+    private static function getFunctionLine($str) {
+        $functEndChar = null;
+        foreach(array('{', ';', '/*', '//') as $char) {
+            if(strpos($str, $char) !== false) {
+                $functEndChar = $char;
+                break;
+            }
+        }
+        if($functEndChar) {
+            return trim(substr($str, 0, strpos($str, $functEndChar)));
+        }
+        else {
+            return trim($str);
+        }
+    }
+
 
     public static function convertNamesToUrls($str) {
         return trim(strtolower(preg_replace('/([A-Z])/', '-$1', $str)), '-');
