@@ -96,9 +96,9 @@ class AdminToolsPanel extends BasePanel {
                 }
                 $out .= '
                 <p>
-                    <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete this module' . $confirmSuffix . '?\');">
+                    <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to uninstall this module' . $confirmSuffix . '?\');">
                         <input type="hidden" name="adminToolsName" value="'.$moduleName.'" />
-                        <input type="submit" name="deleteModule" value="Delete module" />
+                        <input type="submit" name="uninstallModule" value="Uninstall module" />
                     </form>
                 </p>';
             }

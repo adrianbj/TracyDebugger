@@ -8,6 +8,12 @@ The debug bar shows non-fatal errors, dumps, and provides access to all the cust
 
 Current tools are:
 
+**Delete all children**
+
+This lets you delete all children of the current page without deleting the page itself which can be very helpful when you're testing API creation of page and you have forgotten to enable Tracy's Page Recorder panel.
+
+![Admin Tools Pages](img/admin-tools-pages.png)
+
 **Delete field**
 
 If you're on the edit interface for a field, this action will let you delete a field even if it is already added to templates, so you don't have to deal with the "This field may not be deleted because it is in use by one or more templates." notice you get when trying to delete the field.
@@ -24,13 +30,13 @@ Like the delete field, this bypasses the "This template may not be deleted" beca
 
 ![Admin Tools Templates](img/admin-tools-templates.png)
 
-**Delete all children**
+**Uninstall module**
 
-This lets you delete all children of the current page without deleting the page itself which can be very helpful when you're testing API creation of page and you have forgotten to enable Tracy's Page Recorder panel.
+This will take care of deleting any associated fields (for Fieldtype modules) and modules that require the one you are trying to uninstall so that you can uninstall the module with one click.
 
-![Admin Tools Pages](img/admin-tools-pages.png)
+![Admin Tools Templates](img/admin-tools-modules.png)
 
-Hopefully it goes without saying that these can be extremely de﻿structive and bypass core protections against data loss so use with extreme caution. Each action has a confirmation dialog that you must confirm to reduce any accidental clicks and the entire panel is restricted to superusers only, but you must still use with extreme caution.
+Hopefully it goes without saying that these can be extremely destructive and bypass core protections against data loss so use with extreme caution. Each action has a confirmation dialog that you must confirm to reduce any accidental clicks and the entire panel is restricted to superusers only, but you must still use with extreme caution.
 
 ***
 
