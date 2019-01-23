@@ -82,6 +82,26 @@ class AdminToolsPanel extends BasePanel {
                     </form>
                 </p>';
             }
+            elseif($this->wire('input')->get('name') && $this->wire('page')->process == 'ProcessModule') {
+                $moduleName = $this->wire('sanitizer')->selectorValue($this->wire('input')->get('name'));
+                $confirmSuffix = '';
+                $reason = $this->wire('modules')->isUninstallable($this->wire('modules')->get($moduleName), true);
+                if($reason !== true) {
+                    if(strpos($reason, 'Fieldtype') !== false) {
+                        $confirmSuffix .= ' and its associated fields';
+                    }
+                    elseif(strpos($reason, 'required') !== false) {
+                        $confirmSuffix .= ' and any modules that require it';
+                    }
+                }
+                $out .= '
+                <p>
+                    <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete this module' . $confirmSuffix . '?\');">
+                        <input type="hidden" name="adminToolsName" value="'.$moduleName.'" />
+                        <input type="submit" name="deleteModule" value="Delete module" />
+                    </form>
+                </p>';
+            }
             else {
                 $out .= 'No available tools.';
             }

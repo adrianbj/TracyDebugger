@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.17.5',
+            'version' => '4.17.6',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -779,6 +779,35 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     $field = $this->wire('fields')->get((int)$this->wire('input')->post->adminToolsId);
                     $field->type = $this->wire('input')->post->changeFieldType;
                     $field->save();
+                }
+                // delete module
+                if($this->wire('input')->post->deleteModule) {
+                    $moduleName = $this->wire('input')->post->adminToolsName;
+                    $reason = $this->wire('modules')->isUninstallable($moduleName, true);
+                    $class = $this->wire('modules')->getModuleClass($moduleName);
+                    if($reason !== true) {
+                        if(strpos($reason, 'Fieldtype') !== false) {
+                            foreach($this->wire('fields') as $field) {
+                                $fieldtype = wireClassName($field->type, false);
+                                if($fieldtype == $class) {
+                                    foreach($this->wire('templates') as $template) {
+                                        if(!$template->hasField($field)) continue;
+                                        $template->fields->remove($field);
+                                        $template->fields->save();
+                                    }
+                                    $this->wire('fields')->delete($field);
+                                }
+                            }
+                        }
+                        elseif(strpos($reason, 'required') !== false) {
+                            $dependents = $this->wire('modules')->getRequiresForUninstall($class);
+                            foreach($dependents as $dependent) {
+                                $this->wire('modules')->uninstall($dependent);
+                            }
+                        }
+                    }
+                    $this->wire('modules')->uninstall($moduleName);
+                    $this->wire('session')->redirect($this->wire('config')->urls->admin.'module');
                 }
             }
         }
