@@ -48,17 +48,21 @@ class AdminToolsPanel extends BasePanel {
 
             if($p->template != 'admin' && $p->hasChildren()) {
                 $out .= '
-                <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete all children of this page?\');">
-                    <input type="hidden" name="adminToolsId" value="'.$p->id.'" />
-                    <input type="submit" name="deleteChildren" value="Delete all children" />
-                </form>';
+                <p>
+                    <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete all children of this page?\');">
+                        <input type="hidden" name="adminToolsId" value="'.$p->id.'" />
+                        <input type="submit" name="deleteChildren" value="Delete all children" />
+                    </form>
+                </p>';
             }
             elseif($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessTemplate') {
                 $out .= '
-                <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete this template and all associated pages?\');">
-                    <input type="hidden" name="adminToolsId" value="'.(int)$this->wire('input')->get('id').'" />
-                    <input type="submit" name="deleteTemplate" value="Delete template" />
-                </form>';
+                <p>
+                    <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete this template and all associated pages?\');">
+                        <input type="hidden" name="adminToolsId" value="'.(int)$this->wire('input')->get('id').'" />
+                        <input type="submit" name="deleteTemplate" value="Delete template" />
+                    </form>
+                </p>';
             }
             elseif($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessField') {
                 $f = $this->wire('fields')->get((int)$this->wire('input')->get('id'));
