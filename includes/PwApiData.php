@@ -39,8 +39,8 @@ class TracyPwApiData extends WireData {
                 foreach($apiData as $class => $methods) {
                     $i=0;
                     foreach($methods as $method => $params) {
-                        if(!isset($cachedData[$class]) ||!array_key_exists($method, $cachedData[$class])) {
-                            \TracyDebugger::$apiChanges[$type][$class][$i] = $method;
+                        if(!isset($cachedData[$class]) || !array_key_exists($method, $cachedData[$class])) {
+                            if($type != 'hooks') \TracyDebugger::$apiChanges[$type][$class][$i] = $method;
                             $i++;
                         }
                     }
