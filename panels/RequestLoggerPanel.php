@@ -90,7 +90,7 @@ class RequestLoggerPanel extends BasePanel {
                 $time = date("Y-m-d H:i:s", $datum['time']);
                 $out .= "<h2 style='white-space: nowrap;'>{$datum['requestMethod']} @ $time | " . ($datum['remoteHost'] ?: $datum['remoteAddress']) . " | #{$datum['id']}</h2>";
                 if(\TracyDebugger::getDataValue('requestLoggerReturnType') == 'object') $datum = json_decode(json_encode($datum), false);
-                $out .= Dumper::toHtml($datum, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
+                $out .= Dumper::toHtml($datum, array(Dumper::LIVE => true, Dumper::DEPTH => 9, Dumper::TRUNCATE => 99999, Dumper::COLLAPSE => true));
             }
         }
         elseif($this->p->viewable()) {
