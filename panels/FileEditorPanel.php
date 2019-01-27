@@ -397,7 +397,7 @@ HTML;
                     $out .= '
                     </div>
                     <div style="padding: 10px 12px 0 0; float:right">
-                        <form id="tracyFileEditorSubmission" style="padding: 0; margin: 0; method="post" action="'.\TracyDebugger::inputUrl(true).'">
+                        <form id="tracyFileEditorSubmission" style="padding: 0; margin: 0;" method="post" action="'.\TracyDebugger::inputUrl(true).'">
                             <fieldset>
                                 <textarea id="tracyFileEditorRawCode" name="tracyFileEditorRawCode" style="display:none"></textarea>
                                 <input type="hidden" id="fileEditorFilePath" name="fileEditorFilePath" value="'.$this->tracyFileEditorFilePath.'" />
