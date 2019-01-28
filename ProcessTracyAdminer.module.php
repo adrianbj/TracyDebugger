@@ -82,7 +82,7 @@ class ProcessTracyAdminer extends Process implements Module, ConfigurableModule 
             return new AdminerPlugin($plugins);
         }
 
-        require_once __DIR__ . '/panels/Adminer/adminer-4.7.0-mysql.php'/*NoCompile*/;
+        require_once __DIR__ . '/panels/Adminer/adminer-4.7.1-mysql.php'/*NoCompile*/;
         exit;
     }
 
