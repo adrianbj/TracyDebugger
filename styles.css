@@ -1680,7 +1680,7 @@ span.tracyDumpsCollapser {
     margin: 0 !important;
     position: absolute !important;
     z-index: 7 !important;
-    right: 0 !important;
+    left: -3px !important;
     top: 0 !important;
     line-height: 0 !important;
 }

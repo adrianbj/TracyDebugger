@@ -697,7 +697,7 @@ class ConsolePanel extends BasePanel {
                         // create and append toggle fullscreen/restore buttons
                         var toggleFullscreenButton = document.createElement('div');
                         toggleFullscreenButton.innerHTML = '<span class="fullscreenToggleButton" title="Toggle fullscreen" onclick="tracyConsole.toggleFullscreen()">$maximizeSvg</span>';
-                        document.getElementById("tracyConsoleCode").querySelector('.ace_scroller').prepend(toggleFullscreenButton);
+                        document.getElementById("tracyConsoleContainer").querySelector('.ace_gutter').prepend(toggleFullscreenButton);
 
                         // splitjs
                         tracyJSLoader.load(tracyConsole.tracyModuleUrl + "/scripts/splitjs/split.min.js", function() {

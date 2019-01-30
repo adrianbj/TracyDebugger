@@ -331,7 +331,7 @@ class FileEditorPanel extends BasePanel {
                         // create and append toggle fullscreen/restore buttons
                         var toggleFullscreenButton = document.createElement('div');
                         toggleFullscreenButton.innerHTML = '<span class="fullscreenToggleButton" title="Toggle fullscreen" onclick="tracyFileEditor.toggleFullscreen()">$maximizeSvg</span>';
-                        document.getElementById("tracyFileEditorCode").querySelector('.ace_scroller').prepend(toggleFullscreenButton);
+                        document.getElementById("tracyFileEditorContainer").querySelector('.ace_gutter').prepend(toggleFullscreenButton);
 
                         // checks for changes to the panel
                         var config = { attributes: true, attributeOldValue: true };
