@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.17.13',
+            'version' => '4.17.14',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -61,7 +61,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $inAdmin;
     public static $isLocal = false;
     public static $allowedTracyUser = false;
-    public static $tracyVersion;
     public static $dumpItems = array();
     public static $autocompleteArr = array();
     public static $allApiData = array();
@@ -228,7 +227,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "styleWhere" => array(),
             "styleAdminElements" => "body::before {\n\tcontent: \"[type]\";\n\tbackground: [color];\n\tposition: fixed;\n\tleft: 0;\n\tbottom: 100%;\n\tcolor: #ffffff;\n\twidth: 100vh;\n\tpadding: 0;\n\ttext-align: center;\n\tfont-weight: 600;\n\ttext-transform: uppercase;\n\ttransform: rotate(90deg);\n\ttransform-origin: bottom left;\n\tz-index: 999999;\n\tfont-family: sans-serif;\n\tfont-size: 11px;\n\theight: 13px;\n\tline-height: 13px;\npointer-events: none;\n}\n",
             "styleAdminColors" => "\nlocal|#FF9933\n*.local|#FF9933\n*.dev|#FF9933\ndev.*|#FF9933\n*.test|#FF9933\nstaging.*|#8b0066\n*.com|#009900",
-            "styleAdminType" => "default",
+            "styleAdminType" => array("default", "favicon"),
             "showPWInfoPanelIconLabels" => 1,
             "linksNewTab" => null,
             "pWInfoPanelLinksNewTab" => null,
@@ -978,6 +977,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 );
 
                 Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/main.js';
+                Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/tinycon.min.js';
 
                 if(in_array('fileEditor', static::$showPanels)) {
                     // these need to be loaded here (not just in File Editor panel) so that File Editor links
@@ -986,7 +986,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/file-editor.js';
                 }
 
-                if($this->showServerTypeIndicator()) Debugger::$customCssStr .= $this->setServerAdminStyleColor();
+                if($this->showServerTypeIndicator()) {
+                    Debugger::$customCssStr .= $this->setServerAdminStyleColor();
+                    if(in_array('favicon', $this->data['styleAdminType'])) Debugger::$customJsStr .= $this->setFaviconBadge();
+                }
 
                 if(!static::$inAdmin && (in_array('fileEditor', static::$showPanels) || (in_array('processwireInfo', static::$showPanels) && count($this->data['customPWInfoPanelLinks'])))) {
                     Debugger::$customCssStr .= '<link id="fontAwesomeStyles" type="text/css" href="'.$this->wire('config')->urls->root . 'wire/templates-admin/styles/font-awesome/css/font-awesome.min.css" rel="stylesheet" />';
@@ -1046,7 +1049,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                                 document.getElementById("tracy-show-button").style.display = "block";
                                 document.cookie = "tracyHidden=1; path=/";
                                 document.cookie = "tracyShow=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";';
-                                if($this->showServerTypeIndicator() && $this->data['styleAdminType'] == 'custom') {
+                                if($this->showServerTypeIndicator() && in_array('custom', $this->data['styleAdminType'])) {
                                     Debugger::$customJsStr .= 'document.body.classList.add("tracyHidden");';
                                 }
                             Debugger::$customJsStr .= '
@@ -1063,7 +1066,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                         window.Tracy.Debug.bar.restorePosition();
                         document.cookie = "tracyHidden=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
                         document.cookie = "tracyShow=1; path=/";';
-                        if($this->showServerTypeIndicator() && $this->data['styleAdminType'] == 'custom') {
+                        if($this->showServerTypeIndicator() && in_array('custom', $this->data['styleAdminType'])) {
                             Debugger::$customJsStr .= 'document.body.classList.remove("tracyHidden");';
                         }
                     Debugger::$customJsStr .= '
@@ -1107,7 +1110,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
                 ';
 
-                if($this->data['hideDebugBar'] && $this->showServerTypeIndicator() && $this->data['styleAdminType'] == 'custom' && !$this->wire('input')->cookie->tracyShow) {
+                if($this->data['hideDebugBar'] && $this->showServerTypeIndicator() && in_array('custom', $this->data['styleAdminType']) && !$this->wire('input')->cookie->tracyShow) {
                     // hide server type indicator bar if debug bar is hidden by default
                     Debugger::$customJsStr .= 'document.body.classList.add("tracyHidden");';
                 }
@@ -1884,16 +1887,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
     }
 
+
     /**
      * Determine server type and return styled color
      *
      * Local or Live based on IP address and dev or staging based on subdomain
      *
-     * @return string Hex color for style
+     * @return array
      *
      */
-    private function setServerAdminStyleColor() {
-
+    private function getServerAdminStyles() {
         $serverTypeMatch = false;
         $stylesArr = array();
 
@@ -1914,16 +1917,67 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $type = 'local';
         }
 
+        return array(
+            'serverTypeMatch' => $serverTypeMatch,
+            'styles' => $stylesArr,
+            'type' => $type
+        );
+    }
+
+
+    /**
+     * Set the favicon server type badge
+     *
+     * Local or Live based on IP address and dev or staging based on subdomain
+     *
+     * @return string Javacript code
+     *
+     */
+    private function setFaviconBadge() {
+        $styleInfo = $this->getServerAdminStyles();
+        $serverTypeMatch = $styleInfo['serverTypeMatch'];
+        $stylesArr = $styleInfo['styles'];
+        $type = $styleInfo['type'];
+
+        return '
+            Tinycon.setOptions({
+                width: 16,
+                height: 10,
+                font: "9px sans-serif",
+                color: "#ffffff",
+                background: "'.$stylesArr[$type].'",
+                fallback: true
+            });
+            Tinycon.setBubble("'.strtoupper(str_replace('*', '', $type)).'");
+        ';
+    }
+
+
+    /**
+     * Output debug bar badge or custom (sidebar by default) server type indicator
+
+     *
+     * @return string style definition
+     *
+     */
+    private function setServerAdminStyleColor() {
+
+        $styleInfo = $this->getServerAdminStyles();
+        $serverTypeMatch = $styleInfo['serverTypeMatch'];
+        $stylesArr = $styleInfo['styles'];
+        $type = $styleInfo['type'];
+
         if($serverTypeMatch && isset($stylesArr[$type])) {
-            if($this->data['styleAdminType'] == 'custom') {
-                return '
+            $out = '';
+            if(in_array('custom', $this->data['styleAdminType'])) {
+                $out .= '
                     <style>
                         '. str_replace(array('[color]', '[type]'), array($stylesArr[$type], str_replace('*', '', $type)), $this->data['styleAdminElements']) . '
                     </style>
                 ';
             }
-            else {
-                return '
+            if(in_array('default', $this->data['styleAdminType'])) {
+                $out .= '
                     <style>
                         #tracy-debug-logo::before {
                             content: "'.str_replace('*', '', $type).'";
@@ -1943,6 +1997,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     </style>
                 ';
             }
+
+            return $out;
+
         }
         else return;
 
@@ -3618,7 +3675,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($data['styleAdminColors']) $f->attr('value', $data['styleAdminColors']);
         $fieldset->add($f);
 
-        $f = $this->wire('modules')->get("InputfieldRadios");
+        $f = $this->wire('modules')->get("InputfieldCheckboxes");
         $f->attr('name', 'styleAdminType');
         $f->label = __('Indicator type', __FILE__);
         $f->showIf = "styleWhere.count>0";
@@ -3626,6 +3683,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->notes = __('You will need to do a hard reload in your browser for these changes to take effect.', __FILE__);
         $f->addOption('default', 'Indicator on debug bar');
         $f->addOption('custom', 'Custom - control with CSS');
+        $f->addOption('favicon', 'Favicon badge');
         $f->columnWidth = 30;
         if($data['styleAdminType']) $f->attr('value', $data['styleAdminType']);
         $fieldset->add($f);
