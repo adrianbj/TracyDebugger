@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.17.14',
+            'version' => '4.17.15',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -55,6 +55,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     protected $tracyEnabled = false;
     protected $tracyCacheDir;
     protected $modulesDbBackupFilename;
+    protected $serverStyleInfo;
     protected static $useOnlineEditor;
     protected static $onlineEditor;
     protected static $onlineFileEditorDirPath;
@@ -987,6 +988,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 }
 
                 if($this->showServerTypeIndicator()) {
+                    $this->serverStyleInfo = $this->getServerAdminStyles();
                     Debugger::$customCssStr .= $this->setServerAdminStyleColor();
                     if(in_array('favicon', $this->data['styleAdminType'])) Debugger::$customJsStr .= $this->setFaviconBadge();
                 }
@@ -1934,22 +1936,24 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     private function setFaviconBadge() {
-        $styleInfo = $this->getServerAdminStyles();
-        $serverTypeMatch = $styleInfo['serverTypeMatch'];
-        $stylesArr = $styleInfo['styles'];
-        $type = $styleInfo['type'];
 
-        return '
-            Tinycon.setOptions({
-                width: 16,
-                height: 10,
-                font: "9px sans-serif",
-                color: "#ffffff",
-                background: "'.$stylesArr[$type].'",
-                fallback: true
-            });
-            Tinycon.setBubble("'.strtoupper(str_replace('*', '', $type)).'");
-        ';
+        $serverTypeMatch = $this->serverStyleInfo['serverTypeMatch'];
+        $stylesArr = $this->serverStyleInfo['styles'];
+        $type = $this->serverStyleInfo['type'];
+
+        if($serverTypeMatch && isset($stylesArr[$type])) {
+            return '
+                Tinycon.setOptions({
+                    background: "'.$stylesArr[$type].'",
+                    fallback: true
+                });
+                Tinycon.setBubble("'.substr(trim(strtoupper(str_replace('*', '', $type)), '.'), 0, 2).'");
+            ';
+        }
+        else {
+            return;
+        }
+
     }
 
 
@@ -1962,10 +1966,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     private function setServerAdminStyleColor() {
 
-        $styleInfo = $this->getServerAdminStyles();
-        $serverTypeMatch = $styleInfo['serverTypeMatch'];
-        $stylesArr = $styleInfo['styles'];
-        $type = $styleInfo['type'];
+        $serverTypeMatch = $this->serverStyleInfo['serverTypeMatch'];
+        $stylesArr = $this->serverStyleInfo['styles'];
+        $type = $this->serverStyleInfo['type'];
 
         if($serverTypeMatch && isset($stylesArr[$type])) {
             $out = '';
@@ -2001,7 +2004,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             return $out;
 
         }
-        else return;
+        else {
+            return;
+        }
 
     }
 
