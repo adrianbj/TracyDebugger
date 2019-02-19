@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.17.16',
+            'version' => '4.17.17',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -56,6 +56,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     protected $tracyCacheDir;
     protected $modulesDbBackupFilename;
     protected $serverStyleInfo;
+    protected static $validSwitchedUser = false;
     protected static $useOnlineEditor;
     protected static $onlineEditor;
     protected static $onlineFileEditorDirPath;
@@ -89,6 +90,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $tempTemplateFilename;
     public static $panelGenerationTime = array();
     public static $hideInAdmin = array('validator', 'templateResources', 'templatePath');
+    public static $superUserOnlyPanels = array('console', 'snippetRunner', 'fileEditor', 'adminer', 'adminTools');
     public static $pageHtml;
     public static $processWireInfoSections = array(
         'configData' => 'Config Data',
@@ -1441,7 +1443,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         foreach(static::$showPanels as $panel) {
             if(!array_key_exists($panel, static::$allPanels)) continue;
             if(static::$inAdmin && in_array($panel, static::$hideInAdmin)) continue;
-            if(($panel == 'console' || $panel == 'snippetRunner' || $panel == 'fileEditor' || $panel == 'adminer' || $panel == 'adminTools') && !$this->wire('user')->isSuperuser()) continue;
+            if((in_array($panel, self::$superUserOnlyPanels)) && !$this->wire('user')->isSuperuser() && !self::$isLocal && !self::$validSwitchedUser) continue;
+            // special additional check for adminer
+            if($panel == 'adminer' && !$this->wire('user')->isSuperuser()) continue;
             if($panel == 'userSwitcher') {
                 if(isset($this->data['userSwitchSession'])) $userSwitchSession = $this->data['userSwitchSession'];
                 if(!$this->wire('user')->isSuperuser() && (!$this->wire('session')->tracyUserSwitcherId || (isset($userSwitchSession[$this->wire('session')->tracyUserSwitcherId]) && $userSwitchSession[$this->wire('session')->tracyUserSwitcherId] <= time()))) continue;
@@ -2478,6 +2482,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 return 'development';
         }
         elseif(wire('session')->tracyUserSwitcherId && (isset($userSwitchSession[wire('session')->tracyUserSwitcherId]) && $userSwitchSession[wire('session')->tracyUserSwitcherId] > time())) {
+            self::$validSwitchedUser = true;
             return 'development';
         }
         elseif($outputMode == 'production') {

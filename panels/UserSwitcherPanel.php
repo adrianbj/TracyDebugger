@@ -107,8 +107,8 @@ class UserSwitcherPanel extends BasePanel {
                 $out .= '<input type="submit" name="submitUserSwitcher" value="Switch" />&nbsp;';
             }
 
-            if($remainingSessionLength > 0) $out .= '<input type="submit" name="endSessionUserSwitcher" value="End Session" />&nbsp;';
-            if($this->wire('user')->isLoggedin()) $out .= '<input type="submit" name="logoutUserSwitcher" value="Logout" />';
+            if($this->wire('user')->isLoggedin()) $out .= '<input type="submit" name="logoutUserSwitcher" value="Logout" />&nbsp;';
+            if($remainingSessionLength > 0) $out .= '<input type="submit" name="endSessionUserSwitcher" value="End Session" />';
 
             $out .= '
                 <input type="hidden" id="_post_token" name="' . $this->wire('session')->CSRF->getTokenName() . '" value="' . $this->wire('session')->CSRF->getTokenValue() . '"/>

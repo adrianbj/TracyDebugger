@@ -17,7 +17,7 @@ foreach($pwVars->getArray() as $key => $value) {
     $$key = $value;
 }
 
-if($user->isSuperuser()) {
+if($user->isSuperuser() || \TracyDebugger::$validSwitchedUser) {
 
     $page = $pages->get((int)$_POST['pid']);
     if(isset($_POST['tracyConsole'])) {
