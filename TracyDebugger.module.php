@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.17.17',
+            'version' => '4.17.18',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -56,13 +56,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     protected $tracyCacheDir;
     protected $modulesDbBackupFilename;
     protected $serverStyleInfo;
-    protected static $validSwitchedUser = false;
     protected static $useOnlineEditor;
     protected static $onlineEditor;
     protected static $onlineFileEditorDirPath;
     public static $inAdmin;
     public static $isLocal = false;
     public static $allowedTracyUser = false;
+    public static $validSwitchedUser = false;
+    public static $validLocalUser = false;
     public static $dumpItems = array();
     public static $autocompleteArr = array();
     public static $allApiData = array();
@@ -935,7 +936,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $compilerCachePath = isset($this->wire('config')->fileCompilerOptions['cachePath']) ? $this->wire('config')->fileCompilerOptions['cachePath'] : $this->wire('config')->paths->cache . 'FileCompiler/';
                 $compilerCachePath = str_replace('/', DIRECTORY_SEPARATOR, $compilerCachePath);
 
-                static::$useOnlineEditor = $this->wire('user')->isSuperuser() &&
+                static::$useOnlineEditor = ($this->wire('user')->isSuperuser() || self::$validLocalUser || self::$validSwitchedUser) &&
                     (static::$isLocal && in_array('local', $this->data['useOnlineEditor'])) ||
                     (!static::$isLocal && in_array('live', $this->data['useOnlineEditor']) ||
                     (in_array('fileEditor', static::$showPanels) && $this->data['forceEditorLinksToTracy'])
@@ -1353,7 +1354,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
             // FILE/TEMPLATE EDITOR
-            if($this->wire('user')->isSuperuser()) {
+            if($this->wire('user')->isSuperuser() || \TracyDebugger::$validSwitchedUser) {
                 if($this->wire('input')->post->fileEditorFilePath) {
                     $rawCode = base64_decode($this->wire('input')->post->tracyFileEditorRawCode);
                     if(static::$inAdmin &&
@@ -1443,7 +1444,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         foreach(static::$showPanels as $panel) {
             if(!array_key_exists($panel, static::$allPanels)) continue;
             if(static::$inAdmin && in_array($panel, static::$hideInAdmin)) continue;
-            if((in_array($panel, self::$superUserOnlyPanels)) && !$this->wire('user')->isSuperuser() && !self::$isLocal && !self::$validSwitchedUser) continue;
+            if((in_array($panel, self::$superUserOnlyPanels)) && !$this->wire('user')->isSuperuser() && !self::$validLocalUser && !self::$validSwitchedUser) continue;
             // special additional check for adminer
             if($panel == 'adminer' && !$this->wire('user')->isSuperuser()) continue;
             if($panel == 'userSwitcher') {
@@ -2021,7 +2022,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     private function insertCode($when) {
-        if(!$this->wire('user')->isSuperuser() ||
+        if((!$this->wire('user')->isSuperuser() && !\TracyDebugger::$validSwitchedUser) ||
             $this->wire('config')->ajax ||
             $this->wire('input')->cookie->tracyCodeError ||
             !$this->wire('input')->cookie->tracyIncludeCode)
@@ -2479,6 +2480,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         if($u->isSuperuser() && static::getDataValue('superuserForceDevelopment') == 1 ||
             (static::$isLocal && static::getDataValue('guestForceDevelopmentLocal') == 1)) {
+                self::$validLocalUser = true;
                 return 'development';
         }
         elseif(wire('session')->tracyUserSwitcherId && (isset($userSwitchSession[wire('session')->tracyUserSwitcherId]) && $userSwitchSession[wire('session')->tracyUserSwitcherId] > time())) {

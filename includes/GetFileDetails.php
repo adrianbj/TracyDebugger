@@ -1,5 +1,5 @@
 <?php
-if($this->wire('user')->isSuperuser() && strpos($_POST['filePath'], '..') === false && file_exists($_POST['filePath'])) {
+if(($this->wire('user')->isSuperuser() || \TracyDebugger::$validLocalUser || \TracyDebugger::$validSwitchedUser) && strpos($_POST['filePath'], '..') === false && file_exists($_POST['filePath'])) {
 
     if(\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
         ($this->wire('process') == 'ProcessPageEdit' ||

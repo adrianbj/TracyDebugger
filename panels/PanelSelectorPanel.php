@@ -126,7 +126,9 @@ class PanelSelectorPanel extends BasePanel {
                     foreach(\TracyDebugger::$allPanels as $name => $label) {
 
                         if(in_array($name, \TracyDebugger::$restrictedUserDisabledPanels)) continue;
-                        if(($name == 'console' || $name == 'snippetRunner' || $name == 'fileEditor') && !$this->wire('user')->isSuperuser()) continue;
+                        if(in_array($name, \TracyDebugger::$superUserOnlyPanels) && !$this->wire('user')->isSuperuser() && !\TracyDebugger::$validLocalUser && !\TracyDebugger::$validSwitchedUser) continue;
+                        // special additional check for adminer
+                        if($name == 'adminer' && !$this->wire('user')->isSuperuser()) continue;
                         if($name == 'userSwitcher') {
                             if(\TracyDebugger::getDataValue('userSwitchSession') != '') $userSwitchSession = \TracyDebugger::getDataValue('userSwitchSession');
                             if(!$this->wire('user')->isSuperuser() && (!$this->wire('session')->tracyUserSwitcherId || (isset($userSwitchSession[$this->wire('session')->tracyUserSwitcherId]) && $userSwitchSession[$this->wire('session')->tracyUserSwitcherId] <= time()))) continue;
