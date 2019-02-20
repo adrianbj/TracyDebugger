@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.17.20',
+            'version' => '4.17.21',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -53,6 +53,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     protected $data = array();
     protected $httpReferer;
     protected $tracyEnabled = false;
+    protected $earlyExit = false;
     protected $tracyCacheDir;
     protected $modulesDbBackupFilename;
     protected $serverStyleInfo;
@@ -307,6 +308,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public function init() {
 
+        // load Tracy files and our helpers
+        require_once __DIR__ . '/tracy-master/src/tracy.php';
+        require_once __DIR__ . '/includes/TD.php';
+        if($this->data['enableShortcutMethods']) {
+            require_once __DIR__ . '/includes/ShortcutMethods.php';
+        }
+
         // merge in settings from config.php file
         if(isset($this->wire('config')->tracy) && is_array($this->wire('config')->tracy)) {
             $this->data = array_merge($this->data, $this->wire('config')->tracy);
@@ -316,6 +324,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // determine if server is local dev or live
         static::$isLocal = static::isLocal();
+
+        // url for $session->redirects
+        $this->httpReferer = isset($_SERVER['HTTP_REFERER']) ? $this->wire('sanitizer')->text($_SERVER['HTTP_REFERER']) : self::inputHttpUrl(true);
+
+        // determine if we are in the admin / backend
+        static::$inAdmin = $this->inAdmin();
 
         // determine whether user is allowed to use Tracy and whether DEV or PRODUCTION
         static::$allowedTracyUser = static::allowedTracyUser();
@@ -330,29 +344,45 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // EARLY EXITS
+        // modals
+        if(in_array('regularModal', $this->data['hideDebugBarModals']) && $this->wire('input')->get->modal == '1') $this->earlyExit = true;
+        if(in_array('inlineModal', $this->data['hideDebugBarModals']) && $this->wire('input')->get->modal == 'inline') $this->earlyExit = true;
+        if(in_array('overlayPanels', $this->data['hideDebugBarModals']) && $this->wire('input')->get->modal == 'panel') $this->earlyExit = true;
 
-        // if "enabled" not checked or tracyDisabled via config, we should load dummy Tracy class, TD, and shortcut methods
-        // to prevent errors from debug statements still in code, and then exit before anything else
-        if(!$this->data['enabled'] || $this->wire('config')->tracyDisabled) {
-            // load dummy class to prevent "class not found" errors when calling \Tracy\Debugger::method() directly
-            require_once __DIR__ . '/includes/DummyTracyDebuggerClass.php';
-
-            // load main methods to prevent function not defined errors
-            require_once __DIR__ . '/includes/TD.php';
-
-            // load shortcut methods to prevent function not defined errors
-            if($this->data['enableShortcutMethods']) {
-                require_once __DIR__ . '/includes/ShortcutMethods.php';
+        // formbuilder iframe
+        if(in_array('formBuilderIframe', $this->data['hideDebugBarModals']) &&
+            !static::$inAdmin &&
+            strpos(self::inputUrl(true), DIRECTORY_SEPARATOR.'form-builder'.DIRECTORY_SEPARATOR) !== false) {
+                $this->earlyExit = true;
             }
-            return;
+
+        // adminer iframe
+        if(strpos(self::inputUrl(true), 'adminer') !== false) $this->earlyExit = true;
+
+        // don't init Tracy for @soma's PageEditSoftLock polling on Page Edit
+        if(strpos(self::inputUrl(), 'checkpagelock') !== false) $this->earlyExit = true;
+
+        if(isset($_SERVER['REQUEST_URI'])) {
+            $info = parse_url($_SERVER['REQUEST_URI']);
+            $queryString = isset($info['query']) ? $info['query'] : '';
+            // don't init Tracy for the PW Notifications module polling
+            if(strpos($queryString, 'Notifications=update') !== false) $this->earlyExit = true;
+
+            // don't init Tracy for sidenav iframes in admin themes that support this
+            if(strpos($queryString, 'layout=sidenav-side') !== false ||
+                strpos($queryString, 'layout=sidenav-tree') !== false ||
+                strpos($queryString, 'layout=sidenav-init') !== false) $this->earlyExit = true;
+
+            // don't init Tracy for Setup > Logs view polling
+            if(strpos($_SERVER['REQUEST_URI'], DIRECTORY_SEPARATOR.'logs'.DIRECTORY_SEPARATOR.'view'.DIRECTORY_SEPARATOR) !== false &&
+                strpos($queryString, 'q=') !== false) $this->earlyExit = true;
+
         }
 
-
-        // url for $session->redirects
-        $this->httpReferer = isset($_SERVER['HTTP_REFERER']) ? $this->wire('sanitizer')->text($_SERVER['HTTP_REFERER']) : self::inputHttpUrl(true);
-
-        // determine if we are in the admin / backend
-        static::$inAdmin = $this->inAdmin();
+        // if "enabled" not checked or tracyDisabled via config or other early exit
+        if(!$this->data['enabled'] || $this->wire('config')->tracyDisabled || $this->earlyExit) {
+            return;
+        }
 
         // include the codeProcessor (console / snippetRunner) after ready to it has access to any properties/methods added by other modules
         $this->wire()->addHookAfter('ProcessWire::ready', $this, 'codeProcessor');
@@ -361,41 +391,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // log requests for Request Logger
         $this->wire()->addHookAfter('Page::render', $this, 'logRequests');
         $this->wire()->addHookAfter('Page::logRequests', $this, 'logRequests');
-
-        // modals
-        if(in_array('regularModal', $this->data['hideDebugBarModals']) && $this->wire('input')->get->modal == '1') return;
-        if(in_array('inlineModal', $this->data['hideDebugBarModals']) && $this->wire('input')->get->modal == 'inline') return;
-        if(in_array('overlayPanels', $this->data['hideDebugBarModals']) && $this->wire('input')->get->modal == 'panel') return;
-
-        // formbuilder iframe
-        if(in_array('formBuilderIframe', $this->data['hideDebugBarModals']) &&
-            !static::$inAdmin &&
-            strpos(self::inputUrl(true), DIRECTORY_SEPARATOR.'form-builder'.DIRECTORY_SEPARATOR) !== false)
-                return;
-
-        // adminer iframe
-        if(strpos(self::inputUrl(true), 'adminer') !== false)
-            return;
-
-        // don't init Tracy for @soma's PageEditSoftLock polling on Page Edit
-        if(strpos(self::inputUrl(), 'checkpagelock') !== false) return;
-
-        if(isset($_SERVER['REQUEST_URI'])) {
-            $info = parse_url($_SERVER['REQUEST_URI']);
-            $queryString = isset($info['query']) ? $info['query'] : '';
-            // don't init Tracy for the PW Notifications module polling
-            if(strpos($queryString, 'Notifications=update') !== false) return;
-
-            // don't init Tracy for sidenav iframes in admin themes that support this
-            if(strpos($queryString, 'layout=sidenav-side') !== false ||
-                strpos($queryString, 'layout=sidenav-tree') !== false ||
-                strpos($queryString, 'layout=sidenav-init') !== false) return;
-
-            // don't init Tracy for Setup > Logs view polling
-            if(strpos($_SERVER['REQUEST_URI'], DIRECTORY_SEPARATOR.'logs'.DIRECTORY_SEPARATOR.'view'.DIRECTORY_SEPARATOR) !== false &&
-                strpos($queryString, 'q=') !== false) return;
-
-        }
 
 
         // clear session & cookies option in Processwire Info panel
@@ -815,25 +810,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
 
-        // TRACY SETUP
-        // load core tracy library
-        if(static::$allowedTracyUser) {
-            require_once __DIR__ . '/tracy-master/src/tracy.php';
-        }
-        else {
-            // if user not allowed then load dummy class to prevent "class not found" errors when
-            // calling \Tracy\Debugger::method() directly
-            require_once __DIR__ . '/includes/DummyTracyDebuggerClass.php';
-        }
-
-        // always needs to be loaded to prevent function not defined errors when user not allowed to use Tracy
-        require_once __DIR__ . '/includes/TD.php';
-
-        // always needs to be loaded to prevent function not defined errors when user not allowed to use Tracy
-        if($this->data['enableShortcutMethods']) {
-            require_once __DIR__ . '/includes/ShortcutMethods.php';
-        }
-
 
         // CONSOLE PANEL CODE INJECTION
         if(static::$allowedTracyUser === 'development') {
@@ -845,8 +821,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // START ENABLING TRACY
-        // now that required classes above have been loaded if requested,
-        // we can now exit if user not allowed
+        // now that required classes above have been loaded, we can now exit if user is not allowed
         if(!static::$allowedTracyUser) return;
 
 
@@ -1265,7 +1240,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // ENABLE TRACY
-        Debugger::enable($outputMode, $logFolder, $this->data['email'] != '' ? $this->data['email'] : null);
+        if($this->tracyEnabled) Debugger::enable($outputMode, $logFolder, $this->data['email'] != '' ? $this->data['email'] : null);
 
         // fixes for when SessionHandlerDB module is installed
         if($this->wire('modules')->isInstalled('SessionHandlerDB') && Debugger::$showBar) {
