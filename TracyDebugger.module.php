@@ -309,7 +309,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public function init() {
 
         // load Tracy files and our helpers
-        require_once __DIR__ . '/tracy-master/src/tracy.php';
+        if(version_compare(PHP_VERSION, '7.1.0', '>=')) {
+            require_once __DIR__ . '/tracy-2.6.x/src/tracy.php';
+        }
+        else {
+            require_once __DIR__ . '/tracy-2.5.x/src/tracy.php';
+        }
         require_once __DIR__ . '/includes/TD.php';
         if($this->data['enableShortcutMethods']) {
             require_once __DIR__ . '/includes/ShortcutMethods.php';
