@@ -36,6 +36,9 @@ class Debugger
 	/** @var bool whether to send data to FireLogger in development mode */
 	public static $showFireLogger = true;
 
+	/** @var bool whether to disable the shutdown handler in development mode */
+	public static $disableShutdownHandler = false;
+
 	/** @var bool */
 	private static $enabled = false;
 
@@ -104,11 +107,20 @@ class Debugger
 	/** @var string custom static error template */
 	public static $errorTemplate;
 
-	/** @var string[] */
+	/** @var array[] */
 	public static $customCssFiles = [];
 
-	/** @var string[] */
+	/** @var array[] */
 	public static $customJsFiles = [];
+
+	/** @var string */
+	public static $customCssStr = null;
+
+	/** @var string */
+	public static $customJsStr = null;
+
+	/** @var string */
+	public static $customBodyStr = null;
 
 	/** @var array|null */
 	private static $cpuUsage;
@@ -250,6 +262,11 @@ class Debugger
 	 */
 	public static function shutdownHandler(): void
 	{
+
+		if (self::$disableShutdownHandler) {
+			return;
+		}
+
 		if (!self::$reserved) {
 			return;
 		}

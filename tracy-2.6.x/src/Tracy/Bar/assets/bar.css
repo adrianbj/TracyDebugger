@@ -20,7 +20,7 @@ body#tracy-debug { /* in popup window */
 	top: 0;
 }
 
-#tracy-debug * {
+#tracy-debug-bar * {
 	font: inherit;
 	line-height: inherit;
 	color: inherit;
@@ -42,8 +42,8 @@ body#tracy-debug { /* in popup window */
 	clear: none;
 }
 
-#tracy-debug *:before,
-#tracy-debug *:after {
+#tracy-debug-bar *:before,
+#tracy-debug-bar *:after {
 	all: unset;
 }
 

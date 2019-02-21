@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.17.22',
+            'version' => '4.18.0',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -285,7 +285,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "fileEditorAllowedExtensions" => 'php, module, js, css, txt, log, htaccess',
             "fileEditorBaseDirectory" => 'templates',
             "enableShortcutMethods" => 1,
-            "enabledShortcutMethods" => array('addBreakpoint', 'bp', 'barDump', 'bd', 'barDumpBig', 'bdb', 'barDumpLive', 'bdl', 'debugAll', 'da', 'dump', 'd', 'dumpBig', 'db', 'fireLog', 'fl', 'l', 'templateVars', 'tv', 'timer', 't')
+            "enabledShortcutMethods" => array('addBreakpoint', 'bp', 'barDump', 'bd', 'barDumpBig', 'bdb', 'debugAll', 'da', 'dump', 'd', 'dumpBig', 'db', 'fireLog', 'fl', 'l', 'templateVars', 'tv', 'timer', 't')
         );
     }
 
@@ -1230,7 +1230,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             else {
                 // backwards compatibility with older versions of Tracy core before
                 // https://github.com/nette/tracy/commit/12d5cafa9264f2dfc3dfccb302a0eea404dcc24e
-                Debugger::$maxLen = $this->data['maxLength'];
+                if(isset(Debugger::$maxLen)) Debugger::$maxLen = $this->data['maxLength'];
             }
             Debugger::getFireLogger()->maxDepth = $this->data['maxDepth'];
             Debugger::getFireLogger()->maxLength = $this->data['maxLength'];
@@ -1239,7 +1239,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             Debugger::$strictMode = $this->data['strictMode'] || ($this->data['strictModeAjax'] && $this->wire('config')->ajax) || $this->wire('input')->cookie->tracyStrictMode ? TRUE : FALSE;
             Debugger::$scream = $this->data['forceScream'] ? TRUE : FALSE;
-
 
         }
 
@@ -2391,7 +2390,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     public static function getDataValue($property) {
-        if(is_array(self::$_data->$property)) {
+        if(is_array(self::$_data->$property) || is_int(self::$_data->$property)) {
             return self::$_data->$property;
         }
         else {
@@ -3834,8 +3833,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->addOption('bd', 'bd() for TD::barDump()');
         $f->addOption('barDumpBig', 'barDumpBig() for TD::barDumpBig()');
         $f->addOption('bdb', 'bdb() for TD::barDumpBig()');
-        $f->addOption('barDumpLive', 'barDumpLive() for TD::barDumpLive()');
-        $f->addOption('bdl', 'bdl() for TD::barDumpLive()');
         $f->addOption('debugAll', 'debugAll() for TD::debugAll()');
         $f->addOption('da', 'da() for TD::debugAll()');
         $f->addOption('dump', 'dump() for TD::dump()');

@@ -258,9 +258,18 @@ body.tracyHidden:before {
     background: #E2E9EF !important;
 }
 
+#tracy-debug tr:first-child > *:hover:before {
+	position: absolute;
+	right: .3em;
+	content: "\21C5";
+	opacity: 1;
+	font-weight: normal;
+    color: #FFFFFF;
+    background: #2C3E50;
+}
+
 .tracy-panel th {
     position: sticky;
-    top: -13px;
 }
 
 #tracy-debug .tracy-panel td,
@@ -1718,3 +1727,4 @@ https://github.com/ajaxorg/ace/issues/2872
 .ace_editor.ace_autocomplete {
     width: 400px;
 }
+

@@ -45,24 +45,14 @@ class TD extends TracyDebugger {
             $options['maxDepth'] = $options[0];
             if(isset($options[1])) $options['maxLength'] = $options[1];
         }
+
         $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
-        $options[Dumper::LOCATION] = Debugger::$showLocation;
-        static::dumpToBar($var, $title, $options);
-    }
-
-    /**
-     * Tracy\Debugger::barDumpLive() shortcut with live dumping.
-     * @tracySkipLocation
-     */
-    public static function barDumpLive($var, $title = NULL) {
-        if(self::tracyUnavailable()) return false;
-        $options[Dumper::DEPTH] = 99;
-        $options[Dumper::TRUNCATE] = 999999;
         $options[Dumper::LOCATION] = Debugger::$showLocation;
         $options[Dumper::LIVE] = true;
         static::dumpToBar($var, $title, $options);
     }
+
 
     /**
      * Tracy\Debugger::barDumpBig() shortcut dumping with maxDepth = 6 and maxLength = 9999.
@@ -81,6 +71,7 @@ class TD extends TracyDebugger {
         $options[Dumper::DEPTH] = 6;
         $options[Dumper::TRUNCATE] = 9999;
         $options[Dumper::LOCATION] = Debugger::$showLocation;
+        $options[Dumper::LIVE] = true;
         static::dumpToBar($var, $title, $options);
     }
 
@@ -101,6 +92,7 @@ class TD extends TracyDebugger {
         $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
         $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
+        $options[Dumper::LIVE] = false;
         if($title) echo '<h2>'.$title.'</h2>';
         echo static::generateDump($var, $options);
     }
@@ -122,6 +114,7 @@ class TD extends TracyDebugger {
         $options[Dumper::DEPTH] = 6;
         $options[Dumper::TRUNCATE] = 9999;
         $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
+        $options[Dumper::LIVE] = false;
         if($title) echo '<h2>'.$title.'</h2>';
         echo static::generateDump($var, $options);
     }

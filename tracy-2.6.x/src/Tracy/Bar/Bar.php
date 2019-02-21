@@ -226,6 +226,8 @@ class Bar
 	document.head.appendChild(el);})
 ();\n";
 
+		if(Debugger::$customCssStr) echo "(function(){var el = document.createElement('div'); el.className='tracy-debug'; el.innerHTML='".preg_replace('#\s+#u', ' ', Debugger::$customCssStr)."'; document.head.appendChild(el);})();\n";
+
 		array_map('readfile', array_merge([
 			__DIR__ . '/assets/bar.js',
 			__DIR__ . '/../Toggle/toggle.js',
@@ -233,5 +235,10 @@ class Bar
 			__DIR__ . '/../Dumper/assets/dumper.js',
 			__DIR__ . '/../BlueScreen/assets/bluescreen.js',
 		], Debugger::$customJsFiles));
+
+		if(Debugger::$customJsStr) echo Debugger::$customJsStr;
+
+		if(Debugger::$customBodyStr) echo "(function(){var el = document.createElement('div'); el.className='tracy-debug'; el.innerHTML='".preg_replace('#\s+#u', ' ', Debugger::$customBodyStr)."'; document.body.appendChild(el);})();\n";
+
 	}
 }

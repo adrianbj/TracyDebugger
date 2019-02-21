@@ -13,19 +13,9 @@ class DumpsPanel extends BasePanel {
         \Tracy\Debugger::timer('dumps');
 
         $this->data = \TracyDebugger::$dumpItems;
+        $data = $this->data;
 
-        if(\TracyDebugger::isAdditionalBar() == 'ajax') {
-            $dumpItemsAjax = $this->wire('session')->tracyDumpItemsAjax ?: array();
-            foreach($this->data as $item) {
-                array_push($dumpItemsAjax, $item);
-            }
-            $this->wire('session')->tracyDumpItemsAjax = $data = $dumpItemsAjax;
-        }
-        else {
-            $data = $this->data;
-        }
         $this->dumpCount = is_array($data) ? count($data) : 0;
-        if(\TracyDebugger::isAdditionalBar() == 'ajax') $this->entries .= '<div>'.($this->dumpCount > 0 ? '<span id="clearDumpsButton" style="display:inline-block;float:right"><input type="submit" onclick="clearDumps()" value="Clear Dumps" /></span>' : '') . '</div><div style="clear:both; margin-bottom:5px"></div>';
         if($this->dumpCount > 0) {
             $this->iconColor = \TracyDebugger::COLOR_WARN;
             $this->entries .= '
@@ -70,24 +60,6 @@ class DumpsPanel extends BasePanel {
         $isAdditionalBar = \TracyDebugger::isAdditionalBar();
         $out = '
         <h1>' . $this->icon . ' Dumps' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'DumpsPanel'.($isAdditionalBar ? '-'.$isAdditionalBar : '').'\')">+</a></span></span>
-
-        <script>
-            function clearDumps() {
-                document.cookie = "tracyClearDumpItemsAjax=true;expires=0;path=/";
-                document.getElementById("clearDumpsButton").innerHTML="";
-                var elements = document.getElementsByClassName("dump-items");
-                while(elements.length > 0) {
-                    elements[0].parentNode.removeChild(elements[0]);
-                }
-                var icons = document.getElementsByClassName("ajaxDumpIconPath");
-                i=0;
-                while(i < icons.length) {
-                    icons[i].style.fill="'.\TracyDebugger::COLOR_NORMAL.'";
-                    i++;
-                }
-                document.getElementById("ajaxDumpCount").innerHTML="";
-            }
-        </script>
 
         <div class="tracy-inner tracy-DumpPanel">
 

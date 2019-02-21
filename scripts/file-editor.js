@@ -16,7 +16,8 @@ if(!tracyFileEditorLoader) {
                 window.requestAnimationFrame(tracyFileEditorLoader.addFileEditorClickEvents);
             }
             else {
-                document.getElementById("tracy-debug").addEventListener("click", function(e) {
+                // click event added to body because of links on bluescreen
+                document.body.addEventListener("click", function(e) {
                     if(e.target) {
                         var curEl = e.target;
                         while(curEl && curEl.tagName != "A") {
