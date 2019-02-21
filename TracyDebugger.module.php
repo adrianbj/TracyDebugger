@@ -207,6 +207,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "numLogEntries" => 10,
             "maxDepth" => 3,
             "maxLength" => 150,
+            "maxAjaxRows" => 3,
             "showDebugBar" => array('frontend', 'backend'),
             "hideDebugBar" => null,
             "hideDebugBarFrontendTemplates" => array(),
@@ -229,10 +230,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "showPanelLabels" => null,
             "debugbarFixedPosition" => null,
             "panelZindex" => 100,
-            "styleWhere" => array(),
+            "styleWhere" => array('backend', 'frontend'),
             "styleAdminElements" => "body::before {\n\tcontent: \"[type]\";\n\tbackground: [color];\n\tposition: fixed;\n\tleft: 0;\n\tbottom: 100%;\n\tcolor: #ffffff;\n\twidth: 100vh;\n\tpadding: 0;\n\ttext-align: center;\n\tfont-weight: 600;\n\ttext-transform: uppercase;\n\ttransform: rotate(90deg);\n\ttransform-origin: bottom left;\n\tz-index: 999999;\n\tfont-family: sans-serif;\n\tfont-size: 11px;\n\theight: 13px;\n\tline-height: 13px;\npointer-events: none;\n}\n",
             "styleAdminColors" => "\nlocal|#FF9933\n*.local|#FF9933\n*.dev|#FF9933\ndev.*|#FF9933\n*.test|#FF9933\nstaging.*|#8b0066\n*.com|#009900",
-            "styleAdminType" => array("default", "favicon"),
+            "styleAdminType" => array('favicon'),
             "showPWInfoPanelIconLabels" => 1,
             "linksNewTab" => null,
             "pWInfoPanelLinksNewTab" => null,
@@ -308,13 +309,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public function init() {
 
-        // load Tracy files and our helpers
-        if(version_compare(PHP_VERSION, '7.1.0', '>=')) {
-            require_once __DIR__ . '/tracy-2.6.x/src/tracy.php';
-        }
-        else {
-            require_once __DIR__ . '/tracy-2.5.x/src/tracy.php';
-        }
+        // load Tracy files and our helper files
+        $tracyVersion = version_compare(PHP_VERSION, '7.1.0', '>=') ? '2.6.x' : '2.5.x';
+        require_once __DIR__ . '/tracy-'.$tracyVersion.'/src/tracy.php';
         require_once __DIR__ . '/includes/TD.php';
         if($this->data['enableShortcutMethods']) {
             require_once __DIR__ . '/includes/ShortcutMethods.php';
@@ -1092,6 +1089,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             }
                         }
                     });
+
+                    window.TracyMaxAjaxRows = '.$this->data['maxAjaxRows'].';
 
                 ';
 
@@ -2475,6 +2474,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 return $checkIpAddress['ipAddressAllowed'] ? 'development' : false;
             }
             elseif($u->hasPermission('tracy-debugger')) {
+                if(static::$isLocal) self::$validLocalUser = true;
                 return 'development';
             }
             else {
@@ -2854,7 +2854,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Maximum nesting depth', __FILE__);
         $f->description = __('Set the maximum nesting depth of dumped arrays and objects.', __FILE__);
         $f->notes = __('Default: 3. Warning: making this too large can slow your page load down or even crash your browser.', __FILE__);
-        $f->columnWidth = 50;
+        $f->columnWidth = 33;
         $f->attr('value', $data['maxDepth']);
         $fieldset->add($f);
 
@@ -2863,8 +2863,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Maximum string length', __FILE__);
         $f->description = __('Set the maximum displayed strings length.', __FILE__);
         $f->notes = __('Default: 150.', __FILE__);
-        $f->columnWidth = 50;
+        $f->columnWidth = 34;
         $f->attr('value', $data['maxLength']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldInteger");
+        $f->attr('name', 'maxAjaxRows');
+        $f->label = __('Maximum number of AJAX rows in debug bar', __FILE__);
+        $f->description = __('After number is exceeded, the first one will be recycled.', __FILE__);
+        $f->notes = __('Default: 3. Note that you will need to do a hard browser reload for this setting to take effect.', __FILE__);
+        $f->columnWidth = 33;
+        $f->attr('value', $data['maxAjaxRows']);
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");

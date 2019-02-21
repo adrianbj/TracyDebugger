@@ -664,7 +664,7 @@ ul.pw-info-links {
 }
 
 #tracy-debug #saveSnippet {
-    padding: 2px 6px !important;
+    padding: 2px !important;
     margin: 0 !important;
     position: absolute !important;
     font-size: 15px !important;

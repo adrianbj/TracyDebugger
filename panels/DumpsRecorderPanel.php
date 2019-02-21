@@ -9,7 +9,6 @@ class DumpsRecorderPanel extends BasePanel {
 
     public function getTab() {
 
-        if(\TracyDebugger::isAdditionalBar()) return;
         \Tracy\Debugger::timer('dumpsRecorder');
 
         $items = $this->wire('session')->tracyDumpsRecorderItems ?: array();
@@ -46,7 +45,7 @@ class DumpsRecorderPanel extends BasePanel {
 
         return '
         <span title="Dumps Recorder">
-            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Dumps Recorder' : '') . ' ' . ($this->dumpCount > 0 ? '<span id="dumpsRecorderCount">' . $this->dumpCount . '</span>' : '') . '
+            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Dumps Recorder' : '') . ' ' . ($this->dumpCount > 0 ? '<span class="dumpsRecorderCount">' . $this->dumpCount . '</span>' : '') . '
         </span>
         ';
     }
@@ -60,7 +59,7 @@ class DumpsRecorderPanel extends BasePanel {
         <script>
             function clearRecorderDumps() {
                 document.cookie = "tracyClearDumpsRecorderItems=true;expires=0;path=/";
-                document.getElementById("clearDumpsRecorderButton").innerHTML="";
+
                 var elements = document.getElementsByClassName("dumpsrecorder-items");
                 while(elements.length > 0) {
                     elements[0].parentNode.removeChild(elements[0]);
@@ -71,7 +70,14 @@ class DumpsRecorderPanel extends BasePanel {
                     icons[i].style.fill="'.\TracyDebugger::COLOR_NORMAL.'";
                     i++;
                 }
-                document.getElementById("dumpsRecorderCount").innerHTML="";
+
+                var dumpsRecorderCounts = document.getElementsByClassName("dumpsRecorderCount");
+                i=0;
+                while(i < dumpsRecorderCounts.length) {
+                    dumpsRecorderCounts[i].innerHTML="";
+                    i++;
+                }
+
             }
         </script>
 

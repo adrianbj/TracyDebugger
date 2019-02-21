@@ -125,10 +125,10 @@ class MailInterceptorPanel extends BasePanel {
                     i++;
                 }
 
-                var iconCounts = document.getElementsByClassName("mailCount");
+                var mailCounts = document.getElementsByClassName("mailCount");
                 i=0;
-                while(i < iconCounts.length) {
-                    iconCounts[i].innerHTML="";
+                while(i < mailCounts.length) {
+                    mailCounts[i].innerHTML="";
                     i++;
                 }
             }

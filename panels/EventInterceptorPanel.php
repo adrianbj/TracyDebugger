@@ -78,10 +78,10 @@ class EventInterceptorPanel extends BasePanel {
                     i++;
                 }
 
-                var iconCounts = document.getElementsByClassName("eventCount");
+                var eventCounts = document.getElementsByClassName("eventCount");
                 i=0;
-                while(i < iconCounts.length) {
-                    iconCounts[i].innerHTML="";
+                while(i < eventCounts.length) {
+                    eventCounts[i].innerHTML="";
                     i++;
                 }
             }
