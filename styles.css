@@ -68,6 +68,7 @@ body.tracyHidden:before {
 
 .tracy-panel {
     box-sizing: border-box !important;
+    opacity: 1 !important;
 }
 
 .tracy-panel a:link {
@@ -866,6 +867,10 @@ ul.pw-info-links {
     background: #F0F3F7 !important;
     /*border: 1px solid rgba(255, 255, 255, 0.3);*/
     border-bottom: 1px solid #c9d4e1 !important;
+}
+
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-focused"]>h1 {
+    background: #CCCCCC !important;
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>h1>svg,
