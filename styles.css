@@ -870,7 +870,7 @@ ul.pw-info-links {
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-focused"]>h1 {
-    background: #CCCCCC !important;
+    background: #DDDDDD !important;
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>h1>svg,
