@@ -55,14 +55,6 @@ class MethodsInfoPanel extends BasePanel {
                 TD::barDumpBig()<br />
             </p>
 
-
-            <p><strong><a href="'.$debugMethodsRootUrl.'bardumplive" target="_blank">barDumpLive($var, $title = NULL)</a></strong></p>
-            <p>
-                <strong>bdl()</strong><br />
-                barDumpLive()<br />
-                TD::barDumpLive()<br />
-            </p>
-
             <p><strong><a href="'.$debugMethodsRootUrl.'debugall" target="_blank">debugAll($var, $title = NULL, array $options = NULL)</a></strong></p>
             <p>
                 <strong>da()</strong><br />
