@@ -42,7 +42,7 @@ class BlueScreen
 
 	public function __construct()
 	{
-		$this->collapsePaths[] = preg_match('#(.+/vendor)/tracy/tracy/src/Tracy$#', strtr(__DIR__, '\\', '/'), $m)
+		$this->collapsePaths[] = preg_match('#(.+/vendor)/tracy/tracy/src/Tracy/BlueScreen$#', strtr(__DIR__, '\\', '/'), $m)
 			? $m[1]
 			: __DIR__;
 	}
@@ -175,7 +175,7 @@ class BlueScreen
 	{
 		$actions = [];
 		foreach ($this->actions as $callback) {
-			$action = call_user_func($callback, $ex);
+			$action = $callback($ex);
 			if (!empty($action['link']) && !empty($action['label'])) {
 				$actions[] = $action;
 			}
