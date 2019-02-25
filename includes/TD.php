@@ -49,7 +49,7 @@ class TD extends TracyDebugger {
         $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
         $options[Dumper::LOCATION] = Debugger::$showLocation;
-        $options[Dumper::LIVE] = true;
+        $options[Dumper::LIVE] = version_compare(Debugger::VERSION, '2.6.0', '>=') ? true : false;
         static::dumpToBar($var, $title, $options);
     }
 
@@ -71,7 +71,7 @@ class TD extends TracyDebugger {
         $options[Dumper::DEPTH] = 6;
         $options[Dumper::TRUNCATE] = 9999;
         $options[Dumper::LOCATION] = Debugger::$showLocation;
-        $options[Dumper::LIVE] = true;
+        $options[Dumper::LIVE] = version_compare(Debugger::VERSION, '2.6.0', '>=') ? true : false;
         static::dumpToBar($var, $title, $options);
     }
 
