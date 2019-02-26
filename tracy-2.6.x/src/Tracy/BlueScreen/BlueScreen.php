@@ -135,6 +135,8 @@ class BlueScreen
 		$actions = $toScreen ? $this->renderActions($exception) : [];
 
 		require $template;
+
+		$snapshot = [];
 	}
 
 

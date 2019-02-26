@@ -23,17 +23,19 @@
 					el.removeAttribute('data-tracy-snapshot');
 				} else { // <span data-tracy-dump>
 					el.querySelectorAll('[data-tracy-dump]').forEach((el) => {
+						let dump = JSON.parse(el.getAttribute('data-tracy-dump'));
 						el.parentNode.removeChild(el.nextSibling); // remove \n after toggler
 						el.parentNode.replaceChild( // replace toggler
-							build(JSON.parse(el.getAttribute('data-tracy-dump')), snapshot, el.classList.contains('tracy-collapsed')),
+							build(dump, snapshot, el.classList.contains('tracy-collapsed'), dump.parents),
 							el
 						);
 					});
 					return;
 				}
 
-				preList.forEach((el) => {
-					el.insertBefore(build(JSON.parse(el.getAttribute('data-tracy-dump')), snapshot, el.classList.contains('tracy-collapsed')), el.lastChild);
+				preList.forEach((el) => { // <pre>
+					let built = build(JSON.parse(el.getAttribute('data-tracy-dump')), snapshot, el.classList.contains('tracy-collapsed'));
+					el.insertBefore(built, el.lastChild);
 					el.classList.remove('tracy-collapsed');
 					el.removeAttribute('data-tracy-dump');
 				});
@@ -84,37 +86,37 @@
 				)
 			]);
 
-		} else if (Array.isArray(data)) {
+		} else if (data.array) {
 			return buildStruct(
 				[
 					createEl('span', {'class': 'tracy-dump-array'}, ['array']),
-					' (' + (data[0] && data.length || '') + ')'
+					' (' + (data.array[0] && data.array.length || '') + ')'
 				],
 				' [ ... ]',
-				data[0] === null ? null : data,
-				collapsed === true || data.length >= collapseCount,
+				data.array[0] === null ? null : data.array,
+				collapsed === true || data.array.length >= collapseCount,
 				repository,
 				parentIds
 			);
 
-		} else if (type === 'object' && data.number) {
+		} else if (data.number) {
 			return createEl(null, null, [
 				createEl('span', {'class': 'tracy-dump-number'}, [data.number + '\n'])
 			]);
 
-		} else if (type === 'object' && data.type) {
+		} else if (data.type) {
 			return createEl(null, null, [
 				createEl('span', null, [data.type + '\n'])
 			]);
 
-		} else if (type === 'object') {
+		} else {
 			let id = data.object || data.resource,
 				object = repository[id];
 
 			if (!object) {
 				throw new UnknownEntityException;
 			}
-			parentIds = parentIds || [];
+			parentIds = parentIds ? parentIds.slice(0) : [];
 			let recursive = parentIds.indexOf(id) > -1;
 			parentIds.push(id);
 
@@ -128,9 +130,9 @@
 					' ',
 					createEl('span', {'class': 'tracy-dump-hash'}, ['#' + object.hash])
 				],
-				' { ... }',
-				object.items,
-				collapsed === true || recursive || (object.items && object.items.length >= collapseCount),
+				recursive ? ' { RECURSION }' : ' { ... }',
+				recursive ? null : object.items,
+				collapsed === true || (object.items && object.items.length >= collapseCount),
 				repository,
 				parentIds
 			);

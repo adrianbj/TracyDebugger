@@ -292,7 +292,7 @@ class Dumper
 
 			if ($collapsed && $options['lazyLoad'] !== false) {
 				$this->snapshot = (array) $this->snapshot;
-				return $span . " data-tracy-dump='" . json_encode($this->toJson($var), JSON_HEX_APOS | JSON_HEX_AMP) . "'>" . $out . count($var) . ")</span>\n";
+				return $span . " data-tracy-dump='" . json_encode($this->toJson($var, $options), JSON_HEX_APOS | JSON_HEX_AMP) . "'>" . $out . count($var) . ")</span>\n";
 
 			} else {
 				$out = $span . '>' . $out . count($var) . ")</span>\n" . '<div' . ($collapsed ? ' class="tracy-collapsed"' : '') . '>';
@@ -337,12 +337,10 @@ class Dumper
 			. Helpers::escapeHtml(Helpers::getClass($var))
 			. '</span> <span class="tracy-dump-hash">#' . substr(md5(spl_object_hash($var)), 0, 4) . '</span>';
 
-		static $list = [];
-
 		if (empty($fields)) {
 			return $out . "\n";
 
-		} elseif (in_array($var, $list, true)) {
+		} elseif (in_array($var, $options['recursive'] ?? [], true)) {
 			return $out . " { <i>RECURSION</i> }\n";
 
 		} elseif (!$this->maxDepth || $level < $this->maxDepth || $var instanceof \Closure) {
@@ -353,11 +351,11 @@ class Dumper
 			$span = '<span class="tracy-toggle' . ($collapsed ? ' tracy-collapsed' : '') . '"';
 
 			if ($collapsed && $options['lazyLoad'] !== false) {
-				return $span . " data-tracy-dump='" . json_encode($this->toJson($var), JSON_HEX_APOS | JSON_HEX_AMP) . "'>" . $out . "</span>\n";
+				return $span . " data-tracy-dump='" . json_encode($this->toJson($var, $options), JSON_HEX_APOS | JSON_HEX_AMP) . "'>" . $out . "</span>\n";
 
 			} else {
 				$out = $span . '>' . $out . "</span>\n" . '<div' . ($collapsed ? ' class="tracy-collapsed"' : '') . '>';
-				$list[] = $var;
+				$options['recursive'][] = $var;
 				foreach ($fields as $k => &$v) {
 					$vis = '';
 					if (isset($k[0]) && $k[0] === "\x00") {
@@ -369,7 +367,7 @@ class Dumper
 						. '<span class="tracy-dump-key">' . Helpers::escapeHtml($this->encodeKey($k)) . "</span>$vis => "
 						. ($hide ? $this->dumpString($hide) : $this->dumpVar($v, $options, $level + 1));
 				}
-				array_pop($list);
+				array_pop($options['recursive']);
 
 				return $out . '</div>';
 			}
@@ -401,8 +399,17 @@ class Dumper
 	/**
 	 * @return mixed
 	 */
-	private function toJson(&$var, int $level = 0)
+	private function toJson(&$var, array $options = [], int $level = 0)
 	{
+		$parents = function () use ($options): array {
+			foreach ($options['recursive'] ?? [] as $parent) {
+				if ($id = ($this->snapshot[spl_object_hash($parent)]['id'] ?? null)) {
+					$res[] = $id;
+				}
+			}
+			return empty($res) ? [] : ['parents' => $res];
+		};
+
 		if (is_bool($var) || $var === null || is_int($var)) {
 			return $var;
 
@@ -427,11 +434,11 @@ class Dumper
 			foreach ($var as $k => &$v) {
 				if ($k !== $marker) {
 					$hide = is_string($k) && isset($this->keysToHide[strtolower($k)]);
-					$res[] = [$this->encodeKey($k), $hide ? self::HIDDEN_VALUE : $this->toJson($v, $level + 1)];
+					$res[] = [$this->encodeKey($k), $hide ? self::HIDDEN_VALUE : $this->toJson($v, [], $level + 1)];
 				}
 			}
 			unset($var[$marker]);
-			return $res;
+			return ['array' => $res] + $parents();
 
 		} elseif (is_object($var)) {
 			$hash = spl_object_hash($var);
@@ -466,10 +473,11 @@ class Dumper
 						$k = substr($k, strrpos($k, "\x00") + 1);
 					}
 					$hide = is_string($k) && isset($this->keysToHide[strtolower($k)]);
-					$obj['items'][] = [$this->encodeKey($k), $hide ? self::HIDDEN_VALUE : $this->toJson($v, $level + 1), $vis];
+					$obj['items'][] = [$this->encodeKey($k), $hide ? self::HIDDEN_VALUE : $this->toJson($v, [], $level + 1), $vis];
 				}
 			}
-			return ['object' => $obj['id']];
+
+			return ['object' => $obj['id']] + $parents();
 
 		} elseif (is_resource($var)) {
 			$obj = &$this->snapshot[(string) $var];
@@ -478,7 +486,7 @@ class Dumper
 				$obj = ['id' => count($this->snapshot), 'name' => $type . ' resource', 'hash' => (int) $var];
 				if (isset($this->resourceDumpers[$type])) {
 					foreach (($this->resourceDumpers[$type])($var) as $k => $v) {
-						$obj['items'][] = [$k, $this->toJson($v, $level + 1)];
+						$obj['items'][] = [$k, $this->toJson($v, [], $level + 1)];
 					}
 				}
 			}
