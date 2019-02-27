@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.18.3',
+            'version' => '4.18.4',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -3102,7 +3102,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = $this->wire('modules')->get("InputfieldText");
         $f->attr('name', 'editor');
         $f->label = __('Editor protocol handler', __FILE__);
-        $f->description = __('Sets the Tracy `Debugger::$editor` variable. Enter the appropriate address to open your code editor of choice.'."\n".'This approach only works for OSX. For more instructions on Windows and Linux alternatives, [read here](https://pla.nette.org/en/how-open-files-in-ide-from-debugger).'."\n".'For easily adding the SublimeText "subl://" protocol handler to your Mac, use this free [tool](https://github.com/saetia/sublime-url-protocol-mac).'."\n".' For other editors/IDEs, Google "protocol handler editorname".', __FILE__);
+        $f->description = __('Sets the Tracy `Debugger::$editor` variable. Enter the appropriate address to open your code editor of choice.'."\n".'This approach only works for OSX. For more instructions on Windows and Linux alternatives, [read here](https://pla.nette.org/en/how-open-files-in-ide-from-debugger).'."\n\n**Protocol handler helpers**\n[VSCode](https://github.com/shengyou/vscode-handler)\n[Sublime Text](https://github.com/saetia/sublime-url-protocol-mac)\n".' For other editors/IDEs, Google "protocol handler editorname".', __FILE__);
         $f->notes = __("`vscode://file/%file:%line`\n`subl://open/?url=file://%file&line=%line`\n Initially configured for VSCode - change to work with your favorite editor.", __FILE__);
         $f->columnWidth = 50;
         if($data['editor']) $f->attr('value', $data['editor']);
