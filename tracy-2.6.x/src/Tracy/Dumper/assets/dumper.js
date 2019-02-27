@@ -90,9 +90,9 @@
 			return buildStruct(
 				[
 					createEl('span', {'class': 'tracy-dump-array'}, ['array']),
-					' (' + (data.array[0] && data.array.length || '') + ')'
+					' (' + (data.length || data.array.length || '') + ')'
 				],
-				' [ ... ]',
+				data.recursive ? ' [ RECURSION ]' : ' [ ... ]',
 				data.array[0] === null ? null : data.array,
 				collapsed === true || data.array.length >= collapseCount,
 				repository,

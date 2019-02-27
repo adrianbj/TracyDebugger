@@ -58,10 +58,10 @@ class Dumper
 
 	/** @var array */
 	public static $objectExporters = [
-		'Closure' => 'Tracy\Dumper::exportClosure',
-		'SplFileInfo' => 'Tracy\Dumper::exportSplFileInfo',
-		'SplObjectStorage' => 'Tracy\Dumper::exportSplObjectStorage',
-		'__PHP_Incomplete_Class' => 'Tracy\Dumper::exportPhpIncompleteClass',
+		'Closure' => [self::class, 'exportClosure'],
+		'SplFileInfo' => [self::class, 'exportSplFileInfo'],
+		'SplObjectStorage' => [self::class, 'exportSplObjectStorage'],
+		'__PHP_Incomplete_Class' => [self::class, 'exportPhpIncompleteClass'],
 	];
 
 	/** @var int|null */
@@ -292,7 +292,9 @@ class Dumper
 
 			if ($collapsed && $options['lazyLoad'] !== false) {
 				$this->snapshot = (array) $this->snapshot;
-				return $span . " data-tracy-dump='" . json_encode($this->toJson($var, $options), JSON_HEX_APOS | JSON_HEX_AMP) . "'>" . $out . count($var) . ")</span>\n";
+				return $span . " data-tracy-dump='"
+					. json_encode($this->toJson($var, $options, $level), JSON_HEX_APOS | JSON_HEX_AMP) . "'>"
+					. $out . count($var) . ")</span>\n";
 
 			} else {
 				$out = $span . '>' . $out . count($var) . ")</span>\n" . '<div' . ($collapsed ? ' class="tracy-collapsed"' : '') . '>';
@@ -351,7 +353,9 @@ class Dumper
 			$span = '<span class="tracy-toggle' . ($collapsed ? ' tracy-collapsed' : '') . '"';
 
 			if ($collapsed && $options['lazyLoad'] !== false) {
-				return $span . " data-tracy-dump='" . json_encode($this->toJson($var, $options), JSON_HEX_APOS | JSON_HEX_AMP) . "'>" . $out . "</span>\n";
+				return $span . " data-tracy-dump='"
+					. json_encode($this->toJson($var, $options, $level), JSON_HEX_APOS | JSON_HEX_AMP)
+					. "'>" . $out . "</span>\n";
 
 			} else {
 				$out = $span . '>' . $out . "</span>\n" . '<div' . ($collapsed ? ' class="tracy-collapsed"' : '') . '>';
@@ -427,7 +431,7 @@ class Dumper
 				$marker = uniqid("\x00", true);
 			}
 			if (isset($var[$marker]) || $level >= $this->maxDepth) {
-				return [null];
+				return ['array' => [null], 'recursive' => isset($var[$marker]), 'length' => count($var)];
 			}
 			$res = [];
 			$var[$marker] = true;
