@@ -12,21 +12,20 @@
 	class Dumper
 	{
 		static init(context) {
-			(context || document).querySelectorAll('[data-tracy-snapshot]').forEach((el) => {
+			(context || document).querySelectorAll('[itemprop=tracy-snapshot], [data-tracy-snapshot]').forEach((el) => {
 				let preList, snapshot = JSON.parse(el.getAttribute('data-tracy-snapshot'));
 
-				if (el.tagName === 'META') { // <meta data-tracy-snapshot>
+				if (el.tagName === 'META') { // <meta itemprop=tracy-snapshot>
+					snapshot = JSON.parse(el.getAttribute('content'));
 					preList = el.parentElement.querySelectorAll('[data-tracy-dump]');
-					el.parentNode.removeChild(el);
 				} else if (el.matches('[data-tracy-dump]')) { // <pre data-tracy-snapshot data-tracy-dump>
 					preList = [el];
 					el.removeAttribute('data-tracy-snapshot');
 				} else { // <span data-tracy-dump>
 					el.querySelectorAll('[data-tracy-dump]').forEach((el) => {
-						let dump = JSON.parse(el.getAttribute('data-tracy-dump'));
 						el.parentNode.removeChild(el.nextSibling); // remove \n after toggler
 						el.parentNode.replaceChild( // replace toggler
-							build(dump, snapshot, el.classList.contains('tracy-collapsed'), dump.parents),
+							build(JSON.parse(el.getAttribute('data-tracy-dump')), snapshot, el.classList.contains('tracy-collapsed')),
 							el
 						);
 					});
@@ -86,18 +85,25 @@
 				)
 			]);
 
-		} else if (data.array) {
+		} else if (Array.isArray(data)) {
 			return buildStruct(
 				[
 					createEl('span', {'class': 'tracy-dump-array'}, ['array']),
-					' (' + (data.length || data.array.length || '') + ')'
+					' (' + (data[0] && data.length || '') + ')'
 				],
-				data.recursive ? ' [ RECURSION ]' : ' [ ... ]',
-				data.array[0] === null ? null : data.array,
-				collapsed === true || data.array.length >= collapseCount,
+				' [ ... ]',
+				data[0] === null ? null : data,
+				collapsed === true || data.length >= collapseCount,
 				repository,
 				parentIds
 			);
+
+		} else if (data.stop) {
+			return createEl(null, null, [
+				createEl('span', {'class': 'tracy-dump-array'}, ['array']),
+				' (' + data.stop[0] + ')',
+				data.stop[1] ? ' [ RECURSION ]\n' : ' [ ... ]\n',
+			]);
 
 		} else if (data.number) {
 			return createEl(null, null, [
@@ -116,7 +122,7 @@
 			if (!object) {
 				throw new UnknownEntityException;
 			}
-			parentIds = parentIds ? parentIds.slice(0) : [];
+			parentIds = parentIds || [];
 			let recursive = parentIds.indexOf(id) > -1;
 			parentIds.push(id);
 
@@ -203,6 +209,6 @@
 	function UnknownEntityException() {}
 
 
-	Tracy = window.Tracy || {};
+	let Tracy = window.Tracy = window.Tracy || {};
 	Tracy.Dumper = Dumper;
 })();

@@ -31,7 +31,7 @@ $nonceAttr = $nonce ? ' nonce="' . Helpers::escapeHtml($nonce) . '"' : '';
 <!--<?php do { echo str_replace('--', '- ', Helpers::escapeHtml("\n\tcaused by " . Helpers::getClass($ex) . ': ' . $ex->getMessage() . ($ex->getCode() ? ' #' . $ex->getCode() : ''))); } while ($ex = $ex->getPrevious()); ?> -->
 	<?php endif ?>
 
-	<style type="text/css" class="tracy-debug">
+	<style class="tracy-debug">
 	<?= str_replace('</', '<\/', $css) ?>
 	</style>
 	<script<?= $nonceAttr ?>>document.documentElement.className+=' tracy-js'</script>
@@ -43,19 +43,13 @@ $nonceAttr = $nonce ? ' nonce="' . Helpers::escapeHtml($nonce) . '"' : '';
 
 <script<?= $nonceAttr ?>>
 (function() {
-	if (!document.documentElement.dataset) {
-		document.getElementById('tracy-bs-error').innerHTML += '<div id=tracy-bs-ie-warning>Warning: Tracy requires IE 11+<\/div>';
-		return;
-	}
 	<?php readfile(__DIR__ . '/../../Toggle/toggle.js') ?>
 	<?php readfile(__DIR__ . '/../../TableSort/table-sort.js') ?>
 	<?php readfile(__DIR__ . '/../../Dumper/assets/dumper.js') ?>
 	<?php readfile(__DIR__ . '/bluescreen.js') ?>
 })();
-</script>
-<script<?= $nonceAttr ?>>
-Tracy && Tracy.Dumper.init();
-Tracy && Tracy.BlueScreen.init();
+Tracy.Dumper.init();
+Tracy.BlueScreen.init();
 </script>
 </body>
 </html>

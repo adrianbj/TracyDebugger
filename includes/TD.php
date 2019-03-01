@@ -49,7 +49,7 @@ class TD extends TracyDebugger {
         $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
         $options[Dumper::LOCATION] = Debugger::$showLocation;
-        $options[Dumper::LIVE] = version_compare(Debugger::VERSION, '2.6.0', '>=') ? true : false;
+        if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = true;
         static::dumpToBar($var, $title, $options);
     }
 
@@ -71,7 +71,7 @@ class TD extends TracyDebugger {
         $options[Dumper::DEPTH] = 6;
         $options[Dumper::TRUNCATE] = 9999;
         $options[Dumper::LOCATION] = Debugger::$showLocation;
-        $options[Dumper::LIVE] = version_compare(Debugger::VERSION, '2.6.0', '>=') ? true : false;
+        if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = true;
         static::dumpToBar($var, $title, $options);
     }
 
@@ -92,7 +92,7 @@ class TD extends TracyDebugger {
         $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
         $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
-        $options[Dumper::LIVE] = false;
+        if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = false;
         if($title) echo '<h2>'.$title.'</h2>';
         echo static::generateDump($var, $options);
     }
@@ -114,7 +114,7 @@ class TD extends TracyDebugger {
         $options[Dumper::DEPTH] = 6;
         $options[Dumper::TRUNCATE] = 9999;
         $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
-        $options[Dumper::LIVE] = false;
+        if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = false;
         if($title) echo '<h2>'.$title.'</h2>';
         echo static::generateDump($var, $options);
     }

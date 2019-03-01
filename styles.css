@@ -43,6 +43,10 @@ body.tracyHidden:before {
     padding: 1px 0 1px 0 !important;
 }
 
+#tracy-debug-bar .tracy-row:not(:first-child) {
+    background: #F0F3F7 !important;
+}
+
 #tracy-debug-bar li>a:hover {
     color: black !important;
     background: #F0F3F7 !important;

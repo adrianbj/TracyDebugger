@@ -38,6 +38,6 @@
 	}
 
 
-	Tracy = window.Tracy || {};
+	let Tracy = window.Tracy = window.Tracy || {};
 	Tracy.TableSort = Tracy.TableSort || TableSort;
 })();

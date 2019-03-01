@@ -22,8 +22,9 @@ class Dumper
 		COLLAPSE_COUNT = 'collapsecount', // how big array/object are collapsed? (defaults to 7)
 		LOCATION = 'location', // show location string? (defaults to 0)
 		OBJECT_EXPORTERS = 'exporters', // custom exporters for objects (defaults to Dumper::$objectexporters)
-		LIVE = 'live', // lazy-loading via JavaScript? true, false or null (only collapsed parts) (defaults to null/false)
-		SNAPSHOT = 'snapshot', // array for shared snapshot, enables LIVE
+		LAZY = 'lazy', // lazy-loading via JavaScript? true=full, false=none, null=collapsed parts (defaults to null/false)
+		LIVE = 'live', // use static $liveSnapshot (used by Bar)
+		SNAPSHOT = 'snapshot', // array used for shared snapshot for lazy-loading via JavaScript
 		DEBUGINFO = 'debuginfo', // use magic method __debugInfo if exists (defaults to false)
 		KEYS_TO_HIDE = 'keystohide'; // sensitive keys not displayed (defaults to [])
 
@@ -34,6 +35,9 @@ class Dumper
 
 	public const
 		HIDDEN_VALUE = '*****';
+
+	/** @var array */
+	public static $liveSnapshot = [];
 
 	/** @var array */
 	public static $terminalColors = [
@@ -79,14 +83,11 @@ class Dumper
 	/** @var int */
 	private $location = 0;
 
-	/** @var bool|null */
-	private $live;
+	/** @var bool|null  lazy-loading via JavaScript? true=full, false=none, null=collapsed parts */
+	private $lazy;
 
 	/** @var array|null */
 	private $snapshot;
-
-	/** @var bool */
-	private $sharedSnapshot;
 
 	/** @var bool */
 	private $debugInfo = false;
@@ -153,11 +154,11 @@ class Dumper
 		$this->collapseSub = $options[self::COLLAPSE_COUNT] ?? $this->collapseSub;
 		$this->location = $options[self::LOCATION] ?? $this->location;
 		$this->location = $this->location === true ? ~0 : (int) $this->location;
-		$this->live = $options[self::LIVE] ?? $this->live;
 		$this->snapshot = &$options[self::SNAPSHOT];
-		if ($this->sharedSnapshot = is_array($this->snapshot)) {
-			$this->live = true;
+		if ($options[self::LIVE] ?? false) {
+			$this->snapshot = &self::$liveSnapshot;
 		}
+		$this->lazy = is_array($this->snapshot) ? true : ($options[self::LAZY] ?? $this->lazy);
 		$this->debugInfo = $options[self::DEBUGINFO] ?? $this->debugInfo;
 		$this->keysToHide = array_flip(array_map('strtolower', $options[self::KEYS_TO_HIDE] ?? []));
 		$this->resourceDumpers = ($options['resourceExporters'] ?? []) + self::$resources;
@@ -178,22 +179,23 @@ class Dumper
 			' title="%in file % on line %" data-tracy-href="%"', "$code\n", $file, $line, Helpers::editorUri($file, $line)
 		) : null;
 
-		if (!$this->sharedSnapshot) {
-			$this->snapshot = null;
+		if (is_array($this->snapshot)) {
+			$options[self::SNAPSHOT] = &$this->snapshot;
 		}
+		$snapshot = &$options[self::SNAPSHOT]; // reference must exist
 
-		$html = $live = null;
-		if ($this->live && (is_array($var) || is_object($var) || is_resource($var)) && $var) {
-			$live = $this->toJson($var);
-			$this->snapshot = (array) $this->snapshot;
+		$html = $json = null;
+		if ($this->lazy && (is_array($var) || is_object($var) || is_resource($var)) && $var) {
+			$json = $this->toJson($var, $options);
+			$snapshot = (array) $snapshot;
 		} else {
-			$html = $this->dumpVar($var, ['lazyLoad' => $this->live]);
+			$html = $this->dumpVar($var, $options + [self::LAZY => $this->lazy]);
 		}
 
-		return '<pre class="tracy-dump' . ($live && $this->collapseTop === true ? ' tracy-collapsed' : '') . '"'
+		return '<pre class="tracy-dump' . ($json && $this->collapseTop === true ? ' tracy-collapsed' : '') . '"'
 			. $locAttrs
-			. (is_array($this->snapshot) && !$this->sharedSnapshot ? ' ' . $this->formatSnapshotAttribute($this->snapshot) : '')
-			. ($live ? " data-tracy-dump='" . json_encode($live, JSON_HEX_APOS | JSON_HEX_AMP) . "'>" : '>')
+			. (is_array($snapshot) && !is_array($this->snapshot) ? ' data-tracy-snapshot=' . $this->formatSnapshotAttribute($snapshot) : '')
+			. ($json ? " data-tracy-dump='" . json_encode($json, JSON_HEX_APOS | JSON_HEX_AMP) . "'>" : '>')
 			. $html
 			. ($file && $this->location & self::LOCATION_LINK ? '<small>in ' . Helpers::editorLink($file, $line) . '</small>' : '')
 			. "</pre>\n";
@@ -205,7 +207,7 @@ class Dumper
 	 */
 	private function asTerminal($var, array $colors = []): string
 	{
-		$s = $this->dumpVar($var, ['lazyLoad' => false]);
+		$s = $this->dumpVar($var, [self::LAZY => false]);
 		if ($colors) {
 			$s = preg_replace_callback('#<span class="tracy-dump-(\w+)">|</span>#', function ($m) use ($colors): string {
 				return "\033[" . (isset($m[1], $colors[$m[1]]) ? $colors[$m[1]] : '0') . 'm';
@@ -270,17 +272,12 @@ class Dumper
 
 	private function dumpArray(&$var, array $options, int $level): string
 	{
-		static $marker;
-		if ($marker === null) {
-			$marker = uniqid("\x00", true);
-		}
-
 		$out = '<span class="tracy-dump-array">array</span> (';
 
 		if (empty($var)) {
 			return $out . ")\n";
 
-		} elseif (isset($var[$marker])) {
+		} elseif (in_array($var, $options['parents'] ?? [], true)) {
 			return $out . (count($var) - 1) . ") [ <i>RECURSION</i> ]\n";
 
 		} elseif (!$this->maxDepth || $level < $this->maxDepth) {
@@ -290,24 +287,22 @@ class Dumper
 
 			$span = '<span class="tracy-toggle' . ($collapsed ? ' tracy-collapsed' : '') . '"';
 
-			if ($collapsed && $options['lazyLoad'] !== false) {
-				$this->snapshot = (array) $this->snapshot;
+			if ($collapsed && $options[self::LAZY] !== false) {
+				$options[self::SNAPSHOT] = (array) $options[self::SNAPSHOT];
 				return $span . " data-tracy-dump='"
 					. json_encode($this->toJson($var, $options, $level), JSON_HEX_APOS | JSON_HEX_AMP) . "'>"
 					. $out . count($var) . ")</span>\n";
 
 			} else {
 				$out = $span . '>' . $out . count($var) . ")</span>\n" . '<div' . ($collapsed ? ' class="tracy-collapsed"' : '') . '>';
-				$var[$marker] = true;
+				$options['parents'][] = $var;
 				foreach ($var as $k => &$v) {
-					if ($k !== $marker) {
-						$hide = is_string($k) && isset($this->keysToHide[strtolower($k)]) ? self::HIDDEN_VALUE : null;
-						$out .= '<span class="tracy-dump-indent">   ' . str_repeat('|  ', $level) . '</span>'
-							. '<span class="tracy-dump-key">' . Helpers::escapeHtml($this->encodeKey($k)) . '</span> => '
-							. ($hide ? $this->dumpString($hide) : $this->dumpVar($v, $options, $level + 1));
-					}
+					$hide = is_string($k) && isset($this->keysToHide[strtolower($k)]) ? self::HIDDEN_VALUE : null;
+					$out .= '<span class="tracy-dump-indent">   ' . str_repeat('|  ', $level) . '</span>'
+						. '<span class="tracy-dump-key">' . Helpers::escapeHtml($this->encodeKey($k)) . '</span> => '
+						. ($hide ? $this->dumpString($hide) : $this->dumpVar($v, $options, $level + 1));
 				}
-				unset($var[$marker]);
+				array_pop($options['parents']);
 
 				return $out . '</div>';
 			}
@@ -342,7 +337,7 @@ class Dumper
 		if (empty($fields)) {
 			return $out . "\n";
 
-		} elseif (in_array($var, $options['recursive'] ?? [], true)) {
+		} elseif (in_array($var, $options['parents'] ?? [], true)) {
 			return $out . " { <i>RECURSION</i> }\n";
 
 		} elseif (!$this->maxDepth || $level < $this->maxDepth || $var instanceof \Closure) {
@@ -352,14 +347,14 @@ class Dumper
 
 			$span = '<span class="tracy-toggle' . ($collapsed ? ' tracy-collapsed' : '') . '"';
 
-			if ($collapsed && $options['lazyLoad'] !== false) {
+			if ($collapsed && $options[self::LAZY] !== false) {
 				return $span . " data-tracy-dump='"
 					. json_encode($this->toJson($var, $options, $level), JSON_HEX_APOS | JSON_HEX_AMP)
 					. "'>" . $out . "</span>\n";
 
 			} else {
 				$out = $span . '>' . $out . "</span>\n" . '<div' . ($collapsed ? ' class="tracy-collapsed"' : '') . '>';
-				$options['recursive'][] = $var;
+				$options['parents'][] = $var;
 				foreach ($fields as $k => &$v) {
 					$vis = '';
 					if (isset($k[0]) && $k[0] === "\x00") {
@@ -371,7 +366,7 @@ class Dumper
 						. '<span class="tracy-dump-key">' . Helpers::escapeHtml($this->encodeKey($k)) . "</span>$vis => "
 						. ($hide ? $this->dumpString($hide) : $this->dumpVar($v, $options, $level + 1));
 				}
-				array_pop($options['recursive']);
+				array_pop($options['parents']);
 
 				return $out . '</div>';
 			}
@@ -405,15 +400,6 @@ class Dumper
 	 */
 	private function toJson(&$var, array $options = [], int $level = 0)
 	{
-		$parents = function () use ($options): array {
-			foreach ($options['recursive'] ?? [] as $parent) {
-				if ($id = ($this->snapshot[spl_object_hash($parent)]['id'] ?? null)) {
-					$res[] = $id;
-				}
-			}
-			return empty($res) ? [] : ['parents' => $res];
-		};
-
 		if (is_bool($var) || $var === null || is_int($var)) {
 			return $var;
 
@@ -426,45 +412,38 @@ class Dumper
 			return $this->encodeString($var, $this->maxLength);
 
 		} elseif (is_array($var)) {
-			static $marker;
-			if ($marker === null) {
-				$marker = uniqid("\x00", true);
-			}
-			if (isset($var[$marker]) || $level >= $this->maxDepth) {
-				return ['array' => [null], 'recursive' => isset($var[$marker]), 'length' => count($var)];
+			if (($rec = in_array($var, $options['parents'] ?? [], true)) || $level >= $this->maxDepth) {
+				return ['stop' => [count($var), $rec]];
 			}
 			$res = [];
-			$var[$marker] = true;
+			$options['parents'][] = $var;
 			foreach ($var as $k => &$v) {
-				if ($k !== $marker) {
-					$hide = is_string($k) && isset($this->keysToHide[strtolower($k)]);
-					$res[] = [$this->encodeKey($k), $hide ? self::HIDDEN_VALUE : $this->toJson($v, [], $level + 1)];
-				}
+				$hide = is_string($k) && isset($this->keysToHide[strtolower($k)]);
+				$res[] = [$this->encodeKey($k), $hide ? self::HIDDEN_VALUE : $this->toJson($v, $options, $level + 1)];
 			}
-			unset($var[$marker]);
-			return ['array' => $res] + $parents();
+			array_pop($options['parents']);
+			return $res;
 
 		} elseif (is_object($var)) {
 			$hash = spl_object_hash($var);
-			$obj = &$this->snapshot[$hash];
+			$obj = &$options[self::SNAPSHOT][$hash];
 			if ($obj && $obj['level'] <= $level) {
 				return ['object' => $obj['id']];
 			}
 
-			$editorInfo = null;
-			if ($this->location & self::LOCATION_CLASS) {
-				$rc = $var instanceof \Closure ? new \ReflectionFunction($var) : new \ReflectionClass($var);
-				$editor = $rc->getFileName() ? Helpers::editorUri($rc->getFileName(), $rc->getStartLine()) : null;
-				$editorInfo = $editor ? ['file' => $rc->getFileName(), 'line' => $rc->getStartLine(), 'url' => $editor] : null;
-			}
 			$obj = $obj ?: [
-				'id' => count($this->snapshot),
+				'id' => count($options[self::SNAPSHOT]),
 				'name' => Helpers::getClass($var),
 				'hash' => substr(md5($hash), 0, 4),
-				'editor' => $editorInfo,
 				'level' => $level,
 				'object' => $var,
 			];
+			if (empty($obj['editor']) && ($this->location & self::LOCATION_CLASS)) {
+				$rc = $var instanceof \Closure ? new \ReflectionFunction($var) : new \ReflectionClass($var);
+				if ($editor = $rc->getFileName() ? Helpers::editorUri($rc->getFileName(), $rc->getStartLine()) : null) {
+					$obj['editor'] = ['file' => $rc->getFileName(), 'line' => $rc->getStartLine(), 'url' => $editor];
+				}
+			}
 
 			if ($level < $this->maxDepth || !$this->maxDepth) {
 				$obj['level'] = $level;
@@ -477,20 +456,19 @@ class Dumper
 						$k = substr($k, strrpos($k, "\x00") + 1);
 					}
 					$hide = is_string($k) && isset($this->keysToHide[strtolower($k)]);
-					$obj['items'][] = [$this->encodeKey($k), $hide ? self::HIDDEN_VALUE : $this->toJson($v, [], $level + 1), $vis];
+					$obj['items'][] = [$this->encodeKey($k), $hide ? self::HIDDEN_VALUE : $this->toJson($v, $options, $level + 1), $vis];
 				}
 			}
-
-			return ['object' => $obj['id']] + $parents();
+			return ['object' => $obj['id']];
 
 		} elseif (is_resource($var)) {
-			$obj = &$this->snapshot[(string) $var];
+			$obj = &$options[self::SNAPSHOT][(string) $var];
 			if (!$obj) {
 				$type = get_resource_type($var);
-				$obj = ['id' => count($this->snapshot), 'name' => $type . ' resource', 'hash' => (int) $var];
+				$obj = ['id' => count($options[self::SNAPSHOT]), 'name' => $type . ' resource', 'hash' => (int) $var];
 				if (isset($this->resourceDumpers[$type])) {
 					foreach (($this->resourceDumpers[$type])($var) as $k => $v) {
-						$obj['items'][] = [$k, $this->toJson($v, [], $level + 1)];
+						$obj['items'][] = [$k, $this->toJson($v, $options, $level + 1)];
 					}
 				}
 			}
@@ -502,7 +480,7 @@ class Dumper
 	}
 
 
-	public static function formatSnapshotAttribute(array $snapshot): string
+	public static function formatSnapshotAttribute(array &$snapshot): string
 	{
 		$res = [];
 		foreach ($snapshot as $obj) {
@@ -510,7 +488,8 @@ class Dumper
 			unset($obj['level'], $obj['object'], $obj['id']);
 			$res[$id] = $obj;
 		}
-		return "data-tracy-snapshot='" . json_encode($res, JSON_HEX_APOS | JSON_HEX_AMP) . "'";
+		$snapshot = [];
+		return "'" . json_encode($res, JSON_HEX_APOS | JSON_HEX_AMP) . "'";
 	}
 
 
