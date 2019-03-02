@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.18.5',
+            'version' => '4.18.6',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -251,7 +251,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "requestMethods" => array('GET', 'POST', 'PUT', 'DELETE', 'PATCH'),
             "requestLoggerMaxLogs" => 10,
             "requestLoggerReturnType" => 'array',
-            "imagesInFieldListValues" => 1,
+            "imagesInFieldListValues" => 0,
             "snippetsPath" => 'templates',
             "userSwitcherRestricted" => null,
             "todoIgnoreDirs" => 'git, svn, images, img, errors, sass-cache, node_modules',
@@ -3428,6 +3428,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'imagesInFieldListValues');
         $f->label = __('Show image thumbnails in Field List & Values section', __FILE__);
         $f->description = __('This will load all image thumbnails for the page, along with the dimensions & size details.', __FILE__);
+        $f->notes = __('This can significantly increase the size of this panel and rendering time if the page has lots of images.', __FILE__);
         $f->columnWidth = 50;
         $f->attr('checked', $data['imagesInFieldListValues'] == '1' ? 'checked' : '');
         $fieldset->add($f);

@@ -634,12 +634,20 @@ class RequestInfoPanel extends BasePanel {
         // Fields List & Values
         if(in_array('fieldsListValues', $panelSections) && $isPwPage) {
 
-            if(isset($adminerUrl)) {
-                $fieldsListValues = $this->sectionHeader(array('id', 'name', 'label', 'type', 'inputfieldType/class', 'Adminer', 'unformatted', 'formatted', 'image details', 'settings'));
+            $fieldsListValuesColumns = array('id', 'name', 'label', 'type', 'inputfieldType/class', 'Adminer', 'unformatted', 'formatted', 'image details', 'settings');
+
+            if(!isset($adminerUrl)) {
+                if (($key = array_search('Adminer', $fieldsListValuesColumns)) !== false) {
+                    unset($fieldsListValuesColumns[$key]);
+                }
             }
-            else {
-                $fieldsListValues = $this->sectionHeader(array('id', 'name', 'label', 'type', 'inputfieldType/class', 'unformatted', 'formatted', 'image details', 'settings'));
+            if(!\TracyDebugger::getDataValue('imagesInFieldListValues')) {
+                if (($key = array_search('image details', $fieldsListValuesColumns)) !== false) {
+                    unset($fieldsListValuesColumns[$key]);
+                }
             }
+
+            $fieldsListValues = $this->sectionHeader($fieldsListValuesColumns);
 
             $value = array();
             foreach($p->fields as $f) {
@@ -653,9 +661,9 @@ class RequestInfoPanel extends BasePanel {
                     "<td>".str_replace('Inputfield', '', ($f->inputfield ? $f->inputfield : $f->inputfieldClass))."</td>";
                     if(isset($adminerUrl)) $fieldsListValues .= "<td><a href='".$adminerUrl."?edit=field_".$f->name."&where%5Bpages_id%5D=".$p->id."'>".$adminerIcon."</a></td>";
                     $fieldsListValues .= "<td>".$this->generateOutput($p, $f, false)."</td>" .
-                    "<td>".$this->generateOutput($p, $f, true)."</td>" .
-                    "<td>".$this->imageDetails($p, $f)."</td>" .
-                    "<td>".$settings."</td>" .
+                    "<td>".$this->generateOutput($p, $f, true)."</td>";
+                    if(\TracyDebugger::getDataValue('imagesInFieldListValues')) $fieldsListValues .= "<td>".$this->imageDetails($p, $f)."</td>";
+                    $fieldsListValues .= "<td>".$settings."</td>" .
                     "</tr>";
             }
             $fieldsListValues .= $sectionEnd;
