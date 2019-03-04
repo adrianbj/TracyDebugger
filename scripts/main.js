@@ -1,6 +1,6 @@
 function tracyResizePanel(panel) {
     panel = document.getElementById("tracy-debug-panel-" + panel);
-    tracyPanel = window.Tracy.Debug.panels[panel.id];
+    var tracyPanel = window.Tracy.Debug.panels[panel.id];
     tracyPanel.elem.classList.add('tracy-panel-resized');
     tracyPanel.elem.dataset.tracyContent = true; // hack to satisy condition in Tracy's restorePosition() method
     var maximizedPanelSettings = JSON.parse(localStorage.getItem(panel.id + '-maximizedSettings'));
