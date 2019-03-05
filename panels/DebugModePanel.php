@@ -283,7 +283,7 @@ class DebugModePanel extends BasePanel {
                     $cacheDetails .= "<table class=''><thead><tr><th colspan='2'>";
                     $cacheDetails .= $cacheName;
                     if(isset($adminerUrl)) {
-                        $cacheDetails .= '<a style="float:right" title="Edit in Adminer" style="padding-bottom:5px" href="'.$adminerUrl.'?edit=caches&where%5Bname%5D='.$cacheName.'">'.$adminerIcon.'</a>';
+                        $cacheDetails .= '<a style="float:right; cursor:pointer" title="Edit in Adminer" style="padding-bottom:5px" href="'.$adminerUrl.'?edit=caches&where%5Bname%5D='.$cacheName.'">'.$adminerIcon.'</a>';
                     }
                     $cacheDetails .= "</th></tr></thead><tbody>";
                     foreach($info as $key => $value) {
