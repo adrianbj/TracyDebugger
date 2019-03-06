@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.18.9',
+            'version' => '4.18.10',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1185,15 +1185,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 else {
                     $this->wire()->addHookAfter($this->hookSettings['hook'], $this, 'interceptEvent');
                 }
-            }
-
-
-            // DUMPS
-            // clear ajax items from session on window unload (javascript set cookie in Dumps panel)
-            if($this->wire('input')->cookie->tracyClearDumpItemsAjax) {
-                $this->wire('session')->remove('tracyDumpItemsAjax');
-                unset($this->wire('input')->cookie->tracyClearDumpItemsAjax);
-                setcookie("tracyClearDumpItemsAjax", "", time()-3600, "/");
             }
 
 

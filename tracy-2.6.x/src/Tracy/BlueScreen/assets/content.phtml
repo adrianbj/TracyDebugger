@@ -278,6 +278,11 @@ $code = $exception->getCode() ? ' #' . $exception->getCode() : '';
 		<h2><a data-tracy-ref="^+" class="tracy-toggle tracy-collapsed">HTTP request</a></h2>
 
 		<div class="tracy-collapsed inner">
+			<?php if ($sourceIsUrl): ?>
+			<h3>URL</h3>
+			<p><a href="<?= Helpers::escapeHtml($source) ?>"><?= Helpers::escapeHtml($source) ?></a></p>
+			<?php endif ?>
+
 			<h3>Headers</h3>
 			<div class="outer">
 			<table class="tracy-sortable">

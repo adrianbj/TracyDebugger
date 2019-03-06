@@ -46,12 +46,6 @@ class DumpsPanel extends BasePanel {
         <span title="Dumps">
             ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Dumps' : '') . ' ' . ($this->dumpCount > 0 ? '<span id="'.(\TracyDebugger::isAdditionalBar() == 'ajax' ? 'ajaxDumpCount' : 'dumpCount').'">' . $this->dumpCount . '</span>' : '') . '
         </span>
-
-        <script>
-            window.addEventListener("beforeunload", function () {
-                document.cookie = "tracyClearDumpItemsAjax=true;expires=0;path=/";
-            });
-        </script>
         ';
     }
 

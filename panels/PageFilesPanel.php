@@ -9,6 +9,7 @@ class PageFilesPanel extends BasePanel {
     private $p = false;
     private $missingFiles = array();
     private $orphanFiles = array();
+    private $tempFiles = array();
     private $numMissingFiles = 0;
     private $filesListStr;
 
@@ -61,12 +62,10 @@ class PageFilesPanel extends BasePanel {
                         <h2><strong>#'.$pid . '</strong> ' . $repeaterFieldName.'</h2>
                         <div class="tracyPageFilesPage">
                             <table>
-                                <th>Filename</th><th>Field</th>
-                    ';
+                                <th>Filename</th><th>Field</th>'.(count($this->tempFiles) > 0 ? '<th>Temp</th>' : '');
                 }
 
                 foreach($files as $file) {
-
                     if(isset($pageFilesBasenames[$pid]) && in_array($file, $pageFilesBasenames[$pid])) {
                         $style = '';
                         $fileField = $fileFields[$pid][$file];
@@ -76,12 +75,12 @@ class PageFilesPanel extends BasePanel {
                         $fileField = '';
                         $this->orphanFiles[] = $p->filesManager()->path . $file;
                     }
-                    $this->filesListStr .= '<tr><td><a style="'.$style.' !important" href="'.$p->filesManager()->url.$file.'">'.$file.'</a></td><td style="width: 1px">'.$fileField.'</td></tr>';
+                    $this->filesListStr .= '<tr><td><a style="'.$style.' !important" href="'.$p->filesManager()->url.$file.'">'.$file.'</a></td><td style="width: 1px">'.$fileField.'</td>' . (count($this->tempFiles) > 0 ? '<td style="text-align: center">'.(in_array($p->filesManager()->path.$file, $this->tempFiles) ? '	✔' : '').'</td>' : '') . '</tr>';
                 }
 
                 if(isset($this->missingFiles[$pid])) {
                     foreach($this->missingFiles[$pid] as $missingFile) {
-                        $this->filesListStr .= '<tr><td><span style="color: ' . \TracyDebugger::COLOR_ALERT . ' !important">'.pathinfo($missingFile['filename'], PATHINFO_BASENAME).'</td><td>'.$missingFile['field'].'</td></tr>';
+                        $this->filesListStr .= '<tr><td><span style="color: ' . \TracyDebugger::COLOR_ALERT . ' !important">'.pathinfo($missingFile['filename'], PATHINFO_BASENAME).'</td><td>'.$missingFile['field'].'</td>' . (count($this->tempFiles) > 0 ? '<td></td>' : '') . '</tr>';
                     }
                 }
 
@@ -211,11 +210,13 @@ class PageFilesPanel extends BasePanel {
                 foreach($item as $file) {
                     $files[$p->id][$i]['filename'] = $file->filename;
                     $files[$p->id][$i]['field'] = $f->name;
+                    if($file->isTemp()) $this->tempFiles[$i] = $file->filename;
                     $i++;
                     if($file instanceof Pageimage) {
                         foreach($file->getVariations() as $var) {
                             $files[$p->id][$i]['filename'] = $var->filename;
                             $files[$p->id][$i]['field'] = $f->name;
+                            if($var->isTemp()) $this->tempFiles[$i] = $var->filename;
                             $i++;
                         }
                     }
