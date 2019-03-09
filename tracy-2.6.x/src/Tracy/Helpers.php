@@ -166,7 +166,7 @@ class Helpers
 				. $_SERVER['REQUEST_URI'];
 		} else {
 			return 'CLI (PID: ' . getmypid() . ')'
-				. (empty($_SERVER['argv']) ? '' : ': ' . implode(' ', $_SERVER['argv']));
+				. ': ' . implode(' ', array_map([self::class, 'escapeArg'], $_SERVER['argv']));
 		}
 	}
 
@@ -184,7 +184,7 @@ class Helpers
 			$replace = ["$m[2](", "$hint("];
 
 		} elseif (preg_match('#^Call to undefined method ([\w\\\\]+)::(\w+)#', $message, $m)) {
-			$hint = self::getSuggestion(get_class_methods($m[1]), $m[2]);
+			$hint = self::getSuggestion(get_class_methods($m[1]) ?: [], $m[2]);
 			$message .= ", did you mean $hint()?";
 			$replace = ["$m[2](", "$hint("];
 
@@ -301,5 +301,20 @@ class Helpers
 		return preg_match('#^Content-Security-Policy(?:-Report-Only)?:.*\sscript-src\s+(?:[^;]+\s)?\'nonce-([\w+/]+=*)\'#mi', implode("\n", headers_list()), $m)
 			? $m[1]
 			: null;
+	}
+
+
+	/**
+	 * Escape a string to be used as a shell argument.
+	 */
+	private static function escapeArg(string $s): string
+	{
+		if (preg_match('#^[a-z0-9._=/:-]+\z#i', $s)) {
+			return $s;
+		}
+
+		return defined('PHP_WINDOWS_VERSION_BUILD')
+			? '"' . str_replace('"', '""', $s) . '"'
+			: escapeshellarg($s);
 	}
 }

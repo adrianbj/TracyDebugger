@@ -274,14 +274,32 @@ $code = $exception->getCode() ? ' #' . $exception->getCode() : '';
 		</div></div>
 
 
+		<?php if (PHP_SAPI === 'cli'): ?>
+		<div class="panel">
+		<h2><a data-tracy-ref="^+" class="tracy-toggle tracy-collapsed">CLI request</a></h2>
+
+		<div class="tracy-collapsed inner">
+			<h3>Process ID <?= Helpers::escapeHtml(getmypid()) ?></h3>
+			<pre>php<?= Helpers::escapeHtml(explode('):', $source, 2)[1]) ?></pre>
+
+			<h3>Arguments</h3>
+			<div class="outer">
+			<table>
+			<?php
+			foreach ($_SERVER['argv'] as $k => $v) echo '<tr><th>', Helpers::escapeHtml($k), '</th><td>', Helpers::escapeHtml($v), "</td></tr>\n";
+			?>
+			</table>
+			</div>
+		</div></div>
+
+
+		<?php else: ?>
 		<div class="panel">
 		<h2><a data-tracy-ref="^+" class="tracy-toggle tracy-collapsed">HTTP request</a></h2>
 
 		<div class="tracy-collapsed inner">
-			<?php if ($sourceIsUrl): ?>
 			<h3>URL</h3>
 			<p><a href="<?= Helpers::escapeHtml($source) ?>"><?= Helpers::escapeHtml($source) ?></a></p>
-			<?php endif ?>
 
 			<h3>Headers</h3>
 			<div class="outer">
@@ -327,6 +345,7 @@ $code = $exception->getCode() ? ' #' . $exception->getCode() : '';
 			<p><i>no headers</i></p>
 			<?php endif ?>
 		</div></div>
+		<? endif ?>
 
 
 		<?php foreach ($bottomPanels as $panel): ?>

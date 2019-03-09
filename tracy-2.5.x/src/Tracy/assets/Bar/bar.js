@@ -3,7 +3,6 @@
  */
 
 (function(){
-	let nonce, contentId;
 
 	class Panel
 	{
@@ -15,7 +14,7 @@
 
 
 		init() {
-			let elem = this.elem;
+			var elem = this.elem;
 
 			this.init = function() {};
 			elem.innerHTML = addNonces(elem.dataset.tracyContent);
@@ -47,7 +46,7 @@
 				this.blur();
 			});
 
-			elem.addEventListener('mousemove', (e) => {
+			elem.addEventListener('mousemove', e => {
 				if (e.buttons && !this.is(Panel.RESIZED) && (elem.style.width || elem.style.height)) {
 					elem.classList.add(Panel.RESIZED);
 				}
@@ -57,8 +56,8 @@
 				this.reposition();
 			});
 
-			forEach(elem.querySelectorAll('.tracy-icons a'), (link) => {
-				link.addEventListener('click', (e) => {
+			forEach(elem.querySelectorAll('.tracy-icons a'), link => {
+				link.addEventListener('click', e => {
 					if (link.rel === 'close') {
 						this.toPeek();
 					} else if (link.rel === 'window') {
@@ -80,12 +79,12 @@
 
 
 		focus() {
-			let elem = this.elem;
+			var elem = this.elem;
 			if (this.is(Panel.WINDOW)) {
 				elem.Tracy.window.focus();
 
 			} else if (!this.is(Panel.FOCUSED)) {
-				for (let id in Debug.panels) {
+				for (var id in Debug.panels) {
 					Debug.panels[id].elem.classList.remove(Panel.FOCUSED);
 				}
 				elem.classList.add(Panel.FOCUSED);
@@ -95,7 +94,7 @@
 
 
 		blur() {
-			let elem = this.elem;
+			var elem = this.elem;
 			if (this.is(Panel.PEEK)) {
 				clearTimeout(elem.Tracy.displayTimeout);
 				elem.Tracy.displayTimeout = setTimeout(() => {
@@ -126,17 +125,17 @@
 
 
 		toWindow() {
-			let offset = getOffset(this.elem);
+			var offset = getOffset(this.elem);
 			offset.left += typeof window.screenLeft === 'number' ? window.screenLeft : (window.screenX + 10);
 			offset.top += typeof window.screenTop === 'number' ? window.screenTop : (window.screenY + 50);
 
-			let win = window.open('', this.id.replace(/-/g, '_'), 'left=' + offset.left + ',top=' + offset.top
+			var win = window.open('', this.id.replace(/-/g, '_'), 'left=' + offset.left + ',top=' + offset.top
 			+ ',width=' + this.elem.offsetWidth + ',height=' + this.elem.offsetHeight + ',resizable=yes,scrollbars=yes');
 			if (!win) {
 				return false;
 			}
 
-			let doc = win.document;
+			var doc = win.document;
 			doc.write('<!DOCTYPE html><meta charset="utf-8">'
 			+ '<script src="?_tracy_bar=js&amp;XDEBUG_SESSION_STOP=1" onload="Tracy.Dumper.init()" async></script>'
 			+ '<body id="tracy-debug">'
@@ -152,7 +151,7 @@
 				win.close(); // forces closing, can be invoked by F5
 			});
 
-			doc.addEventListener('keyup', (e) => {
+			doc.addEventListener('keyup', e => {
 				if (e.keyCode === 27 && !e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey) {
 					win.close();
 				}
@@ -169,11 +168,11 @@
 
 
 		reposition(deltaX, deltaY) {
-			let pos = getPosition(this.elem);
+			var pos = getPosition(this.elem);
 			if (pos.width) { // is visible?
 				setPosition(this.elem, {left: pos.left + (deltaX || 0), top: pos.top + (deltaY || 0)});
 				if (this.is(Panel.RESIZED)) {
-					let size = getWindowSize();
+					var size = getWindowSize();
 					this.elem.style.width = Math.min(size.width, pos.width) + 'px';
 					this.elem.style.height = Math.min(size.height, pos.height) + 'px';
 				}
@@ -182,7 +181,7 @@
 
 
 		savePosition() {
-			let pos = getPosition(this.elem);
+			var pos = getPosition(this.elem);
 			if (this.is(Panel.WINDOW)) {
 				localStorage.setItem(this.id, JSON.stringify({window: true}));
 			} else if (pos.width) { // is visible?
@@ -194,7 +193,7 @@
 
 
 		restorePosition() {
-			let pos = JSON.parse(localStorage.getItem(this.id));
+			var pos = JSON.parse(localStorage.getItem(this.id));
 			if (!pos) {
 				this.elem.classList.add(Panel.PEEK);
 			} else if (pos.window) {
@@ -237,7 +236,7 @@
 				}
 			});
 
-			this.elem.addEventListener('mousedown', (e) => {
+			this.elem.addEventListener('mousedown', e => {
 				e.preventDefault();
 			});
 
@@ -251,13 +250,13 @@
 
 
 		initTabs(elem) {
-			forEach(elem.getElementsByTagName('a'), (link) => {
-				link.addEventListener('click', (e) => {
+			forEach(elem.getElementsByTagName('a'), link => {
+				link.addEventListener('click', e => {
 					if (link.rel === 'close') {
 						this.close();
 
 					} else if (link.rel) {
-						let panel = Debug.panels[link.rel];
+						var panel = Debug.panels[link.rel];
 						panel.init();
 
 						if (e.shiftKey) {
@@ -278,20 +277,20 @@
 					e.preventDefault();
 				});
 
-				link.addEventListener('mouseenter', (e) => {
+				link.addEventListener('mouseenter', e => {
 					if (e.buttons || !link.rel || link.rel === 'close' || elem.classList.contains('tracy-dragged')) {
 						return;
 					}
 
 					clearTimeout(this.displayTimeout);
 					this.displayTimeout = setTimeout(() => {
-						let panel = Debug.panels[link.rel];
+						var panel = Debug.panels[link.rel];
 						panel.focus();
 
 						if (panel.is(Panel.PEEK)) {
 							panel.init();
 
-							let pos = getPosition(panel.elem);
+							var pos = getPosition(panel.elem);
 							setPosition(panel.elem, {
 								left: getOffset(link).left + getPosition(link).width + 4 - pos.width,
 								top: this.isAtTop()
@@ -316,13 +315,10 @@
 
 
 		autoHideLabels() {
-			let width = getWindowSize().width;
-			forEach(this.elem.children, (ul) => {
-				let i, labels = ul.querySelectorAll('.tracy-label');
-				for (i = 0; i < labels.length && ul.clientWidth < width; i++) {
-					labels.item(i).hidden = false;
-				}
-				for (i = labels.length - 1; i >= 0 && ul.clientWidth >= width; i--) {
+			var width = getWindowSize().width;
+			forEach(this.elem.children, function (ul) {
+				var labels = ul.querySelectorAll('.tracy-label');
+				for (var i = labels.length - 1; i >= 0 && ul.clientWidth >= width; i--) {
 					labels.item(i).hidden = true;
 				}
 			});
@@ -335,7 +331,7 @@
 
 
 		reposition(deltaX, deltaY) {
-			let pos = getPosition(this.elem);
+			var pos = getPosition(this.elem);
 			if (pos.width) { // is visible?
 				setPosition(this.elem, {left: pos.left + (deltaX || 0), top: pos.top + (deltaY || 0)});
 				this.savePosition();
@@ -344,7 +340,7 @@
 
 
 		savePosition() {
-			let pos = getPosition(this.elem);
+			var pos = getPosition(this.elem);
 			if (pos.width) { // is visible?
 				localStorage.setItem(this.id, JSON.stringify(this.isAtTop() ? {right: pos.right, top: pos.top} : {right: pos.right, bottom: pos.bottom}));
 			}
@@ -352,14 +348,14 @@
 
 
 		restorePosition() {
-			let pos = JSON.parse(localStorage.getItem(this.id));
+			var pos = JSON.parse(localStorage.getItem(this.id));
 			setPosition(this.elem, pos || {right: 0, bottom: 0});
 			this.savePosition();
 		}
 
 
 		isAtTop() {
-			let pos = getPosition(this.elem);
+			var pos = getPosition(this.elem);
 			return pos.top < 100 && pos.bottom > pos.top;
 		}
 	}
@@ -375,13 +371,13 @@
 			Debug.layer = document.createElement('div');
 			Debug.layer.setAttribute('id', 'tracy-debug');
 			Debug.layer.innerHTML = addNonces(content);
-			(document.body || document.documentElement).appendChild(Debug.layer);
+			document.documentElement.appendChild(Debug.layer);
 			evalScripts(Debug.layer);
 			Tracy.Dumper.init();
 			Debug.layer.style.display = 'block';
 			Debug.bar.init();
 
-			forEach(document.querySelectorAll('.tracy-panel'), (panel) => {
+			forEach(document.querySelectorAll('.tracy-panel'), panel => {
 				Debug.panels[panel.id] = new Panel(panel.id);
 				Debug.panels[panel.id].dumps = dumps;
 				Debug.panels[panel.id].restorePosition();
@@ -393,13 +389,13 @@
 
 
 		static loadAjax(content, dumps) {
-			forEach(Debug.layer.querySelectorAll('.tracy-panel.tracy-ajax'), (panel) => {
+			forEach(Debug.layer.querySelectorAll('.tracy-panel.tracy-ajax'), panel => {
 				Debug.panels[panel.id].savePosition();
 				delete Debug.panels[panel.id];
 				panel.parentNode.removeChild(panel);
 			});
 
-			let ajaxBar = document.getElementById('tracy-ajax-bar');
+			var ajaxBar = document.getElementById('tracy-ajax-bar');
 			if (ajaxBar) {
 				ajaxBar.parentNode.removeChild(ajaxBar);
 			}
@@ -409,7 +405,7 @@
 			ajaxBar = document.getElementById('tracy-ajax-bar');
 			Debug.bar.elem.appendChild(ajaxBar);
 
-			forEach(document.querySelectorAll('.tracy-panel'), (panel) => {
+			forEach(document.querySelectorAll('.tracy-panel'), panel => {
 				if (!Debug.panels[panel.id]) {
 					Debug.panels[panel.id] = new Panel(panel.id);
 					Debug.panels[panel.id].dumps = dumps;
@@ -422,15 +418,14 @@
 
 
 		static captureWindow() {
-			let size = getWindowSize();
+			var size = getWindowSize();
 
 			window.addEventListener('resize', () => {
-				let newSize = getWindowSize();
+				var newSize = getWindowSize();
 
 				Debug.bar.reposition(newSize.width - size.width, newSize.height - size.height);
-				Debug.bar.autoHideLabels();
 
-				for (let id in Debug.panels) {
+				for (var id in Debug.panels) {
 					Debug.panels[id].reposition(newSize.width - size.width, newSize.height - size.height);
 				}
 
@@ -438,7 +433,7 @@
 			});
 
 			window.addEventListener('unload', () => {
-				for (let id in Debug.panels) {
+				for (var id in Debug.panels) {
 					Debug.panels[id].savePosition();
 				}
 			});
@@ -446,11 +441,11 @@
 
 
 		static captureAjax() {
-			let header = Tracy.getAjaxHeader();
+			var header = Tracy.getAjaxHeader();
 			if (!header) {
 				return;
 			}
-			let oldOpen = XMLHttpRequest.prototype.open;
+			var oldOpen = XMLHttpRequest.prototype.open;
 
 			XMLHttpRequest.prototype.open = function() {
 				oldOpen.apply(this, arguments);
@@ -465,13 +460,17 @@
 			};
 
 			if (window.fetch) {
-				let oldFetch = window.fetch;
+				var oldFetch = window.fetch;
 				window.fetch = function(request, options) {
-					request = request instanceof Request ? request : new Request(request, options || {});
+					options = options || {};
+					options.headers = new Headers(options.headers || {});
+					var url = request instanceof Request ? request.url : request;
 
-					if (window.TracyAutoRefresh !== false && new URL(request.url, location.origin).host === location.host) {
-						request.headers.set('X-Tracy-Ajax', header);
-						return oldFetch(request).then((response) => {
+					if (window.TracyAutoRefresh !== false && new URL(url, location.origin).host === location.host) {
+						options.headers.set('X-Tracy-Ajax', header);
+						options.credentials = (request instanceof Request && request.credentials) || options.credentials || 'same-origin';
+
+						return oldFetch(request, options).then(function (response) {
 							if (response.headers.has('X-Tracy-Ajax') && response.headers.get('X-Tracy-Ajax')[0] === '1') {
 								Debug.loadScript('?_tracy_bar=content-ajax.' + header + '&XDEBUG_SESSION_STOP=1&v=' + Math.random());
 							}
@@ -480,7 +479,7 @@
 						});
 					}
 
-					return oldFetch(request);
+					return oldFetch(request, options);
 				};
 			}
 		}
@@ -493,39 +492,38 @@
 			Debug.scriptElem = document.createElement('script');
 			Debug.scriptElem.src = url;
 			Debug.scriptElem.setAttribute('nonce', nonce);
-			(document.body || document.documentElement).appendChild(Debug.scriptElem);
+			document.documentElement.appendChild(Debug.scriptElem);
 		}
 	}
 
 
 	function evalScripts(elem) {
-		forEach(elem.getElementsByTagName('script'), (script) => {
+		forEach(elem.getElementsByTagName('script'), script => {
 			if ((!script.hasAttribute('type') || script.type === 'text/javascript' || script.type === 'application/javascript') && !script.tracyEvaluated) {
-				let document = script.ownerDocument;
-				let dolly = document.createElement('script');
+				var dolly = script.ownerDocument.createElement('script');
 				dolly.textContent = script.textContent;
 				dolly.setAttribute('nonce', nonce);
-				(document.body || document.documentElement).appendChild(dolly);
+				script.ownerDocument.documentElement.appendChild(dolly);
 				script.tracyEvaluated = true;
 			}
 		});
 	}
 
 
-	let dragging;
+	var dragging;
 
 	function draggable(elem, options) {
-		let dE = document.documentElement, started, deltaX, deltaY, clientX, clientY;
+		var dE = document.documentElement, started, deltaX, deltaY, clientX, clientY;
 		options = options || {};
 
-		let redraw = function () {
+		var redraw = function () {
 			if (dragging) {
 				setPosition(elem, {left: clientX + deltaX, top: clientY + deltaY});
 				requestAnimationFrame(redraw);
 			}
 		};
 
-		let onMove = function(e) {
+		var onMove = function(e) {
 			if (e.buttons === 0) {
 				return onEnd(e);
 			}
@@ -544,7 +542,7 @@
 			return false;
 		};
 
-		let onEnd = function(e) {
+		var onEnd = function(e) {
 			if (started) {
 				if (options.draggedClass) {
 					elem.classList.remove(options.draggedClass);
@@ -561,7 +559,7 @@
 			return false;
 		};
 
-		let onStart = function(e) {
+		var onStart = function(e) {
 			e.preventDefault();
 			e.stopPropagation();
 
@@ -569,7 +567,7 @@
 				return onEnd(e);
 			}
 
-			let pos = getPosition(elem);
+			var pos = getPosition(elem);
 			clientX = e.touches ? e.touches[0].clientX : e.clientX;
 			clientY = e.touches ? e.touches[0].clientY : e.clientY;
 			deltaX = pos.left - clientX;
@@ -586,11 +584,11 @@
 			}
 		};
 
-		forEach(options.handles, (handle) => {
+		forEach(options.handles, function (handle) {
 			handle.addEventListener('mousedown', onStart);
 			handle.addEventListener('touchstart', onStart);
 
-			handle.addEventListener('click', (e) => {
+			handle.addEventListener('click', function(e) {
 				if (started) {
 					e.stopImmediatePropagation();
 				}
@@ -601,7 +599,7 @@
 
 	// returns total offset for element
 	function getOffset(elem) {
-		let res = {left: elem.offsetLeft, top: elem.offsetTop};
+		var res = {left: elem.offsetLeft, top: elem.offsetTop};
 		while (elem = elem.offsetParent) { // eslint-disable-line no-cond-assign
 			res.left += elem.offsetLeft; res.top += elem.offsetTop;
 		}
@@ -619,7 +617,7 @@
 
 	// move to new position
 	function setPosition(elem, coords) {
-		let win = getWindowSize();
+		var win = getWindowSize();
 		if (typeof coords.right !== 'undefined') {
 			coords.left = win.width - elem.offsetWidth - coords.right;
 		}
@@ -633,7 +631,7 @@
 
 	// returns current position
 	function getPosition(elem) {
-		let win = getWindowSize();
+		var win = getWindowSize();
 		return {
 			left: elem.offsetLeft,
 			top: elem.offsetTop,
@@ -646,9 +644,9 @@
 
 
 	function addNonces(html) {
-		let el = document.createElement('div');
+		var el = document.createElement('div');
 		el.innerHTML = html;
-		forEach(el.getElementsByTagName('style'), (style) => {
+		forEach(el.getElementsByTagName('style'), style => {
 			style.setAttribute('nonce', nonce);
 		});
 		return el.innerHTML;
@@ -661,8 +659,8 @@
 
 
 	if (document.currentScript) {
-		nonce = document.currentScript.getAttribute('nonce') || document.currentScript.nonce;
-		contentId = document.currentScript.dataset.id;
+		var nonce = document.currentScript.getAttribute('nonce') || document.currentScript.nonce;
+		var contentId = document.currentScript.dataset.id;
 	}
 
 	Tracy = window.Tracy || {};

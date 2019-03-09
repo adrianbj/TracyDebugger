@@ -8,8 +8,8 @@
 	class Toggle
 	{
 		static init() {
-			document.documentElement.addEventListener('click', (e) => {
-				let el = e.target.closest('.tracy-toggle');
+			document.documentElement.addEventListener('click', function(e) {
+				var el = e.target.closest('.tracy-toggle');
 				if (el && !e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey) {
 					Toggle.toggle(el);
 				}
@@ -20,7 +20,7 @@
 
 		// changes element visibility
 		static toggle(el, show) {
-			let collapsed = el.classList.contains('tracy-collapsed'),
+			var collapsed = el.classList.contains('tracy-collapsed'),
 				ref = el.getAttribute('data-tracy-ref') || el.getAttribute('href', 2),
 				dest = el;
 
@@ -44,9 +44,8 @@
 			el.classList.toggle('tracy-collapsed', !show);
 			dest.classList.toggle('tracy-collapsed', !show);
 
-			let toggleEvent;
 			if (typeof window.Event === 'function') {
-				toggleEvent = new Event('tracy-toggle', {bubbles: true});
+				var toggleEvent = new Event('tracy-toggle', {bubbles: true});
 			} else {
 				toggleEvent = document.createEvent('Event');
 				toggleEvent.initEvent('tracy-toggle', true, false);
@@ -57,18 +56,18 @@
 
 		// save & restore toggles
 		static persist(baseEl, restore) {
-			let saved = [];
-			baseEl.addEventListener('tracy-toggle', (e) => {
+			var saved = [];
+			baseEl.addEventListener('tracy-toggle', function(e) {
 				if (saved.indexOf(e.target) < 0) {
 					saved.push(e.target);
 				}
 			});
 
-			let toggles = JSON.parse(sessionStorage.getItem('tracy-toggles-' + baseEl.id));
+			var toggles = JSON.parse(sessionStorage.getItem('tracy-toggles-' + baseEl.id));
 			if (toggles && restore !== false) {
-				toggles.forEach((item) => {
-					let el = baseEl;
-					for (let i in item.path) {
+				toggles.forEach(function(item) {
+					var el = baseEl;
+					for (var i in item.path) {
 						if (!(el = el.children[item.path[i]])) {
 							return;
 						}
@@ -79,9 +78,9 @@
 				});
 			}
 
-			window.addEventListener('unload', () => {
-				toggles = [].map.call(saved, (el) => {
-					let item = {path: [], text: el.textContent, show: !el.classList.contains('tracy-collapsed')};
+			window.addEventListener('unload', function() {
+				toggles = [].map.call(saved, function(el) {
+					var item = {path: [], text: el.textContent, show: !el.classList.contains('tracy-collapsed')};
 					do {
 						item.path.unshift([].indexOf.call(el.parentNode.children, el));
 						el = el.parentNode;
