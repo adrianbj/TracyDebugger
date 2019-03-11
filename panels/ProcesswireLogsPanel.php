@@ -33,20 +33,17 @@ class ProcesswireLogsPanel extends BasePanel {
         }
         else {
             $this->logEntries = $this->sectionHeader(array('Type', 'Date', 'User', 'URL', 'Text'));
+            $logLinesData = $this->wire('cache')->get('TracyLogData.ProcessWire');
             $entriesArr = array();
             $i=0;
             foreach($logs as $log) {
                 $x=99;
-
-                $cacheName = 'TracyLogData.ProcessWire.'.$log['name'];
-                $logLinesData = $this->wire('cache')->get($cacheName);
-
-                if(!$logLinesData || filemtime($this->wire('log')->getFilename($log['name'])) > $logLinesData['time']) {
-                    $logLinesData['time'] = time();
-                    $logLinesData['lines'] = $this->wire('log')->getEntries($log['name'], array("limit" => \TracyDebugger::getDataValue("numLogEntries")));
-                    $this->wire('cache')->save($cacheName, $logLinesData, WireCache::expireNever);
+                if(!$logLinesData || !isset($logLinesData[$log['name']]) || filemtime($this->wire('log')->getFilename($log['name'])) > $logLinesData[$log['name']]['time']) {
+                    $logLinesData[$log['name']]['time'] = time();
+                    $logLinesData[$log['name']]['lines'] = $this->wire('log')->getEntries($log['name'], array("limit" => \TracyDebugger::getDataValue("numLogEntries")));
+                    $this->wire('cache')->save('TracyLogData.ProcessWire', $logLinesData, WireCache::expireNever);
                 }
-                $logLines = $logLinesData['lines'];
+                $logLines = $logLinesData[$log['name']]['lines'];
 
                 foreach($logLines as $entry) {
                     $itemKey = $log['name'] . '_' . $x;

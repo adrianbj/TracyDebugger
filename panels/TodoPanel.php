@@ -159,6 +159,7 @@ class TodoPanel extends BasePanel {
     }
 
     private function scanDirectories($dir) {
+        $todoLinesData = $this->wire('cache')->get('TracyToDoData');
         $items = array();
         $ignoreDirs = array_map('trim', explode(',', \TracyDebugger::getDataValue('todoIgnoreDirs')));
         array_push($ignoreDirs, 'TracyDebugger');
@@ -167,7 +168,12 @@ class TodoPanel extends BasePanel {
             $filePath = $fileinfo->getPathname();
             $fileSize = filesize($filePath);
             if($fileSize > 0 && $fileinfo->isFile() && $this->strpos_array($filePath, $ignoreDirs) === false && in_array($fileinfo->getExtension(), $allowedExtensions) === true) {
-                $items[] = $this->parseFile($filePath, $fileSize);
+                if(!$todoLinesData || !isset($todoLinesData[$filePath]) || filemtime($filePath) > $todoLinesData[$filePath]['time']) {
+                    $todoLinesData[$filePath]['time'] = time();
+                    $todoLinesData[$filePath]['items'] = $this->parseFile($filePath, $fileSize);
+                    $this->wire('cache')->save('TracyToDoData', $todoLinesData, WireCache::expireNever);
+                }
+                $items[] = $todoLinesData[$filePath]['items'];
             }
         }
         return $items;

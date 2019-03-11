@@ -36,18 +36,15 @@ class TracyLogsPanel extends BasePanel {
         }
         else {
             $this->logEntries = $this->sectionHeader(array('Type', 'Date', 'URL', 'Text'));
+            $logLinesData = $this->wire('cache')->get('TracyLogData.Tracy');
             foreach($logs as $log) {
                 $x=99;
-
-                $cacheName = 'TracyLogData.Tracy.'.$log['name'];
-                $logLinesData = $this->wire('cache')->get($cacheName);
-
-                if(!$logLinesData || filemtime($this->getFilename($log['name'])) > $logLinesData['time']) {
-                    $logLinesData['time'] = time();
-                    $logLinesData['lines'] = $this->getLines($log['name'], array("limit" => \TracyDebugger::getDataValue("numLogEntries")));
-                    $this->wire('cache')->save($cacheName, $logLinesData, WireCache::expireNever);
+                if(!$logLinesData || !isset($logLinesData[$log['name']]) || filemtime($this->getFilename($log['name'])) > $logLinesData[$log['name']]['time']) {
+                    $logLinesData[$log['name']]['time'] = time();
+                    $logLinesData[$log['name']]['lines'] = $this->getLines($log['name'], array("limit" => \TracyDebugger::getDataValue("numLogEntries")));
+                    $this->wire('cache')->save('TracyLogData.Tracy', $logLinesData, WireCache::expireNever);
                 }
-                $logLines = $logLinesData['lines'];
+                $logLines = $logLinesData[$log['name']]['lines'];
 
                 foreach($logLines as $entry) {
                     $logDateTime = str_replace(array('[',']'), '', substr($entry, 0 , 21)); // get the date - first 21 chars
