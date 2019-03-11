@@ -38,7 +38,18 @@ class TracyLogsPanel extends BasePanel {
             $this->logEntries = $this->sectionHeader(array('Type', 'Date', 'URL', 'Text'));
             foreach($logs as $log) {
                 $x=99;
-                foreach($this->getLines($log['name'], array("limit" => \TracyDebugger::getDataValue("numLogEntries"))) as $entry) {
+
+                $cacheName = 'TracyLogData.Tracy.'.$log['name'];
+                $logLinesData = $this->wire('cache')->get($cacheName);
+
+                if(!$logLinesData || filemtime($this->getFilename($log['name'])) > $logLinesData['time']) {
+                    $logLinesData['time'] = time();
+                    $logLinesData['lines'] = $this->getLines($log['name'], array("limit" => \TracyDebugger::getDataValue("numLogEntries")));
+                    $this->wire('cache')->save($cacheName, $logLinesData, WireCache::expireNever);
+                }
+                $logLines = $logLinesData['lines'];
+
+                foreach($logLines as $entry) {
                     $logDateTime = str_replace(array('[',']'), '', substr($entry, 0 , 21)); // get the date - first 21 chars
                     $logDateParts = explode(" ", $logDateTime);
                     $logDate = $logDateParts[0];

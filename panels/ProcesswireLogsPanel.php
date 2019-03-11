@@ -37,7 +37,18 @@ class ProcesswireLogsPanel extends BasePanel {
             $i=0;
             foreach($logs as $log) {
                 $x=99;
-                foreach($this->wire('log')->getEntries($log['name'], array("limit" => \TracyDebugger::getDataValue("numLogEntries"))) as $entry) {
+
+                $cacheName = 'TracyLogData.ProcessWire.'.$log['name'];
+                $logLinesData = $this->wire('cache')->get($cacheName);
+
+                if(!$logLinesData || filemtime($this->wire('log')->getFilename($log['name'])) > $logLinesData['time']) {
+                    $logLinesData['time'] = time();
+                    $logLinesData['lines'] = $this->wire('log')->getEntries($log['name'], array("limit" => \TracyDebugger::getDataValue("numLogEntries")));
+                    $this->wire('cache')->save($cacheName, $logLinesData, WireCache::expireNever);
+                }
+                $logLines = $logLinesData['lines'];
+
+                foreach($logLines as $entry) {
                     $itemKey = $log['name'] . '_' . $x;
                     $entriesArr[$itemKey]['timestamp'] = @strtotime($entry['date']); // silenced in case timezone is not set
                     $entriesArr[$itemKey]['linenumber'] = 99-$x;

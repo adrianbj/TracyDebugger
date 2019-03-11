@@ -1535,22 +1535,22 @@ ul.pw-info-links {
 }
 
 div#tracyDumpEntries {
-    position: relative;
+    position: relative !important;
 }
 
 ul.tracyDumpTabs {
-    display: block;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    background: #EAF0F2;
-    border: 1px solid #D2D2D2;
-    border-bottom: none;
+    display: block !important;
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #EAF0F2 !important;
+    border: 1px solid #D2D2D2 !important;
+    border-bottom: none !important;
 }
 
 h2+ul.tracyDumpTabs {
-    border-top: none;
-    user-select: none;
+    border-top: none !important;
+    user-select: none !important;
 }
 
 h2+ul.tracyDumpTabs li.active a {
@@ -1558,39 +1558,39 @@ h2+ul.tracyDumpTabs li.active a {
 }
 
 ul.tracyDumpTabs:after {
-    content: "";
-    display: table;
-    clear: both;
+    content: "" !important;
+    display: table !important;
+    clear: both !important;
 }
 
 /* edit link at the end of the dump tabs */
 
 ul.tracyDumpTabs+li {
-    user-select: none;
+    user-select: none !important;
 }
 
 ul.tracyDumpTabs li {
     float: left;
-    border-bottom: 0;
-    color: #444;
+    border-bottom: 0 !important;
+    color: #444 !important;
 }
 
 ul.tracyDumpTabs li:not(:first-child) {
-    margin-left: -1px;
+    margin-left: -1px !important;
 }
 
 ul.tracyDumpTabs li.tracyEditLinkCount {
-    float:right;
-    padding: 3px 7px;
+    float:right !important;
+    padding: 3px 7px !important;
 }
 
 ul.tracyDumpTabs li a {
-    padding: 4px 7px;
+    padding: 4px 7px !important;
     font-size: 12px !important;
     border: 1px solid transparent !important;
     border-bottom: none !important;
-    margin-bottom: -1px;
-    margin-top: -1px;
+    margin-bottom: -1px !important;
+    margin-top: -1px !important;
 }
 
 ul.tracyDumpTabs li a:hover {
