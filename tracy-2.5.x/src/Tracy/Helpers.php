@@ -23,13 +23,13 @@ class Helpers
 		$file = strtr($origFile = $file, Debugger::$editorMapping);
 		if ($editor = self::editorUri($origFile, $line)) {
 			$file = strtr($file, '\\', '/');
-			if (preg_match('#(^[a-z]:)?/.{1,50}$#i', $file, $m) && strlen($file) > strlen($m[0])) {
+			if (preg_match('#(^[a-z]:)?/.{1,40}$#i', $file, $m) && strlen($file) > strlen($m[0])) {
 				$file = '...' . $m[0];
 			}
 			$file = strtr($file, '/', DIRECTORY_SEPARATOR);
 			return self::formatHtml('<a href="%" title="%">%<b>%</b>%</a>',
 				$editor,
-				$file . ($line ? ":$line" : ''),
+				$origFile . ($line ? ":$line" : ''),
 				rtrim(dirname($file), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR,
 				basename($file),
 				$line ? ":$line" : ''
@@ -176,21 +176,7 @@ class Helpers
 	public static function improveException($e)
 	{
 		$message = $e->getMessage();
-
-		if ($e instanceof \Nette\MemberAccessException && ($trace = $e->getTrace()) && isset($trace[1]['file'], $trace[1]['line'])) {
-			if (preg_match('# property ([\w\\\\]+)::\$(\w+), did you mean \$(\w+)#', $message, $m)) {
-				$replace = ["->$m[2]", "->$m[3]"];
-			} elseif (preg_match('# method ([\w\\\\]+)::(\w+)\(\), did you mean (\w+)\(#', $message, $m)) {
-				$replace = ["$m[2](", "$m[3]("];
-			} else {
-				return;
-			}
-			$e->tracyAction = [
-				'link' => self::editorUri($trace[1]['file'], $trace[1]['line'], 'fix', $replace[0], $replace[1]),
-				'label' => 'fix it',
-			];
-
-		} elseif (!$e instanceof \Error && !$e instanceof \ErrorException) {
+		if (!$e instanceof \Error && !$e instanceof \ErrorException) {
 			// do nothing
 		} elseif (preg_match('#^Call to undefined function (\S+\\\\)?(\w+)\(#', $message, $m)) {
 			$funcs = array_merge(get_defined_functions()['internal'], get_defined_functions()['user']);
@@ -199,7 +185,7 @@ class Helpers
 			$replace = ["$m[2](", "$hint("];
 
 		} elseif (preg_match('#^Call to undefined method ([\w\\\\]+)::(\w+)#', $message, $m)) {
-			$hint = self::getSuggestion(get_class_methods($m[1]), $m[2]);
+			$hint = self::getSuggestion(get_class_methods($m[1]) ?: [], $m[2]);
 			$message .= ", did you mean $hint()?";
 			$replace = ["$m[2](", "$hint("];
 

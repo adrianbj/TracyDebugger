@@ -6,7 +6,8 @@
 
 (function(){
 	let nonce, contentId, ajaxCounter = 1;
-	let baseUrl = location.href.split('#')[0] + (location.href.indexOf('?') < 0 ? '?' : '&');
+	let baseUrl = location.href.split('#')[0];
+	baseUrl += (baseUrl.indexOf('?') < 0 ? '?' : '&');
 
 	class Panel
 	{
@@ -140,7 +141,7 @@
 
 			let doc = win.document;
 			doc.write('<!DOCTYPE html><meta charset="utf-8">'
-			+ '<script src="' + (baseUrl.replace('&', '&amp;').replace('<', '&lt;').replace('"', '&quot;')) + '_tracy_bar=js&amp;XDEBUG_SESSION_STOP=1" onload="Tracy.Dumper.init()" async></script>'
+			+ '<script src="' + (baseUrl.replace('&', '&amp;').replace('"', '&quot;')) + '_tracy_bar=js&amp;XDEBUG_SESSION_STOP=1" onload="Tracy.Dumper.init()" async></script>'
 			+ '<body id="tracy-debug">'
 			);
 			doc.body.innerHTML = '<div class="tracy-panel tracy-mode-window" id="' + this.elem.id + '">' + this.elem.innerHTML + '</div>';

@@ -155,6 +155,9 @@ HTML;
                     if(\TracyDebugger::getDataValue('captainHookShowDescription') && isset($hook['description'])) {
                         $out .= '<td class="tracy-force-no-wrap">' . $hook['description'] . '</td>';
                     }
+                    else {
+                        $out .= '<td></td>';
+                    }
                 $out .=
                 '</tr>';
         }
