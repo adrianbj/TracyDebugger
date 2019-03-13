@@ -236,7 +236,6 @@ class FileEditorPanel extends BasePanel {
                     tracyFileEditor.tfe.setTheme("ace/theme/" + tracyFileEditor.aceTheme);
 
                     // set mode appropriately
-                    // in ext-modelist.js I have added "inc" to PHP and "latte" to Twig
                     tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/ace-editor/ext-modelist.js", function() {
                         tracyFileEditor.modelist = ace.require("ace/ext/modelist");
                         tracyFileEditor.mode = tracyFileEditor.modelist.getModeForPath(tracyFileEditor.tracyFileEditorFilePath).mode;
@@ -389,7 +388,10 @@ HTML;
         $out .= '<h1>'.$this->icon.' File Editor: <span id="panelTitleFilePath" style="font-size:14px">'.($this->tracyFileEditorFilePath ?: 'no selected file').'</span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'FileEditorPanel\')">+</a></span></span>
         <div class="tracy-inner">
             <div id="tracyFileEditorContainer" style="height: 100%;">
-                <div style="float: left; height: calc(100% - 38px);">
+                <div style="float: left; height: calc(100% - 80px);">
+                    <div style="padding-bottom:10px">
+                        <select title="Select recently opened files" style="width:290px !important" onchange="tracyFileEditorLoader.loadFileEditor(this.value)" id="tfe_recently_opened"></select>
+                    </div>
                     <div id="tracyFoldersFiles" style="margin: 0; padding:0; width: 310px; height: 100%; overflow: auto">';
                         $out .= "<div class='fe-file-tree'>";
                         $out .= $this->php_file_tree($this->wire('config')->paths->{\TracyDebugger::getDataValue('fileEditorBaseDirectory')}, $this->toArray(\TracyDebugger::getDataValue('fileEditorAllowedExtensions')));
@@ -458,8 +460,13 @@ HTML;
      */
     private function php_file_tree_dir($directory, $extensions = array(), $extFilter = false, $parent = "") {
 
-        // Get directories/files
-        $filesArray = array_diff(@scandir($directory), array('.', '..')); // array_diff removes . and ..
+        if($this->strposa($directory, $this->toArray(\TracyDebugger::getDataValue('fileEditorExcludedDirs'))) !== false) {
+            $filesArray = array();
+        }
+        else {
+            // Get directories/files
+            $filesArray = array_diff(@scandir($directory), array('.', '..')); // array_diff removes . and ..
+        }
 
         // Filter unwanted extensions
         // currently empty extensions array returns all files in folders
@@ -502,8 +509,7 @@ HTML;
 
                 if(@is_dir("$directory/$file")) {
                     $subtree = $this->php_file_tree_dir("$directory/$file", $extensions, $extFilter, "$parent/$file"); // no need to urlencode parent/file
-                    $tree .= "<li title='".($subtree == '' ? 'no editable files' : '')."' class='tft-d".($subtree == '' ? ' tft-d-no-editable-files' : '')."'><a data-p='".($subtree == '' ? 'no editable files' : '')."'>$fileName</a>";
-                    //$tree .= "<li class='tft-d'><a data-p='$dirPath'>$fileName</a>";
+                    if($subtree != '') $tree .= "<li class='tft-d'><a>$fileName</a>";
                     $tree .= $subtree;
                     $tree .= "</li>";
                 } else {
@@ -614,6 +620,15 @@ HTML;
         $ext = preg_replace('# +#', '', $extensions); // remove all spaces
         $ext = array_filter(explode($delimiter, $ext), 'strlen'); // convert to array splitting by delimiter
         return $ext;
+    }
+
+
+    private function strposa($haystack, $needle, $offset=0) {
+        if(!is_array($needle)) $needle = array($needle);
+        foreach($needle as $query) {
+            if(strpos($haystack, $query, $offset) !== false) return true; // stop on first true result
+        }
+        return false;
     }
 
 }

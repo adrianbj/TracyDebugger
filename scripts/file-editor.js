@@ -11,11 +11,23 @@ if(!tracyFileEditorLoader) {
             }
         },
 
-        addFileEditorClickEvents: function() {
-            if(!document.getElementById("tracy-debug")) {
-                window.requestAnimationFrame(tracyFileEditorLoader.addFileEditorClickEvents);
+        initializeEditor: function() {
+            if(!document.getElementById("tfe_recently_opened")) {
+                window.requestAnimationFrame(tracyFileEditorLoader.initializeEditor);
             }
             else {
+                // populate recently opened files select
+                var recentlyOpenSelect = document.getElementById("tfe_recently_opened");
+                var storedFiles = JSON.parse(localStorage.getItem("tracyFileEditorRecentlyOpen"));
+                if(storedFiles) {
+                    for(var i = 0; i < storedFiles.length; ++i) {
+                        recentlyOpenSelect.options[recentlyOpenSelect.options.length] = new Option(storedFiles[i], storedFiles[i]);
+                    }
+                }
+                var initialFile = document.getElementById('panelTitleFilePath').innerHTML;
+                tracyFileEditorLoader.addRecentlyOpenedFile(initialFile);
+
+
                 // click event added to body because of links on bluescreen
                 document.body.addEventListener("click", function(e) {
                     if(e.target) {
@@ -25,17 +37,40 @@ if(!tracyFileEditorLoader) {
                         }
                         if(curEl && curEl.href && curEl.href.indexOf("tracy://") !== -1) {
                             e.preventDefault();
-                            var els = document.getElementsByClassName("active");
-                            [].forEach.call(els, function (el) {
-                                el.classList.remove("active");
-                            });
-                            curEl.classList.add("active");
                             queryStr = curEl.href.split('?')[1];
-                            tracyFileEditorLoader.loadFileEditor(tracyFileEditorLoader.getFileLineVars(queryStr, "f"), tracyFileEditorLoader.getFileLineVars(queryStr, "l"));
+                            var fullFilePath = tracyFileEditorLoader.getFileLineVars(queryStr, "f");
+                            tracyFileEditorLoader.loadFileEditor(fullFilePath, tracyFileEditorLoader.getFileLineVars(queryStr, "l"));
+
+                            tracyFileEditorLoader.addRecentlyOpenedFile(fullFilePath);
+
                         }
                     }
                 });
             }
+        },
+
+        addRecentlyOpenedFile: function(fullFilePath) {
+            var storedFilesArr = [];
+            var storedFiles = JSON.parse(localStorage.getItem("tracyFileEditorRecentlyOpen"));
+            if(storedFiles) storedFilesArr = storedFiles;
+            var recentlyOpenSelect = document.getElementById("tfe_recently_opened");
+            var alreadyExists = false;
+            for(var i = 0; i < recentlyOpenSelect.length; ++i) {
+                if(recentlyOpenSelect.options[i].value == fullFilePath) {
+                    alreadyExists = true;
+                }
+            }
+            if(!alreadyExists) {
+                var opt = new Option(fullFilePath, fullFilePath);
+                recentlyOpenSelect.insertBefore(opt, recentlyOpenSelect.firstChild);
+                storedFilesArr.unshift(fullFilePath);
+                if(storedFilesArr.length > 10) {
+                    storedFilesArr.pop();
+                    recentlyOpenSelect.options[storedFilesArr.length] = null;
+                }
+                localStorage.setItem("tracyFileEditorRecentlyOpen", JSON.stringify(storedFilesArr));
+            }
+            recentlyOpenSelect.value = fullFilePath;
         },
 
         getCookie: function(name) {
@@ -124,7 +159,6 @@ if(!tracyFileEditorLoader) {
                                 tracyFileEditor.tfe.gotoLine(line, 0);
 
                                 // set mode appropriately
-                                // in ext-modelist.js I have added "inc" to PHP and "latte" to Twig
                                 var mode = tracyFileEditor.modelist.getModeForPath(filePath).mode;
                                 tracyFileEditor.tfe.session.setMode(mode);
                             }
@@ -135,9 +169,10 @@ if(!tracyFileEditorLoader) {
                     xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                     xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
                     xmlhttp.send("filePath=" + filePath);
+                    init_php_file_tree(filePath);
                 }
             }
         }
     };
-    tracyFileEditorLoader.addFileEditorClickEvents();
+    tracyFileEditorLoader.initializeEditor();
 }

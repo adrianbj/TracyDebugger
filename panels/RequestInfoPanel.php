@@ -817,7 +817,6 @@ class RequestInfoPanel extends BasePanel {
             }
             catch(Exception $e) {
                 \TD::log($e);
-                $out .= $e;
             }
         }
         return $out;

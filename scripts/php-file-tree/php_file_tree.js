@@ -32,7 +32,7 @@
 
 */
 
-function init_php_file_tree() {
+function init_php_file_tree(linkedFilePath) {
 
 	if (!document.getElementsByTagName) return;
 	var path = '';
@@ -94,8 +94,13 @@ function init_php_file_tree() {
 					var parser = document.createElement('a');
 					queryStr = items[j].href.split('?')[1];
 					var currentFilePath = queryStr.replace('f=','').replace('&l=1','');
-					if(document.getElementById('panelTitleFilePath').innerHTML == currentFilePath) {
+					if(document.getElementById('panelTitleFilePath').innerHTML == currentFilePath || linkedFilePath == currentFilePath) {
+						var els = document.getElementsByClassName("active");
+						[].forEach.call(els, function (el) {
+							el.classList.remove("active");
+						});
 						items[j].classList.add("active");
+						document.getElementById("tfe_recently_opened").value = currentFilePath;
 					}
 				}
 			}

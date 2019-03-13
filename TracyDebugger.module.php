@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.18.15',
+            'version' => '4.18.16',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -284,6 +284,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "customSnippetsUrl" => '',
             "pwAutocompletions" => 1,
             "fileEditorAllowedExtensions" => 'php, module, js, css, txt, log, htaccess',
+            "fileEditorExcludedDirs" => 'site/assets',
             "fileEditorBaseDirectory" => 'templates',
             "enableShortcutMethods" => 1,
             "enabledShortcutMethods" => array('addBreakpoint', 'bp', 'barDump', 'bd', 'barDumpBig', 'bdb', 'debugAll', 'da', 'dump', 'd', 'dumpBig', 'db', 'fireLog', 'fl', 'l', 'templateVars', 'tv', 'timer', 't')
@@ -3284,10 +3285,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = $this->wire('modules')->get("InputfieldText");
         $f->attr('name', 'fileEditorAllowedExtensions');
         $f->label = __('Allowed extensions', __FILE__);
-        $f->description = __('List of extensions that can be opened in the editor. Fewer extensions results in better performance in the File Editor Panel.', __FILE__);
+        $f->description = __('Comma separated list of extensions that can be opened in the editor. Fewer extensions results in better performance in the File Editor Panel.', __FILE__);
         $f->notes = __('Initially configured for: php, module, js, css, txt, log, htaccess', __FILE__);
         $f->columnWidth = 50;
         if($data['fileEditorAllowedExtensions']) $f->attr('value', $data['fileEditorAllowedExtensions']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'fileEditorExcludedDirs');
+        $f->label = __('Excluded directories', __FILE__);
+        $f->description = __('Comma separated list of directories that will be excluded from the tree.', __FILE__);
+        $f->notes = __('Initially configured for: site/assets', __FILE__);
+        if($data['fileEditorExcludedDirs']) $f->attr('value', $data['fileEditorExcludedDirs']);
         $fieldset->add($f);
 
         // ProcessWire Info Panel

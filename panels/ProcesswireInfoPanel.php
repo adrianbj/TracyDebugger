@@ -177,7 +177,7 @@ class ProcesswireInfoPanel extends BasePanel {
                     ksort($value);
                     if($key == 'paths') $value = array_map(array($this, 'addRoot'), $value);
                 }
-                $value = \Tracy\Dumper::toHtml($value, array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
+                $value = \Tracy\Dumper::toHtml($value, array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::LIVE => true, Dumper::COLLAPSE => true));
                 $configData .= "<tr><td>".$this->wire('sanitizer')->entities($key)."</td><td>" . $value . "</td></tr>";
             }
             $configData .= $sectionEnd;

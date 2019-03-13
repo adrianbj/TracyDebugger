@@ -166,6 +166,7 @@ class PageFilesPanel extends BasePanel {
      * @return array $files fullpaths to files
      */
     private function getDiskFiles($p) {
+        if(!$p->filesManager()) return array();
         $files = array();
         $filesDir = $p->filesManager()->path;
         foreach($p->fields as $f) {
