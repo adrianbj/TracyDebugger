@@ -7,14 +7,13 @@ addFilterBox({
             attrs: {
                 id: "tracyFileEditorFilterBoxInput",
                 placeholder: "Find file...",
-                style: "width: 290px !important;"
+                style: "width: 275px !important;"
             }
         },
         wrapper: {
             tag: "div",
             attrs: {
-                id: "tracyFileEditorFilterBoxWrap",
-                style: "padding-bottom: 10px;"
+                id: "tracyFileEditorFilterBoxWrap"
             }
         },
         addTo: {

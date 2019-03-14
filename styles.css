@@ -194,7 +194,7 @@ body.tracyHidden:before {
     border-color: #EEEEEE !important;
 }
 
-#tracy-debug select {
+#tracy-debug select:not(#tfe_recently_opened) {
     height: 30px !important;
     width: initial !important;
     border-radius: 5px !important;
@@ -945,6 +945,14 @@ ul.pw-info-links {
 .tracy-file-tree a[href].active {
     color: white !important;
     background-color: #125EAE !important;
+}
+
+#tfe_recently_opened {
+    width: 17px !important;
+    height: 30px !important;
+    float: right !important;
+    margin: 0 13px 0 0 !important;
+    padding: 0 !important;
 }
 
 .tracy-panel-footer {

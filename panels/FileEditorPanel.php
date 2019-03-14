@@ -391,10 +391,8 @@ HTML;
         <div class="tracy-inner">
             <div id="tracyFileEditorContainer" style="height: 100%;">
                 <div style="float: left; height: calc(100% - 80px);">
-                    <div style="padding-bottom:10px">
-                        <select title="Select recently opened files" style="width:290px !important" onchange="tracyFileEditorLoader.loadFileEditor(this.value)" id="tfe_recently_opened"></select>
-                    </div>
-                    <div id="tracyFoldersFiles" style="margin: 0; padding:0; width: 310px; height: 100%; overflow: auto">';
+                    <select title="Select recently opened files" onchange="tracyFileEditorLoader.loadFileEditor(this.value)" id="tfe_recently_opened"></select>
+                    <div id="tracyFoldersFiles" style="padding: 0; margin:10px 0 0 0; width: 310px; height: 100%; overflow: auto">';
                         $out .= "<div class='fe-file-tree'>";
                         $out .= $this->php_file_tree($this->wire('config')->paths->{\TracyDebugger::getDataValue('fileEditorBaseDirectory')}, $this->toArray(\TracyDebugger::getDataValue('fileEditorAllowedExtensions')));
                         $out .= "</div>";
