@@ -935,6 +935,13 @@ ul.pw-info-links {
     width: 100% !important;
 }
 
+[data-filterbox-active="1"] .filterbox-visible {
+    display: block !important;
+}
+[data-filterbox-active="1"] .filterbox-hidden {
+    display: none;
+}
+
 .tracy-file-tree a[href].active {
     color: white !important;
     background-color: #125EAE !important;
