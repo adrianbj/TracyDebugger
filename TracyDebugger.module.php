@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.18.19',
+            'version' => '4.19.0',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -92,7 +92,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $tempTemplateFilename;
     public static $panelGenerationTime = array();
     public static $hideInAdmin = array('validator', 'templateResources', 'templatePath');
-    public static $superUserOnlyPanels = array('console', 'snippetRunner', 'fileEditor', 'adminer', 'adminTools');
+    public static $superUserOnlyPanels = array('console', 'snippetRunner', 'fileEditor', 'adminer', 'terminal', 'adminTools');
     public static $pageHtml;
     public static $processWireInfoSections = array(
         'configData' => 'Config Data',
@@ -173,6 +173,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'requestInfo' => 'Request Info',
         'requestLogger' => 'Request Logger',
         'snippetRunner' => 'Snippet Runner',
+        'terminal' => 'Terminal',
         'templatePath' => 'Template Path',
         'templateResources' => 'Template Resources',
         'todo' => 'ToDo',
@@ -361,6 +362,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // adminer iframe
         if(strpos(self::inputUrl(true), 'adminer') !== false) $this->earlyExit = true;
+        // terminal iframe
+        if(strpos(self::inputUrl(true), 'terminal') !== false) $this->earlyExit = true;
 
         // don't init Tracy for @soma's PageEditSoftLock polling on Page Edit
         if(strpos(self::inputUrl(), 'checkpagelock') !== false) $this->earlyExit = true;
@@ -3829,7 +3832,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'enableShortcutMethods');
         $f->label = __('Enable shortcut methods', __FILE__);
-        $f->description = __('Uncheck to not define any of the shortcut methods. If you are not going to use these in your templates, unchecking means that they will not be defined which may reduce possible future name clashes. If in doubt, uncheck and use the full methods:'."\n".'TD::addBreakpoint()'."\n".'TD::barDump()'."\n".'TD::barDumpBig()'."\n".'TD::barDumpLive()'."\n".'TD::debugAll()'."\n".'TD::dump()'."\n".'TD::fireLog()'."\n".'TD::log()'."\n".'TD::templateVars()'."\n".'TD::timer()', __FILE__);
+        $f->description = __('Uncheck to not define any of the shortcut methods. If you are not going to use these in your templates, unchecking means that they will not be defined which may reduce possible future name clashes. If in doubt, uncheck and use the full methods:'."\n".'TD::addBreakpoint()'."\n".'TD::barDump()'."\n".'TD::barDumpBig()'."\n".'TD::debugAll()'."\n".'TD::dump()'."\n".'TD::dumpBig()'."\n".'TD::fireLog()'."\n".'TD::log()'."\n".'TD::templateVars()'."\n".'TD::timer()', __FILE__);
         $f->notes = __('If this, or one of the shortcut methods is not enabled, but is called in your templates, all users will get a "call to undefined function" fatal error, so please be aware when using the shortcut methods in your templates if they are not enabled here.', __FILE__);
         $f->columnWidth = 50;
         $f->attr('checked', $data['enableShortcutMethods'] == '1' ? 'checked' : '');

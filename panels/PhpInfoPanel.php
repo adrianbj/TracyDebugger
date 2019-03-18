@@ -46,11 +46,33 @@ class PhpInfoPanel extends BasePanel {
         libxml_use_internal_errors(false);
         $body = $dom->getElementsByTagName('body')->item(0);
         $this->removeElementsByTagName('img', $body);
+
+        // move h1 in the first section to the root level
+        $mainTitle = $dom->getElementsByTagName('h1')->item(0);
+        $body->insertBefore($mainTitle, $body->firstChild);
+
         $phpInfo = $dom->saveHTML($body);
 
+        // remove unnecessary body and div wrappers
+        $phpInfo = str_replace(array('<body>', '</body>', '<div>', '</div>'), '', $phpInfo);
+
+		// wrap sections in section tags
+        $phpInfo = str_replace('<h1>', '</section><h1>', '<section class="phpinfo-section">' . $phpInfo);
+        $phpInfo = str_replace('<h1>', '<section class="phpinfo-section"><h1>', $phpInfo);
+        $phpInfo .= '</section>';
+
+        $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
+        $out = '<script>' . file_get_contents($this->wire('config')->paths->TracyDebugger . 'scripts/js-loader.js') . '</script>';
+        $out .= <<< HTML
+        <script>
+            tracyJSLoader.load("{$tracyModuleUrl}scripts/filterbox/filterbox.js", function() {
+                tracyJSLoader.load("{$tracyModuleUrl}scripts/php-info-search.js");
+            });
+        </script>
+HTML;
 
         // Load all the panel sections
-        $out = '
+        $out .= '
         <h1>
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 16.172 16.172" style="enable-background:new 0 0 16.172 16.172;" xml:space="preserve" width="16px" height="16px">
                 <g>
@@ -62,31 +84,13 @@ class PhpInfoPanel extends BasePanel {
             PHP Info
         </h1>
         <div class="tracy-inner">
-            <style type="text/css">
-                #phpinfoBody pre {margin: 0; font-family: monospace;}
-                #phpinfoBody a:link {color: #009; text-decoration: none; background-color: #fff;}
-                #phpinfoBody a:hover {text-decoration: underline;}
-                #phpinfoBody table {border-collapse: collapse; border: 0; box-shadow: 1px 2px 3px #ccc;}
-                #phpinfoBody .center {text-align: center;}
-                #phpinfoBody .center table {margin: 1em auto; text-align: left; width:100% !important;}
-                #phpinfoBody .center th {text-align: center !important;}
-                #phpinfoBody td, th {border: 1px solid #666; font-size: 100%; vertical-align: baseline; padding: 4px 5px;}
-                #phpinfoBody h1 {font-size: 175%;}
-                #phpinfoBody h2 {font-size: 150%;}
-                #phpinfoBody .p {text-align: left;}
-                #phpinfoBody .e {background-color: #ccf !important; width: 300px; font-weight: bold; }
-                #phpinfoBody .h th {background-color: #99c !important; font-weight: bold; }
-                #phpinfoBody .v {background-color: #ddd !important; max-width: 300px;}
-                #phpinfoBody .v i {color: #999 !important; }
-                #phpinfoBody img {float: right; border: 0;}
-                #phpinfoBody hr {background-color: #ccc; border: 0; height: 1px;}
-                #phpinfoBody td {border: 1px solid #000 !important;}
-                #phpinfoBody th {border: 1px solid #000 !important; color:#000 !important;}
-            </style>
-            <div id="phpinfoBody">'.$phpInfo.'</div>';
+            <div id="phpinfoBody">'
+                .$phpInfo.
+            '</div>';
 
             $out .= \TracyDebugger::generatePanelFooter('phpInfo', \Tracy\Debugger::timer('phpInfo'), strlen($out));
-        $out .= '</div>
+        $out .= '
+        </div>
         ';
 
         return parent::loadResources() . $out;

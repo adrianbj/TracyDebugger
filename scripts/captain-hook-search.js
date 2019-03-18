@@ -1,27 +1,26 @@
 addFilterBox({
-    suffix: "-fileeditor-panel",
+    suffix: "-captainhook-panel",
     target: {
-        selector: "#tracyFileEditorContainer .tracy-file-tree",
-        items: "li.tft-f"
+        selector: "#tracy-debug-panel-CaptainHookPanel .tracy-inner",
+        items: "tbody tr"
     },
     wrapper: {
         tag: "div",
         attrs: {
-            id: "tracyFileEditorFilterBoxWrap",
+            id: "tracyCaptainHookFilterBoxWrap",
             class: "tracy-filterbox-wrap tracy-filterbox-titlebar-wrap"
         }
     },
     input: {
         attrs: {
-            placeholder: "Find file..."
+            placeholder: "Find..."
         }
     },
     addTo: {
-        selector: "#tracy-debug-panel-FileEditorPanel .tracy-icons",
+        selector: "#tracy-debug-panel-CaptainHookPanel .tracy-icons",
         position: "before"
     },
     inputDelay: 500,
-    suffix: 'file-editor',
     highlight: {
         style: "background: #ff9; color: #125eae;",
         minChar: 2
@@ -30,7 +29,7 @@ addFilterBox({
         counter: {
             tag: "p",
             addTo: {
-                selector: "#tracyFileEditorFilterBoxWrap",
+                selector: "#tracyCaptainHookFilterBoxWrap",
                 position: "append"
             },
             attrs: {
@@ -52,7 +51,7 @@ addFilterBox({
         clearButton: {
             tag: "span",
             addTo: {
-                selector: "#tracyFileEditorFilterBoxWrap",
+                selector: "#tracyCaptainHookFilterBoxWrap",
                 position: "append"
             },
             attrs: {
@@ -73,25 +72,16 @@ addFilterBox({
                 $target.setAttribute("data-filterbox-active", "1");
             });
         },
-        onEnter: function () {
-            var $file = this.getFirstVisibleItem();
-
-            if($file) {
-                $file.querySelector("a").click();
-            }
-
-            return false;
-        },
         afterFilter: function () {
             var filter = (this.getFilter() || "").trim(),
                 visibleSelector = this.getVisibleSelector(),
-                $target = document.querySelector(".tracy-file-tree"),
+                $target = document.querySelector("#tracy-debug-panel-CaptainHookPanel .tracy-inner"),
                 $itemsToHide,
                 $foundFiles,
                 $file,
                 $parents,
                 displayAttr = "data-filterbox-display",
-                visibleMode = "block",
+                visibleMode = "table-row",
                 hiddenMode = "none";
 
             if(filter === "") {
@@ -106,17 +96,17 @@ addFilterBox({
                 return false;
             }
 
-            $itemsToHide = $target.querySelectorAll("ul, li");
+            /*$itemsToHide = $target.querySelectorAll("");
 
             for(var i = 0; i < $itemsToHide.length; i++) {
                 $itemsToHide[i].setAttribute(displayAttr, hiddenMode);
-            }
+            }*/
 
             $foundFiles = $target.querySelectorAll(visibleSelector);
 
             for(var j = 0; j < $foundFiles.length; j++) {
                 $file = $foundFiles[j];
-                $parents = getParentsUntil($file, ".tracy-file-tree");
+                $parents = getParentsUntil($file, "#tracy-debug-panel-CaptainHookPanel .tracy-inner");
 
                 $file.setAttribute(displayAttr, visibleMode);
 
@@ -124,10 +114,11 @@ addFilterBox({
                     $parents[k].setAttribute(displayAttr, visibleMode);
                 }
             }
+            // reposition panel so that if it's wider after filtering (expanding results), it won't be off the screen
+            window.Tracy.Debug.panels['tracy-debug-panel-CaptainHookPanel'].reposition();
         }
     }
-}
-);
+});
 
 /*!
 * Get all of an element's parent elements up the DOM tree until a matching parent is found

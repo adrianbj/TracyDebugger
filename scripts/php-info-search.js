@@ -1,27 +1,26 @@
 addFilterBox({
-    suffix: "-fileeditor-panel",
+	suffix: "-phpinfo-panel",
     target: {
-        selector: "#tracyFileEditorContainer .tracy-file-tree",
-        items: "li.tft-f"
+        selector: "#phpinfoBody",
+        items: ".phpinfo-section tbody tr:not(.h)"
     },
     wrapper: {
         tag: "div",
         attrs: {
-            id: "tracyFileEditorFilterBoxWrap",
+            id: "tracyPhpInfoFilterBoxWrap",
             class: "tracy-filterbox-wrap tracy-filterbox-titlebar-wrap"
         }
     },
     input: {
         attrs: {
-            placeholder: "Find file..."
+            placeholder: "Find..."
         }
     },
     addTo: {
-        selector: "#tracy-debug-panel-FileEditorPanel .tracy-icons",
+        selector: "#tracy-debug-panel-PhpInfoPanel .tracy-icons",
         position: "before"
     },
     inputDelay: 500,
-    suffix: 'file-editor',
     highlight: {
         style: "background: #ff9; color: #125eae;",
         minChar: 2
@@ -30,7 +29,7 @@ addFilterBox({
         counter: {
             tag: "p",
             addTo: {
-                selector: "#tracyFileEditorFilterBoxWrap",
+                selector: "#tracyPhpInfoFilterBoxWrap",
                 position: "append"
             },
             attrs: {
@@ -52,12 +51,12 @@ addFilterBox({
         clearButton: {
             tag: "span",
             addTo: {
-                selector: "#tracyFileEditorFilterBoxWrap",
+                selector: "#tracyPhpInfoFilterBoxWrap",
                 position: "append"
             },
             attrs: {
                 class: "tracy-filterbox-clear",
-                onclick: "var input = this.parentElement.querySelector('input'); input.getFilterBox().clearFilterBox(); input.focus();"
+                onclick: "var input = this.parentElement.querySelector('input'); input.getFilterBox().clearFilterBox(); input.focus(); window.Tracy.Debug.panels['tracy-debug-panel-PhpInfoPanel'].reposition();"
             },
             text: function () {
                 return this.getFilter() ? "&times;" : "";
@@ -72,26 +71,32 @@ addFilterBox({
             $input.addEventListener("input", function() {
                 $target.setAttribute("data-filterbox-active", "1");
             });
-        },
-        onEnter: function () {
-            var $file = this.getFirstVisibleItem();
 
-            if($file) {
-                $file.querySelector("a").click();
+            // modify panel markup
+            var $firstSection = document.querySelector("#phpinfoBody .phpinfo-section"),
+            	$tablesToMove = $firstSection.querySelectorAll("table"),
+            	$divToRemove = $firstSection.querySelector("div.center"),
+            	tableCount = $tablesToMove.length;
+
+            if(tableCount) {
+	            for(var i = 1; i < tableCount; i++) {
+					$firstSection.appendChild($tablesToMove[i]);
+	            }
+	            $divToRemove.parentElement.removeChild($divToRemove);
             }
-
-            return false;
         },
         afterFilter: function () {
+            window.Tracy.Debug.panels['tracy-debug-panel-PhpInfoPanel'].reposition();
             var filter = (this.getFilter() || "").trim(),
                 visibleSelector = this.getVisibleSelector(),
-                $target = document.querySelector(".tracy-file-tree"),
+                $target = document.querySelector("#phpinfoBody"),
                 $itemsToHide,
-                $foundFiles,
-                $file,
+                $foundItems,
+                $item,
                 $parents,
+                $sections = $target.querySelectorAll(".phpinfo-section"),
                 displayAttr = "data-filterbox-display",
-                visibleMode = "block",
+                visibleMode = "table-row",
                 hiddenMode = "none";
 
             if(filter === "") {
@@ -106,28 +111,51 @@ addFilterBox({
                 return false;
             }
 
-            $itemsToHide = $target.querySelectorAll("ul, li");
+            $itemsToHide = $target.querySelectorAll("h1, h2, table, tbody tr:not(.h)");
 
             for(var i = 0; i < $itemsToHide.length; i++) {
                 $itemsToHide[i].setAttribute(displayAttr, hiddenMode);
             }
 
-            $foundFiles = $target.querySelectorAll(visibleSelector);
+            $foundItems = $target.querySelectorAll(visibleSelector);
 
-            for(var j = 0; j < $foundFiles.length; j++) {
-                $file = $foundFiles[j];
-                $parents = getParentsUntil($file, ".tracy-file-tree");
+            for(var j = 0; j < $foundItems.length; j++) {
+                $item = $foundItems[j];
+                $parents = getParentsUntil($item, "#phpinfoBody");
 
-                $file.setAttribute(displayAttr, visibleMode);
+                $item.setAttribute(displayAttr, visibleMode);
 
                 for(var k = 0; k < $parents.length; k++) {
-                    $parents[k].setAttribute(displayAttr, visibleMode);
+	                var $parent = $parents[k],
+	                	$previousElement;
+
+					if($parent.getAttribute(displayAttr) === "table") {
+						continue;
+					}
+
+	                $previousElement = $parent.previousElementSibling;
+
+	                if($parent.tagName === "TABLE") {
+		                $parent.setAttribute(displayAttr, "table");
+	                }
+
+	                if($previousElement && $previousElement.tagName === "H2") {
+		                $previousElement.setAttribute(displayAttr, "block");
+					}
                 }
             }
+
+			for(var j = 0; j < $sections.length; j++) {
+				var $section = $sections[j];
+
+	            if($section.querySelector("table:not([" + displayAttr + "='" + hiddenMode + "'])")) {
+		            $section.querySelector("h1").setAttribute(displayAttr, "block");
+				}
+            }
+            window.Tracy.Debug.panels['tracy-debug-panel-PhpInfoPanel'].reposition();
         }
     }
-}
-);
+});
 
 /*!
 * Get all of an element's parent elements up the DOM tree until a matching parent is found

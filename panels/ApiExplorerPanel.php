@@ -46,9 +46,15 @@ class ApiExplorerPanel extends BasePanel {
         $out = '
         <h1>' . $this->icon . ' API Explorer</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'ApiExplorerPanel\')">+</a></span></span>';
 
+        $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
+        $out .= '<script>' . file_get_contents($this->wire('config')->paths->TracyDebugger . 'scripts/js-loader.js') . '</script>';
         $out .= <<< HTML
-
         <script>
+
+            tracyJSLoader.load("{$tracyModuleUrl}scripts/filterbox/filterbox.js", function() {
+                tracyJSLoader.load("{$tracyModuleUrl}scripts/api-explorer-search.js");
+            });
+
             function removeA(arr) {
                 var what, a = arguments, L = a.length, ax;
                 while (L > 1 && arr.length) {

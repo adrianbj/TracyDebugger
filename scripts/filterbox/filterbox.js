@@ -1,5 +1,5 @@
 /**
- * FilterBox v0.4.3
+ * FilterBox v0.4.4
  */
 (function (window, document) {
     'use strict';
@@ -615,18 +615,29 @@
             var $items = getItems();
 
             for (var i = 0; i < $items.length; i++) {
-
                 var $item = $items[i], data, currentValue;
 
                 data = getTextualContent($item.querySelectorAll(dataSources.join(',')));
                 data += getExtraFilterAttrsContent($item, extraFilterAttrs);
 
                 if (data) {
-                    data = unique(data.split(SEPARATOR)); // remove duplicates
-
+					data = data.split(SEPARATOR);
+					
                     // set or append attribute value
                     currentValue = $item.getAttribute(filterAttr);
-                    data = (currentValue + SEPARATOR + data.join(SEPARATOR)).trim();
+
+                    if(currentValue) {
+	                    data.push(currentValue);
+                    }
+                    
+					data = unique(data); // remove duplicates
+
+					data = data.filter(function (el) {
+					    return el != "";
+					});
+
+                    data = data.join(SEPARATOR).trim();
+					
                     $item.setAttribute(filterAttr, data);
                 }
             }
@@ -699,9 +710,10 @@
 
             if (v === '!') return false;
 
+            dehighlight();
+
             if (isInvertFilter(v)) {
                 invert = true;
-                dehighlight();
                 v = getValueWhenInvert(v);
             }
 
@@ -716,7 +728,6 @@
                 $visibleItems;
 
             if (!terms) {
-
                 self.clearFilterBox();
 
             } else {
@@ -871,7 +882,6 @@
                         content += getTextualContent($el[i]);
                     }
                 } else {
-
                     if ($el.value) {
                         content += SEPARATOR + $el.value.toLowerCase();
                     }

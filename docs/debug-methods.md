@@ -90,20 +90,6 @@ bdb($var, $title, $options);
 
 ***
 
-## barDumpLive
-
-Uses Tracy's "Live" dumping method whereby each level of an array or object is added to the DOM in realtime as you click to open the level. This makes deep arrays/objects fast to render, but the downside to this method is that is that it may display incorrect information when used inside a hook, so use with caution.
-
-#### Parameters
-```php
-bdl($var, $title);
-
-/**
-* @param mixed $var string|array|object to be dumped
-* @param string $title string to identify this dump
-*/
-```
-
 ## debugAll
 
 Shortcut for outputting via all the dump/log methods via the one call.

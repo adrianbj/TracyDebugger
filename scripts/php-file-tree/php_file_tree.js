@@ -93,7 +93,7 @@ function init_php_file_tree(linkedFilePath) {
 				if (items[j].tagName == "A") {
 					var parser = document.createElement('a');
 					queryStr = items[j].href.split('?')[1];
-					var currentFilePath = queryStr.replace('f=','').replace('&l=1','');
+					var currentFilePath = decodeURI(queryStr.replace('f=','').replace('&l=1',''));
 					if(document.getElementById('panelTitleFilePath').innerHTML == currentFilePath || linkedFilePath == currentFilePath) {
 						var els = document.getElementsByClassName("active");
 						[].forEach.call(els, function (el) {

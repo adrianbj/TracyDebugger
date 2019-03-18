@@ -203,7 +203,7 @@ body.tracyHidden:before {
     padding: 3px 3px 3px 10px !important;
 }
 
-#tracy-debug select:not([multiple]):not([size]) {
+#tracy-debug select:not([multiple]):not([size]):not(#tfe_recently_opened) {
     -webkit-appearance: menulist !important;
     -moz-appearance: menulist !important;
     appearance: menulist !important;
@@ -265,6 +265,7 @@ body.tracyHidden:before {
 
 .tracy-panel th {
     position: sticky;
+    top: -13px;
 }
 
 #tracy-debug .tracy-panel td,
@@ -740,7 +741,8 @@ ul.pw-info-links {
 }
 
 #tracy-debug-panel-ConsolePanel,
-#tracy-debug-panel-ValidatorPanel {
+#tracy-debug-panel-ValidatorPanel,
+#tracy-debug-panel-TerminalPanel {
     height: 75%;
     min-height: 300px !important;
     width: 1200px;
@@ -935,10 +937,134 @@ ul.pw-info-links {
     width: 100% !important;
 }
 
-[data-filterbox-active="1"] .filterbox-visible {
+[data-filterbox-active="1"] [data-filterbox-display="block"] {
     display: block !important;
 }
-[data-filterbox-active="1"] .filterbox-hidden {
+[data-filterbox-active="1"] [data-filterbox-display="inline-block"] {
+    display: inline-block !important;
+}
+[data-filterbox-active="1"] [data-filterbox-display="table"] {
+    display: table !important;
+}
+[data-filterbox-active="1"] [data-filterbox-display="table-row"] {
+    display: table-row !important;
+}
+[data-filterbox-active="1"] [data-filterbox-display="none"] {
+    display: none;
+}
+
+.tracy-filterbox-wrap {
+	position: absolute;
+	right: 70px;
+	padding: 0 !important;
+	top: 0;
+	width: 200px !important;
+	height: 30px;
+}
+
+#tracy-debug .tracy-filterbox-wrap input:not(.ace_search_field) {
+	width: 100% !important;
+	height: 30px;
+	line-height: 30px;
+	padding: 0 27px 0 8px !important;
+	border-color: white !important;
+	outline: none !important;
+	border: none !important;
+}
+
+#tracy-debug .tracy-filterbox-wrap[data-no-match="1"] input:not(.ace_search_field) {
+	outline: 1px solid rgba(244, 67, 54, 0.5) !important;
+	outline-offset: -1px !important;
+	color: rgba(244, 67, 54, 1) !important;
+}
+
+.tracy-filterbox-clear {
+	user-select: none;
+	display: block;
+	position: absolute;
+	right: 1px;
+	top: 0;
+	cursor: pointer;
+	font-size: 19px !important;
+	padding: 6px 9px !important;
+	line-height: 1 !important;
+	opacity: 0.5;
+}
+
+.tracy-filterbox-clear:hover {
+	opacity: 0.99;
+}
+
+.tracy-filterbox-counter {
+	color: #aaa;
+	font-style: italic !important;
+	margin: 0 !important;
+	font-size: 11px !important;
+	position: absolute !important;
+	right: 30px !important;
+	white-space: nowrap;
+	top: 7px !important;
+	user-select: none;
+}
+
+.tracy-filterbox-counter span {
+	color: #333;
+	margin-right: 2px;
+}
+
+
+#phpinfoBody table:first-child td {
+    border: none !important;
+    font-weight: bold;
+    line-height: 1 !important;
+}
+#phpinfoBody hr {
+    background-color: #FFFFFF;
+    border: 0;
+    height: 1px;
+}
+#phpinfoBody td {
+    border: none !important;
+}
+#phpinfoBody .p {
+    text-align: left;
+}
+#phpinfoBody .e {
+    width: 300px;
+    font-weight: bold;
+}
+#phpinfoBody .h th {
+    font-weight: bold;
+}
+#phpinfoBody .v {
+    max-width: 700px;
+}
+#phpinfoBody .v i {
+    color: #999 !important;
+}
+
+#phpinfoBody .phpinfo-section:first-child div.center table:first-child {
+    display: none !important;
+}
+
+#phpinfoBody hr {
+    display: none !important;
+}
+
+.phpinfo-section h1 {
+    margin: 12px 0 !important;
+    padding: 0 !important;
+}
+
+#phpinfoBody .phpinfo-section:first-child h1 {
+    margin-top: 0 !important;
+}
+
+.tracy-file-tree > ul {
+	margin-left: 0 !important;
+}
+
+.tracy-mode-rollup .tracy-filterbox {
     display: none;
 }
 
@@ -947,12 +1073,34 @@ ul.pw-info-links {
     background-color: #125EAE !important;
 }
 
+.tracy-file-tree a {
+    padding: 1px 4px 1px 22px !important;
+    word-break: break-word;
+}
+
+.tracy-file-tree a:before {
+	font-size: 13px !important;
+    position: absolute !important;
+    left: 0 !important;
+}
+
+.tracy-file-tree a.open:before {
+	content: "\f07c" !important;
+}
+
+.tft-d > ul {
+    padding-left: 3px !important;
+}
+
 #tfe_recently_opened {
     width: 17px !important;
     height: 30px !important;
-    float: right !important;
-    margin: 0 13px 0 0 !important;
+    position: absolute !important;
+    margin: 0 !important;
     padding: 0 !important;
+    left: 285px !important;
+    cursor: pointer;
+    z-index: 2 !important;
 }
 
 .tracy-panel-footer {

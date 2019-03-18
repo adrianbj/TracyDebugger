@@ -93,7 +93,18 @@ function tracyDumpsToggler(el, show) {
 
 // reposition panel if comment opened (for Captain Hook and API Explorer panels)
 document.addEventListener("click", filterEventHandler(".comment", function (e) {
-    setTimeout(function(){
+    setTimeout(function() {
         window.Tracy.Debug.panels[e.filterdTarget.closest('.tracy-panel').id].reposition();
     }, 250);
 }));
+
+// focus filterbox input for currently focused panel
+document.addEventListener("keydown", function(e) {
+    if(e.altKey && (e.keyCode==70||e.charCode==70)) {
+        e.preventDefault();
+        var focusedPanel = document.querySelector(".tracy-focused");
+        if(focusedPanel) {
+            focusedPanel.querySelector("[id$='FilterBoxWrap']").querySelector("input").focus();
+        }
+    }
+});

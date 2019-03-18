@@ -77,9 +77,6 @@ class FileEditorPanel extends BasePanel {
         }
 
         $out = '<script>' . file_get_contents($this->wire('config')->paths->TracyDebugger . 'scripts/js-loader.js') . '</script>';
-        $out .= '<script>' . file_get_contents($this->wire('config')->paths->TracyDebugger . 'scripts/file-editor.js') . '</script>';
-        $out .= '<script>' . file_get_contents($this->wire('config')->paths->TracyDebugger . 'scripts/filterbox.js') . '</script>';
-        $out .= '<script>' . file_get_contents($this->wire('config')->paths->TracyDebugger . 'scripts/file-editor-search.js') . '</script>';
 
         $maximizeSvg = '<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="282.8 231 16 15.2" enable-background="new 282.8 231 16 15.2" xml:space="preserve"><polygon fill="#AEAEAE" points="287.6,233.6 298.8,231 295.4,242 "/><polygon fill="#AEAEAE" points="293.9,243.6 282.8,246.2 286.1,235.3 "/></svg>';
 
@@ -198,8 +195,9 @@ class FileEditorPanel extends BasePanel {
                 },
 
                 resizeAce: function(focus = true) {
-                    tracyFileEditor.tfe.resize(true);
-                    if(focus) {
+
+                    if(typeof tracyFileEditor.tfe.resize == 'function') tracyFileEditor.tfe.resize(true);
+                    if(focus && typeof tracyFileEditor.tfe.focus == 'function') {
                         document.getElementById("tracy-debug-panel-FileEditorPanel").classList.add('tracy-focused');
                         tracyFileEditor.tfe.focus();
                     }
@@ -380,7 +378,13 @@ class FileEditorPanel extends BasePanel {
                 }
             });
 
-            tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/php-file-tree/php_file_tree.js");
+            tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/php-file-tree/php_file_tree.js", function() {
+                tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/file-editor.js");
+            });
+            tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/filterbox/filterbox.js", function() {
+                tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/file-editor-search.js");
+            });
+
             tracyFileEditorLoader.generateButtons($tracyFileEditorFileData);
             document.cookie = "tracyTestFileEditor=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
 
@@ -390,9 +394,9 @@ HTML;
         $out .= '<h1>'.$this->icon.' File Editor: <span id="panelTitleFilePath" style="font-size:14px">'.($this->tracyFileEditorFilePath ?: 'no selected file').'</span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'FileEditorPanel\')">+</a></span></span>
         <div class="tracy-inner">
             <div id="tracyFileEditorContainer" style="height: 100%;">
-                <div style="float: left; height: calc(100% - 80px);">
+                <div style="float: left; height: calc(100% - 38px);">
                     <select title="Select recently opened files" onchange="tracyFileEditorLoader.loadFileEditor(this.value)" id="tfe_recently_opened"></select>
-                    <div id="tracyFoldersFiles" style="padding: 0; margin:10px 0 0 0; width: 310px; height: 100%; overflow: auto">';
+                    <div id="tracyFoldersFiles" style="padding: 0; margin:0; width: 310px; height: 100%; overflow-y: auto; overflow-x: hidden; z-index: 1">';
                         $out .= "<div class='fe-file-tree'>";
                         $out .= $this->php_file_tree($this->wire('config')->paths->{\TracyDebugger::getDataValue('fileEditorBaseDirectory')}, $this->toArray(\TracyDebugger::getDataValue('fileEditorAllowedExtensions')));
                         $out .= "</div>";
