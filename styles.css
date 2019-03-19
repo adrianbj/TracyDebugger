@@ -295,9 +295,8 @@ body.tracyHidden:before {
 
 #keyboardShortcuts {
     position: absolute;
-    background: #FFFFFF;
+    background: #DEE6ED;
     padding: 10px;
-    border: 2px solid rgb(210, 210, 210);
     border-radius: 0;
     box-shadow: none;
     background-clip: padding-box;
