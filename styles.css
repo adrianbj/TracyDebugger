@@ -862,12 +862,12 @@ ul.pw-info-links {
     color: #2C3E50 !important;
     text-transform: uppercase;
     background: #F0F3F7 !important;
-    /*border: 1px solid rgba(255, 255, 255, 0.3);*/
+    opacity: 0.4 !important;
     border-bottom: 1px solid #c9d4e1 !important;
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-focused"]>h1 {
-    background: #dee6ed !important;
+    opacity: 1 !important;
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>h1>svg,
