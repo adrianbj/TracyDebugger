@@ -712,7 +712,7 @@
 
             dehighlight();
 
-            if (isInvertFilter(v)) {
+            if (self.isInvertFilter(v)) {
                 invert = true;
                 v = getValueWhenInvert(v);
             }
@@ -732,7 +732,7 @@
 
             } else {
 
-                hideSelector = invert ? self.getVisibleSelector(v) : self.getHiddenSelector(v);
+                hideSelector = self.getMatchingSelector(v);
 
                 setStyles(hideSelector + '{display:none}');
 
@@ -785,7 +785,11 @@
             return target + ' ' + items + selector;
         };
 
-        function isInvertFilter(v) {
+        self.getMatchingSelector = function (v) {
+            return self.isInvertFilter(v) ? self.getHiddenSelector(v) :  self.getVisibleSelector(v);
+        };
+
+        self.isInvertFilter = function (v) {
             return (v && v.length > 1 && (v.indexOf('!') === 0 || v.indexOf('!') === v.length - 1));
         }
 
@@ -802,7 +806,7 @@
         self.count = function (v) {
             var terms, selector, invert = false;
 
-            if (isInvertFilter(v)) {
+            if (self.isInvertFilter(v)) {
                 invert = true;
                 v = getValueWhenInvert(v);
             }

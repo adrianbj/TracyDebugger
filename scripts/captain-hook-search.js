@@ -74,14 +74,16 @@ addFilterBox({
         },
         afterFilter: function () {
             var filter = (this.getFilter() || "").trim(),
-                visibleSelector = this.getVisibleSelector(),
-                $target = document.querySelector("#tracy-debug-panel-CaptainHookPanel .tracy-inner"),
+                matchingSelector = this.getMatchingSelector(filter),
+                $target = this.getTarget(),
                 $itemsToHide,
                 $foundFiles,
                 $file,
+                $parent,
                 $parents,
+                $toggles = $target.querySelectorAll(".tracy-toggle"),
                 displayAttr = "data-filterbox-display",
-                visibleMode = "table-row",
+                visibleMode = "true",
                 hiddenMode = "none";
 
             if(filter === "") {
@@ -96,14 +98,12 @@ addFilterBox({
                 return false;
             }
 
-            /*$itemsToHide = $target.querySelectorAll("");
-
+            $itemsToHide = $target.querySelectorAll("table, tr, .tracy-toggle, .tracy-toggle + div");
             for(var i = 0; i < $itemsToHide.length; i++) {
                 $itemsToHide[i].setAttribute(displayAttr, hiddenMode);
-            }*/
+            }
 
-            $foundFiles = $target.querySelectorAll(visibleSelector);
-
+            $foundFiles = $target.querySelectorAll(matchingSelector);
             for(var j = 0; j < $foundFiles.length; j++) {
                 $file = $foundFiles[j];
                 $parents = getParentsUntil($file, "#tracy-debug-panel-CaptainHookPanel .tracy-inner");
@@ -114,51 +114,16 @@ addFilterBox({
                     $parents[k].setAttribute(displayAttr, visibleMode);
                 }
             }
+
+            for(var j = 0; j < $toggles.length; j++) {
+	            var $toggle = $toggles[j],
+	            	$section = $toggle.nextElementSibling;
+
+	            $toggle.setAttribute(displayAttr, $section.querySelector("table[" + displayAttr + "='true']") ? visibleMode : hiddenMode);
+            }
+
             // reposition panel so that if it's wider after filtering (expanding results), it won't be off the screen
             window.Tracy.Debug.panels['tracy-debug-panel-CaptainHookPanel'].reposition();
         }
     }
 });
-
-/*!
-* Get all of an element's parent elements up the DOM tree until a matching parent is found
-* (c) 2019 Chris Ferdinandi, MIT License, https://gomakethings.com
-* @param  {Node}   elem     The element
-* @param  {String} parent   The selector for the parent to stop at
-* @param  {String} filter   The selector to filter against [optional]
-* @return {Array}           The parent elements
-*/
-var getParentsUntil = function (elem, parent, filter) {
-// Setup parents array
-var parents = [];
-
-// Get matching parent elements
-while (elem && elem !== document) {
-    // If there's a parent and the element matches, break
-    if (parent) {
-        if (elem.matches(parent)) break;
-    }
-
-    // If there's a filter and the element matches, push it to the array
-    if (filter) {
-        if (elem.matches(filter)) {
-            parents.push(elem);
-        }
-        continue;
-    }
-
-    // Otherwise, just add it to the array
-    parents.push(elem);
-    elem = elem.parentNode;
-}
-
-return parents;
-};
-
-/**
-* Element.matches() polyfill (simple version)
-* https://developer.mozilla.org/en-US/docs/Web/API/Element/matches#Polyfill
-*/
-if (!Element.prototype.matches) {
-Element.prototype.matches = Element.prototype.msMatchesSelector || Element.prototype.webkitMatchesSelector;
-}

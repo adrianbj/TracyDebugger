@@ -88,7 +88,7 @@ addFilterBox({
         afterFilter: function () {
             window.Tracy.Debug.panels['tracy-debug-panel-PhpInfoPanel'].reposition();
             var filter = (this.getFilter() || "").trim(),
-                visibleSelector = this.getVisibleSelector(),
+                matchingSelector = this.getMatchingSelector(filter),
                 $target = document.querySelector("#phpinfoBody"),
                 $itemsToHide,
                 $foundItems,
@@ -96,7 +96,7 @@ addFilterBox({
                 $parents,
                 $sections = $target.querySelectorAll(".phpinfo-section"),
                 displayAttr = "data-filterbox-display",
-                visibleMode = "table-row",
+                visibleMode = "true",
                 hiddenMode = "none";
 
             if(filter === "") {
@@ -117,7 +117,7 @@ addFilterBox({
                 $itemsToHide[i].setAttribute(displayAttr, hiddenMode);
             }
 
-            $foundItems = $target.querySelectorAll(visibleSelector);
+            $foundItems = $target.querySelectorAll(matchingSelector);
 
             for(var j = 0; j < $foundItems.length; j++) {
                 $item = $foundItems[j];
@@ -136,11 +136,11 @@ addFilterBox({
 	                $previousElement = $parent.previousElementSibling;
 
 	                if($parent.tagName === "TABLE") {
-		                $parent.setAttribute(displayAttr, "table");
+		                $parent.setAttribute(displayAttr, visibleMode);
 	                }
 
 	                if($previousElement && $previousElement.tagName === "H2") {
-		                $previousElement.setAttribute(displayAttr, "block");
+		                $previousElement.setAttribute(displayAttr, visibleMode);
 					}
                 }
             }
@@ -148,54 +148,12 @@ addFilterBox({
 			for(var j = 0; j < $sections.length; j++) {
 				var $section = $sections[j];
 
-	            if($section.querySelector("table:not([" + displayAttr + "='" + hiddenMode + "'])")) {
-		            $section.querySelector("h1").setAttribute(displayAttr, "block");
+	            if($section.querySelector("table[" + displayAttr + "='true']")) {
+		            $section.querySelector("h1").setAttribute(displayAttr, visibleMode);
 				}
             }
+
             window.Tracy.Debug.panels['tracy-debug-panel-PhpInfoPanel'].reposition();
         }
     }
 });
-
-/*!
-* Get all of an element's parent elements up the DOM tree until a matching parent is found
-* (c) 2019 Chris Ferdinandi, MIT License, https://gomakethings.com
-* @param  {Node}   elem     The element
-* @param  {String} parent   The selector for the parent to stop at
-* @param  {String} filter   The selector to filter against [optional]
-* @return {Array}           The parent elements
-*/
-var getParentsUntil = function (elem, parent, filter) {
-// Setup parents array
-var parents = [];
-
-// Get matching parent elements
-while (elem && elem !== document) {
-    // If there's a parent and the element matches, break
-    if (parent) {
-        if (elem.matches(parent)) break;
-    }
-
-    // If there's a filter and the element matches, push it to the array
-    if (filter) {
-        if (elem.matches(filter)) {
-            parents.push(elem);
-        }
-        continue;
-    }
-
-    // Otherwise, just add it to the array
-    parents.push(elem);
-    elem = elem.parentNode;
-}
-
-return parents;
-};
-
-/**
-* Element.matches() polyfill (simple version)
-* https://developer.mozilla.org/en-US/docs/Web/API/Element/matches#Polyfill
-*/
-if (!Element.prototype.matches) {
-Element.prototype.matches = Element.prototype.msMatchesSelector || Element.prototype.webkitMatchesSelector;
-}

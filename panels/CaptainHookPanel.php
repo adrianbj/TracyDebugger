@@ -57,56 +57,14 @@ class CaptainHookPanel extends BasePanel {
         $out .= '<script>' . file_get_contents($this->wire('config')->paths->TracyDebugger . 'scripts/js-loader.js') . '</script>';
         $out .= <<< HTML
         <script>
-
             tracyJSLoader.load("{$tracyModuleUrl}scripts/filterbox/filterbox.js", function() {
                 tracyJSLoader.load("{$tracyModuleUrl}scripts/captain-hook-search.js");
             });
-
-            function removeA(arr) {
-                var what, a = arguments, L = a.length, ax;
-                while (L > 1 && arr.length) {
-                    what = a[--L];
-                    while ((ax= arr.indexOf(what)) !== -1) {
-                        arr.splice(ax, 1);
-                    }
-                }
-                return arr;
-            }
-
-            var groupShow = true;
-            var manuallyOpened = [];
-            function toggleHooks() {
-
-                var panel = document.getElementById("tracy-debug-panel-CaptainHookPanel");
-                var innerPanel = panel.getElementsByClassName("tracy-inner")[0];
-                var sections = innerPanel.getElementsByTagName("div");
-                Array.prototype.forEach.call(sections, function(el) {
-                    elId = el.getAttribute("id");
-                    if(groupShow) {
-                        if(el.classList.contains("tracy-collapsed")) {
-                            el.classList.toggle("tracy-collapsed", !groupShow);
-                            //manuallyOpened.remove(elId);
-                            removeA(manuallyOpened, elId);
-                        }
-                        else {
-                            if(manuallyOpened.indexOf(elId) === -1) manuallyOpened.push(elId);
-                        }
-                    }
-                    else {
-                        if(manuallyOpened.indexOf(elId) === -1) {
-                            el.classList.toggle("tracy-collapsed", !groupShow);
-                        }
-                    }
-                });
-                groupShow = !groupShow;
-                window.Tracy.Debug.panels["tracy-debug-panel-CaptainHookPanel"].reposition();
-            }
         </script>
 HTML;
 
         $out .= '
         <div class="tracy-inner">
-            <p><input type="submit" id="toggleAll" onclick="toggleHooks()" value="Toggle All" /></p>
         ';
 
         $hooks = \TracyDebugger::getApiData('hooks');
@@ -127,7 +85,7 @@ HTML;
             }
             $sections[$currentSectionIndex] .= '
             <a href="#" rel="'.$name.'" class="tracy-toggle tracy-collapsed">'.str_replace($segments[0].'/'.$segments[1].'/', '', $label).'</a>
-            <div style="padding-left:10px" id="'.$name.'" class="tracy-collapsed"><p>'.(isset($info['classname']) && (!in_array('site', $segments) || $this->apiModuleInstalled) ? '<a '.$this->newTab.' href="'.$this->apiBaseUrl.$this->convertNamesToUrls($info['classname']).'/">'.$info['classname'].'</a> ' : $info['classname']).(isset($info['extends']) ? ' extends <a '.$this->newTab.' href="'.$this->apiBaseUrl.$this->convertNamesToUrls($info['extends']).'/">'.$info['extends'].'</a>' : '').'</p>'.$this->buildHookTable($info).'</div><br />';
+            <div id="'.$name.'" class="tracy-collapsed"><p>'.(isset($info['classname']) && (!in_array('site', $segments) || $this->apiModuleInstalled) ? '<a '.$this->newTab.' href="'.$this->apiBaseUrl.$this->convertNamesToUrls($info['classname']).'/">'.$info['classname'].'</a> ' : $info['classname']).(isset($info['extends']) ? ' extends <a '.$this->newTab.' href="'.$this->apiBaseUrl.$this->convertNamesToUrls($info['extends']).'/">'.$info['extends'].'</a>' : '').'</p>'.$this->buildHookTable($info).'</div>';
             $lastSection = $currentSection;
         }
 
