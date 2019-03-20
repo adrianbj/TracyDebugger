@@ -238,62 +238,63 @@ class FileEditorPanel extends BasePanel {
                         tracyFileEditor.modelist = ace.require("ace/ext/modelist");
                         tracyFileEditor.mode = tracyFileEditor.modelist.getModeForPath(tracyFileEditor.tracyFileEditorFilePath).mode;
                         tracyFileEditor.tfe.session.setMode(tracyFileEditor.mode);
-                    });
 
-                    // set autocomplete and other options
-                    ace.config.loadModule('ace/ext/language_tools', function () {
-                        document.getElementById("tracyFileEditorCode").style.visibility = "visible";
-                        if(tracyFileEditor.tracyFileEditorFilePath) {
-                            tracyFileEditor.tfe.setValue($tracyFileEditorFileCode);
-                            var tracyFileEditorState = JSON.parse(localStorage.getItem("tracyFileEditor"));
-                            if(!!tracyFileEditorState) {
-                                tracyFileEditor.tfe.selection.fromJSON(tracyFileEditorState.selections);
-                                tracyFileEditor.tfe.session.setScrollTop(tracyFileEditorState.scrollTop);
-                                tracyFileEditor.tfe.session.setScrollLeft(tracyFileEditorState.scrollLeft);
-                            }
-                            else {
-                                tracyFileEditor.tfe.gotoLine(1, 0);
-                            }
-                        }
-
-
-                        tracyFileEditor.tfe.setOptions({
-                            enableBasicAutocompletion: true,
-                            enableSnippets: true,
-                            enableLiveAutocompletion: true,
-                            tabSize: $codeTabSize,
-                            useSoftTabs: $codeUseSoftTabs,
-                            minLines: 5
-                        });
-
-                        // all PW variable completers
-                        if(tracyFileEditor.pwAutocomplete.length > 0) {
-                            var staticWordCompleter = {
-                                getCompletions: function(editor, session, pos, prefix, callback) {
-                                    callback(null, tracyFileEditor.pwAutocomplete.map(function(word) {
-                                        return {
-                                            value: word.name,
-                                            meta: word.meta,
-                                            docHTML: word.docHTML
-                                        };
-                                    }));
+                        // set autocomplete and other options
+                        ace.config.loadModule('ace/ext/language_tools', function () {
+                            document.getElementById("tracyFileEditorCode").style.visibility = "visible";
+                            if(tracyFileEditor.tracyFileEditorFilePath) {
+                                tracyFileEditor.tfe.setValue($tracyFileEditorFileCode);
+                                var tracyFileEditorState = JSON.parse(localStorage.getItem("tracyFileEditor"));
+                                if(!!tracyFileEditorState) {
+                                    tracyFileEditor.tfe.selection.fromJSON(tracyFileEditorState.selections);
+                                    tracyFileEditor.tfe.session.setScrollTop(tracyFileEditorState.scrollTop);
+                                    tracyFileEditor.tfe.session.setScrollLeft(tracyFileEditorState.scrollLeft);
                                 }
-                            };
-                            tracyFileEditor.tfe.completers.push(staticWordCompleter);
-                        }
+                                else {
+                                    tracyFileEditor.tfe.gotoLine(1, 0);
+                                }
+                            }
 
-                        // included PW snippets
-                        tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/code-snippets.js", function() {
-                            tracyFileEditor.snippetManager = ace.require("ace/snippets").snippetManager;
-                            tracyFileEditor.snippetManager.register(getCodeSnippets(), tracyFileEditor.mode.replace('ace/mode/', ''));
-                        });
-
-                        // custom snippets URL
-                        if(tracyFileEditor.customSnippetsUrl !== '') {
-                            tracyJSLoader.load(tracyFileEditor.customSnippetsUrl, function() {
-                                tracyFileEditor.snippetManager.register(getCustomCodeSnippets(), "php");
+                            tracyFileEditor.tfe.setOptions({
+                                enableBasicAutocompletion: true,
+                                enableSnippets: true,
+                                enableLiveAutocompletion: true,
+                                tabSize: $codeTabSize,
+                                useSoftTabs: $codeUseSoftTabs,
+                                minLines: 5
                             });
-                        }
+
+                            // all PW variable completers
+                            if(tracyFileEditor.pwAutocomplete.length > 0) {
+                                var staticWordCompleter = {
+                                    getCompletions: function(editor, session, pos, prefix, callback) {
+                                        callback(null, tracyFileEditor.pwAutocomplete.map(function(word) {
+                                            return {
+                                                value: word.name,
+                                                meta: word.meta,
+                                                docHTML: word.docHTML
+                                            };
+                                        }));
+                                    }
+                                };
+                                tracyFileEditor.tfe.completers.push(staticWordCompleter);
+                            }
+
+                            // included PW snippets
+                            tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/code-snippets.js", function() {
+                                tracyFileEditor.snippetManager = ace.require("ace/snippets").snippetManager;
+                                tracyFileEditor.snippetManager.register(getCodeSnippets(), tracyFileEditor.mode.replace('ace/mode/', ''));
+
+                                // custom snippets URL
+                                if(tracyFileEditor.customSnippetsUrl !== '') {
+                                    tracyJSLoader.load(tracyFileEditor.customSnippetsUrl, function() {
+                                        tracyFileEditor.snippetManager.register(getCustomCodeSnippets(), "php");
+                                    });
+                                }
+
+                            });
+
+                        });
 
                         tracyFileEditor.tfe.commands.addCommands([
                             {

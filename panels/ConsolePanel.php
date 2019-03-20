@@ -654,14 +654,15 @@ class ConsolePanel extends BasePanel {
                         tracyConsole.snippetManager = ace.require("ace/snippets").snippetManager;
                         tracyJSLoader.load(tracyConsole.tracyModuleUrl + "scripts/code-snippets.js", function() {
                             tracyConsole.snippetManager.register(getCodeSnippets(), "php-inline");
-                        });
 
-                        // custom snippets URL
-                        if(tracyConsole.customSnippetsUrl !== '') {
-                            tracyJSLoader.load(tracyConsole.customSnippetsUrl, function() {
-                                tracyConsole.snippetManager.register(getCustomCodeSnippets(), "php-inline");
-                            });
-                        }
+                            // custom snippets URL
+                            if(tracyConsole.customSnippetsUrl !== '') {
+                                tracyJSLoader.load(tracyConsole.customSnippetsUrl, function() {
+                                    tracyConsole.snippetManager.register(getCustomCodeSnippets(), "php-inline");
+                                });
+                            }
+
+                        });
 
                         tracyConsole.tce.commands.addCommands([
                             {
