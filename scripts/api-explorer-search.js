@@ -5,7 +5,6 @@ addFilterBox({
         items: "tbody tr"
     },
     wrapper: {
-        tag: "div",
         attrs: {
             id: "tracyApiExplorerFilterBoxWrap",
             class: "tracy-filterbox-wrap tracy-filterbox-titlebar-wrap"
@@ -25,44 +24,7 @@ addFilterBox({
         style: "background: #ff9; color: #125eae;",
         minChar: 2
     },
-    displays: {
-        counter: {
-            tag: "p",
-            addTo: {
-                selector: "#tracyApiExplorerFilterBoxWrap",
-                position: "append"
-            },
-            attrs: {
-                class: "tracy-filterbox-counter"
-            },
-            text: function () {
-	            var text = "";
-
-	            if(this.getFilter() !== "") {
-		            var matches = this.countVisible(),
-		            	total = this.countTotal();
-
-	                text = matches ? "<span>" + matches + "</span>/" + total : "No match";
-	            }
-
-	            return text;
-            }
-        },
-        clearButton: {
-            tag: "span",
-            addTo: {
-                selector: "#tracyApiExplorerFilterBoxWrap",
-                position: "append"
-            },
-            attrs: {
-                class: "tracy-filterbox-clear",
-                onclick: "var input = this.parentElement.querySelector('input'); input.getFilterBox().clearFilterBox(); input.focus();"
-            },
-            text: function () {
-                return this.getFilter() ? "&times;" : "";
-            }
-        }
-    },
+    displays: setupTracyPanelFilterBoxDisplays,
     callbacks: {
         onReady: function () {
             var $target = this.getTarget(),
@@ -73,8 +35,8 @@ addFilterBox({
             });
         },
         afterFilter: function () {
-            var filter = (this.getFilter() || "").trim(),
-                matchingSelector = this.getMatchingSelector(filter),
+            var filter = this.getFilter(),
+                matchingSelector = this.isInvertFilter() ? this.getHiddenSelector(this.getInvertFilter()) : this.getVisibleSelector(filter),
                 $target = this.getTarget(),
                 $itemsToHide,
                 $foundItems,
@@ -99,29 +61,33 @@ addFilterBox({
             }
 
             $itemsToHide = $target.querySelectorAll("table, tr, .tracy-toggle");
+
             for(var i = 0; i < $itemsToHide.length; i++) {
                 $itemsToHide[i].setAttribute(displayAttr, hiddenMode);
             }
 
-            $foundItems = $target.querySelectorAll(matchingSelector);
-            for(var j = 0; j < $foundItems.length; j++) {
-                $item = $foundItems[j];
-                $parents = getParentsUntil($item, "#tracy-debug-panel-ApiExplorerPanel .tracy-inner");
+             try {
+                $foundItems = $target.querySelectorAll(matchingSelector);
 
-                $item.setAttribute(displayAttr, visibleMode);
+                for(var j = 0; j < $foundItems.length; j++) {
+                    $item = $foundItems[j];
+                    $parents = getParentsUntil($item, "#tracy-debug-panel-ApiExplorerPanel .tracy-inner");
 
-                for(var k = 0; k < $parents.length; k++) {
-	                if($parents[k].tagName !== "TBODY") {
-		                $parents[k].setAttribute(displayAttr, visibleMode);
-	                }
+                    $item.setAttribute(displayAttr, visibleMode);
+
+                    for(var k = 0; k < $parents.length; k++) {
+                        if($parents[k].tagName !== "TBODY") {
+                            $parents[k].setAttribute(displayAttr, visibleMode);
+                        }
+                    }
                 }
-            }
+            } catch (e) {}
 
             for(var j = 0; j < $toggles.length; j++) {
-	            var $toggle = $toggles[j],
-	            	$section = $toggle.nextElementSibling;
+                var $toggle = $toggles[j],
+                    $section = $toggle.nextElementSibling;
 
-	            $toggle.setAttribute(displayAttr, $section.querySelector("table[" + displayAttr + "='true']") ? visibleMode : hiddenMode);
+                $toggle.setAttribute(displayAttr, $section.querySelector("table[" + displayAttr + "='true']") ? visibleMode : hiddenMode);
             }
 
             // reposition panel so that if it's wider after filtering (expanding results), it won't be off the screen

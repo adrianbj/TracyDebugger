@@ -109,6 +109,54 @@ document.addEventListener("keydown", function(e) {
     }
 });
 
+/*!
+* Setup general FilterBox panel displays.
+
+* @param  {FilterBox}   fbx   FilterBox instance
+* @return {object}   object of displays
+*/
+function setupTracyPanelFilterBoxDisplays (fbx) {
+	var wrapperId = "#" + fbx.getInput().parentElement.id;
+
+	return {
+        counter: {
+            tag: "p",
+            addTo: {
+                selector: wrapperId,
+                position: "append"
+            },
+            attrs: {
+                class: "tracy-filterbox-counter"
+            },
+            text: function () {
+	            var text = "";
+
+	            if(fbx.getFilter() !== "") {
+		            var matches = fbx.countVisible(),
+		            	total = fbx.countTotal();
+
+	                text = matches ? "<span>" + matches + "</span>/" + total : "No match";
+	            }
+
+	            return text;
+            }
+        },
+        clearButton: {
+	        tag: "span",
+	        addTo: {
+	            selector: wrapperId,
+	            position: "append"
+	        },
+	        attrs: {
+	            class: "tracy-filterbox-clear",
+	            onclick: "var input = this.parentElement.querySelector('input'); input.getFilterBox().clearFilterBox(); input.focus();"
+	        },
+	        text: function () {
+	            return fbx.getFilter() ? "&times;" : "";
+	        }
+	    }
+    };
+}
 
 /*!
 * Get all of an element's parent elements up the DOM tree until a matching parent is found

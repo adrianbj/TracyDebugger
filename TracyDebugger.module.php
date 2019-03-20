@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.19.2',
+            'version' => '4.19.3',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -968,11 +968,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
                 Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/main.js';
                 Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/tinycon.min.js';
+                Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/js-loader.js';
 
                 if(in_array('fileEditor', static::$showPanels)) {
-                    // these need to be loaded here (not just in File Editor panel) so that File Editor links
+                    // this needs to be loaded here (not just in File Editor panel) so that File Editor links
                     // will work even if File Editor panel hasn't been opened yet
-                    Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/js-loader.js';
                     Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/file-editor.js';
                 }
 

@@ -5,7 +5,6 @@ addFilterBox({
         items: "li.tft-f"
     },
     wrapper: {
-        tag: "div",
         attrs: {
             id: "tracyFileEditorFilterBoxWrap",
             class: "tracy-filterbox-wrap tracy-filterbox-titlebar-wrap"
@@ -21,49 +20,11 @@ addFilterBox({
         position: "before"
     },
     inputDelay: 500,
-    suffix: 'file-editor',
     highlight: {
         style: "background: #ff9; color: #125eae;",
         minChar: 2
     },
-    displays: {
-        counter: {
-            tag: "p",
-            addTo: {
-                selector: "#tracyFileEditorFilterBoxWrap",
-                position: "append"
-            },
-            attrs: {
-                class: "tracy-filterbox-counter"
-            },
-            text: function () {
-	            var text = "";
-
-	            if(this.getFilter() !== "") {
-		            var matches = this.countVisible(),
-		            	total = this.countTotal();
-
-	                text = matches ? "<span>" + matches + "</span>/" + total : "No match";
-	            }
-
-	            return text;
-            }
-        },
-        clearButton: {
-            tag: "span",
-            addTo: {
-                selector: "#tracyFileEditorFilterBoxWrap",
-                position: "append"
-            },
-            attrs: {
-                class: "tracy-filterbox-clear",
-                onclick: "var input = this.parentElement.querySelector('input'); input.getFilterBox().clearFilterBox(); input.focus();"
-            },
-            text: function () {
-                return this.getFilter() ? "&times;" : "";
-            }
-        }
-    },
+    displays: setupTracyPanelFilterBoxDisplays,
     callbacks: {
         onReady: function () {
             var $target = this.getTarget(),
@@ -74,21 +35,21 @@ addFilterBox({
             });
         },
         onEnter: function () {
-            var $file = this.getFirstVisibleItem();
+            var $item = this.getFirstVisibleItem();
 
-            if($file) {
-                $file.querySelector("a").click();
+            if($item) {
+                $item.querySelector("a").click();
             }
 
             return false;
         },
         afterFilter: function () {
-            var filter = (this.getFilter() || "").trim(),
-                matchingSelector = this.getMatchingSelector(filter),
-                $target = document.querySelector(".tracy-file-tree"),
+            var filter = this.getFilter(),
+                matchingSelector = this.isInvertFilter() ? this.getHiddenSelector(this.getInvertFilter()) : this.getVisibleSelector(filter),
+                $target = this.getTarget(),
                 $itemsToHide,
-                $foundFiles,
-                $file,
+                $foundItems,
+                $item,
                 $parents,
                 displayAttr = "data-filterbox-display",
                 visibleMode = "true",
@@ -112,19 +73,20 @@ addFilterBox({
                 $itemsToHide[i].setAttribute(displayAttr, hiddenMode);
             }
 
-            $foundFiles = $target.querySelectorAll(matchingSelector);
+            try {
+                 $foundItems = $target.querySelectorAll(matchingSelector);
 
-            for(var j = 0; j < $foundFiles.length; j++) {
-                $file = $foundFiles[j];
-                $parents = getParentsUntil($file, ".tracy-file-tree");
+                for(var j = 0; j < $foundItems.length; j++) {
+                    $item = $foundItems[j];
+                    $parents = getParentsUntil($item, ".tracy-file-tree");
 
-                $file.setAttribute(displayAttr, visibleMode);
+                    $item.setAttribute(displayAttr, visibleMode);
 
-                for(var k = 0; k < $parents.length; k++) {
-                    $parents[k].setAttribute(displayAttr, visibleMode);
+                    for(var k = 0; k < $parents.length; k++) {
+                        $parents[k].setAttribute(displayAttr, visibleMode);
+                    }
                 }
-            }
+            } catch (e) {}
         }
     }
-}
-);
+});

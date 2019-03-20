@@ -74,7 +74,7 @@
             $wrapper,
             label = o.input && o.input.label ? o.input.label : false,
             $label,
-            displays = o.displays && typeof o.displays === 'object' ? o.displays : false,
+            displays = o.displays && (typeof o.displays === 'object' || typeof o.displays === 'function') ? o.displays : false,
             $displays = [],
             suffix = o.suffix ? o.suffix : '',
             zebra = o.zebra || false,
@@ -393,7 +393,7 @@
         }
 
         self.getFilter = function () {
-            return $input.value;
+            return ($input.value || "").trim();
         };
 
         self.updateDisplays = function () {
@@ -463,6 +463,10 @@
 
         function addDisplays() {
             if (!displays) return false;
+
+            if(typeof displays === 'function') {
+                displays = displays(self);
+            }
 
             for (var k in displays) {
                 if (!displays.hasOwnProperty(k)) continue;
@@ -560,10 +564,7 @@
 
         function getTerms(v) {
             if (!v) return false;
-
-            // v = v.replace(/['"]+/g, '');
             if (v) v = replaceAll(v, SEPARATOR + SEPARATOR, SEPARATOR);  // remove double separators
-
             if (!v) return false;
 
             return self.getFilterTokens(v.toLowerCase());
@@ -603,7 +604,6 @@
         };
 
         function handleFocus(e, force) {
-
             if (useDomFilter) return false;
 
             if (force === undefined) {
@@ -615,30 +615,30 @@
             var $items = getItems();
 
             for (var i = 0; i < $items.length; i++) {
-                var $item = $items[i], data, currentValue;
+                var $item = $items[i],
+                    data,
+                    currentValue;
 
                 data = getTextualContent($item.querySelectorAll(dataSources.join(',')));
                 data += getExtraFilterAttrsContent($item, extraFilterAttrs);
 
                 if (data) {
-					data = data.split(SEPARATOR);
-					
+                    data = data.split(SEPARATOR);
+                    
                     // set or append attribute value
                     currentValue = $item.getAttribute(filterAttr);
+                    if(currentValue) data.push(currentValue);
 
-                    if(currentValue) {
-	                    data.push(currentValue);
-                    }
+                    // also push item value if any (input, option, etc)
+                    if($item.value) data.push($item.value);
                     
-					data = unique(data); // remove duplicates
+                    data = unique(data); // remove duplicates
 
-					data = data.filter(function (el) {
-					    return el != "";
-					});
+                    data = data.filter(function (el) {
+                        return el != "";
+                    });
 
-                    data = data.join(SEPARATOR).trim();
-					
-                    $item.setAttribute(filterAttr, data);
+                    $item.setAttribute(filterAttr, data.join(SEPARATOR).trim());
                 }
             }
 
@@ -704,17 +704,20 @@
         }
 
         function handleInput() {
-            var v = $input.value.toLowerCase().trim(),
+            var v = self.getFilter().toLowerCase().trim(),
                 count,
                 invert = false;
 
-            if (v === '!') return false;
-
             dehighlight();
 
-            if (self.isInvertFilter(v)) {
+            if (v === '!' || v.length > 0 && replaceAll(v, '"', '') === '') {
+                setStyles('');
+                return false;
+            }
+
+            if (self.isInvertFilter()) {
                 invert = true;
-                v = getValueWhenInvert(v);
+                v = self.getInvertFilter();
             }
 
             if (beforeFilter && beforeFilter.call(self) === false) return;
@@ -724,15 +727,14 @@
 
             // do the filter
             var terms = getTerms(v),
+                hideSelector,
                 $dataSources = dataSources.join(','),
                 $visibleItems;
 
             if (!terms) {
                 self.clearFilterBox();
-
             } else {
-
-                hideSelector = self.getMatchingSelector(v);
+                hideSelector = invert ? self.getVisibleSelector(v) : self.getHiddenSelector(v);
 
                 setStyles(hideSelector + '{display:none}');
 
@@ -785,19 +787,19 @@
             return target + ' ' + items + selector;
         };
 
-        self.getMatchingSelector = function (v) {
-            return self.isInvertFilter(v) ? self.getHiddenSelector(v) :  self.getVisibleSelector(v);
+        self.isInvertFilter = function() {
+            var v = this.getFilter();
+            
+            return (v && v.length > 1 && (v.indexOf('!') === 0 || v.indexOf('!') === v.length - 1));
         };
 
-        self.isInvertFilter = function (v) {
-            return (v && v.length > 1 && (v.indexOf('!') === 0 || v.indexOf('!') === v.length - 1));
-        }
-
-        function getValueWhenInvert(v) {
+        self.getInvertFilter = function() {
+            var v = self.getFilter();
+            
             v = v.indexOf('!') === 0 ? v.substring(1) : v.substring(0, v.length - 1);
-            if (v) v = v.trim();
-            return v;
-        }
+
+            return (v || "").trim();
+        };
 
         function replaceAll(str, search, replacement) {
             return str.split(search).join(replacement);
@@ -806,9 +808,9 @@
         self.count = function (v) {
             var terms, selector, invert = false;
 
-            if (self.isInvertFilter(v)) {
+            if (self.isInvertFilter()) {
                 invert = true;
-                v = getValueWhenInvert(v);
+                v = self.getInvertFilter();
             }
 
             terms = getTerms(v);
@@ -886,10 +888,6 @@
                         content += getTextualContent($el[i]);
                     }
                 } else {
-                    if ($el.value) {
-                        content += SEPARATOR + $el.value.toLowerCase();
-                    }
-
                     if ($el.textContent) {
                         content += SEPARATOR + $el.textContent;
                     }

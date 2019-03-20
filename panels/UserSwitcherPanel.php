@@ -88,6 +88,18 @@ class UserSwitcherPanel extends BasePanel {
                         else {
                             $selectableUsers = $this->wire('users');
                         }
+
+                        if(count($selectableUsers) > 10) {
+                            $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
+                            $out .= <<< HTML
+                                <script>
+                                    tracyJSLoader.load("{$tracyModuleUrl}scripts/filterbox/filterbox.js", function() {
+                                        tracyJSLoader.load("{$tracyModuleUrl}scripts/user-switcher-search.js");
+                                    });
+                                </script>
+HTML;
+                        }
+
                         foreach($selectableUsers as $u) {
                             if(count($u->roles)>1) $out .= '<option value="'.$u->name.'"' . ($this->wire('user')->name === $u->name ? 'selected="selected"' : '') . '>'.$u->name.'</option>';
                         }

@@ -62,8 +62,7 @@ class PhpInfoPanel extends BasePanel {
         $phpInfo .= '</section>';
 
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
-        $out = '<script>' . file_get_contents($this->wire('config')->paths->TracyDebugger . 'scripts/js-loader.js') . '</script>';
-        $out .= <<< HTML
+        $out = <<< HTML
         <script>
             tracyJSLoader.load("{$tracyModuleUrl}scripts/filterbox/filterbox.js", function() {
                 tracyJSLoader.load("{$tracyModuleUrl}scripts/php-info-search.js");

@@ -83,10 +83,8 @@ class ProcesswireInfoPanel extends BasePanel {
         $PwVersion = $this->wire('config')->version;
         $panelSections = \TracyDebugger::getDataValue('processwireInfoPanelSections');
 
-        $out = '<script>' . file_get_contents($this->wire('config')->paths->TracyDebugger . 'scripts/js-loader.js') . '</script>';
-
         if(in_array('gotoId', $panelSections)) {
-            $out .= '
+            $out = <<< HTML
             <script>
 
                 function tracyClearGoToPageID(matchStatus) {
@@ -131,11 +129,11 @@ class ProcesswireInfoPanel extends BasePanel {
                     }
                 });
             </script>
-            ';
+HTML;
         }
 
         if(in_array('processWireWebsiteSearch', $panelSections)) {
-            $out .= '
+            $out .= <<< HTML
             <script>
                 function searchPw(form) {
                     if(form.section.value == "Github") {
@@ -150,7 +148,7 @@ class ProcesswireInfoPanel extends BasePanel {
                     return false;
                 }
             </script>
-            ';
+HTML;
         }
 
         // end for each section
@@ -186,7 +184,7 @@ class ProcesswireInfoPanel extends BasePanel {
 
         // Versions Info
         if(in_array('versionsList', $panelSections)) {
-            $versionsList = '
+            $versionsList = <<< HTML
             <script>
                 tracyJSLoader.load("'.$this->wire('config')->urls->TracyDebugger.'scripts/clipboardjs/clipboard.min.js", function() {
                     tracyJSLoader.load("'.$this->wire('config')->urls->TracyDebugger.'scripts/clipboardjs/tooltips.js", function() {
@@ -195,7 +193,7 @@ class ProcesswireInfoPanel extends BasePanel {
                     });
                 });
             </script>
-            ';
+HTML;
 
             // Server Details
             $versionsDetails = array();
@@ -426,7 +424,7 @@ class ProcesswireInfoPanel extends BasePanel {
         if(count(\TracyDebugger::getDataValue('customPWInfoPanelLinks'))) {
 
             // make sure Font Awesome is loaded
-            $out .= '
+            $out .= <<< HTML
             <script>
                 function loadFAIfNotAlreadyLoaded() {
                     if(!document.getElementById("fontAwesome")) {
@@ -438,7 +436,7 @@ class ProcesswireInfoPanel extends BasePanel {
                 }
                 loadFAIfNotAlreadyLoaded();
             </script>
-            ';
+HTML;
 
             $out .= '<ul class="pw-info-links">';
             foreach(\TracyDebugger::getDataValue('customPWInfoPanelLinks') as $path) {

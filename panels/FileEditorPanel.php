@@ -76,8 +76,6 @@ class FileEditorPanel extends BasePanel {
             $tracyFileEditorFileCode = json_encode($this->tracyFileEditorFilePath . ' does not exist');
         }
 
-        $out = '<script>' . file_get_contents($this->wire('config')->paths->TracyDebugger . 'scripts/js-loader.js') . '</script>';
-
         $maximizeSvg = '<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="282.8 231 16 15.2" enable-background="new 282.8 231 16 15.2" xml:space="preserve"><polygon fill="#AEAEAE" points="287.6,233.6 298.8,231 295.4,242 "/><polygon fill="#AEAEAE" points="293.9,243.6 282.8,246.2 286.1,235.3 "/></svg>';
 
         $codeUseSoftTabs = \TracyDebugger::getDataValue('codeUseSoftTabs');
@@ -135,7 +133,7 @@ class FileEditorPanel extends BasePanel {
             $pwAutocomplete = json_encode(array());
         }
 
-        $out .= <<< HTML
+        $out = <<< HTML
         <script>
 
             var tracyFileEditor = {
@@ -395,7 +393,7 @@ HTML;
         <div class="tracy-inner">
             <div id="tracyFileEditorContainer" style="height: 100%;">
                 <div style="float: left; height: calc(100% - 38px);">
-                    <select title="Select recently opened files" onchange="tracyFileEditorLoader.loadFileEditor(this.value)" id="tfe_recently_opened"></select>
+                    <select style="width: 17px !important;" title="Select recently opened files" onchange="tracyFileEditorLoader.loadFileEditor(this.value)" id="tfe_recently_opened"></select>
                     <div id="tracyFoldersFiles" style="padding: 0; margin:0; width: 310px; height: 100%; overflow-y: auto; overflow-x: hidden; z-index: 1">';
                         $out .= "<div class='fe-file-tree'>";
                         $out .= $this->php_file_tree($this->wire('config')->paths->{\TracyDebugger::getDataValue('fileEditorBaseDirectory')}, $this->toArray(\TracyDebugger::getDataValue('fileEditorAllowedExtensions')));

@@ -1,11 +1,10 @@
 addFilterBox({
-	suffix: "-phpinfo-panel",
+    suffix: "-phpinfo-panel",
     target: {
         selector: "#phpinfoBody",
         items: ".phpinfo-section tbody tr:not(.h)"
     },
     wrapper: {
-        tag: "div",
         attrs: {
             id: "tracyPhpInfoFilterBoxWrap",
             class: "tracy-filterbox-wrap tracy-filterbox-titlebar-wrap"
@@ -25,44 +24,7 @@ addFilterBox({
         style: "background: #ff9; color: #125eae;",
         minChar: 2
     },
-    displays: {
-        counter: {
-            tag: "p",
-            addTo: {
-                selector: "#tracyPhpInfoFilterBoxWrap",
-                position: "append"
-            },
-            attrs: {
-                class: "tracy-filterbox-counter"
-            },
-            text: function () {
-	            var text = "";
-
-	            if(this.getFilter() !== "") {
-		            var matches = this.countVisible(),
-		            	total = this.countTotal();
-
-	                text = matches ? "<span>" + matches + "</span>/" + total : "No match";
-	            }
-
-	            return text;
-            }
-        },
-        clearButton: {
-            tag: "span",
-            addTo: {
-                selector: "#tracyPhpInfoFilterBoxWrap",
-                position: "append"
-            },
-            attrs: {
-                class: "tracy-filterbox-clear",
-                onclick: "var input = this.parentElement.querySelector('input'); input.getFilterBox().clearFilterBox(); input.focus(); window.Tracy.Debug.panels['tracy-debug-panel-PhpInfoPanel'].reposition();"
-            },
-            text: function () {
-                return this.getFilter() ? "&times;" : "";
-            }
-        }
-    },
+    displays: setupTracyPanelFilterBoxDisplays,
     callbacks: {
         onReady: function () {
             var $target = this.getTarget(),
@@ -74,22 +36,21 @@ addFilterBox({
 
             // modify panel markup
             var $firstSection = document.querySelector("#phpinfoBody .phpinfo-section"),
-            	$tablesToMove = $firstSection.querySelectorAll("table"),
-            	$divToRemove = $firstSection.querySelector("div.center"),
-            	tableCount = $tablesToMove.length;
+                $tablesToMove = $firstSection.querySelectorAll("table"),
+                $divToRemove = $firstSection.querySelector("div.center"),
+                tableCount = $tablesToMove.length;
 
             if(tableCount) {
-	            for(var i = 1; i < tableCount; i++) {
-					$firstSection.appendChild($tablesToMove[i]);
-	            }
-	            $divToRemove.parentElement.removeChild($divToRemove);
+                for(var i = 1; i < tableCount; i++) {
+                    $firstSection.appendChild($tablesToMove[i]);
+                }
+                $divToRemove.parentElement.removeChild($divToRemove);
             }
         },
         afterFilter: function () {
-            window.Tracy.Debug.panels['tracy-debug-panel-PhpInfoPanel'].reposition();
-            var filter = (this.getFilter() || "").trim(),
-                matchingSelector = this.getMatchingSelector(filter),
-                $target = document.querySelector("#phpinfoBody"),
+            var filter = this.getFilter(),
+                matchingSelector = this.isInvertFilter() ? this.getHiddenSelector(this.getInvertFilter()) : this.getVisibleSelector(filter),
+                $target = this.getTarget(),
                 $itemsToHide,
                 $foundItems,
                 $item,
@@ -117,40 +78,42 @@ addFilterBox({
                 $itemsToHide[i].setAttribute(displayAttr, hiddenMode);
             }
 
-            $foundItems = $target.querySelectorAll(matchingSelector);
+             try {
+                $foundItems = $target.querySelectorAll(matchingSelector);
 
-            for(var j = 0; j < $foundItems.length; j++) {
-                $item = $foundItems[j];
-                $parents = getParentsUntil($item, "#phpinfoBody");
+                for(var j = 0; j < $foundItems.length; j++) {
+                    $item = $foundItems[j];
+                    $parents = getParentsUntil($item, "#phpinfoBody");
 
-                $item.setAttribute(displayAttr, visibleMode);
+                    $item.setAttribute(displayAttr, visibleMode);
 
-                for(var k = 0; k < $parents.length; k++) {
-	                var $parent = $parents[k],
-	                	$previousElement;
+                    for(var k = 0; k < $parents.length; k++) {
+                        var $parent = $parents[k],
+                            $previousElement;
 
-					if($parent.getAttribute(displayAttr) === "table") {
-						continue;
-					}
+                        if($parent.getAttribute(displayAttr) === "table") {
+                            continue;
+                        }
 
-	                $previousElement = $parent.previousElementSibling;
+                        $previousElement = $parent.previousElementSibling;
 
-	                if($parent.tagName === "TABLE") {
-		                $parent.setAttribute(displayAttr, visibleMode);
-	                }
+                        if($parent.tagName === "TABLE") {
+                            $parent.setAttribute(displayAttr, visibleMode);
+                        }
 
-	                if($previousElement && $previousElement.tagName === "H2") {
-		                $previousElement.setAttribute(displayAttr, visibleMode);
-					}
+                        if($previousElement && $previousElement.tagName === "H2") {
+                            $previousElement.setAttribute(displayAttr, visibleMode);
+                        }
+                    }
                 }
-            }
+            } catch (e) {}
 
-			for(var j = 0; j < $sections.length; j++) {
-				var $section = $sections[j];
+            for(var j = 0; j < $sections.length; j++) {
+                var $section = $sections[j];
 
-	            if($section.querySelector("table[" + displayAttr + "='true']")) {
-		            $section.querySelector("h1").setAttribute(displayAttr, visibleMode);
-				}
+                if($section.querySelector("table[" + displayAttr + "='true']")) {
+                    $section.querySelector("h1").setAttribute(displayAttr, visibleMode);
+                }
             }
 
             window.Tracy.Debug.panels['tracy-debug-panel-PhpInfoPanel'].reposition();
