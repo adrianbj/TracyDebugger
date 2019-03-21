@@ -308,7 +308,6 @@ HTML;
 
         // all the "non" icon links sections
         foreach(\TracyDebugger::$processWireInfoSections as $name => $label) {
-            bd($label);
             // get all sections excluding those that are admin "links"
             if(strpos($name, 'Links') === false && in_array($name, $panelSections)) {
                 if(isset(${$name}) && ${$name} !== '') {
