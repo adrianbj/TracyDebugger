@@ -80,11 +80,11 @@ class ProcesswireInfoPanel extends BasePanel {
 
     public function getPanel() {
 
-        $PwVersion = $this->wire('config')->version;
+        $out = '';
         $panelSections = \TracyDebugger::getDataValue('processwireInfoPanelSections');
 
         if(in_array('gotoId', $panelSections)) {
-            $out = <<< HTML
+            $out .= <<< HTML
             <script>
 
                 function tracyClearGoToPageID(matchStatus) {
@@ -94,10 +94,10 @@ class ProcesswireInfoPanel extends BasePanel {
                     document.getElementById("pageDetails").innerHTML = matchStatus;
                 }
 
-                document.getElementById(\'pageId\').addEventListener(\'keyup\', function() {
+                document.getElementById('pageId').addEventListener('keyup', function() {
                     tracyClearGoToPageID("");
                     if(this.value) {
-                        tracyClearGoToPageID("<i style=\'font-family: FontAwesome !important\' class=\'fa fa-spinner fa-spin\'></i>");
+                        tracyClearGoToPageID("<i style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></i>");
                         var pid = this.value;
                         if(this.t) clearTimeout(this.t);
                         this.t = setTimeout(function() {
@@ -107,10 +107,10 @@ class ProcesswireInfoPanel extends BasePanel {
                                 if(xmlhttp.readyState == XMLHttpRequest.DONE) {
                                     if(xmlhttp.status == 200 && xmlhttp.responseText !== "[]") {
                                         var pageDetails = JSON.parse(xmlhttp.responseText);
-                                        document.getElementById("pageDetails").innerHTML = "<span style=\'font-weight:bold\'>" + pageDetails.title + "</span>&nbsp;&nbsp;<a href=\''.$this->wire('config')->urls->admin.'setup/template/edit?id="  + pageDetails.template_id + "\' style=\'color:#888\'>" + pageDetails.template_name + "</a>";
-                                        document.getElementById("idGoToEdit").href = "'.$this->wire('config')->urls->admin.'page/edit/?id=" + pageDetails.id;
+                                        document.getElementById("pageDetails").innerHTML = "<span style='font-weight:bold'>" + pageDetails.title + "</span>&nbsp;&nbsp;<a href='{$this->wire('config')->urls->admin}setup/template/edit?id="  + pageDetails.template_id + " style='color:#888'>" + pageDetails.template_name + "</a>";
+                                        document.getElementById("idGoToEdit").href = "{$this->wire('config')->urls->admin}page/edit/?id=" + pageDetails.id;
                                         document.getElementById("idGoToView").href = pageDetails.url;
-                                        document.getElementById("idGoToOpen").href = "'.$this->wire('config')->urls->admin.'page/?open=" + pageDetails.id;
+                                        document.getElementById("idGoToOpen").href = "{$this->wire('config')->urls->admin}page/?open=" + pageDetails.id;
                                     }
                                     else {
                                         tracyClearGoToPageID("No match");
@@ -186,8 +186,8 @@ HTML;
         if(in_array('versionsList', $panelSections)) {
             $versionsList = <<< HTML
             <script>
-                tracyJSLoader.load("'.$this->wire('config')->urls->TracyDebugger.'scripts/clipboardjs/clipboard.min.js", function() {
-                    tracyJSLoader.load("'.$this->wire('config')->urls->TracyDebugger.'scripts/clipboardjs/tooltips.js", function() {
+                tracyJSLoader.load("{$this->wire('config')->urls->TracyDebugger}scripts/clipboardjs/clipboard.min.js", function() {
+                    tracyJSLoader.load("{$this->wire('config')->urls->TracyDebugger}scripts/clipboardjs/tooltips.js", function() {
                         var versionsClipboard=new ClipboardJS(".tracyCopyBtn");
                         versionsClipboard.on("success",function(e){e.clearSelection();showTooltip(e.trigger,"Copied!");});versionsClipboard.on("error",function(e){showTooltip(e.trigger,fallbackMessage(e.action));});
                     });
@@ -295,7 +295,7 @@ HTML;
                     Copy plain text
                 </button>
             </p>
-            <p><textarea id="versionsListTextarea" rows="6" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="font-size:12px; width:100%; resize:vertical; padding:3px !important">'.$textVersionsList.'</textarea></p>';
+            <p><textarea id="versionsListTextarea" rows="6" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="font-size:12px; width:100% !important; resize:vertical; padding:3px !important">'.$textVersionsList.'</textarea></p>';
 
         }
 
@@ -308,15 +308,13 @@ HTML;
 
         // all the "non" icon links sections
         foreach(\TracyDebugger::$processWireInfoSections as $name => $label) {
+            bd($label);
             // get all sections excluding those that are admin "links"
             if(strpos($name, 'Links') === false && in_array($name, $panelSections)) {
                 if(isset(${$name}) && ${$name} !== '') {
-                    if($label == 'Module Settings') $label = $label . ' (' . $moduleName . ')';
-                    if($label == 'Template Settings') $label = $label . ' (' . $template->name . ')';
-                    if($label == 'Field Settings') $label = $label . ' (' . $field->name . ')';
                     $out .= '
                     <a href="#" rel="'.$name.'" class="tracy-toggle tracy-collapsed">'.$label.'</a>
-                    <div id="'.$name.'" class="tracy-collapsed">'.${$name}.'</div><br />';
+                    <div id="'.$name.'" class="tracy-collapsed">'.${$name}.'</div>';
                 }
             }
         }
@@ -430,7 +428,7 @@ HTML;
                     if(!document.getElementById("fontAwesome")) {
                         var link = document.createElement("link");
                         link.rel = "stylesheet";
-                        link.href = "'.$this->wire('config')->urls->root . 'wire/templates-admin/styles/font-awesome/css/font-awesome.min.css";
+                        link.href = "{$this->wire('config')->urls->root}wire/templates-admin/styles/font-awesome/css/font-awesome.min.css";
                         document.getElementsByTagName("head")[0].appendChild(link);
                     }
                 }
