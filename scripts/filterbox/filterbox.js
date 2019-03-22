@@ -549,7 +549,7 @@
         };
 
         self.getFilterTokens = function(str) {
-            var i, aStr = str.match(/\w[a-zA-Z\u00C0-\u017F]+|"[^"]+"/g);
+            var i, aStr = str.match(/[^\s]+|"[^"]+"/g);
 
             if (!aStr) return [str];
 
@@ -624,14 +624,14 @@
 
                 if (data) {
                     data = data.split(SEPARATOR);
-                    
+
                     // set or append attribute value
                     currentValue = $item.getAttribute(filterAttr);
                     if(currentValue) data.push(currentValue);
 
                     // also push item value if any (input, option, etc)
                     if($item.value) data.push($item.value);
-                    
+
                     data = unique(data); // remove duplicates
 
                     data = data.filter(function (el) {
@@ -789,13 +789,13 @@
 
         self.isInvertFilter = function() {
             var v = this.getFilter();
-            
+
             return (v && v.length > 1 && (v.indexOf('!') === 0 || v.indexOf('!') === v.length - 1));
         };
 
         self.getInvertFilter = function() {
             var v = self.getFilter();
-            
+
             v = v.indexOf('!') === 0 ? v.substring(1) : v.substring(0, v.length - 1);
 
             return (v || "").trim();
