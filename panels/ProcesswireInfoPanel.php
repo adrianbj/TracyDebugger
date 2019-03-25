@@ -313,7 +313,7 @@ HTML;
                 if(isset(${$name}) && ${$name} !== '') {
                     $out .= '
                     <a href="#" rel="'.$name.'" class="tracy-toggle tracy-collapsed">'.$label.'</a>
-                    <div id="'.$name.'" class="tracy-collapsed">'.${$name}.'</div>';
+                    <div id="'.$name.'" class="tracy-collapsed">'.${$name}.'</div><br />';
                 }
             }
         }

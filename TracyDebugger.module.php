@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.19.6',
+            'version' => '4.19.7',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -229,7 +229,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "userBarTopBottom" => 'bottom',
             "userBarLeftRight" => 'left',
             "showPanelLabels" => null,
-            "debugbarFixedPosition" => null,
             "panelZindex" => 100,
             "styleWhere" => array('backend', 'frontend'),
             "styleAdminElements" => "body::before {\n\tcontent: \"[type]\";\n\tbackground: [color];\n\tposition: fixed;\n\tleft: 0;\n\tbottom: 100%;\n\tcolor: #ffffff;\n\twidth: 100vh;\n\tpadding: 0;\n\ttext-align: center;\n\tfont-weight: 600;\n\ttext-transform: uppercase;\n\ttransform: rotate(90deg);\n\ttransform-origin: bottom left;\n\tz-index: 999999;\n\tfont-family: sans-serif;\n\tfont-size: 11px;\n\theight: 13px;\n\tline-height: 13px;\npointer-events: none;\n}\n",
@@ -986,14 +985,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     Debugger::$customCssStr .= '<link id="fontAwesomeStyles" type="text/css" href="'.$this->wire('config')->urls->root . 'wire/templates-admin/styles/font-awesome/css/font-awesome.min.css" rel="stylesheet" />';
                 }
 
-                if($this->data['debugbarFixedPosition']) {
-                    Debugger::$customCssStr .= '
-                    <style>
-                        #tracy-debug-bar { position:fixed !important; left:auto !important; top:auto !important; right:0 !important; bottom:0 !important; }
-                        #tracy-debug-bar li:first-child {cursor: pointer !important;}
-                    </style>';
-                }
-
                 // override Tracy core default zIndex for panels
                 // add settings link on double-click to "TRACY" icon
                 // replace "close" icon link with "hide" and "unhide" links
@@ -1039,11 +1030,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                                 document.getElementById("tracy-debug").style.display = "none";
                                 document.getElementById("tracy-show-button").style.display = "block";
                                 document.cookie = "tracyHidden=1; path=/";
-                                document.cookie = "tracyShow=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";';
-                                if($this->showServerTypeIndicator() && in_array('custom', $this->data['styleAdminType'])) {
-                                    Debugger::$customJsStr .= 'document.body.classList.add("tracyHidden");';
-                                }
-                            Debugger::$customJsStr .= '
+                                document.cookie = "tracyShow=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
                             });
                             barul.replaceChild(toggleli, barul.lastChild.previousElementSibling);
                             window.Tracy.Debug.bar.restorePosition();
@@ -1056,11 +1043,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                         document.getElementById("tracy-show-button").style.display = "none";
                         window.Tracy.Debug.bar.restorePosition();
                         document.cookie = "tracyHidden=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
-                        document.cookie = "tracyShow=1; path=/";';
-                        if($this->showServerTypeIndicator() && in_array('custom', $this->data['styleAdminType'])) {
-                            Debugger::$customJsStr .= 'document.body.classList.remove("tracyHidden");';
-                        }
-                    Debugger::$customJsStr .= '
+                        document.cookie = "tracyShow=1; path=/";
                     }
 
                     function modifyTracyLogo() {
@@ -2996,20 +2979,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'debugbarFixedPosition');
-        $f->label = __('Fixed Position', __FILE__);
-        $f->description = __('Forces debug bar to stay at bottom right of viewport.', __FILE__);
-        $f->notes = __('Normally the debug bar position is draggable. This option locked it in position.', __FILE__);
-        $f->columnWidth = 25;
-        $f->attr('checked', $data['debugbarFixedPosition'] == '1' ? 'checked' : '');
-        $fieldset->add($f);
-
-        $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'hideDebugBar');
         $f->label = __('Hide debug bar by default', __FILE__);
         $f->description = __('Hide the debug bar by default on page load.', __FILE__);
         $f->notes = __('This results in the bar being hidden (unless an error is reported), and replaced with a small "show bar" &#8689; icon.', __FILE__);
-        $f->columnWidth = 25;
+        $f->columnWidth = 33;
         $f->attr('checked', $data['hideDebugBar'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
@@ -3018,7 +2992,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Show panel labels', __FILE__);
         $f->description = __('Show the labels next to each panel.', __FILE__);
         $f->notes = __('Unchecking this will make the debugger bar much more compact.', __FILE__);
-        $f->columnWidth = 25;
+        $f->columnWidth = 34;
         $f->attr('checked', $data['showPanelLabels'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
@@ -3027,7 +3001,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Starting z-index for panels', __FILE__);
         $f->description = __('Adjust if you find panels are below/above elements that you don\'t want.', __FILE__);
         $f->notes = __('Default: 100', __FILE__);
-        $f->columnWidth = 25;
+        $f->columnWidth = 33;
         if($data['panelZindex']) $f->attr('value', $data['panelZindex']);
         $fieldset->add($f);
 
@@ -3102,8 +3076,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = $this->wire('modules')->get("InputfieldText");
         $f->attr('name', 'editor');
         $f->label = __('Editor protocol handler', __FILE__);
-        $f->description = __('Sets the Tracy `Debugger::$editor` variable. Enter the appropriate address to open your code editor of choice.'."\n".'This approach only works for OSX. For more instructions on Windows and Linux alternatives, [read here](https://pla.nette.org/en/how-open-files-in-ide-from-debugger).'."\n\n**Protocol handler helpers**\n[VSCode](https://github.com/shengyou/vscode-handler)\n[Sublime Text](https://github.com/saetia/sublime-url-protocol-mac)\n".' For other editors/IDEs, Google "protocol handler editorname".', __FILE__);
-        $f->notes = __("`vscode://file/%file:%line`\n`subl://open/?url=file://%file&line=%line`\n Initially configured for VSCode - change to work with your favorite editor.", __FILE__);
+        $f->description = __('Sets the Tracy `Debugger::$editor` variable. Enter the appropriate address to open your code editor of choice.'."\n".'This approach only works for OSX. For more instructions on Windows and Linux alternatives, [read here](https://pla.nette.org/en/how-open-files-in-ide-from-debugger).'."\n\n**Protocol handler helpers**\n[VSCode](https://github.com/shengyou/vscode-handler)\n[Sublime Text](https://github.com/saetia/sublime-url-protocol-mac)\n[PHP Storm](https://github.com/sanduhrs/phpstorm-url-handler)\n".' For other editors/IDEs, Google "protocol handler editorname".', __FILE__);
+        $f->notes = __("`vscode://file/%file:%line`\n`subl://open/?url=file://%file&line=%line`\n`phpstorm://open?file=%file&line=%line`\n Initially configured for VSCode - change to work with your favorite editor.", __FILE__);
         $f->columnWidth = 50;
         if($data['editor']) $f->attr('value', $data['editor']);
         $fieldset->add($f);

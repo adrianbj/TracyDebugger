@@ -34,6 +34,11 @@ body.tracyHidden:before {
 }
 
 #tracy-debug-bar {
+    position:fixed !important;
+    left:auto !important;
+    top:auto !important;
+    right:0 !important;
+    bottom:0 !important;
     font: normal normal 13px/1.55 Arial, sans-serif !important;
     background: #F0F3F7 !important;
     border: 0 !important;
@@ -41,6 +46,10 @@ body.tracyHidden:before {
     box-shadow: none !important;
     opacity: 1 !important;
     padding: 1px 0 1px 0 !important;
+}
+
+#tracy-debug-bar li:first-child {
+    cursor: pointer !important;
 }
 
 #tracy-debug-bar .tracy-row:not(:first-child) {
