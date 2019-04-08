@@ -66,25 +66,27 @@ class AdminToolsPanel extends BasePanel {
             }
             elseif($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessField') {
                 $f = $this->wire('fields')->get((int)$this->wire('input')->get('id'));
-                $out .= '
-                <p>
-                    <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete this field and remove it from all templates/pages?\');">
-                        <input type="hidden" name="adminToolsId" value="'.(int)$this->wire('input')->get('id').'" />
-                        <input type="submit" name="deleteField" value="Delete field" />
-                    </form>
-                </p>';
-                $out .= '
-                <p>
-                    <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to change the type of this field?\');">
-                        <input type="hidden" name="adminToolsId" value="'.(int)$this->wire('input')->get('id').'" />
-                        <select type="submit" name="changeFieldType">';
-                            foreach($this->wire('fieldtypes')->sort('name') as $fieldtype) {
-                                $out .= '<option value="'.$fieldtype.'"'.($f->type === $fieldtype ? " selected='selected'" : "").'>'.str_replace('Fieldtype', '', $fieldtype).'</option>';
-                            }
-                        $out .= '</select>
-                        <input type="submit" value="Change field type" />
-                    </form>
-                </p>';
+                if($f) {
+                    $out .= '
+                    <p>
+                        <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete this field and remove it from all templates/pages?\');">
+                            <input type="hidden" name="adminToolsId" value="'.(int)$this->wire('input')->get('id').'" />
+                            <input type="submit" name="deleteField" value="Delete field" />
+                        </form>
+                    </p>';
+                    $out .= '
+                    <p>
+                        <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to change the type of this field?\');">
+                            <input type="hidden" name="adminToolsId" value="'.(int)$this->wire('input')->get('id').'" />
+                            <select type="submit" name="changeFieldType">';
+                                foreach($this->wire('fieldtypes')->sort('name') as $fieldtype) {
+                                    $out .= '<option value="'.$fieldtype.'"'.($f->type === $fieldtype ? " selected='selected'" : "").'>'.str_replace('Fieldtype', '', $fieldtype).'</option>';
+                                }
+                            $out .= '</select>
+                            <input type="submit" value="Change field type" />
+                        </form>
+                    </p>';
+                }
             }
             elseif($this->wire('input')->get('name') && $this->wire('page')->process == 'ProcessModule') {
                 $moduleName = $this->wire('sanitizer')->selectorValue($this->wire('input')->get('name'));
