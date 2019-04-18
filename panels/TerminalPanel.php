@@ -44,7 +44,7 @@ class TerminalPanel extends BasePanel {
         else {
             $out .= '
             <div class="tracy-inner">
-                <p>This panel is not available because the ProcessTerminal module has not been installed.</p>';
+                <p>This panel is not available because the <a href="http://modules.processwire.com/modules/process-terminal/">ProcessTerminal module</a> has not been installed.</p>';
         }
 
         $out .= '<div style="padding-left:5px">'.\TracyDebugger::generatePanelFooter('terminal', \Tracy\Debugger::timer('terminal'), strlen($out)).'</div>';
