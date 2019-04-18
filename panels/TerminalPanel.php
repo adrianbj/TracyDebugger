@@ -30,13 +30,13 @@ class TerminalPanel extends BasePanel {
 
     public function getPanel() {
 
-        $terminalModuleId = $this->wire('modules')->getModuleID("ProcessTracyTerminal");
+        $terminalModuleId = $this->wire('modules')->getModuleID("ProcessTerminal");
         $terminalUrl = $this->wire('pages')->get("process=$terminalModuleId")->url;
 
         $out = '
         <h1>' . $this->icon . ' Terminal</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'TerminalPanel\')">+</a></span></span>';
 
-        if($this->wire('modules')->isInstalled("ProcessTracyTerminal")) {
+        if($this->wire('modules')->isInstalled("ProcessTerminal")) {
             $out .= '
             <div class="tracy-inner" style="padding: 0 !important">
                 <iframe src="'.$terminalUrl.'" style="width:100%; height:calc(100% - 5px); border: none; padding:0; margin:0;"></iframe>';
@@ -44,7 +44,7 @@ class TerminalPanel extends BasePanel {
         else {
             $out .= '
             <div class="tracy-inner">
-                <p>This panel is not available because the ProcessTracyTerminal module has not been installed.</p>';
+                <p>This panel is not available because the ProcessTerminal module has not been installed.</p>';
         }
 
         $out .= '<div style="padding-left:5px">'.\TracyDebugger::generatePanelFooter('terminal', \Tracy\Debugger::timer('terminal'), strlen($out)).'</div>';
