@@ -17,11 +17,7 @@ class ValidatorPanel extends BasePanel {
         if(\TracyDebugger::isAdditionalBar()) return;
         \Tracy\Debugger::timer('validator');
 
-        // determine which version of the validator to use
-        // $this->validatorUrl = strpos(\TracyDebugger::$pageHtml, '<!DOCTYPE html>') !== false ? "https://html5.validator.nu/" : "https://validator.nu/";
-        // seems to be problems with the https://validator.nu/ validator for some sites, so forcing the html5 one
-        // what about switching to: https://checker.html5.org ?
-        $this->validatorUrl = 'https://html5.validator.nu/';
+        $this->validatorUrl = 'https://checker.html5.org/';
         $this->validationUrl = $this->validatorUrl . "?doc=".$this->wire('page')->httpUrl."&out=html&showimagereport=yes&showsource=yes";
 
         // get results from validator and convert any entities to UTF-8
