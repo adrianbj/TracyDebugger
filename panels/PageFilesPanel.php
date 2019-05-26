@@ -214,6 +214,11 @@ class PageFilesPanel extends BasePanel {
                     if($file->isTemp()) $this->tempFiles[$i] = $file->filename;
                     $i++;
                     if($file instanceof Pageimage) {
+                        if($file->webp) {
+                            $files[$p->id][$i]['filename'] = $file->webp->filename;
+                            $files[$p->id][$i]['field'] = $f->name;
+                            $i++;
+                        }
                         foreach($file->getVariations() as $var) {
                             $files[$p->id][$i]['filename'] = $var->filename;
                             $files[$p->id][$i]['field'] = $f->name;
