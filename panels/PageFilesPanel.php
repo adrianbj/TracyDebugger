@@ -224,6 +224,12 @@ class PageFilesPanel extends BasePanel {
                             $files[$p->id][$i]['field'] = $f->name;
                             if($var->isTemp()) $this->tempFiles[$i] = $var->filename;
                             $i++;
+
+                            if($var->webp && file_exists($var->webp->filename)) {
+                                $files[$p->id][$i]['filename'] = $var->webp->filename;
+                                $files[$p->id][$i]['field'] = $f->name;
+                                $i++;
+                            }
                         }
                     }
                 }
