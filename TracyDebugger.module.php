@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.19.19',
+            'version' => '4.19.20',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -832,7 +832,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // override default PW core behavior that converts exceptions to string
         $this->wire()->addHookAfter('Wire::trackException', function($event) {
             $exception = $event->arguments(0);
-            if(!$this->wire('config')->ajax) {
+            if($this->wire('config')->ajax && ($exception instanceof WireException || $exception instanceof \ProcessWire\WireException)) {
+                // intentionally blank
+            }
+            else {
                 throw $exception;
             }
         });
