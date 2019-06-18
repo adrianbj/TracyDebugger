@@ -17,7 +17,7 @@ use ErrorException;
  */
 class Debugger
 {
-	public const VERSION = '2.6.2';
+	public const VERSION = '2.6.3';
 
 	/** server modes for Debugger::enable() */
 	public const
@@ -38,6 +38,9 @@ class Debugger
 
 	/** @var bool whether to disable the shutdown handler in development mode */
 	public static $disableShutdownHandler = false;
+
+	/** @var int size of reserved memory */
+	public static $reservedMemorySize = 500000;
 
 	/** @var bool */
 	private static $enabled = false;
@@ -110,7 +113,7 @@ class Debugger
 	/** @var string custom static error template */
 	public static $errorTemplate;
 
-	/** @var array[] */
+	/** @var string[] */
 	public static $customCssFiles = [];
 
 	/** @var array[] */
@@ -164,7 +167,7 @@ class Debugger
 			self::$productionMode = is_bool($mode) ? $mode : !self::detectDebugMode($mode);
 		}
 
-		self::$reserved = str_repeat('t', 30000);
+		self::$reserved = str_repeat('t', self::$reservedMemorySize);
 		self::$time = $_SERVER['REQUEST_TIME_FLOAT'] ?? microtime(true);
 		self::$obLevel = ob_get_level();
 		self::$cpuUsage = !self::$productionMode && function_exists('getrusage') ? getrusage() : null;
@@ -270,7 +273,7 @@ class Debugger
 			return;
 		}
 
-		if (!self::$reserved) {
+		if (self::$reserved === null) {
 			return;
 		}
 		self::$reserved = null;
@@ -300,7 +303,7 @@ class Debugger
 	 */
 	public static function exceptionHandler(\Throwable $exception, bool $exit = true): void
 	{
-		if (!self::$reserved && $exit) {
+		if (self::$reserved === null && $exit) {
 			return;
 		}
 		self::$reserved = null;

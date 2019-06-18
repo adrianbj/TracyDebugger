@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.19.20',
+            'version' => '4.19.21',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -267,6 +267,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "email" => '',
             "clearEmailSent" => null,
             "showFireLogger" => 1,
+            "reservedMemorySize" => 500000,
             "referencePageEdited" => 1,
             "debugInfo" => 1,
             "editor" => 'vscode://file/%file:%line',
@@ -902,6 +903,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         Debugger::$showFireLogger = $this->data['showFireLogger'];
+        if(isset(Debugger::$reservedMemorySize)) Debugger::$reservedMemorySize = $this->data['reservedMemorySize'];
 
         if(static::$allowedTracyUser === 'development') {
 
@@ -2843,7 +2845,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Maximum nesting depth', __FILE__);
         $f->description = __('Set the maximum nesting depth of dumped arrays and objects.', __FILE__);
         $f->notes = __('Default: 3. Warning: making this too large can slow your page load down or even crash your browser.', __FILE__);
-        $f->columnWidth = 33;
+        $f->columnWidth = 50;
         $f->attr('value', $data['maxDepth']);
         $fieldset->add($f);
 
@@ -2852,7 +2854,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Maximum string length', __FILE__);
         $f->description = __('Set the maximum displayed strings length.', __FILE__);
         $f->notes = __('Default: 150.', __FILE__);
-        $f->columnWidth = 34;
+        $f->columnWidth = 50;
         $f->attr('value', $data['maxLength']);
         $fieldset->add($f);
 
@@ -2861,8 +2863,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Maximum number of AJAX rows in debug bar', __FILE__);
         $f->description = __('After number is exceeded, the first one will be recycled.', __FILE__);
         $f->notes = __('Default: 3. Note that you will need to do a hard browser reload for this setting to take effect.', __FILE__);
-        $f->columnWidth = 33;
+        $f->columnWidth = 50;
         $f->attr('value', $data['maxAjaxRows']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldInteger");
+        $f->attr('name', 'reservedMemorySize');
+        $f->label = __('Reserved memory size', __FILE__);
+        $f->description = __('If you are getting memory exhaustion errors on Tracy\'s bluescreen, try increasing this value.', __FILE__);
+        $f->notes = __('Default: 500000', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('value', $data['reservedMemorySize']);
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
