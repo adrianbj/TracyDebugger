@@ -4,7 +4,7 @@
 
 /* common styles */
 #tracy-debug {
-	all: unset;
+	all: initial;
 	display: none;
 	direction: ltr;
 	line-height: 1.5;
