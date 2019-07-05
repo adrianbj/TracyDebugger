@@ -26,7 +26,7 @@ class TracyPwApiData extends WireData {
             }
             elseif($type == 'proceduralFunctions') {
                 $apiData = array('Functions' => $this->getProceduralFunctions('Functions')['pwFunctions']);
-                $apiData += array('FunctionsAPI' => $this->getProceduralFunctions('FunctionsAPI')['pwFunctions']);
+                if(file_exists($this->wire('config')->paths->core . 'FunctionsAPI.php')) $apiData += array('FunctionsAPI' => $this->getProceduralFunctions('FunctionsAPI')['pwFunctions']);
             }
             else {
                 $typeDir = $type == 'coreModules' ? 'modules' : $type;
