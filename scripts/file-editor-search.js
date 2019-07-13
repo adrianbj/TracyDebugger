@@ -16,10 +16,11 @@ addFilterBox({
         }
     },
     addTo: {
-        selector: "#tracy-debug-panel-FileEditorPanel .tracy-icons",
-        position: "before"
+        selector: "#tracy-debug-panel-FileEditorPanel .tracy-inner",
+        position: "append"
     },
     inputDelay: 500,
+    keyNav: true,
     highlight: {
         style: "background: #ff9; color: #125eae;",
         minChar: 2
@@ -35,11 +36,9 @@ addFilterBox({
             });
         },
         onEnter: function () {
-            var $item = this.getFirstVisibleItem();
+            var $item = this.getSelectedItem();
 
-            if($item) {
-                $item.querySelector("a").click();
-            }
+            $item && $item.querySelector("a").click();
 
             return false;
         },

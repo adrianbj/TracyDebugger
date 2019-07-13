@@ -1007,6 +1007,20 @@ ul.pw-info-links {
     display: none !important;
 }
 
+#tracy-debug .fbx-keynav-active-fileeditor-panel::before {
+    content: "";
+    position: absolute;
+    background: #F0F3F7;
+    left: -200px;
+    right: -8px;
+    top: -1px;
+    bottom: 0;
+    display: block;
+    z-index: -1;
+    pointer-events: none;
+    outline-offset: -1px;
+}
+
 .tracy-filterbox-wrap {
     position: absolute;
     right: 70px;
@@ -1066,6 +1080,52 @@ ul.pw-info-links {
     margin-right: 2px;
 }
 
+/*FileEditorPanel overrides*/
+#tracyFileEditorFilterBoxWrap {
+    height: auto;
+    width: 275px !important;
+    right: auto;
+    left: 11px;
+    top: 45px;
+    bottom: auto;
+    border-bottom: 1px solid #B5C3D4 !important;
+}
+@-moz-document url-prefix() {
+    #tracyFileEditorFilterBoxWrap {
+        bottom: 20px;
+    }
+}
+#tracy-debug #tracyFileEditorFilterBoxWrap.tracy-filterbox-wrap input:not(.ace_search_field) {
+    height: 27px !important;
+    line-height: 27px !important;
+    padding-left: 7px !important;
+    background: #f0f3f7 !important;
+}
+#tracyFileEditorFilterBoxWrap .tracy-filterbox-counter {
+    font-size: 11px !important;
+    top: 6px !important;
+    right: 27px !important;
+    margin: 0 !important;
+    opacity: 0.6;
+}
+#tracyFileEditorFilterBoxWrap .tracy-filterbox-clear {
+    right: 0 !important;
+    top: -2px !important;
+}
+/**/
+
+#tracyFileEditorContainer {
+    margin-left: -12px;
+}
+#tracyFoldersFiles {
+    padding: 0 0 0 8px !important;
+    border-bottom: 1px solid #C9D4E1;
+}
+#fileEditorButtons {
+    position: relative;
+    right: -4px;
+    top: -1px;
+}
 
 #phpinfoBody table:first-child td {
     border: none !important;

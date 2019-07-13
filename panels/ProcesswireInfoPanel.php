@@ -253,9 +253,10 @@ HTML;
             }
 
             if(class_exists('\Imagick')) {
-                $im  = \Imagick::queryformats();
-                $imGetVersion = \Imagick::getVersion();
-                $imVersionStr = preg_match('/ImageMagick ([0-9]*\.[0-9]*\.[0-9]*)/', $imGetVersion['versionString'], $imVersionNum);
+                // @ to suppress this PHP bug: https://bugs.php.net/bug.php?id=64945
+                $im  = @\Imagick::queryformats();
+                $imGetVersion = @\Imagick::getVersion();
+                preg_match('/ImageMagick ([0-9]*\.[0-9]*\.[0-9]*)/', $imGetVersion['versionString'], $imVersionNum);
                 $versionsDetails['iMagick Settings']['headings'] = array('Parameter', 'Value');
                 $versionsDetails['iMagick Settings']['items']['Version'] = ($imVersionNum[1] ? $imVersionNum[1] : $this->_('Version-Info not available'));
                 $versionsDetails['iMagick Settings']['items']['GIF'] = (in_array('GIF', $im) ? 1 : false);
