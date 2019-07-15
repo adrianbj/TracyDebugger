@@ -1010,9 +1010,9 @@ ul.pw-info-links {
 #tracy-debug .fbx-keynav-active-fileeditor-panel::before {
     content: "";
     position: absolute;
-    background: #F0F3F7;
+    background: #B8C7D8;
     left: -200px;
-    right: -8px;
+    right: 0px;
     top: -1px;
     bottom: 0;
     display: block;
