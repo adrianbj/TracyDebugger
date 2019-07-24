@@ -15,7 +15,7 @@ Integrates and extends Nette's Tracy debugging tool
 <br />
 
 [GitHub](https://github.com/adrianbj/TracyDebugger)
-[ProcessWire Modules Directory](http://modules.processwire.com/modules/tracy-debugger/)
+[ProcessWire Modules Directory](https://modules.processwire.com/modules/tracy-debugger/)
 [Support](https://processwire.com/talk/topic/12208-tracy-debugger/)
 [Donate](donate.md)
 

@@ -1,0 +1,26 @@
+{
+    "name": "adrianbj/tracy-debugger",
+    "type": "pw-module",
+    "description": "The ultimate debugging and development tool for ProcessWire.",
+    "homepage": "https://adrianbj.github.io/TracyDebugger/",
+    "keywords": [
+        "module",
+        "processwire",
+        "debug",
+        "development"
+    ],
+    "license": "GPL-2.0",
+    "authors": [
+        {
+            "name": "Adrian Jones",
+            "homepage": "https://github.com/adrianbj",
+            "email": "adrianbjones@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.4",
+        "processwire/processwire": ">=2.7",
+        "wireframe-framework/processwire-composer-installer": "^1.0.0"
+    }
+}
