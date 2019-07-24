@@ -17,7 +17,7 @@ Documentation is available at: https://adrianbj.github.io/TracyDebugger/
 For support for this module, please visit this thread on the ProcessWire forum: https://processwire.com/talk/topic/12208-tracy-debugger/
 
 ### ProcessWire Modules Directory
-http://modules.processwire.com/modules/tracy-debugger/
+https://modules.processwire.com/modules/tracy-debugger/
 
 ### Installation
 
