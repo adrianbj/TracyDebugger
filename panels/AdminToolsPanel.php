@@ -30,7 +30,22 @@ class AdminToolsPanel extends BasePanel {
 
     public function getPanel() {
 
+        $i=0;
+
         $out = '
+        <script>
+            function unhideUnlockFields(restore) {
+                if(restore) {
+                    document.cookie = "tracyUnhideUnlockFields=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
+                }
+                else {
+                    document.cookie = "tracyUnhideUnlockFields=1; expires=0; path=/";
+                }
+                location.reload();
+            }
+        </script>';
+
+        $out .= '
         <h1>' . $this->icon . ' ' . $this->label . '</h1>
 
         <div class="tracy-inner">';
@@ -47,6 +62,7 @@ class AdminToolsPanel extends BasePanel {
             }
 
             if($p->template != 'admin' && $p->hasChildren()) {
+                $i++;
                 $out .= '
                 <p>
                     <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete all children of this page?\');">
@@ -55,7 +71,9 @@ class AdminToolsPanel extends BasePanel {
                     </form>
                 </p>';
             }
-            elseif($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessTemplate') {
+
+            if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessTemplate') {
+                $i++;
                 $out .= '
                 <p>
                     <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete this template and all associated pages?\');">
@@ -64,9 +82,27 @@ class AdminToolsPanel extends BasePanel {
                     </form>
                 </p>';
             }
-            elseif($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessField') {
+
+            if($this->wire('input')->get('id') && ($this->wire('page')->process == 'ProcessPageEdit' || $this->wire('page')->process == 'ProcessUser')) {
+                $i++;
+                if($this->wire('input')->cookie->tracyUnhideUnlockFields == 1) {
+                    $out .= '
+                    <p>
+                        <input type="submit" name="restoreFieldCollapsedStatus" onclick="unhideUnlockFields(true)" value="Restore Field Collapsed Status" />
+                    </p>';
+                }
+                else {
+                    $out .= '
+                    <p>
+                        <input type="submit" name="unhideUnlockFields" onclick="unhideUnlockFields()" value="Unhide / Unlock Fields" />
+                    </p>';
+                }
+            }
+
+            if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessField') {
                 $f = $this->wire('fields')->get((int)$this->wire('input')->get('id'));
                 if($f) {
+                    $i++;
                     $out .= '
                     <p>
                         <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete this field and remove it from all templates/pages?\');">
@@ -88,7 +124,9 @@ class AdminToolsPanel extends BasePanel {
                     </p>';
                 }
             }
-            elseif($this->wire('input')->get('name') && $this->wire('page')->process == 'ProcessModule') {
+
+            if($this->wire('input')->get('name') && $this->wire('page')->process == 'ProcessModule') {
+                $i++;
                 $moduleName = $this->wire('sanitizer')->selectorValue($this->wire('input')->get('name'));
                 $confirmSuffix = '';
                 $reason = $this->wire('modules')->isUninstallable($this->wire('modules')->get($moduleName), true);
@@ -108,7 +146,8 @@ class AdminToolsPanel extends BasePanel {
                     </form>
                 </p>';
             }
-            else {
+
+            if($i == 0) {
                 $out .= 'No available tools.';
             }
 
