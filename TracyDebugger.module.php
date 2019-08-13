@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.19.28',
+            'version' => '4.19.29',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -236,6 +236,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "styleAdminType" => array('favicon'),
             "showPWInfoPanelIconLabels" => 1,
             "linksNewTab" => null,
+            "unhideUnlockFields" => null,
             "pWInfoPanelLinksNewTab" => null,
             "customPWInfoPanelLinks" => array(11, 16, 22, 21, 29, 30, 31, 304),
             "captainHookShowDescription" => 1,
@@ -493,6 +494,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 unset(static::$showPanels[$key]);
                 static::$showPanels[] = 'panelSelector';
             }
+
+            // unhide and unlock all fields
+            if($this->data['unhideUnlockFields']) {
+                $this->wire()->addHookAfter('Field::getInputfield', function(HookEvent $event) {
+                    // Only for ProcessPageEdit / ProcessUser
+                    if($this->page->process !== 'ProcessPageEdit' && $this->page->process !== 'ProcessUser') return;
+                    $inputfield = $event->return;
+                    if($inputfield->collapsed > 0) $inputfield->label .= ' (Unhidden / Uncollapsed / Unlocked by Tracy Debugger)';
+                    $inputfield->collapsed = Inputfield::collapsedNo;
+                });
+            }
+
 
             // ProcessWire Info panel early redirects
             // logout
@@ -2889,8 +2902,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Reference page being edited', __FILE__);
         $f->description = __('When editing a page in the admin, the Request Info Panel will show details of the page being edited, and the Consol Panel will assign the $page variable to the page being edited.', __FILE__);
         $f->notes = __('Highly recommended unless you have a reason not to do this.', __FILE__);
-        $f->columnWidth = 50;
         $f->attr('checked', $data['referencePageEdited'] == '1' ? 'checked' : '');
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'unhideUnlockFields');
+        $f->label = __('Unhide / Unlock all fields', __FILE__);
+        $f->description = __('When Tracy is in DEVELOPMENT mode, all fields will be visible, open, and editable.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['unhideUnlockFields'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
