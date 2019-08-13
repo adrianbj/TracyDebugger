@@ -20,7 +20,7 @@ class PageFilesPanel extends BasePanel {
 
         \Tracy\Debugger::timer($this->name);
 
-        if(\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') && $this->wire('process') == 'ProcessPageEdit') {
+        if(\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') && ($this->wire('process') == 'ProcessPageEdit' || $this->wire('process') == 'ProcessUser')) {
             $this->p = $this->wire('process')->getPage();
         }
         elseif($this->wire('process') == 'ProcessPageView') {

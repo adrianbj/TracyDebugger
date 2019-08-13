@@ -35,11 +35,10 @@ addFilterBox({
                 $target.setAttribute("data-filterbox-active", "1");
             });
         },
-        onEnter: function () {
+        onEnter: function (e) {
+            e.preventDefault();
             var $item = this.getSelectedItem();
-
             $item && $item.querySelector("a").click();
-
             return false;
         },
         afterFilter: function () {
