@@ -958,14 +958,27 @@ ul.pw-info-links {
     scroll-behavior:smooth;
 }
 
-#tracy-debug .tracy-DumpPanel h2,
+.tracy-DumpPanel {
+    font: normal normal 13px/1.3 Arial, sans-serif !important;
+    font-weight: normal !important;
+    color: #333333 !important;
+    text-transform: none !important;
+}
+
+.tracy-DumpPanel a:link {
+    color: #125EAE !important;
+    background-color: transparent !important;
+}
+
+.tracy-DumpPanel h2,
 #tracyConsoleResult h2,
 #tracySnippetRunnerResult h2,
 #tracyPageFilesList h2 {
     font: normal normal Arial, sans-serif !important;
     font-size: 14px !important;
-    margin: 0;
+    font-weight: normal !important;
     padding: 3px 8px 5px 8px;
+    margin: 0 !important;
     background: #EAF0F2 !important;
     border: 1px solid #D2D2D2 !important;
     border-bottom: 0 !important;

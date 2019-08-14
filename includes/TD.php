@@ -93,8 +93,13 @@ class TD extends TracyDebugger {
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
         $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
         if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = false;
+        echo '
+        <div class="tracy-inner" style="height:auto !important">
+            <div class="tracy-DumpPanel">';
         if($title) echo '<h2>'.$title.'</h2>';
-        echo static::generateDump($var, $options);
+        echo static::generateDump($var, $options) .
+        '   </div>
+        </div>';
     }
 
     /**
@@ -115,8 +120,13 @@ class TD extends TracyDebugger {
         $options[Dumper::TRUNCATE] = 9999;
         $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
         if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = false;
+        echo '
+        <div class="tracy-inner" style="height:auto !important">
+            <div class="tracy-DumpPanel">';
         if($title) echo '<h2>'.$title.'</h2>';
-        echo static::generateDump($var, $options);
+        echo static::generateDump($var, $options) .
+        '   </div>
+        </div>';
     }
 
     /**
