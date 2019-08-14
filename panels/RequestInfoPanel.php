@@ -811,7 +811,7 @@ class RequestInfoPanel extends BasePanel {
 
     private function generateOutput($p, $f, $outputFormatting) {
         $out = '';
-        $value = $outputFormatting ? $p->getFormatted($f->name) : $p->getUnformatted($f->name);
+        $value = $outputFormatting ? $this->wire('sanitizer')->entities1($p->getFormatted($f->name)) : $p->getUnformatted($f->name);
         if(is_string($value) && $outputFormatting) {
             $out .= substr($value, 0, \TracyDebugger::getDataValue('maxLength')) . (strlen($value) > 99 ? '... ('.strlen($value).')' : '');
         }
