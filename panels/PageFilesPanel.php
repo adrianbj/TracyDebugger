@@ -168,20 +168,25 @@ class PageFilesPanel extends BasePanel {
     private function getDiskFiles($p) {
         if(!$p->filesManager()) return array();
         $files = array();
+        $p_of = $p->of();
+        $p->of(false);
         $filesDir = $p->filesManager()->path;
         foreach($p->fields as $f) {
             // this is for nested repeaters
             if($f && $f->type instanceof FieldTypeRepeater) {
                 $repeaterValue = $p->{$f->name};
-                if($repeaterValue instanceof Page) $repeaterValue = array($repeaterValue);
-                foreach($repeaterValue as $subpage) {
-                    $files += $this->getDiskFiles($subpage);
+                if($repeaterValue) {
+                    if($repeaterValue instanceof Page) $repeaterValue = array($repeaterValue);
+                    foreach($repeaterValue as $subpage) {
+                        $files += $this->getDiskFiles($subpage);
+                    }
                 }
             }
             else {
                 $files[$p->id] = array_slice(scandir($filesDir), 2);
             }
         }
+        $p->of($p_of);
         return $files;
     }
 
@@ -202,9 +207,11 @@ class PageFilesPanel extends BasePanel {
             // this is for nested repeaters
             if($item && $f && $f->type instanceof FieldTypeRepeater) {
                 $repeaterValue = $p->{$f->name};
-                if($repeaterValue instanceof Page) $repeaterValue = array($repeaterValue);
-                foreach($repeaterValue as $subpage) {
-                    $files += $this->getPageFiles($subpage);
+                if($repeaterValue) {
+                    if($repeaterValue instanceof Page) $repeaterValue = array($repeaterValue);
+                    foreach($repeaterValue as $subpage) {
+                        $files += $this->getPageFiles($subpage);
+                    }
                 }
             }
             elseif($item && $f && $f->type instanceof FieldTypeFile) {
