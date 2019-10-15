@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.19.34',
+            'version' => '4.19.35',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -254,6 +254,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "imagesInFieldListValues" => 0,
             "snippetsPath" => 'templates',
             "userSwitcherRestricted" => null,
+            "userSwitcherIncluded" => null,
             "todoIgnoreDirs" => 'git, svn, images, img, errors, sass-cache, node_modules',
             "todoScanModules" => null,
             "todoScanAssets" => null,
@@ -3623,14 +3624,28 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldAsmSelect");
         $f->attr('name', 'userSwitcherRestricted');
-        $f->label = __('Restricted Roles', __FILE__);
+        $f->label = __('Excluded Roles', __FILE__);
         $f->description = __('Users with selected roles will not be available from the list of users to switch to.', __FILE__);
-        $f->notes = __('This can be useful if you use the User system to store frontend "members" and the system has a lot of users.', __FILE__);
+        $f->notes = __('These options can be useful if you use the User system to store frontend "members" and the system has a lot of users.', __FILE__);
+        $f->columnWidth = 50;
         $f->setAsmSelectOption('sortable', false);
         foreach($this->wire('roles') as $role) {
             $f->addOption($role->id, $role->name);
         }
         if($data['userSwitcherRestricted']) $f->attr('value', $data['userSwitcherRestricted']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldAsmSelect");
+        $f->attr('name', 'userSwitcherIncluded');
+        $f->label = __('Included Roles', __FILE__);
+        $f->description = __('Only users with these selected roles will be available from the list of users to switch to. If none selected, then all will be available unless the excluded roles is populated.', __FILE__);
+        $f->notes = __('Only use one of these options: either excluded or included.', __FILE__);
+        $f->columnWidth = 50;
+        $f->setAsmSelectOption('sortable', false);
+        foreach($this->wire('roles') as $role) {
+            $f->addOption($role->id, $role->name);
+        }
+        if($data['userSwitcherIncluded']) $f->attr('value', $data['userSwitcherIncluded']);
         $fieldset->add($f);
 
         // requestLogger Panel

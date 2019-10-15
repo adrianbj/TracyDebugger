@@ -85,6 +85,9 @@ class UserSwitcherPanel extends BasePanel {
                         if(\TracyDebugger::getDataValue('userSwitcherRestricted') && count(\TracyDebugger::getDataValue('userSwitcherRestricted')) > 0) {
                             $selectableUsers = $this->wire('users')->find('roles!='.implode(', roles!=', \TracyDebugger::getDataValue('userSwitcherRestricted')));
                         }
+                        elseif(\TracyDebugger::getDataValue('userSwitcherIncluded') && count(\TracyDebugger::getDataValue('userSwitcherIncluded')) > 0) {
+                            $selectableUsers = $this->wire('users')->find('roles='.implode('|', \TracyDebugger::getDataValue('userSwitcherIncluded')));
+                        }
                         else {
                             $selectableUsers = $this->wire('users');
                         }
