@@ -868,11 +868,13 @@ ul.pw-info-links {
 */
 
 /* Remove the open in popup window button from all panels */
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>.tracy-icons a[rel="window"] {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>.tracy-icons a[rel="window"],
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>.tracy-icons a[data-tracy-action="window"] {
     display: none !important;
 }
 
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>.tracy-icons a[rel="close"] {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>.tracy-icons a[rel="close"],
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>.tracy-icons a[data-tracy-action="close"] {
     float: right;
 }
 
@@ -1788,7 +1790,8 @@ ul.pw-info-links {
 
 #tracy-debug .tracy-panel.tracy-mode-rollup .tracy-inner,
 #tracy-debug .tracy-panel.tracy-mode-rollup .resizeIcons,
-#tracy-debug .tracy-panel.tracy-mode-rollup a[rel="window"] {
+#tracy-debug .tracy-panel.tracy-mode-rollup a[rel="window"],
+#tracy-debug .tracy-panel.tracy-mode-rollup a[data-tracy-action="window"] {
     display: none;
 }
 

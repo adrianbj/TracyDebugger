@@ -213,10 +213,10 @@ function tracyConsoleShutdownHandler() {
 
     // ignore any include/require errors - we are including all files by their full path via
     // $this->wire('session')->tracyIncludedFiles anyway, so the errors caused by relative paths won't matter
-    if(strpos($lasterror['message'], 'include') !== false || strpos($lasterror['message'], 'require') !== false) {
+    if($lasterror && (strpos($lasterror['message'], 'include') !== false || strpos($lasterror['message'], 'require') !== false)) {
         return;
     }
-    else {
+    elseif($lasterror) {
         switch ($lasterror['type']) {
             case E_ERROR:
             case E_CORE_ERROR:

@@ -1030,9 +1030,9 @@ HTML;
                         <input title="Clear results" type="button" class="clearResults" onclick="tracyConsole.clearResults()" value="&#10006; Clear results" />
                         <span style="float:right; padding-top: 10px">
                             <label title="Don\'t Run on Page Load" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'off\')" value="off" ' . (!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? ' checked' : '') . ' /> off</label>&nbsp;
-                            <label title="Run on init" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'init\')" value="init" ' . ($this->tracyIncludeCode['when'] === 'init' ? ' checked' : '') . ' /> init</label>&nbsp;
-                            <label title="Run on ready" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'ready\')" value="ready" ' . ($this->tracyIncludeCode['when'] === 'ready' ? ' checked' : '') . ' /> ready</label>&nbsp;
-                            <label title="Run on finished" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'finished\')" value="finished" ' . ($this->tracyIncludeCode['when'] === 'finished' ? ' checked' : '') . ' /> finished</label>&nbsp;
+                            <label title="Run on init" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'init\')" value="init" ' . ($this->tracyIncludeCode && $this->tracyIncludeCode['when'] === 'init' ? ' checked' : '') . ' /> init</label>&nbsp;
+                            <label title="Run on ready" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'ready\')" value="ready" ' . ($this->tracyIncludeCode && $this->tracyIncludeCode['when'] === 'ready' ? ' checked' : '') . ' /> ready</label>&nbsp;
+                            <label title="Run on finished" style="display:inline !important"><input type="radio" name="includeCode" onclick="tracyConsole.tracyIncludeCode(\'finished\')" value="finished" ' . ($this->tracyIncludeCode && $this->tracyIncludeCode['when'] === 'finished' ? ' checked' : '') . ' /> finished</label>&nbsp;
                         </span>
                         <span id="tracyConsoleStatus" style="padding: 10px"></span>
                     </div>
