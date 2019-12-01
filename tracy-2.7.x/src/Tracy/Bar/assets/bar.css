@@ -35,10 +35,10 @@
 	height: initial;
 }
 
-#tracy-debug:before,
-#tracy-debug:after,
-#tracy-debug *:before,
-#tracy-debug *:after {
+#tracy-debug-bar:before,
+#tracy-debug-bar:after,
+#tracy-debug-bar *:before,
+#tracy-debug-bar *:after {
 	all: unset;
 }
 
