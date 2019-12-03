@@ -120,16 +120,16 @@ class EventInterceptorPanel extends BasePanel {
         <div class="tracy-inner tracy-DumpPanel" style="min-width:350px !important">
 
             <fieldset id="eventInterceptor">
-                <legend><span id="eventHookLegend">'.($hookSettings['hook'] ? '<strong>' . $hookSettings['hook'] . '</strong> <em>' . $hookSettings['when'] . '</em> hook is set to return <em>' . $hookSettings['return'] . '</em>' : 'Enter an Event Hook (eg. PageRender::renderPage)') .'</span></legend><br />';
+                <legend><span id="eventHookLegend">'.(isset($hookSettings['hook']) ? '<strong>' . $hookSettings['hook'] . '</strong> <em>' . $hookSettings['when'] . '</em> hook is set to return <em>' . $hookSettings['return'] . '</em>' : 'Enter an Event Hook (eg. PageRender::renderPage)') .'</span></legend><br />';
                 $out .= '
-                <input type="text" style="width:250px !important" id="eventInterceptorHook" name="eventInterceptorHook" value="'.$hookSettings['hook'].'">
+                <input type="text" style="width:250px !important" id="eventInterceptorHook" name="eventInterceptorHook" value="'.(isset($hookSettings['hook']) ? $hookSettings['hook'] : '') .'">
                 <p>
-                    Hook: <label style="display:inline-block !important"><input type="radio" id="tracyEventWhenBefore" name="when" value="before" '. ($hookSettings['when'] == 'before' ? ' checked="checked"' : '') .' /> Before</label>
+                    Hook: <label style="display:inline-block !important"><input type="radio" id="tracyEventWhenBefore" name="when" value="before" '. (isset($hookSettings['when']) && $hookSettings['when'] == 'before' ? ' checked="checked"' : '') .' /> Before</label>
                     <label style="display:inline-block !important"><input type="radio" id="tracyEventWhenAfter" name="when" value="after" '. (!isset($hookSettings) || $hookSettings['when'] == 'after' ? ' checked="checked"' : '') .' /> After</label>
                 </p>
                 <p>
                     Return: <label style="display:inline-block !important"><input type="radio" id="tracyEventReturnDefault" name="return" value="default" '. (!isset($hookSettings) || $hookSettings['return'] == 'default' ? ' checked="checked"' : '') .' /> Default</label>
-                    <label style="display:inline-block !important"><input type="radio" id="tracyEventReturnFalse" name="return" value="false" '. ($hookSettings['return'] == 'false' ? ' checked="checked"' : '') .' /> False</label>
+                    <label style="display:inline-block !important"><input type="radio" id="tracyEventReturnFalse" name="return" value="false" '. (isset($hookSettings['return']) && $hookSettings['return'] == 'false' ? ' checked="checked"' : '') .' /> False</label>
 
                 </p>
                 <br />
