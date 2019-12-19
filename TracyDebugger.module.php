@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.19.40',
+            'version' => '4.19.41',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1301,7 +1301,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // USER DEV TEMPLATES
         // if user dev template enabled and required permission exists in system,
         // check if current user has a matching permission for the current page's template, or the "tracy-all-suffix" permission
-        if($this->data['userDevTemplate'] && $this->wire('permissions')->get("tracy-".$this->wire('page')->template->name."-".$this->data['userDevTemplateSuffix'])->id) {
+        if($this->data['userDevTemplate'] && ($this->wire('permissions')->get("tracy-".$this->wire('page')->template->name."-".$this->data['userDevTemplateSuffix'])->id || $this->wire('permissions')->get("tracy-all-".$this->data['userDevTemplateSuffix'])->id)) {
             if($this->superuserHasPermission("tracy-".$this->wire('page')->template->name."-".$this->data['userDevTemplateSuffix']) ||
                 $this->superuserHasPermission("tracy-all-".$this->data['userDevTemplateSuffix'])
             ) {
