@@ -17,7 +17,7 @@ class ValidatorPanel extends BasePanel {
         if(\TracyDebugger::isAdditionalBar()) return;
         \Tracy\Debugger::timer('validator');
 
-        $this->validatorUrl = 'https://checker.html5.org/';
+        $this->validatorUrl = \TracyDebugger::getDataValue('validatorUrl');
         $this->validationUrl = $this->validatorUrl . "?doc=".$this->wire('page')->httpUrl."&out=html&showimagereport=yes&showsource=yes";
 
         // get results from validator and convert any entities to UTF-8

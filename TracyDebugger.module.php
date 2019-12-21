@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.19.41',
+            'version' => '4.19.42',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -248,6 +248,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "debugModePanelSections" => array('pagesLoaded', 'modulesLoaded', 'hooks', 'databaseQueries', 'selectorQueries', 'timers', 'user', 'cache', 'autoload'),
             "diagnosticsPanelSections" => array('filesystemFolders'),
             "dumpPanelTabs" => array('debugInfo', 'fullObject'),
+            "validatorUrl" => 'https://html5.validator.nu/',
             "requestMethods" => array('GET', 'POST', 'PUT', 'DELETE', 'PATCH'),
             "requestLoggerMaxLogs" => 10,
             "requestLoggerReturnType" => 'array',
@@ -1010,6 +1011,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 // replace "close" icon link with "hide" and "unhide" links
                 // add esc key event handler to close all panels
                 $this->wire()->addHookAfter('Page::render', function($event) {
+                    // ignore this if Page::render $event is from a RepeaterPage or anything else other than Page
+                    // this prevents this being called more than once if site uses repeater template render() approach
+                    if((new \ReflectionClass($event->object))->getShortName() !== 'Page') return;
+
                     $tracyErrors = Debugger::getBar()->getPanel('Tracy:errors');
                     if(!is_array($tracyErrors->data) || count($tracyErrors->data) === 0) {
                         if(($this->data['hideDebugBar'] && !$this->wire('input')->cookie->tracyShow) || $this->wire('input')->cookie->tracyHidden == 1) {
@@ -1525,6 +1530,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     protected function addUserBar($event) {
+        // ignore this if Page::render $event is from a RepeaterPage or anything else other than Page
+        // this prevents this being called more than once if site uses repeater template render() approach
+        if((new \ReflectionClass($event->object))->getShortName() !== 'Page') return;
         $userBar = '';
         require_once __DIR__ . '/includes/user-bar/UserBar.php';
         $event->return = str_replace("</body>", "\n<!-- Tracy User Bar -->\n" . static::minify($userBar)."\n</body>", $event->return);
@@ -1540,6 +1548,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     protected function addEnableButton($event) {
+
+        // ignore this if Page::render $event is from a RepeaterPage or anything else other than Page
+        // this prevents this being called more than once if site uses repeater template render() approach
+        if((new \ReflectionClass($event->object))->getShortName() !== 'Page') return;
+
         // DON'T add comments to injected code below because it breaks my simple minify() function
         // if Tracy temporarily toggled disabled, add enable icon link
         $enableButton = '
@@ -1606,6 +1619,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     protected function getPageHtml($event) {
+        // ignore this if Page::render $event is from a RepeaterPage or anything else other than Page
+        // this prevents this being called more than once if site uses repeater template render() approach
+        if((new \ReflectionClass($event->object))->getShortName() !== 'Page') return;
         static::$pageHtml = $event->return;
     }
 
@@ -2043,6 +2059,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * @return void
      */
     public function logRequests(HookEvent $event) {
+        // ignore this if Page::render $event is from a RepeaterPage or anything else other than Page
+        // this prevents this being called more than once if site uses repeater template render() approach
+        if((new \ReflectionClass($event->object))->getShortName() !== 'Page') return;
+
         $page = $event->object;
 
         // exits
@@ -3495,6 +3515,20 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $f->addOption($name, $label);
         }
         if($data['dumpPanelTabs']) $f->attr('value', $data['dumpPanelTabs']);
+        $fieldset->add($f);
+
+        // Validator Panel
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->attr('name+id', 'validatorPanel');
+        $fieldset->label = __('Validator panel', __FILE__);
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'validatorUrl');
+        $f->label = __('Validator URL', __FILE__);
+        $f->description = __('Enter the URL for the validation service.', __FILE__);
+        $f->notes = __('Default: https://html5.validator.nu/', __FILE__);
+        if($data['validatorUrl']) $f->attr('value', $data['validatorUrl']);
         $fieldset->add($f);
 
         // ToDo Panel
