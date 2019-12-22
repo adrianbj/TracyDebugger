@@ -31,9 +31,9 @@ class TemplatePathPanel extends BasePanel {
         }
 
         $this->userDevTemplatePossible = \TracyDebugger::getDataValue('userDevTemplate')
-            && $this->wire('permissions')->get("template-dev")->id
+            && ($this->wire('permissions')->get("tracy-all-dev")->id || $this->wire('permissions')->get("tracy-".$this->wire('page')->template->name."-dev")->id)
             && $userDevTemplateFiles > 0
-            && $this->wire('users')->count("roles.permissions=template-".\TracyDebugger::getDataValue('userDevTemplateSuffix'));
+            && $this->wire('users')->count("roles.permissions=tracy-all-".\TracyDebugger::getDataValue('userDevTemplateSuffix')."|tracy-".$this->wire('page')->template->name."-".\TracyDebugger::getDataValue('userDevTemplateSuffix'));
 
         if(\TracyDebugger::$templatePath) {
             $iconColor = \TracyDebugger::COLOR_ALERT;
@@ -155,7 +155,7 @@ class TemplatePathPanel extends BasePanel {
                 <legend>**User Dev Template Reminder**
                     <ul>
                         <li>the "User Dev Template" option is enabled in module settings
-                        <li>the "template-'.\TracyDebugger::getDataValue('userDevTemplateSuffix').'" permission exists</li>
+                        <li>the "tracy-all-'.\TracyDebugger::getDataValue('userDevTemplateSuffix').'" or "tracy-'.$this->wire('page')->template->name.'-'.\TracyDebugger::getDataValue('userDevTemplateSuffix').'" permission exists</li>
                         <li>the permission has been assigned to at least one user</li>
                         <li>there are template files with a "-'.\TracyDebugger::getDataValue('userDevTemplateSuffix').'" suffix</li>
                     </ul>
