@@ -397,7 +397,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // log requests for Request Logger
-        $this->wire()->addHook('ProcessWire::ready', function($event) {
+        $this->wire()->addHookAfter('ProcessWire::ready', function($event) {
             $event->page->addHookAfter('render', $this, 'logRequests');
         });
         $this->wire()->addHookAfter('Page::logRequests', $this, 'logRequests');
@@ -434,7 +434,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             (static::$allowedTracyUser !== 'development' || $this->data['showUserBarTracyUsers']) &&
             (strpos(self::inputUrl(true), DIRECTORY_SEPARATOR.'form-builder'.DIRECTORY_SEPARATOR) === false)
         ) {
-            $this->wire()->addHook('ProcessWire::ready', function($event) {
+            $this->wire()->addHookAfter('ProcessWire::ready', function($event) {
                 $event->page->addHookAfter('render', $this, 'addUserBar', array('priority'=>1000));
             });
         }
@@ -1016,7 +1016,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 // add settings link on double-click to "TRACY" icon
                 // replace "close" icon link with "hide" and "unhide" links
                 // add esc key event handler to close all panels
-                $this->wire()->addHook('ProcessWire::ready', function($event) {
+                $this->wire()->addHookAfter('ProcessWire::ready', function($event) {
                     $event->page->addHookAfter('render', function($event) {
                         $tracyErrors = Debugger::getBar()->getPanel('Tracy:errors');
                         if(!is_array($tracyErrors->data) || count($tracyErrors->data) === 0) {
@@ -1172,7 +1172,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if(!static::$inAdmin) {
                 // VALIDATOR
                 if(in_array('validator', static::$showPanels)) {
-                    $this->wire()->addHook('ProcessWire::ready', function($event) {
+                    $this->wire()->addHookAfter('ProcessWire::ready', function($event) {
                         $event->page->addHookAfter('render', $this, 'getPageHtml', array('priority'=>1000));
                     });
                 }
