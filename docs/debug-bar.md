@@ -563,7 +563,7 @@ So if this is expected then great, but if not, then you can prevent the alternat
 
 If you are on a page that is using an alternate template due to user permissions, then you will see the PW permission cog icon:
 
-![Template Resources panel 3](img/template-resources-3.png)
+![Template Resources panel 3](img/template-path-3.png)
 
 ***
 
