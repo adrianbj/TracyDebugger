@@ -545,10 +545,12 @@ Obviously this is not the best approach for major changes (you should set up a d
 
 Additionally, it automatically swaps out files included via `$config->prependTemplateFile` and `$config->appendTemplateFile` to use the same suffix at the replaced template, eg `_init-dev.php` or `_main-dev.php`
 
+![Template Path panel](img/template-path-2.png)
+
 In this screenshot, you can see the reminder detailing why the icon is orange. Currently we are not viewing a page with an alternate template, but it is letting us know that:
 
 * the "User Dev Template" option is enabled in module settings
-* the `tracy-template-dev` (or `tracy-all-dev`) permission exists
+* the `tracy-basic-page-dev` (or `tracy-all-dev`) permission exists
 * the permission has been assigned to at least one user
 * there are template files with a "-dev" suffix
 
@@ -560,6 +562,8 @@ So if this is expected then great, but if not, then you can prevent the alternat
 * delete alternate template files with the "-dev" suffix
 
 If you are on a page that is using an alternate template due to user permissions, then you will see the PW permission cog icon:
+
+![Template Resources panel 3](img/template-resources-3.png)
 
 ***
 
