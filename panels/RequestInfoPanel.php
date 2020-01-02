@@ -551,7 +551,7 @@ class RequestInfoPanel extends BasePanel {
             if(function_exists('posix_getpwuid')) {
                 if(isset($templateFilePath)) {
                     $owner = posix_getpwuid(fileowner($templateFilePath));
-                    $group = posix_getgrgid($owner['gid']);
+                    if($owner) $group = posix_getgrgid($owner['gid']);
                 }
             }
             $permission = !isset($templateFilePath) ? '' : substr(sprintf('%o', fileperms($templateFilePath)), -4);
@@ -593,7 +593,7 @@ class RequestInfoPanel extends BasePanel {
                     <td>filename</td>
                     <td>'.(isset($templateFilePath) ? \TracyDebugger::createEditorLink($templateFilePath, 1, str_replace($this->wire('config')->paths->root, '/', $templateFilePath), 'Edit Template File') . '<br />
                         modified: ' . date("Y-m-d H:i:s", filemtime($templateFilePath)) . '<br />' .
-                        (isset($owner) ? 'user:group: ' . $owner['name'].":".$group['name'] : '') . '<br />
+                        ($owner ? 'user:group: ' . $owner['name'].":".$group['name'] .'<br />' : '') . '
                         permissions: ' . $permission
                          : 'No file').'</td>
                 </tr>
