@@ -310,13 +310,16 @@ body.tracyHidden:before {
     color: #444444 !important;
 }
 
-#tracy-debug th {
+#tracy-debug th, .tracy-section-heading {
     background: #2C3E50;
     color: white !important;
     font-size: 90%;
     font-weight: bold;
 }
 
+.tracy-section-heading {
+    padding: 2px 0 2px 2px;
+}
 
 #keyboardShortcuts {
     position: absolute;
