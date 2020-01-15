@@ -10,12 +10,12 @@ class ApiExplorerPanel extends BasePanel {
 
     public function __construct() {
         if($this->wire('modules')->isInstalled('ProcessWireAPI')) {
-            $apiModuleInstalled = true;
+            $this->apiModuleInstalled = true;
             $apiModuleId = $this->wire('modules')->getModuleID("ProcessWireAPI");
             $this->apiBaseUrl = $this->wire('pages')->get("process=$apiModuleId")->url.'methods/';
         }
         else {
-            $apiModuleInstalled = false;
+            $this->apiModuleInstalled = false;
             $this->apiBaseUrl = 'https://processwire.com/api/ref/';
         }
         $this->newTab = \TracyDebugger::getDataValue('linksNewTab') ? 'target="_blank"' : '';
@@ -180,10 +180,8 @@ HTML;
 
                 $name = $info['name'];
                 $methodName = str_replace(array('___', '__'), '', $name);
-                if(strpos($filename, 'wire') !== false) {
-                    if($this->apiModuleInstalled || strpos($filename, 'modules') === false) {
-                        $name = "<a ".$this->newTab." href='".$this->apiBaseUrl.$this->convertNamesToUrls(str_replace('$', '', $className))."/".$this->convertNamesToUrls($methodName)."/'>" . $name . "</a>";
-                    }
+                if(strpos($filename, 'wire') !== false || $this->apiModuleInstalled) {
+                    $name = "<a ".$this->newTab." href='".$this->apiBaseUrl.$this->convertNamesToUrls(str_replace('$', '', $className))."/".$this->convertNamesToUrls($methodName)."/'>" . $name . "</a>";
                 }
 
                 $out .= '
