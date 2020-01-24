@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.20.2',
+            'version' => '4.20.3',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -268,6 +268,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "userDevTemplate" => null,
             "userDevTemplateSuffix" => 'dev',
             "customPhpCode" => '',
+            "fromEmail" => '',
             "email" => '',
             "clearEmailSent" => null,
             "showFireLogger" => 1,
@@ -1271,7 +1272,20 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // ENABLE TRACY
-        if($this->tracyEnabled) Debugger::enable($outputMode, $logFolder, $this->data['email'] != '' ? $this->data['email'] : null);
+        if($this->tracyEnabled) {
+            Debugger::enable($outputMode, $logFolder, $this->data['email'] != '' ? $this->data['email'] : null);
+
+            Debugger::getLogger()->mailer = function($message) {
+                $m = $this->wire('mail')->new();
+                $m->from($this->data['fromEmail']);
+                $m->to($this->data['email']);
+                $m->subject('Error on server: ' . $this->wire('config')->urls->httpRoot);
+                $message = nl2br(\Tracy\Logger::formatMessage($message)) . "<br /><br />Remember to <a href='".$this->wire('config')->urls->httpAdmin."module/edit?name=TracyDebugger#errorLogging'>clear email sent flag</a> to receive future emails.";
+                $m->bodyHTML($message);
+                $m->send();
+            };
+
+        }
 
         // fixes for when SessionHandlerDB module is installed
         if($this->wire('modules')->isInstalled('SessionHandlerDB') && Debugger::$showBar) {
@@ -2937,6 +2951,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // Error Logging Settings
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->attr('name+id', 'errorLogging');
         $fieldset->label = __('Error logging', __FILE__);
         $wrapper->add($fieldset);
 
@@ -2945,7 +2960,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = 'Log severity';
         $f->description = __('If you want Tracy to log PHP errors like E_NOTICE or E_WARNING with detailed information (HTML report), set them here.', __FILE__);
         $f->notes = __('These only affect log file content, not onscreen debug info.');
-        $f->columnWidth = 40;
+        $f->columnWidth = 25;
         $f->addOption('E_ERROR', 'E_ERROR');
         $f->addOption('E_WARNING', 'E_WARNING');
         $f->addOption('E_PARSE', 'E_PARSE');
@@ -2966,10 +2981,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldEmail");
+        $f->attr('name', 'fromEmail');
+        $f->label = __('Email errors "From"', __FILE__);
+        $f->description = __('Receive emails from this address when an error occurs.', __FILE__);
+        $f->columnWidth = 25;
+        if($data['fromEmail']) $f->attr('value', $data['fromEmail']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldEmail");
         $f->attr('name', 'email');
-        $f->label = __('Email for production errors', __FILE__);
-        $f->description = __('Receive emails at this address when an error occurs in production mode.', __FILE__);
-        $f->columnWidth = 40;
+        $f->label = __('Email errors "To"', __FILE__);
+        $f->description = __('Receive emails at this address when an error occurs.', __FILE__);
+        $f->columnWidth = 25;
         if($data['email']) $f->attr('value', $data['email']);
         $fieldset->add($f);
 
@@ -2977,7 +3000,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'clearEmailSent');
         $f->label = __('Clear "email sent" flag', __FILE__);
         $f->description = __('Check and save settings to remove the "email-sent" file so that you will start receiving new error emails.', __FILE__);
-        $f->columnWidth = 20;
+        $f->columnWidth = 25;
         $fieldset->add($f);
 
         // Debug Bar and Panel Settings
