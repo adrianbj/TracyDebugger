@@ -69,6 +69,10 @@ if($user->isSuperuser() || \TracyDebugger::$validLocalUser || \TracyDebugger::$v
         $nameSpace = 'namespace ' . $nameSpace . ';';
         $code = str_replace($nameSpace, '', $code);
     }
+    elseif(version_compare($this->wire('config')->version, '3', '>=')) {
+        $nameSpace = 'namespace ProcessWire;';
+    }
+
     $openPHP = '<' . '?php';
     $inPwCheck = 'if(!defined("PROCESSWIRE")) die("no direct access");';
     $setVars = '$page = $pages->get('.$page->id.'); ';

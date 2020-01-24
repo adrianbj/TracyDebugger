@@ -1,8 +1,7 @@
 #tracy-show-button {
-    bottom: 0 !important;
-    right: 0 !important;
-    z-index: 99999 !important;
     position: fixed !important;
+    bottom: 0 !important;
+    z-index: 99999 !important;
     width: 16px !important;
     margin: 0 !important;
     padding: 4px 15px 2px 6px !important;
@@ -35,9 +34,7 @@ body.tracyHidden:before {
 
 #tracy-debug-bar {
     position:fixed !important;
-    left:auto !important;
     top:auto !important;
-    right:0 !important;
     bottom:0 !important;
     font: normal normal 13px/1.55 Arial, sans-serif !important;
     background: #F0F3F7 !important;
