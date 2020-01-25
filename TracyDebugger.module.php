@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.20.3',
+            'version' => '4.20.4',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1275,16 +1275,21 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($this->tracyEnabled) {
             Debugger::enable($outputMode, $logFolder, $this->data['email'] != '' ? $this->data['email'] : null);
 
-            Debugger::getLogger()->mailer = function($message) {
-                $m = $this->wire('mail')->new();
-                $m->from($this->data['fromEmail']);
-                $m->to($this->data['email']);
-                $m->subject('Error on server: ' . $this->wire('config')->urls->httpRoot);
-                $message = nl2br(\Tracy\Logger::formatMessage($message)) . "<br /><br />Remember to <a href='".$this->wire('config')->urls->httpAdmin."module/edit?name=TracyDebugger#errorLogging'>clear email sent flag</a> to receive future emails.";
-                $m->bodyHTML($message);
-                $m->send();
-            };
-
+            // don't email custom (writeError()) logged errors for Console / Snippet Runner panels via CodeProcessor.php
+            if($this->wire('config')->ajax && ($this->wire('input')->post->tracyConsole == 1 || $this->wire('input')->post->tracySnippetRunner == 1)) {
+                Debugger::getLogger()->mailer = function() {};
+            }
+            else {
+                Debugger::getLogger()->mailer = function($message) {
+                    $m = $this->wire('mail')->new();
+                    $m->from($this->data['fromEmail']);
+                    $m->to($this->data['email']);
+                    $m->subject('Error on server: ' . $this->wire('config')->urls->httpRoot);
+                    $message = nl2br(\Tracy\Logger::formatMessage($message)) . "<br /><br />Remember to <a href='".$this->wire('config')->urls->httpAdmin."module/edit?name=TracyDebugger#errorLogging'>clear email sent flag</a> to receive future emails.";
+                    $m->bodyHTML($message);
+                    $m->send();
+                };
+            }
         }
 
         // fixes for when SessionHandlerDB module is installed
