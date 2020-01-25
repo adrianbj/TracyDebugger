@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.20.4',
+            'version' => '4.20.5',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -440,6 +440,22 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $this->wire()->addHookAfter('ProcessWire::ready', function($event) {
                 $event->page->addHookAfter('render', $this, 'addUserBar', array('priority'=>1000));
             });
+        }
+
+        // notify user about email sent flag and provide option to clear it
+        if(static::$allowedTracyUser) {
+            $emailSentPath = $this->wire('config')->paths->logs.'tracy/email-sent';
+            if($this->wire('input')->post->clearEmailSent || $this->wire('input')->get->clearEmailSent) {
+                if(file_exists($emailSentPath)) {
+                    $removed = unlink($emailSentPath);
+                }
+                if (!isset($removed) || !$removed) wire()->error( __('No file to remove'));
+                else wire()->message(__("email-sent file deleted successfully"));
+            }
+
+            if(file_exists($emailSentPath)) {
+                $this->wire()->warning('Tracy Debugger "Email Sent" flag has been set. <a href="'.$this->wire('input')->url(true).($this->wire('input')->queryString() ? '&' : '?').'clearEmailSent=1">Clear it</a> to continue receiving further emails', Notice::allowMarkup);
+            }
         }
 
 
@@ -2747,15 +2763,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             setcookie("tracyModulesDisabled", "", time()-3600, '/');
             unset($this->wire('input')->cookie->tracyDisabled);
             setcookie("tracyDisabled", "", time()-3600, '/');
-        }
-
-        if($this->wire('input')->post->clearEmailSent) {
-            $emailSentPath = $this->wire('config')->paths->logs.'tracy/email-sent';
-            if(file_exists($emailSentPath)) {
-                $removed = unlink($emailSentPath);
-            }
-            if (!isset($removed) || !$removed) wire()->error( __('No file to remove'));
-            else wire()->message(__("email-sent file deleted successfully"));
         }
 
         $data = array_merge(self::getDefaultData(), $data);
