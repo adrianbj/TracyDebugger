@@ -64,6 +64,9 @@ class AdminerPanel extends BasePanel {
         elseif($this->wire('process') == 'ProcessPageList') {
             $contextLink = '&select=pages';
         }
+        elseif($this->wire('process') == 'ProcessPageListerPro') {
+            $contextLink = '&edit=modules&where%5Bclass%5D=ProcessPageListerPro';
+        }
         elseif($this->wire('page')->process == 'ProcessField') {
             if($this->wire('input')->get('id')) {
                 $contextLink = '&edit=fields&where%5Bid%5D='.(int)$this->wire('input')->get('id');
