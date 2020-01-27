@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.20.7',
+            'version' => '4.20.8',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -442,22 +442,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             });
         }
 
-        // notify user about email sent flag and provide option to clear it
-        if(static::$allowedTracyUser) {
-            $emailSentPath = $this->wire('config')->paths->logs.'tracy/email-sent';
-            if($this->wire('input')->post->clearEmailSent || $this->wire('input')->get->clearEmailSent) {
-                if(file_exists($emailSentPath)) {
-                    $removed = unlink($emailSentPath);
-                }
-                if (!isset($removed) || !$removed) wire()->error( __('No file to remove'));
-                else wire()->message(__("email-sent file deleted successfully"));
-            }
-
-            if(file_exists($emailSentPath)) {
-                $this->wire()->warning('Tracy Debugger "Email Sent" flag has been set. <a href="'.$this->wire('input')->url(true).($this->wire('input')->queryString() ? '&' : '?').'clearEmailSent=1">Clear it</a> to continue receiving further emails', Notice::allowMarkup);
-            }
-        }
-
 
         // Various features that can be run before loading Tracy core files
         if(static::$allowedTracyUser === 'development') {
@@ -850,15 +834,27 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     $this->wire('session')->redirect($this->wire('config')->urls->admin.'module');
                 }
             }
-        }
 
+            // notify user about email sent flag and provide option to clear it
+            $emailSentPath = $this->wire('config')->paths->logs.'tracy/email-sent';
+            if($this->wire('input')->post->clearEmailSent || $this->wire('input')->get->clearEmailSent) {
+                if(file_exists($emailSentPath)) {
+                    $removed = unlink($emailSentPath);
+                }
+                if (!isset($removed) || !$removed) wire()->error( __('No file to remove'));
+                else wire()->message(__("email-sent file deleted successfully"));
+            }
 
-        // CONSOLE PANEL CODE INJECTION
-        if(static::$allowedTracyUser === 'development') {
+            if(file_exists($emailSentPath)) {
+                $this->wire()->warning('Tracy Debugger "Email Sent" flag has been set. <a href="'.$this->wire('input')->url(true).($this->wire('input')->queryString() ? '&' : '?').'clearEmailSent=1">Clear it</a> to continue receiving further emails', Notice::allowMarkup);
+            }
+
+            // CONSOLE PANEL CODE INJECTION
             $this->insertCode('init');
             $this->wire()->addHookBefore('ProcessWire::finished', function($event) {
                 $this->insertCode('finished');
             });
+
         }
 
 
