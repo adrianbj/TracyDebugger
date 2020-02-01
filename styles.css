@@ -1097,7 +1097,6 @@ ul.pw-info-links {
 
 /*FileEditorPanel overrides*/
 #tracyFileEditorFilterBoxWrap {
-    height: auto !important;
     width: 265px !important;
     right: auto !important;
     left: 11px !important;
