@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.20.10',
+            'version' => '4.20.11',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -207,6 +207,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "showLocation" => array('Tracy\Dumper::LOCATION_SOURCE', 'Tracy\Dumper::LOCATION_LINK', 'Tracy\Dumper::LOCATION_CLASS'),
             "logSeverity" => array(),
             "numLogEntries" => 10,
+            "collapse" => 14,
+            "collapse_count" => 7,
             "maxDepth" => 3,
             "maxLength" => 150,
             "maxAjaxRows" => 3,
@@ -2908,9 +2910,27 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'maxLength');
         $f->label = __('Maximum string length', __FILE__);
         $f->description = __('Set the maximum displayed strings length.', __FILE__);
-        $f->notes = __('Default: 150.', __FILE__);
+        $f->notes = __('Default: 150', __FILE__);
         $f->columnWidth = 50;
         $f->attr('value', $data['maxLength']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldInteger");
+        $f->attr('name', 'collapse');
+        $f->label = __('Collapse top array/object', __FILE__);
+        $f->description = __('Set how big are collapsed', __FILE__);
+        $f->notes = __('Default: 14', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('value', $data['collapse']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldInteger");
+        $f->attr('name', 'collapse_count');
+        $f->label = __('Collapse array/object', __FILE__);
+        $f->description = __('Set how big are collapsed', __FILE__);
+        $f->notes = __('Default: 7', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('value', $data['collapse_count']);
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldInteger");
