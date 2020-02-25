@@ -318,7 +318,7 @@ body.tracyHidden:before {
     padding: 2px 0 2px 2px;
 }
 
-#keyboardShortcuts {
+.keyboardShortcuts {
     position: absolute;
     background: #DEE6ED;
     padding: 10px;
@@ -328,7 +328,7 @@ body.tracyHidden:before {
     z-index: 99999999999999 !important;
 }
 
-#keyboardShortcuts table td:nth-child(1) {
+.keyboardShortcuts table td:nth-child(1) {
     width: 250px;
 }
 
