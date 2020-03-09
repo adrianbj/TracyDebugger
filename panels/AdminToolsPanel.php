@@ -74,11 +74,12 @@ class AdminToolsPanel extends BasePanel {
 
             if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessTemplate') {
                 $i++;
+                $t = $this->wire('templates')->get((int)$this->wire('input')->get('id'));
                 $out .= '
                 <p>
-                    <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete this template and all associated pages?\');">
-                        <input type="hidden" name="adminToolsId" value="'.(int)$this->wire('input')->get('id').'" />
-                        <input type="submit" name="deleteTemplate" value="Delete template" />
+                    <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete the '.$t->name.' template and all associated pages?\');">
+                        <input type="hidden" name="adminToolsId" value="'.$t->id.'" />
+                        <input type="submit" name="deleteTemplate" value="Delete \''.$t->name.'\' template" />
                     </form>
                 </p>';
             }
@@ -105,9 +106,9 @@ class AdminToolsPanel extends BasePanel {
                     $i++;
                     $out .= '
                     <p>
-                        <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete this field and remove it from all templates/pages?\');">
+                        <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete the '. $f->name.' field and remove it from all templates/pages?\');">
                             <input type="hidden" name="adminToolsId" value="'.(int)$this->wire('input')->get('id').'" />
-                            <input type="submit" name="deleteField" value="Delete field" />
+                            <input type="submit" name="deleteField" value="Delete \''.$f->name.'\' field" />
                         </form>
                     </p>';
                     $out .= '
