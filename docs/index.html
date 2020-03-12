@@ -75,7 +75,6 @@
 <body>
   <div id="app">Loading ...</div>
   <script src="//unpkg.com/docsify-edit-on-github@1.0.1/index.js"></script>
-  <script src="https://unpkg.com/docsify-plugin-codefund/index.js"></script>
   <script>
     window.$docsify = {
       themeColor: '#D22778',
@@ -92,8 +91,7 @@
       subMaxLevel: 2,
       ga: 'UA-112753287-1',
       plugins: [
-        EditOnGithubPlugin.create('https://github.com/adrianbj/TracyDebugger/tree/master/docs/'),
-        DocsifyCodefund.create(149)
+        EditOnGithubPlugin.create('https://github.com/adrianbj/TracyDebugger/tree/master/docs/')
       ],
 
       search: 'auto',
