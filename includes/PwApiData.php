@@ -11,9 +11,6 @@ class TracyPwApiData extends WireData {
 
         if(!$apiData || \TracyDebugger::getDataValue('apiDataVersion') === null || $this->wire('config')->version != \TracyDebugger::getDataValue('apiDataVersion')) {
             $cachedData = json_decode(ltrim($apiData, '~'), true);
-            $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
-            $configData['apiDataVersion'] = $this->wire('config')->version;
-            $this->wire('modules')->saveModuleConfigData($this->wire('modules')->get("TracyDebugger"), $configData);
             if($type == 'variables') {
                 $apiData = $this->getVariables();
             }
@@ -46,6 +43,11 @@ class TracyPwApiData extends WireData {
                     }
                 }
                 $this->wire('cache')->save('TracyApiChanges', '~'.json_encode(\TracyDebugger::$apiChanges), WireCache::expireNever);
+
+                $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
+                $configData['apiDataVersion'] = $this->wire('config')->version;
+                $this->wire('modules')->saveModuleConfigData($this->wire('modules')->get("TracyDebugger"), $configData);
+
             }
 
             // tilde hack for this: https://github.com/processwire/processwire-issues/issues/775

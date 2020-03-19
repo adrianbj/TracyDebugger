@@ -202,7 +202,8 @@ HTML;
             $versionsDetails['Server Details']['items']['ProcessWire'] = $this->wire('config')->version;
             $versionsDetails['Server Details']['items']['PHP'] = phpversion();
             if(isset($_SERVER['SERVER_SOFTWARE'])) $versionsDetails['Server Details']['items']['Webserver'] = current(explode("PHP", $_SERVER['SERVER_SOFTWARE']));
-            $versionsDetails['Server Details']['items']['MySQL'] = $this->wire('database')->query('select version()')->fetchColumn();
+            $versionsDetails['Server Details']['items']['MySQL Server'] = $this->wire('database')->getAttribute(constant("PDO::ATTR_SERVER_VERSION"));
+            $versionsDetails['Server Details']['items']['MySQL Client'] = $this->wire('database')->getAttribute(constant("PDO::ATTR_CLIENT_VERSION"));
 
 
             // Server Settings
