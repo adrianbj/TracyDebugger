@@ -5,6 +5,10 @@ class TracyPwApiData extends WireData {
     private $n = 0;
     private $pwVars = array();
 
+    public function ___newApiData($type) {
+        // only for hooking
+    }
+
     public function getApiData($type) {
         $cacheName = 'TracyApiData.'.$type;
         $apiData = $this->wire('cache')->get($cacheName);
@@ -53,7 +57,10 @@ class TracyPwApiData extends WireData {
             // tilde hack for this: https://github.com/processwire/processwire-issues/issues/775
             $apiData = '~'.json_encode($apiData);
             $this->wire('cache')->save($cacheName, $apiData, WireCache::expireNever);
+
+            $this->newApiData($type);
         }
+
         return json_decode(ltrim($apiData, '~'), true);
     }
 
@@ -375,6 +382,18 @@ class TracyPwApiData extends WireData {
                             $files['pwFunctions'][$name]['name'] = $name;
                             $files['pwFunctions'][$name]['lineNumber'] = $token[2];
 
+                            if($className) {
+                                if(class_exists("\ProcessWire\\$className")) {
+                                    $r = new \ReflectionMethod("\ProcessWire\\$className", '___'.$methodName);
+                                }
+                                elseif(class_exists($className)) {
+                                    $r = new \ReflectionMethod($className, '___'.$methodName);
+                                }
+                                if(isset($r)) {
+                                    $files['pwFunctions'][$name]['params'] = $this->phpdoc_params($r);
+                                }
+                            }
+
                             $methodStr = ltrim(self::getFunctionLine($lines[($token[2]-1)]), 'function');
                             if(
                                 ($hooks && \TracyDebugger::getDataValue('captainHookToggleDocComment')) ||
@@ -496,6 +515,35 @@ class TracyPwApiData extends WireData {
         else {
             return trim($str);
         }
+    }
+
+
+    private function phpdoc_params(ReflectionMethod $method) : array {
+        // Retrieve the full PhpDoc comment block
+        $doc = $method->getDocComment();
+
+        // Trim each line from space and star chars
+        $lines = array_map(function($line) {
+            return trim(preg_replace('/\t/', '', $line), " *");
+        }, explode("\n", $doc));
+
+        // Retain lines that start with an @
+        $lines = array_filter($lines, function($line) {
+            return strpos($line, "@") === 0;
+        });
+
+        $args = [];
+
+        // Push each value in the corresponding @param array
+        foreach($lines as $line) {
+            list($param, $value) = explode(' ', "$line ", 2);
+            if($param == '@param') {
+                list($type, $var) = explode(' ', "$value ");
+                $args[$var] = $type;
+            }
+        }
+
+        return $args;
     }
 
 
