@@ -5,10 +5,6 @@ class TracyPwApiData extends WireData {
     private $n = 0;
     private $pwVars = array();
 
-    public function ___newApiData($type) {
-        // only for hooking
-    }
-
     public function getApiData($type) {
         $cacheName = 'TracyApiData.'.$type;
         $apiData = $this->wire('cache')->get($cacheName);
@@ -58,7 +54,6 @@ class TracyPwApiData extends WireData {
             $apiData = '~'.json_encode($apiData);
             $this->wire('cache')->save($cacheName, $apiData, WireCache::expireNever);
 
-            $this->newApiData($type);
         }
 
         return json_decode(ltrim($apiData, '~'), true);
