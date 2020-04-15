@@ -110,7 +110,7 @@ body.tracyHidden:before {
     text-transform: none !important;
 }
 
-.tracy-inner input {
+.tracy-inner input:not(#backupFilename) {
     font: normal normal 13px/1.3 Arial, sans-serif !important;
     font-size: 13px !important;
     text-transform: none !important;
@@ -158,7 +158,7 @@ body.tracyHidden:before {
     margin: 0 !important;
 }
 
-.tracy-inner input[type="text"],
+.tracy-inner input[type="text"]:not(#backupFilename),
 .tracy-inner input[type="number"] {
     font: normal normal 13px/1.3 Arial, sans-serif !important;
     height: 30px !important;
@@ -232,6 +232,8 @@ body.tracyHidden:before {
     border: 1px solid #D2D2D2 !important;
     padding-left: 5px !important;
     width: initial !important;
+}
+#tracy-debug input:not(.ace_search_field):not(.disabledButton) {
     opacity: initial !important;
 }
 
@@ -577,7 +579,7 @@ ul.pw-info-links {
 }
 
 #tracy-debug input[type="text"]#tracySnippetName {
-    padding: 4px 30px 4px 8px !important;
+    padding: 4px 35px 4px 4px !important;
     margin: 0 !important;
     height: 29px !important;
     width: 100% !important;
@@ -593,8 +595,7 @@ ul.pw-info-links {
     visibility: hidden;
 }
 
-#tracySnippets,
-#tracyRunnerSnippets {
+#tracySnippets {
     padding: 0 !important;
     border: none !important;
 }
@@ -606,14 +607,12 @@ ul.pw-info-links {
     overflow: auto !important;
 }
 
-#tracySnippets ul,
-#tracyRunnerSnippets ul {
+#tracySnippets ul {
     margin: 0 !important;
     padding: 0 !important;
 }
 
-#tracySnippets li,
-#tracyRunnerSnippets li {
+#tracySnippets li {
     display: block;
     padding: 0 !important;
     border-top: 1px solid #ddd;
@@ -622,65 +621,65 @@ ul.pw-info-links {
     position: relative !important;
 }
 
-#tracySnippets li:first-child,
-#tracyRunnerSnippets li:first-child {
+#tracySnippets li:first-child {
     border-top: none;
 }
 
-#tracySnippets li svg,
-#tracyRunnerSnippets li svg {
+#tracySnippets li svg {
     width: 100% !important;
 }
 
-#tracySnippets li>span,
-#tracyRunnerSnippets li>span {
+#tracySnippets li>span {
     display: block;
-    padding: 5px 5px 5px 9px !important;
+    padding: 3px !important;
     -moz-user-select: none;
     -webkit-user-select: none;
     user-select: none;
 }
 
-#tracySnippets li>span:not(.trashIcon):active,
-#tracyRunnerSnippets li>span:not(.trashIcon):active,
+#tracySnippets li>span:not(.consoleSnippetIcon):active,
 .activeSnippet {
     background: #ebeef0 !important;
 }
 
-#tracySnippets li:hover span:not(.activeSnippet),
-#tracyRunnerSnippets li:hover span:not(.activeSnippet) {
+#tracySnippets li:hover span:not(.activeSnippet) {
     background: #F5F8F9;
 }
 
-#tracySnippets li .trashIcon:active+span {
+#tracySnippets li .consoleSnippetIcon:active+span {
     color: white !important;
     background: #EA2262 !important;
 }
 
-#tracySnippets .trashIcon {
+#tracySnippets .consoleSnippetIcon {
     visibility: hidden;
     background: transparent !important;
     position: absolute !important;
-    padding: 5px !important;
+    padding: 5px 0 5px 5px !important;
     top: 1px !important;
-    right: 5px !important;
+    right: 5px;
     cursor: pointer !important;
+    font-size: 17px;
 }
 
-#tracySnippets .trashIcon:active {
+#tracySnippets .consoleSnippetIcon:active {
     color: white !important;
 }
 
-#tracySnippets .trashIcon:hover {
+#tracySnippets .consoleSnippetIcon:hover {
     color: #EA2262 !important;
 }
 
-#tracySnippets .trashIcon:not(:hover) {
+#tracySnippets .consoleSnippetIcon:not(:hover) {
     color: #a8bdc8 !important;
 }
 
-#tracySnippets li:hover .trashIcon {
+#tracySnippets li:hover .consoleSnippetIcon {
     visibility: visible !important;
+}
+
+.consoleEditIcon {
+    right: 25px !important;
 }
 
 #tracy-debug #saveSnippet {
@@ -695,7 +694,6 @@ ul.pw-info-links {
 }
 
 #tracy-debug #runCode,
-#runSnippetRunnerCode,
 #tracy-debug #historyBack,
 #tracy-debug #historyForward {
     padding: 3px 10px !important;
@@ -719,7 +717,7 @@ ul.pw-info-links {
     border-bottom-right-radius: 0 !important;
 }
 
-.arrowRight {
+.iconFlip {
     transform: scaleX(-1);
     filter: flipH;
     -ms-filter: flipH;
@@ -727,12 +725,12 @@ ul.pw-info-links {
 }
 
 #tracyConsoleStatus {
-    font-style: italic;
-    opacity: 0.8;
+    font-style: normal;
+    font-size: 13px;
 }
 
 .disabledButton {
-    opacity: 0.5;
+    opacity: 0.5 !important;
     cursor: default !important;
 }
 
@@ -769,14 +767,10 @@ ul.pw-info-links {
 #tracy-debug-panel-TerminalPanel {
     height: 75%;
     min-height: 300px !important;
-    width: 1200px;
+    width: 1400px;
     min-width: 825px !important;
     padding: 0px !important;
     margin: 0px !important;
-}
-
-#tracy-debug-panel-SnippetRunnerPanel {
-    width: 1200px;
 }
 
 #tracy-debug-panel-ModuleDisablerPanel {
@@ -790,8 +784,7 @@ ul.pw-info-links {
     height: 75%;
 }
 
-#tracy-debug-panel-ConsolePanel fieldset,
-#tracy-debug-panel-SnippetRunnerPanel fieldset {
+#tracy-debug-panel-ConsolePanel fieldset {
     width: 100% !important;
 }
 
@@ -799,16 +792,14 @@ ul.pw-info-links {
     width: 100% !important;
 }
 
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] #tracyConsoleMainContainer,
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] #tracySnippetRunnerContainer {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] #tracyConsoleMainContainer {
     float: left;
     width: calc(100% - 290px);
     float: left;
     display: block;
 }
 
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-window"] #tracyConsoleMainContainer,
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-window"] #tracySnippetRunnerContainer {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-window"] #tracyConsoleMainContainer {
     float: left;
     width: calc(100% - 240px) !important;
     float: left;
@@ -974,7 +965,6 @@ ul.pw-info-links {
 
 .tracy-DumpPanel h2,
 #tracyConsoleResult h2,
-#tracySnippetRunnerResult h2,
 #tracyPageFilesList h2 {
     font: normal normal Arial, sans-serif !important;
     font-size: 14px !important;

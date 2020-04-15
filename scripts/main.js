@@ -3,19 +3,19 @@ function tracyResizePanel(panel) {
     var tracyPanel = window.Tracy.Debug.panels[panel.id];
     tracyPanel.elem.classList.add('tracy-panel-resized');
     tracyPanel.elem.dataset.tracyContent = true; // hack to satisy condition in Tracy's restorePosition() method
-    var maximizedPanelSettings = JSON.parse(localStorage.getItem(panel.id + '-maximizedSettings'));
-    if(maximizedPanelSettings) {
-        localStorage.setItem(panel.id, localStorage.getItem(panel.id + '-maximizedSettings'));
+
+    var maxPanelWidth = window.clientHeight < window.scrollHeight ? 'calc(100vw - 15px)' : '100vw';
+    var maxPanelHeight = 'calc(100vh - 44px)';
+
+    if(panel.style.width == maxPanelWidth && panel.style.height == maxPanelHeight) {
         tracyPanel.restorePosition();
-        localStorage.removeItem(panel.id + '-maximizedSettings');
     }
     else {
         tracyPanel.savePosition();
-        localStorage.setItem(panel.id + '-maximizedSettings', JSON.stringify(JSON.parse(localStorage.getItem(panel.id))));
         panel.style.left = '0px';
-        panel.style.width = window.clientHeight < window.scrollHeight ? 'calc(100vw - 15px)' : '100vw';
+        panel.style.width = maxPanelWidth;
         panel.style.top = '0px';
-        panel.style.height = 'calc(100vh - 44px)';
+        panel.style.height = maxPanelHeight;
     }
 }
 

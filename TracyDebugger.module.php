@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.20.17',
+            'version' => '4.21.0',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -92,7 +92,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $tempTemplateFilename;
     public static $panelGenerationTime = array();
     public static $hideInAdmin = array('validator', 'templateResources', 'templatePath');
-    public static $superUserOnlyPanels = array('console', 'snippetRunner', 'fileEditor', 'adminer', 'terminal', 'adminTools');
+    public static $superUserOnlyPanels = array('console', 'fileEditor', 'adminer', 'terminal', 'adminTools');
     public static $pageHtml;
     public static $processWireInfoSections = array(
         'configData' => 'Config Data',
@@ -172,7 +172,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'processwireVersion' => 'ProcessWire Version',
         'requestInfo' => 'Request Info',
         'requestLogger' => 'Request Logger',
-        'snippetRunner' => 'Snippet Runner',
         'terminal' => 'Terminal',
         'templatePath' => 'Template Path',
         'templateResources' => 'Template Resources',
@@ -258,6 +257,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "requestLoggerReturnType" => 'array',
             "imagesInFieldListValues" => 0,
             "snippetsPath" => 'templates',
+            "consoleBackupLimit" => 25,
+            "consoleCodePrefix" => '',
+            "userSwitcherSelector" => '',
             "userSwitcherRestricted" => null,
             "userSwitcherIncluded" => null,
             "todoIgnoreDirs" => 'git, svn, images, img, errors, sass-cache, node_modules',
@@ -397,8 +399,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             return;
         }
 
-        // include the codeProcessor (console / snippetRunner) after ready to it has access to any properties/methods added by other modules
-        $this->wire()->addHookAfter('ProcessWire::ready', $this, 'codeProcessor');
+        // include the Console panel's codeProcessor after ready so it has access to any properties/methods added by other modules
+        $this->wire()->addHookAfter('ProcessWire::ready', function($event) {
+            // if it's an ajax request from the Tracy Console panel for code execution, then process and return
+            if($this->wire('config')->ajax && $this->wire('input')->post->tracyConsole == 1) {
+                require_once(__DIR__ . '/includes/CodeProcessor.php');
+                return;
+            }
+        });
 
 
         // log requests for Request Logger
@@ -1289,8 +1297,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($this->tracyEnabled) {
             Debugger::enable($outputMode, $logFolder, $this->data['fromEmail'] != '' && $this->data['email'] != '' ? $this->data['email'] : null);
 
-            // don't email custom (writeError()) logged errors for Console / Snippet Runner panels via CodeProcessor.php
-            if($this->wire('config')->ajax && ($this->wire('input')->post->tracyConsole == 1 || $this->wire('input')->post->tracySnippetRunner == 1)) {
+            // don't email custom (writeError()) logged errors for Console panel via CodeProcessor.php
+            if($this->wire('config')->ajax && $this->wire('input')->post->tracyConsole == 1) {
                 Debugger::getLogger()->mailer = null;
             }
             else {
@@ -1299,7 +1307,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     $m->from($this->data['fromEmail']);
                     $m->to($this->data['email']);
                     $m->subject('Error on server: ' . $this->wire('config')->urls->httpRoot);
-                    $message = nl2br(\Tracy\Logger::formatMessage($message)) . "<br /><br />Remember to <a href='".$this->wire('config')->urls->httpAdmin."module/edit?name=TracyDebugger#errorLogging'>clear email sent flag</a> to receive future emails.";
+                    $message = nl2br(\Tracy\Logger::formatMessage($message)) . "<br /><br />Remember to <a href='".$this->wire('config')->urls->httpRoot."?clearEmailSent=1'>clear email sent flag</a> to receive future emails.";
                     $m->bodyHTML($message);
                     $m->send();
                 };
@@ -1554,24 +1562,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     /**
      * FUNCTIONS CALLED FROM HOOKS
      */
-
-
-    /**
-     * Hook after ProcessWire::ready()
-     *
-     * Process code from Console and Snippet Runner panels
-     *
-     * @param HookEvent $event
-     *
-     */
-    protected function codeProcessor() {
-        // if it's an ajax request from the Tracy Console or Snippet Runner panels for code execution, then process and return
-        if($this->wire('config')->ajax && ($this->wire('input')->post->tracyConsole == 1 || $this->wire('input')->post->tracySnippetRunner == 1)) {
-            require_once(__DIR__ . '/includes/CodeProcessor.php');
-            return;
-        }
-
-    }
 
 
     /**
@@ -2459,7 +2449,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     public static function getDataValue($property) {
-        if(is_array(self::$_data->$property) || is_int(self::$_data->$property)) {
+        if(is_array(self::$_data->$property) || is_int(self::$_data->$property) || $property == 'consoleCodePrefix') {
             return self::$_data->$property;
         }
         else {
@@ -2733,9 +2723,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $this->wire('session')->redirect($this->inputUrl(true).'#wrap_Inputfield_customPhpCode');
         }
 
-        // load ACE editor for Custom PHP panel code entry
+        // load JS files for config settings
         $this->wire('config')->scripts->append($this->wire('config')->urls->TracyDebugger . "scripts/ace-editor/ace.js");
-        $this->wire('config')->scripts->append($this->wire('config')->urls->TracyDebugger . "scripts/config-load-ace.js");
+        $this->wire('config')->scripts->append($this->wire('config')->urls->TracyDebugger . "scripts/config.js");
 
         // convert PW Info panel custom links from path back to ID
         if(isset($data['customPWInfoPanelLinks'])) {
@@ -2784,6 +2774,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         ';
         if(isset($this->wire('config')->tracy) && is_array($this->wire('config')->tracy)) $fieldset->value .= '<p style="margin-top:35px"><i class="fa fa-fw fa-lg fa-exclamation-triangle"></i> You have specified various Tracy settings in <code>$config->tracy</code> that override settings here.</p>';
         $wrapper->add($fieldset);
+
+        // Quick links
+        $f =
+        $this->wire('modules')->get('InputfieldMarkup');
+        $f->id = 'tracy-quick-links';
+        $f->label = __('Quick links', __FILE__);
+        $f->value = '<ul></ul>';
+        $wrapper->add($f);
 
         // Main Setup
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
@@ -3239,6 +3237,80 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('checked', $data['forceEditorLinksToTracy'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
+        // Console Panel
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->attr('name+id', 'consolePanel');
+        $fieldset->label = __('Console panel', __FILE__);
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldRadios");
+        $f->attr('name', 'snippetsPath');
+        $f->label = __('Snippets path', __FILE__);
+        $f->description = __('This path will be checked for snippets.', __FILE__);
+        $f->notes = __('Neither of these directories exist by default so you will need to create them.', __FILE__);
+        $f->addOption('templates', $this->wire('config')->urls->templates.'TracyDebugger/snippets/');
+        $f->addOption('assets', $this->wire('config')->urls->assets.'TracyDebugger/snippets/');
+        if($data['snippetsPath']) $f->attr('value', $data['snippetsPath']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldInteger");
+        $f->attr('name', 'consoleBackupLimit');
+        $f->label = __('Maximum number automatically named backups', __FILE__);
+        $f->description = __('The maximum number of automatically named backups that will be retained before pruning the oldest.', __FILE__);
+        $f->notes = __('Default: 25.', __FILE__);
+        $f->attr('value', $data['consoleBackupLimit']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldTextarea");
+        $f->attr('name', 'consoleCodePrefix');
+        $f->label = __('Code prefix', __FILE__);
+        $f->description = __('Code block that should be added to each snippet stored on disk.', __FILE__);
+        $f->noTrim = true;
+        if($data['consoleCodePrefix']) $f->attr('value', $data['consoleCodePrefix']);
+        $fieldset->add($f);
+
+        // File Editor Panel
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->attr('name+id', 'fileEditorPanel');
+        $fieldset->label = __('File Editor panel', __FILE__);
+        $fieldset->description = __("These settings don't affect links opened via the Editor Protocol Handler. They only affect browsing directly from the File Editor folder/file selector sidebar.");
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldMarkup");
+        $f->attr('name', 'fileEditorNote');
+        $f->showIf = "useOnlineEditor.count>0, onlineEditor!=processFileEdit";
+        $f->value = __('Because you are using Tracy File Editor for the editor links, the File Editor Panel will be enabled, even if you don\'t have it selected in the Frontend/Backend Panel selections above.', __FILE__);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldSelect");
+        $f->attr('name', 'fileEditorBaseDirectory');
+        $f->label = __('Base directory', __FILE__);
+        $f->description = __('A more specific selection results in better performance in the File Editor Panel.', __FILE__);
+        $f->columnWidth = 50;
+        $f->addOption('root', 'Root');
+        $f->addOption('site', 'Site');
+        $f->addOption('templates', 'Templates');
+        $f->required = true;
+        if($data['fileEditorBaseDirectory']) $f->attr('value', $data['fileEditorBaseDirectory']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'fileEditorAllowedExtensions');
+        $f->label = __('Allowed extensions', __FILE__);
+        $f->description = __('Comma separated list of extensions that can be opened in the editor. Fewer extensions results in better performance in the File Editor Panel.', __FILE__);
+        $f->notes = __('Initially configured for: php, module, js, css, txt, log, htaccess', __FILE__);
+        $f->columnWidth = 50;
+        if($data['fileEditorAllowedExtensions']) $f->attr('value', $data['fileEditorAllowedExtensions']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'fileEditorExcludedDirs');
+        $f->label = __('Excluded directories', __FILE__);
+        $f->description = __('Comma separated list of directories that will be excluded from the tree.', __FILE__);
+        $f->notes = __('Initially configured for: site/assets', __FILE__);
+        if($data['fileEditorExcludedDirs']) $f->attr('value', $data['fileEditorExcludedDirs']);
+        $fieldset->add($f);
+
         // Code Editor settings
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
         $fieldset->attr('name+id', 'codeEditorSettings');
@@ -3343,48 +3415,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->description = __('Link to snippets file for use in Console and File Editor panels. Can be local or remote, eg. a Github Gist file.', __FILE__);
         $f->notes = __('If Github gist, you must use a service such as [https://rawgit.com/](https://rawgit.com/)', __FILE__);
         if($data['customSnippetsUrl']) $f->attr('value', $data['customSnippetsUrl']);
-        $fieldset->add($f);
-
-        // File Editor Panel
-        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->attr('name+id', 'fileEditorPanel');
-        $fieldset->label = __('File Editor panel', __FILE__);
-        $fieldset->description = __("These settings don't affect links opened via the Editor Protocol Handler. They only affect browsing directly from the File Editor folder/file selector sidebar.");
-        $wrapper->add($fieldset);
-
-        $f = $this->wire('modules')->get("InputfieldMarkup");
-        $f->attr('name', 'fileEditorNote');
-        $f->showIf = "useOnlineEditor.count>0, onlineEditor!=processFileEdit";
-        $f->value = __('Because you are using Tracy File Editor for the editor links, the File Editor Panel will be enabled, even if you don\'t have it selected in the Frontend/Backend Panel selections above.', __FILE__);
-        $fieldset->add($f);
-
-        $f = $this->wire('modules')->get("InputfieldSelect");
-        $f->attr('name', 'fileEditorBaseDirectory');
-        $f->label = __('Base directory', __FILE__);
-        $f->description = __('A more specific selection results in better performance in the File Editor Panel.', __FILE__);
-        $f->columnWidth = 50;
-        $f->addOption('root', 'Root');
-        $f->addOption('site', 'Site');
-        $f->addOption('templates', 'Templates');
-        $f->required = true;
-        if($data['fileEditorBaseDirectory']) $f->attr('value', $data['fileEditorBaseDirectory']);
-        $fieldset->add($f);
-
-        $f = $this->wire('modules')->get("InputfieldText");
-        $f->attr('name', 'fileEditorAllowedExtensions');
-        $f->label = __('Allowed extensions', __FILE__);
-        $f->description = __('Comma separated list of extensions that can be opened in the editor. Fewer extensions results in better performance in the File Editor Panel.', __FILE__);
-        $f->notes = __('Initially configured for: php, module, js, css, txt, log, htaccess', __FILE__);
-        $f->columnWidth = 50;
-        if($data['fileEditorAllowedExtensions']) $f->attr('value', $data['fileEditorAllowedExtensions']);
-        $fieldset->add($f);
-
-        $f = $this->wire('modules')->get("InputfieldText");
-        $f->attr('name', 'fileEditorExcludedDirs');
-        $f->label = __('Excluded directories', __FILE__);
-        $f->description = __('Comma separated list of directories that will be excluded from the tree.', __FILE__);
-        $f->notes = __('Initially configured for: site/assets', __FILE__);
-        if($data['fileEditorExcludedDirs']) $f->attr('value', $data['fileEditorExcludedDirs']);
         $fieldset->add($f);
 
         // ProcessWire Info Panel
@@ -3669,22 +3699,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('checked', $data['variablesShowPwObjects'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
-        // Snippet Runner Panel
-        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->attr('name+id', 'snippetRunnerPanel');
-        $fieldset->label = __('Snippet Runner panel', __FILE__);
-        $wrapper->add($fieldset);
-
-        $f = $this->wire('modules')->get("InputfieldRadios");
-        $f->attr('name', 'snippetsPath');
-        $f->label = __('Snippets path', __FILE__);
-        $f->description = __('This path will be checked for snippets.', __FILE__);
-        $f->notes = __('Neither of these directories exist by default so you will need to create them.', __FILE__);
-        $f->addOption('templates', $this->wire('config')->urls->templates.'TracyDebugger/snippets/');
-        $f->addOption('assets', $this->wire('config')->urls->assets.'TracyDebugger/snippets/');
-        if($data['snippetsPath']) $f->attr('value', $data['snippetsPath']);
-        $fieldset->add($f);
-
         // Custom PHP Panel
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
         $fieldset->attr('name+id', 'customPhpPanel');
@@ -3711,11 +3725,22 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $fieldset->label = __('User Switcher panel', __FILE__);
         $wrapper->add($fieldset);
 
+        $f = $this->wire('modules')->get("InputfieldMarkup");
+        $f->label = __(' ', __FILE__);
+        $f->value = '<p>These options can be useful if you use the User system to store frontend "members" and the system has a lot of users.<br />Do not use more than one of the following three options for limiting the list of users.</p>';
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'userSwitcherSelector');
+        $f->label = __('Selector', __FILE__);
+        $f->description = __('Use this to determine which users will be available.', __FILE__);
+        if($data['userSwitcherSelector']) $f->attr('value', $data['userSwitcherSelector']);
+        $fieldset->add($f);
+
         $f = $this->wire('modules')->get("InputfieldAsmSelect");
         $f->attr('name', 'userSwitcherRestricted');
         $f->label = __('Excluded Roles', __FILE__);
         $f->description = __('Users with selected roles will not be available from the list of users to switch to.', __FILE__);
-        $f->notes = __('These options can be useful if you use the User system to store frontend "members" and the system has a lot of users.', __FILE__);
         $f->columnWidth = 50;
         $f->setAsmSelectOption('sortable', false);
         foreach($this->wire('roles') as $role) {
@@ -3728,7 +3753,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'userSwitcherIncluded');
         $f->label = __('Included Roles', __FILE__);
         $f->description = __('Only users with these selected roles will be available from the list of users to switch to. If none selected, then all will be available unless the excluded roles is populated.', __FILE__);
-        $f->notes = __('Only use one of these options: either excluded or included.', __FILE__);
         $f->columnWidth = 50;
         $f->setAsmSelectOption('sortable', false);
         foreach($this->wire('roles') as $role) {
@@ -4035,6 +4059,24 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         return $wrapper;
 
+    }
+
+
+    public function ___upgrade($fromVersion, $toVersion) {
+
+        // move old snippets from Tracy module settings DB table to filesystem
+        if($this->data['snippets']) {
+            $this->wire('log')->save('testing', 'move snippets');
+            $snippetsPath = $this->wire('config')->paths->site.$this->data['snippetsPath'].'/TracyDebugger/snippets/';
+            if(!file_exists($snippetsPath)) wireMkdir($snippetsPath, true);
+            foreach(json_decode($this->data['snippets']) as $snippet) {
+                file_put_contents($snippetsPath.$snippet->name.'.php', urldecode($snippet->code));
+                touch($snippetsPath.$snippet->name.'.php', substr($snippet->modified, 0, -3));
+            }
+            $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
+            unset($configData['snippets']);
+            $this->wire('modules')->saveModuleConfigData($this, $configData);
+        }
     }
 
 }

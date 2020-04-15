@@ -23,9 +23,6 @@ if($user->isSuperuser() || \TracyDebugger::$validLocalUser || \TracyDebugger::$v
     if(isset($_POST['tracyConsole'])) {
         $code = $_POST['code'];
     }
-    elseif(isset($_POST['tracySnippetRunner']) && isset($_POST['file']) && $_POST['file'] != '') {
-        $code = file_get_contents($_POST['file']);
-    }
     else {
         $code = null;
     }
@@ -42,7 +39,7 @@ if($user->isSuperuser() || \TracyDebugger::$validLocalUser || \TracyDebugger::$v
         throw new WireException("Unable to create cache path: $cachePath");
     }
 
-    $this->file = $cachePath.(isset($_POST['tracyConsole']) ? 'consoleCode.php' : 'snippetRunner.php');
+    $this->file = $cachePath.'consoleCode.php';
     $tokens = token_get_all($code);
     $nextStringIsNamespace = false;
     $nameSpace = null;
@@ -91,6 +88,53 @@ if($user->isSuperuser() || \TracyDebugger::$validLocalUser || \TracyDebugger::$v
 
     if(!file_put_contents($this->file, $code, LOCK_EX)) throw new WireException("Unable to write file: $this->file");
     if($this->wire('config')->chmodFile) chmod($this->file, octdec($this->wire('config')->chmodFile));
+
+    if($this->wire('input')->post->dbBackup === "true") {
+
+        setcookie('tracyDbBackup', 1, time() + 3600, '/');
+        setcookie('tracyDbBackupFilename', $input->post->text('backupFilename'), time() + 3600, '/');
+
+        $backupDir = $this->wire('config')->paths->assets . 'backups/database/';
+        $filename = basename($this->wire('sanitizer')->filename($input->post('backupFilename')), '.sql');
+
+		if(empty($filename)) {
+            $filename = 'tracy-console_' . date('Y-m-d-H-i-s');
+            $files = glob($backupDir . "tracy-console-*");
+            if($files) {
+                if(count($files) >= \TracyDebugger::getDataValue('consoleBackupLimit')) {
+                    array_multisort(
+                        array_map('filemtime', $files),
+                        SORT_NUMERIC,
+                        SORT_ASC,
+                        $files
+                    );
+                    bd($files[0]);
+                    unlink($files[0]);
+                }
+            }
+        }
+		$_filename = $filename;
+		$filename .= '.sql';
+
+		if(preg_match('/^(.+)-(\d+)$/', $_filename, $matches)) {
+			$_filename = $matches[1];
+			$n = $matches[2];
+		} else {
+			$n = 0;
+		}
+
+		while(file_exists($backupDir . $filename)) {
+			$filename = $_filename . "-" . (++$n) . ".sql";
+		}
+
+        if(!file_exists($backupDir)) wireMkdir($backupDir);
+
+        $backup = new WireDatabaseBackup($backupDir);
+        $backup->setDatabase($this->wire('database'));
+        $backup->setDatabaseConfig($this->wire('config'));
+        $file = $backup->backup(array('filename' => $filename));
+
+    }
 
     if($page->template != 'admin' && $this->wire('input')->post->accessTemplateVars === "true") {
         // make vars from the page template available to the console code
@@ -240,7 +284,7 @@ function tracyConsoleShutdownHandler() {
 
 function writeError($error) {
     $customErrStr = $error['message'] . ' on line: ' . (strpos($error['file'], 'cache'.DIRECTORY_SEPARATOR.'TracyDebugger') !== false ? $error['line'] - 1 : $error['line']) . (strpos($error['file'], 'cache'.DIRECTORY_SEPARATOR.'TracyDebugger') !== false ? '' : ' in ' . str_replace(wire('config')->paths->cache . 'FileCompiler'.DIRECTORY_SEPARATOR, '../', $error['file']));
-    $customErrStrLog = $customErrStr . (strpos($error['file'], 'cache'.DIRECTORY_SEPARATOR.'TracyDebugger') !== false ? ' in '.(isset($_POST['tracySnippetRunner']) ? 'Snippet Runner Panel' : 'Tracy Console Panel') : '');
+    $customErrStrLog = $customErrStr . (strpos($error['file'], 'cache'.DIRECTORY_SEPARATOR.'TracyDebugger') !== false ? ' in Tracy Console Panel' : '');
     \TD::fireLog($customErrStrLog);
     \TD::log($customErrStrLog, 'error');
 
@@ -250,5 +294,4 @@ function writeError($error) {
     // this means that the browser will receive a 200 when it may have been a 500,
     // but think that is ok in this case
     echo $error['type'].': '.$customErrStr;
-    echo '<div style="border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;"></div>';
 }
