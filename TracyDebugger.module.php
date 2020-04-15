@@ -3246,8 +3246,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = $this->wire('modules')->get("InputfieldRadios");
         $f->attr('name', 'snippetsPath');
         $f->label = __('Snippets path', __FILE__);
-        $f->description = __('This path will be checked for snippets.', __FILE__);
-        $f->notes = __('Neither of these directories exist by default so you will need to create them.', __FILE__);
+        $f->description = __('Directory where snippets will be saved to / loaded from', __FILE__);
+        $f->notes = __('Default: templates', __FILE__);
         $f->addOption('templates', $this->wire('config')->urls->templates.'TracyDebugger/snippets/');
         $f->addOption('assets', $this->wire('config')->urls->assets.'TracyDebugger/snippets/');
         if($data['snippetsPath']) $f->attr('value', $data['snippetsPath']);
