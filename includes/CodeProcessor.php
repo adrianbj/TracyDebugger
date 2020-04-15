@@ -98,7 +98,7 @@ if($user->isSuperuser() || \TracyDebugger::$validLocalUser || \TracyDebugger::$v
         $filename = basename($this->wire('sanitizer')->filename($input->post('backupFilename')), '.sql');
 
 		if(empty($filename)) {
-            $filename = 'tracy-console_' . date('Y-m-d-H-i-s');
+            $filename = 'tracy-console-' . date('Y-m-d-H-i-s');
             $files = glob($backupDir . "tracy-console-*");
             if($files) {
                 if(count($files) >= \TracyDebugger::getDataValue('consoleBackupLimit')) {
