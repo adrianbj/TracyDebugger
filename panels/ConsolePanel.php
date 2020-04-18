@@ -193,7 +193,7 @@ class ConsolePanel extends BasePanel {
                 maxHistoryItems: 25,
                 historyItem: localStorage.getItem("tracyConsoleHistoryItem") ? localStorage.getItem("tracyConsoleHistoryItem") : 1,
                 historyCount: localStorage.getItem("tracyConsoleHistoryCount"),
-                loadedSnippetCode: null,
+                diskSnippetCode: null,
                 desc: false,
                 inAdmin: "$inAdmin",
                 customSnippetsUrl: "$customSnippetsUrl",
@@ -361,7 +361,8 @@ class ConsolePanel extends BasePanel {
                     xmlhttp.onreadystatechange = function() {
                         if(xmlhttp.readyState == XMLHttpRequest.DONE) {
                             if(xmlhttp.status == 200 && xmlhttp.responseText !== "[]") {
-                                tracyConsole.loadedSnippetCode = xmlhttp.responseText;
+                                tracyConsole.diskSnippetCode = xmlhttp.responseText;
+                                localStorage.setItem("diskSnippetCode", tracyConsole.diskSnippetCode);
                                 tracyConsole.tce.setValue(xmlhttp.responseText);
                                 tracyConsole.tce.gotoLine(0, 0);
 
@@ -369,7 +370,7 @@ class ConsolePanel extends BasePanel {
                                 tracyJSLoader.load(tracyConsole.tracyModuleUrl + "scripts/ace-editor/ext-modelist.js", function() {
                                     tracyConsole.modelist = ace.require("ace/ext/modelist");
                                     var mode = tracyConsole.modelist.getModeForPath(tracyConsole.rootPath+tracyConsole.snippetsPath+name).mode;
-                                    if(tracyConsole.loadedSnippetCode.indexOf('<?php') !== -1) {
+                                    if(tracyConsole.diskSnippetCode.indexOf('<?php') !== -1) {
                                         mode = 'ace/mode/php';
                                     }
                                     else {
@@ -458,6 +459,7 @@ class ConsolePanel extends BasePanel {
                     var tracySnippetName = document.getElementById("tracySnippetName").value;
                     if(tracySnippetName != "") {
                         this.modifyConsoleSnippets(tracySnippetName, encodeURIComponent(this.tce.getValue()));
+                        localStorage.setItem("diskSnippetCode", this.tce.getValue());
                         this.disableButton("saveSnippet");
                         this.tce.focus();
                     }
@@ -569,6 +571,7 @@ class ConsolePanel extends BasePanel {
 
                 newSnippet: function() {
                     tracyConsole.tce.setValue('');
+                    tracyConsole.tce.session.setMode({path:"ace/mode/php", inline:true});
                     localStorage.removeItem("tracyConsoleSelectedSnippet");
                     if(document.querySelector(".activeSnippet")) {
                         document.querySelector(".activeSnippet").classList.remove("activeSnippet");
@@ -595,7 +598,7 @@ class ConsolePanel extends BasePanel {
                 },
 
                 toggleSaveButton: function() {
-                    if(tracyConsole.loadedSnippetCode && tracyConsole.tce.getValue() != tracyConsole.loadedSnippetCode) {
+                    if(localStorage.getItem("diskSnippetCode") != tracyConsole.tce.getValue()) {
                         tracyConsole.enableButton("saveSnippet");
                     }
                     else {
@@ -656,6 +659,9 @@ class ConsolePanel extends BasePanel {
 
                     tracyConsole.tce.on("beforeEndOperation", function() {
                         tracyConsole.saveToLocalStorage('tracyConsole');
+                        if(tracyConsole.tce.getValue().indexOf('<?php') !== -1) {
+                            tracyConsole.tce.session.setMode('ace/mode/php');
+                        }
                         tracyConsole.toggleSaveButton();
                         // focus set to false to prevent breaking the Ace search box
                         tracyConsole.resizeAce(false);
@@ -687,7 +693,6 @@ class ConsolePanel extends BasePanel {
                             count = tracyConsole.tce.session.getLength();
                             tracyConsole.tce.gotoLine(count, tracyConsole.tce.session.getLine(count-1).length);
                         }
-                        tracyConsole.loadedSnippetCode = tracyConsole.tce.getValue();
 
                         // set mode to php
                         if(JSON.parse(localStorage.getItem("tracyConsole")).code.indexOf('<?php') !== -1) {
@@ -951,6 +956,7 @@ class ConsolePanel extends BasePanel {
                                 tracyConsole.enableButton("reloadSnippet");
                             }
                         }
+
                         tracyConsole.sortList('alphabetical');
 
                         // history buttons
