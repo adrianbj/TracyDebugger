@@ -283,8 +283,13 @@ class ConsolePanel extends BasePanel {
                 },
 
                 reloadAndRun: function() {
-                    document.getElementById("tracyConsoleStatus").innerHTML = "<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> Processing";
-                    this.reloadSnippet(true);
+                    if(localStorage.getItem("tracyConsoleSelectedSnippet")) {
+                        document.getElementById("tracyConsoleStatus").innerHTML = "<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> Processing";
+                        this.reloadSnippet(true);
+                    }
+                    else {
+                        this.processTracyCode();
+                    }
                 },
 
                 tracyIncludeCode: function(when) {
@@ -1111,17 +1116,15 @@ HTML;
                         }
 
                         $out .= '
-                        <span style="display:inline-block; padding: 0 20px 10px 0;">
-                            <select name="includeCode" title="When to execute code" onchange="tracyConsole.tracyIncludeCode(this)" />
+                        <span style="display:inline-block; padding-right: 10px;">
+                            <select name="includeCode" style="height: 24px !important" title="When to execute code" onchange="tracyConsole.tracyIncludeCode(this)" />
                                 <option value="off"' . (!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? ' selected' : '') . '>@ Run</option>
                                 <option value="init"' . ($this->tracyIncludeCode && $this->tracyIncludeCode['when'] === 'init' ? ' selected' : '') . '>@ Init</option>
                                 <option value="ready"' . ($this->tracyIncludeCode && $this->tracyIncludeCode['when'] === 'ready' ? ' selected' : '') . '>@ Ready</option>
                                 <option value="finished"' . ($this->tracyIncludeCode && $this->tracyIncludeCode['when'] === 'finished' ? ' selected' : '') . '>@ Finished</option>
                             </select>
                         </span>
-                        <span style="display:inline-block; padding: 0 20px 10px 0;">
-                            <input id="runInjectButton" title="Run (CTRL/CMD + Enter) | Clear & Run (ALT/OPT + Enter) | Reload from Disk, Clear & Run (CTRL/CMD + ALT/OPT + Enter)" type="submit" onclick="tracyConsole.processTracyCode()" value="' . (!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? 'Run' : 'Inject') . '" />
-                        </span>
+                        <input id="runInjectButton" title="&bull; Run (CTRL/CMD + Enter)&#10;&bull; Clear & Run (ALT/OPT + Enter)&#10;&bull; Reload from Disk, Clear & Run&#10;(CTRL/CMD + ALT/OPT + Enter)" type="submit" onclick="tracyConsole.processTracyCode()" value="' . (!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? 'Run' : 'Inject') . '" />
                     </div>
 
                     <div id="tracyConsoleContainer" class="split" style="height: 100%; min-height: '.$codeLineHeight.'px">
