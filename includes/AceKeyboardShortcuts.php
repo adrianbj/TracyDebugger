@@ -7,31 +7,41 @@ $aceKeyboardShortcuts = '
         <td><a href="https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts" target="_blank">https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts</a></td>
     </tr>
 </table>
-<br />
-<table>
-    <th colspan="2">Code Execution</th>
-    <tr>
-        <td>CTRL/CMD + Enter</td>
-        <td>Run</td>
-    </tr>
-    <tr>
-        <td>ALT/OPT + Enter</td>
-        <td>Clear & Run</td>
-    </tr>
-</table>
-<br />
-<table>
-    <th colspan="2">Execution History</th>
-    <tr>
-        <td>ALT + PageUp</td>
-        <td>Back</td>
-    </tr>
-    <tr>
-        <td>ALT + PageDown</td>
-        <td>Forward</td>
-    </tr>
-</table>
-<br />
+<br />';
+
+if($panel == 'console') {
+    $aceKeyboardShortcuts .= '
+    <table>
+        <th colspan="2">Code Execution</th>
+        <tr>
+            <td>CTRL/CMD + Enter</td>
+            <td>Run</td>
+        </tr>
+        <tr>
+            <td>ALT/OPT + Enter</td>
+            <td>Clear & Run</td>
+        </tr>
+        <tr>
+            <td>CTRL/CMD + ALT/OPT + Enter</td>
+            <td>Reload from Disk, Clear & Run</td>
+        </tr>
+    </table>
+    <br />
+    <table>
+        <th colspan="2">Execution History</th>
+        <tr>
+            <td>ALT + PageUp</td>
+            <td>Back</td>
+        </tr>
+        <tr>
+            <td>ALT + PageDown</td>
+            <td>Forward</td>
+        </tr>
+    </table>
+    <br />';
+}
+
+$aceKeyboardShortcuts .= '
 <table>
     <th colspan="2">Screen / Pane Manipulation</th>
     <tr>

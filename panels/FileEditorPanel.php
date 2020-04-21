@@ -413,6 +413,7 @@ HTML;
             <div id="tracyFileEditorContainer" style="height: 100%;">
 
                 <div id="fileEditorKeyboardShortcuts" class="keyboardShortcuts tracyHidden">';
+                    $panel = 'fileEditor';
                     include($this->wire('config')->paths->TracyDebugger.'includes/AceKeyboardShortcuts.php');
                     $out .= $aceKeyboardShortcuts . '
                 </div>';

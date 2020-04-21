@@ -1,5 +1,4 @@
 <?php
-
 unset($this->wire('input')->cookie->tracyCodeError);
 setcookie("tracyCodeError", "", time()-3600, '/');
 
@@ -89,125 +88,127 @@ if($user->isSuperuser() || \TracyDebugger::$validLocalUser || \TracyDebugger::$v
     if(!file_put_contents($this->file, $code, LOCK_EX)) throw new WireException("Unable to write file: $this->file");
     if($this->wire('config')->chmodFile) chmod($this->file, octdec($this->wire('config')->chmodFile));
 
-    if($this->wire('input')->post->dbBackup === "true") {
+    if($this->wire('input')->cookie->tracyCodeReturn != "no") {
 
-        setcookie('tracyDbBackup', 1, time() + 3600, '/');
-        setcookie('tracyDbBackupFilename', $input->post->text('backupFilename'), time() + 3600, '/');
+        if($this->wire('input')->post->dbBackup === "true") {
 
-        $backupDir = $this->wire('config')->paths->assets . 'backups/database/';
-        $filename = basename($this->wire('sanitizer')->filename($input->post('backupFilename')), '.sql');
+            setcookie('tracyDbBackup', 1, time() + 3600, '/');
+            setcookie('tracyDbBackupFilename', $input->post->text('backupFilename'), time() + 3600, '/');
 
-		if(empty($filename)) {
-            $filename = 'tracy-console-' . date('Y-m-d-H-i-s');
-            $files = glob($backupDir . "tracy-console-*");
-            if($files) {
-                if(count($files) >= \TracyDebugger::getDataValue('consoleBackupLimit')) {
-                    array_multisort(
-                        array_map('filemtime', $files),
-                        SORT_NUMERIC,
-                        SORT_ASC,
-                        $files
-                    );
-                    bd($files[0]);
-                    unlink($files[0]);
+            $backupDir = $this->wire('config')->paths->assets . 'backups/database/';
+            $filename = basename($this->wire('sanitizer')->filename($input->post('backupFilename')), '.sql');
+
+            if(empty($filename)) {
+                $filename = 'tracy-console-' . date('Y-m-d-H-i-s');
+                $files = glob($backupDir . "tracy-console-*");
+                if($files) {
+                    if(count($files) >= \TracyDebugger::getDataValue('consoleBackupLimit')) {
+                        array_multisort(
+                            array_map('filemtime', $files),
+                            SORT_NUMERIC,
+                            SORT_ASC,
+                            $files
+                        );
+                        unlink($files[0]);
+                    }
                 }
             }
+            $_filename = $filename;
+            $filename .= '.sql';
+
+            if(preg_match('/^(.+)-(\d+)$/', $_filename, $matches)) {
+                $_filename = $matches[1];
+                $n = $matches[2];
+            } else {
+                $n = 0;
+            }
+
+            while(file_exists($backupDir . $filename)) {
+                $filename = $_filename . "-" . (++$n) . ".sql";
+            }
+
+            if(!file_exists($backupDir)) wireMkdir($backupDir);
+
+            $backup = new WireDatabaseBackup($backupDir);
+            $backup->setDatabase($this->wire('database'));
+            $backup->setDatabaseConfig($this->wire('config'));
+            $file = $backup->backup(array('filename' => $filename));
         }
-		$_filename = $filename;
-		$filename .= '.sql';
 
-		if(preg_match('/^(.+)-(\d+)$/', $_filename, $matches)) {
-			$_filename = $matches[1];
-			$n = $matches[2];
-		} else {
-			$n = 0;
-		}
+        if($page->template != 'admin' && $this->wire('input')->post->accessTemplateVars === "true") {
+            // make vars from the page template available to the console code
+            // get all current vars
+            $currentVars = get_defined_vars();
+            // get vars from the page's template file
+            ob_start();
+            foreach($this->wire('session')->tracyIncludedFiles as $key => $path) {
+                if($path != $this->file && $path != $page->template->filename) {
+                    include_once($path);
+                }
+            }
+            // template file is excluded above and included now, after all others, to prevent include errors to
+            // relative file paths preventing access to all variables/functions - happens especially when filecompiler is off
+            include_once($page->template->filename);
 
-		while(file_exists($backupDir . $filename)) {
-			$filename = $_filename . "-" . (++$n) . ".sql";
-		}
+            $templateVars = get_defined_vars();
+            ob_end_clean();
+            // remove the current vars from the list
+            foreach($currentVars as $key => $value) {
+                unset($templateVars[$key]);
+            }
+            unset($templateVars['currentVars']);
 
-        if(!file_exists($backupDir)) wireMkdir($backupDir);
+            // this needs to be here, not before the template != 'admin' conditional
+            // because it is converted to an integer during output buffering
+            $t = new TemplateFile($this->file);
 
-        $backup = new WireDatabaseBackup($backupDir);
-        $backup->setDatabase($this->wire('database'));
-        $backup->setDatabaseConfig($this->wire('config'));
-        $file = $backup->backup(array('filename' => $filename));
-
-    }
-
-    if($page->template != 'admin' && $this->wire('input')->post->accessTemplateVars === "true") {
-        // make vars from the page template available to the console code
-        // get all current vars
-        $currentVars = get_defined_vars();
-        // get vars from the page's template file
-        ob_start();
-        foreach($this->wire('session')->tracyIncludedFiles as $key => $path) {
-            if($path != $this->file && $path != $page->template->filename) {
-                include_once($path);
+            // populate template with all $templateVars
+            foreach($templateVars as $key => $value) {
+                $t->set($key, $value);
             }
         }
-        // template file is excluded above and included now, after all others, to prevent include errors to
-        // relative file paths preventing access to all variables/functions - happens especially when filecompiler is off
-        include_once($page->template->filename);
 
-        $templateVars = get_defined_vars();
-        ob_end_clean();
-        // remove the current vars from the list
-        foreach($currentVars as $key => $value) {
-            unset($templateVars[$key]);
+        // re-populate various $input properties from version stored in session
+        foreach($this->wire('session')->tracyGetData as $k => $v) {
+            $this->wire('input')->get->$k = $v;
         }
-        unset($templateVars['currentVars']);
 
-        // this needs to be here, not before the template != 'admin' conditional
-        // because it is converted to an integer during output buffering
-        $t = new TemplateFile($this->file);
-
-        // populate template with all $templateVars
-        foreach($templateVars as $key => $value) {
-            $t->set($key, $value);
+        $postData = $this->wire('session')->tracyPostData;
+        foreach($this->wire('input')->post as $k => $v) {
+            unset($this->wire('input')->post->$k);
         }
-    }
+        foreach($postData as $k => $v) {
+            $this->wire('input')->post->$k = $v;
+        }
 
-    // re-populate various $input properties from version stored in session
-    foreach($this->wire('session')->tracyGetData as $k => $v) {
-        $this->wire('input')->get->$k = $v;
-    }
-
-    $postData = $this->wire('session')->tracyPostData;
-    foreach($this->wire('input')->post as $k => $v) {
-        unset($this->wire('input')->post->$k);
-    }
-    foreach($postData as $k => $v) {
-        $this->wire('input')->post->$k = $v;
-    }
-
-    foreach($this->wire('session')->tracyWhitelistData as $k => $v) {
-        $this->wire('input')->whitelist->$k = $v;
-    }
+        foreach($this->wire('session')->tracyWhitelistData as $k => $v) {
+            $this->wire('input')->whitelist->$k = $v;
+        }
 
 
-    // if in admin then $t won't have been instantiated above so do it now
-    if(!isset($t) || !$t instanceof TemplateFile) $t = new TemplateFile($this->file);
+        // if in admin then $t won't have been instantiated above so do it now
+        if(!isset($t) || !$t instanceof TemplateFile) $t = new TemplateFile($this->file);
 
-    \Tracy\Debugger::timer('consoleCode');
-    $initialMemory = memory_get_usage();
-    // output rendered result of code
-    try {
-        echo $t->render();
-    }
-    catch (\Exception $e) {
-        tracyConsoleExceptionHandler($e);
-    }
-    echo '
-    <div style="border-top: 1px dotted #cccccc; color:#A9ABAB; border-bottom: 1px solid #cccccc; color:#A9ABAB; font-size: 10px; padding: 3px; margin: 10px 0 0 0;">' .
-        \TracyDebugger::formatTime(\Tracy\Debugger::timer('consoleCode'), false) . ', ' .
-        \TracyDebugger::human_filesize((memory_get_usage() - $initialMemory), false) . '
-    </div>';
+        \Tracy\Debugger::timer('consoleCode');
+        $initialMemory = memory_get_usage();
+        // output rendered result of code
+        try {
+            echo $t->render();
+        }
+        catch (\Exception $e) {
+            tracyConsoleExceptionHandler($e);
+        }
+        echo '
+        <div style="border-top: 1px dotted #cccccc; color:#A9ABAB; border-bottom: 1px solid #cccccc; color:#A9ABAB; font-size: 10px; padding: 3px; margin: 10px 0 0 0;">' .
+            \TracyDebugger::formatTime(\Tracy\Debugger::timer('consoleCode'), false) . ', ' .
+            \TracyDebugger::human_filesize((memory_get_usage() - $initialMemory), false) . '
+        </div>';
 
-    // fix for updating AJAX bar
-    \Tracy\Debugger::getBar()->render();
-    \Tracy\Debugger::$showBar = false;
+        // fix for updating AJAX bar
+        \Tracy\Debugger::getBar()->render();
+        \Tracy\Debugger::$showBar = false;
+
+    }
 
     exit;
 }
