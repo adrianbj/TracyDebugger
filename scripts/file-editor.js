@@ -97,10 +97,45 @@ if(!tracyFileEditorLoader) {
             }
         },
 
+        populateFileEditor: function(filePath, line) {
+
+            document.getElementById("fileEditorFilePath").value = filePath;
+            document.cookie = "tracyFileEditorFilePath=" + filePath + "; path=/";
+            document.getElementById("panelTitleFilePath").innerHTML = "/" + filePath;
+
+            if(typeof ace === "undefined" || typeof tracyFileEditor === "undefined" || !tracyFileEditor.tfe) {
+                window.requestAnimationFrame(populateFileEditor);
+            }
+            else {
+                var xmlhttp;
+                xmlhttp = new XMLHttpRequest();
+                xmlhttp.onreadystatechange = function() {
+                    if(xmlhttp.readyState == XMLHttpRequest.DONE) {
+                        if(xmlhttp.status == 200 && xmlhttp.responseText !== "" && xmlhttp.responseText !== "[]") {
+                            var fileData = JSON.parse(xmlhttp.responseText);
+                            tracyFileEditorLoader.generateButtons(fileData);
+                            tracyFileEditor.tfe.setValue(fileData["contents"]);
+                            tracyFileEditor.tfe.gotoLine(line, 0);
+
+                            // set mode appropriately
+                            var mode = tracyFileEditor.modelist.getModeForPath(filePath).mode;
+                            tracyFileEditor.tfe.session.setMode(mode);
+                        }
+                        xmlhttp.getAllResponseHeaders();
+                    }
+                };
+                xmlhttp.open("POST", "./", true);
+                xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+                xmlhttp.send("filePath=" + filePath);
+                init_php_file_tree(filePath);
+            }
+        },
+
         loadFileEditor: function(filePath, line) {
 
             if(document.getElementById("tracy-debug-panel-FileEditorPanel").classList.contains("tracy-mode-window")) {
-                populateFileEditor();
+                this.populateFileEditor(filePath, line);
             }
             else {
                 if(!window.Tracy.Debug.panels || !document.getElementById("tracy-debug-panel-FileEditorPanel")) {
@@ -111,45 +146,10 @@ if(!tracyFileEditorLoader) {
                     if(panel.elem.dataset.tracyContent) {
                         panel.init();
                     }
-                    populateFileEditor();
+                    this.populateFileEditor(filePath, line);
                     panel.toFloat();
                     panel.focus();
                     tracyFileEditor.resizeAce();
-                }
-            }
-
-            function populateFileEditor() {
-
-                document.getElementById("fileEditorFilePath").value = filePath;
-                document.cookie = "tracyFileEditorFilePath=" + filePath + "; path=/";
-                document.getElementById("panelTitleFilePath").innerHTML = "/" + filePath;
-
-                if(typeof ace === "undefined" || typeof tracyFileEditor === "undefined" || !tracyFileEditor.tfe) {
-                    window.requestAnimationFrame(populateFileEditor);
-                }
-                else {
-                    var xmlhttp;
-                    xmlhttp = new XMLHttpRequest();
-                    xmlhttp.onreadystatechange = function() {
-                        if(xmlhttp.readyState == XMLHttpRequest.DONE) {
-                            if(xmlhttp.status == 200 && xmlhttp.responseText !== "" && xmlhttp.responseText !== "[]") {
-                                var fileData = JSON.parse(xmlhttp.responseText);
-                                tracyFileEditorLoader.generateButtons(fileData);
-                                tracyFileEditor.tfe.setValue(fileData["contents"]);
-                                tracyFileEditor.tfe.gotoLine(line, 0);
-
-                                // set mode appropriately
-                                var mode = tracyFileEditor.modelist.getModeForPath(filePath).mode;
-                                tracyFileEditor.tfe.session.setMode(mode);
-                            }
-                            xmlhttp.getAllResponseHeaders();
-                        }
-                    };
-                    xmlhttp.open("POST", "./", true);
-                    xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                    xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-                    xmlhttp.send("filePath=" + filePath);
-                    init_php_file_tree(filePath);
                 }
             }
         }
