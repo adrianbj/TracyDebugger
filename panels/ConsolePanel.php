@@ -741,7 +741,7 @@ class ConsolePanel extends BasePanel {
                         }
 
                         // set mode to php
-                        if(JSON.parse(localStorage.getItem("tracyConsole")).code.indexOf('<?php') !== -1) {
+                        if(localStorage.getItem("tracyConsole") && JSON.parse(localStorage.getItem("tracyConsole")).code.indexOf('<?php') !== -1) {
                             var mode = 'ace/mode/php';
                         }
                         else {
