@@ -693,14 +693,14 @@ ul.pw-info-links {
     background: transparent !important;
 }
 
-#tracy-debug #runCode,
+#tracy-debug #runInjectButton,
 #tracy-debug #historyBack,
 #tracy-debug #historyForward {
     padding: 3px 10px !important;
     margin-right: 5px !important;
 }
 
-#tracy-debug #runCode:hover,
+#tracy-debug #runInjectButton:hover,
 #tracy-debug #historyBack:hover,
 #tracy-debug #historyForward:hover {
     background: #F5F8F9 !important;

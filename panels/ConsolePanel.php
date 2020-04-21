@@ -298,6 +298,7 @@ class ConsolePanel extends BasePanel {
                             icons[i].style.fill = tracyConsole.colorNormal;
                             i++;
                         }
+                        document.getElementById("runInjectButton").value = 'Run';
                     }
                     else {
                         var expires = new Date();
@@ -307,6 +308,7 @@ class ConsolePanel extends BasePanel {
                             icons[i].style.fill = tracyConsole.colorWarn;
                             i++;
                         }
+                        document.getElementById("runInjectButton").value = 'Inject';
                     }
                     tracyConsole.tce.focus();
                 },
@@ -1118,7 +1120,7 @@ HTML;
                             </select>
                         </span>
                         <span style="display:inline-block; padding: 0 20px 10px 0;">
-                            <input title="Run (CTRL/CMD + Enter) | Clear & Run (ALT/OPT + Enter) | Reload from Disk, Clear & Run (CTRL/CMD + ALT/OPT + Enter)" type="submit" id="runCode" onclick="tracyConsole.processTracyCode()" value="Run" />&nbsp;
+                            <input id="runInjectButton" title="Run (CTRL/CMD + Enter) | Clear & Run (ALT/OPT + Enter) | Reload from Disk, Clear & Run (CTRL/CMD + ALT/OPT + Enter)" type="submit" onclick="tracyConsole.processTracyCode()" value="' . (!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? 'Run' : 'Inject') . '" />
                         </span>
                     </div>
 
