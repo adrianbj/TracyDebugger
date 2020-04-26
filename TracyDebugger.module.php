@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.21.7',
+            'version' => '4.21.8',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1250,8 +1250,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             // DUMPS RECORDER
             // if dump recorder panel items were cleared, clear them from the session variable and remove cookie
-            if($this->wire('input')->cookie->tracyClearDumpsRecorderItems || !in_array('dumpsRecorder', static::$showPanels)) {
-                $this->wire('session')->remove('tracyDumpsRecorderItems');
+            if($this->wire('input')->cookie->tracyClearDumpsRecorderItems) {
+                $dumpsFile = $this->tracyCacheDir.'dumps.json';
+                if(file_exists($dumpsFile)) unlink($dumpsFile);
                 unset($this->wire('input')->cookie->tracyClearDumpsRecorderItems);
                 setcookie("tracyClearDumpsRecorderItems", "", time()-3600, "/");
             }

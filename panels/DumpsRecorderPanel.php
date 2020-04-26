@@ -11,7 +11,8 @@ class DumpsRecorderPanel extends BasePanel {
 
         \Tracy\Debugger::timer('dumpsRecorder');
 
-        $items = $this->wire('session')->tracyDumpsRecorderItems ?: array();
+        $dumpsFile = $this->wire('config')->paths->cache . 'TracyDebugger/dumps.json';
+        $items = file_exists($dumpsFile) ? json_decode(file_get_contents($dumpsFile), true) : array();
         $this->dumpCount = is_array($items) ? count($items) : 0;
         $this->entries .= '<div>'.($this->dumpCount > 0 ? '<span id="clearDumpsRecorderButton" style="display:inline-block;float:right"><input type="submit" onclick="clearRecorderDumps()" value="Clear Dumps" /></span>' : '') . '</div><div style="clear:both; margin-bottom:5px"></div>';
         if($this->dumpCount > 0) {

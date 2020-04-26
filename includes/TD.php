@@ -140,9 +140,10 @@ class TD extends TracyDebugger {
         array_push(\TracyDebugger::$dumpItems, $dumpItem);
 
         if(isset(\TracyDebugger::$showPanels) && in_array('dumpsRecorder', \TracyDebugger::$showPanels)) {
-            $dumpsRecorderItems = wire('session')->tracyDumpsRecorderItems ?: array();
+            $dumpsFile = wire('config')->paths->cache . 'TracyDebugger/dumps.json';
+            $dumpsRecorderItems = file_exists($dumpsFile) ? json_decode(file_get_contents($dumpsFile), true) : array();
             array_push($dumpsRecorderItems, $dumpItem);
-            wire('session')->tracyDumpsRecorderItems = $dumpsRecorderItems;
+            file_put_contents($dumpsFile, json_encode($dumpsRecorderItems));
         }
     }
 
