@@ -32,7 +32,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.21.8',
+            'version' => '4.21.9',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -4066,8 +4066,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public function ___upgrade($fromVersion, $toVersion) {
 
         // move old snippets from Tracy module settings DB table to filesystem
-        if($this->data['snippets']) {
-            $this->wire('log')->save('testing', 'move snippets');
+        if(isset($this->data['snippets'])) {
             $snippetsPath = $this->wire('config')->paths->site.$this->data['snippetsPath'].'/TracyDebugger/snippets/';
             if(!file_exists($snippetsPath)) wireMkdir($snippetsPath, true);
             foreach(json_decode($this->data['snippets']) as $snippet) {

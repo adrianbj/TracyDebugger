@@ -794,15 +794,12 @@ ul.pw-info-links {
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] #tracyConsoleMainContainer {
     float: left;
-    width: calc(100% - 290px);
-    float: left;
     display: block;
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-window"] #tracyConsoleMainContainer {
     float: left;
     width: calc(100% - 240px) !important;
-    float: left;
     display: block;
 }
 

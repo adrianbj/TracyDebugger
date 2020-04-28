@@ -318,6 +318,23 @@ class ConsolePanel extends BasePanel {
                     tracyConsole.tce.focus();
                 },
 
+                toggleSnippetsPane: function() {
+                    if(tracyConsole.getCookie('tracySnippetsPaneCollapsed') == 1) {
+                        document.cookie = "tracySnippetsPaneCollapsed=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
+                        document.getElementById("tracyConsoleMainContainer").style.width = "calc(100% - 290px)";
+                        document.getElementById("tracySnippetsContainer").classList.remove('tracyHidden');
+                        document.getElementById("snippetPaneToggle").innerHTML = ">";
+                    }
+                    else {
+                        var expires = new Date();
+                        expires.setMinutes(expires.getMinutes() + (10 * 365 * 24 * 60));
+                        document.cookie = "tracySnippetsPaneCollapsed=1;expires="+expires.toGMTString()+";path=/";
+                        document.getElementById("tracyConsoleMainContainer").style.width = "100%";
+                        document.getElementById("tracySnippetsContainer").classList.add('tracyHidden');
+                        document.getElementById("snippetPaneToggle").innerHTML = "<";
+                    }
+                },
+
                 toggleKeyboardShortcuts: function() {
                     document.getElementById("consoleKeyboardShortcuts").classList.toggle('tracyHidden');
                 },
@@ -1082,7 +1099,7 @@ HTML;
 
             <div style="position: relative; height: calc(100% - 45px)">
 
-                <div id="tracyConsoleMainContainer" style="position: absolute; height: 100%">
+                <div id="tracyConsoleMainContainer" style="position: absolute; height: 100%; width: '.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '100%' : 'calc(100% - 290px)').'">
 
                     <div id="consoleKeyboardShortcuts" class="keyboardShortcuts tracyHidden">';
                         $panel = 'console';
@@ -1125,6 +1142,7 @@ HTML;
                             </select>
                         </span>
                         <input id="runInjectButton" title="&bull; Run (CTRL/CMD + Enter)&#10;&bull; Clear & Run (ALT/OPT + Enter)&#10;&bull; Reload from Disk, Clear & Run&#10;(CTRL/CMD + ALT/OPT + Enter)" type="submit" onclick="tracyConsole.processTracyCode()" value="' . (!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? 'Run' : 'Inject') . '" />
+                        <span id="snippetPaneToggle" title="Toggle snippets pane" style="float:right; font-weight: bold; cursor: pointer" onclick="tracyConsole.toggleSnippetsPane()">'.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '<' : '>').'</span>
                     </div>
 
                     <div id="tracyConsoleContainer" class="split" style="height: 100%; min-height: '.$codeLineHeight.'px">
@@ -1146,7 +1164,7 @@ HTML;
                     </div>
                 </div>
 
-                <div id="tracySnippetsContainer" style="position: absolute; right:0; margin: 0 0 0 10px; width: 275px; height: calc(100% - 15px)">
+                <div id="tracySnippetsContainer" style="position: absolute; right:0; margin: 0 0 0 10px; width: 275px; height: calc(100% - 15px);"'.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? ' class="tracyHidden"' : '').'">
                     <div style="padding-bottom:5px">
                         Sort: <a href="#" onclick="tracyConsole.sortList(\'alphabetical\')">alphabetical</a>&nbsp;|&nbsp;<a href="#" onclick="tracyConsole.sortList(\'chronological\')">chronological</a>
                     </div>
