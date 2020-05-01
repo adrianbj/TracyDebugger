@@ -7,7 +7,7 @@ class ProcessTracyAdminer extends Process implements Module, ConfigurableModule 
             'summary' => __('Adminer page for TracyDebugger.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '1.0.6',
+            'version' => '1.0.7',
             'autoload' => false,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4, TracyDebugger',
@@ -28,7 +28,10 @@ class ProcessTracyAdminer extends Process implements Module, ConfigurableModule 
     static public function getDefaultData() {
         return array(
             "themeColor" => 'blue',
-            "jsonMaxTextLength" => 500
+            "jsonMaxLevel" => 3,
+            "jsonInTable" => 1,
+            "jsonInEdit" => 1,
+            "jsonMaxTextLength" => 200
         );
     }
 
@@ -60,8 +63,7 @@ class ProcessTracyAdminer extends Process implements Module, ConfigurableModule 
             }
 
             $data = wire('modules')->getModuleConfigData('ProcessTracyAdminer');
-            $themeColor = isset($data['themeColor']) ? $data['themeColor'] : 'blue';
-            $jsonMaxTextLength = isset($data['jsonMaxTextLength']) ? $data['jsonMaxTextLength'] : 200;
+            $data = array_merge(\ProcessTracyAdminer::getDefaultData(), $data);
 
             $port = wire('config')->dbPort ? ':' . wire('config')->dbPort : '';
 
@@ -71,12 +73,12 @@ class ProcessTracyAdminer extends Process implements Module, ConfigurableModule 
                 new AdminerTablesFilter(),
                 new AdminerSimpleMenu(),
                 new AdminerCollations(),
-                new AdminerJsonPreview(0, true, true, $jsonMaxTextLength),
+                new AdminerJsonPreview($data['jsonMaxLevel'], $data['jsonInTable'], $data['jsonInEdit'], $data['jsonMaxTextLength']),
                 new AdminerDumpJson,
                 new AdminerDumpBz2,
                 new AdminerDumpZip,
                 new AdminerDumpAlter,
-                new AdminerTheme("default-".$themeColor)
+                new AdminerTheme("default-".$data['themeColor'])
             ];
 
             return new AdminerPlugin($plugins);
@@ -108,8 +110,35 @@ class ProcessTracyAdminer extends Process implements Module, ConfigurableModule 
         $wrapper->add($f);
 
         $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'jsonMaxLevel');
+        $f->label = __('JSON max level', __FILE__);
+        $f->description = __('Max. level in recursion. 0 means no limit.', __FILE__);
+        $f->notes = __('Default: 3', __FILE__);
+        $f->required = true;
+        if($this->data['jsonMaxLevel']) $f->attr('value', $this->data['jsonMaxLevel']);
+        $wrapper->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'jsonInTable');
+        $f->label = __('JSON In Table', __FILE__);
+        $f->description = __('Whether apply JSON preview in selection table.', __FILE__);
+        $f->notes = __('Default: true', __FILE__);
+        $f->attr('checked', $this->data['jsonInTable'] == '1' ? 'checked' : '');
+        $wrapper->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'jsonInEdit');
+        $f->label = __('JSON In Edit', __FILE__);
+        $f->description = __('Whether apply JSON preview in edit form.', __FILE__);
+        $f->notes = __('Default: true', __FILE__);
+        $f->attr('checked', $this->data['jsonInEdit'] == '1' ? 'checked' : '');
+        $wrapper->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldText");
         $f->attr('name', 'jsonMaxTextLength');
         $f->label = __('JSON max text length', __FILE__);
+        $f->description = __('Maximal length of string values. Longer texts will be truncated with ellipsis sign. 0 means no limit.', __FILE__);
+        $f->notes = __('Default: 200', __FILE__);
         $f->required = true;
         if($this->data['jsonMaxTextLength']) $f->attr('value', $this->data['jsonMaxTextLength']);
         $wrapper->add($f);
