@@ -98,8 +98,11 @@ Results are cached for speed, but will be updated whenever you update your Proce
 * All output is generated via ajax, and so no page load required
 * Only available to superusers
 * Caches code so it stored between page reloads, navigation to other pages, and even browser restarts
-* Use CTRL + Enter or CMD + Enter or the "Run Code" button to run the code
 * In-code search & replace with CMD/CTRL + F
+* Code Execution
+	* CTRL/CMD + Enter	Run
+	* ALT/OPT + Enter	Clear & Run
+	* CTRL/CMD + ALT/OPT + Enter	Reload from Disk, Clear & Run
 * History stack
 	* ALT + PageUp | back
 	* ALT + PageDown | forward
@@ -114,8 +117,11 @@ Results are cached for speed, but will be updated whenever you update your Proce
 	* SHFT + Enter | Expand to fit all code and add new line (saves position)
 	* SHFT + Backspace | Contract to fit all code and remove line (saves position)
 * Snippets storage for regularly used code
-* Options to run code instead at `init`, `ready`, or `finished` - useful for testing hooks. To use this, click Run, select `init`, `ready`, or `finished` and then execute whatever action in ProcessWire that is needed to trigger the hook. An orange icon will indicate this feature is active. You can switch to `off` manually when you are done. It will also expire automatically after 5 minutes.
-
+	* Snippets can be stored in either of these. Visit the config settings to set which you prefer.
+		* /site/templates/TracyDebugger/snippets/
+		* /site/assets/TracyDebugger/snippets/
+	* You can edit the snippets within the Console panel, or using your external code editor.
+* Options to run code instead at `init`, `ready`, or `finished` - useful for testing hooks. To use this, select `init`, `ready`, or `finished`, click the Inject button, and then execute whatever action in ProcessWire that is needed to trigger the hook. An orange icon will indicate this feature is active. You can switch to `off` manually when you are done. It will also expire automatically after 5 minutes.
 
 Remember that this allows you to run any PHP code, so be careful!
 
@@ -150,6 +156,13 @@ The icon color on the debug bar is red when debug mode is on and green when it i
 Overview of the filesystem access permissions for all the key folders and files in your PW install. It also provides status and notes about these. These should not be taken as definitive (especially if you are on a Windows system), but rather as a guide and reminder to check these. The debug bar icon for this panel is colored to match the most serious status level - OK, Warning, or Failure.
 
 ![Diagnostics Filesystem Folders](img/diagnostics-filesystem-folders.png)
+
+***
+
+## ![Viewports](icons/viewports.svg ':no-zoom')Viewports
+
+Shows the current page at a wide variety of viewport sizes.
+
 
 ### Filesystem Files
 Generally not recommended to enable this (in the module config settings), because it is very slow to generate, but if needed, it shows the permissions for all files within the site.
@@ -502,17 +515,6 @@ You can also use this panel on non-ProcessWire pages, so if you use a php script
 
 In the config settings you can define which types of request methods are logged: GET, POST, PUT, DELETE, PATCH. By default, all are checked, but I think in most cases unchecking GET is probably helpful as it will prevent page views from being logged.
 
-
-***
-
-## ![Snippet Runner](icons/snippet-runner.svg ':no-zoom')Snippet Runner
-This is similar to the [Console Panel](#console), but instead lets you run snippets stored on the server's filesystem which allows for easier version control, and also for editing snippets in your code editor. It has access to all the same ProcessWire system variables that the Console panel has, so please see it's documentation for details.
-
-Snippets can be stored in either of these. Visit the config settings to set which you prefer. You can also make use of subfolders to categorize your snippets.
-* /site/templates/TracyDebugger/snippets/
-* /site/assets/TracyDebugger/snippets/
-
-![Snippet Runner panel](img/snippet-runner.png)
 
 ***
 
