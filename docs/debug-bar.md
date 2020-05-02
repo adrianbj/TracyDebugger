@@ -157,13 +157,6 @@ Overview of the filesystem access permissions for all the key folders and files 
 
 ![Diagnostics Filesystem Folders](img/diagnostics-filesystem-folders.png)
 
-***
-
-## ![Viewports](icons/viewports.svg ':no-zoom')Viewports
-
-Shows the current page at a wide variety of viewport sizes.
-
-
 ### Filesystem Files
 Generally not recommended to enable this (in the module config settings), because it is very slow to generate, but if needed, it shows the permissions for all files within the site.
 
@@ -634,5 +627,11 @@ Lists all the users/roles with access to the Tracy Debugger bar. A green debug b
 Validates the HTML of the page using the validator.nu service. This works with local development sites as well as live sites.
 
 ![Validator panel](img/validator.png)
+
+***
+
+## ![Viewports](icons/viewports.svg ':no-zoom')Viewports
+
+Shows the current page at a wide variety of viewport sizes.
 
 ***
