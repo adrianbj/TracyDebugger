@@ -97,7 +97,7 @@ class ProcesswireInfoPanel extends BasePanel {
                 document.getElementById('pageId').addEventListener('keyup', function() {
                     tracyClearGoToPageID("");
                     if(this.value) {
-                        tracyClearGoToPageID("<i style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></i>");
+                        tracyClearGoToPageID("<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span>");
                         var pid = this.value;
                         if(this.t) clearTimeout(this.t);
                         this.t = setTimeout(function() {
@@ -107,7 +107,7 @@ class ProcesswireInfoPanel extends BasePanel {
                                 if(xmlhttp.readyState == XMLHttpRequest.DONE) {
                                     if(xmlhttp.status == 200 && xmlhttp.responseText !== "[]") {
                                         var pageDetails = JSON.parse(xmlhttp.responseText);
-                                        document.getElementById("pageDetails").innerHTML = "<span style='font-weight:bold'>" + pageDetails.title + "</span>&nbsp;&nbsp;<a href='{$this->wire('config')->urls->admin}setup/template/edit?id="  + pageDetails.template_id + " style='color:#888'>" + pageDetails.template_name + "</a>";
+                                        document.getElementById("pageDetails").innerHTML = "<span style='font-weight:bold'>" + pageDetails.title + "</span>&nbsp;&nbsp;<a href='{$this->wire('config')->urls->admin}setup/template/edit?id="  + pageDetails.template_id + "' style='color:#888'>" + pageDetails.template_name + "</a>";
                                         document.getElementById("idGoToEdit").href = "{$this->wire('config')->urls->admin}page/edit/?id=" + pageDetails.id;
                                         document.getElementById("idGoToView").href = pageDetails.url;
                                         document.getElementById("idGoToOpen").href = "{$this->wire('config')->urls->admin}page/?open=" + pageDetails.id;

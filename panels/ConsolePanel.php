@@ -479,7 +479,7 @@ class ConsolePanel extends BasePanel {
                         if(!existingSnippets.hasOwnProperty(key)) continue;
                         var obj = existingSnippets[key];
                         if(deleteSnippet === true && obj.name === name) continue;
-                        snippetList += "<li title='Load in console' id='"+this.makeIdFromTitle(obj.name)+"' data-modified='"+obj.modified+"'><span class='consoleSnippetIcon consoleEditIcon iconFlip'>" + this.externalEditorLink.replace('ExternalEditorDummyFile', obj.name) + "</span><span class='consoleSnippetIcon' title='Delete snippet' onclick='tracyConsole.modifyConsoleSnippets(\""+obj.name+"\", null, true)'>&#10006;</span><span style='color: #125EAE; cursor: pointer; width:200px' onclick='tracyConsole.loadSnippet(\""+obj.name+"\");'>" + obj.name + "</span></li>";
+                        snippetList += "<li title='Load in console' id='"+this.makeIdFromTitle(obj.name)+"' data-modified='"+obj.modified+"'><span class='consoleSnippetIcon consoleEditIcon iconFlip'>" + this.externalEditorLink.replace('ExternalEditorDummyFile', obj.name) + "</span><span class='consoleSnippetIcon' title='Delete snippet' onclick='tracyConsole.modifyConsoleSnippets(\""+obj.name+"\", null, true)'>&#10006;</span><span style='color: #125EAE; cursor: pointer; width:200px; word-break: break-all;' onclick='tracyConsole.loadSnippet(\""+obj.name+"\");'>" + obj.name + "</span></li>";
                     }
                     snippetList += "</ul>";
                     document.getElementById("tracySnippets").innerHTML = snippetList;
