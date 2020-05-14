@@ -292,16 +292,17 @@ class RequestInfoPanel extends BasePanel {
                 if($this->wire('modules')->isInstalled($moduleName)) {
                     $moduleInfo = $this->wire('modules')->getModuleInfoVerbose($moduleName);
                     $moduleConfigData = $this->wire('modules')->getModuleConfigData($moduleName) ?: array();
-                    $moduleObject = $this->wire('modules')->getModule($moduleName, array('noInit' => true))->getArray() ?: array();
+                    $moduleObject = $this->wire('modules')->getModule($moduleName, array('noInit' => true));
+                    $moduleObject = method_exists($moduleObject, 'getArray') ? $moduleObject->getArray() : array();
                     ksort($moduleConfigData);
                     ksort($moduleObject);
                     if(isset($adminerUrl)) {
                         $moduleSettings .= '<a title="Edit in Adminer" style="padding-bottom:5px" href="'.$adminerUrl.'?edit=modules&where%5Bclass%5D='.$moduleName.'">'.$adminerIcon.'</a>';
                     }
                     foreach(array(
-                        'getModuleInfoVerbose()' => $moduleInfo,
-                        'getConfig()' => $moduleConfigData,
-                        'getModule()' => $moduleObject
+                        'getModuleInfoVerbose() (' . count($moduleInfo) . ' params)' => $moduleInfo,
+                        'getConfig() (' . count($moduleConfigData) . ' params)' => $moduleConfigData,
+                        'getModule() (' . count($moduleObject) . ' params)' => $moduleObject
                     ) as $type => $settings) {
                         $moduleSettings .= '
                         <p><table>
