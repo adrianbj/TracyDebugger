@@ -231,55 +231,57 @@ class RequestInfoPanel extends BasePanel {
             if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessTemplate') {
                 $templateSettings = '';
                 $template = $this->wire('templates')->get((int)$this->wire('input')->get('id'));
-                if(isset($adminerUrl)) {
-                    $templateSettings .= '<a title="Edit in Adminer" style="padding-bottom:5px" href="'.$adminerUrl.'?edit=templates&where%5Bid%5D='.$template->id.'">'.$adminerIcon.'</a>';
-                }
-                $templateSettings .= '<table>';
-                if(method_exists($template, 'getExportData')) {
-                    foreach($template->getExportData() as $k => $v) {
+                if($template) {
+                    if(isset($adminerUrl)) {
+                        $templateSettings .= '<a title="Edit in Adminer" style="padding-bottom:5px" href="'.$adminerUrl.'?edit=templates&where%5Bid%5D='.$template->id.'">'.$adminerIcon.'</a>';
+                    }
+                    $templateSettings .= '<table>';
+                    if(method_exists($template, 'getExportData')) {
+                        foreach($template->getExportData() as $k => $v) {
+                            $templateSettings .= '
+                                <tr>
+                                    <td>'.$k.'</td>
+                                    <td>'.Dumper::toHtml($v, array(Dumper::TRUNCATE => 999)).'</td>
+                                </tr>
+                            ';
+                        }
+                    }
+                    // older version of PW that doesn't have getExportData() method
+                    else {
                         $templateSettings .= '
                             <tr>
-                                <td>'.$k.'</td>
-                                <td>'.Dumper::toHtml($v, array(Dumper::TRUNCATE => 999)).'</td>
+                                <td>label</td>
+                                <td>'.$template->label.'</td>
                             </tr>
-                        ';
-                    }
-                }
-                // older version of PW that doesn't have getExportData() method
-                else {
-                    $templateSettings .= '
-                        <tr>
-                            <td>label</td>
-                            <td>'.$template->label.'</td>
-                        </tr>
-                        <tr>
-                            <td>name</td>
-                            <td>'.$template->name.'</td>
-                        </tr>
-                        <tr>
-                            <td>id</td>
-                            <td>'.$template->id.'</td>
-                        </tr>
-                        <tr>
-                            <td>type</td>
-                            <td>'.$template->type.'</td>
-                        </tr>
-                        <tr>
-                            <td>flags</td>
-                            <td>'.$template->flags.'</td>
-                        </tr>
-                        ';
-                    foreach($template->getArray() as $k => $v) {
-                        $templateSettings .= '
                             <tr>
-                                <td>'.$k.'</td>
-                                <td>'.Dumper::toHtml($v, array(Dumper::TRUNCATE => 999)).'</td>
+                                <td>name</td>
+                                <td>'.$template->name.'</td>
                             </tr>
-                        ';
+                            <tr>
+                                <td>id</td>
+                                <td>'.$template->id.'</td>
+                            </tr>
+                            <tr>
+                                <td>type</td>
+                                <td>'.$template->type.'</td>
+                            </tr>
+                            <tr>
+                                <td>flags</td>
+                                <td>'.$template->flags.'</td>
+                            </tr>
+                            ';
+                        foreach($template->getArray() as $k => $v) {
+                            $templateSettings .= '
+                                <tr>
+                                    <td>'.$k.'</td>
+                                    <td>'.Dumper::toHtml($v, array(Dumper::TRUNCATE => 999)).'</td>
+                                </tr>
+                            ';
+                        }
                     }
+                    $templateSettings .= '</table>
+                    ';
                 }
-                $templateSettings .= '</table>
-                ';
             }
         }
 
@@ -388,7 +390,7 @@ class RequestInfoPanel extends BasePanel {
             </tr>
             <tr>
                 <td>process</td>
-                <td>'.$this->wire('process').'</td>
+                <td>'.$this->wire('page')->process.'</td>
             </tr>';
             if($p->parent->id) {
                 $pageInfo .= '
@@ -518,7 +520,7 @@ class RequestInfoPanel extends BasePanel {
         // Template info
         // defining $templateFilePath even if templateInfo not a selected panel because it's used to build the template editing button at the bottom of the panel
         if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessTemplate') {
-            $templateFilePath = $this->wire('templates')->get((int)$this->wire('input')->get('id'))->filename;
+            if($template) $templateFilePath = $this->wire('templates')->get((int)$this->wire('input')->get('id'))->filename;
         }
         elseif($isPwPage && ($this->wire('process') == 'ProcessPageView' || $this->wire('process') == 'ProcessPageEdit')) {
             if(file_exists($p->template->filename)) $templateFilePath = $p->template->filename;
@@ -564,77 +566,80 @@ class RequestInfoPanel extends BasePanel {
                 $template = $p->template;
             }
 
-            if(isset($adminerUrl)) {
-                $templateInfo .= '<a title="Edit in Adminer" style="padding-bottom:5px" href="'.$adminerUrl.'?edit=templates&where%5Bid%5D='.$template->id.'">'.$adminerIcon.'</a>';
-            }
+            if($template) {
 
-            $templateInfo .= '
-            <table>
-                <tr>
-                    <td>label</td>
-                    <td>'.($this->wire('languages') ? $template->getLabel($userLang) : $template->label).'</td>
-                </tr>
-                <tr>
-                    <td>name</td>
-                    <td><a title="Edit Template" href="'.$this->wire('config')->urls->admin.'setup/template/edit?id='.$template->id.'">'.$template->name.'</a></td>
-                </tr>
-                <tr>
-                    <td>id</td>
-                    <td>'.$template->id.'</td>
-                </tr>
-                <tr>
-                    <td>modified</td>
-                    <td>'.date("Y-m-d H:i:s", $template->modified).'</td>
-                </tr>
-                <tr>
-                    <td>fieldgroup</td>
-                    <td>'.$template->fieldgroup.'</td>
-                </tr>
-                <tr>
-                    <td>filename</td>
-                    <td>'.(isset($templateFilePath) ? \TracyDebugger::createEditorLink($templateFilePath, 1, str_replace($this->wire('config')->paths->root, '/', $templateFilePath), 'Edit Template File') . '<br />
-                        modified: ' . date("Y-m-d H:i:s", filemtime($templateFilePath)) . '<br />' .
-                        (isset($owner) && !is_bool($owner) ? 'user:group: ' . $owner['name'].":".$group['name'] .'<br />' : '') . '
-                        permissions: ' . $permission
-                         : 'No file').'</td>
-                </tr>
-                <tr>
-                    <td>compile</td>
-                    <td>'.($template->compile === 0 ? 'No' : ($template->compile === 1 ? 'Yes (template file only)' : 'Yes (and included files)')).'</td>
-                </tr>
-                <tr>
-                    <td>contentType</td>
-                    <td>'.$template->contentType.'</td>
-                </tr>
-                <tr>
-                    <td>allowPageNum</td>
-                    <td>'.($template->allowPageNum === 1 ? 'Enabled' : 'Disabled').'</td>
-                </tr>
-                <tr>
-                    <td>urlSegments</td>
-                    <td>'.($template->urlSegments === 1 || is_array($template->urlSegments) ? 'Enabled' : 'Disabled').'</td>
-                </tr>
-                <tr>
-                    <td>urlSegmentsList (Segments Allowed)</td>
-                    <td>'.(is_array($template->urlSegments) ? Dumper::toHtml($template->urlSegments) : '').'</td>
-                </tr>
-                <tr>
-                    <td>noChildren (Children Allowed)</td>
-                    <td>'.($template->noChildren === 1 ? 'No' : 'Yes').'</td>
-                </tr>
-                <tr>
-                    <td>noParents (Allow for New Page)</td>
-                    <td>'.($template->noParents < 0 ? 'Only One' : ($template->noParents === 1 ? 'No' : 'Yes')).'</td>
-                </tr>
-                <tr>
-                    <td>sortfield (Children Sorted By)</td>
-                    <td>'.$template->sortfield.'</td>
-                </tr>
-                <tr>
-                    <td>cache_time (Cache Time)</td>
-                    <td>'.$template->cache_time.'</td>
-                </tr>
-            </table>';
+                if(isset($adminerUrl)) {
+                    $templateInfo .= '<a title="Edit in Adminer" style="padding-bottom:5px" href="'.$adminerUrl.'?edit=templates&where%5Bid%5D='.$template->id.'">'.$adminerIcon.'</a>';
+                }
+
+                $templateInfo .= '
+                <table>
+                    <tr>
+                        <td>label</td>
+                        <td>'.($this->wire('languages') ? $template->getLabel($userLang) : $template->label).'</td>
+                    </tr>
+                    <tr>
+                        <td>name</td>
+                        <td><a title="Edit Template" href="'.$this->wire('config')->urls->admin.'setup/template/edit?id='.$template->id.'">'.$template->name.'</a></td>
+                    </tr>
+                    <tr>
+                        <td>id</td>
+                        <td>'.$template->id.'</td>
+                    </tr>
+                    <tr>
+                        <td>modified</td>
+                        <td>'.date("Y-m-d H:i:s", $template->modified).'</td>
+                    </tr>
+                    <tr>
+                        <td>fieldgroup</td>
+                        <td>'.$template->fieldgroup.'</td>
+                    </tr>
+                    <tr>
+                        <td>filename</td>
+                        <td>'.(isset($templateFilePath) ? \TracyDebugger::createEditorLink($templateFilePath, 1, str_replace($this->wire('config')->paths->root, '/', $templateFilePath), 'Edit Template File') . '<br />
+                            modified: ' . date("Y-m-d H:i:s", filemtime($templateFilePath)) . '<br />' .
+                            (isset($owner) && !is_bool($owner) ? 'user:group: ' . $owner['name'].":".$group['name'] .'<br />' : '') . '
+                            permissions: ' . $permission
+                            : 'No file').'</td>
+                    </tr>
+                    <tr>
+                        <td>compile</td>
+                        <td>'.($template->compile === 0 ? 'No' : ($template->compile === 1 ? 'Yes (template file only)' : 'Yes (and included files)')).'</td>
+                    </tr>
+                    <tr>
+                        <td>contentType</td>
+                        <td>'.$template->contentType.'</td>
+                    </tr>
+                    <tr>
+                        <td>allowPageNum</td>
+                        <td>'.($template->allowPageNum === 1 ? 'Enabled' : 'Disabled').'</td>
+                    </tr>
+                    <tr>
+                        <td>urlSegments</td>
+                        <td>'.($template->urlSegments === 1 || is_array($template->urlSegments) ? 'Enabled' : 'Disabled').'</td>
+                    </tr>
+                    <tr>
+                        <td>urlSegmentsList (Segments Allowed)</td>
+                        <td>'.(is_array($template->urlSegments) ? Dumper::toHtml($template->urlSegments) : '').'</td>
+                    </tr>
+                    <tr>
+                        <td>noChildren (Children Allowed)</td>
+                        <td>'.($template->noChildren === 1 ? 'No' : 'Yes').'</td>
+                    </tr>
+                    <tr>
+                        <td>noParents (Allow for New Page)</td>
+                        <td>'.($template->noParents < 0 ? 'Only One' : ($template->noParents === 1 ? 'No' : 'Yes')).'</td>
+                    </tr>
+                    <tr>
+                        <td>sortfield (Children Sorted By)</td>
+                        <td>'.$template->sortfield.'</td>
+                    </tr>
+                    <tr>
+                        <td>cache_time (Cache Time)</td>
+                        <td>'.$template->cache_time.'</td>
+                    </tr>
+                </table>';
+            }
         }
 
 
