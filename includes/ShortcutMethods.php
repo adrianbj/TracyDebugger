@@ -53,9 +53,9 @@ if(!function_exists('barDumpBig') && in_array('barDumpBig', $this->data['enabled
  * @tracySkipLocation
  */
 if(!function_exists('dump') && in_array('dump', $this->data['enabledShortcutMethods'])) {
-    function dump($var, $title = NULL, array $options = NULL, $return = FALSE) {
+    function dump($var, $title = NULL, array $options = NULL) {
         if(tracyUnavailable()) return false;
-        return TD::dump($var, $otions, $return);
+        return TD::dump($var, $title, $otions);
     }
 }
 
@@ -64,9 +64,20 @@ if(!function_exists('dump') && in_array('dump', $this->data['enabledShortcutMeth
  * @tracySkipLocation
  */
 if(!function_exists('dumpBig') && in_array('dumpBig', $this->data['enabledShortcutMethods'])) {
-    function dumpBig($var, $title = NULL, array $options = NULL, $return = FALSE) {
+    function dumpBig($var, $title = NULL, array $options = NULL) {
         if(tracyUnavailable()) return false;
-        return TD::dumpBig($var, $otions, $return);
+        return TD::dumpBig($var, $title, $otions);
+    }
+}
+
+/**
+ * TD::barEcho() shortcut echo to bar dumps panel.
+ * @tracySkipLocation
+ */
+if(!function_exists('barEcho') && in_array('barEcho', $this->data['enabledShortcutMethods'])) {
+    function barEcho($str, $title = NULL) {
+        if(tracyUnavailable()) return false;
+        return TD::barEcho($str, $title);
     }
 }
 
@@ -156,9 +167,9 @@ if(!function_exists('bdb') && in_array('bdb', $this->data['enabledShortcutMethod
  * @tracySkipLocation
  */
 if(!function_exists('d') && in_array('d', $this->data['enabledShortcutMethods'])) {
-    function d($var, $title = NULL, array $options = NULL, $return = FALSE) {
+    function d($var, $title = NULL, array $options = NULL) {
         if(tracyUnavailable()) return false;
-        return TD::dump($var, $title, $options, $return);
+        return TD::dump($var, $title, $options);
     }
 }
 
@@ -167,9 +178,20 @@ if(!function_exists('d') && in_array('d', $this->data['enabledShortcutMethods'])
  * @tracySkipLocation
  */
 if(!function_exists('db') && in_array('db', $this->data['enabledShortcutMethods'])) {
-    function db($var, $title = NULL, array $options = NULL, $return = FALSE) {
+    function db($var, $title = NULL, array $options = NULL) {
         if(tracyUnavailable()) return false;
-        return TD::dumpBig($var, $title, $options, $return);
+        return TD::dumpBig($var, $title, $options);
+    }
+}
+
+/**
+ * TD::barEcho() shortcut echo to bar dumps panel.
+ * @tracySkipLocation
+ */
+if(!function_exists('be') && in_array('be', $this->data['enabledShortcutMethods'])) {
+    function be($str, $title = NULL) {
+        if(tracyUnavailable()) return false;
+        return TD::barEcho($str, $title);
     }
 }
 

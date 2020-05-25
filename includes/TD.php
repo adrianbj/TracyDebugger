@@ -32,6 +32,14 @@ class TD extends TracyDebugger {
     }
 
     /**
+     * Tracy\Debugger::barEcho() shortcut.
+     * @tracySkipLocation
+     */
+    public static function barEcho($str, $title = null) {
+        static::dumpToBar($str, $title, null, true);
+    }
+
+    /**
      * Tracy\Debugger::barDump() shortcut.
      * @tracySkipLocation
      */
@@ -79,7 +87,7 @@ class TD extends TracyDebugger {
      * Tracy\Debugger::dump() shortcut.
      * @tracySkipLocation
      */
-    public static function dump($var, $title = NULL, array $options = NULL, $return = FALSE) {
+    public static function dump($var, $title = NULL, array $options = NULL) {
         if(self::tracyUnavailable()) return false;
         if(is_array($title)) {
             $options = $title;
@@ -106,7 +114,7 @@ class TD extends TracyDebugger {
      * Tracy\Debugger::dumpBig() shortcut dumping with maxDepth = 6 and maxLength = 9999.
      * @tracySkipLocation
      */
-    public static function dumpBig($var, $title = NULL, array $options = NULL, $return = FALSE) {
+    public static function dumpBig($var, $title = NULL, array $options = NULL) {
         if(self::tracyUnavailable()) return false;
         if(is_array($title)) {
             $options = $title;
@@ -133,10 +141,10 @@ class TD extends TracyDebugger {
      * Send content to dump bar
      * @tracySkipLocation
      */
-    private static function dumpToBar($var, $title = NULL, array $options = NULL) {
+    private static function dumpToBar($var, $title = NULL, array $options = NULL, $echo = false) {
         $dumpItem = array();
         $dumpItem['title'] = $title;
-        $dumpItem['dump'] = static::generateDump($var, $options);
+        $dumpItem['dump'] = $echo ? $var : static::generateDump($var, $options);
         array_push(\TracyDebugger::$dumpItems, $dumpItem);
 
         if(isset(\TracyDebugger::$showPanels) && in_array('dumpsRecorder', \TracyDebugger::$showPanels)) {

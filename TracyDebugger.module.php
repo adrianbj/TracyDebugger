@@ -297,7 +297,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "fileEditorExcludedDirs" => 'site/assets',
             "fileEditorBaseDirectory" => 'templates',
             "enableShortcutMethods" => 1,
-            "enabledShortcutMethods" => array('addBreakpoint', 'bp', 'barDump', 'bd', 'barDumpBig', 'bdb', 'debugAll', 'da', 'dump', 'd', 'dumpBig', 'db', 'fireLog', 'fl', 'l', 'templateVars', 'tv', 'timer', 't')
+            "enabledShortcutMethods" => array('addBreakpoint', 'bp', 'barDump', 'bd', 'barDumpBig', 'bdb', 'barEcho', 'be', 'debugAll', 'da', 'dump', 'd', 'dumpBig', 'db', 'fireLog', 'fl', 'l', 'templateVars', 'tv', 'timer', 't')
         );
     }
 
@@ -3987,6 +3987,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->addOption('bp', 'bp() for TD::addBreakpoint()');
         $f->addOption('barDump', 'barDump() for TD::barDump()');
         $f->addOption('bd', 'bd() for TD::barDump()');
+        $f->addOption('barEcho', 'barEcho() for TD::barEcho()');
+        $f->addOption('be', 'be() for TD::barEcho()');
         $f->addOption('barDumpBig', 'barDumpBig() for TD::barDumpBig()');
         $f->addOption('bdb', 'bdb() for TD::barDumpBig()');
         $f->addOption('debugAll', 'debugAll() for TD::debugAll()');
