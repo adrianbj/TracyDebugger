@@ -1074,6 +1074,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                                 $event->return = str_replace("</body>", "\n<!-- Tracy Hide Bar -->\n" . static::minify($hideBar)."\n</body>", $event->return);
                             }
                         }
+                        if(in_array('titlePrefix', $this->data['styleAdminType'])) {
+                            $serverTypeMatch = $this->serverStyleInfo['serverTypeMatch'];
+                            $stylesArr = $this->serverStyleInfo['styles'];
+                            $type = $this->serverStyleInfo['type'];
+                            if($serverTypeMatch && isset($stylesArr[$type])) {
+                                $event->return = str_replace('<title>', '<title>'.strtoupper(str_replace('*', '', $type)).' - ', $event->return);
+                            }
+                        }
                     });
                 });
 
@@ -3830,6 +3838,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->notes = __('You will need to do a hard reload in your browser for these changes to take effect.', __FILE__);
         $f->addOption('default', 'Indicator on debug bar');
         $f->addOption('custom', 'Custom - control with CSS');
+        $f->addOption('titlePrefix', 'Add prefix page title');
         $f->addOption('favicon', 'Favicon badge');
         $f->columnWidth = 30;
         if($data['styleAdminType']) $f->attr('value', $data['styleAdminType']);
