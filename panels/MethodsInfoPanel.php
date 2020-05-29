@@ -55,6 +55,13 @@ class MethodsInfoPanel extends BasePanel {
                 TD::barDumpBig()<br />
             </p>
 
+            <p><strong><a href="'.$debugMethodsRootUrl.'barecho" target="_blank">barEcho($str, $title = NULL)</a></strong></p>
+            <p>
+                <strong>be()</strong><br />
+                barEcho()<br />
+                TD::barEcho()<br />
+            </p>
+
             <p><strong><a href="'.$debugMethodsRootUrl.'debugall" target="_blank">debugAll($var, $title = NULL, array $options = NULL)</a></strong></p>
             <p>
                 <strong>da()</strong><br />
@@ -62,14 +69,14 @@ class MethodsInfoPanel extends BasePanel {
                 TD::debugAll()<br />
             </p>
 
-            <p><strong><a href="'.$debugMethodsRootUrl.'dump" target="_blank">dump($var, $title = NULL, array $options = NULL, $return = FALSE)</a></strong></p>
+            <p><strong><a href="'.$debugMethodsRootUrl.'dump" target="_blank">dump($var, $title = NULL, array $options = NULL)</a></strong></p>
             <p>
                 <strong>d()</strong><br />
                 dump()<br />
                 TD::dump()<br />
             </p>
 
-            <p><strong><a href="'.$debugMethodsRootUrl.'dumpbig" target="_blank">dumpBig($var, $title = NULL, array $options = NULL, $return = FALSE)</a></strong></p>
+            <p><strong><a href="'.$debugMethodsRootUrl.'dumpbig" target="_blank">dumpBig($var, $title = NULL, array $options = NULL)</a></strong></p>
             <p>
                 <strong>db()</strong><br />
                 dumpBig()<br />
