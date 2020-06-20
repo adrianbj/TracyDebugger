@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.21.16',
+            'version' => '4.21.17',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -401,7 +401,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 require_once(__DIR__ . '/includes/CodeProcessor.php');
                 return;
             }
-        });
+        }, array('priority' => 9999));
 
 
         // log requests for Request Logger
@@ -1321,8 +1321,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // fixes for when SessionHandlerDB module is installed
         if($this->wire('modules')->isInstalled('SessionHandlerDB') && Debugger::$showBar) {
 
-            // ensure Tracy can show additional bars when SessionHandlerDB module is installed and debugbar is showing
-            $this->wire()->addHookBefore('ProcessWire::finished', $this, 'sessionHandlerDBAjaxFix');
+            // ensure Tracy can show AJAX bars when SessionHandlerDB module is installed and debugbar is showing
+            $this->wire()->addHookAfter('ProcessWire::finished', function() {
+                if(ob_get_level() == 0) ob_start();
+                Debugger::getBar()->render();
+                Debugger::$showBar = false;
+            }, array('priority' => 9999));
 
             // ensure Tracy can show Redirect bars when SessionHandlerDB module is installed and debugbar is showing
             if(!$this->wire('config')->disableTracySHDBRedirectFix) {
@@ -1759,20 +1763,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($p->is("has_parent=".$this->wire('config')->adminRootPageID)) return;
         $this->data['recordedPages'][] = $p->id;
         $this->wire('modules')->saveModuleConfigData($this, $this->data);
-    }
-
-
-    /**
-     * Hook before ProcessWire::finished
-     *
-     * This ensures Tracy will be able to show the AJAX bar when SessionHandlerDB module is installed
-     *
-     */
-    protected function sessionHandlerDBAjaxFix() {
-        if(!Debugger::$showBar) return;
-        if(ob_get_level() == 0) ob_start();
-        Debugger::getBar()->render();
-        Debugger::$showBar = false;
     }
 
 
