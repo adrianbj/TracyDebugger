@@ -226,6 +226,22 @@ class RequestInfoPanel extends BasePanel {
             }
         }
 
+        // Field Export Code
+        if(in_array('fieldExportCode', $panelSections) && $isPwPage) {
+            if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessField') {
+                $fieldExportCode = '<pre style="margin-bottom: 0">';
+                $field = $this->wire('fields')->get((int)$this->wire('input')->get('id'));
+                if($field) {
+                    if(method_exists($field, 'getExportData')) {
+                        $fieldExportData = array();
+                        $fieldExportData[$field->name] = $field->getExportData();
+                        $fieldExportCode .= $this->wire('sanitizer')->entities(wireEncodeJSON($fieldExportData, true, true));
+                    }
+                    $fieldExportCode .= '</pre>';
+                }
+            }
+        }
+
         // Template Settings
         if(in_array('templateSettings', $panelSections) && $isPwPage) {
             if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessTemplate') {
