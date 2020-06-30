@@ -598,7 +598,7 @@ class RequestInfoPanel extends BasePanel {
                         <td>filename</td>
                         <td>'.(isset($templateFilePath) ? \TracyDebugger::createEditorLink($templateFilePath, 1, str_replace($this->wire('config')->paths->root, '/', $templateFilePath), 'Edit Template File') . '<br />
                             modified: ' . date("Y-m-d H:i:s", filemtime($templateFilePath)) . '<br />' .
-                            (isset($owner) && !is_bool($owner) ? 'user:group: ' . $owner['name'].":".$group['name'] .'<br />' : '') . '
+                            (isset($owner) && !is_bool($owner) && isset($group) && !is_bool($group) ? 'user/group: ' . $owner['name'].":".$group['name'] .'<br />' : '') . '
                             permissions: ' . $permission
                             : 'No file').'</td>
                     </tr>
