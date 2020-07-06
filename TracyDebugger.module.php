@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.21.19',
+            'version' => '4.21.20',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -847,8 +847,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 if(file_exists($emailSentPath)) {
                     $removed = unlink($emailSentPath);
                 }
-                if (!isset($removed) || !$removed) wire()->error( __('No file to remove'));
-                else wire()->message(__("email-sent file deleted successfully"));
+                if (!isset($removed) || !$removed) {
+                    $this->wire()->error( __('No file to remove'));
+                }
+                else {
+                    $this->wire()->message(__("email-sent file deleted successfully"));
+                    $this->wire('session')->redirect(str_replace(array('?clearEmailSent=1', '&clearEmailSent=1'), '', $this->wire('input')->url(true)));
+                }
             }
 
             if(file_exists($emailSentPath)) {
