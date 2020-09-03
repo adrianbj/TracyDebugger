@@ -513,7 +513,7 @@ class TracyPwApiData extends WireData {
     }
 
 
-    private function phpdoc_params(ReflectionMethod $method) : array {
+    private function phpdoc_params(ReflectionMethod $method) {
         // Retrieve the full PhpDoc comment block
         $doc = $method->getDocComment();
 

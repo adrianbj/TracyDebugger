@@ -7,6 +7,10 @@ class ProcesswireInfoPanel extends BasePanel {
     protected $icon;
     protected $newTab;
 
+    public function __construct() {
+        $this->newTab = \TracyDebugger::getDataValue('pWInfoPanelLinksNewTab') ? 'target="_blank"' : '';
+    }
+
     public function getTab() {
         if(\TracyDebugger::isAdditionalBar()) return;
         \Tracy\Debugger::timer('processwireInfo');
