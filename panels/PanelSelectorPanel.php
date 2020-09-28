@@ -139,7 +139,7 @@ class PanelSelectorPanel extends BasePanel {
                         $out .= '
                             <label style="'.($this->wire('page')->template == 'admin' && in_array($name, \TracyDebugger::$hideInAdmin) ? ' visibility:hidden;position: absolute; left: -999em;' : '').'">' .
                                 ($this->isOnce($name, $defaultPanels) ? $onceIcon .'&nbsp;' : '<span style="display:inline-block;width:18px">&nbsp;</span>');
-                                if(!array_key_exists($name, \TracyDebugger::$externalPanels)) {
+                                if(!empty(\TracyDebugger::$externalPanels) && !array_key_exists($name, \TracyDebugger::$externalPanels)) {
                                     $out .= '<span style="font-size:16px; font-weight:600"><a title="Panel Info" href="https://adrianbj.github.io/TracyDebugger/#/debug-bar?id='.str_replace(' ', '-', strtolower($label)).'" target="_blank">ℹ</a></span>';
                                 }
                                 else {
