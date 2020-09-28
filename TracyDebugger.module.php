@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.21.21',
+            'version' => '4.21.22',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -140,6 +140,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'iterator' => 'Iterator',
         'fullObject' => 'Full Object'
     );
+    public static $externalPanels;
     public static $allPanels = array(
         'adminTools' => 'Admin Tools',
         'adminer' => 'Adminer',
@@ -315,6 +316,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * Initialize the module
      */
     public function init() {
+
+        $externalPanelPaths = glob($this->wire('config')->paths->root.'/site/modules/*/TracyPanels/*.php');
+        foreach($externalPanelPaths as $panelPath) {
+            $path_parts = pathinfo($panelPath);
+            $panelName = lcfirst($path_parts['filename']);
+            static::$externalPanels[$panelName] = $panelPath;
+            static::$allPanels[$panelName] = implode(' ', preg_split('/(?=[A-Z])/', $path_parts['filename']));
+            ksort(static::$allPanels);
+        }
 
         // load Tracy files and our helper files
         $tracyVersion = version_compare(PHP_VERSION, '7.1.0', '>=') ? '2.7.x' : '2.5.x';
@@ -1523,7 +1533,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if(!empty(static::$restrictedUserDisabledPanels) && in_array($panel, static::$restrictedUserDisabledPanels)) continue;
 
             $panelName = ucfirst($panel).'Panel';
-            require_once __DIR__ . '/panels/'.$panelName.'.php';
+            if(file_exists(__DIR__ . '/panels/'.$panelName.'.php')) {
+                require_once __DIR__ . '/panels/'.$panelName.'.php';
+            }
+            else {
+                // external panels
+                include_once static::$externalPanels[$panel];
+            }
             switch($panel) {
                 case 'performance':
                     break;
@@ -4059,6 +4075,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
 
         });
+
+        foreach(static::$externalPanels as $name => $path) {
+            $className = ucfirst($name) . 'Panel';
+            if(!class_exists($className)) {
+                include_once $path;
+            }
+            $externalPanel = new $className;
+            if(method_exists($externalPanel, 'addSettings')) {
+                $externalPanelSettings = $externalPanel->addSettings();
+                $wrapper->add($externalPanelSettings);
+            }
+        }
 
         return $wrapper;
 

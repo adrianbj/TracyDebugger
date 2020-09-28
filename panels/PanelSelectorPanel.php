@@ -138,9 +138,14 @@ class PanelSelectorPanel extends BasePanel {
                         $size = isset(\TracyDebugger::$panelGenerationTime[$name]['size']) ? \TracyDebugger::human_filesize(\TracyDebugger::$panelGenerationTime[$name]['size']) : '';
                         $out .= '
                             <label style="'.($this->wire('page')->template == 'admin' && in_array($name, \TracyDebugger::$hideInAdmin) ? ' visibility:hidden;position: absolute; left: -999em;' : '').'">' .
-                                ($this->isOnce($name, $defaultPanels) ? $onceIcon .'&nbsp;' : '<span style="display:inline-block;width:18px">&nbsp;</span>') . '
-                                 <span style="font-size:16px; font-weight:600"><a title="Panel Info" href="https://adrianbj.github.io/TracyDebugger/#/debug-bar?id='.str_replace(' ', '-', strtolower($label)).'" target="_blank">ℹ</a></span>
-                                <input type="checkbox" name="selectedPanels[]" ' . ($name == 'panelSelector' || in_array($name, \TracyDebugger::getDataValue('nonToggleablePanels')) ? 'disabled="disabled"' : '') . ' value="'.$name.'" ' . (in_array($name, $showPanels) ? 'checked="checked"' : '') . ' /> '
+                                ($this->isOnce($name, $defaultPanels) ? $onceIcon .'&nbsp;' : '<span style="display:inline-block;width:18px">&nbsp;</span>');
+                                if(!array_key_exists($name, \TracyDebugger::$externalPanels)) {
+                                    $out .= '<span style="font-size:16px; font-weight:600"><a title="Panel Info" href="https://adrianbj.github.io/TracyDebugger/#/debug-bar?id='.str_replace(' ', '-', strtolower($label)).'" target="_blank">ℹ</a></span>';
+                                }
+                                else {
+                                    $out .= '&nbsp;&nbsp;&nbsp;';
+                                }
+                                $out .= '<input type="checkbox" name="selectedPanels[]" ' . ($name == 'panelSelector' || in_array($name, \TracyDebugger::getDataValue('nonToggleablePanels')) ? 'disabled="disabled"' : '') . ' value="'.$name.'" ' . (in_array($name, $showPanels) ? 'checked="checked"' : '') . ' /> '
                                 . $label . (in_array($name, $defaultPanels) ? '&nbsp;<strong>*</strong>' : '') . ($seconds ? '<span style="color:#999999; font-size:11px; float:right; margin-left:20px">&nbsp;' . \TracyDebugger::formatTime($seconds) . ($size ? ', '.$size : '') . '</span>' : '') . '
                             </label>';
                     }
