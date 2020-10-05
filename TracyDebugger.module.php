@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.21.23',
+            'version' => '4.21.24',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -140,7 +140,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'iterator' => 'Iterator',
         'fullObject' => 'Full Object'
     );
-    public static $externalPanels;
+    public static $externalPanels = array();
     public static $allPanels = array(
         'adminTools' => 'Admin Tools',
         'adminer' => 'Adminer',
