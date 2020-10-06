@@ -237,6 +237,15 @@ body.tracyHidden:before {
     opacity: initial !important;
 }
 
+#tracy-debug input,
+#tracy-debug select,
+#tracy-debug textarea {
+    -moz-appearance: auto !important;
+    -webkit-appearance: auto !important;
+    -ms-appearance: auto !important;
+    appearance: auto !important;
+}
+
 #tracy-debug input[type="checkbox"],
 #tracy-debug input[type="radio"] {
     vertical-align: middle !important;
