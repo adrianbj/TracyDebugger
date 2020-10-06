@@ -252,6 +252,8 @@ body.tracyHidden:before {
     height: 12px !important;
     width: initial !important;
     opacity: initial !important;
+    appearance: auto !important;
+    float: none !important;
 }
 
 #tracy-debug label {
