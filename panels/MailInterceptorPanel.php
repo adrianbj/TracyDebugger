@@ -24,7 +24,7 @@ class MailInterceptorPanel extends BasePanel {
             foreach($items as $item) {
 
                 // from @tpr - for dealing with encoded fromName which is necessary for some email clients
-                if(function_exists('mb_decode_mimeheader')) {
+                if(function_exists('mb_decode_mimeheader') && mb_detect_encoding($item['fromName']) == 'ASCII') {
                     $item['fromName'] = mb_decode_mimeheader($item['fromName']);
                 }
 
