@@ -301,6 +301,60 @@ class RequestInfoPanel extends BasePanel {
             }
         }
 
+        // Template Code
+        if(in_array('templateCode', $panelSections) && $isPwPage) {
+            if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessTemplate') {
+                $templateCode = '<pre style="margin-bottom: 0">';
+                $template = $this->wire('templates')->get((int)$this->wire('input')->get('id'));
+                if($template) {
+                    $templateCode .= "[\n";
+                    if(method_exists($template, 'getExportData')) {
+                        $templateExportData = $template->getExportData();
+                        unset($templateExportData['id']);
+                        $templateCode .= $this->wire('sanitizer')->entities(ltrim(rtrim(ltrim(str_replace(':', ' =>', wireEncodeJSON($templateExportData, true, true)), "{"), "}"), "\n"));
+                    }
+                    // older version of PW that doesn't have getExportData() method
+                    else {
+                        $templateCode .= "\t'type' => '" . (string)$template->getInputfield(new NullPage()) . "',\n";
+                        $templateCode .= "\t'name' => '$template->name',\n";
+                        $templateCode .= "\t'label' => __('$template->label'),\n";
+                        $templateCode .= "\t'flags' => '$template->flags',\n";
+                        $templateDataArr = $template->getArray();
+                        foreach($templateDataArr as $k => $v) {
+                            if(is_array($v)) {
+                                $templateCode .= "\t'$k' => [\n";
+                                foreach($v as $key => $val) {
+                                    $templateCode .= "\t\t'".$this->wire('sanitizer')->entities($val)."',\n";
+                                }
+                                $templateCode .= "\t],\n";
+                            }
+                            else {
+                                $templateCode .= "\t'$k' => '".$this->wire('sanitizer')->entities($v)."',\n";
+                            }
+                        }
+                    }
+                    $templateCode .= "]\n";
+                    $templateCode .= '</pre>';
+                }
+            }
+        }
+
+        // Template Export Code
+        if(in_array('templateExportCode', $panelSections) && $isPwPage) {
+            if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessTemplate') {
+                $templateExportCode = '<pre style="margin-bottom: 0">';
+                $template = $this->wire('templates')->get((int)$this->wire('input')->get('id'));
+                if($template) {
+                    if(method_exists($template, 'getExportData')) {
+                        $templateExportData = array();
+                        $templateExportData[$template->name] = $template->getExportData();
+                        $templateExportCode .= $this->wire('sanitizer')->entities(wireEncodeJSON($templateExportData, true, true));
+                    }
+                    $templateExportCode .= '</pre>';
+                }
+            }
+        }
+
 
         // Module Settings
         if(in_array('moduleSettings', $panelSections) && $isPwPage) {
