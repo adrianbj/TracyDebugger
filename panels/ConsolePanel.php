@@ -136,7 +136,7 @@ class ConsolePanel extends BasePanel {
             foreach(\TracyDebugger::getApiData('variables') as $key => $vars) {
                 foreach($vars as $name => $params) {
                     if(strpos($name, '()') !== false) {
-                        $pwAutocompleteArr[$i]['name'] = "$$key->" . str_replace('___', '', $name) . (method_exists($this->wire()->$key, $name) ? '()' : '');
+                        $pwAutocompleteArr[$i]['name'] = "$$key->" . str_replace('___', '', $name) . ($this->wire()->$key && method_exists($this->wire()->$key, $name) ? '()' : '');
                         $pwAutocompleteArr[$i]['meta'] = 'PW method';
                     }
                     else {
