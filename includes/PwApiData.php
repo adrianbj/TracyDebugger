@@ -130,7 +130,13 @@ class TracyPwApiData extends WireData {
         }
 
         // sort by filename with Wire Core, Wire Modules, & Site Modules sections
-        uasort($hooks, function($a, $b) { return $a['filename']>$b['filename']; });
+        uasort($hooks, function($a, $b) {
+            // this could be replaced by "return $a['filename'] <=> $b['filename'];" for PHP 7+
+            if($a['filename'] == $b['filename']) {
+                return 0;
+            }
+            return($a['filename'] < $b['filename']) ? -1 : 1;
+        });
         return $hooks;
     }
 
@@ -217,7 +223,11 @@ class TracyPwApiData extends WireData {
             uksort($methodsList, function($a, $b) {
                 $aStripped = str_replace(array('___','__', '_'), '', $a);
                 $bStripped = str_replace(array('___','__', '_'), '', $b);
-                return $aStripped > $bStripped;
+                // this could be replaced by "return $aStripped <=> $bStripped;" for PHP 7+
+                if($aStripped == $bStripped) {
+                    return 0;
+                }
+                return($aStripped < $bStripped) ? -1 : 1;
             });
 
             foreach($methodsList as $name => $info) {
@@ -271,7 +281,11 @@ class TracyPwApiData extends WireData {
             uksort($propertiesList, function($a, $b) {
                 $aStripped = str_replace(array('___','__', '_'), '', strtolower($a));
                 $bStripped = str_replace(array('___','__', '_'), '', strtolower($b));
-                return $aStripped > $bStripped;
+                // this could be replaced by "return $aStripped <=> $bStripped;" for PHP 7+
+                if($aStripped == $bStripped) {
+                    return 0;
+                }
+                return($aStripped < $bStripped) ? -1 : 1;
             });
 
             foreach($propertiesList as $name => $info) {
@@ -473,7 +487,11 @@ class TracyPwApiData extends WireData {
             uksort($files['pwFunctions'], function($a, $b) {
                 $aLower = strtolower($a);
                 $bLower = strtolower($b);
-                return $aLower > $bLower;
+                // this could be replaced by "return $aLower <=> $bLower;" for PHP 7+
+                if($aLower == $bLower) {
+                    return 0;
+                }
+                return($aLower < $bLower) ? -1 : 1;
             });
         }
         return $files;
