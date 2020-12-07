@@ -1,10 +1,15 @@
 <?php
 
-$_GET['username'] = ''; // triggers autologin
-
 class AdminerProcessWireLogin {
 
     public function __construct($pwAdminUrl, $server = false, $db = false, $name = false, $pass = false) {
+
+        if(strpos($_SERVER['REQUEST_URI'], '&it=') !== false) {
+            header("Location: " . strtok($_SERVER['REQUEST_URI'], '?'));
+        }
+
+        $_GET['username'] = '';
+
         $this->pwAdminUrl = $pwAdminUrl;
         $this->server = $server;
         $this->db = $db;
@@ -13,6 +18,7 @@ class AdminerProcessWireLogin {
     }
 
     public function head() {
+
     ?>
         <link rel="stylesheet" type="text/css" href="../../../site/modules/TracyDebugger/panels/Adminer/css/tweaks.css">
     <?php
@@ -52,6 +58,37 @@ class AdminerProcessWireLogin {
 
     function login() {
         return true;
+    }
+
+    // really just here in case the javascript autosubmit in loginForm() doesn't work
+    // this hides the form fields so the user won't think they need to fill them out
+    function loginFormField($name, $heading, $value) {
+        if($name == 'server') {
+            return '<input type="hidden" name="'.$name.'" value="'.$this->server.'" />';
+        }
+        if($name == 'driver') {
+            return '<input type="hidden" name="auth[driver]" value="server" />';
+        }
+        if($name == 'db') {
+            return '<input type="hidden" name="'.$name.'" value="'.$this->db.'" />';
+        }
+        if($name == 'username') {
+            return '<input type="hidden" name="'.$name.'" value="'.$this->name.'" />';
+        }
+        if($name == 'password') {
+            return '';
+        }
+    }
+
+    function loginForm() {
+        ?>
+        <script<?php echo nonce(); ?>>
+            addEventListener('DOMContentLoaded', function () {
+                document.getElementsByTagName('body')[0].style.display = "none";
+                document.forms[0].submit();
+            });
+        </script>
+        <?php
     }
 
     function databases($flush = true) {

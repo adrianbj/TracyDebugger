@@ -7,7 +7,7 @@ class ProcessTracyAdminer extends Process implements Module, ConfigurableModule 
             'summary' => __('Adminer page for TracyDebugger.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '1.0.7',
+            'version' => '1.1.0',
             'autoload' => false,
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4, TracyDebugger',
@@ -84,7 +84,7 @@ class ProcessTracyAdminer extends Process implements Module, ConfigurableModule 
             return new AdminerPlugin($plugins);
         }
 
-        require_once __DIR__ . '/panels/Adminer/adminer-4.7.1-mysql.php'/*NoCompile*/;
+        require_once __DIR__ . '/panels/Adminer/adminer-4.7.8-mysql.php'/*NoCompile*/;
         exit;
     }
 
