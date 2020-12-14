@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.21.32',
+            'version' => '4.21.33',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -329,7 +329,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         // load Tracy files and our helper files
-        $tracyVersion = version_compare(PHP_VERSION, '7.1.0', '>=') ? '2.7.x' : '2.5.x';
+        if(version_compare(PHP_VERSION, '7.2.0', '>=')) {
+            $tracyVersion = '2.8.x';
+        }
+        elseif(version_compare(PHP_VERSION, '7.1.0', '>=')) {
+            $tracyVersion = '2.7.x';
+        }
+        else {
+            $tracyVersion = '2.5.x';
+        }
         require_once __DIR__ . '/tracy-'.$tracyVersion.'/src/tracy.php';
         require_once __DIR__ . '/includes/TD.php';
         if($this->data['enableShortcutMethods']) {
@@ -1114,6 +1122,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             toggleli.setAttribute("id", "hide-button");
                             toggleli.setAttribute("title", "Hide Tracy");
                             toggleli.addEventListener("click", function() {
+                                document.body.classList.remove("has-tracy-debugbar");
                                 document.getElementById("tracy-debug").style.display = "none";
                                 document.getElementById("tracy-show-button").style.display = "block";
                                 document.cookie = "tracyHidden=1; path=/";
@@ -1129,6 +1138,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                         document.getElementById("tracy-debug").style.display = "block";
                         document.getElementById("tracy-show-button").style.display = "none";
                         window.Tracy.Debug.bar.restorePosition();
+                        document.body.classList.add("has-tracy-debugbar");
                         document.cookie = "tracyHidden=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
                         document.cookie = "tracyShow=1; path=/";
                     }
@@ -1176,6 +1186,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 if($this->data['hideDebugBar'] && $this->showServerTypeIndicator() && in_array('custom', $this->data['styleAdminType']) && !$this->wire('input')->cookie->tracyShow) {
                     // hide server type indicator bar if debug bar is hidden by default
                     Debugger::$customJsStr .= 'document.body.classList.add("tracyHidden");';
+                    Debugger::$customJsStr .= 'document.body.classList.remove("has-tracy-debugbar");';
                 }
 
                 // remove localStorage items to prevent the panel from staying open
@@ -1196,6 +1207,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     Debugger::$customJsStr .= '
                         localStorage.removeItem("tracy-debug-panel-DumpsRecorderPanel");
                     ';
+                }
+
+                if(!$this->wire('input')->cookie->tracyHidden) {
+                    Debugger::$customJsStr .= 'document.body.classList.add("has-tracy-debugbar");';
                 }
 
             }

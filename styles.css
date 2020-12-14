@@ -1942,6 +1942,10 @@ span.tracyDumpsCollapser {
     right: 5px;
 }
 
+.tracy-dump-location {
+    margin-right: 35px !important;
+}
+
 .maximizedConsole {
     position: fixed !important;
     left: 0;
