@@ -87,7 +87,7 @@ final class Renderer
 				$file,
 				$line,
 				$uri ? "\nClick to open in editor" : ''
-			) . Helpers::encodeString($code, 50) . " 📍</a\n>";
+			) . Helpers::encodeString($code, 50) . "</a\n>";
 		}
 
 		return '<pre class="tracy-dump' . ($this->theme ? ' tracy-' . htmlspecialchars($this->theme) : '')

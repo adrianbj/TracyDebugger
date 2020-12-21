@@ -455,7 +455,7 @@ button.tracyCopyBtn:focus {
 
 pre.tracy-dump {
     background: transparent !important;
-    padding: .4em 2em .4em .7em !important;
+    padding: .4em 2em 2em .7em !important;
     margin: 0 0 10px 0 !important;
     border: 1px solid #D2D2D2 !important;
     border-radius: 0 !important;
@@ -463,6 +463,14 @@ pre.tracy-dump {
 
 td pre.tracy-dump {
     margin: 0 !important;
+}
+
+.tracy-dump-location {
+    float: none !important;
+    position: absolute !important;
+    bottom: 0px !important;
+    display: block !important;
+    margin: 5px 0 5px 0 !important;
 }
 
 .tracy-inner td {
@@ -1940,10 +1948,6 @@ span.tracyDumpsExpander {
 
 span.tracyDumpsCollapser {
     right: 5px;
-}
-
-.tracy-dump-location {
-    margin-right: 35px !important;
 }
 
 .maximizedConsole {
