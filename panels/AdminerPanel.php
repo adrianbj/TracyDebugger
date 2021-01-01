@@ -99,6 +99,9 @@ class AdminerPanel extends BasePanel {
                 $contextLink = '&select=hanna_code';
             }
         }
+        elseif($this->wire('page')->process == 'ProcessJumplinks') {
+            $contextLink = '&select=process_jumplinks';
+        }
         elseif($this->wire('page')->process == 'ProcessChangelog') {
             $contextLink = '&select=process_changelog&order=timestamp&desc=1';
         }
