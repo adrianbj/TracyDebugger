@@ -144,7 +144,7 @@ class TD extends TracyDebugger {
     private static function dumpToBar($var, $title = NULL, array $options = NULL, $echo = false) {
         $dumpItem = array();
         $dumpItem['title'] = $title;
-        $dumpItem['dump'] = $echo ? $var : static::generateDump($var, $options);
+        $dumpItem['dump'] = $echo ? '<div class="tracy-echo">' . $var . '</div>' : static::generateDump($var, $options);
         array_push(\TracyDebugger::$dumpItems, $dumpItem);
 
         if(isset(\TracyDebugger::$showPanels) && in_array('dumpsRecorder', \TracyDebugger::$showPanels)) {

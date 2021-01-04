@@ -90,6 +90,37 @@ bdb($var, $title, $options);
 
 ***
 
+## barEcho
+
+Echos string directly to the dumps panel. It supports HTML.
+
+#### Parameters
+```php
+be($var, $title, $options);
+
+/**
+* @param mixed $var string to be dumped
+* @param string $title string to identify this dump
+*
+*/
+```
+
+#### Output Examples
+
+Note the second optional parameter used to name the outputs in the Dumps panel.
+
+```php
+be('<p>My <strong>Custom</strong> HTML</p>', 'String');
+be('<table><tr><th>A</th><th>B</th></tr><tr><td>One</td><td>Two</td></tr><tr><td>Three</td><td>Four</td></tr></table>', 'Table');
+```
+
+![Dumps Panel Example](img/dump-echo-panel.png)
+
+See the **String** title in the output?
+Also, note the link to file and line number where these `be()` calls were triggered. This is linked to open the file to that line in your code editor, the Tracy File Editor, or ProcessFileEdit, depending on your configuration.
+
+***
+
 ## debugAll
 
 Shortcut for outputting via all the dump/log methods via the one call.
