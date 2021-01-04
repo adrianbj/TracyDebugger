@@ -472,6 +472,10 @@ td pre.tracy-dump {
     margin: 0 !important;
 }
 
+#tracy-debug .tracy-dump {
+    position: relative;
+}
+
 .tracy-dump-location {
     float: none !important;
     position: absolute !important;
