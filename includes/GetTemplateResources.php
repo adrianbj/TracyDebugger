@@ -3,7 +3,8 @@
 \TracyDebugger::$templateVars = \TracyDebugger::templateVars(get_defined_vars());
 unset(\TracyDebugger::$templateVars['returnValue']);
 
-\TracyDebugger::$templateConsts = array_diff_assoc(get_defined_constants(), \TracyDebugger::$initialConsts);
+\TracyDebugger::$templateConsts = \TracyDebugger::arrayDiffAssocMultidimensional(get_defined_constants(), \TracyDebugger::$initialConsts);
+unset(\TracyDebugger::$templateConsts['NAN']);
 
 $functions = get_defined_functions();
 \TracyDebugger::$templateFuncs = array_diff($functions['user'], \TracyDebugger::$initialFuncs);

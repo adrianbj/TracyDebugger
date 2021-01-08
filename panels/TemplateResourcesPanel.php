@@ -222,7 +222,7 @@ class TemplateResourcesPanel extends BasePanel {
                 "<td>".gettype($value)."</td>" .
                 "<td>".(gettype($value) == "object" ? get_class($value) : "")."</td>" .
                 "<td>".$outValue."</td>";
-                $out .= isset($varOut) ? $varOut : '<td></td>';
+                if($type == 'var') $out .= isset($varOut) ? $varOut : '<td></td>';
                 $out .= "</tr>";
         }
         $out .= $this->sectionEnd;

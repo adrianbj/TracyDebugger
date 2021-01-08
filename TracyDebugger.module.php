@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '4.21.38',
+            'version' => '4.21.39',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -2681,6 +2681,33 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             self::$allApiData[$type] = $tracyPwApiData->getApiData($type);
         }
         return self::$allApiData[$type];
+    }
+
+
+    public static function arrayDiffAssocMultidimensional(array $array1, array $array2) {
+        $difference = [];
+        foreach($array1 as $key => $value) {
+            if(is_array($value)) {
+                if(!array_key_exists($key, $array2)) {
+                    $difference[$key] = $value;
+                }
+                elseif (!is_array($array2[$key])) {
+                    $difference[$key] = $value;
+                }
+                else {
+                    $multidimensionalDiff = self::arrayDiffAssocMultidimensional($value, $array2[$key]);
+                    if (count($multidimensionalDiff) > 0) {
+                        $difference[$key] = $multidimensionalDiff;
+                    }
+                }
+            }
+            else {
+                if (!array_key_exists($key, $array2) || $array2[$key] !== $value) {
+                    $difference[$key] = $value;
+                }
+            }
+        }
+        return $difference;
     }
 
 
