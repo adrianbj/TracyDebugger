@@ -26,7 +26,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'title' => __('Tracy Debugger', __FILE__),
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
-            'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
+            'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
             'version' => '4.21.40',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
@@ -2825,7 +2825,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         <p style="margin-left:55px"><i class="fa fa-fw fa-lg fa-book"></i> <a href="https://adrianbj.github.io/TracyDebugger">TracyDebugger for ProcessWire Docs</a> and <a href="https://tracy.nette.org/">Nette Tracy Docs</a><p>
         <p style="margin-left:55px"><i class="fa fa-fw fa-lg fa-github"></i> <a href="https://github.com/adrianbj/TracyDebugger">Star on Github</a></p>
         <p style="margin-left:55px"><img class="fa fa-fw" style="display:inline; vertical-align: middle; margin:0 4px" src="https://adrianbj.github.io/TracyDebugger/icons/processwire-info.svg"> <a href="http://modules.processwire.com/modules/tracy-debugger/">Recommend in the Modules Directory</a></strong></p>
-        <p style="margin-left:55px"><i class="fa fa-fw fa-lg fa-life-ring"></i> <a href="https://processwire.com/talk/topic/12208-tracy-debugger/">Forum Support Thread</a></p>
+        <p style="margin-left:55px"><i class="fa fa-fw fa-lg fa-life-ring"></i> <a href="https://processwire.com/talk/forum/58-tracy-debugger/">Forum Support Thread</a></p>
         <p style="margin-left:55px">
             <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=BJPJ5LGQHMCVE&source=url">
                 <img src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif" border="0" name="submit" />
