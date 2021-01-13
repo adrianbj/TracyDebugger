@@ -246,7 +246,7 @@ class TD extends TracyDebugger {
 
         }
         else {
-            $out .= Dumper::toHtml($var, $options);
+            $out .= '<div style="clear:both; position:relative;">' . Dumper::toHtml($var, $options) . '</div>';
         }
 
         $out .= '</div>';
