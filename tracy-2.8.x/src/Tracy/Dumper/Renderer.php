@@ -90,6 +90,7 @@ final class Renderer
 				$line,
 				$uri ? "\nClick to open in editor" : ''
 			) . Helpers::encodeString($code, 50) . "</a\n>";
+			$location .= '<span class="tracy-dump-location" style="margin-bottom: 3px !important">in ' . Helpers::editorLink($file, $line) . '</span>';
 		}
 
 		return '<pre class="tracy-dump' . ($this->theme ? ' tracy-' . htmlspecialchars($this->theme) : '')
@@ -289,7 +290,7 @@ final class Renderer
 		}
 
 		$collapsed = $depth
-			? $count >= $this->collapseSub
+			? ($this->lazy === false || $depth === 1 ? $count >= $this->collapseSub : true)
 			: (is_int($this->collapseTop) ? $count >= $this->collapseTop : $this->collapseTop);
 
 		$span = '<span class="tracy-toggle' . ($collapsed ? ' tracy-collapsed' : '') . '"';
@@ -360,7 +361,7 @@ final class Renderer
 		}
 
 		$collapsed = $object->collapsed ?? ($depth
-			? count($object->items) >= $this->collapseSub
+			? ($this->lazy === false || $depth === 1 ? count($object->items) >= $this->collapseSub : true)
 			: (is_int($this->collapseTop) ? count($object->items) >= $this->collapseTop : $this->collapseTop));
 
 		$span = '<span class="tracy-toggle' . ($collapsed ? ' tracy-collapsed' : '') . '"';
@@ -429,12 +430,18 @@ final class Renderer
 		if ($this->collectingMode) {
 			return;
 		}
-		settype($this->snapshotSelection, 'array');
+		if ($this->snapshotSelection === null) {
+			$this->snapshotSelection = [];
+		}
+
 		if (is_array($value)) {
 			foreach ($value as [, $v]) {
 				$this->copySnapshot($v);
 			}
 		} elseif ($value instanceof Value && $value->type === Value::TYPE_REF) {
+			if (isset($this->snapshotSelection[$value->value])) {
+				return;
+			}
 			$ref = $this->snapshotSelection[$value->value] = $this->snapshot[$value->value];
 			if (!isset($this->parents[$value->value])) {
 				$this->parents[$value->value] = true;
@@ -455,7 +462,9 @@ final class Renderer
 		try {
 			return json_encode($snapshot, JSON_HEX_APOS | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 		} finally {
-			@ini_set('serialize_precision', $old); // @ may be disabled
+			if ($old !== false) {
+				ini_set('serialize_precision', $old);
+			}
 		}
 	}
 

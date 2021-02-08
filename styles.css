@@ -461,7 +461,7 @@ pre.tracy-dump, .tracy-echo {
 }
 
 pre.tracy-dump {
-    padding: .4em 2em 2em .7em !important;
+    padding: .4em 2em 3em .7em !important;
 }
 
 .tracy-echo {
@@ -477,7 +477,7 @@ td pre.tracy-dump {
     position: absolute !important;
     bottom: 0px !important;
     display: block !important;
-    margin: 5px 0 5px 0 !important;
+    margin: 10px 0 15px 0 !important;
 }
 
 .tracy-inner td {
@@ -2021,3 +2021,28 @@ https://github.com/ajaxorg/ace/issues/2872
     width: 400px;
 }
 
+
+
+#tracy-quick-links .InputfieldContent ul {
+    list-style-type: none;
+    padding: 0;
+    overflow: hidden;
+}
+#tracy-quick-links .InputfieldContent ul li {
+    float: left;
+    padding: 0 5px 5px 0;
+}
+#tracy-quick-links .InputfieldContent ul li a {
+    background: #e3e9ef;
+    color: #333;
+    display: block;
+    padding: 1px 10px;
+    border-radius: 3px; }
+#tracy-quick-links .InputfieldContent ul li a:hover {
+        text-decoration: none;
+        background: #d9e1ea;
+}
+#tracy-quick-links .InputfieldContent ul li a.active {
+        background: #e83561;
+        color: #fff;
+}

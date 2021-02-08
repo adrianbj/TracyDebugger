@@ -191,12 +191,30 @@ var getParentsUntil = function (elem, parent, filter) {
     }
 
     return parents;
-    };
+};
 
-    /**
-    * Element.matches() polyfill (simple version)
-    * https://developer.mozilla.org/en-US/docs/Web/API/Element/matches#Polyfill
-    */
-    if (!Element.prototype.matches) {
+/**
+* Element.matches() polyfill (simple version)
+* https://developer.mozilla.org/en-US/docs/Web/API/Element/matches#Polyfill
+*/
+if (!Element.prototype.matches) {
     Element.prototype.matches = Element.prototype.msMatchesSelector || Element.prototype.webkitMatchesSelector;
-    }
+}
+
+
+$(document).ready(function() {
+    var $quick_links = $('#tracy-quick-links');
+    var $config_fields = $quick_links.nextUntil('#wrap_uninstall');
+    $quick_links.on('click', 'a', function(event) {
+        event.preventDefault();
+        if($(this).hasClass('active')) {
+            $(this).removeClass('active');
+            $config_fields.show();
+        } else {
+            $quick_links.find('a').removeClass('active');
+            $(this).addClass('active');
+            $config_fields.hide();
+            $($(this).attr('href')).show();
+        }
+    });
+});

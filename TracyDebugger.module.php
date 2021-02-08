@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.21.40',
+            'version' => '4.21.41',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -57,6 +57,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     protected static $onlineFileEditorDirPath;
     public static $inAdmin;
     public static $isLocal = false;
+    public static $allowedSuperuser = false;
     public static $allowedTracyUser = false;
     public static $validSwitchedUser = false;
     public static $validLocalUser = false;
@@ -198,6 +199,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "superuserForceDevelopment" => null,
             "guestForceDevelopmentLocal" => null,
             "ipAddress" => null,
+            "restrictSuperusers" => null,
             "strictMode" => null,
             "strictModeAjax" => null,
             "forceScream" => null,
@@ -319,15 +321,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public function init() {
 
-        $externalPanelPaths = glob($this->wire('config')->paths->root.'/site/modules/*/TracyPanels/*.php');
-        foreach($externalPanelPaths as $panelPath) {
-            $path_parts = pathinfo($panelPath);
-            $panelName = lcfirst($path_parts['filename']);
-            static::$externalPanels[$panelName] = $panelPath;
-            static::$allPanels[$panelName] = implode(' ', preg_split('/(?=[A-Z])/', $path_parts['filename']));
-            ksort(static::$allPanels);
-        }
-
         // load Tracy files and our helper files
         if(version_compare(PHP_VERSION, '7.2.0', '>=')) {
             $tracyVersion = '2.8.x';
@@ -342,6 +335,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         require_once __DIR__ . '/includes/TD.php';
         if($this->data['enableShortcutMethods']) {
             require_once __DIR__ . '/includes/ShortcutMethods.php';
+        }
+
+        // load base panel class
+        require_once __DIR__ . '/includes/BasePanel.php';
+
+        $externalPanelPaths = glob($this->wire('config')->paths->root.'/site/modules/*/TracyPanels/*.php');
+        foreach($externalPanelPaths as $panelPath) {
+            $path_parts = pathinfo($panelPath);
+            $panelName = lcfirst($path_parts['filename']);
+            static::$externalPanels[$panelName] = $panelPath;
+            static::$allPanels[$panelName] = implode(' ', preg_split('/(?=[A-Z])/', $path_parts['filename']));
+            ksort(static::$allPanels);
         }
 
         // merge in settings from config.php file
@@ -359,6 +364,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // determine if we are in the admin / backend
         static::$inAdmin = $this->inAdmin();
+
+        // check if user is superuser and has tracy-debugger permission if required
+        if($this->data['restrictSuperusers'] && $this->wire('user')->isSuperuser()) {
+            static::$allowedSuperuser = self::userHasPermission('tracy-debugger');
+        }
+        else {
+            static::$allowedSuperuser = $this->wire('user')->isSuperuser();
+        }
+
 
         // determine whether user is allowed to use Tracy and whether DEV or PRODUCTION
         static::$allowedTracyUser = static::allowedTracyUser();
@@ -517,7 +531,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             foreach(static::$allPanels as $panelName => $panelTitle) {
                 if(in_array($panelName, static::$showPanels) && !in_array($panelName, $showPanelsOrdered)) $showPanelsOrdered[$i] = $panelName;
                 // define disabled panels for restricted users
-                if((self::$validSwitchedUser || $this->superuserHasPermission("tracy-restricted-panels") || $this->wire('user')->hasRole("tracy-restricted-panels")) && in_array($panelName, $this->data['restrictedUserDisabledPanels'])) {
+                if((self::$validSwitchedUser || self::userHasPermission("tracy-restricted-panels") || $this->wire('user')->hasRole("tracy-restricted-panels")) && in_array($panelName, $this->data['restrictedUserDisabledPanels'])) {
                     static::$restrictedUserDisabledPanels[] = $panelName;
                 }
                 $i++;
@@ -585,7 +599,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             // process userSwitcher if panel open and switch initiated
             if(in_array('userSwitcher', static::$showPanels) && $this->wire('input')->post->userSwitcher) {
                 // if user is superuser and session length is set, save to config settings
-                if($this->wire('user')->isSuperuser() && $this->wire('input')->post->userSwitchSessionLength && $this->wire('session')->CSRF->validate()) {
+                if(static::$allowedSuperuser && $this->wire('input')->post->userSwitchSessionLength && $this->wire('session')->CSRF->validate()) {
                     // cleanup expired sessions
                     if(isset($this->data['userSwitchSession'])) {
                         foreach($this->data['userSwitchSession'] as $id => $expireTime) {
@@ -794,7 +808,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
             // ADMIN TOOLS
-            if($this->wire('user')->isSuperuser()) {
+            if(static::$allowedSuperuser) {
                 // delete children
                 if($this->wire('input')->post->deleteChildren) {
                     foreach($this->wire('pages')->get((int)$this->wire('input')->post->adminToolsId)->children("include=all") as $child) {
@@ -991,10 +1005,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 // they have to be completely separate replacements because Tracy uses strtr()
                 // which won't replace the same substring more than once
                 $mappingReplacements = array();
-                $compilerCachePath = isset($this->wire('config')->fileCompilerOptions['cachePath']) ? $this->wire('config')->fileCompilerOptions['cachePath'] : $this->wire('config')->paths->cache . 'FileCompiler/';
+                $compilerCachePath = isset($this->wire('config')->fileCompilerOptions['cachePath']) && $this->wire('config')->fileCompilerOptions['cachePath'] != '' ? $this->wire('config')->fileCompilerOptions['cachePath'] : $this->wire('config')->paths->cache . 'FileCompiler/';
                 $compilerCachePath = str_replace('/', DIRECTORY_SEPARATOR, $compilerCachePath);
 
-                static::$useOnlineEditor = ($this->wire('user')->isSuperuser() || self::$validLocalUser || self::$validSwitchedUser) &&
+                static::$useOnlineEditor = (static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser) &&
                     (static::$isLocal && in_array('local', $this->data['useOnlineEditor'])) ||
                     (!static::$isLocal && in_array('live', $this->data['useOnlineEditor']) ||
                     (in_array('fileEditor', static::$showPanels) && $this->data['forceEditorLinksToTracy'])
@@ -1409,8 +1423,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // if user dev template enabled and required permission exists in system,
         // check if current user has a matching permission for the current page's template, or the "tracy-all-suffix" permission
         if($this->data['userDevTemplate'] && ($this->wire('permissions')->get("tracy-".$this->wire('page')->template->name."-".$this->data['userDevTemplateSuffix'])->id || $this->wire('permissions')->get("tracy-all-".$this->data['userDevTemplateSuffix'])->id)) {
-            if($this->superuserHasPermission("tracy-".$this->wire('page')->template->name."-".$this->data['userDevTemplateSuffix']) ||
-                $this->superuserHasPermission("tracy-all-".$this->data['userDevTemplateSuffix'])
+            if(self::userHasPermission("tracy-".$this->wire('page')->template->name."-".$this->data['userDevTemplateSuffix']) ||
+                self::userHasPermission("tracy-all-".$this->data['userDevTemplateSuffix'])
             ) {
                 // template file
                 $devTemplateFilename = $this->appendSuffixToFile($this->wire('page')->template->filename, $this->data['userDevTemplateSuffix']);
@@ -1442,7 +1456,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
             // FILE/TEMPLATE EDITOR
-            if($this->wire('user')->isSuperuser() || self::$validLocalUser || self::$validSwitchedUser) {
+            if(static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser) {
                 if($this->wire('input')->post->fileEditorFilePath) {
                     $rawCode = base64_decode($this->wire('input')->post->tracyFileEditorRawCode);
                     if(static::$inAdmin &&
@@ -1526,9 +1540,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
 
-        // load base panel class
-        require_once __DIR__ . '/includes/BasePanel.php';
-
         // load File Editor panel if Tracy online editor is selected
         if(static::$useOnlineEditor && static::$onlineEditor == 'tracy' && !in_array('fileEditor', static::$showPanels)) {
             array_push(static::$showPanels, 'fileEditor');
@@ -1539,12 +1550,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         foreach(static::$showPanels as $panel) {
             if(!array_key_exists($panel, static::$allPanels)) continue;
             if(static::$inAdmin && in_array($panel, static::$hideInAdmin)) continue;
-            if((in_array($panel, self::$superUserOnlyPanels)) && !$this->wire('user')->isSuperuser() && !self::$validLocalUser && !self::$validSwitchedUser) continue;
+            if((in_array($panel, self::$superUserOnlyPanels)) && !static::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) continue;
             // special additional check for adminer
-            if($panel == 'adminer' && !$this->wire('user')->isSuperuser()) continue;
+            if($panel == 'adminer' && !static::$allowedSuperuser) continue;
             if($panel == 'userSwitcher') {
                 if(isset($this->data['userSwitchSession'])) $userSwitchSession = $this->data['userSwitchSession'];
-                if(!$this->wire('user')->isSuperuser() && (!$this->wire('session')->tracyUserSwitcherId || (isset($userSwitchSession[$this->wire('session')->tracyUserSwitcherId]) && $userSwitchSession[$this->wire('session')->tracyUserSwitcherId] <= time()))) continue;
+                if(!static::$allowedSuperuser && (!$this->wire('session')->tracyUserSwitcherId || (isset($userSwitchSession[$this->wire('session')->tracyUserSwitcherId]) && $userSwitchSession[$this->wire('session')->tracyUserSwitcherId] <= time()))) continue;
             }
             // ignore disabled panels for restricted users
             if(!empty(static::$restrictedUserDisabledPanels) && in_array($panel, static::$restrictedUserDisabledPanels)) continue;
@@ -1894,8 +1905,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * @return bool
      *
      */
-    private function superuserHasPermission($permission) {
-        foreach($this->wire('user')->roles as $role) {
+    private static function userHasPermission($permission) {
+        foreach(wire('user')->roles as $role) {
             foreach($role->permissions as $perm) {
                 if($perm->name == $permission) return true;
             }
@@ -2092,7 +2103,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     private function insertCode($when) {
-        if((!$this->wire('user')->isSuperuser() && !self::$validLocalUser && !self::$validSwitchedUser) ||
+        if((!static::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) ||
             $this->wire('config')->ajax ||
             $this->wire('input')->cookie->tracyCodeError ||
             !$this->wire('input')->cookie->tracyIncludeCode)
@@ -2547,9 +2558,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         if(static::getDataValue('userSwitchSession') !== null) $userSwitchSession = static::getDataValue('userSwitchSession');
 
-        $u = wire('user');
-
-        if($u->isSuperuser() && static::getDataValue('superuserForceDevelopment') == 1 ||
+        if(static::$allowedSuperuser && static::getDataValue('superuserForceDevelopment') == 1 ||
             (static::$isLocal && static::getDataValue('guestForceDevelopmentLocal') == 1)) {
                 self::$validLocalUser = true;
                 return 'development';
@@ -2563,10 +2572,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
         else {
             $checkIpAddress = static::checkIpAddress();
-            if($checkIpAddress['ipAddress'] != '' && $u->hasPermission('tracy-debugger')) {
+            if($checkIpAddress['ipAddress'] != '' && self::userHasPermission('tracy-debugger')) {
                 return $checkIpAddress['ipAddressAllowed'] ? 'development' : false;
             }
-            elseif($u->hasPermission('tracy-debugger')) {
+            elseif(self::userHasPermission('tracy-debugger')) {
                 if(static::$isLocal) self::$validLocalUser = true;
                 return 'development';
             }
@@ -2879,7 +2888,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Force superusers into DEVELOPMENT mode', __FILE__);
         $f->description = __('Check to force DEVELOPMENT mode for superusers even on live sites.', __FILE__);
         $f->notes = __('By default, the Output Mode setting\'s DETECT option will force a site into PRODUCTION mode when it is live, which hides the DebugBar and sends errors and dumps to log files. However, with this checked, superusers will always be in DEVELOPMENT mode.', __FILE__);
-        $f->columnWidth = 33;
+        $f->columnWidth = 50;
         $f->attr('checked', $data['superuserForceDevelopment'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
@@ -2888,7 +2897,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Force guest users into DEVELOPMENT mode on localhost', __FILE__);
         $f->description = __('Check to force DEVELOPMENT mode for guests when server detected as localhost.', __FILE__);
         $f->notes = __('By default, guest users will always be in PRODUCTION mode (no debug bar). However, with this checked, they will always be in DEVELOPMENT mode on localhost.', __FILE__);
-        $f->columnWidth = 34;
+        $f->columnWidth = 50;
         $f->attr('checked', $data['guestForceDevelopmentLocal'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
@@ -2896,9 +2905,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'ipAddress');
         $f->label = __('Restrict non-superusers', __FILE__);
         $f->description = __('IP Address that non-superusers need to use TracyDebugger. Enter IP address or a PCRE regular expression to match IP address of user, eg. /^123\.456\.789\./ would match all IP addresses that started with 123.456.789.', __FILE__);
-        $f->columnWidth = 33;
+        $f->columnWidth = 50;
         $f->notes = __('Non-superusers are already blocked unless they have the `tracy-debugger` permission. But once a user has been given the permission, this option restricts access to the listed IP address. Highly recommended for debugging live sites that you have manually set into DEVELOPMENT mode.', __FILE__);
         if($data['ipAddress']) $f->attr('value', $data['ipAddress']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'restrictSuperusers');
+        $f->label = __('Restrict superusers', __FILE__);
+        $f->description = __('If checked, only superusers with the `tracy-debugger` permission will have access to Tracy.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['restrictSuperusers'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
         // Miscellaneous Settings

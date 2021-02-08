@@ -9,7 +9,7 @@ class UserSwitcherPanel extends BasePanel {
         if(\TracyDebugger::isAdditionalBar()) return;
         \Tracy\Debugger::timer('userSwitcher');
 
-        if($this->wire('user')->isSuperuser()) {
+        if(\TracyDebugger::$allowedSuperuser) {
             $iconColor = \TracyDebugger::COLOR_NORMAL;
         }
         elseif($this->wire('user')->isLoggedin()) {
@@ -77,7 +77,7 @@ class UserSwitcherPanel extends BasePanel {
                 $out .= '<form name="userSwitcherPanel" action="'.\TracyDebugger::inputUrl(true).'" method="post">';
             }
 
-            if($this->wire('user')->isSuperuser() || $remainingSessionLength > 0) {
+            if(\TracyDebugger::$allowedSuperuser || $remainingSessionLength > 0) {
                 $out .= '
                     <select name="userSwitcher" size="5" style="width:100% !important; height:90px !important">';
                         if(!$this->wire('user')->isLoggedin()) $out .= '<option value="guest" selected="selected">guest</option>';
@@ -114,14 +114,14 @@ HTML;
                 </p>';
             }
 
-            if($this->wire('user')->isSuperuser()) {
+            if(\TracyDebugger::$allowedSuperuser) {
                 $out .= '<p style="font-size:11px !important;">Session length (mins)<br /><input type="number" max="60" style="width:100% !important" name="userSwitchSessionLength" value="'.round($remainingSessionLength).'" /></p>';
             }
             else {
                 $out .= '<p style="font-size:11px !important">Remaining session length: ' . ($remainingSessionLength < 1 ? '<1' : round($remainingSessionLength)) . ' mins</p>';
             }
 
-            if($this->wire('user')->isSuperuser() || $remainingSessionLength > 0) {
+            if(\TracyDebugger::$allowedSuperuser || $remainingSessionLength > 0) {
                 $out .= '<input type="submit" name="submitUserSwitcher" value="Switch" />&nbsp;';
             }
 

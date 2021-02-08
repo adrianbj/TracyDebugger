@@ -241,7 +241,7 @@ class TD extends TracyDebugger {
 	            $out .= $tabs . $tabDivs;
 	        }
 	        else {
-            	$out .= $lastDump;
+            	$out .= '<div style="clear:both; position:relative;">' . $lastDump . '</div>';
 	        }
 
         }
