@@ -8,8 +8,6 @@ class AdminerProcessWireLogin {
             header("Location: " . strtok($_SERVER['REQUEST_URI'], '?'));
         }
 
-        $_GET['username'] = '';
-
         $this->pwAdminUrl = $pwAdminUrl;
         $this->server = $server;
         $this->db = $db;

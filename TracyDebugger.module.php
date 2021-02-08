@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.21.41',
+            'version' => '4.21.42',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -372,7 +372,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         else {
             static::$allowedSuperuser = $this->wire('user')->isSuperuser();
         }
-
 
         // determine whether user is allowed to use Tracy and whether DEV or PRODUCTION
         static::$allowedTracyUser = static::allowedTracyUser();
@@ -1049,7 +1048,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
                 //CUSTOM CSS & JS
                 Debugger::$customCssFiles = array(
-                    $this->wire('config')->paths->TracyDebugger.'styles.css'
+                    $this->wire('config')->paths->TracyDebugger.'styles/styles.css'
                 );
 
                 Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/main.js';
@@ -2575,7 +2574,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if($checkIpAddress['ipAddress'] != '' && self::userHasPermission('tracy-debugger')) {
                 return $checkIpAddress['ipAddressAllowed'] ? 'development' : false;
             }
-            elseif(self::userHasPermission('tracy-debugger')) {
+            elseif(self::userHasPermission('tracy-debugger') || static::$allowedSuperuser) {
                 if(static::$isLocal) self::$validLocalUser = true;
                 return 'development';
             }
@@ -2792,7 +2791,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $this->wire('session')->redirect($this->inputUrl(true).'#wrap_Inputfield_customPhpCode');
         }
 
-        // load JS files for config settings
+        // load JS & CSS files for config settings
+        $this->wire('config')->styles->append($this->wire('config')->urls->TracyDebugger . "styles/config.css");
         $this->wire('config')->scripts->append($this->wire('config')->urls->TracyDebugger . "scripts/ace-editor/ace.js");
         $this->wire('config')->scripts->append($this->wire('config')->urls->TracyDebugger . "scripts/config.js");
 

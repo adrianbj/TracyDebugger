@@ -1,0 +1,23 @@
+#tracy-quick-links .InputfieldContent ul {
+    list-style-type: none;
+    padding: 0;
+    overflow: hidden;
+}
+#tracy-quick-links .InputfieldContent ul li {
+    float: left;
+    padding: 0 5px 5px 0;
+}
+#tracy-quick-links .InputfieldContent ul li a {
+    background: #e3e9ef;
+    color: #333;
+    display: block;
+    padding: 1px 10px;
+    border-radius: 3px; }
+#tracy-quick-links .InputfieldContent ul li a:hover {
+        text-decoration: none;
+        background: #d9e1ea;
+}
+#tracy-quick-links .InputfieldContent ul li a.active {
+        background: #e83561;
+        color: #fff;
+}

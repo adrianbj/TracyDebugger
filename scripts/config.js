@@ -5,8 +5,24 @@
         // add quicklinks to top of config settings (thanks to @Robin S / @Toutouwai)
         var $links_list = $('#tracy-quick-links .InputfieldContent > ul');
         $('#ModuleEditForm > .Inputfields > .InputfieldFieldset').each(function() {
-        $links_list.append('<li><a class="label" href="#' + $(this).attr('id') + '">' + $(this).children('label').text() + '</a></li>');
+            $links_list.append('<li><a class="label" href="#' + $(this).attr('id') + '">' + $(this).children('label').text() + '</a></li>');
         });
+        var $quick_links = $('#tracy-quick-links');
+        var $config_fields = $quick_links.nextUntil('#wrap_uninstall');
+        $quick_links.on('click', 'a', function(event) {
+            event.preventDefault();
+            if($(this).hasClass('active')) {
+                $(this).removeClass('active');
+                $config_fields.show();
+            } else {
+                $quick_links.find('a').removeClass('active');
+                $(this).addClass('active');
+                $config_fields.hide();
+                $($(this).attr('href')).show();
+            }
+        });
+
+
 
         // loading ACE editor for various config fields
         // modified from https://github.com/ryanburnette/textarea-as-ace-editor
