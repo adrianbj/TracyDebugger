@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.21.42',
+            'version' => '4.21.43',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -236,7 +236,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "panelZindex" => 100,
             "styleWhere" => array('backend', 'frontend'),
             "styleAdminElements" => "body::before {\n\tcontent: \"[type]\";\n\tbackground: [color];\n\tposition: fixed;\n\tleft: 0;\n\tbottom: 100%;\n\tcolor: #ffffff;\n\twidth: 100vh;\n\tpadding: 0;\n\ttext-align: center;\n\tfont-weight: 600;\n\ttext-transform: uppercase;\n\ttransform: rotate(90deg);\n\ttransform-origin: bottom left;\n\tz-index: 999999;\n\tfont-family: sans-serif;\n\tfont-size: 11px;\n\theight: 13px;\n\tline-height: 13px;\npointer-events: none;\n}\n",
-            "styleAdminColors" => "\nlocal|#FF9933\n*.local|#FF9933\n*.dev|#FF9933\ndev.*|#FF9933\n*.test|#FF9933\nstaging.*|#8b0066\n*.com|#009900",
+            "styleAdminColors" => "\nlocal|#FF9933\n*.local|#FF9933\ndev.*|#FF9933\n*.test|#FF9933\nstaging.*|#8b0066\n*.com|#009900",
             "styleAdminType" => array('favicon'),
             "showPWInfoPanelIconLabels" => 1,
             "linksNewTab" => null,
@@ -3893,7 +3893,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Indicator colors', __FILE__);
         $f->showIf = "styleWhere.count>0";
         $f->description = __('Use "type|#color" entries to define indicator styling for each server type. "local" is determined by IP address. Other types are detected based on their existence in subdomain or TLD (eg. dev.mysite.com or mysite.dev), dependant on whether you include the period after (dev.﹡) or before (﹡.dev).', __FILE__);
-        $f->notes = __("**DEFAULT**\nlocal|#FF9933\n*.local|#FF9933\n*.dev|#FF9933\ndev.*|#FF9933\n*.test|#FF9933\nstaging.*|#8b0066\n*.com|#009900", __FILE__);
+        $f->notes = __("**DEFAULT**\nlocal|#FF9933\n*.local|#FF9933\ndev.*|#FF9933\n*.test|#FF9933\nstaging.*|#8b0066\n*.com|#009900", __FILE__);
         $f->columnWidth = 70;
         if($data['styleAdminColors']) $f->attr('value', $data['styleAdminColors']);
         $fieldset->add($f);
