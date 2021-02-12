@@ -4,6 +4,29 @@ class PanelSelectorPanel extends BasePanel {
 
     protected $icon;
 
+    protected $panelSettingsLinks = array(
+        'adminer' => 'adminerPanel',
+        'apiExplorer' => 'apiExplorerPanel',
+        'captainHook' => 'captainHookPanel',
+        'console' => 'consolePanel',
+        'customPhp' => 'customPhpPanel',
+        'debugMode' => 'debugModePanel',
+        'diagnostics' => 'diagnosticsPanel',
+        'dumpsRecorder' => 'dumpsPanel',
+        'fileEditor' => 'fileEditorPanel',
+        'methodsInfo' => 'methodShortcuts',
+        'panelSelector' => 'panelSelectorPanel',
+        'processwireLogs' => 'processwireAndTracyLogsPanels',
+        'tracyLogs' => 'processwireAndTracyLogsPanels',
+        'processwireInfo' => 'processwireInfoPanel',
+        'requestInfo' => 'requestInfoPanel',
+        'requestLogger' => 'requestLoggerPanel',
+        'templateResources' => 'templateResourcesPanel',
+        'todo' => 'todoPanel',
+        'userSwitcher' => 'userSwitcherPanel',
+        'validator' => 'validatorPanel'
+    );
+
     public function getTab() {
         if(\TracyDebugger::isAdditionalBar()) return;
         \Tracy\Debugger::timer('panelSelector');
@@ -139,31 +162,9 @@ class PanelSelectorPanel extends BasePanel {
                         $out .= '
                             <label style="'.($this->wire('page')->template == 'admin' && in_array($name, \TracyDebugger::$hideInAdmin) ? ' visibility:hidden;position: absolute; left: -999em;' : '').'">' .
                                 ($this->isOnce($name, $defaultPanels) ? $onceIcon .'&nbsp;' : '<span style="display:inline-block;width:18px">&nbsp;</span>');
-                                if(!empty(\TracyDebugger::$externalPanels) && !array_key_exists($name, \TracyDebugger::$externalPanels)) {
-                                    $panelSettingsLinks = array(
-                                        'adminer' => 'adminerPanel',
-                                        'apiExplorer' => 'apiExplorerPanel',
-                                        'captainHook' => 'captainHookPanel',
-                                        'console' => 'consolePanel',
-                                        'customPhp' => 'customPhpPanel',
-                                        'debugMode' => 'debugModePanel',
-                                        'diagnostics' => 'diagnosticsPanel',
-                                        'dumpsRecorder' => 'dumpsPanel',
-                                        'fileEditor' => 'fileEditorPanel',
-                                        'methodsInfo' => 'methodShortcuts',
-                                        'panelSelector' => 'panelSelectorPanel',
-                                        'processwireLogs' => 'processwireAndTracyLogsPanels',
-                                        'tracyLogs' => 'processwireAndTracyLogsPanels',
-                                        'processwireInfo' => 'processwireInfoPanel',
-                                        'requestInfo' => 'requestInfoPanel',
-                                        'requestLogger' => 'requestLoggerPanel',
-                                        'templateResources' => 'templateResourcesPanel',
-                                        'todo' => 'todoPanel',
-                                        'userSwitcher' => 'userSwitcherPanel',
-                                        'validator' => 'validatorPanel'
-                                    );
-                                    if(array_key_exists($name, $panelSettingsLinks)) {
-                                        $out .= \TracyDebugger::generatePanelSettingsLink($panelSettingsLinks[$name]);
+                                if(!empty(\TracyDebugger::$externalPanels) || !array_key_exists($name, \TracyDebugger::$externalPanels)) {
+                                    if(array_key_exists($name, $this->panelSettingsLinks)) {
+                                        $out .= \TracyDebugger::generatePanelSettingsLink($this->panelSettingsLinks[$name]);
                                     }
                                     else {
                                         $out .= '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
