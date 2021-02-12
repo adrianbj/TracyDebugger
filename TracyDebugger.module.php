@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.21.43',
+            'version' => '4.21.44',
             'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1161,7 +1161,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             window.requestAnimationFrame(modifyTracyLogo);
                         } else {
                             var tracyLogo = document.getElementById("tracy-debug-logo");
-                            tracyLogo.setAttribute("title", tracyLogo.getAttribute("title") + "\n\nTracy Debugger for PW '.$this->getModuleInfo()['version'].'\nDouble-click to visit module settings");
+                            tracyLogo.setAttribute("title", tracyLogo.getAttribute("title") + "\n\nTracy Debugger for PW '.$this->getModuleInfo()['version'].'\nClick to scroll to page top\nDouble-click to visit module settings");
+                            tracyLogo.addEventListener("click", function() {
+                                window.scrollTo(0,0);
+                            }, false);
                             tracyLogo.addEventListener("dblclick", function() {
                                 window.open("'.$this->wire('config')->urls->admin.'module/edit?name=TracyDebugger","_blank");
                             }, false);
@@ -2854,6 +2857,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // Main Setup
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->attr('name+id', 'mainSetup');
         $fieldset->label = __('Main setup', __FILE__);
         $wrapper->add($fieldset);
 
@@ -2880,6 +2884,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // Access Permissions
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->attr('name+id', 'accessPermission');
         $fieldset->label = __('Access permission', __FILE__);
         $wrapper->add($fieldset);
 
@@ -2920,6 +2925,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // Miscellaneous Settings
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->attr('name+id', 'miscellaneous');
         $fieldset->label = __('Miscellaneous', __FILE__);
         $wrapper->add($fieldset);
 
@@ -3108,6 +3114,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // Debug Bar and Panel Settings
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->attr('name+id', 'debugBarAndPanels');
         $fieldset->label = __('Debug bar and panels', __FILE__);
         $wrapper->add($fieldset);
 
@@ -3256,6 +3263,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // Editor Protocol Handler
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->attr('name+id', 'editorLinks');
         $fieldset->label = __('Editor links', __FILE__);
         $wrapper->add($fieldset);
 
@@ -3854,6 +3862,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->addOption('PUT');
         $f->addOption('DELETE');
         $f->addOption('PATCH');
+        $f->columnWidth = 33;
         if($data['requestMethods']) $f->attr('value', $data['requestMethods']);
         $fieldset->add($f);
 
@@ -3861,6 +3870,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'requestLoggerMaxLogs');
         $f->label = __('Maximum number of logged requests', __FILE__);
         $f->description = __('Number of requests to be kept for each page.', __FILE__);
+        $f->columnWidth = 34;
         $f->attr('value', $data['requestLoggerMaxLogs']);
         $fieldset->add($f);
 
@@ -3870,11 +3880,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->description = __('This determines whether the logged data is returned as an object or an array.', __FILE__);
         $f->addOption('array', 'Array');
         $f->addOption('object', 'Object');
+        $f->columnWidth = 33;
         if($data['requestLoggerReturnType']) $f->attr('value', $data['requestLoggerReturnType']);
         $fieldset->add($f);
 
         // Server Type Indicator
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->attr('name+id', 'serverTypeIndicator');
         $fieldset->label = __('Server type indicator', __FILE__);
         $wrapper->add($fieldset);
 
@@ -3926,6 +3938,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // User DEV Template
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->attr('name+id', 'userDevTemplate');
         $fieldset->label = __('User dev template', __FILE__);
         $wrapper->add($fieldset);
 
@@ -3947,6 +3960,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // User Bar
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->attr('name+id', 'userBar');
         $fieldset->label = __('User Bar', __FILE__);
         $wrapper->add($fieldset);
 
@@ -4041,6 +4055,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // Method Shortcuts
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->attr('name+id', 'methodShortcuts');
         $fieldset->label = __('Method shortcuts', __FILE__);
         $wrapper->add($fieldset);
 

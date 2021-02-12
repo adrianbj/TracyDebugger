@@ -4,7 +4,11 @@
 
         // add quicklinks to top of config settings (thanks to @Robin S / @Toutouwai)
         var $links_list = $('#tracy-quick-links .InputfieldContent > ul');
-        $('#ModuleEditForm > .Inputfields > .InputfieldFieldset').each(function() {
+        var $links = $('#ModuleEditForm > .Inputfields > .InputfieldFieldset');
+        $links.sort(function(a, b) {
+            return $(a).text().toUpperCase().localeCompare($(b).text().toUpperCase());
+        })
+        $links.each(function() {
             $links_list.append('<li><a class="label" href="#' + $(this).attr('id') + '">' + $(this).children('label').text() + '</a></li>');
         });
         var $quick_links = $('#tracy-quick-links');

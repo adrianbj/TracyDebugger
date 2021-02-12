@@ -111,7 +111,7 @@ class MethodsInfoPanel extends BasePanel {
                 TD::timer()<br />
             </p>
             ';
-            $out .= \TracyDebugger::generatePanelFooter('methodsInfo', \Tracy\Debugger::timer('methodsInfo'), strlen($out)) . '
+            $out .= \TracyDebugger::generatePanelFooter('methodsInfo', \Tracy\Debugger::timer('methodsInfo'), strlen($out), 'methodShortcuts') . '
         </div>
         ';
 

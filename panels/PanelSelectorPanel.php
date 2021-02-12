@@ -140,12 +140,40 @@ class PanelSelectorPanel extends BasePanel {
                             <label style="'.($this->wire('page')->template == 'admin' && in_array($name, \TracyDebugger::$hideInAdmin) ? ' visibility:hidden;position: absolute; left: -999em;' : '').'">' .
                                 ($this->isOnce($name, $defaultPanels) ? $onceIcon .'&nbsp;' : '<span style="display:inline-block;width:18px">&nbsp;</span>');
                                 if(!empty(\TracyDebugger::$externalPanels) && !array_key_exists($name, \TracyDebugger::$externalPanels)) {
+                                    $panelSettingsLinks = array(
+                                        'adminer' => 'adminerPanel',
+                                        'apiExplorer' => 'apiExplorerPanel',
+                                        'captainHook' => 'captainHookPanel',
+                                        'console' => 'consolePanel',
+                                        'customPhp' => 'customPhpPanel',
+                                        'debugMode' => 'debugModePanel',
+                                        'diagnostics' => 'diagnosticsPanel',
+                                        'dumpsRecorder' => 'dumpsPanel',
+                                        'fileEditor' => 'fileEditorPanel',
+                                        'methodsInfo' => 'methodShortcuts',
+                                        'panelSelector' => 'panelSelectorPanel',
+                                        'processwireLogs' => 'processwireAndTracyLogsPanels',
+                                        'tracyLogs' => 'processwireAndTracyLogsPanels',
+                                        'processwireInfo' => 'processwireInfoPanel',
+                                        'requestInfo' => 'requestInfoPanel',
+                                        'requestLogger' => 'requestLoggerPanel',
+                                        'templateResources' => 'templateResourcesPanel',
+                                        'todo' => 'todoPanel',
+                                        'userSwitcher' => 'userSwitcherPanel',
+                                        'validator' => 'validatorPanel'
+                                    );
+                                    if(array_key_exists($name, $panelSettingsLinks)) {
+                                        $out .= \TracyDebugger::generatePanelSettingsLink($panelSettingsLinks[$name]);
+                                    }
+                                    else {
+                                        $out .= '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+                                    }
                                     $out .= '<span style="font-size:16px; font-weight:600"><a title="Panel Info" href="https://adrianbj.github.io/TracyDebugger/#/debug-bar?id='.str_replace(' ', '-', strtolower($label)).'" target="_blank">ℹ</a></span>';
                                 }
                                 else {
-                                    $out .= '&nbsp;&nbsp;&nbsp;';
+                                    $out .= '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
                                 }
-                                $out .= '<input type="checkbox" name="selectedPanels[]" ' . ($name == 'panelSelector' || in_array($name, \TracyDebugger::getDataValue('nonToggleablePanels')) ? 'disabled="disabled"' : '') . ' value="'.$name.'" ' . (in_array($name, $showPanels) ? 'checked="checked"' : '') . ' /> '
+                                $out .= '&nbsp;<input type="checkbox" name="selectedPanels[]" ' . ($name == 'panelSelector' || in_array($name, \TracyDebugger::getDataValue('nonToggleablePanels')) ? 'disabled="disabled"' : '') . ' value="'.$name.'" ' . (in_array($name, $showPanels) ? 'checked="checked"' : '') . ' /> '
                                 . $label . (in_array($name, $defaultPanels) ? '&nbsp;<strong>*</strong>' : '') . ($seconds ? '<span style="color:#999999; font-size:11px; float:right; margin-left:20px">&nbsp;' . \TracyDebugger::formatTime($seconds) . ($size ? ', '.$size : '') . '</span>' : '') . '
                             </label>';
                     }
