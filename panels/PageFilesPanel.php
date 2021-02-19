@@ -33,7 +33,7 @@ class PageFilesPanel extends BasePanel {
         $pageFiles = $this->getPageFiles($this->p);
         $numDiskFiles = count($diskFiles, COUNT_RECURSIVE) - count($diskFiles);
 
-        if($numDiskFiles == 0) {
+        if($numDiskFiles == 0 && count($pageFiles) == 0) {
             $this->filesListStr .= '<p>There are no files associated with this page.';
         }
         else {

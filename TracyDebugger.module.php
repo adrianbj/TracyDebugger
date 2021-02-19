@@ -28,7 +28,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
             'version' => '4.21.46',
-            'autoload' => 9999, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
+            'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
             'installs' => array('ProcessTracyAdminer'),
