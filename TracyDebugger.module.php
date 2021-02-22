@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.21.47',
+            'version' => '4.21.48',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -378,6 +378,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $this->tracyCacheDir = $this->wire('config')->paths->cache . 'TracyDebugger/';
 
+        if(!is_dir($this->tracyCacheDir)) {
+            if(!wireMkdir($this->tracyCacheDir)) {
+                throw new WireException("Unable to create cache path: " . $this->tracyCacheDir);
+            }
+        }
+
 
         // REQUEST LOGGER
         // add getRequestData() method to the $page object
@@ -704,7 +710,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
                 // if modules have been checked to disable
                 if($this->wire('input')->cookie->tracyModulesDisabled) {
-                    if (!file_exists($this->tracyCacheDir)) wireMkdir($this->tracyCacheDir);
 
                     // if it doesn't already exist, backup existing modules database
                     if(!file_exists($this->tracyCacheDir . $this->modulesDbBackupFilename)) {

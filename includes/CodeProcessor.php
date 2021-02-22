@@ -34,9 +34,6 @@ if(\TracyDebugger::$allowedSuperuser || \TracyDebugger::$validLocalUser || \Trac
     if(file_exists($finishedPath)) include_once($finishedPath);
 
     $cachePath = $this->wire('config')->paths->cache . 'TracyDebugger/';
-    if(!is_dir($cachePath)) if(!wireMkdir($cachePath)) {
-        throw new WireException("Unable to create cache path: $cachePath");
-    }
 
     $this->file = $cachePath.'consoleCode.php';
     $tokens = token_get_all($code);
