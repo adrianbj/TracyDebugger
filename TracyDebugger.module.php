@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.21.48',
+            'version' => '4.21.49',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -599,66 +599,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $this->wire('session')->remove('tracyPwVersion');
             }
 
-
-            // USER SWITCHER
-            // process userSwitcher if panel open and switch initiated
-            if(in_array('userSwitcher', static::$showPanels) && $this->wire('input')->post->userSwitcher) {
-                // if user is superuser and session length is set, save to config settings
-                if(static::$allowedSuperuser && $this->wire('input')->post->userSwitchSessionLength && $this->wire('session')->CSRF->validate()) {
-                    // cleanup expired sessions
-                    if(isset($this->data['userSwitchSession'])) {
-                        foreach($this->data['userSwitchSession'] as $id => $expireTime) {
-                            if($expireTime < time()) unset($this->data['userSwitchSession'][$id]);
-                        }
-                    }
-                    // if no existing session ID, start a new session
-                    if(!$this->wire('session')->tracyUserSwitcherId) {
-                        $pass = new Password();
-                        $challenge = $pass->randomBase64String(32);
-                        $this->wire('session')->tracyUserSwitcherId = $challenge;
-                    }
-                    // save session ID and expiry time in module config settings
-                    $this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId] = time() + ($this->wire('input')->post->userSwitchSessionLength * 60);
-                    $this->wire('modules')->saveModuleConfigData($this, $this->data);
-                }
-                // if logout button clicked
-                if($this->wire('input')->post->logoutUserSwitcher && $this->wire('session')->CSRF->validate()) {
-                    if($this->wire('session')->tracyUserSwitcherId) {
-                        // if session variable exists, grab it and add to the new session after logging out
-                        $tracyUserSwitcherId = $this->wire('session')->tracyUserSwitcherId;
-                        $this->wire('session')->logout();
-                        $this->wire('session')->tracyUserSwitcherId = $tracyUserSwitcherId;
-                    }
-                    else {
-                        $this->wire('session')->logout();
-                    }
-                    $this->wire('session')->redirect($this->httpReferer);
-                }
-                // if end session clicked, remove session variable and config settings entry
-                elseif($this->wire('input')->post->endSessionUserSwitcher && $this->wire('session')->CSRF->validate()) {
-                    $this->wire('session')->remove("tracyUserSwitcherId");
-                    unset($this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId]);
-                    $this->wire('modules')->saveModuleConfigData($this, $this->data);
-                    $this->wire('session')->redirect($this->httpReferer);
-                }
-                // if session not expired, switch to requested user
-                elseif($this->wire('input')->post->userSwitcher && $this->wire('session')->CSRF->validate()) {
-                    if(isset($this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId]) && $this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId] > time() && $this->wire('session')->tracyUserSwitcherId) {
-                        // if session variable exists, grab it and add to the new session after logging out
-                        // and forceLogin the new switched user
-                        $tracyUserSwitcherId = $this->wire('session')->tracyUserSwitcherId;
-                        if($this->wire('user')->isLoggedin()) $this->wire('session')->logout();
-                        $user = $this->wire('session')->forceLogin($this->wire('input')->post->userSwitcher);
-                        $this->wire('session')->tracyUserSwitcherId = $tracyUserSwitcherId;
-                    }
-                    if($this->wire('pages')->get(self::inputUrl())->viewable) {
-                        $this->wire('session')->redirect($this->httpReferer);
-                    }
-                    else {
-                        $this->wire('session')->redirect(static::$inAdmin ? $this->wire('config')->urls->admin : $this->wire('config')->urls->root);
-                    }
-                }
-            }
 
             // REQUEST LOGGER
             // enable/disable page logging
@@ -1614,6 +1554,68 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $panelName = 'DumpsPanel';
         require_once __DIR__ . '/panels/'.$panelName.'.php';
         Debugger::getBar()->addPanel(new $panelName);
+
+
+        // USER SWITCHER
+        // process userSwitcher if panel open and switch initiated
+        if(in_array('userSwitcher', static::$showPanels) && $this->wire('input')->post->userSwitcher) {
+            // if user is superuser and session length is set, save to config settings
+            if(static::$allowedSuperuser && $this->wire('input')->post->userSwitchSessionLength && $this->wire('session')->CSRF->validate()) {
+                // cleanup expired sessions
+                if(isset($this->data['userSwitchSession'])) {
+                    foreach($this->data['userSwitchSession'] as $id => $expireTime) {
+                        if($expireTime < time()) unset($this->data['userSwitchSession'][$id]);
+                    }
+                }
+                // if no existing session ID, start a new session
+                if(!$this->wire('session')->tracyUserSwitcherId) {
+                    $pass = new Password();
+                    $challenge = $pass->randomBase64String(32);
+                    $this->wire('session')->tracyUserSwitcherId = $challenge;
+                }
+                // save session ID and expiry time in module config settings
+                $this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId] = time() + ($this->wire('input')->post->userSwitchSessionLength * 60);
+                $this->wire('modules')->saveModuleConfigData($this, $this->data);
+            }
+            // if logout button clicked
+            if($this->wire('input')->post->logoutUserSwitcher && $this->wire('session')->CSRF->validate()) {
+                if($this->wire('session')->tracyUserSwitcherId) {
+                    // if session variable exists, grab it and add to the new session after logging out
+                    $tracyUserSwitcherId = $this->wire('session')->tracyUserSwitcherId;
+                    $this->wire('session')->logout();
+                    $this->wire('session')->tracyUserSwitcherId = $tracyUserSwitcherId;
+                }
+                else {
+                    $this->wire('session')->logout();
+                }
+                $this->wire('session')->redirect($this->httpReferer);
+            }
+            // if end session clicked, remove session variable and config settings entry
+            elseif($this->wire('input')->post->endSessionUserSwitcher && $this->wire('session')->CSRF->validate()) {
+                $this->wire('session')->remove("tracyUserSwitcherId");
+                unset($this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId]);
+                $this->wire('modules')->saveModuleConfigData($this, $this->data);
+                $this->wire('session')->redirect($this->httpReferer);
+            }
+            // if session not expired, switch to requested user
+            elseif($this->wire('input')->post->userSwitcher && $this->wire('session')->CSRF->validate()) {
+                if(isset($this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId]) && $this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId] > time() && $this->wire('session')->tracyUserSwitcherId) {
+                    // if session variable exists, grab it and add to the new session after logging out
+                    // and forceLogin the new switched user
+                    $tracyUserSwitcherId = $this->wire('session')->tracyUserSwitcherId;
+                    if($this->wire('user')->isLoggedin()) $this->wire('session')->logout();
+                    $user = $this->wire('session')->forceLogin($this->wire('input')->post->userSwitcher);
+                    $this->wire('session')->tracyUserSwitcherId = $tracyUserSwitcherId;
+                }
+                if($this->wire('pages')->get(self::inputUrl())->viewable) {
+                    $this->wire('session')->redirect($this->httpReferer);
+                }
+                else {
+                    $this->wire('session')->redirect(static::$inAdmin ? $this->wire('config')->urls->admin : $this->wire('config')->urls->root);
+                }
+            }
+        }
+
 
         // if it's an ajax request from the Tracy Console panel snippets, then process and return
         if($this->wire('config')->ajax && $this->wire('input')->post->tracysnippets == 1) {
