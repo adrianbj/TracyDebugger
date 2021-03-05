@@ -274,7 +274,7 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     private static function generateEditViewLinks($var, $type, $section) {
-        if($var->id === 0) {
+        if($var->id == '' || $var->id === 0) {
             return;
         }
         else {

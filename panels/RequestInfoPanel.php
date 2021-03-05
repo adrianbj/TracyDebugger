@@ -106,48 +106,35 @@ class RequestInfoPanel extends BasePanel {
                         $fieldSettings .= '<a title="Edit in Adminer" style="padding-bottom:5px" href="'.$adminerUrl.'?edit=fields&where%5Bid%5D='.$field->id.'">'.$adminerIcon.'</a>';
                     }
                     $fieldSettings .= '<table>';
-                    if(method_exists($field, 'getExportData')) {
-                        foreach($field->getExportData() as $k => $v) {
-                            $fieldSettings .= '
-                                <tr>
-                                    <td>'.$k.'</td>
-                                    <td>'.Dumper::toHtml($v, array(Dumper::TRUNCATE => 999)).'</td>
-                                </tr>
-                            ';
-                        }
-                    }
-                    // older version of PW that doesn't have getExportData() method
-                    else {
+                    $fieldSettings .= '
+                        <tr>
+                            <td>label</td>
+                            <td>'.$field->label.'</td>
+                        </tr>
+                        <tr>
+                            <td>name</td>
+                            <td>'.$field->name.'</td>
+                        </tr>
+                        <tr>
+                            <td>id</td>
+                            <td>'.$field->id.'</td>
+                        </tr>
+                        <tr>
+                            <td>type</td>
+                            <td>'.$field->type.'</td>
+                        </tr>
+                        <tr>
+                            <td>flags</td>
+                            <td>'.$field->flags.'</td>
+                        </tr>
+                        ';
+                    foreach($field->getArray() as $k => $v) {
                         $fieldSettings .= '
                             <tr>
-                                <td>label</td>
-                                <td>'.$field->label.'</td>
+                                <td>'.$k.'</td>
+                                <td>'.Dumper::toHtml($v, array(Dumper::TRUNCATE => 999)).'</td>
                             </tr>
-                            <tr>
-                                <td>name</td>
-                                <td>'.$field->name.'</td>
-                            </tr>
-                            <tr>
-                                <td>id</td>
-                                <td>'.$field->id.'</td>
-                            </tr>
-                            <tr>
-                                <td>type</td>
-                                <td>'.$field->type.'</td>
-                            </tr>
-                            <tr>
-                                <td>flags</td>
-                                <td>'.$field->flags.'</td>
-                            </tr>
-                            ';
-                        foreach($field->getArray() as $k => $v) {
-                            $fieldSettings .= '
-                                <tr>
-                                    <td>'.$k.'</td>
-                                    <td>'.Dumper::toHtml($v, array(Dumper::TRUNCATE => 999)).'</td>
-                                </tr>
-                            ';
-                        }
+                        ';
                     }
                     $fieldSettings .= '</table>
                     ';
@@ -195,29 +182,21 @@ class RequestInfoPanel extends BasePanel {
                 $field = $this->wire('fields')->get((int)$this->wire('input')->get('id'));
                 if($field) {
                     $fieldCode .= "[\n";
-                    if(method_exists($field, 'getExportData')) {
-                        $fieldExportData = $field->getExportData();
-                        unset($fieldExportData['id']);
-                        $fieldCode .= $this->wire('sanitizer')->entities(ltrim(rtrim(ltrim(str_replace(':', ' =>', wireEncodeJSON($fieldExportData, true, true)), "{"), "}"), "\n"));
-                    }
-                    // older version of PW that doesn't have getExportData() method
-                    else {
-                        $fieldCode .= "\t'type' => '" . (string)$field->getInputfield(new NullPage()) . "',\n";
-                        $fieldCode .= "\t'name' => '$field->name',\n";
-                        $fieldCode .= "\t'label' => __('$field->label'),\n";
-                        $fieldCode .= "\t'flags' => '$field->flags',\n";
-                        $fieldDataArr = $field->getArray();
-                        foreach($fieldDataArr as $k => $v) {
-                            if(is_array($v)) {
-                                $fieldCode .= "\t'$k' => [\n";
-                                foreach($v as $key => $val) {
-                                    $fieldCode .= "\t\t'".$this->wire('sanitizer')->entities($val)."',\n";
-                                }
-                                $fieldCode .= "\t],\n";
+                    $fieldCode .= "\t'type' => '" . (string)$field->getInputfield(new NullPage()) . "',\n";
+                    $fieldCode .= "\t'name' => '$field->name',\n";
+                    $fieldCode .= "\t'label' => __('$field->label'),\n";
+                    $fieldCode .= "\t'flags' => '$field->flags',\n";
+                    $fieldDataArr = $field->getArray();
+                    foreach($fieldDataArr as $k => $v) {
+                        if(is_array($v)) {
+                            $fieldCode .= "\t'$k' => [\n";
+                            foreach($v as $key => $val) {
+                                $fieldCode .= "\t\t'".$this->wire('sanitizer')->entities($val)."',\n";
                             }
-                            else {
-                                $fieldCode .= "\t'$k' => '".$this->wire('sanitizer')->entities($v)."',\n";
-                            }
+                            $fieldCode .= "\t],\n";
+                        }
+                        else {
+                            $fieldCode .= "\t'$k' => '".$this->wire('sanitizer')->entities($v)."',\n";
                         }
                     }
                     $fieldCode .= "]\n";
