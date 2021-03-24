@@ -182,7 +182,7 @@ class RequestInfoPanel extends BasePanel {
                 $field = $this->wire('fields')->get((int)$this->wire('input')->get('id'));
                 if($field) {
                     $fieldCode .= "[\n";
-                    $fieldCode .= "\t'type' => '" . (string)$field->getInputfield(new NullPage()) . "',\n";
+                    $fieldCode .= "\t'type' => '" . (string)$field->type . "',\n";
                     $fieldCode .= "\t'name' => '$field->name',\n";
                     $fieldCode .= "\t'label' => __('$field->label'),\n";
                     $fieldCode .= "\t'flags' => '$field->flags',\n";
