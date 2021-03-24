@@ -1036,7 +1036,7 @@ class ConsolePanel extends BasePanel {
                                 if(((e.keyCode==10||e.charCode==10)||(e.keyCode==13||e.charCode==13)) && (e.metaKey || e.ctrlKey || e.altKey) && !e.shiftKey) {
                                     e.preventDefault();
                                     if(e.altKey) tracyConsole.clearResults();
-                                    if(e.metaKey || e.ctrlKey) {
+                                    if((e.metaKey || e.ctrlKey) && e.altKey) {
                                         tracyConsole.reloadAndRun();
                                     }
                                     else {
