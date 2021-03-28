@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with several PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.21.51',
+            'version' => '4.21.52',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -446,7 +446,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // log requests for Request Logger
         $this->wire()->addHookAfter('ProcessWire::ready', function($event) {
-            $event->page->addHookAfter('render', $this, 'logRequests');
+            $event->page->addHookAfter('PageRender::renderPage', $this, 'logRequests');
         });
         $this->wire()->addHookAfter('Page::logRequests', $this, 'logRequests');
 
@@ -483,7 +483,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             (strpos(self::inputUrl(true), DIRECTORY_SEPARATOR.'form-builder'.DIRECTORY_SEPARATOR) === false)
         ) {
             $this->wire()->addHookAfter('ProcessWire::ready', function($event) {
-                $event->page->addHookAfter('render', $this, 'addUserBar', array('priority'=>1000));
+                $event->page->addHookAfter('PageRender::renderPage', $this, 'addUserBar', array('priority'=>1000));
             });
         }
 
@@ -933,7 +933,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if($this->wire('input')->cookie->tracyDisabled == 1) {
                 if(Debugger::$showBar && !$this->wire('config')->ajax) {
                     $this->wire()->addHook('ProcessWire::ready', function($event) {
-                        $event->page->addHookAfter('render', $this, 'addEnableButton', array('priority'=>1000));
+                        $event->page->addHookAfter('PageRender::renderPage', $this, 'addEnableButton', array('priority'=>1000));
                     });
                 }
                 // Tracy not enabled so exit now
@@ -1033,7 +1033,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 // replace "close" icon link with "hide" and "unhide" links
                 // add esc key event handler to close all panels
                 $this->wire()->addHookAfter('ProcessWire::ready', function($event) {
-                    $event->page->addHookAfter('render', function($event) {
+                    $event->page->addHookAfter('PageRender::renderPage', function($event) {
+                        $event = $event->arguments(0);
                         $tracyErrors = Debugger::getBar()->getPanel('Tracy:errors');
                         if(!is_array($tracyErrors->data) || count($tracyErrors->data) === 0) {
                             if(($this->data['hideDebugBar'] && !$this->wire('input')->cookie->tracyShow) || $this->wire('input')->cookie->tracyHidden == 1) {
@@ -1207,7 +1208,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 // VALIDATOR
                 if(in_array('validator', static::$showPanels)) {
                     $this->wire()->addHookAfter('ProcessWire::ready', function($event) {
-                        $event->page->addHookAfter('render', $this, 'getPageHtml', array('priority'=>1000));
+                        $event->page->addHookAfter('PageRender::renderPage', $this, 'getPageHtml', array('priority'=>1000));
                     });
                 }
 
@@ -1640,6 +1641,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     protected function addUserBar($event) {
+        $event = $event->arguments(0);
         $userBar = '';
         require_once __DIR__ . '/includes/user-bar/UserBar.php';
         $event->return = str_replace("</body>", "\n<!-- Tracy User Bar -->\n" . static::minify($userBar)."\n</body>", $event->return);
@@ -1655,6 +1657,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     protected function addEnableButton($event) {
+
+        $event = $event->arguments(0);
 
         // DON'T add comments to injected code below because it breaks my simple minify() function
         // if Tracy temporarily toggled disabled, add enable icon link
@@ -1722,6 +1726,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     protected function getPageHtml($event) {
+        $event = $event->arguments(0);
         static::$pageHtml = $event->return;
     }
 
@@ -2146,6 +2151,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public function logRequests(HookEvent $event) {
 
+        $event = $event->arguments(0);
         $page = $event->object;
 
         // exits

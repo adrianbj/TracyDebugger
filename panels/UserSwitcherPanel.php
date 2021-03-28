@@ -125,7 +125,7 @@ HTML;
                 $out .= '<input type="submit" name="submitUserSwitcher" value="Switch" />&nbsp;';
             }
 
-            if($this->wire('user')->isLoggedin()) $out .= '<input type="submit" name="logoutUserSwitcher" value="Logout" />&nbsp;';
+            if($this->wire('user')->isLoggedin()) $out .= '<input type="submit" name="logoutUserSwitcher" value="Logout to Guest" />&nbsp;';
             if($remainingSessionLength > 0) $out .= '<input type="submit" name="endSessionUserSwitcher" value="End Session" />';
 
             $out .= '
