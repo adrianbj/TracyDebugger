@@ -192,11 +192,26 @@ class DebugModePanel extends BasePanel {
                     $suffix = $hook['options']['type'] == 'method' ? '()' : '';
                     $toObject = !empty($hook['toObject']) ? $hook['toObject'] : '';
                     $toMethod = $hook['toMethod'];
+
+                    if($toMethod instanceof \Closure) {
+                        $rc = new \ReflectionFunction($toMethod);
+                    }
+                    else {
+                        if(method_exists("\ProcessWire\\$toObject", $toMethod)) {
+                            $rc = new \ReflectionMethod("\ProcessWire\\$toObject", $toMethod);
+                        }
+                        elseif(method_exists($toObject, $toMethod)) {
+                            $rc = new \ReflectionMethod($toObject, $toMethod);
+                        }
+                    }
+                    $file = $rc->getFileName();
+                    $line = $rc->getStartLine();
+
                     if(is_callable($toMethod)) $toMethod = 'anonymous function';
                     $hooksCalled .= "<tr>";
                     $hooksCalled .= "<td>" . ($hook['options']['before'] ? 'before ' : '') . ($hook['options']['after'] ? 'after' : '') . "</td>";
                     $hooksCalled .= "<td>" . ($hook['options']['fromClass'] ? $hook['options']['fromClass'] . '::' : '') . "$hook[method]$suffix</td>";
-                    $hooksCalled .= "<td>" . ($toObject ? "$toObject::$toMethod" : $toMethod) . "()</td>";
+                    $hooksCalled .= "<td>" . \TracyDebugger::createEditorLink(\TracyDebugger::removeCompilerFromPath($file), $line, ($toObject ? "$toObject::$toMethod" : $toMethod)) . "()</td>";
                     $hooksCalled .= "<td>" . ($hook['options']['allInstances'] || $hook['options']['fromClass'] ? "class " : "instance ") . $hook['options']['type'] . "</td>";
                     $hooksCalled .= "<td>" . $hook['options']['priority'] . "</td>";
                     $hooksCalled .= "</tr>";

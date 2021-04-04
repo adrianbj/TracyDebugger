@@ -1,6 +1,6 @@
 <?php
 
-$userBar = '
+$userBarStyles = '
 <style>
     div#tracyUserBar {
         '.\TracyDebugger::getDataValue("userBarTopBottom").': 0px;
@@ -27,8 +27,9 @@ $userBar = '
         vertical-align: top;
         margin-left: 2px;
     }
-</style>
+</style>';
 
+$userBar = '
 <div id="tracyUserBar">';
 
 foreach($this->data['userBarFeatures'] as $barFeature) {
