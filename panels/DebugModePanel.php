@@ -203,15 +203,24 @@ class DebugModePanel extends BasePanel {
                         elseif(method_exists($toObject, $toMethod)) {
                             $rc = new \ReflectionMethod($toObject, $toMethod);
                         }
+                        $ro = new \ReflectionObject($toObject);
+                        $toObjectName = str_replace('ProcessWire\\', '', $ro->getName());
                     }
-                    $file = $rc->getFileName();
-                    $line = $rc->getStartLine();
+                    if(isset($rc)) {
+                        $file = $rc->getFileName();
+                        $line = $rc->getStartLine();
+                        $toMethodName = str_replace('ProcessWire\\', '', $rc->getName());
+                        $visitedByStr = \TracyDebugger::createEditorLink(\TracyDebugger::removeCompilerFromPath($file), $line, ($toObject ? "$toObjectName::$toMethodName" : $toMethodName));
+                    }
+                    else {
+                        $visitedByStr = ($toObject ? "$toObjectName::$toMethod" : $toMethodName);
+                    }
 
                     if(is_callable($toMethod)) $toMethod = 'anonymous function';
                     $hooksCalled .= "<tr>";
                     $hooksCalled .= "<td>" . ($hook['options']['before'] ? 'before ' : '') . ($hook['options']['after'] ? 'after' : '') . "</td>";
                     $hooksCalled .= "<td>" . ($hook['options']['fromClass'] ? $hook['options']['fromClass'] . '::' : '') . "$hook[method]$suffix</td>";
-                    $hooksCalled .= "<td>" . \TracyDebugger::createEditorLink(\TracyDebugger::removeCompilerFromPath($file), $line, ($toObject ? "$toObject::$toMethod" : $toMethod)) . "()</td>";
+                    $hooksCalled .= "<td>" . $visitedByStr . "()</td>";
                     $hooksCalled .= "<td>" . ($hook['options']['allInstances'] || $hook['options']['fromClass'] ? "class " : "instance ") . $hook['options']['type'] . "</td>";
                     $hooksCalled .= "<td>" . $hook['options']['priority'] . "</td>";
                     $hooksCalled .= "</tr>";
