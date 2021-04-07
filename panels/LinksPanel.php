@@ -36,9 +36,14 @@ class LinksPanel extends BasePanel {
         <div class="tracy-inner">
         ';
 
-        foreach(explode("\n", \TracyDebugger::getDataValue('linksCode')) as $link) {
-            $link_parts = explode('|', $link);
-            $out .= '<a href="'.trim($link_parts[0]).'">'.trim($link_parts[1]).'</a><br />';
+        if(\TracyDebugger::getDataValue('linksCode')) {
+            foreach(explode("\n", \TracyDebugger::getDataValue('linksCode')) as $link) {
+                $link_parts = explode('|', $link);
+                $out .= '<a href="'.trim($link_parts[0]).'">'.trim($link_parts[1]).'</a><br />';
+            }
+        }
+        else {
+            $out .= 'No links added yet - visit the module settings to add some.';
         }
 
         $out .= \TracyDebugger::generatePanelFooter('links', \Tracy\Debugger::timer('links'), strlen($out), 'linksPanel');

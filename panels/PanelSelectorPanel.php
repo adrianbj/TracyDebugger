@@ -14,6 +14,7 @@ class PanelSelectorPanel extends BasePanel {
         'diagnostics' => 'diagnosticsPanel',
         'dumpsRecorder' => 'dumpsPanel',
         'fileEditor' => 'fileEditorPanel',
+        'links' => 'linksPanel',
         'methodsInfo' => 'methodShortcuts',
         'panelSelector' => 'panelSelectorPanel',
         'processwireLogs' => 'processwireAndTracyLogsPanels',
