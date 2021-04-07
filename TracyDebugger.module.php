@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.21.54',
+            'version' => '4.22.0',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -158,6 +158,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'fileEditor' => 'File Editor',
         'gitInfo' => 'Git Info',
         'helloWorld' => 'Hello World',
+        'links' => 'Links',
         'mailInterceptor' => 'Mail Interceptor',
         'methodsInfo' => 'Methods Info',
         'moduleDisabler' => 'Module Disabler',
@@ -273,6 +274,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "userDevTemplate" => null,
             "userDevTemplateSuffix" => 'dev',
             "customPhpCode" => '',
+            "linksCode" => '',
             "fromEmail" => '',
             "email" => '',
             "clearEmailSent" => null,
@@ -3808,6 +3810,20 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('checked', $data['variablesShowPwObjects'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
+        // Links Panel
+        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
+        $fieldset->attr('name+id', 'linksPanel');
+        $fieldset->label = __('Links panel', __FILE__);
+        $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldTextarea");
+        $f->attr('name', 'linksCode');
+        $f->label = __('Links code', __FILE__);
+        $f->description = __('One link per line. Optionally add label for link.', __FILE__);
+        $f->notes = __('eg. https://www.google.com | Google Search', __FILE__);
+        if($data['linksCode']) $f->attr('value', $data['linksCode']);
+        $fieldset->add($f);
+
         // Custom PHP Panel
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
         $fieldset->attr('name+id', 'customPhpPanel');
@@ -4123,11 +4139,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($data['enabledShortcutMethods']) $f->attr('value', $data['enabledShortcutMethods']);
         $fieldset->add($f);
 
-        // convert PW Info panel custom links page IDs into paths so we can export settings to another PW site
+
         $this->wire('modules')->addHookBefore('saveModuleConfigData', null, function($event) {
+
             if($event->arguments[0] !== 'TracyDebugger') return;
-            if(!$this->wire('input')->post->customPWInfoPanelLinks[0]) return;
+            if(!$this->wire('input')->post->customPWInfoPanelLinks[0] && $this->wire('input')->post->linksCode == '') return;
+
             $data = $event->arguments[1];
+
+            // convert PW Info panel custom links page IDs into paths so we can export settings to another PW site
             $customPWInfoPanelLinkPaths = array();
             $customPWInfoPanelLinks = $this->wire('input')->post->customPWInfoPanelLinks;
             if(method_exists($this->wire('pages'), 'getPath') && version_compare($this->wire('config')->version, '3.0.73', '>=')) {
@@ -4142,6 +4162,30 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 }
             }
             $data['customPWInfoPanelLinks'] = $customPWInfoPanelLinkPaths;
+
+            // make URLs in links panel root relative and get titles if not supplied
+            $allLinks = array();
+            foreach(explode("\n", $this->wire('input')->post->linksCode) as $link) {
+                $link_parts = explode('|', $link);
+                $url = trim($link_parts[0]);
+                $title = isset($link_parts[1]) ? trim($link_parts[1]) : '';
+                $url = str_replace($this->wire('config')->urls->httpRoot, '/', $url);
+                if($title == '') {
+                    $http = new WireHttp();
+                    $fullUrl = strpos($url, 'http') === false ? $this->wire('config')->urls->httpRoot . $url : $url;
+                    $html = $http->get($fullUrl);
+                    libxml_use_internal_errors(true);
+                    $dom = new \DOMDocument();
+                    $dom->loadHTML($html);
+                    $list = $dom->getElementsByTagName('title');
+                    libxml_use_internal_errors(false);
+                    $title = $list->length ? str_replace('|', ':', $list->item(0)->textContent) : $url;
+                }
+                $finalLink = $url . ' | ' . $title;
+                $allLinks[] = $finalLink;
+            }
+            $data['linksCode'] = implode("\n", $allLinks);
+
             $event->arguments(1, $data);
         });
 
