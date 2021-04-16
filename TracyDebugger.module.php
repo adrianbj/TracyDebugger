@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.22.1',
+            'version' => '4.22.2',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -2804,6 +2804,31 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
     }
 
+    /**
+     * Prepare an individual link for the Links panel
+     *
+     * @param string $link
+     * @return string
+     *
+     */
+    protected function prepLink($link) {
+        $http = new WireHttp();
+        $link_parts = explode('|', $link);
+        $url = trim($link_parts[0]);
+        $title = isset($link_parts[1]) ? trim($link_parts[1]) : '';
+        $url = str_replace($this->wire('config')->urls->httpRoot, '/', $url);
+        if($title == '') {
+            $fullUrl = strpos($url, 'http') === false ? $this->wire('config')->urls->httpRoot . $url : $url;
+            $html = $http->get($fullUrl);
+            libxml_use_internal_errors(true);
+            $dom = new \DOMDocument();
+            $dom->loadHTML($html);
+            $list = $dom->getElementsByTagName('title');
+            libxml_use_internal_errors(false);
+            $title = $list->length ? str_replace('|', ':', $list->item(0)->textContent) : $url;
+        }
+        return $url . ' | ' . $title;
+    }
 
     /**
      * Return an InputfieldWrapper of Inputfields used to configure the class
@@ -2813,6 +2838,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     public function getModuleConfigInputfields(array $data) {
+
+        // if link info is in POST then add it to the Links panel
+        $link = $this->wire('input')->post->link;
+        if($link) {
+            $link = $this->prepLink($link);
+            $tracyConfig = $this->wire('modules')->getModuleConfigData($this);
+            if(!isset($tracyConfig['linksCode'])) $tracyConfig['linksCode'] = '';
+            $tracyConfig['linksCode'] .= "\n" . $link;
+            // calling saveModuleConfigData with underscores because we don't need hooks to run again
+            $this->wire('modules')->___saveModuleConfigData($this, $tracyConfig);
+            // redirect back to where the user submitted the link from
+            $this->wire('session')->redirect($this->httpReferer);
+        }
 
         // if customPHP code was changed then session var was set to tell us to redirect to url with hash
         if($this->wire('session')->scrolltoCustomPhp === 1) {
@@ -3974,8 +4012,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($data['styleAdminElements']) $f->attr('value', $data['styleAdminElements']);
         $fieldset->add($f);
 
-
-
         // User DEV Template
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
         $fieldset->attr('name+id', 'userDevTemplate');
@@ -4163,28 +4199,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
             $data['customPWInfoPanelLinks'] = $customPWInfoPanelLinkPaths;
 
-            // make URLs in links panel root relative and get titles if not supplied
-            $allLinks = array();
-            foreach(explode("\n", $this->wire('input')->post->linksCode) as $link) {
-                $link_parts = explode('|', $link);
-                $url = trim($link_parts[0]);
-                $title = isset($link_parts[1]) ? trim($link_parts[1]) : '';
-                $url = str_replace($this->wire('config')->urls->httpRoot, '/', $url);
-                if($title == '') {
-                    $http = new WireHttp();
-                    $fullUrl = strpos($url, 'http') === false ? $this->wire('config')->urls->httpRoot . $url : $url;
-                    $html = $http->get($fullUrl);
-                    libxml_use_internal_errors(true);
-                    $dom = new \DOMDocument();
-                    $dom->loadHTML($html);
-                    $list = $dom->getElementsByTagName('title');
-                    libxml_use_internal_errors(false);
-                    $title = $list->length ? str_replace('|', ':', $list->item(0)->textContent) : $url;
-                }
-                $finalLink = $url . ' | ' . $title;
-                $allLinks[] = $finalLink;
-            }
-            $data['linksCode'] = implode("\n", $allLinks);
+            // links panel link conversion
+	        $existingConfig = $this->wire('modules')->getModuleConfigData($this);
+	        $existingLinks = isset($existingConfig['linksCode']) ? $existingConfig['linksCode'] : '';
+	        $savedLinks = isset($data['linksCode']) ? $data['linksCode'] : '';
+	        if($savedLinks !== $existingLinks) {
+		        // make URLs in links panel root relative and get titles if not supplied
+		        $allLinks = array();
+		        foreach(explode("\n", $savedLinks) as $link) {
+			        $finalLink = $this->prepLink($link);
+			        $allLinks[] = $finalLink;
+		        }
+		        $data['linksCode'] = implode("\n", $allLinks);
+	        }
 
             $event->arguments(1, $data);
         });

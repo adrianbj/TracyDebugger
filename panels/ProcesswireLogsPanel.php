@@ -53,7 +53,7 @@ class ProcesswireLogsPanel extends BasePanel {
                     $entriesArr[$itemKey]['date'] = $entry['date'];
                     $entriesArr[$itemKey]['text'] = $entry['text'];
                     $entriesArr[$itemKey]['user'] = $entry['user'];
-                    $entriesArr[$itemKey]['url'] = $entry['url'];
+                    $entriesArr[$itemKey]['url'] = '<a href="'.$entry['url'].'">'.$entry['url'].'</a>';
                     $entriesArr[$itemKey]['log'] = $log['name'];
                     $x--;
                     $i++;

@@ -30,25 +30,67 @@ class LinksPanel extends BasePanel {
 
     public function getPanel() {
 
-        // panel title
-        $out = '
-        <h1>' . $this->icon . ' Links</h1>
-        <div class="tracy-inner">
-        ';
-
+        $out = <<<EOT
+<style>
+    #tracy-add-link { height:30px; padding-right:75px; position:relative; margin-bottom:10px; }
+    #tracy-add-link#tracy-add-link input { width:calc(100% - 10px) !important; outline:none; }
+    #tracy-add-link#tracy-add-link input:focus { border-color:#8a9cb1 !important; }
+    #tracy-add-link button { width:30px; height:30px; padding:0; border:1px solid #C8CED6; background:#F0F3F7; position:absolute; cursor:pointer; outline:none; vertical-align:middle; }
+    #tracy-add-link button:hover { background:white; }
+    #tracy-add-link button svg { vertical-align:middle; }
+    #tracy-lp-btn-add { right:32px; }
+    #tracy-lp-btn-current { right:0; }
+    #tracy-link-items { line-height:1.5; }
+</style>
+<script>
+var form = document.getElementById('tracy-add-link');
+document.getElementById('tracy-lp-btn-current').addEventListener('click', function(event) {
+    var link = window.location.href
+    var title = document.title;
+    if(title.length) link += ' | ' + title;
+    document.getElementById('tracy-lp-input').value = link;
+    form.submit();
+});
+form.addEventListener('submit', function(event) {
+    var link_input = document.getElementById('tracy-lp-input');
+    if(!link_input.value) {
+        event.preventDefault();
+        alert('Please add a link URL before submitting.');
+    }
+});
+</script>
+<h1>{$this->icon} Links</h1>
+<div class="tracy-inner">
+<form id="tracy-add-link" action="{$this->wire('config')->urls->admin}module/edit" method="post">
+    <input type="hidden" name="name" value="TracyDebugger">
+    <input id="tracy-lp-input" name="link" type="text" placeholder="Add link...">
+    <button id="tracy-lp-btn-add" title="Add link">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-circle-plus" width="32" height="32" viewBox="0 0 24 24" stroke-width="1.5" stroke="#000000" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <circle cx="12" cy="12" r="9" />
+            <line x1="9" y1="12" x2="15" y2="12" />
+            <line x1="12" y1="9" x2="12" y2="15" />
+        </svg>
+    </button>
+    <button id="tracy-lp-btn-current" type="button" title="Add link to current page">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-bolt" width="32" height="32" viewBox="0 0 24 24" stroke-width="1.5" stroke="#000000" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <polyline points="13 3 13 10 19 10 11 21 11 14 5 14 13 3" />
+        </svg>
+    </button>
+</form>
+<div id="tracy-link-items">
+EOT;
         if(\TracyDebugger::getDataValue('linksCode')) {
             foreach(explode("\n", \TracyDebugger::getDataValue('linksCode')) as $link) {
                 $link_parts = explode('|', $link);
                 $out .= '<a href="'.trim($link_parts[0]).'">'.trim($link_parts[1]).'</a><br />';
             }
         }
-        else {
-            $out .= 'No links added yet - visit the module settings to add some.';
-        }
+        $out .= '</div>';
 
         $out .= \TracyDebugger::generatePanelFooter('links', \Tracy\Debugger::timer('links'), strlen($out), 'linksPanel');
-        $out .= '
-        </div>';
+        $out .= '</div>';
 
         return parent::loadResources() . $out;
     }
