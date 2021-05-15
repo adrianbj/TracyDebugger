@@ -17,7 +17,7 @@ use ErrorException;
  */
 class Debugger
 {
-	public const VERSION = '2.7.7';
+	public const VERSION = '2.7.8';
 
 	/** server modes for Debugger::enable() */
 	public const
@@ -349,7 +349,7 @@ class Debugger
 				}
 				echo "$exception\n" . ($file ? "(stored in $file)\n" : '');
 				if ($file && self::$browser) {
-					exec(self::$browser . ' ' . escapeshellarg($file));
+					exec(self::$browser . ' ' . escapeshellarg(strtr($file, self::$editorMapping)));
 				}
 			} catch (\Throwable $e) {
 				echo "$exception\nUnable to log error: {$e->getMessage()}\n";

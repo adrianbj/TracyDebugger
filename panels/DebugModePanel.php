@@ -196,7 +196,7 @@ class DebugModePanel extends BasePanel {
                     if($toMethod instanceof \Closure) {
                         $rc = new \ReflectionFunction($toMethod);
                     }
-                    else {
+                    elseif($hook['toObject']) {
                         if(method_exists("\ProcessWire\\$toObject", $toMethod)) {
                             $rc = new \ReflectionMethod("\ProcessWire\\$toObject", $toMethod);
                         }

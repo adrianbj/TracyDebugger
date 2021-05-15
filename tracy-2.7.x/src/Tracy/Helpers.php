@@ -110,7 +110,9 @@ class Helpers
 	{
 		if (function_exists('xdebug_get_function_stack')) {
 			$stack = [];
-			foreach (array_slice(array_reverse(xdebug_get_function_stack()), 2, -1) as $row) {
+			$trace = @xdebug_get_function_stack(); // @ xdebug compatibility warning
+			$trace = array_slice(array_reverse($trace), 2, -1);
+			foreach ($trace as $row) {
 				$frame = [
 					'file' => $row['file'],
 					'line' => $row['line'],
@@ -180,7 +182,11 @@ class Helpers
 	public static function improveException(\Throwable $e): void
 	{
 		$message = $e->getMessage();
-		if ((!$e instanceof \Error && !$e instanceof \ErrorException) || strpos($e->getMessage(), 'did you mean')) {
+		if (
+			(!$e instanceof \Error && !$e instanceof \ErrorException)
+			|| $e instanceof \Nette\MemberAccessException
+			|| strpos($e->getMessage(), 'did you mean')
+		) {
 			// do nothing
 		} elseif (preg_match('#^Call to undefined function (\S+\\\\)?(\w+)\(#', $message, $m)) {
 			$funcs = array_merge(get_defined_functions()['internal'], get_defined_functions()['user']);
@@ -200,14 +206,14 @@ class Helpers
 
 		} elseif (preg_match('#^Undefined property: ([\w\\\\]+)::\$(\w+)#', $message, $m)) {
 			$rc = new \ReflectionClass($m[1]);
-			$items = array_diff($rc->getProperties(\ReflectionProperty::IS_PUBLIC), $rc->getProperties(\ReflectionProperty::IS_STATIC));
+			$items = array_filter($rc->getProperties(\ReflectionProperty::IS_PUBLIC), function ($prop) { return !$prop->isStatic(); });
 			$hint = self::getSuggestion($items, $m[2]);
 			$message .= ", did you mean $$hint?";
 			$replace = ["->$m[2]", "->$hint"];
 
 		} elseif (preg_match('#^Access to undeclared static property:? ([\w\\\\]+)::\$(\w+)#', $message, $m)) {
 			$rc = new \ReflectionClass($m[1]);
-			$items = array_intersect($rc->getProperties(\ReflectionProperty::IS_PUBLIC), $rc->getProperties(\ReflectionProperty::IS_STATIC));
+			$items = array_filter($rc->getProperties(\ReflectionProperty::IS_STATIC), function ($prop) { return $prop->isPublic(); });
 			$hint = self::getSuggestion($items, $m[2]);
 			$message .= ", did you mean $$hint?";
 			$replace = ["::$$m[2]", "::$$hint"];
@@ -236,7 +242,7 @@ class Helpers
 
 		} elseif (preg_match('#^Undefined property: ([\w\\\\]+)::\$(\w+)#', $message, $m)) {
 			$rc = new \ReflectionClass($m[1]);
-			$items = array_diff($rc->getProperties(\ReflectionProperty::IS_PUBLIC), $rc->getProperties(\ReflectionProperty::IS_STATIC));
+			$items = array_filter($rc->getProperties(\ReflectionProperty::IS_PUBLIC), function ($prop) { return !$prop->isStatic(); });
 			$hint = self::getSuggestion($items, $m[2]);
 			return $hint ? $message . ", did you mean $$hint?" : $message;
 		}

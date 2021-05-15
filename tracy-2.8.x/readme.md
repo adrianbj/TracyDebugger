@@ -26,12 +26,14 @@ If you are meeting Tracy for the first time, believe me, your life starts to be 
 Documentation can be found on the [website](https://tracy.nette.org).
 
 
-Support Project
----------------
+[Support Tracy](https://github.com/sponsors/dg)
+-----------------------------------------------
 
 Do you like Tracy? Are you looking forward to the new features?
 
-[![Donate](https://files.nette.org/icons/donation-1.svg?)](https://nette.org/make-donation?to=tracy)
+[![Buy me a coffee](https://files.nette.org/icons/donation-3.svg)](https://github.com/sponsors/dg)
+
+Thank you!
 
 
 Installation and requirements
@@ -80,7 +82,7 @@ The Debugger Bar is a floating panel. It is displayed in the bottom right corner
 
 [![Debugger-Bar](https://nette.github.io/tracy/images/tracy-bar.png)](https://nette.github.io/tracy/tracy-debug-bar.html)
 
-You can add other useful panels to the Debugger Bar. You can find interesting ones in [addons](https://componette.com) or you can [create your own](https://tracy.nette.org/en/extensions).
+You can add other useful panels to the Debugger Bar. You can find interesting ones in [addons](https://componette.org) or you can [create your own](https://tracy.nette.org/en/extensions).
 
 If you do not want to show Debugger Bar, set:
 

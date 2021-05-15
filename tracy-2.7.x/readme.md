@@ -1,13 +1,6 @@
 [Tracy](https://tracy.nette.org) - PHP debugger
 ==============================================
 
-[![Downloads this Month](https://img.shields.io/packagist/dm/tracy/tracy.svg)](https://packagist.org/packages/tracy/tracy)
-[![Build Status](https://travis-ci.org/nette/tracy.svg?branch=master)](https://travis-ci.org/nette/tracy)
-[![Build Status Windows](https://ci.appveyor.com/api/projects/status/github/nette/tracy?branch=master&svg=true)](https://ci.appveyor.com/project/dg/tracy/branch/master)
-[![Latest Stable Version](https://poser.pugx.org/tracy/tracy/v/stable)](https://github.com/nette/tracy/releases)
-[![License](https://img.shields.io/badge/license-New%20BSD-blue.svg)](https://github.com/nette/tracy/blob/master/license.md)
-
-
 Introduction
 ------------
 
@@ -73,7 +66,7 @@ The Debugger Bar is a floating panel. It is displayed in the bottom right corner
 
 [![Debugger-Bar](https://nette.github.io/tracy/images/tracy-bar.png)](https://nette.github.io/tracy/tracy-debug-bar.html)
 
-You can add other useful panels to the Debugger Bar. You can find interesting ones in [addons](https://componette.com) or you can [create your own](https://tracy.nette.org/en/extensions).
+You can add other useful panels to the Debugger Bar. You can find interesting ones in [addons](https://componette.org) or you can [create your own](https://tracy.nette.org/en/extensions).
 
 If you do not want to show Debugger Bar, set:
 
