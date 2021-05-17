@@ -216,10 +216,10 @@ class PageFilesPanel extends BasePanel {
         $i=0;
         $p_of = $p->of();
         $p->of(false);
-        foreach($p as $field => $item) {
-            $f = $this->wire('fields')->get($field);
+        foreach($p->fields as $f) {
+
             // this is for nested repeaters
-            if($item && $f && $f->type instanceof FieldTypeRepeater) {
+            if($f && $f->type instanceof FieldTypeRepeater) {
                 $repeaterValue = $p->{$f->name};
                 if($repeaterValue) {
                     if($repeaterValue instanceof Page) $repeaterValue = array($repeaterValue);
@@ -228,8 +228,8 @@ class PageFilesPanel extends BasePanel {
                     }
                 }
             }
-            elseif($item && $f && $f->type instanceof FieldTypeFile) {
-                foreach($item as $file) {
+            elseif($f && $f->type instanceof FieldTypeFile) {
+                foreach($p->{$f->name} as $file) {
                     $files[$p->id][$i]['filename'] = $file->filename;
                     $files[$p->id][$i]['field'] = $f->name;
                     if($file->isTemp()) $this->tempFiles[$i] = $file->filename;

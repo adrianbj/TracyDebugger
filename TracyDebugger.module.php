@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.22.4',
+            'version' => '4.22.5',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -857,17 +857,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // now that required classes above have been loaded, we can now exit if user is not allowed
         if(!static::$allowedTracyUser) return;
 
-        // override default PW core behavior that converts exceptions to string
-        $this->wire()->addHookAfter('Wire::trackException', function($event) {
+        // override default PW core behavior that converts exceptions to string for passing to trigger_error()
+        $this->wire()->addHookAfter('ProcessWire::trackException', function($event) {
             $exception = $event->arguments(0);
-            if($this->wire('config')->ajax && ($exception instanceof WireException || $exception instanceof \ProcessWire\WireException)) {
-                // intentionally blank
-            }
-            else {
-                throw $exception;
-            }
+            throw $exception;
         });
-
+        $this->wire()->addHookAfter('Config::trackException', function($event) {
+            $exception = $event->arguments(0);
+            throw $exception;
+        });
 
         // SET TRACY AS ENBALED
         // if we get this far, Tracy is fully enabled, so set this for checking in ready()
