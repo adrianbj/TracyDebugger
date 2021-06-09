@@ -899,9 +899,8 @@ ul.pw-info-links {
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>h1 {
     padding-top: 5px !important;
     padding-bottom: 5px !important;
-    font-size: 15px;
+    font-size: 15px !important;
     color: #2C3E50 !important;
-    text-transform: uppercase;
     background: #F0F3F7 !important;
     opacity: 0.6 !important;
     border-bottom: 1px solid #c9d4e1 !important;

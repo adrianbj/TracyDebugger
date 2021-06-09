@@ -17,7 +17,7 @@ use ErrorException;
  */
 class Debugger
 {
-	public const VERSION = '2.8.4';
+	public const VERSION = '2.8.5';
 
 	/** server modes for Debugger::enable() */
 	public const
@@ -336,8 +336,12 @@ class Debugger
 					require self::$errorTemplate ?: __DIR__ . '/assets/error.500.phtml';
 				})(empty($e));
 			} elseif (PHP_SAPI === 'cli') {
-				@fwrite(STDERR, 'ERROR: application encountered an error and can not continue. '
-					. (isset($e) ? "Unable to log error.\n" : "Error was logged.\n")); // @ triggers E_NOTICE when strerr is closed since PHP 7.4
+				// @ triggers E_NOTICE when strerr is closed since PHP 7.4
+				@fwrite(STDERR, "ERROR: {$exception->getMessage()}\n"
+					. (isset($e)
+						? 'Unable to log error. You may try enable debug mode to inspect the problem.'
+						: 'Check log to see more info.')
+					. "\n");
 			}
 
 		} elseif ($firstTime && Helpers::isHtmlMode() || Helpers::isAjax()) {
