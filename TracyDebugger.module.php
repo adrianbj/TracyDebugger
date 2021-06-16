@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.22.6',
+            'version' => '4.22.7',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -413,6 +413,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // don't init Tracy for @soma's PageEditSoftLock polling on Page Edit
         if(strpos(self::inputUrl(), 'checkpagelock') !== false) $this->earlyExit = true;
+
+        // don't init Tracy for PW ProDevTools ajax request - ATM I know this works for UserActivity module
+        if($this->wire('config')->input->pwpdt) $this->earlyExit = true;
+
+        // don't init Tracy for Pro Profiler ajax request
+        if(strpos(self::inputUrl(true), '?field=ProfilerEventsTable') !== false) $this->earlyExit = true;
 
         if(isset($_SERVER['REQUEST_URI'])) {
             $info = parse_url($_SERVER['REQUEST_URI']);
