@@ -16,7 +16,7 @@ class ProcesswireInfoPanel extends BasePanel {
         \Tracy\Debugger::timer('processwireInfo');
 
             $this->icon = '
-            <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
                  width="16px" height="16.1px" viewBox="80 80.1 16 16.1" enable-background="new 80 80.1 16 16.1" xml:space="preserve">
             <path fill="'.\TracyDebugger::COLOR_NORMAL.'" d="M94.6,83.7c-0.5-0.7-1.3-1.6-2.1-2.1c-1.7-1.2-3.6-1.6-5.4-1.4c-1.8,0.2-3.3,0.9-4.6,2
                 c-1.2,1.1-1.9,2.3-2.3,3.6C80,87,80,88.1,80.1,89c0.1,0.9,0.6,2,0.6,2c0.1,0.2,0.2,0.3,0.3,0.3c0.3,0.2,0.8,0,1.2-0.4
@@ -34,7 +34,7 @@ class ProcesswireInfoPanel extends BasePanel {
             </svg>';
 
             $this->tracyIcon = '
-            <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
                 width="16px" height="16.6px" viewBox="199.6 129.9 16 16.6" enable-background="new 199.6 129.9 16 16.6" xml:space="preserve">
                 <path fill="'.\TracyDebugger::COLOR_NORMAL.'" d="M215.4,139.4c-0.1-0.1-0.3-0.2-0.4-0.2h-1v0c0-0.4-0.1-0.8-0.1-1.2c-0.1-0.7-0.4-1.4-0.8-2l1.5-1.5
                     c0.1-0.1,0.2-0.3,0.2-0.5s-0.1-0.3-0.2-0.4c-0.1-0.1-0.3-0.2-0.4-0.2s-0.3,0.1-0.4,0.2l-1.4,1.4c-0.3-0.3-0.7-0.6-1-0.9
@@ -398,7 +398,7 @@ HTML;
                 $out .= '
                 <li ' . ($withLabels ? ' class="with-labels"' : '') . '>
                     <a onclick="tracyClosePanel(\'ProcesswireInfo\')" href="'.\TracyDebugger::inputUrl(true) . (strpos(\TracyDebugger::inputUrl(true), '?') !== false ? '&' : '?') . 'tracyClearSession=1"'.(!$withLabels ? ' title="'.$linkTitle.'"' : '').'>
-                        <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 16 16" enable-background="new 0 0 16 16" xml:space="preserve">
+                        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 16 16" enable-background="new 0 0 16 16" xml:space="preserve">
                             <path fill="'.\TracyDebugger::COLOR_NORMAL.'" d="M15.747201,6.8416004h-1.9904003C13.2032013,3.5680001,10.3552008,1.072,6.9280005,1.072
                             C3.1040001,1.072,0.0032,4.1760001,0.0032,8s3.1008,6.9280005,6.9248004,6.9280005
                             c1.7440004,0,3.3375998-0.6464005,4.5535994-1.7087994l-1.4335995-1.8207998
@@ -414,7 +414,7 @@ HTML;
                 $out .= '
                 <li ' . ($withLabels ? ' class="with-labels"' : '') . '>
                     <a onclick="tracyClosePanel(\'ProcesswireInfo\')" href="'.\TracyDebugger::inputUrl(true) . (strpos(\TracyDebugger::inputUrl(true), '?') !== false ? '&' : '?') . 'tracyModulesRefresh=1"'.(!$withLabels ? ' title="'.$linkTitle.'"' : '').'>
-                        <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="16px" height="16px" viewBox="888 888 16 16" enable-background="new 888 888 16 16" xml:space="preserve">
+                        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="16px" height="16px" viewBox="888 888 16 16" enable-background="new 888 888 16 16" xml:space="preserve">
                             <path fill="'.\TracyDebugger::COLOR_NORMAL.'" d="M903.7,897.7C903.7,897.7,903.7,897.7,903.7,897.7c-0.5,1.9-1.4,3.4-2.8,4.6s-3.1,1.7-5,1.7
                                 c-1,0-2-0.2-2.9-0.6c-0.9-0.4-1.8-0.9-2.5-1.6l-1.3,1.3c-0.1,0.1-0.3,0.2-0.5,0.2c-0.2,0-0.3-0.1-0.5-0.2c-0.1-0.1-0.2-0.3-0.2-0.5
                                 V898c0-0.2,0.1-0.3,0.2-0.5c0.1-0.1,0.3-0.2,0.5-0.2h4.7c0.2,0,0.3,0.1,0.5,0.2c0.1,0.1,0.2,0.3,0.2,0.5s-0.1,0.3-0.2,0.5l-1.4,1.4

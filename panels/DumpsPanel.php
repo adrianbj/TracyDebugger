@@ -33,7 +33,7 @@ class DumpsPanel extends BasePanel {
         }
 
         $this->icon = '
-            <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
                  width="16px" height="16px" viewBox="3 4 16 16" enable-background="new 3 4 16 16" xml:space="preserve">
             <path class="'.(\TracyDebugger::isAdditionalBar() == 'ajax' ? 'ajaxDumpIconPath' : 'dumpIconPath').'" d="M7.8,16.8c-0.9,0-1.6,0.7-1.6,1.6c0,0.9,0.7,1.6,1.6,1.6s1.6-0.7,1.6-1.6C9.4,17.5,8.7,16.8,7.8,16.8z M3,4v1.6h1.6l2.9,6.1
                 l-1.1,2c-0.1,0.2-0.2,0.5-0.2,0.8c0,0.9,0.7,1.6,1.6,1.6h9.6v-1.6H8.1c-0.1,0-0.2-0.1-0.2-0.2l0-0.1l0.7-1.3h6

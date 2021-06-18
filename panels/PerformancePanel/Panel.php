@@ -66,7 +66,7 @@ class Panel implements IBarPanel
 	{
 		return ''
 				. '<span id="performance-panel" title="Performance Tracy Panel">'
-					. '<svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+					. '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
 							 width="16px" height="16px" viewBox="40.6 40.6 16 16" enable-background="new 40.6 40.6 16 16" xml:space="preserve">
 							<g>
 								<path fill="'.\TracyDebugger::COLOR_NORMAL.'" d="M48.6,40.6c-4.4,0-8,3.6-8,8s3.6,8,8,8s8-3.6,8-8S53,40.6,48.6,40.6z M48.6,54.9c-3.5,0-6.3-2.8-6.3-6.3
