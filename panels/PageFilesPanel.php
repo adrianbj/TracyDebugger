@@ -187,7 +187,7 @@ class PageFilesPanel extends BasePanel {
         $filesDir = $p->filesManager()->path;
         foreach($p->fields as $f) {
             // this is for nested repeaters
-            if($f && $f->type instanceof FieldTypeRepeater) {
+            if($f && $f->type instanceof FieldtypeRepeater) {
                 $repeaterValue = $p->{$f->name};
                 if($repeaterValue) {
                     if($repeaterValue instanceof Page) $repeaterValue = array($repeaterValue);
@@ -219,7 +219,7 @@ class PageFilesPanel extends BasePanel {
         foreach($p->fields as $f) {
 
             // this is for nested repeaters
-            if($f && $f->type instanceof FieldTypeRepeater) {
+            if($f && $f->type instanceof FieldtypeRepeater) {
                 $repeaterValue = $p->{$f->name};
                 if($repeaterValue) {
                     if($repeaterValue instanceof Page) $repeaterValue = array($repeaterValue);
@@ -228,7 +228,7 @@ class PageFilesPanel extends BasePanel {
                     }
                 }
             }
-            elseif($f && $f->type instanceof FieldTypeFile) {
+            elseif($f && $f->type instanceof FieldtypeFile && $p->{$f->name}) {
                 foreach($p->{$f->name} as $file) {
                     $files[$p->id][$i]['filename'] = $file->filename;
                     $files[$p->id][$i]['field'] = $f->name;

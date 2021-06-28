@@ -930,7 +930,7 @@ class RequestInfoPanel extends BasePanel {
         foreach($p as $field => $item) {
             $f = $this->wire('fields')->get($field);
             // this is for nested repeaters
-            if($item && $f && $f->type instanceof FieldTypeRepeater) {
+            if($item && $f && $f->type instanceof FieldtypeRepeater) {
 								$repeaterValue = $p->get($f->name);
 								if($repeaterValue instanceof Page) $repeaterValue = array($repeaterValue); //support for FieldtypeFieldsetPage
 								if($repeaterValue) {
@@ -939,7 +939,7 @@ class RequestInfoPanel extends BasePanel {
                 		}
                 }
             }
-            elseif($item && $f && $f->type instanceof FieldTypeImage) {
+            elseif($item && $f && $f->type instanceof FieldtypeImage) {
                 $inputfield = \TracyDebugger::getDataValue('imagesInFieldListValues') ? $f->getInputfield($p) : null;
                 foreach($item as $image) {
                     $imageStr .= $this->imageStr($inputfield, $image);
