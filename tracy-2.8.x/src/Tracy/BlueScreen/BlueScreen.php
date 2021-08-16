@@ -212,7 +212,7 @@ class BlueScreen
 		if (preg_match('# ([\'"])(\w{3,}(?:\\\\\w{3,})+)\1#i', $ex->getMessage(), $m)) {
 			$class = $m[2];
 			if (
-				!class_exists($class) && !interface_exists($class) && !trait_exists($class)
+				!class_exists($class, false) && !interface_exists($class, false) && !trait_exists($class, false)
 				&& ($file = Helpers::guessClassFile($class)) && !is_file($file)
 			) {
 				$actions[] = [
@@ -337,6 +337,45 @@ class BlueScreen
 
 
 	/**
+	 * Returns syntax highlighted source code to Terminal.
+	 */
+	public static function highlightPhpCli(string $file, int $line, int $lines = 15): string
+	{
+		$source = @file_get_contents($file); // @ file may not exist
+		if ($source === false) {
+			return null;
+		}
+		$s = self::highlightPhp($source, $line, $lines);
+
+		$colors = [
+			'color: ' . ini_get('highlight.comment') => '1;30',
+			'color: ' . ini_get('highlight.default') => '1;36',
+			'color: ' . ini_get('highlight.html') => '1;35',
+			'color: ' . ini_get('highlight.keyword') => '1;37',
+			'color: ' . ini_get('highlight.string') => '1;32',
+			'line' => '1;30',
+			'highlight' => "1;37m\e[41",
+		];
+
+		$stack = ['0'];
+		$s = preg_replace_callback(
+			'#<\w+(?: (class|style)=["\'](.*?)["\'])?[^>]*>|</\w+>#',
+			function ($m) use ($colors, &$stack): string {
+				if ($m[0][1] === '/') {
+					array_pop($stack);
+				} else {
+					$stack[] = isset($m[2], $colors[$m[2]]) ? $colors[$m[2]] : '0';
+				}
+				return "\e[0m\e[" . end($stack) . 'm';
+			},
+			$s
+		);
+		$s = htmlspecialchars_decode(strip_tags($s), ENT_QUOTES | ENT_HTML5);
+		return $s;
+	}
+
+
+	/**
 	 * Should a file be collapsed in stack trace?
 	 * @internal
 	 */
@@ -371,8 +410,7 @@ class BlueScreen
 
 	public function formatMessage(\Throwable $exception): string
 	{
-		$msg = Helpers::encodeString(trim((string) $exception->getMessage()), self::MAX_MESSAGE_LENGTH);
-		$msg = str_replace('<i>\n</i>', '', $msg);
+		$msg = Helpers::encodeString(trim((string) $exception->getMessage()), self::MAX_MESSAGE_LENGTH, false);
 
 		// highlight 'string'
 		$msg = preg_replace(
