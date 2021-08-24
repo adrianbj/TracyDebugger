@@ -17,7 +17,7 @@ use ErrorException;
  */
 class Debugger
 {
-	public const VERSION = '2.8.6';
+	public const VERSION = '2.8.7';
 
 	/** server modes for Debugger::enable() */
 	public const
@@ -72,6 +72,9 @@ class Debugger
 
 	/** @var bool display location by dump()? */
 	public static $showLocation;
+
+	/** @var string[] sensitive keys not displayed by dump() */
+	public static $keysToHide = [];
 
 	/** @var string theme for dump() */
 	public static $dumpTheme = 'light';

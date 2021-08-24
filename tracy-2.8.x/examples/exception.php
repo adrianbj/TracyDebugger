@@ -38,17 +38,15 @@ class DemoClass
 }
 
 
-$a = new class extends \RuntimeException {
-	public function setPrevious(\Throwable $e): void
-	{
-		$ref = new \ReflectionClass($this);
-		$parent = $ref->getParentClass()->getParentClass();
-		$previous = $parent->getProperty('previous');
-		$previous->setAccessible(true);
-		$previous->setValue($this, $e);
-	}
-};
-$a->setPrevious($a);
+function demo($a, $b)
+{
+	$demo = new DemoClass;
+	$demo->first($a, $b);
+}
 
-// this line will kill your BlueScreen:
-throw $a;
+
+if (Debugger::$productionMode) {
+	echo '<p><b>For security reasons, Tracy is visible only on localhost. Look into the source code to see how to enable Tracy.</b></p>';
+}
+
+demo(10, 'any string');
