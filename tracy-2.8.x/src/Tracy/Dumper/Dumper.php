@@ -33,7 +33,8 @@ class Dumper
 		DEBUGINFO = 'debuginfo', // use magic method __debugInfo if exists (defaults to false)
 		KEYS_TO_HIDE = 'keystohide', // sensitive keys not displayed (defaults to [])
 		SCRUBBER = 'scrubber', // detects sensitive keys not to be displayed
-		THEME = 'theme'; // color theme (defaults to light)
+		THEME = 'theme', // color theme (defaults to light)
+		HASH = 'hash'; // show object and reference hashes (defaults to true)
 
 	public const
 		LOCATION_CLASS = 0b0001, // shows where classes are defined
@@ -73,6 +74,7 @@ class Dumper
 	/** @var array */
 	public static $objectExporters = [
 		\Closure::class => [Exposer::class, 'exposeClosure'],
+		\UnitEnum::class => [Exposer::class, 'exposeEnum'],
 		\ArrayObject::class => [Exposer::class, 'exposeArrayObject'],
 		\SplFileInfo::class => [Exposer::class, 'exposeSplFileInfo'],
 		\SplObjectStorage::class => [Exposer::class, 'exposeSplObjectStorage'],
@@ -97,7 +99,7 @@ class Dumper
 	 */
 	public static function dump($var, array $options = [])
 	{
-		if (PHP_SAPI === 'cli' || PHP_SAPI === 'phpdbg') {
+		if (Helpers::isCli()) {
 			$useColors = self::$terminalColors && Helpers::detectColors();
 			$dumper = new self($options);
 			fwrite(STDOUT, $dumper->asTerminal($var, $useColors ? self::$terminalColors : []));
@@ -204,6 +206,7 @@ class Dumper
 		$renderer->sourceLocation = !(~$location & self::LOCATION_SOURCE);
 		$renderer->classLocation = !(~$location & self::LOCATION_CLASS);
 		$renderer->theme = $options[self::THEME] ?? $renderer->theme;
+		$renderer->hash = $options[self::HASH] ?? true;
 	}
 
 
