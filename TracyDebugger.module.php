@@ -3529,7 +3529,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->addOption(1, 'True');
         $f->addOption(0, 'False');
         $f->required = true;
-        if($data['codeShowInvisibles']) $f->attr('value', $data['codeShowInvisibles']);
+        if(isset($data['codeShowInvisibles'])) $f->attr('value', $data['codeShowInvisibles']);
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldInteger");
@@ -3549,7 +3549,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->addOption(1, 'True');
         $f->addOption(0, 'False');
         $f->required = true;
-        if($data['codeUseSoftTabs']) $f->attr('value', $data['codeUseSoftTabs']);
+        if(isset($data['codeUseSoftTabs'])) $f->attr('value', $data['codeUseSoftTabs']);
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
