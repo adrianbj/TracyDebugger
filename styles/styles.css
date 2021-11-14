@@ -46,7 +46,7 @@ body.tracyHidden:before {
 }
 
 #tracy-debug-bar li:first-child {
-    cursor: pointer !important;
+    cursor: default !important;
 }
 
 #tracy-debug-bar .tracy-row:not(:first-child) {
