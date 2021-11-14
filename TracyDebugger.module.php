@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.22.14',
+            'version' => '4.22.15',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1079,30 +1079,36 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                                 }
                             }
                             if(isset(static::$_data['forceIsLocal']) && static::$_data['forceIsLocal']) {
-                                //$event->return = str_replace('</body>', '<style>#tracy-debug-bar {border: 3px solid #f53b2f !important;}</style></body>', $event->return);
-                                $event->return = str_replace('</body>', '
-                                    <script>
-                                        function addLocalAlert() {
-                                            if(!document.getElementById("tracy-debug-bar")) {
-                                                window.requestAnimationFrame(addLocalAlert);
-                                            } else {
-                                                var debugBar = document.getElementById("tracy-debug-bar");
-                                                var barul = debugBar.getElementsByTagName("ul")[0];
-                                                var forcelocalli = document.createElement("li");
-                                                const warningIcon = document.createElement("img");
-                                                warningIcon.src  = "'.$this->wire('config')->urls->TracyDebugger.'assets/warning-icon.svg";
-                                                warningIcon.style.width = "16px";
-                                                warningIcon.style.height = "16px";
-                                                forcelocalli.appendChild(warningIcon);
-                                                forcelocalli.setAttribute("id", "local-alert");
-                                                forcelocalli.setAttribute("style", "background: #f53b2f; padding: 0 5px; color: #FFFFFF");
-                                                forcelocalli.setAttribute("title", "WARNING: Tracy is in ForceLocal mode. Only use this if you know what you are doing!");
-                                                barul.insertBefore(forcelocalli, barul.firstChild);
-                                            }
+
+                                $isLocalWarnIcon = '
+                                <script>
+                                    function addLocalAlert() {
+                                        if(!document.getElementById("tracy-debug-bar")) {
+                                            window.requestAnimationFrame(addLocalAlert);
+                                        } else {
+                                            var debugBar = document.getElementById("tracy-debug-bar");
+                                            var barul = debugBar.getElementsByTagName("ul")[0];
+                                            var forcelocalli = document.createElement("li");
+                                            const warningIcon = document.createElement("img");
+                                            warningIcon.src  = "'.$this->wire('config')->urls->TracyDebugger.'assets/warning-icon.svg";
+                                            warningIcon.style.width = "16px";
+                                            warningIcon.style.height = "16px";
+                                            forcelocalli.appendChild(warningIcon);
+                                            forcelocalli.setAttribute("id", "local-alert");
+                                            forcelocalli.setAttribute("style", "background: '.self::COLOR_WARN.'; padding: 0 5px; color: #FFFFFF");
+                                            forcelocalli.setAttribute("title", "WARNING: Tracy is in ForceLocal mode. Only use this if you know what you are doing!");
+                                            barul.insertBefore(forcelocalli, barul.firstChild);
                                         }
-                                        addLocalAlert();
-                                    </script>
-                                    </body>', $event->return);
+                                    }
+                                    addLocalAlert();
+                                </script>';
+
+                                if(strpos($event->return, '</body>') !== false) {
+                                    $event->return = str_replace('</body>', $isLocalWarnIcon . '</body>', $event->return);
+                                }
+                                elseif(!$this->wire('config')->ajax) {
+                                    $event->return = $event->return . $isLocalWarnIcon;
+                                }
                             }
                         });
                     }
