@@ -1781,12 +1781,12 @@ ul.pw-info-links {
 
 #tracy-debug .ace_search input,
 #tracy-debug .ace_search_counter {
-    font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', 'Courier New', monospace;
 }
 
 .ace_editor,
 .ace_editor * {
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', 'Courier New', monospace !important;
 }
 
 /*panel rollup*/
