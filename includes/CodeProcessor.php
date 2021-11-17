@@ -71,7 +71,7 @@ if(\TracyDebugger::$allowedSuperuser || \TracyDebugger::$validLocalUser || \Trac
     $setVars = '$page = $pages->get('.$page->id.'); ';
     if(isset($_POST['fid']) && $_POST['fid'] != '') $setVars .= '$field = $fields->get('.(int)$_POST['fid'].'); ';
     if(isset($_POST['tid']) && $_POST['tid'] != '') $setVars .= '$template = $templates->get('.(int)$_POST['tid'].'); ';
-    if(isset($_POST['mid']) && $_POST['mid'] != '') $setVars .= '$module = $modules->getModule("'.$this->wire('sanitizer')->name($_POST['mid']).'", array("noInit" => true, "noCache" => true)); ';
+    if(isset($_POST['mid']) && $_POST['mid'] != '') $setVars .= '$module = $modules->getModule("'.$this->wire('sanitizer')->name($_POST['mid']).'", array("configOnly" => true)); ';
 
     $codePrefixes = "$openPHP $nameSpace $inPwCheck $setVars";
 
