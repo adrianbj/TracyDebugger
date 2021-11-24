@@ -122,6 +122,8 @@ class BlueScreen
 
 	private function renderTemplate(\Throwable $exception, string $template, $toScreen = true): void
 	{
+		$headersSent = headers_sent($headersFile, $headersLine);
+		$obStatus = Debugger::$obStatus;
 		$showEnvironment = $this->showEnvironment && (strpos($exception->getMessage(), 'Allowed memory size') === false);
 		$info = array_filter($this->info);
 		$source = Helpers::getSource();
@@ -339,7 +341,7 @@ class BlueScreen
 	/**
 	 * Returns syntax highlighted source code to Terminal.
 	 */
-	public static function highlightPhpCli(string $file, int $line, int $lines = 15): string
+	public static function highlightPhpCli(string $file, int $line, int $lines = 15): ?string
 	{
 		$source = @file_get_contents($file); // @ file may not exist
 		if ($source === false) {

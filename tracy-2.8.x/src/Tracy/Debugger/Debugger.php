@@ -17,7 +17,7 @@ use ErrorException;
  */
 class Debugger
 {
-	public const VERSION = '2.8.8';
+	public const VERSION = '2.8.9';
 
 	/** server modes for Debugger::enable() */
 	public const
@@ -50,6 +50,9 @@ class Debugger
 
 	/** @var int initial output buffer level */
 	private static $obLevel;
+
+	/** @var ?array output buffer status @internal */
+	public static $obStatus;
 
 	/********************* errors and exceptions reporting ****************d*g**/
 
@@ -327,6 +330,7 @@ class Debugger
 	{
 		$firstTime = (bool) self::$reserved;
 		self::$reserved = null;
+		self::$obStatus = ob_get_status(true);
 
 		if (!headers_sent()) {
 			http_response_code(isset($_SERVER['HTTP_USER_AGENT']) && strpos($_SERVER['HTTP_USER_AGENT'], 'MSIE ') !== false ? 503 : 500);
