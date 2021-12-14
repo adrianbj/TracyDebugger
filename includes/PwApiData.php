@@ -379,7 +379,7 @@ class TracyPwApiData extends WireData {
                     }
                     if($nextStringIsFunc) {
                         $nextStringIsFunc = false;
-                        if(!$hooks || ($hooks && strpos($token[1], '___') !== false)) {
+                        if(!$hooks || ($hooks && substr($token[1], 0, 3) === "___")) {
                             $methodName = str_replace('___', '', $token[1]);
                             $name = ($hooks ? $className . '::' : '') . $methodName;
 
