@@ -42,6 +42,7 @@ class TracyLogsPanel extends BasePanel {
                 if(!$logLinesData || !isset($logLinesData[$log['name']]) || filemtime($this->getFilename($log['name'])) > $logLinesData[$log['name']]['time']) {
                     $logLinesData[$log['name']]['time'] = time();
                     $logLinesData[$log['name']]['lines'] = $this->getLines($log['name'], array("limit" => \TracyDebugger::getDataValue("numLogEntries")));
+                    $logLinesData = mb_convert_encoding($logLinesData, 'UTF-8');
                     $this->wire('cache')->save('TracyLogData.Tracy', $logLinesData, WireCache::expireNever);
                 }
                 $logLines = $logLinesData[$log['name']]['lines'];
