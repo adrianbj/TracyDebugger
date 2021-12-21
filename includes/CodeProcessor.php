@@ -4,7 +4,9 @@ setcookie("tracyCodeError", "", time()-3600, '/');
 
 set_error_handler('tracyConsoleErrorHandler');
 set_exception_handler('tracyConsoleExceptionHandler');
-\Tracy\Debugger::$disableShutdownHandler = true;
+if(\TracyDebugger::$tracyVersion == '2.8.x' || \TracyDebugger::$tracyVersion == '2.7.x' || \TracyDebugger::$tracyVersion == '2.5.x') {
+    \Tracy\Debugger::$disableShutdownHandler = true;
+}
 register_shutdown_function('tracyConsoleShutdownHandler');
 
 // remove location links from dumps - not really meaningful for console
