@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.22.22',
+            'version' => '4.22.23',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -86,6 +86,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $templatePathSticky;
     public static $templatePathPermission;
     public static $tempTemplateFilename;
+    public static $tracyVersion;
     public static $panelGenerationTime = array();
     public static $hideInAdmin = array('validator', 'templateResources', 'templatePath');
     public static $superUserOnlyPanels = array('console', 'fileEditor', 'adminer', 'terminal', 'adminTools');
@@ -325,15 +326,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // load Tracy files and our helper files
         if(version_compare(PHP_VERSION, '7.2.0', '>=')) {
-            $tracyVersion = '2.8.x';
+            self::$tracyVersion = '2.8.x';
         }
         elseif(version_compare(PHP_VERSION, '7.1.0', '>=')) {
-            $tracyVersion = '2.7.x';
+            self::$tracyVersion = '2.7.x';
         }
         else {
-            $tracyVersion = '2.5.x';
+            self::$tracyVersion = '2.5.x';
         }
-        require_once __DIR__ . '/tracy-'.$tracyVersion.'/src/tracy.php';
+        require_once __DIR__ . '/tracy-'.self::$tracyVersion.'/src/tracy.php';
         require_once __DIR__ . '/includes/TD.php';
         if($this->data['enableShortcutMethods']) {
             require_once __DIR__ . '/includes/ShortcutMethods.php';
@@ -1365,26 +1366,27 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         // fixes for when SessionHandlerDB module is installed
-        if($this->wire('modules')->isInstalled('SessionHandlerDB') && Debugger::$showBar) {
+        if(self::$tracyVersion == '2.8.x' || self::$tracyVersion == '2.7.x' || self::$tracyVersion == '2.5.x') {
+            if($this->wire('modules')->isInstalled('SessionHandlerDB') && Debugger::$showBar) {
 
-            // ensure Tracy can show AJAX bars when SessionHandlerDB module is installed and debugbar is showing
-            $this->wire()->addHookAfter('ProcessWire::finished', function() {
-                if(ob_get_level() == 0) ob_start();
-                Debugger::getBar()->render();
-                Debugger::$showBar = false;
-            }, array('priority' => 9999));
+                // ensure Tracy can show AJAX bars when SessionHandlerDB module is installed and debugbar is showing
+                $this->wire()->addHookAfter('ProcessWire::finished', function() {
+                    if(ob_get_level() == 0) ob_start();
+                    Debugger::getBar()->render();
+                    Debugger::$showBar = false;
+                }, array('priority' => 9999));
 
-            // ensure Tracy can show Redirect bars when SessionHandlerDB module is installed and debugbar is showing
-            if(!$this->wire('config')->disableTracySHDBRedirectFix) {
-                $this->wire()->addHookBefore('Session::redirect', function($event) {
-                    $url = $event->arguments[0];
-                    $http301 = isset($event->arguments[1]) ? $event->arguments[1] : true;
-                    if($http301) header("HTTP/1.1 301 Moved Permanently");
-                    header("Location: $url");
-                });
+                // ensure Tracy can show Redirect bars when SessionHandlerDB module is installed and debugbar is showing
+                if(!$this->wire('config')->disableTracySHDBRedirectFix) {
+                    $this->wire()->addHookBefore('Session::redirect', function($event) {
+                        $url = $event->arguments[0];
+                        $http301 = isset($event->arguments[1]) ? $event->arguments[1] : true;
+                        if($http301) header("HTTP/1.1 301 Moved Permanently");
+                        header("Location: $url");
+                    });
+                }
             }
         }
-
 
     }
 

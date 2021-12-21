@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace Tracy;
 
+use Nette;
+
 
 /**
  * Rendering helpers for Debugger.
@@ -18,15 +20,16 @@ class Helpers
 	/**
 	 * Returns HTML link to editor.
 	 */
-	public static function editorLink(string $file, int $line = null): string
+	public static function editorLink(string $file, ?int $line = null): string
 	{
 		$file = strtr($origFile = $file, Debugger::$editorMapping);
 		if ($editor = self::editorUri($origFile, $line)) {
 			$parts = explode('/', strtr($file, '\\', '/'));
 			$file = array_pop($parts);
-			while ($parts && strlen($file) < 42) {
+			while ($parts && strlen($file) < 50) {
 				$file = array_pop($parts) . '/' . $file;
 			}
+
 			$file = ($parts ? '.../' : '') . $file;
 			$file = strtr($file, '/', DIRECTORY_SEPARATOR);
 
@@ -49,7 +52,7 @@ class Helpers
 	 */
 	public static function editorUri(
 		string $file,
-		int $line = null,
+		?int $line = null,
 		string $action = 'open',
 		string $search = '',
 		string $replace = ''
@@ -65,6 +68,7 @@ class Helpers
 				'%replace' => rawurlencode($replace),
 			]);
 		}
+
 		return null;
 	}
 
@@ -84,7 +88,7 @@ class Helpers
 	}
 
 
-	public static function findTrace(array $trace, $method, int &$index = null): ?array
+	public static function findTrace(array $trace, $method, ?int &$index = null): ?array
 	{
 		$m = is_array($method) ? $method : explode('::', $method);
 		foreach ($trace as $i => $item) {
@@ -98,6 +102,7 @@ class Helpers
 				return $item;
 			}
 		}
+
 		return null;
 	}
 
@@ -126,12 +131,15 @@ class Helpers
 					$frame['type'] = isset($row['type']) && $row['type'] === 'dynamic' ? '->' : '::';
 					$frame['class'] = $row['class'];
 				}
+
 				$stack[] = $frame;
 			}
+
 			$ref = new \ReflectionProperty('Exception', 'trace');
 			$ref->setAccessible(true);
 			$ref->setValue($exception, $stack);
 		}
+
 		return $exception;
 	}
 
@@ -184,7 +192,7 @@ class Helpers
 		$message = $e->getMessage();
 		if (
 			(!$e instanceof \Error && !$e instanceof \ErrorException)
-			|| $e instanceof \Nette\MemberAccessException
+			|| $e instanceof Nette\MemberAccessException
 			|| strpos($e->getMessage(), 'did you mean')
 		) {
 			// do nothing
@@ -246,6 +254,7 @@ class Helpers
 			$hint = self::getSuggestion($items, $m[2]);
 			return $hint ? $message . ", did you mean $$hint?" : $message;
 		}
+
 		return $message;
 	}
 
@@ -263,12 +272,14 @@ class Helpers
 					break;
 				}
 			}
+
 			if ($i > $max && $i < count($segments) && ($file = (new \ReflectionClass($class))->getFileName())) {
 				$max = $i;
 				$res = array_merge(array_slice(explode(DIRECTORY_SEPARATOR, $file), 0, $i - count($parts)), array_slice($segments, $i));
 				$res = implode(DIRECTORY_SEPARATOR, $res) . '.php';
 			}
 		}
+
 		return $res;
 	}
 
@@ -290,6 +301,7 @@ class Helpers
 				$best = $item;
 			}
 		}
+
 		return $best;
 	}
 
@@ -308,6 +320,20 @@ class Helpers
 	public static function isAjax(): bool
 	{
 		return isset($_SERVER['HTTP_X_TRACY_AJAX']) && preg_match('#^\w{10,15}$#D', $_SERVER['HTTP_X_TRACY_AJAX']);
+	}
+
+
+	/** @internal */
+	public static function isRedirect(): bool
+	{
+		return (bool) preg_match('#^Location:#im', implode("\n", headers_list()));
+	}
+
+
+	/** @internal */
+	public static function createId(): string
+	{
+		return bin2hex(random_bytes(5));
 	}
 
 
@@ -359,7 +385,7 @@ class Helpers
 
 
 	/** @internal */
-	public static function encodeString(string $s, int $maxLength = null, bool $showWhitespaces = true): string
+	public static function encodeString(string $s, ?int $maxLength = null, bool $showWhitespaces = true): string
 	{
 		$utf8 = self::isUtf8($s);
 		$len = $utf8 ? self::utf8Length($s) : strlen($s);
@@ -489,8 +515,10 @@ XX
 					if ($regexp) {
 						$result = $context . ($context === '/' ? ' ' : '') . $regexp;
 					}
+
 					$last = '';
 				}
+
 				return $result;
 			},
 			$s . "\n"
@@ -520,6 +548,7 @@ XX
 					$result = $result === '}' ? '}' : ';' . $result;
 					$last = '';
 				}
+
 				if ($word !== '') {
 					$result = ($last === 'word' ? ' ' : '') . $result;
 					$last = 'word';
@@ -529,6 +558,7 @@ XX
 				} else {
 					$last = '';
 				}
+
 				return $result;
 			},
 			$s . "\n"
@@ -559,6 +589,7 @@ XX
 		while (($ex = $ex->getPrevious()) && !in_array($ex, $res, true)) {
 			$res[] = $ex;
 		}
+
 		return $res;
 	}
 }
