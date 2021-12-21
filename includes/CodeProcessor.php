@@ -166,20 +166,26 @@ if(\TracyDebugger::$allowedSuperuser || \TracyDebugger::$validLocalUser || \Trac
         }
 
         // re-populate various $input properties from version stored in session
-        foreach($this->wire('session')->tracyGetData as $k => $v) {
-            $this->wire('input')->get->$k = $v;
+        if($this->wire('session')->tracyGetData) {
+            foreach($this->wire('session')->tracyGetData as $k => $v) {
+                $this->wire('input')->get->$k = $v;
+            }
         }
 
-        $postData = $this->wire('session')->tracyPostData;
-        foreach($this->wire('input')->post as $k => $v) {
-            unset($this->wire('input')->post->$k);
-        }
-        foreach($postData as $k => $v) {
-            $this->wire('input')->post->$k = $v;
+        if($this->wire('session')->tracyPostData) {
+            $postData = $this->wire('session')->tracyPostData;
+            foreach($this->wire('input')->post as $k => $v) {
+                unset($this->wire('input')->post->$k);
+            }
+            foreach($postData as $k => $v) {
+                $this->wire('input')->post->$k = $v;
+            }
         }
 
-        foreach($this->wire('session')->tracyWhitelistData as $k => $v) {
-            $this->wire('input')->whitelist->$k = $v;
+        if($this->wire('session')->tracyWhitelistData) {
+            foreach($this->wire('session')->tracyWhitelistData as $k => $v) {
+                $this->wire('input')->whitelist->$k = $v;
+            }
         }
 
 
@@ -202,8 +208,10 @@ if(\TracyDebugger::$allowedSuperuser || \TracyDebugger::$validLocalUser || \Trac
         </div>';
 
         // fix for updating AJAX bar
-        \Tracy\Debugger::getBar()->render();
-        \Tracy\Debugger::$showBar = false;
+        if(\TracyDebugger::$tracyVersion == '2.8.x' || \TracyDebugger::$tracyVersion == '2.7.x' || \TracyDebugger::$tracyVersion == '2.5.x') {
+            \Tracy\Debugger::getBar()->render();
+            \Tracy\Debugger::$showBar = false;
+        }
 
     }
 
