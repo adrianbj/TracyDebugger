@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.23.1',
+            'version' => '4.23.2',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -198,6 +198,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     static public function getDefaultData() {
         return array(
             "enabled" => 1,
+            "use_php_session" => 0,
             "superuserForceDevelopment" => null,
             "guestForceDevelopmentLocal" => null,
             "ipAddress" => null,
@@ -1346,6 +1347,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // ENABLE TRACY
         if($this->tracyEnabled) {
+            if($this->data['use_php_session'] === 1 && self::$tracyVersion != '2.8.x' && self::$tracyVersion != '2.7.x' && self::$tracyVersion != '2.5.x') {
+                if (session_status() === PHP_SESSION_NONE) {
+                    session_start();
+                }
+                Debugger::setSessionStorage(new Tracy\NativeSession);
+            }
             Debugger::enable($outputMode, $logFolder, $this->data['fromEmail'] != '' && $this->data['email'] != '' ? $this->data['email'] : null);
 
             // don't email custom (writeError()) logged errors for Console panel via CodeProcessor.php
@@ -1366,7 +1373,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         // fixes for when SessionHandlerDB module is installed
-        if(self::$tracyVersion == '2.8.x' || self::$tracyVersion == '2.7.x' || self::$tracyVersion == '2.5.x') {
+        if($this->data['use_php_session'] === 1 || self::$tracyVersion == '2.8.x' || self::$tracyVersion == '2.7.x' || self::$tracyVersion == '2.5.x') {
             if($this->wire('modules')->isInstalled('SessionHandlerDB') && Debugger::$showBar) {
 
                 // ensure Tracy can show AJAX bars when SessionHandlerDB module is installed and debugbar is showing
@@ -2976,8 +2983,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'enabled');
         $f->label = __('Enable Tracy Debugger', __FILE__);
         $f->description = __('Uncheck to completely disable all Tracy Debugger features.', __FILE__);
-        $f->columnWidth = 50;
+        $f->columnWidth = 33;
         $f->attr('checked', $data['enabled'] == '1' ? 'checked' : '');
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'use_php_session');
+        $f->label = __('Use Native PHP Session', __FILE__);
+        $f->description = __('Check to use native PHP session instead of temporary files.', __FILE__);
+        $f->notes = __('Use this if you are having problems with Tracy\'s AJAX and Redirect bars not showing. IMPORTANT: Do not use this option together with the SessionHandlerDB module.', __FILE__);
+        $f->columnWidth = 34;
+        $f->attr('checked', $data['use_php_session'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldSelect");
@@ -2985,7 +3001,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = 'Output mode';
         $f->description = __('The DETECT option automatically switches from DEVELOPMENT to PRODUCTION mode based on whether the IP of the site is publicly accessible or not.', __FILE__);
         $f->notes = __('In PRODUCTION mode, all errors and dumps etc are logged to file. Nothing is displayed in the browser. In DEVELOPMENT mode, the debug bar is displayed for authorized users - superusers and those with the `tracy-debugger` permission. All other users will be forced into PRODUCTION mode, regardless of this setting.', __FILE__);
-        $f->columnWidth = 50;
+        $f->columnWidth = 33;
         $f->required = true;
         $f->addOption('detect', 'DETECT');
         $f->addOption('development', 'DEVELOPMENT');

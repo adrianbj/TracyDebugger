@@ -4,7 +4,7 @@ setcookie("tracyCodeError", "", time()-3600, '/');
 
 set_error_handler('tracyConsoleErrorHandler');
 set_exception_handler('tracyConsoleExceptionHandler');
-if(\TracyDebugger::$tracyVersion == '2.8.x' || \TracyDebugger::$tracyVersion == '2.7.x' || \TracyDebugger::$tracyVersion == '2.5.x') {
+if(\TracyDebugger::getDataValue('use_php_session') === 1 || \TracyDebugger::$tracyVersion == '2.8.x' || \TracyDebugger::$tracyVersion == '2.7.x' || \TracyDebugger::$tracyVersion == '2.5.x') {
     \Tracy\Debugger::$disableShutdownHandler = true;
 }
 register_shutdown_function('tracyConsoleShutdownHandler');
