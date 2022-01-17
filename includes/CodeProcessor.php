@@ -70,7 +70,7 @@ if(\TracyDebugger::$allowedSuperuser || \TracyDebugger::$validLocalUser || \Trac
 
     $openPHP = '<' . '?php';
     $inPwCheck = 'if(!defined("PROCESSWIRE")) die("no direct access");';
-    $setVars = '$page = $pages->get('.$page->id.'); ';
+    $setVars = '$page = $pages->get('.$page->id.'); $pages->uncacheAll();';
     if(isset($_POST['fid']) && $_POST['fid'] != '') $setVars .= '$field = $fields->get('.(int)$_POST['fid'].'); ';
     if(isset($_POST['tid']) && $_POST['tid'] != '') $setVars .= '$template = $templates->get('.(int)$_POST['tid'].'); ';
     if(isset($_POST['mid']) && $_POST['mid'] != '') $setVars .= '$module = $modules->getModule("'.$this->wire('sanitizer')->name($_POST['mid']).'", array("configOnly" => true)); ';
