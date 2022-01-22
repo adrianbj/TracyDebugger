@@ -10,7 +10,7 @@ class TracyPwApiData extends WireData {
         $apiData = $this->wire('cache')->get($cacheName);
 
         if(!$apiData || \TracyDebugger::getDataValue('apiDataVersion') === null || $this->wire('config')->version != \TracyDebugger::getDataValue('apiDataVersion')) {
-            $cachedData = json_decode(ltrim($apiData, '~'), true);
+            if($apiData) $cachedData = json_decode(ltrim($apiData, '~'), true);
             if($type == 'variables') {
                 $apiData = $this->getVariables();
             }
@@ -31,7 +31,7 @@ class TracyPwApiData extends WireData {
             }
 
             // if PW core version has changed, populate the "TracyApiChanges" data cache
-            if($cachedData && \TracyDebugger::getDataValue('apiDataVersion') !== null && $this->wire('config')->version != \TracyDebugger::getDataValue('apiDataVersion')) {
+            if(isset($cachedData) && \TracyDebugger::getDataValue('apiDataVersion') !== null && $this->wire('config')->version != \TracyDebugger::getDataValue('apiDataVersion')) {
                 \TracyDebugger::$apiChanges['cachedVersion'] = \TracyDebugger::getDataValue('apiDataVersion');
                 foreach($apiData as $class => $methods) {
                     $i=0;
