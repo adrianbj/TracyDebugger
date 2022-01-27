@@ -206,7 +206,7 @@ if(\TracyDebugger::$allowedSuperuser || \TracyDebugger::$validLocalUser || \Trac
         echo '
         <div style="border-top: 1px dotted #cccccc; color:#A9ABAB; border-bottom: 1px solid #cccccc; color:#A9ABAB; font-size: 10px; padding: 3px; margin: 10px 0 0 0;">' .
             \TracyDebugger::formatTime(\Tracy\Debugger::timer('consoleCode'), false) . ', ' .
-            \TracyDebugger::human_filesize((memory_get_usage() - $initialMemory), false) . '
+            \TracyDebugger::human_filesize((max((memory_get_usage() - $initialMemory), 0)), false) . '
         </div>';
 
         // fix for updating AJAX bar

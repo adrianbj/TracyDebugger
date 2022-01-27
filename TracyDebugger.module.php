@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.23.5',
+            'version' => '4.23.6',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -2435,7 +2435,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         if($bytes == 0) {
-            return('<span style="color:'.self::COLOR_ALERT.'">0 Bytes</span>');
+            return('<span style="color:'.self::COLOR_LIGHTGREY.'">0 Bytes</span>');
         }
         else {
             $filesizename = array("&nbsp;Bytes", "&nbsp;KB", "&nbsp;MB", "&nbsp;GB", "&nbsp;TB", "&nbsp;PB", "&nbsp;EB", "&nbsp;ZB", "&nbsp;YB");
