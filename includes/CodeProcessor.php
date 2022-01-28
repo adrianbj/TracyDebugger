@@ -1,6 +1,6 @@
 <?php
 unset($this->wire('input')->cookie->tracyCodeError);
-setcookie("tracyCodeError", "", time()-3600, '/');
+setcookie("tracyCodeError", "", time()-3600);
 
 set_error_handler('tracyConsoleErrorHandler');
 set_exception_handler('tracyConsoleExceptionHandler');
