@@ -1,9 +1,10 @@
 <?php
 unset($this->wire('input')->cookie->tracyCodeError);
 setcookie("tracyCodeError", "", time()-3600);
-
-set_error_handler('tracyConsoleErrorHandler');
-set_exception_handler('tracyConsoleExceptionHandler');
+if($this->wire('input')->post->allowBluescreen !== 'true') {
+    set_error_handler('tracyConsoleErrorHandler');
+    set_exception_handler('tracyConsoleExceptionHandler');
+}
 if(\TracyDebugger::getDataValue('use_php_session') === 1 || \TracyDebugger::$tracyVersion == '2.8.x' || \TracyDebugger::$tracyVersion == '2.7.x' || \TracyDebugger::$tracyVersion == '2.5.x') {
     \Tracy\Debugger::$disableShutdownHandler = true;
 }

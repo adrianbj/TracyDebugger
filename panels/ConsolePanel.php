@@ -399,13 +399,14 @@ class ConsolePanel extends BasePanel {
                     };
 
                     var dbBackup = document.getElementById("dbBackup").checked;
+                    var allowBluescreen = document.getElementById("allowBluescreen").checked;
                     var backupFilename = document.getElementById("backupFilename").value;
                     var accessTemplateVars = !this.inAdmin ? document.getElementById("accessTemplateVars").checked : "false";
 
                     xmlhttp.open("POST", "./", true);
                     xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                     xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-                    xmlhttp.send("tracyConsole=1&codeReturn=codeReturn&dbBackup="+dbBackup+"&backupFilename="+backupFilename+"&accessTemplateVars="+accessTemplateVars+"&pid={$pid}&fid={$fid}&tid={$tid}&mid={$mid}&code="+encodeURIComponent(code));
+                    xmlhttp.send("tracyConsole=1&codeReturn=codeReturn&allowBluescreen="+allowBluescreen+"&dbBackup="+dbBackup+"&backupFilename="+backupFilename+"&accessTemplateVars="+accessTemplateVars+"&pid={$pid}&fid={$fid}&tid={$tid}&mid={$mid}&code="+encodeURIComponent(code));
                 },
 
                 resizeAce: function(focus = true) {
@@ -1123,7 +1124,13 @@ HTML;
                                 <input type="checkbox" id="dbBackup" '.($this->wire('input')->cookie->tracyDbBackup ? 'checked="checked"' : '').' onclick="tracyConsole.updateBackupState();" /> Backup DB
                             </label>&nbsp;&nbsp;
                             <input id="backupFilename" type="text" placeholder="Backup name (optional)" '.($this->wire('input')->cookie->tracyDbBackup ? 'style="display:inline-block !important"' : 'style="display:none !important"').' '.($this->wire('input')->cookie->tracyDbBackupFilename ? 'value="'.$this->wire('input')->cookie->tracyDbBackupFilename.'"' : '').' />
-                        </span>';
+                        </span>
+                        <span style="display: inline-block; padding: 0 20px 10px 0">
+                            <label title="Send full stack trace of errors to Tracy bluescreen">
+                                <input type="checkbox" id="allowBluescreen" /> Allow bluescreen
+                            </label>
+                        </span>
+                        ';
 
                         if(!$inAdmin) {
                             $out .= '
