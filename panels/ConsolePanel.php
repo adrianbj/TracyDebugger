@@ -1058,6 +1058,14 @@ class ConsolePanel extends BasePanel {
                             tracyConsole.enableButton("saveSnippet");
                         };
 
+                        // add tracy-debug class to all stylesheets so that they won't be removed
+                        // by Tracy core when bluescreen is triggered from Console exception
+                        for (let i = 0; i < document.styleSheets.length; i++) {
+			                let style = document.styleSheets[i];
+                            console.log(style.ownerNode);
+                            style.ownerNode.classList.add("tracy-debug");
+                        }
+
                     });
 
                 }
