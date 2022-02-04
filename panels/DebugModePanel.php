@@ -261,7 +261,9 @@ class DebugModePanel extends BasePanel {
                     // 3.0.157 and earlier
                     $sqlStr = $query->return->getQuery();
                     }
-                    $selectorQueries .= "\n<tr><td>$n</td><td class='tracy-force-break'>".$selector."</td><td>".(isset($query->arguments[1]['caller']) ? $query->arguments[1]['caller'] : '')."</td><td class='tracy-force-break'>".$sqlStr."</td><td>".(isset($query->arguments[1]) ? \Tracy\Dumper::toHtml($query->arguments[1], array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false)) : '')."</td><td>".($query->arguments[2]*1000)."</td></tr>";
+                    $options = array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false);
+                    if(defined('\Tracy\Dumper::ITEMS')) array_push($options, array(Dumper::ITEMS => \TracyDebugger::getDataValue('maxItems')));
+                    $selectorQueries .= "\n<tr><td>$n</td><td class='tracy-force-break'>".$selector."</td><td>".(isset($query->arguments[1]['caller']) ? $query->arguments[1]['caller'] : '')."</td><td class='tracy-force-break'>".$sqlStr."</td><td>".(isset($query->arguments[1]) ? \Tracy\Dumper::toHtml($query->arguments[1], $options) : '')."</td><td>".($query->arguments[2]*1000)."</td></tr>";
                 }
                 $selectorQueries .= $sectionEnd;
             }

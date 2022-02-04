@@ -188,7 +188,9 @@ class TemplateResourcesPanel extends BasePanel {
             }
 
             // if it's an object or multidimensional array, then collapse it
-            $outValue = Dumper::toHtml($outValue, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => ((is_array($outValue) && count($outValue) !== count($outValue, COUNT_RECURSIVE)) || is_object($outValue) ? true : false)));
+            $options = array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => ((is_array($outValue) && count($outValue) !== count($outValue, COUNT_RECURSIVE)) || is_object($outValue) ? true : false));
+            if(defined('\Tracy\Dumper::ITEMS')) array_push($options, array(Dumper::ITEMS => \TracyDebugger::getDataValue('maxItems')));
+            $outValue = Dumper::toHtml($outValue, $options);
             if(isset($this->variables['$'.$var])) {
                 $fileLines = array();
                 $currentVar = null;

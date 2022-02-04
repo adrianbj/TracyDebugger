@@ -36,9 +36,9 @@ bd($var, $title, $options);
 /**
 * @param mixed $var string|array|object to be dumped
 * @param string $title string to identify this dump
-* @param array $options | maxDepth (default:3), maxLength (default:150)
+* @param array $options | maxDepth (default:3), maxLength (default:150), maxItems (default:100)
 *
-* NOTE: default maxDepth and maxLength are configurable in the module config settings,
+* NOTE: default maxDepth, maxLength, and maxItems are configurable in the module config settings,
 * but it is recommended to leave as is
 */
 ```
@@ -48,12 +48,12 @@ bd($var, $title, $options);
 You can adjust the depth of array/objects, and the lengths of strings like this:
 
 ```php
-bd($myArr, 'My Array', array('maxDepth' => 7, 'maxLength' => 0));
+bd($myArr, 'My Array', array('maxDepth' => 7, 'maxLength' => 0, 'maxItems' => 500));
 // OR this shortcut
-bd($myArr, 'My Array', [7,0]);
+bd($myArr, 'My Array', [7,0, 500]);
 ```
 
-This can be very handy when you have a deep array or very long string that you need to see more of without changing the defaults of maxDepth: 3 and maxLength: 150 which can cause problems with PW objects if you go too high. Setting to '0' means no limit so don't do this on maxDepth when dumping a PW object - it won't be pretty!
+This can be very handy when you have a deep array or very long string that you need to see more of without changing the defaults of maxDepth: 3, maxLength: 150, maxItems: 100 which can cause problems with PW objects if you go too high. Setting to '0' means no limit so don't do this on maxDepth when dumping a PW object - it won't be pretty!
 
 #### Output Examples
 
@@ -73,9 +73,9 @@ Also, note the link to file and line number where these `bd()` calls were trigge
 
 ## barDumpBig
 
-The default `maxDepth` and `maxLength` settings are set to 3 and 150, respectively. This ensure faster rendering performance and is often all you need. You can of course use the `$options` parameter in `bd()` calls to adjust to your exact needs, but this method provides a quick shortcut to a "deeper and longer" version that should be enough in most circumstances.
+The default `maxDepth`, `maxLength`, `maxItems` settings are set to 3, 150, and 100, respectively. This ensure faster rendering performance and is often all you need. You can of course use the `$options` parameter in `bd()` calls to adjust to your exact needs, but this method provides a quick shortcut to a "deeper and longer" version that should be enough in most circumstances.
 
-Shortcut to `bd($var, $title, array('maxDepth' => 6, 'maxLength' => 9999))`
+Shortcut to `bd($var, $title, array('maxDepth' => 6, 'maxLength' => 9999, 'maxItems' => 250))`
 
 #### Parameters
 ```php
@@ -84,7 +84,7 @@ bdb($var, $title, $options);
 /**
 * @param mixed $var string|array|object to be dumped
 * @param string $title string to identify this dump
-* @param array $options | maxDepth (default:3), maxLength (default:150)
+* @param array $options | maxDepth (default:3), maxLength (default:150), maxItems (default:100)
 */
 ```
 
@@ -132,9 +132,9 @@ da($var, $title, $options);
 /**
 * @param mixed $var string|array|object to be dumped
 * @param string $title string to identify this dump
-* @param array $options | maxDepth (default:3), maxLength (default:150)
+* @param array $options | maxDepth (default:3), maxLength (default:150), maxItems (default:100)
 *
-* NOTE: default maxDepth and maxLength are configurable in the module config settings,
+* NOTE: default maxDepth, maxLength, and maxItems are configurable in the module config settings,
 * but it is recommended to leave as is
 */
 ```
@@ -153,9 +153,9 @@ d($var, $title, $options);
 /**
 * @param mixed $var string|array|object to be dumped
 * @param string $title string to identify this dump
-* @param array $options | maxDepth (default:3), maxLength (default:150)
+* @param array $options | maxDepth (default:3), maxLength (default:150), maxItems (default:100)
 *
-* NOTE: default maxDepth and maxLength are configurable in the module config settings,
+* NOTE: default maxDepth, maxLength, and maxItems are configurable in the module config settings,
 * but it is recommended to leave as is
 */
 ```
@@ -165,9 +165,9 @@ d($var, $title, $options);
 
 ## dumpBig
 
-The default `maxDepth` and `maxLength` settings are set to 3 and 150, respectively. This ensure faster rendering performance and is often all you need. You can of course use the `$options` parameter in `d()` calls to adjust to your exact needs, but this method provides a quick shortcut to a "deeper and longer" version that should be enough in most circumstances.
+The default `maxDepth`, `maxLength`, and `maxItems` settings are set to 3, 150, and 100, respectively. This ensure faster rendering performance and is often all you need. You can of course use the `$options` parameter in `d()` calls to adjust to your exact needs, but this method provides a quick shortcut to a "deeper and longer" version that should be enough in most circumstances.
 
-Shortcut to `d($var, $title, array('maxDepth' => 6, 'maxLength' => 9999))`
+Shortcut to `d($var, $title, array('maxDepth' => 6, 'maxLength' => 9999, 'maxItems => 250))`
 
 #### Parameters
 ```php
@@ -176,7 +176,7 @@ db($var, $title, $options);
 /**
 * @param mixed $var string|array|object to be dumped
 * @param string $title string to identify this dump
-* @param array $options | maxDepth (default:3), maxLength (default:150)
+* @param array $options | maxDepth (default:3), maxLength (default:150), maxItems (default:100)
 */
 ```
 

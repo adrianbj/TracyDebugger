@@ -713,7 +713,9 @@ class RequestInfoPanel extends BasePanel {
             $value = array();
             foreach($p->fields as $f) {
                 $fieldArray['settings'] = $p->template->fieldgroup->getField($f, true)->getArray();
-                $settings = Dumper::toHtml($fieldArray['settings'], array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true));
+                $options = array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true);
+                if(defined('\Tracy\Dumper::ITEMS')) array_push($options, array(Dumper::ITEMS => \TracyDebugger::getDataValue('maxItems')));
+                $settings = Dumper::toHtml($fieldArray['settings'], $options);
                 $fieldsListValues .= "\n<tr>" .
                     "<td>$f->id</td>" .
                     '<td><a title="Edit Field" href="'.$this->wire('config')->urls->admin.'setup/field/edit?id='.$f->id.'">'.$f->name.'</a></td>' .
@@ -809,9 +811,11 @@ class RequestInfoPanel extends BasePanel {
 
         // Page, Template, and Field Objects
         if($isPwPage) {
-            if(in_array('pageObject', $panelSections)) $pageObject = Dumper::toHtml($p, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false));
-            if(in_array('templateObject', $panelSections)) $templateObject = Dumper::toHtml($p->template, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false));
-            if(in_array('fieldsObject', $panelSections)) $fieldsObject = Dumper::toHtml($p->fields, array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false));
+            $options = array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true);
+            if(defined('\Tracy\Dumper::ITEMS')) array_push($options, array(Dumper::ITEMS => \TracyDebugger::getDataValue('maxItems')));
+            if(in_array('pageObject', $panelSections)) $pageObject = Dumper::toHtml($p, $options);
+            if(in_array('templateObject', $panelSections)) $templateObject = Dumper::toHtml($p->template, $options);
+            if(in_array('fieldsObject', $panelSections)) $fieldsObject = Dumper::toHtml($p->fields, $options);
         }
 
 

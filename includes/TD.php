@@ -52,10 +52,12 @@ class TD extends TracyDebugger {
         if(isset($options) && is_array($options) && !static::has_string_keys($options)) {
             $options['maxDepth'] = $options[0];
             if(isset($options[1])) $options['maxLength'] = $options[1];
+            if(isset($options[2])) $options['maxItems'] = $options[2];
         }
 
         $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
+        if(defined('\Tracy\Dumper::ITEMS')) $options[Dumper::ITEMS] = isset($options['maxItems']) ? $options['maxItems'] : \TracyDebugger::getDataValue('maxItems');
         $options[Dumper::LOCATION] = Debugger::$showLocation;
         if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = true;
         static::dumpToBar($var, $title, $options);
@@ -63,7 +65,7 @@ class TD extends TracyDebugger {
 
 
     /**
-     * Tracy\Debugger::barDumpBig() shortcut dumping with maxDepth = 6 and maxLength = 9999.
+     * Tracy\Debugger::barDumpBig() shortcut dumping with maxDepth = 6, maxLength = 9999, and maxItems = 250.
      * @tracySkipLocation
      */
     public static function barDumpBig($var, $title = NULL, array $options = NULL) {
@@ -75,9 +77,11 @@ class TD extends TracyDebugger {
         if(isset($options) && is_array($options) && !static::has_string_keys($options)) {
             $options['maxDepth'] = $options[0];
             if(isset($options[1])) $options['maxLength'] = $options[1];
+            if(isset($options[2])) $options['maxItems'] = $options[2];
         }
         $options[Dumper::DEPTH] = 6;
         $options[Dumper::TRUNCATE] = 9999;
+        if(defined('\Tracy\Dumper::ITEMS')) $options[Dumper::ITEMS] = 250;
         $options[Dumper::LOCATION] = Debugger::$showLocation;
         if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = true;
         static::dumpToBar($var, $title, $options);
@@ -96,9 +100,13 @@ class TD extends TracyDebugger {
         if(isset($options) && is_array($options) && !static::has_string_keys($options)) {
             $options['maxDepth'] = $options[0];
             if(isset($options[1])) $options['maxLength'] = $options[1];
+            if(isset($options[2])) $options['maxItems'] = $options[2];
         }
         $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
+        if(defined('\Tracy\Dumper::ITEMS')) {
+            $options[Dumper::ITEMS] = isset($options['maxItems']) ? $options['maxItems'] : \TracyDebugger::getDataValue('maxItems');
+        }
         $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
         if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = false;
         echo '
@@ -111,7 +119,7 @@ class TD extends TracyDebugger {
     }
 
     /**
-     * Tracy\Debugger::dumpBig() shortcut dumping with maxDepth = 6 and maxLength = 9999.
+     * Tracy\Debugger::dumpBig() shortcut dumping with maxDepth = 6, maxLength = 9999 and maxItems = 250.
      * @tracySkipLocation
      */
     public static function dumpBig($var, $title = NULL, array $options = NULL) {
@@ -123,9 +131,11 @@ class TD extends TracyDebugger {
         if(isset($options) && is_array($options) && !static::has_string_keys($options)) {
             $options['maxDepth'] = $options[0];
             if(isset($options[1])) $options['maxLength'] = $options[1];
+            if(isset($options[2])) $options['maxItems'] = $options[2];
         }
         $options[Dumper::DEPTH] = 6;
         $options[Dumper::TRUNCATE] = 9999;
+        if(defined('\Tracy\Dumper::ITEMS')) $options[Dumper::ITEMS] = 250;
         $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
         if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = false;
         echo '

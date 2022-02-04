@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.23.9',
+            'version' => '4.23.10',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -214,6 +214,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "collapse_count" => 7,
             "maxDepth" => 3,
             "maxLength" => 150,
+            "maxItems" => 100,
             "maxAjaxRows" => 3,
             "showDebugBar" => array('frontend', 'backend'),
             "hideDebugBar" => null,
@@ -469,7 +470,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $userName = $this->wire('user')->name;
             $this->wire('session')->logout();
 
-            if (isset($_SERVER['HTTP_COOKIE'])) {
+            if(isset($_SERVER['HTTP_COOKIE'])) {
                 $cookies = explode(';', $_SERVER['HTTP_COOKIE']);
                 foreach($cookies as $cookie) {
                     $parts = explode('=', $cookie);
@@ -480,7 +481,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
 
             $this->wire('session')->forceLogin($userName);
-            $this->wire('session')->redirect(substr(str_replace('tracyClearSession=1', '', self::inputUrl(true)), 0, -1));
+            $this->wire('session')->tracyLastUrl = substr(str_replace('tracyClearSession=1', '', self::inputUrl(true)), 0, -1);
+            $this->wire('session')->redirect($this->wire('config')->urls->admin.'module/?reset=1');
+
         }
 
 
@@ -1336,10 +1339,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 // https://github.com/nette/tracy/commit/12d5cafa9264f2dfc3dfccb302a0eea404dcc24e
                 if(isset(Debugger::$maxLen)) Debugger::$maxLen = $this->data['maxLength'];
             }
+            if(property_exists('Debugger', 'maxItems')) {
+                Debugger::$maxItems = $this->data['maxItems'];
+            }
             Debugger::getFireLogger()->maxDepth = $this->data['maxDepth'];
             Debugger::getFireLogger()->maxLength = $this->data['maxLength'];
+            Debugger::getFireLogger()->maxItems = $this->data['maxItems'];
             Debugger::getBlueScreen()->maxDepth = $this->data['maxDepth'];
             Debugger::getBlueScreen()->maxLength = $this->data['maxLength'];
+            Debugger::getBlueScreen()->maxItems = $this->data['maxItems'];
 
             Debugger::$strictMode = $this->data['strictMode'] || ($this->data['strictModeAjax'] && $this->wire('config')->ajax) || $this->wire('input')->cookie->tracyStrictMode ? TRUE : FALSE;
             Debugger::$scream = $this->data['forceScream'] ? TRUE : FALSE;
@@ -1863,6 +1871,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $options[Dumper::COLLAPSE] = true;
         $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : $this->data['maxDepth'];
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : $this->data['maxLength'];
+        $options[Dumper::ITEMS] = isset($options['maxItems']) ? $options['maxItems'] : $this->data['maxItems'];
         $eventItem['object'] = Dumper::toHtml($event->object, $options);
         $eventItem['arguments'] = Dumper::toHtml($event->arguments, $options);
         array_push($eventItems, $eventItem);
@@ -3112,7 +3121,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Maximum nesting depth', __FILE__);
         $f->description = __('Set the maximum nesting depth of dumped arrays and objects.', __FILE__);
         $f->notes = __('Default: 3. Warning: making this too large can slow your page load down or even crash your browser.', __FILE__);
-        $f->columnWidth = 50;
+        $f->columnWidth = 33;
         $f->attr('value', $data['maxDepth']);
         $fieldset->add($f);
 
@@ -3121,8 +3130,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Maximum string length', __FILE__);
         $f->description = __('Set the maximum displayed strings length.', __FILE__);
         $f->notes = __('Default: 150', __FILE__);
-        $f->columnWidth = 50;
+        $f->columnWidth = 34;
         $f->attr('value', $data['maxLength']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldInteger");
+        $f->attr('name', 'maxItems');
+        $f->label = __('Maximum number of items', __FILE__);
+        $f->description = __('Set the maximum number of items displayed.', __FILE__);
+        $f->notes = __('Default: 100', __FILE__);
+        $f->columnWidth = 33;
+        $f->attr('value', $data['maxItems']);
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldInteger");

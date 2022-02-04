@@ -179,7 +179,9 @@ HTML;
                     ksort($value);
                     if($key == 'paths') $value = array_map(array($this, 'addRoot'), $value);
                 }
-                $value = \Tracy\Dumper::toHtml($value, array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::LIVE => true, Dumper::COLLAPSE => true));
+                $options = array(Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::ITEMS => \TracyDebugger::getDataValue('maxItems'), Dumper::LIVE => true, Dumper::COLLAPSE => true);
+                if(defined('\Tracy\Dumper::ITEMS')) array_push($options, array(Dumper::ITEMS => \TracyDebugger::getDataValue('maxItems')));
+                $value = \Tracy\Dumper::toHtml($value, $options);
                 $configData .= "<tr><td>".$this->wire('sanitizer')->entities($key)."</td><td>" . $value . "</td></tr>";
             }
             $configData .= $sectionEnd;
@@ -394,7 +396,7 @@ HTML;
                     '</li>';
                 }
 
-                $linkTitle = 'Clear Session & Cookies';
+                $linkTitle = 'Clear Session, Cookies, & Modules Refresh';
                 $out .= '
                 <li ' . ($withLabels ? ' class="with-labels"' : '') . '>
                     <a onclick="tracyClosePanel(\'ProcesswireInfo\')" href="'.\TracyDebugger::inputUrl(true) . (strpos(\TracyDebugger::inputUrl(true), '?') !== false ? '&' : '?') . 'tracyClearSession=1"'.(!$withLabels ? ' title="'.$linkTitle.'"' : '').'>
