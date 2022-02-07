@@ -176,7 +176,12 @@ class MailInterceptorPanel extends BasePanel {
         $styledAddresses = '';
         if(!is_array($addresses)) $addresses = array($addresses);
         foreach($addresses as $address) {
-            $styledAddresses .= $names[$address].' &lt;'.$address.'&gt;<br />';
+            if($names) {
+                $styledAddresses .= $names[$address].' &lt;'.$address.'&gt;<br />';
+            }
+            else {
+                $styledAddresses .= $address.'<br />';
+            }
         }
         return $styledAddresses;
     }

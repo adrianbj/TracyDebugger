@@ -231,30 +231,6 @@ class TracyLogsPanel extends BasePanel {
     }
 
 
-    /**
-     * Return the given number of entries from the end of log file
-     *
-     * This method is pagination aware.
-     *
-     * @param string $name Name of log
-     * @param array $options Specify any of the following:
-     *  - limit (integer): Specify number of lines.
-     *  - text (string): Text to find.
-     *  - dateFrom (int|string): Oldest date to match entries.
-     *  - dateTo (int|string): Newest date to match entries.
-     *  - reverse (bool): Reverse order (default=true)
-     *  - pageNum (int): Pagination number 1 or above (default=0 which means auto-detect)
-     * @return array
-     *
-     */
-    public function getLines($name, array $options = array()) {
-        $pageNum = !empty($options['pageNum']) ? $options['pageNum'] : $this->wire('input')->pageNum;
-        unset($options['pageNum']);
-        $log = $this->getFileLog($name);
-        $limit = isset($options['limit']) ? (int) $options['limit'] : 100;
-        return $log->find($limit, $pageNum, $options);
-    }
-
 
     public function getPanel() {
 
