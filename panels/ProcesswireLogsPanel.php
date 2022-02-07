@@ -39,6 +39,7 @@ class ProcesswireLogsPanel extends BasePanel {
             foreach($logs as $log) {
 
                 $lines = \TracyDebugger::tailCustom($this->wire('config')->paths->logs.$log['name'].'.txt', \TracyDebugger::getDataValue("numLogEntries"));
+                $lines = mb_convert_encoding($lines, 'UTF-8');
                 $lines = explode("\n", $lines);
                 foreach($lines as $key => $line) {
                     $entry = $this->wire('log')->lineToEntry($line);
@@ -49,7 +50,6 @@ class ProcesswireLogsPanel extends BasePanel {
                 if(!$logLinesData || !isset($logLinesData[$log['name']]) || filemtime($this->wire('log')->getFilename($log['name'])) > $logLinesData[$log['name']]['time']) {
                     $logLinesData[$log['name']]['time'] = time();
                     $logLinesData[$log['name']]['lines'] = $lines;
-                    $logLinesData = mb_convert_encoding($logLinesData, 'UTF-8');
                     $this->wire('cache')->save('TracyLogData.ProcessWire', $logLinesData, WireCache::expireNever);
                 }
                 $logLines = $logLinesData[$log['name']]['lines'];
