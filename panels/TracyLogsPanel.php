@@ -47,7 +47,11 @@ class TracyLogsPanel extends BasePanel {
                 if(!$logLinesData || !isset($logLinesData[$log['name']]) || filemtime($this->getFilename($log['name'])) > $logLinesData[$log['name']]['time']) {
                     $logLinesData[$log['name']]['time'] = time();
                     $logLinesData[$log['name']]['lines'] = $lines;
+                    $isNew = true;
                     $this->wire('cache')->save('TracyLogData.Tracy', $logLinesData, WireCache::expireNever);
+                }
+                else {
+                    $isNew = false;
                 }
                 $logLines = $logLinesData[$log['name']]['lines'];
 
@@ -75,9 +79,8 @@ class TracyLogsPanel extends BasePanel {
                     $x--;
                     $i++;
 
-                    // if log entry was in the last 5 seconds (think this is OK for detecting the last page load),
-                    // then count the error or other entry type
-                    if(time()-5 < @strtotime($logDateTime)) { // silenced in case timezone is not set
+                    // if log entry is new, then count the error or other entry type
+                    if($isNew) {
                         if($log['name'] == 'error' || $log['name'] == 'exception' || $log['name'] == 'critical') {
                             $this->numErrors++;
                         }

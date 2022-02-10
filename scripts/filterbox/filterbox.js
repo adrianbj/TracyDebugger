@@ -1,8 +1,8 @@
 /**
- * FilterBox v0.4.97
- * 2019/08/05
+ * FilterBox v0.4.98
+ * 2022/02/06
  */
-(function (window, document) {
+ (function (window, document) {
     "use strict";
 
     // CustomEvent polyfill
@@ -700,8 +700,8 @@
             callCb(afterFilter);
         };
 
-        function handleBlur() {
-            callCb(onBlur);
+        function handleBlur(e) {
+            callCb(onBlur, e);
         }
 
         function handleFocus(e, force) {
