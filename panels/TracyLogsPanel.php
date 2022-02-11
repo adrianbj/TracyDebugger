@@ -37,6 +37,7 @@ class TracyLogsPanel extends BasePanel {
         else {
             $this->logEntries = $this->sectionHeader(array('Type', 'Date', 'URL', 'Text'));
             $logLinesData = $this->wire('cache')->get('TracyLogData.Tracy');
+            $isNew = false;
             foreach($logs as $log) {
 
                 $lines = \TracyDebugger::tailCustom($this->wire('config')->paths->logs.'tracy/'.$log['name'].'.log', \TracyDebugger::getDataValue("numLogEntries"));
@@ -50,9 +51,7 @@ class TracyLogsPanel extends BasePanel {
                     $isNew = true;
                     $this->wire('cache')->save('TracyLogData.Tracy', $logLinesData, WireCache::expireNever);
                 }
-                else {
-                    $isNew = false;
-                }
+
                 $logLines = $logLinesData[$log['name']]['lines'];
 
                 foreach($logLines as $entry) {

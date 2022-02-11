@@ -36,6 +36,7 @@ class ProcesswireLogsPanel extends BasePanel {
             $logLinesData = $this->wire('cache')->get('TracyLogData.ProcessWire');
             $entriesArr = array();
             $i=0;
+            $isNew = false;
             foreach($logs as $log) {
 
                 $lines = \TracyDebugger::tailCustom($this->wire('config')->paths->logs.$log['name'].'.txt', \TracyDebugger::getDataValue("numLogEntries"));
@@ -53,9 +54,7 @@ class ProcesswireLogsPanel extends BasePanel {
                     $isNew = true;
                     $this->wire('cache')->save('TracyLogData.ProcessWire', $logLinesData, WireCache::expireNever);
                 }
-                else {
-                    $isNew = false;
-                }
+
                 $logLines = $logLinesData[$log['name']]['lines'];
 
                 foreach($logLines as $entry) {
