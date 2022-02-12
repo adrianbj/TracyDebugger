@@ -48,7 +48,7 @@ class AdminerPanel extends BasePanel {
                 $contextLink = '&edit=pages&where%5Bid%5D='.(int)$this->wire('input')->get('id');
             }
             else {
-                $languagePage = $this->wire('pages')->get('/admin/setup/languages/');
+                $languagePage = $this->wire('pages')->get($this->wire('config')->urls->admin.'setup/languages/');
                 $contextLink = '&select=pages&columns%5B0%5D%5Bfun%5D=&columns%5B0%5D%5Bcol%5D=&where%5B0%5D%5Bcol%5D=parent_id&where%5B0%5D%5Bop%5D=%3D&where%5B0%5D%5Bval%5D='.$languagePage->id.'&where%5B01%5D%5Bcol%5D=&where%5B01%5D%5Bop%5D=%3D&where%5B01%5D%5Bval%5D=&order%5B0%5D=&limit=50&text_length=100';
             }
         }
