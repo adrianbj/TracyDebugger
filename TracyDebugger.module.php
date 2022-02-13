@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.23.16',
+            'version' => '4.23.17',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1001,7 +1001,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 else {
                     Debugger::$editor = $this->data['editor'];
 
-                    if(!static::$isLocal && $this->data['localRootPath'] != '') {
+                    if($this->data['localRootPath'] != '') {
                         $mappingReplacements[$compilerCachePath] = $this->data['localRootPath'];
                         $mappingReplacements[$this->wire('config')->paths->root] = $this->data['localRootPath'];
                     }
@@ -2562,7 +2562,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $file = str_replace("%file", $file, str_replace("%line", $line, Debugger::$editor));
         $file = static::forwardSlashPath($file);
         if(static::$useOnlineEditor) $file = str_replace(static::$onlineFileEditorDirPath, '', $file);
-        elseif(!static::$isLocal && self::getDataValue('localRootPath') != '') $file = str_replace(wire('config')->paths->root, self::getDataValue('localRootPath'), $file);
+        elseif(self::getDataValue('localRootPath') != '') $file = str_replace(wire('config')->paths->root, self::getDataValue('localRootPath'), $file);
         return '<a '.($title ? 'title="'.$title.'"' : '').' href="'.$file.'">'.$linkText.'</a>';
     }
 
@@ -3484,7 +3484,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = $this->wire('modules')->get("InputfieldText");
         $f->attr('name', 'localRootPath');
         $f->label = __('Local root path', __FILE__);
-        $f->description = __('Maps editor links from live site to local dev files. Only used if you are viewing a live site, otherwise it is ignored.', __FILE__);
+        $f->description = __('Maps editor links from site root to local path.', __FILE__);
         $f->notes = __('An example path on MacOS might be: /Users/myname/Sites/sitefolder/', __FILE__);
         $f->columnWidth = 50;
         if($data['localRootPath']) $f->attr('value', $data['localRootPath']);
