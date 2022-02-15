@@ -17,7 +17,7 @@ use ErrorException;
  */
 class Debugger
 {
-	public const VERSION = '2.9.0';
+	public const VERSION = '2.9.1';
 
 	/** server modes for Debugger::enable() */
 	public const
@@ -68,10 +68,13 @@ class Debugger
 	/********************* Debugger::dump() ****************d*g**/
 
 	/** @var int  how many nested levels of array/object properties display by dump() */
-	public static $maxDepth = 7;
+	public static $maxDepth = 15;
 
 	/** @var int  how long strings display by dump() */
 	public static $maxLength = 150;
+
+	/** @var int  how many items in array/object display by dump() */
+	public static $maxItems = 100;
 
 	/** @var bool display location by dump()? */
 	public static $showLocation;
@@ -137,7 +140,8 @@ class Debugger
 	/** @var string */
 	public static $customBodyStr = null;
 
-	public static $sourceMappers = [];
+	/** @var callable[] */
+	private static $sourceMappers = [];
 
 	/** @var array|null */
 	private static $cpuUsage;
@@ -222,6 +226,7 @@ class Debugger
 
 		$strategy = self::getStrategy();
 		$strategy->initialize();
+		self::dispatch();
 
 		if (self::$enabled) {
 			return;
@@ -253,7 +258,6 @@ class Debugger
 			require_once dirname(__DIR__) . "/$path.php";
 		}
 
-		self::dispatch();
 		self::$enabled = true;
 	}
 
@@ -502,9 +506,9 @@ class Debugger
 	public static function getSessionStorage(): SessionStorage
 	{
 		if (!self::$sessionStorage) {
-			self::$sessionStorage = is_dir($dir = session_save_path())
-				|| is_dir($dir = ini_get('upload_tmp_dir'))
-				|| is_dir($dir = sys_get_temp_dir())
+			self::$sessionStorage = @is_dir($dir = session_save_path())
+				|| @is_dir($dir = ini_get('upload_tmp_dir'))
+				|| @is_dir($dir = sys_get_temp_dir())
 				|| ($dir = self::$logDirectory)
 				? new FileSession($dir)
 				: new NativeSession;
@@ -530,6 +534,7 @@ class Debugger
 			$options = [
 				Dumper::DEPTH => self::$maxDepth,
 				Dumper::TRUNCATE => self::$maxLength,
+				Dumper::ITEMS => self::$maxItems,
 			];
 			return Helpers::isCli()
 				? Dumper::toText($var)
@@ -538,13 +543,17 @@ class Debugger
 				});
 
 		} elseif (!self::$productionMode) {
+			$html = Helpers::isHtmlMode();
+			echo $html ? '<tracy-div>' : '';
 			Dumper::dump($var, [
 				Dumper::DEPTH => self::$maxDepth,
 				Dumper::TRUNCATE => self::$maxLength,
+				Dumper::ITEMS => self::$maxItems,
 				Dumper::LOCATION => self::$showLocation,
 				Dumper::THEME => self::$dumpTheme,
 				Dumper::KEYS_TO_HIDE => self::$keysToHide,
 			]);
+			echo $html ? '</tracy-div>' : '';
 		}
 
 		return $var;

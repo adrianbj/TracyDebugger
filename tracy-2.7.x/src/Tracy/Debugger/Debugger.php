@@ -17,7 +17,7 @@ use ErrorException;
  */
 class Debugger
 {
-	public const VERSION = '2.7.8';
+	public const VERSION = '2.7.9';
 
 	/** server modes for Debugger::enable() */
 	public const
@@ -247,6 +247,7 @@ class Debugger
 		}
 
 		if (self::getBar()->dispatchAssets()) {
+			self::$showBar = false;
 			exit;
 		}
 	}

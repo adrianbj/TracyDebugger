@@ -288,6 +288,7 @@ body.tracyHidden:before {
     margin: 0 !important;
     box-shadow: none !important;
     background: white !important;
+    border-collapse: collapse !important;
 }
 
 #tracy-debug table tbody tr {
@@ -2023,4 +2024,20 @@ https://github.com/ajaxorg/ace/issues/2872
 
 .ace_editor.ace_autocomplete {
     width: 400px;
+}
+
+
+#tracy-debug .tracy-panel-ajax h1::after,
+#tracy-debug .tracy-panel-redirect h1::after {
+	content: '' !important;
+
+}
+
+#tracy-debug .tracy-panel-redirect h1::after {
+	content: '' !important;
+}
+
+.tracy-row {
+    padding: 0 !important;
+    margin: 0 !important;
 }

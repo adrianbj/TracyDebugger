@@ -1060,6 +1060,8 @@ class ConsolePanel extends BasePanel {
 
                         // add tracy-debug class to all stylesheets so that they won't be removed
                         // by Tracy core when bluescreen is triggered from Console exception
+                        // this is no longer needed with Tracy core 2.9.1+,
+                        // but keeping while we are still supporting older versions
                         for (let i = 0; i < document.styleSheets.length; i++) {
 			                let style = document.styleSheets[i];
                             console.log(style.ownerNode);
