@@ -464,7 +464,7 @@ pre.tracy-dump, .tracy-echo {
 }
 
 pre.tracy-dump {
-    padding: .4em 2em 3em .7em !important;
+    padding: .4em 2em 7em .7em !important;
     color: #444444 !important;
 }
 
@@ -478,12 +478,21 @@ td pre.tracy-dump {
     color: #444444 !important;
 }
 
+.tracy-dump-location-container {
+    position: absolute !important;
+    bottom: 0 !important;
+    margin: 10px 10px 5px 5px !important;
+    padding: 0 !important;
+    font-size: 11px !important;
+}
+
 .tracy-dump-location {
     float: none !important;
-    position: absolute !important;
+    position: relative !important;
+}
+
+.tracy-dump-location-path {
     bottom: 0px !important;
-    display: block !important;
-    margin: 10px 0 15px 0 !important;
 }
 
 .tracy-inner td {

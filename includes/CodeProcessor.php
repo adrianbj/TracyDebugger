@@ -5,7 +5,7 @@ if($this->wire('input')->post->allowBluescreen !== 'true') {
     set_error_handler('tracyConsoleErrorHandler');
     set_exception_handler('tracyConsoleExceptionHandler');
 }
-if(\TracyDebugger::getDataValue('use_php_session') === 1 || \TracyDebugger::$tracyVersion == '2.8.x' || \TracyDebugger::$tracyVersion == '2.7.x' || \TracyDebugger::$tracyVersion == '2.5.x') {
+if(\TracyDebugger::getDataValue('use_php_session') === 1 || \TracyDebugger::$tracyVersion == '2.7.x' || \TracyDebugger::$tracyVersion == '2.5.x') {
     \Tracy\Debugger::$disableShutdownHandler = true;
 }
 register_shutdown_function('tracyConsoleShutdownHandler');
@@ -211,7 +211,7 @@ if(\TracyDebugger::$allowedSuperuser || \TracyDebugger::$validLocalUser || \Trac
         </div>';
 
         // fix for updating AJAX bar
-        if(\TracyDebugger::$tracyVersion == '2.8.x' || \TracyDebugger::$tracyVersion == '2.7.x' || \TracyDebugger::$tracyVersion == '2.5.x') {
+        if(\TracyDebugger::$tracyVersion == '2.7.x' || \TracyDebugger::$tracyVersion == '2.5.x') {
             \Tracy\Debugger::getBar()->render();
             \Tracy\Debugger::$showBar = false;
         }

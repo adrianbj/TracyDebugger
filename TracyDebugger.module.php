@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.23.18',
+            'version' => '4.23.19',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1357,7 +1357,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // ENABLE TRACY
         if($this->tracyEnabled) {
-            if($this->data['use_php_session'] === 1 && !$this->wire('modules')->isInstalled('SessionHandlerDB') && self::$tracyVersion != '2.8.x' && self::$tracyVersion != '2.7.x' && self::$tracyVersion != '2.5.x') {
+            if($this->data['use_php_session'] === 1 && !$this->wire('modules')->isInstalled('SessionHandlerDB') && self::$tracyVersion != '2.7.x' && self::$tracyVersion != '2.5.x') {
                 if (session_status() === PHP_SESSION_NONE) {
                     session_start();
                 }
@@ -1383,7 +1383,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         // fixes for when SessionHandlerDB module is installed
-        if(($this->data['use_php_session'] === 1 && !$this->wire('modules')->isInstalled('SessionHandlerDB')) || self::$tracyVersion == '2.8.x' || self::$tracyVersion == '2.7.x' || self::$tracyVersion == '2.5.x') {
+        if(($this->data['use_php_session'] === 1 && !$this->wire('modules')->isInstalled('SessionHandlerDB')) || self::$tracyVersion == '2.7.x' || self::$tracyVersion == '2.5.x') {
             if($this->wire('modules')->isInstalled('SessionHandlerDB') && Debugger::$showBar) {
 
                 // ensure Tracy can show AJAX bars when SessionHandlerDB module is installed and debugbar is showing

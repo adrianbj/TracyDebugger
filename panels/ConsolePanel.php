@@ -1064,7 +1064,6 @@ class ConsolePanel extends BasePanel {
                         // but keeping while we are still supporting older versions
                         for (let i = 0; i < document.styleSheets.length; i++) {
 			                let style = document.styleSheets[i];
-                            console.log(style.ownerNode);
                             style.ownerNode.classList.add("tracy-debug");
                         }
 
