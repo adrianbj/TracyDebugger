@@ -94,7 +94,7 @@ final class Renderer
 				$line,
 				$uri ? "\nClick to open in editor" : ''
 			) . Helpers::encodeString($code, 50) . "</a\n>";
-			$location .= "\n" . '<span class="tracy-dump-location tracy-dump-location-path">' . Helpers::editorLink($file, $line) . '</span></div>';
+			$location .= "  " . '<span class="tracy-dump-location tracy-dump-location-path">' . Helpers::editorLink($file, $line) . '</span></div>';
 		}
 
 		return '<pre class="tracy-dump' . ($this->theme ? ' tracy-' . htmlspecialchars($this->theme) : '')
@@ -103,9 +103,8 @@ final class Renderer
 				. ($json ? " data-tracy-dump='" . self::jsonEncode($json) . "'" : '')
 				. ($location || strlen($html) > 100 ? "\n" : '')
 			. '>'
-			. $location
 			. $html
-			. "</pre>\n";
+			. "</pre>\n" . $location;
 	}
 
 

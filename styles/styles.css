@@ -464,7 +464,7 @@ pre.tracy-dump, .tracy-echo {
 }
 
 pre.tracy-dump {
-    padding: .4em 2em 7em .7em !important;
+    padding: .4em 2em 0.4em .7em !important;
     color: #444444 !important;
 }
 
@@ -479,10 +479,8 @@ td pre.tracy-dump {
 }
 
 .tracy-dump-location-container {
-    position: absolute !important;
-    bottom: 0 !important;
-    margin: 10px 10px 5px 5px !important;
-    padding: 0 !important;
+    margin: 5px 5px 10px 0 !important;
+    padding: 0 0 5px 0 !important;
     font-size: 11px !important;
 }
 
@@ -961,6 +959,7 @@ ul.pw-info-links {
 .tracy-panel svg {
     width: 16px !important;
     height: 16px !important;
+    vertical-align: middle !important;
 }
 
 #tracy-debug-panel-CaptainHookPanel .tracy-inner .tracy-toggle:not(.tracy-collapsed),
