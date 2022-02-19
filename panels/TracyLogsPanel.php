@@ -109,9 +109,10 @@ class TracyLogsPanel extends BasePanel {
                     }
 
                     $trimmedText = trim(htmlspecialchars($item['text'], ENT_QUOTES, 'UTF-8'));
+                    $lineIsNew = !isset($cachedLogLinesData[$item['log']]) || (isset($cachedLogLinesData[$item['log']]) && strtotime($item['date']) > $cachedLogLinesData[$item['log']]['time']);
                     $this->logEntries .= "
                     \n<tr>" .
-                        "<td ".(isset($cachedLogLinesData[$item['log']]) && strtotime($item['date']) > $cachedLogLinesData[$item['log']]['time'] ? 'style="background: '.$color.' !important; color: #FFFFFF !important"' : '').">".$item['log']."</td>" .
+                        "<td ".($lineIsNew ? 'style="background: '.$color.' !important; color: #FFFFFF !important"' : '').">".$item['log']."</td>" .
                         "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;', $item['date']))."</td>" .
                         "<td>".(isset($item['url']) ? $item['url'] : '')."</td>" .
                         "<td>".\TracyDebugger::createEditorLink($this->wire('config')->paths->logs . $item['log'] . '.txt', 1, (strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText), 'View in your code editor')."</td>" .
