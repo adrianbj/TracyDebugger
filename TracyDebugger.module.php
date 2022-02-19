@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.23.20',
+            'version' => '4.23.21',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -201,6 +201,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "use_php_session" => 0,
             "superuserForceDevelopment" => null,
             "guestForceDevelopmentLocal" => null,
+            "forceIsLocal" => false,
             "ipAddress" => null,
             "restrictSuperusers" => null,
             "strictMode" => null,
@@ -762,8 +763,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                         $this->wire('pages')->trash($this->wire('pages')->get($pid));
                     }
                 }
-                unset($this->data['recordedPages']);
-                $this->wire('modules')->saveModuleConfigData($this, $this->data);
+                $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
+                unset($configData['recordedPages']);
+                $this->wire('modules')->saveModuleConfigData($this, $configData);
                 $this->wire('session')->redirect($this->httpReferer);
             }
 
@@ -1085,7 +1087,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                                     $event->return = str_replace('<title>', '<title>'.strtoupper(str_replace('*', '', $type)).' - ', $event->return);
                                 }
                             }
-                            if(isset(static::$_data['forceIsLocal']) && static::$_data['forceIsLocal']) {
+
+                            if(static::getDataValue('forceIsLocal')) {
 
                                 $isLocalWarnIcon = '
                                 <script>
@@ -1645,8 +1648,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     $this->wire('session')->tracyUserSwitcherId = $challenge;
                 }
                 // save session ID and expiry time in module config settings
+                $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
                 $this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId] = time() + ($this->wire('input')->post->userSwitchSessionLength * 60);
-                $this->wire('modules')->saveModuleConfigData($this, $this->data);
+                $configData['userSwitchSession'] = $this->data['userSwitchSession'];
+                $this->wire('modules')->saveModuleConfigData($this, $configData);
             }
             // if logout button clicked
             if($this->wire('input')->post->logoutUserSwitcher && $this->wire('session')->CSRF->validate()) {
@@ -1664,8 +1669,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             // if end session clicked, remove session variable and config settings entry
             elseif($this->wire('input')->post->endSessionUserSwitcher && $this->wire('session')->CSRF->validate()) {
                 $this->wire('session')->remove("tracyUserSwitcherId");
+                $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
                 unset($this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId]);
-                $this->wire('modules')->saveModuleConfigData($this, $this->data);
+                unset($configData['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId]);
+                $this->wire('modules')->saveModuleConfigData($this, $configData);
                 $this->wire('session')->redirect($this->httpReferer);
             }
             // if session not expired, switch to requested user
@@ -1895,8 +1902,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     protected function recordPage($event) {
         $p = $event->arguments(0);
         if($p->is("has_parent=".$this->wire('config')->adminRootPageID)) return;
-        $this->data['recordedPages'][] = $p->id;
-        $this->wire('modules')->saveModuleConfigData($this, $this->data);
+
+        $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
+        $configData['recordedPages'][] = $p->id;
+        $this->wire('modules')->saveModuleConfigData($this, $configData);
     }
 
 
@@ -2680,9 +2689,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * @return bool
      */
     public static function isLocal($list = null) {
-        if (isset(static::$_data['forceIsLocal'])) {
-			return static::$_data['forceIsLocal'];
-		}
+
+        if(static::getDataValue('forceIsLocal')) {
+            return static::getDataValue('forceIsLocal');
+        }
         else {
             return Debugger::detectDebugMode($list = null);
         }
@@ -3031,7 +3041,21 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             </a>
         </p>
         ';
-        if(isset($this->wire('config')->tracy) && is_array($this->wire('config')->tracy)) $fieldset->value .= '<p style="margin-top:35px"><i class="fa fa-fw fa-lg fa-exclamation-triangle"></i> You have specified various Tracy settings in <code>$config->tracy</code> that override settings here.</p>';
+        if(isset($this->wire('config')->tracy) && is_array($this->wire('config')->tracy)) {
+            $fieldset->value .= '<p style="margin-top:35px"><i class="fa fa-fw fa-lg fa-exclamation-triangle"></i> You have specified various Tracy settings in <code>$config->tracy</code> that override settings here.</p>';
+            $fieldset->value .= '<table class="uk-table uk-table-small uk-table-striped uk-width-1-2@m"><head><tr><th>Setting</th><th>Value</th></tr>';
+            foreach($this->wire('config')->tracy as $k => $v) {
+                if($v === true) {
+                    $v = 'true';
+                }
+                elseif($v === false) {
+                    $v = 'false';
+                }
+                $fieldset->value .= '<tr><td>'.$k.'</td><td>'.$v.'</td></tr>';
+            }
+            $fieldset->value .= '</table>';
+        }
+
         $wrapper->add($fieldset);
 
         // Quick links
@@ -3089,7 +3113,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Force superusers into DEVELOPMENT mode', __FILE__);
         $f->description = __('Check to force DEVELOPMENT mode for superusers even on live sites.', __FILE__);
         $f->notes = __('By default, the Output Mode setting\'s DETECT option will force a site into PRODUCTION mode when it is live, which hides the DebugBar and sends errors and dumps to log files. However, with this checked, superusers will always be in DEVELOPMENT mode.', __FILE__);
-        $f->columnWidth = 50;
+        $f->columnWidth = 33;
         $f->attr('checked', $data['superuserForceDevelopment'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
@@ -3098,8 +3122,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Force guest users into DEVELOPMENT mode on localhost', __FILE__);
         $f->description = __('Check to force DEVELOPMENT mode for guests when server detected as localhost.', __FILE__);
         $f->notes = __('By default, guest users will always be in PRODUCTION mode (no debug bar). However, with this checked, they will always be in DEVELOPMENT mode on localhost.', __FILE__);
-        $f->columnWidth = 50;
+        $f->columnWidth = 34;
         $f->attr('checked', $data['guestForceDevelopmentLocal'] == '1' ? 'checked' : '');
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'forceIsLocal');
+        $f->label = __('Force isLocal check to always return true', __FILE__);
+        $f->description = __('Check to force isLocal.', __FILE__);
+        $f->notes = __('WARNING - Only use this if you know what you are doing! You will expose debug info to guest users on a live site when combined with the previous setting.', __FILE__);
+        $f->columnWidth = 33;
+        $f->attr('checked', $data['forceIsLocal'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldText");
