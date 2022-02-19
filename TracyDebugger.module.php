@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.23.19',
+            'version' => '4.23.20',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -3971,7 +3971,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'numLogEntries');
         $f->label = __('Number of log entries', __FILE__);
         $f->description = __('Set the number of log entries to be displayed for the Tracy and ProcessWire log viewer panels.', __FILE__);
-        $f->notes = __('Default: 10', __FILE__);
+        $f->notes = __('Default: 100', __FILE__);
         $f->attr('value', $data['numLogEntries']);
         $fieldset->add($f);
 

@@ -69,16 +69,6 @@ class ProcesswireLogsPanel extends BasePanel {
                     $entriesArr[$itemKey]['log'] = $log['name'];
                     $x--;
                     $i++;
-
-                    // if log entry is new, then count the error or other entry type
-                    if($isNew) {
-                        if($log['name'] == 'errors' || $log['name'] == 'exceptions') {
-                            $this->numErrors++;
-                        }
-                        else {
-                            $this->numOther++;
-                        }
-                    }
                     $this->numLogEntries++;
                 }
 
@@ -95,6 +85,17 @@ class ProcesswireLogsPanel extends BasePanel {
 
             //display most recent entries from all log files
             foreach(array_slice($entriesArr, 0, \TracyDebugger::getDataValue("numLogEntries")) as $item) {
+
+                // if log entry is new, then count the error or other entry type
+                if($isNew) {
+                    if($item['log'] == 'errors' || $item['log'] == 'exceptions' || $item['log'] == 'files-errors') {
+                        $this->numErrors++;
+                    }
+                    else {
+                        $this->numOther++;
+                    }
+                }
+
                 $trimmedText = trim(htmlspecialchars($item['text'], ENT_QUOTES, 'UTF-8'));
                 $this->logEntries .= "
                 \n<tr>
