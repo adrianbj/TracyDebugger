@@ -21,6 +21,8 @@ class TracyLogsPanel extends BasePanel {
          * Tracy log panel sections
          */
 
+        $isNew = 0;
+        $isNewErrors = 0;
         $this->logEntries = '';
         $entriesArr = array();
 
@@ -37,8 +39,6 @@ class TracyLogsPanel extends BasePanel {
             $logLinesData = $this->wire('cache')->get('TracyLogData.Tracy');
             $cachedLogLinesData = $logLinesData;
 
-            $isNew = 0;
-            $isNewErrors = 0;
             $errorLogs = array('error', 'exception', 'critical');
             foreach($logs as $log) {
 

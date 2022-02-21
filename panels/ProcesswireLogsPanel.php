@@ -21,6 +21,10 @@ class ProcesswireLogsPanel extends BasePanel {
          * PW log panel sections
          */
 
+        $isNew = 0;
+        $isNewErrors = 0;
+        $entriesArr = array();
+
         $logs = $this->wire('log')->getLogs();
         if($logs === null) {
             $this->logEntries .= 'Logs directory is not readable.';
@@ -34,9 +38,6 @@ class ProcesswireLogsPanel extends BasePanel {
             $logLinesData = $this->wire('cache')->get('TracyLogData.ProcessWire');
             $cachedLogLinesData = $logLinesData;
 
-            $entriesArr = array();
-            $isNew = 0;
-            $isNewErrors = 0;
             $errorLogs = array('errors', 'exceptions', 'files-errors');
             foreach($logs as $log) {
 
