@@ -32,7 +32,7 @@ if(!function_exists('debugAll') && in_array('debugAll', $this->data['enabledShor
  */
 if(!function_exists('barDump') && in_array('barDump', $this->data['enabledShortcutMethods'])) {
     function barDump($var, $title = NULL, array $options = NULL) {
-        if(tracyUnavailable()) return false;
+        if(tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
         return TD::barDump($var, $title, $options);
     }
 }
@@ -43,7 +43,7 @@ if(!function_exists('barDump') && in_array('barDump', $this->data['enabledShortc
  */
 if(!function_exists('barDumpBig') && in_array('barDumpBig', $this->data['enabledShortcutMethods'])) {
     function barDumpBig($var, $title = NULL) {
-        if(tracyUnavailable()) return false;
+        if(tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
         return TD::barDumpBig($var, $title);
     }
 }
@@ -76,7 +76,7 @@ if(!function_exists('dumpBig') && in_array('dumpBig', $this->data['enabledShortc
  */
 if(!function_exists('barEcho') && in_array('barEcho', $this->data['enabledShortcutMethods'])) {
     function barEcho($str, $title = NULL) {
-        if(tracyUnavailable()) return false;
+        if(tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
         return TD::barEcho($str, $title);
     }
 }
@@ -146,7 +146,7 @@ if(!function_exists('da') && in_array('da', $this->data['enabledShortcutMethods'
  */
 if(!function_exists('bd') && in_array('bd', $this->data['enabledShortcutMethods'])) {
     function bd($var, $title = NULL, array $options = NULL) {
-        if(tracyUnavailable()) return false;
+        if(tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
         return TD::barDump($var, $title, $options);
     }
 }
@@ -157,7 +157,7 @@ if(!function_exists('bd') && in_array('bd', $this->data['enabledShortcutMethods'
  */
 if(!function_exists('bdb') && in_array('bdb', $this->data['enabledShortcutMethods'])) {
     function bdb($var, $title = NULL) {
-        if(tracyUnavailable()) return false;
+        if(tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
         return TD::barDumpBig($var, $title);
     }
 }
@@ -190,7 +190,7 @@ if(!function_exists('db') && in_array('db', $this->data['enabledShortcutMethods'
  */
 if(!function_exists('be') && in_array('be', $this->data['enabledShortcutMethods'])) {
     function be($str, $title = NULL) {
-        if(tracyUnavailable()) return false;
+        if(tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
         return TD::barEcho($str, $title);
     }
 }

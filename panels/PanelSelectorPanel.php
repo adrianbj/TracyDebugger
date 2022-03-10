@@ -90,15 +90,24 @@ class PanelSelectorPanel extends BasePanel {
                 location.reload();
             }
 
+            function toggleGuestDumps() {
+                if(getCookie("tracyGuestDumps")) {
+                    document.cookie = "tracyGuestDumps=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
+                }
+                else {
+                    document.cookie = "tracyGuestDumps=1; expires=0; path=/";
+                }
+                location.reload();
+            }
+
             function toggleStrictMode() {
                 if(getCookie("tracyStrictMode")) {
                     document.cookie = "tracyStrictMode=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
-                    location.reload();
                 }
                 else {
                     document.cookie = "tracyStrictMode=1; expires=0; path=/";
-                    location.reload();
                 }
+                location.reload();
             }
 
             function disableTracy() {
@@ -188,6 +197,7 @@ class PanelSelectorPanel extends BasePanel {
                         <input type="submit" onclick="resetTracyPanels()" value="Reset" />
                     </span>
                     <span style="float:right">';
+                    $out .= '<input type="submit" onclick="toggleGuestDumps()" value="' . ($this->wire('input')->cookie->tracyGuestDumps ? 'Disable' : 'Enable') .' Guest Dumps" />&nbsp;&nbsp;';
                     if(!\TracyDebugger::getDataValue('strictMode')) {
                         $out .= '<input type="submit" onclick="toggleStrictMode()" value="' . ($this->wire('input')->cookie->tracyStrictMode ? 'Disable' : 'Enable') .' Strict Mode" />&nbsp;&nbsp;';
                     }

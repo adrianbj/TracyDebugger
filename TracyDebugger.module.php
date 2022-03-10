@@ -4,7 +4,7 @@
  * Processwire module for running the Tracy debugger from Nette.
  * by Adrian Jones
  *
- * Copyright (C) 2021 by Adrian Jones
+ * Copyright (C) 2022 by Adrian Jones
  * Licensed under GNU/GPL v2, see LICENSE.TXT
  *
  * A big thanks to Roland Toth (https://github.com/rolandtoth/) for the idea for this module
@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.23.23',
+            'version' => '4.23.24',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -202,6 +202,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "superuserForceDevelopment" => null,
             "guestForceDevelopmentLocal" => null,
             "forceIsLocal" => false,
+            "recordGuestDumps" => false,
             "ipAddress" => null,
             "restrictSuperusers" => null,
             "strictMode" => null,
@@ -339,6 +340,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
         require_once __DIR__ . '/tracy-'.self::$tracyVersion.'/src/tracy.php';
         require_once __DIR__ . '/includes/TD.php';
+
+
+        // load any custom function files if includes dir exists
+        $functionsPath = 'templates/TracyDebugger/includes/';
+        if(file_exists($this->wire('config')->paths->site.$functionsPath)) {
+            $functionsFiles = new RecursiveDirectoryIterator($this->wire('config')->paths->site.$functionsPath, RecursiveDirectoryIterator::SKIP_DOTS);
+            foreach($functionsFiles as $functionFile) {
+                include_once $functionFile;
+            }
+        }
+
         if($this->data['enableShortcutMethods']) {
             require_once __DIR__ . '/includes/ShortcutMethods.php';
         }
@@ -642,6 +654,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
 
 
+            if($this->data['recordGuestDumps'] || $this->wire('input')->cookie->tracyGuestDumps) {
+                $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
+                if($this->wire('input')->cookie->tracyGuestDumps) {
+                    $configData['recordGuestDumps'] = $this->data['recordGuestDumps'] = 1;
+                }
+                else {
+                    unset($configData['recordGuestDumps']);
+                }
+                $this->wire('modules')->saveModuleConfigData($this, $configData);
+            }
+
+
             // MODULES DISABLER
             //set up backup directory/file - outside conditional so they are available for cleanup when panel is disabled
             $this->modulesDbBackupFilename = 'modulesBackup.sql';
@@ -864,6 +888,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             });
 
         }
+
+        //convert checked location strings to constants and array_reduce to bitwise OR (|) line
+        $locations = array_map('constant', $this->data['showLocation']);
+        Debugger::$showLocation = array_reduce($locations, function($a, $b) { return $a | $b; }, 0);
 
 
         // START ENABLING TRACY
@@ -1324,11 +1352,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
 
 
-            // TRACY SETTINGS
-            //convert checked location strings to constants and array_reduce to bitwise OR (|) line
-            $locations = array_map('constant', $this->data['showLocation']);
-            Debugger::$showLocation = array_reduce($locations, function($a, $b) { return $a | $b; }, 0);
-
+            // TRACY SETTING
             //convert checked log severity strings to constants and array_reduce to bitwise OR (|) line
             $severityOptions = array_map('constant', $this->data['logSeverity']);
             Debugger::$logSeverity = array_reduce($severityOptions, function($a, $b) { return $a | $b; }, 0);
@@ -1628,6 +1652,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $panelName = 'DumpsPanel';
         require_once __DIR__ . '/panels/'.$panelName.'.php';
         Debugger::getBar()->addPanel(new $panelName);
+
+        // even if dumpsRecorder isn't enabled, but there are recorded dumps to show, enable it anyway
+        if(!in_array('dumpsRecorder', static::$showPanels) && file_exists($this->wire('config')->paths->cache . 'TracyDebugger/dumps.json')) {
+            $panelName = 'DumpsRecorderPanel';
+            static::$showPanels[] = 'dumpsRecorder';
+            require_once __DIR__ . '/panels/'.$panelName.'.php';
+            Debugger::getBar()->addPanel(new $panelName);
+        }
 
 
         // USER SWITCHER

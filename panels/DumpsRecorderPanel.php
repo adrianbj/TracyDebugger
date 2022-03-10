@@ -79,6 +79,8 @@ class DumpsRecorderPanel extends BasePanel {
                     i++;
                 }
 
+                location.reload();
+
             }
         </script>
 
