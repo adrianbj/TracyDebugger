@@ -25,7 +25,7 @@ class TD extends TracyDebugger {
 	 */
 
     protected static function tracyUnavailable() {
-        if(!\TracyDebugger::getDataValue('enabled') || !\TracyDebugger::$allowedTracyUser || !class_exists('\Tracy\Debugger')) {
+        if(!\TracyDebugger::getDataValue('enabled') || \TracyDebugger::$allowedTracyUser != 'development' || !class_exists('\Tracy\Debugger')) {
             return true;
         }
         else {
@@ -50,7 +50,7 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     public static function barEcho($str, $title = null) {
-        if(tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
+        if(self::tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
         static::dumpToBar($str, $title, null, true);
     }
 
@@ -59,7 +59,7 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     public static function barDump($var, $title = NULL, array $options = NULL) {
-        if(tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
+        if(self::tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
         if(is_array($title)) {
             $options = $title;
             $title = NULL;
@@ -84,7 +84,7 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     public static function barDumpBig($var, $title = NULL, array $options = NULL) {
-        if(tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
+        if(self::tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
         if(is_array($title)) {
             $options = $title;
             $title = NULL;
@@ -172,7 +172,7 @@ class TD extends TracyDebugger {
         $dumpItem['dump'] = $echo ? '<div class="tracy-echo">' . $var . '</div>' : static::generateDump($var, $options);
         array_push(\TracyDebugger::$dumpItems, $dumpItem);
 
-        if((tracyUnavailable() && \TracyDebugger::getDataValue('recordGuestDumps')) || (isset(\TracyDebugger::$showPanels) && in_array('dumpsRecorder', \TracyDebugger::$showPanels))) {
+        if((self::tracyUnavailable() && \TracyDebugger::getDataValue('recordGuestDumps')) || (isset(\TracyDebugger::$showPanels) && in_array('dumpsRecorder', \TracyDebugger::$showPanels))) {
             $dumpsFile = wire('config')->paths->cache . 'TracyDebugger/dumps.json';
             $dumpsRecorderItems = file_exists($dumpsFile) ? json_decode(file_get_contents($dumpsFile), true) : array();
             array_push($dumpsRecorderItems, $dumpItem);
