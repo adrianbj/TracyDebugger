@@ -569,6 +569,7 @@ class RequestInfoPanel extends BasePanel {
         // Template info
         // defining $templateFilePath even if templateInfo not a selected panel because it's used to build the template editing button at the bottom of the panel
         if($this->wire('input')->get('id') && $this->wire('page')->process == 'ProcessTemplate') {
+            $template = $this->wire('templates')->get((int)$this->wire('input')->get('id'));
             if($template) $templateFilePath = $this->wire('templates')->get((int)$this->wire('input')->get('id'))->filename;
         }
         elseif($isPwPage && ($this->wire('process') == 'ProcessPageView' || $this->wire('process') == 'ProcessPageEdit')) {
