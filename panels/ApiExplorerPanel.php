@@ -81,29 +81,31 @@ HTML;
         //get API changes
         $apiChangesOut = '';
         $apiChanges = $this->wire('cache')->get('TracyApiChanges');
-        $apiChanges = json_decode(ltrim($apiChanges, '~'), true);
-        if(is_array($apiChanges) && count($apiChanges) > 1) {
-            foreach($apiChanges as $type => $classes) {
-                if($type == 'cachedVersion') {
-                    $apiChangesOut .= '
-                    <a href="#" rel="new-since" class="tracy-toggle tracy-collapsed new-since">
-                        <span style="font-size: 15px; font-weight: bold">NEW SINCE v'.$classes.'</span>
-                    </a>
-                    <div style="padding-left:10px" id="new-since" class="tracy-collapsed new-since">
-                    ';
-                    continue;
-                }
-                if(!isset($currentType) || $currentType !== $type) {
-                    $apiChangesOut .= '<h3>' . ucfirst(strtolower(preg_replace('/([a-z0-9])([A-Z])/', "$1 $2", $type))) .($type == 'variables' || $type == 'proceduralFunctions' ? '' : ' classes').'</h3>';
-                }
-                foreach($classes as $class => $methods) {
-                    foreach($methods as $method) {
-                        $apiChangesOut .= ($type == 'variables' ? '$' : '').$class.'->'.$method .'<br />';
+        if($apiChanges) {
+            $apiChanges = json_decode(ltrim($apiChanges, '~'), true);
+            if(is_array($apiChanges) && count($apiChanges) > 1) {
+                foreach($apiChanges as $type => $classes) {
+                    if($type == 'cachedVersion') {
+                        $apiChangesOut .= '
+                        <a href="#" rel="new-since" class="tracy-toggle tracy-collapsed new-since">
+                            <span style="font-size: 15px; font-weight: bold">NEW SINCE v'.$classes.'</span>
+                        </a>
+                        <div style="padding-left:10px" id="new-since" class="tracy-collapsed new-since">
+                        ';
+                        continue;
                     }
+                    if(!isset($currentType) || $currentType !== $type) {
+                        $apiChangesOut .= '<h3>' . ucfirst(strtolower(preg_replace('/([a-z0-9])([A-Z])/', "$1 $2", $type))) .($type == 'variables' || $type == 'proceduralFunctions' ? '' : ' classes').'</h3>';
+                    }
+                    foreach($classes as $class => $methods) {
+                        foreach($methods as $method) {
+                            $apiChangesOut .= ($type == 'variables' ? '$' : '').$class.'->'.$method .'<br />';
+                        }
+                    }
+                    $currentType = $type;
                 }
-                $currentType = $type;
+                $apiChangesOut .= '</div><br /><br /><span style="font-size: 15px; font-weight: bold">CURRENT v'.$this->wire('config')->version.'</span>';
             }
-            $apiChangesOut .= '</div><br /><br /><span style="font-size: 15px; font-weight: bold">CURRENT v'.$this->wire('config')->version.'</span>';
         }
 
         $out .= $apiChangesOut . $currentApiOut;
