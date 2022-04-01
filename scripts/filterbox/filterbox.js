@@ -1,6 +1,6 @@
 /**
- * FilterBox v0.4.98
- * 2022/02/06
+ * FilterBox v0.4.99
+ * 2022/03/31
  */
  (function (window, document) {
     "use strict";
@@ -708,7 +708,7 @@
             if (callCb(onFocus) === false) return false;
             if (useDomFilter) return false;
 
-            if (force === undefined) {
+            if (force !== true) {
                 if (($wrapper || $input).hasAttribute(initAttr)) {
                     return false;
                 }
