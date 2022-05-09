@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.23.26',
+            'version' => '4.23.27',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1090,6 +1090,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     if(!method_exists($event->page, 'render')) {
                         $event->page->addHookAfter('render', function($event) {
                             if(!$event->return) return;
+
+                            $event->return = str_replace("</body>", "<script>window.TracyMaxAjaxRows = ".$this->data['maxAjaxRows']."; window.TracyPanelZIndex = " . ($this->data['panelZindex'] + 1) . ";</script></body>", $event->return);
+
                             $tracyErrors = Debugger::getBar()->getPanel('Tracy:errors');
                             if(!is_array($tracyErrors->data) || count($tracyErrors->data) === 0) {
                                 if(($this->data['hideDebugBar'] && !$this->wire('input')->cookie->tracyShow) || $this->wire('input')->cookie->tracyHidden == 1) {
@@ -1217,8 +1220,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     }
                     bsZIndex();
 
-                    window.Tracy.panelZIndex = ' . ($this->data['panelZindex'] + 1) . ';
-
                     document.addEventListener("keydown", function(e) {
                         if((e.keyCode==27||e.charCode==27)) {
                             var panels = document.getElementsByClassName("tracy-panel");
@@ -1229,9 +1230,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             }
                         }
                     });
-
-                    window.TracyMaxAjaxRows = '.$this->data['maxAjaxRows'].';
-
                 ';
 
                 if($this->data['hideDebugBar'] && $this->showServerTypeIndicator() && in_array('custom', $this->data['styleAdminType']) && !$this->wire('input')->cookie->tracyShow) {
