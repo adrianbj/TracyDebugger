@@ -1432,20 +1432,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
 
-
-        // language switcher
-        $lang = $this->wire->input->get('tracyLangSwitcher', 'int');
-        if($lang) {
-            $this->wire->session->set('tracyLangSwitcher', $lang);
-            // reset cache for nav
-            // thx robins https://bit.ly/3O2YHfA
-            $this->wire()->session->removeFor('AdminThemeUikit', 'prnav');
-            $this->wire()->session->removeFor('AdminThemeUikit', 'sidenav');
-        }
-        if($sessionLang = $this->wire->session->get('tracyLangSwitcher')) {
-            $this->wire->user->language = $sessionLang;
-        }
-
     }
 
 
@@ -1453,6 +1439,21 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * Called when ProcessWire's API is ready
      */
     public function ready() {
+
+        // language switcher
+        if($this->wire->user->isLoggedin()) {
+            $lang = $this->wire->input->get('tracyLangSwitcher', 'int');
+            if($lang) {
+                $this->wire->session->set('tracyLangSwitcher', $lang);
+                // reset cache for nav
+                // thx robins https://bit.ly/3O2YHfA
+                $this->wire->session->removeFor('AdminThemeUikit', 'prnav');
+                $this->wire->session->removeFor('AdminThemeUikit', 'sidenav');
+            }
+            if($sessionLang = $this->wire->session->get('tracyLangSwitcher')) {
+                $this->wire->user->language = $sessionLang;
+            }
+        }
 
         // USER BAR PAGE VERSIONS
         if(!static::$inAdmin && !$this->wire('config')->ajax && $this->wire('user')->isLoggedin() && $this->wire('user')->hasPermission('tracy-page-versions') && $this->data['showUserBar'] && in_array('pageVersions', $this->data['userBarFeatures'])) {
