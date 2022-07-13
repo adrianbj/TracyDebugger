@@ -52,7 +52,7 @@ class LanguageSwitcherPanel extends BasePanel {
                 $out .= "</div>";
                 $profile = $this->wire()->pages->get(2)->url."profile/";
                 $out .= "<div class='uk-text-small'>Note that the language is set for the session.<br>
-                    You can change your language persistantly <a href=$profile>in your profile</a>.</div>";
+                    You can change your language persistently <a href=$profile>in your profile</a>.</div>";
                 $out .= \TracyDebugger::generatePanelFooter($this->name, \Tracy\Debugger::timer($this->name), strlen($out));
             $out .= '</div>';
 
