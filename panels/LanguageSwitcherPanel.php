@@ -33,17 +33,17 @@ class LanguageSwitcherPanel extends BasePanel {
         $out .= '<span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'' . $this->className . '\')">+</a></span></span>';
 
         // panel body
-        if(!$this->wire->languages) {
+        if(!$this->wire()->languages) {
             $out = "No languages installed";
         }
         else {
-            $url = $this->wire->input->url(true);
+            $url = $this->wire()->input->url(true);
             $url .= strpos($url, "?") ? '&' : '?';
             $out .= '<div class="tracy-inner">';
-                foreach($this->wire->languages as $lang) {
+                foreach($this->wire()->languages as $lang) {
                     $out .= "<div><a href={$url}tracyLangSwitcher=$lang>{$lang->title} ({$lang->name})</a></div>";
                 }
-                $profile = $this->wire->pages->get(2)->url."profile/";
+                $profile = $this->wire()->pages->get(2)->url."profile/";
                 $out .= "<p class='notes'>Note that the language is set for the session.<br>
                     You can change your language persistantly <a href=$profile>in your profile</a>.</p>";
                 $out .= \TracyDebugger::generatePanelFooter($this->name, \Tracy\Debugger::timer($this->name), strlen($out));
