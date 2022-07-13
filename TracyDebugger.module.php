@@ -1444,12 +1444,24 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($this->wire()->user->isLoggedin()) {
             $lang = $this->wire()->input->get('tracyLangSwitcher', 'int');
             if($lang) {
-                $this->wire()->session->set('tracyLangSwitcher', $lang);
+                // compare language setting from session with users profile
+                $user = $this->wire->pages->getFresh($this->wire->user->id);
+                if($user->language->id == $lang) {
+                    // language is users profile language -> reset session
+                    $this->wire()->session->set('tracyLangSwitcher', null);
+                }
+                else {
+                    // language is different from profile -> save it
+                    $this->wire()->session->set('tracyLangSwitcher', $lang);
+                }
+
                 // reset cache for nav
                 // thx robins https://bit.ly/3O2YHfA
                 $this->wire()->session->removeFor('AdminThemeUikit', 'prnav');
                 $this->wire()->session->removeFor('AdminThemeUikit', 'sidenav');
             }
+
+            // set users language dynamically from session value
             if($sessionLang = $this->wire()->session->get('tracyLangSwitcher')) {
                 $this->wire()->user->language = $sessionLang;
             }
