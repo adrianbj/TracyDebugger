@@ -105,7 +105,12 @@ HTML;
             $name = $hook['name'];
             $methodName = str_replace(array('___', '__'), '', $name);
             if(strpos($hook['comment'], '#pw-internal') === false && strpos($info['filename'], 'wire') !== false || $this->apiModuleInstalled) {
-                $name = "<a ".$this->newTab." href='".$this->apiBaseUrl.$this->convertNamesToUrls(str_replace('$', '', $info['classname']))."/".$this->convertNamesToUrls($hook['rawname'])."/'>" . $name . "</a>";
+                if(isset($info['classname'])) {
+                    $name = "<a ".$this->newTab." href='".$this->apiBaseUrl.$this->convertNamesToUrls(str_replace('$', '', $info['classname']))."/".$this->convertNamesToUrls($hook['rawname'])."/'>" . $name . "</a>";
+                }
+                else {
+                    $name = pathinfo($info['filename'])['filename'] . $name;
+                }
             }
 
             $out .= '
