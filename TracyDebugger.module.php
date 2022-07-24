@@ -1441,7 +1441,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public function ready() {
 
         // language switcher
-        if($this->wire()->user->isLoggedin()) {
+        if(Debugger::$showBar) {
             $lang = $this->wire()->input->get('tracyLangSwitcher', 'int');
             if($lang) {
                 // compare language setting from session with users profile
