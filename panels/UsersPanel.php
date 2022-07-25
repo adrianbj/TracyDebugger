@@ -35,7 +35,9 @@ class UsersPanel extends BasePanel {
         foreach($tracyDebuggerRoles as $r) {
             $this->listTracyRoles .= '<a href="'.$this->wire('config')->urls->admin.'access/roles/edit/?id='.$r->id.'">' . $r->name . '</a>, ';
         }
-        $this->listTracyRoles = rtrim($this->listTracyRoles, ', ');
+        if($this->listTracyRoles) {
+            $this->listTracyRoles = rtrim($this->listTracyRoles, ', ');
+        }  
 
         if($this->numNonSuperusers > 0) {
             return true;

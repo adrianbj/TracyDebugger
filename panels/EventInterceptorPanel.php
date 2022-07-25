@@ -57,7 +57,9 @@ class EventInterceptorPanel extends BasePanel {
     public function getPanel() {
         $isAdditionalBar = \TracyDebugger::isAdditionalBar();
 
-        $hookSettings = json_decode($this->wire('input')->cookie->eventInterceptorHook, true);
+        if($this->wire('input')->cookie->eventInterceptorHook) {
+            $hookSettings = json_decode($this->wire('input')->cookie->eventInterceptorHook, true);
+        }
 
         $out = '
         <h1>' . $this->icon . ' Event Interceptor' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>

@@ -1199,8 +1199,12 @@ class DiagnosticsPanel extends BasePanel {
                 $writable       = is_writeable($path);
 
                 if(function_exists('posix_getpwuid')) {
-                    $owner     = posix_getpwuid(fileowner($path))['name'];
-                    $group     = posix_getgrgid(filegroup($path))['name'];
+                    if($owner = posix_getpwuid(fileowner($path))) {
+                        $owner = $owner['name'];
+                    }
+                    if($group = posix_getgrgid(filegroup($path))) {
+                        $group = $group['name'];
+                    }
                 }
 
                 $puser_matches_owner = $this->process_user === $owner;
@@ -1325,12 +1329,15 @@ class DiagnosticsPanel extends BasePanel {
     protected function getPHPUser($full = true) {
         if(function_exists('posix_geteuid')) {
             $pwu_data = posix_getpwuid(posix_geteuid());
-            $username = $pwu_data['name'];
-        } else if(function_exists('exec')) {
+            if($pwu_data) $username = $pwu_data['name'];
+        } 
+        if(!isset($username) && function_exists('exec')) {
             $username = exec('whoami');
-        } else if(!empty(getenv('APACHE_RUN_USER'))) {
+        }
+        if(!isset($username) && !empty(getenv('APACHE_RUN_USER'))) {
             $username = getenv('APACHE_RUN_USER');
-        } else {
+        } 
+        if(!isset($username)) {
             $username = 'Unknown';
             $tempDir  = new WireTempDir('whoami');
             $tempFile = $tempDir."/test.txt";
