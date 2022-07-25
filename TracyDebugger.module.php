@@ -479,6 +479,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         });
         $this->wire()->addHookAfter('Page::logRequests', $this, 'logRequests');
 
+
         // clear session & cookies option in Processwire Info panel
         // not inside static::$allowedTracyUser === 'development' check because it won't validate during forceLogin()
         if($this->wire('input')->get->tracyClearSession) {
@@ -1440,33 +1441,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public function ready() {
 
-        // language switcher
-        if(Debugger::$showBar) {
-            $lang = $this->wire()->input->get('tracyLangSwitcher', 'int');
-            if($lang) {
-                // compare language setting from session with users profile
-                $user = $this->wire->pages->getFresh($this->wire->user->id);
-                if($user->language->id == $lang) {
-                    // language is users profile language -> reset session
-                    $this->wire()->session->set('tracyLangSwitcher', null);
-                }
-                else {
-                    // language is different from profile -> save it
-                    $this->wire()->session->set('tracyLangSwitcher', $lang);
-                }
-
-                // reset cache for nav
-                // thx robins https://bit.ly/3O2YHfA
-                $this->wire()->session->removeFor('AdminThemeUikit', 'prnav');
-                $this->wire()->session->removeFor('AdminThemeUikit', 'sidenav');
-            }
-
-            // set users language dynamically from session value
-            if($sessionLang = $this->wire()->session->get('tracyLangSwitcher')) {
-                $this->wire()->user->language = $sessionLang;
-            }
-        }
-
         // USER BAR PAGE VERSIONS
         if(!static::$inAdmin && !$this->wire('config')->ajax && $this->wire('user')->isLoggedin() && $this->wire('user')->hasPermission('tracy-page-versions') && $this->data['showUserBar'] && in_array('pageVersions', $this->data['userBarFeatures'])) {
             static::$pageVersion = $this->findPageTemplateInCookie($this->wire('input')->cookie->tracyPageVersion);
@@ -1753,6 +1727,37 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
 
+
+        // LANGUAGE SWITCHER PANEL
+        // process languageSwitcher if panel open and switch initiated
+        if(in_array('languageSwitcher', static::$showPanels) && ($this->wire('input')->post->tracyLanguageSwitcher || $this->wire('session')->tracyLanguageSwitcher)) {
+            $langId = $this->wire('input')->post->int('tracyLanguageSwitcher');
+            if($langId) {
+                // compare language setting from session with users profile
+                if($this->wire('user')->language->id === $langId) {
+                    // language is users profile language -> reset session
+                    $this->wire('session')->remove('tracyLanguageSwitcher');
+                }
+                else {
+                    // language is different from profile -> save it
+                    $this->wire('session')->set('tracyLanguageSwitcher', $langId);
+                }
+
+                // reset cache for nav
+                // thx @toutouwai https://github.com/Toutouwai/CustomAdminMenus/blob/8dfdfa7d07c40ab2d93e3191d2d960e317738169/CustomAdminMenus.module#L35
+                $this->wire('session')->removeFor('AdminThemeUikit', 'prnav');
+                $this->wire('session')->removeFor('AdminThemeUikit', 'sidenav');
+            }
+
+            if($this->wire('input')->post->tracyResetLanguageSwitcher) {
+                $this->wire('session')->remove('tracyLanguageSwitcher');
+            }
+            // set users language dynamically from session value
+            elseif($sessionLang = $this->wire('session')->get('tracyLanguageSwitcher')) {
+                $this->wire('user')->language = $sessionLang;
+            }
+        }
+        
 
         // if it's an ajax request from the Tracy Console panel snippets, then process and return
         if($this->wire('config')->ajax && $this->wire('input')->post->tracysnippets == 1) {
