@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.23.28',
+            'version' => '4.23.29',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -159,6 +159,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'fileEditor' => 'File Editor',
         'gitInfo' => 'Git Info',
         'helloWorld' => 'Hello World',
+        'languageSwitcher' => 'Language Switcher',
         'links' => 'Links',
         'mailInterceptor' => 'Mail Interceptor',
         'methodsInfo' => 'Methods Info',
@@ -477,7 +478,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         });
         $this->wire()->addHookAfter('Page::logRequests', $this, 'logRequests');
-
 
         // clear session & cookies option in Processwire Info panel
         // not inside static::$allowedTracyUser === 'development' check because it won't validate during forceLogin()
@@ -1439,6 +1439,33 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * Called when ProcessWire's API is ready
      */
     public function ready() {
+
+        // language switcher
+        if(Debugger::$showBar) {
+            $lang = $this->wire()->input->get('tracyLangSwitcher', 'int');
+            if($lang) {
+                // compare language setting from session with users profile
+                $user = $this->wire->pages->getFresh($this->wire->user->id);
+                if($user->language->id == $lang) {
+                    // language is users profile language -> reset session
+                    $this->wire()->session->set('tracyLangSwitcher', null);
+                }
+                else {
+                    // language is different from profile -> save it
+                    $this->wire()->session->set('tracyLangSwitcher', $lang);
+                }
+
+                // reset cache for nav
+                // thx robins https://bit.ly/3O2YHfA
+                $this->wire()->session->removeFor('AdminThemeUikit', 'prnav');
+                $this->wire()->session->removeFor('AdminThemeUikit', 'sidenav');
+            }
+
+            // set users language dynamically from session value
+            if($sessionLang = $this->wire()->session->get('tracyLangSwitcher')) {
+                $this->wire()->user->language = $sessionLang;
+            }
+        }
 
         // USER BAR PAGE VERSIONS
         if(!static::$inAdmin && !$this->wire('config')->ajax && $this->wire('user')->isLoggedin() && $this->wire('user')->hasPermission('tracy-page-versions') && $this->data['showUserBar'] && in_array('pageVersions', $this->data['userBarFeatures'])) {
