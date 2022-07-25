@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.23.30',
+            'version' => '4.23.31',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1742,12 +1742,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     // language is different from profile -> save it
                     $this->wire('session')->set('tracyLanguageSwitcher', $langId);
                 }
-
-                // reset cache for nav
-                // thx @toutouwai https://github.com/Toutouwai/CustomAdminMenus/blob/8dfdfa7d07c40ab2d93e3191d2d960e317738169/CustomAdminMenus.module#L35
-                $this->wire('session')->removeFor('AdminThemeUikit', 'prnav');
-                $this->wire('session')->removeFor('AdminThemeUikit', 'sidenav');
             }
+
+            // reset cache for nav
+            // thx @toutouwai https://github.com/Toutouwai/CustomAdminMenus/blob/8dfdfa7d07c40ab2d93e3191d2d960e317738169/CustomAdminMenus.module#L35
+            $this->wire('session')->removeFor('AdminThemeUikit', 'prnav');
+            $this->wire('session')->removeFor('AdminThemeUikit', 'sidenav');
 
             if($this->wire('input')->post->tracyResetLanguageSwitcher) {
                 $this->wire('session')->remove('tracyLanguageSwitcher');

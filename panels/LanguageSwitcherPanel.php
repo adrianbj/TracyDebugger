@@ -34,22 +34,37 @@ class LanguageSwitcherPanel extends BasePanel {
             $out = "No languages installed";
         }
         else {
-
             $out .= '
             <div class="tracy-inner">
                 <form name="languageSwitcherPanel" action="'.\TracyDebugger::inputUrl(true).'" method="post">
-                    <select name="tracyLanguageSwitcher" size="5" style="width:100% !important; height:150px !important">
-                        <option value="'.$this->wire('user')->language->id.'" style="padding: 2px' . ($this->wire('session')->tracyLanguageSwitcher ? '; background: '.TracyDebugger::COLOR_WARN.'; color: #FFFFFF;"' : '; background: '.TracyDebugger::COLOR_NORMAL.'; color: #FFFFFF;"') . '>'.$this->wire('user')->language->title . ' (#'.$this->wire('user')->language->id.')</option>';
-                        foreach($this->wire('pages')->find("template=language, include=all, sort=name, id!=".$this->wire('user')->language->id) as $lang) {
-                            $out .= '<option style="padding: 2px" value="'.$lang->id.'">'.$lang->title . ' (#'.$lang->id.')</option>';
+                    <select onchange="this.form.submit()" id="tracyLanguageSwitcher" name="tracyLanguageSwitcher" size="5" style="width:100% !important; height:150px !important">';
+                        foreach($this->wire('pages')->find('template=language, include=all, sort=name') as $lang) {
+                            if($this->wire('session')->tracyLanguageSwitcher && $this->wire('session')->tracyLanguageSwitcher === $lang->id) {
+                                $highlight = '; background:'.TracyDebugger::COLOR_WARN.'; color: #FFFFFF;';
+                            }
+                            elseif($this->wire('user')->language->id === $lang->id) {
+                                $highlight = '; background: '.TracyDebugger::COLOR_NORMAL.'; color: #FFFFFF;"';
+                            }
+                            else {
+                                $highlight = '';
+                            }
+                            $out .= '<option id="lang_'.$lang->id.'" value="'.$lang->id.'" style="padding: 2px'.$highlight.'">'.$lang->title . ' (#'.$lang->id.')</option>';
                         }
                 $out .= '
                     </select>';
-                $out .= '<p><input type="submit" value="Switch" />&nbsp;<input type="submit" name="tracyResetLanguageSwitcher" value="Reset" /></p>';
+                $out .= '<p><input type="submit" name="tracyResetLanguageSwitcher" value="Reset" /></p>';
                 $out .= \TracyDebugger::generatePanelFooter($this->name, \Tracy\Debugger::timer($this->name), strlen($out));
             $out .= '
                 </form>
             </div>
+
+            <script>
+                document.addEventListener("DOMContentLoaded", (event) => {
+                    var selectElement = document.querySelector("#tracyLanguageSwitcher");
+                    var langElement = document.querySelector("#lang_'.$this->wire('user')->language->id.'");
+                    selectElement.scrollTop = langElement.offsetTop - selectElement.offsetTop;
+                });
+            </script>
             ';
             
         }
