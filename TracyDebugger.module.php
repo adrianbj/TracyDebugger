@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.23.29',
+            'version' => '4.23.30',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1753,8 +1753,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $this->wire('session')->remove('tracyLanguageSwitcher');
             }
             // set users language dynamically from session value
-            elseif($sessionLang = $this->wire('session')->get('tracyLanguageSwitcher')) {
-                $this->wire('user')->language = $sessionLang;
+            elseif($sessionLangId = $this->wire('session')->get('tracyLanguageSwitcher')) {
+                $this->wire('user')->language = $this->wire('languages')->get($sessionLangId);
             }
         }
         
