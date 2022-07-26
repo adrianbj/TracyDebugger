@@ -10,4 +10,4 @@
 
 - [Other Tools](other-tools.md)
 
-- [Donate](donate.md)
+- <iframe src="https://github.com/sponsors/adrianbj/button" title="Sponsor adrianbj" height="35" width="116" style="border: 0;"></iframe>
