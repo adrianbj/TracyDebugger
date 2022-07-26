@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.23.31',
+            'version' => '4.23.32',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1401,7 +1401,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 Debugger::getLogger()->mailer = function($message) {
                     $m = $this->wire('mail')->new();
                     $m->from($this->data['fromEmail']);
-                    $m->to($this->data['email']);
+                    foreach(explode("\n", trim($this->data['email'])) as $recipient) {
+                        $m->to(trim($recipient));
+                    }
                     $m->subject('Error on server: ' . $this->wire('config')->urls->httpRoot);
                     $message = nl2br(\Tracy\Logger::formatMessage($message)) . "<br /><br />Remember to <a href='".$this->wire('config')->urls->httpAdmin."?clearEmailSent=1'>clear email sent flag</a> to receive future emails.";
                     $m->bodyHTML($message);
@@ -1757,7 +1759,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $this->wire('user')->language = $this->wire('languages')->get($sessionLangId);
             }
         }
-        
+
 
         // if it's an ajax request from the Tracy Console panel snippets, then process and return
         if($this->wire('config')->ajax && $this->wire('input')->post->tracysnippets == 1) {
@@ -3399,10 +3401,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($data['fromEmail']) $f->attr('value', $data['fromEmail']);
         $fieldset->add($f);
 
-        $f = $this->wire('modules')->get("InputfieldEmail");
+        $f = $this->wire('modules')->get("InputfieldTextarea");
         $f->attr('name', 'email');
         $f->label = __('Email errors "To"', __FILE__);
         $f->description = __('Receive emails at this address when an error occurs.', __FILE__);
+        $f->notes = __('You can supply multiple addresses, one per line.', __FILE__);
         $f->columnWidth = 25;
         if($data['email']) $f->attr('value', $data['email']);
         $fieldset->add($f);
