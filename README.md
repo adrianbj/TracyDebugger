@@ -10,6 +10,12 @@ Integrates and extends Nette's Tracy debugging tool
 
 ![Tracy Debug Bar Kitchen Sink](https://adrianbj.github.io/TracyDebugger/img/debug-bar-kitchen-sink.png "Tracy Debug Bar")
 
+### Premium Sponsors
+
+A huge shout-out to my premium sponsors
+
+[![Flydev logo](https://avatars.githubusercontent.com/u/11658616?v=4 "Flydev" | width=75)](https://github.com/flydev-fr)
+
 ### Documentation
 Documentation is available at: https://adrianbj.github.io/TracyDebugger/
 
