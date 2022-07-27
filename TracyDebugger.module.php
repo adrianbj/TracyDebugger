@@ -3102,9 +3102,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         <p style="margin-left:55px"><img class="fa fa-fw" style="display:inline; vertical-align: middle; margin:0 4px" src="https://adrianbj.github.io/TracyDebugger/icons/processwire-info.svg"> <a href="http://modules.processwire.com/modules/tracy-debugger/">Recommend in the Modules Directory</a></strong></p>
         <p style="margin-left:55px"><i class="fa fa-fw fa-lg fa-life-ring"></i> <a href="https://processwire.com/talk/forum/58-tracy-debugger/">Forum Support Thread</a></p>
         <p style="margin-left:55px">
-            <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=BJPJ5LGQHMCVE&source=url">
-                <img src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif" border="0" name="submit" />
-            </a>
+            <iframe src="https://github.com/sponsors/adrianbj/button" title="Sponsor adrianbj" height="35" width="116" style="border: 0;"></iframe>
         </p>
         ';
         if(isset($this->wire('config')->tracy) && is_array($this->wire('config')->tracy)) {
