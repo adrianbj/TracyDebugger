@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.23.32',
+            'version' => '4.23.33',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1669,7 +1669,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // process userSwitcher if panel open and switch initiated
         if(in_array('userSwitcher', static::$showPanels) && $this->wire('input')->post->userSwitcher) {
             // if user is superuser and session length is set, save to config settings
-            if(static::$allowedSuperuser && $this->wire('input')->post->userSwitchSessionLength && $this->wire('session')->CSRF->validate()) {
+            if(static::$allowedSuperuser && $this->wire('input')->post->submitUserSwitcher && $this->wire('session')->CSRF->validate()) {
                 // cleanup expired sessions
                 if(isset($this->data['userSwitchSession'])) {
                     foreach($this->data['userSwitchSession'] as $id => $expireTime) {
@@ -1684,7 +1684,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 }
                 // save session ID and expiry time in module config settings
                 $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
-                $this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId] = time() + ($this->wire('input')->post->userSwitchSessionLength * 60);
+                $this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId] = time() + $this->wire('config')->sessionExpireSeconds;
                 $configData['userSwitchSession'] = $this->data['userSwitchSession'];
                 $this->wire('modules')->saveModuleConfigData($this, $configData);
             }

@@ -3,6 +3,7 @@
 class UserSwitcherPanel extends BasePanel {
 
     protected $icon;
+    protected $switchedUser = false;
 
     public function getTab() {
 
@@ -14,6 +15,7 @@ class UserSwitcherPanel extends BasePanel {
         }
         elseif($this->wire('user')->isLoggedin()) {
             $iconColor = \TracyDebugger::COLOR_WARN;
+            $this->switchedUser = true;
         }
         else {
             $iconColor = \TracyDebugger::COLOR_ALERT;
@@ -59,7 +61,7 @@ class UserSwitcherPanel extends BasePanel {
             </p>
             <p>';
 
-            $remainingSessionLength = 0;
+            $remainingSessionLength = $this->wire('config')->sessionExpireSeconds;
             if(\TracyDebugger::getDataValue('userSwitchSession') != '') {
                 $userSwitchSession = \TracyDebugger::getDataValue('userSwitchSession');
                 $sessionSwitcherId = $this->wire('session')->tracyUserSwitcherId;
@@ -114,19 +116,12 @@ HTML;
                 </p>';
             }
 
-            if(\TracyDebugger::$allowedSuperuser) {
-                $out .= '<p style="font-size:11px !important;">Session length (mins)<br /><input type="number" max="60" style="width:100% !important" name="userSwitchSessionLength" value="'.round($remainingSessionLength).'" /></p>';
-            }
-            else {
-                $out .= '<p style="font-size:11px !important">Remaining session length: ' . ($remainingSessionLength < 1 ? '<1' : round($remainingSessionLength)) . ' mins</p>';
-            }
-
             if(\TracyDebugger::$allowedSuperuser || $remainingSessionLength > 0) {
                 $out .= '<input type="submit" name="submitUserSwitcher" value="Switch" />&nbsp;';
             }
 
             if($this->wire('user')->isLoggedin()) $out .= '<input type="submit" name="logoutUserSwitcher" value="Logout to Guest" />&nbsp;';
-            if($remainingSessionLength > 0) $out .= '<input type="submit" name="endSessionUserSwitcher" value="End Session" />';
+            if($this->switchedUser) $out .= '<input type="submit" name="endSessionUserSwitcher" value="End Session" />';
 
             $out .= '
                 <input type="hidden" id="_post_token" name="' . $this->wire('session')->CSRF->getTokenName() . '" value="' . $this->wire('session')->CSRF->getTokenValue() . '"/>
