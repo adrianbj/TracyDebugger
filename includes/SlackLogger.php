@@ -24,33 +24,26 @@ class SlackLogger implements ILogger {
                 $icon = ':octagonal_sign:';
             break;
             default:
-                $color = null;
+                $icon = '';
                 break;
         }
 
-        $this->message($icon . ' ' . $message, 'support-notifications-test', 'TracyDebugger');
+        $this->message($icon . ' ' . $message);
     }
 
     protected $endpointUrl = 'https://slack.com/api/';
     protected $endPoint;
-    protected $token;
-    protected $channel;
     protected $query = [];
 
-    public function __construct() {
-        $this->token = \TracyDebugger::getDataValue('slackAppOauthToken');
-        $this->channel = \TracyDebugger::getDataValue('slackChannel');
-    }
-
-    public function message($message, $channel, $username) {
+    public function message($message) {
 
         $this->endpoint = 'chat.postMessage';
 
         $this->query = [
-            "token" => $this->token,
+            "token" => \TracyDebugger::getDataValue('slackAppOauthToken'),
             "text" => $message,
-            "channel" => $channel,
-            "username" => $username,
+            "channel" => \TracyDebugger::getDataValue('slackChannel'),
+            "username" => 'TracyDebugger',
             "icon_emoji" => ':beetle:',
         ];
 

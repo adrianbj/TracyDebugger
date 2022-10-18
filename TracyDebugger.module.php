@@ -1673,7 +1673,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // process userSwitcher if panel open and switch initiated
         if(in_array('userSwitcher', static::$showPanels) && $this->wire('input')->post->userSwitcher) {
             // if user is superuser and session length is set, save to config settings
-            if(static::$allowedSuperuser && $this->wire('input')->post->submitUserSwitcher && $this->wire('session')->CSRF->validate()) {
+            if(static::$allowedSuperuser && ($this->wire('input')->post->userSwitcher || $this->wire('input')->post->logoutUserSwitcher) && $this->wire('session')->CSRF->validate()) {
                 // cleanup expired sessions
                 if(isset($this->data['userSwitchSession'])) {
                     foreach($this->data['userSwitchSession'] as $id => $expireTime) {
