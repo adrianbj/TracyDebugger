@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.23.33',
+            'version' => '4.23.34',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -284,6 +284,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "fromEmail" => '',
             "email" => '',
             "clearEmailSent" => null,
+            "slackChannel" => '',
+            "slackAppOauthToken" => '',
             "showFireLogger" => 1,
             "reservedMemorySize" => 500000,
             "referencePageEdited" => 1,
@@ -1409,6 +1411,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     $m->bodyHTML($message);
                     $m->send();
                 };
+
+                require_once __DIR__ . '/includes/SlackLogger.php';
             }
         }
 
@@ -1688,6 +1692,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $configData['userSwitchSession'] = $this->data['userSwitchSession'];
                 $this->wire('modules')->saveModuleConfigData($this, $configData);
             }
+
             // if logout button clicked
             if($this->wire('input')->post->logoutUserSwitcher && $this->wire('session')->CSRF->validate()) {
                 if($this->wire('session')->tracyUserSwitcherId) {
@@ -3371,7 +3376,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = 'Log severity';
         $f->description = __('If you want Tracy to log PHP errors like E_NOTICE or E_WARNING with detailed information (HTML report), set them here.', __FILE__);
         $f->notes = __('These only affect log file content, not onscreen debug info.');
-        $f->columnWidth = 25;
         $f->addOption('E_ERROR', 'E_ERROR');
         $f->addOption('E_WARNING', 'E_WARNING');
         $f->addOption('E_PARSE', 'E_PARSE');
@@ -3395,7 +3399,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'fromEmail');
         $f->label = __('Email errors "From"', __FILE__);
         $f->description = __('Receive emails from this address when an error occurs.', __FILE__);
-        $f->columnWidth = 25;
+        $f->columnWidth = 33;
         if($data['fromEmail']) $f->attr('value', $data['fromEmail']);
         $fieldset->add($f);
 
@@ -3404,7 +3408,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Email errors "To"', __FILE__);
         $f->description = __('Receive emails at this address when an error occurs.', __FILE__);
         $f->notes = __('You can supply multiple addresses, one per line.', __FILE__);
-        $f->columnWidth = 25;
+        $f->columnWidth = 34;
         if($data['email']) $f->attr('value', $data['email']);
         $fieldset->add($f);
 
@@ -3412,7 +3416,22 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'clearEmailSent');
         $f->label = __('Clear "email sent" flag', __FILE__);
         $f->description = __('Check and save settings to remove the "email-sent" file so that you will start receiving new error emails.', __FILE__);
-        $f->columnWidth = 25;
+        $f->columnWidth = 33;
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'slackChannel');
+        $f->label = __('Slack Channel', __FILE__);
+        $f->description = __('Post to this Slack channel when an error occurs.', __FILE__);
+        $f->columnWidth = 50;
+        if($data['slackChannel']) $f->attr('value', $data['slackChannel']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'slackAppOauthToken');
+        $f->label = __('Slack App Oauth Token', __FILE__);
+        $f->columnWidth = 50;
+        if($data['slackAppOauthToken']) $f->attr('value', $data['slackAppOauthToken']);
         $fieldset->add($f);
 
         // Debug Bar and Panel Settings

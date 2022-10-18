@@ -983,7 +983,8 @@ class RequestInfoPanel extends BasePanel {
 
 
     private function getLanguageVersion($p, $fieldName, $lang, $showDefault = false) {
-        if($this->wire('languages')) {
+
+        if($this->wire('languages') && method_exists($p, 'localName')) {
             $p->of(false);
             $result = '';
             if($fieldName == 'name') {
