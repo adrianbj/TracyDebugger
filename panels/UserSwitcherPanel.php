@@ -81,8 +81,8 @@ class UserSwitcherPanel extends BasePanel {
 
             if(\TracyDebugger::$allowedSuperuser || $remainingSessionLength > 0) {
                 $out .= '
-                    <select name="userSwitcher" size="5" style="width:100% !important; height:90px !important">';
-                        if(!$this->wire('user')->isLoggedin()) $out .= '<option value="guest" selected="selected">guest</option>';
+                    <select onchange="this.form.submit()" name="userSwitcher" size="5" style="width:100% !important; height:90px !important">';
+                        if(!$this->wire('user')->isLoggedin()) $out .= '<option value="guest" style="padding: 2px; background:'.TracyDebugger::COLOR_WARN.'; color: #FFFFFF;" selected="selected">guest</option>';
 
                         if(\TracyDebugger::getDataValue('userSwitcherSelector')) {
                             $selectableUsers = $this->wire('users')->find(\TracyDebugger::getDataValue('userSwitcherSelector'));
@@ -109,15 +109,11 @@ HTML;
                         }
 
                         foreach($selectableUsers as $u) {
-                            if(count($u->roles)>1) $out .= '<option value="'.$u->name.'"' . ($this->wire('user')->name === $u->name ? 'selected="selected"' : '') . '>'.$u->name.'</option>';
+                            if(count($u->roles)>1) $out .= '<option id="user_'.$u->id.'" value="'.$u->name.'" style="padding: 2px; ' . ($this->wire('user')->name === $u->name ? 'background:'.TracyDebugger::COLOR_WARN.'; color: #FFFFFF;" selected="selected"' : '"') . '>'.$u->name.'</option>';
                         }
                 $out .= '
                     </select>
                 </p>';
-            }
-
-            if(\TracyDebugger::$allowedSuperuser || $remainingSessionLength > 0) {
-                $out .= '<input type="submit" name="submitUserSwitcher" value="Switch" />&nbsp;';
             }
 
             if($this->wire('user')->isLoggedin()) $out .= '<input type="submit" name="logoutUserSwitcher" value="Logout to Guest" />&nbsp;';
@@ -125,12 +121,23 @@ HTML;
 
             $out .= '
                 <input type="hidden" id="_post_token" name="' . $this->wire('session')->CSRF->getTokenName() . '" value="' . $this->wire('session')->CSRF->getTokenValue() . '"/>
-            </form>
-            ';
+            </form>';
+
+            if(\TracyDebugger::$allowedSuperuser || $remainingSessionLength > 0) {
+                $out .= '
+                <script>
+                    document.addEventListener("DOMContentLoaded", (event) => {
+                        var selectElement = document.querySelector("#userSwitcherPanel");
+                        var langElement = document.querySelector("#user_'.$this->wire('user')->id.'");
+                        selectElement.scrollTop = langElement.offsetTop - selectElement.offsetTop;
+                    });
+                </script>';
+            }
 
         $out .= \TracyDebugger::generatePanelFooter('userSwitcher', \Tracy\Debugger::timer('userSwitcher'), strlen($out), 'userSwitcherPanel');
 
-        $out .= '</div>';
+        $out .= '
+        </div>';
 
         return parent::loadResources() . $out;
     }
