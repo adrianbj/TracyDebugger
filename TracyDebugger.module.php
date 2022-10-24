@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.23.37',
+            'version' => '4.23.38',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1400,21 +1400,26 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 Debugger::getLogger()->mailer = null;
             }
             else {
-                Debugger::getLogger()->mailer = function($message) {
+                Debugger::getLogger()->mailer = function($value) {
+
+                    $message = nl2br(\Tracy\Logger::formatMessage($value));
+
                     $m = $this->wire('mail')->new();
                     $m->from($this->data['fromEmail']);
                     foreach(explode("\n", trim($this->data['email'])) as $recipient) {
                         $m->to(trim($recipient));
                     }
                     $m->subject('Error on server: ' . $this->wire('config')->urls->httpRoot);
-                    $message = nl2br(\Tracy\Logger::formatMessage($message)) . "<br /><br />Remember to <a href='".$this->wire('config')->urls->httpAdmin."?clearEmailSent=1'>clear email sent flag</a> to receive future emails.";
-                    $m->bodyHTML($message);
+                    $m->bodyHTML($message . "<br /><br />Remember to <a href='".$this->wire('config')->urls->httpAdmin."?clearEmailSent=1'>clear email sent flag</a> to receive future emails.");
                     $m->send();
-                };
 
-                if($this->data['slackChannel'] != '' && $this->data['slackAppOauthToken'] != '') {
-                    require_once __DIR__ . '/includes/SlackLogger.php';
-                }
+                    if($this->data['slackChannel'] != '' && $this->data['slackAppOauthToken'] != '') {
+                        require_once __DIR__ . '/includes/SlackLogger.php';
+                        $slackLogger = new SlackLogger();
+                        $slackLogger->log($message);
+                    }
+
+                };
             }
         }
 

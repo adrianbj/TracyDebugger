@@ -4,28 +4,18 @@ use Tracy\ILogger;
 use Tracy\Logger;
 use Tracy\Dumper;
 
-class SlackLogger implements ILogger {
+class SlackLogger {
 
-    public function log($value, $priority = ILogger::INFO) {
+    public function log($message) {
 
-        $message = nl2br(Logger::formatMessage($value));
-
-        switch ($priority) {
-            case ILogger::DEBUG:
-            case ILogger::INFO:
-                $icon = ':information_source:';
-                break;
-            case ILogger::ERROR:
-            case ILogger::WARNING:
-                $icon = ':warning:';
-                break;
-            case ILogger::EXCEPTION:
-            case ILogger::CRITICAL:
-                $icon = ':octagonal_sign:';
-            break;
-            default:
-                $icon = '';
-                break;
+        if(stripos($message, 'warning') !== false) {
+            $icon = ':warning:';
+        }
+        elseif(stripos($message, 'exception') !== false || stripos($message, 'error') !== false) {
+            $icon = ':octagonal_sign:';
+        }
+        else {
+            $icon = ':information_source:';
         }
 
         $this->message($icon . ' ' . $message);
@@ -64,5 +54,3 @@ class SlackLogger implements ILogger {
 
 
 }
-
-Tracy\Debugger::setLogger(new SlackLogger);
