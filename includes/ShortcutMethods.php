@@ -55,7 +55,7 @@ if(!function_exists('barDumpBig') && in_array('barDumpBig', $this->data['enabled
 if(!function_exists('dump') && in_array('dump', $this->data['enabledShortcutMethods'])) {
     function dump($var, $title = NULL, array $options = NULL) {
         if(tracyUnavailable()) return false;
-        return TD::dump($var, $title, $otions);
+        return TD::dump($var, $title, $options);
     }
 }
 
@@ -66,7 +66,7 @@ if(!function_exists('dump') && in_array('dump', $this->data['enabledShortcutMeth
 if(!function_exists('dumpBig') && in_array('dumpBig', $this->data['enabledShortcutMethods'])) {
     function dumpBig($var, $title = NULL, array $options = NULL) {
         if(tracyUnavailable()) return false;
-        return TD::dumpBig($var, $title, $otions);
+        return TD::dumpBig($var, $title, $options);
     }
 }
 
