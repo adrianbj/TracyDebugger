@@ -24,6 +24,9 @@ class FireLogger implements ILogger
 	/** @var int  */
 	public $maxLength = 150;
 
+	/** @var int  */
+	public $maxItems = 100;
+
 	/** @var array  */
 	private $payload = ['logs' => []];
 
