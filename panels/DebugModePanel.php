@@ -197,11 +197,11 @@ class DebugModePanel extends BasePanel {
                         $rc = new \ReflectionFunction($toMethod);
                     }
                     elseif($hook['toObject']) {
-                        if(method_exists("\ProcessWire\\$toObject", $toMethod)) {
-                            $rc = new \ReflectionMethod("\ProcessWire\\$toObject", $toMethod);
-                        }
-                        elseif(method_exists($toObject, $toMethod)) {
+                        if(method_exists($toObject, $toMethod)) {
                             $rc = new \ReflectionMethod($toObject, $toMethod);
+                        }
+                        elseif(method_exists("\ProcessWire\\$toObject", $toMethod)) {
+                            $rc = new \ReflectionMethod("\ProcessWire\\$toObject", $toMethod);
                         }
                         $ro = new \ReflectionObject($toObject);
                         $toObjectName = str_replace('ProcessWire\\', '', $ro->getName());
