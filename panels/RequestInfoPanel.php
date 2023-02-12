@@ -440,6 +440,10 @@ class RequestInfoPanel extends BasePanel {
             <tr>
                 <td>process</td>
                 <td>'.$this->wire('page')->process.'</td>
+            </tr>
+            <tr>
+                <td>class</td>
+                <td>'.wireClassName($p, true, true).'</td>
             </tr>';
             if($p->parent->id) {
                 $pageInfo .= '
@@ -635,6 +639,10 @@ class RequestInfoPanel extends BasePanel {
                     <tr>
                         <td>id</td>
                         <td>'.$template->id.'</td>
+                    </tr>
+                    <tr>
+                        <td>class</td>
+                        <td>'.wireClassName($template->pageClass, true, true).'</td>
                     </tr>
                     <tr>
                         <td>modified</td>
