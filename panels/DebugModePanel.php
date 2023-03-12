@@ -213,7 +213,7 @@ class DebugModePanel extends BasePanel {
                         $visitedByStr = \TracyDebugger::createEditorLink(\TracyDebugger::removeCompilerFromPath($file), $line, ($toObject ? "$toObjectName::$toMethodName" : $toMethodName));
                     }
                     else {
-                        $visitedByStr = ($toObject ? "$toObjectName::$toMethod" : $toMethodName);
+                        $visitedByStr = ($toObject ? "$toObjectName::$toMethod" : $toMethod);
                     }
 
                     if(is_callable($toMethod)) $toMethod = 'anonymous function';
