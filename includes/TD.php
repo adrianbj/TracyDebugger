@@ -41,7 +41,9 @@ class TD extends TracyDebugger {
         if(self::tracyUnavailable()) return false;
         static::barDump($var, $title, $options);
         static::dump($var, $title, $options);
-        static::fireLog($var);
+        if(method_exists('Tracy\Debugger', 'getFireLogger')) {
+            static::fireLog($var);
+        }
         static::log($var);
     }
 
@@ -336,9 +338,10 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     public static function fireLog($message = NULL) {
-        if(self::tracyUnavailable()) return false;
+        if(!method_exists('Tracy\Debugger', 'getFireLogger') || self::tracyUnavailable()) return false;
         return Debugger::fireLog($message);
     }
+
 
     /**
      * Zarganwar\PerformancePanel\Register::add() shortcut.

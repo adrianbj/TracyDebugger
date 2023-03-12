@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.23.43',
+            'version' => '4.24.0',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -308,7 +308,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "fileEditorExcludedDirs" => 'site/assets',
             "fileEditorBaseDirectory" => 'templates',
             "enableShortcutMethods" => 1,
-            "enabledShortcutMethods" => array('addBreakpoint', 'bp', 'barDump', 'bd', 'barDumpBig', 'bdb', 'barEcho', 'be', 'debugAll', 'da', 'dump', 'd', 'dumpBig', 'db', 'fireLog', 'fl', 'l', 'templateVars', 'tv', 'timer', 't')
+            "enabledShortcutMethods" => array('addBreakpoint', 'bp', 'barDump', 'bd', 'barDumpBig', 'bdb', 'barEcho', 'be', 'debugAll', 'da', 'dump', 'd', 'dumpBig', 'db', 'l', 'templateVars', 'tv', 'timer', 't')
         );
     }
 
@@ -334,7 +334,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if(class_exists('\Tracy\Debugger', false) && Debugger::isEnabled()) return;
 
         // load Tracy files and our helper files
-        if(version_compare(PHP_VERSION, '7.2.0', '>=')) {
+        if(version_compare(PHP_VERSION, '8.0.0', '>=')) {
+            self::$tracyVersion = '2.10.x';
+        }
+        elseif(version_compare(PHP_VERSION, '7.2.0', '>=')) {
             self::$tracyVersion = '2.9.x';
         }
         elseif(version_compare(PHP_VERSION, '7.1.0', '>=')) {
@@ -978,7 +981,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
 
-        Debugger::$showFireLogger = $this->data['showFireLogger'];
+        if(method_exists('Tracy\Debugger', 'getFireLogger')) Debugger::$showFireLogger = $this->data['showFireLogger'];
         if(isset(Debugger::$reservedMemorySize)) Debugger::$reservedMemorySize = $this->data['reservedMemorySize'];
 
         if(static::$allowedTracyUser === 'development') {
@@ -1372,9 +1375,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if(property_exists('Debugger', 'maxItems')) {
                 Debugger::$maxItems = $this->data['maxItems'];
             }
-            Debugger::getFireLogger()->maxDepth = $this->data['maxDepth'];
-            Debugger::getFireLogger()->maxLength = $this->data['maxLength'];
-            Debugger::getFireLogger()->maxItems = $this->data['maxItems'];
+            if(method_exists('Tracy\Debugger', 'getFireLogger')) {
+                Debugger::getFireLogger()->maxDepth = $this->data['maxDepth'];
+                Debugger::getFireLogger()->maxLength = $this->data['maxLength'];
+                Debugger::getFireLogger()->maxItems = $this->data['maxItems'];
+            }
             Debugger::getBlueScreen()->maxDepth = $this->data['maxDepth'];
             Debugger::getBlueScreen()->maxLength = $this->data['maxLength'];
             Debugger::getBlueScreen()->maxItems = $this->data['maxItems'];
@@ -3278,7 +3283,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'debugInfo');
         $f->label = __('Use debugInfo() magic method', __FILE__);
         $f->description = __('If a `__debugInfo()` method has been defined, it will be used instead of dumping the full object.', __FILE__);
-        $f->notes = __('This results in a smaller, cleaner dump, but you may miss some information. You can override this with the `debugInfo => true/false` option when calling `d()`, `bd()`, `fl()`, etc. Note that this also affects the output in the Request Info panel\'s Field List & Values section.', __FILE__);
+        $f->notes = __('This results in a smaller, cleaner dump, but you may miss some information. You can override this with the `debugInfo => true/false` option when calling `d()`, `bd()`, etc. Note that this also affects the output in the Request Info panel\'s Field List & Values section.', __FILE__);
         $f->columnWidth = 50;
         $f->attr('checked', $data['debugInfo'] == '1' ? 'checked' : '');
         $fieldset->add($f);
@@ -3346,13 +3351,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('value', $data['reservedMemorySize']);
         $fieldset->add($f);
 
-        $f = $this->wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'showFireLogger');
-        $f->label = __('Send data to FireLogger', __FILE__);
-        $f->description = __('When checked, certain errors and `fl()` calls will be sent to FireLogger in the browser console.', __FILE__);
-        $f->notes = __('If you are running on nginx and don\'t have access to adjust `fastcgi_buffers` and `fastcgi_buffer_size` settings, you may want to uncheck this to avoid 502 bad gateway errors because of `upstream sent too big header while reading response header from upstream` issues.', __FILE__);
-        $f->attr('checked', $data['showFireLogger'] == '1' ? 'checked' : '');
-        $fieldset->add($f);
+        if(method_exists('Tracy\Debugger', 'getFireLogger')) {
+            $f = $this->wire('modules')->get("InputfieldCheckbox");
+            $f->attr('name', 'showFireLogger');
+            $f->label = __('Send data to FireLogger', __FILE__);
+            $f->description = __('When checked, certain errors and `fl()` calls will be sent to FireLogger in the browser console.', __FILE__);
+            $f->notes = __('If you are running on nginx and don\'t have access to adjust `fastcgi_buffers` and `fastcgi_buffer_size` settings, you may want to uncheck this to avoid 502 bad gateway errors because of `upstream sent too big header while reading response header from upstream` issues.', __FILE__);
+            $f->attr('checked', $data['showFireLogger'] == '1' ? 'checked' : '');
+            $fieldset->add($f);
+        }
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'referencePageEdited');
@@ -4403,7 +4410,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'enableShortcutMethods');
         $f->label = __('Enable shortcut methods', __FILE__);
-        $f->description = __('Uncheck to not define any of the shortcut methods. If you are not going to use these in your templates, unchecking means that they will not be defined which may reduce possible future name clashes. If in doubt, uncheck and use the full methods:'."\n".'TD::addBreakpoint()'."\n".'TD::barDump()'."\n".'TD::barDumpBig()'."\n".'TD::debugAll()'."\n".'TD::dump()'."\n".'TD::dumpBig()'."\n".'TD::fireLog()'."\n".'TD::log()'."\n".'TD::templateVars()'."\n".'TD::timer()', __FILE__);
+        $f->description = __('Uncheck to not define any of the shortcut methods. If you are not going to use these in your templates, unchecking means that they will not be defined which may reduce possible future name clashes. If in doubt, uncheck and use the full methods:'."\n".'TD::addBreakpoint()'."\n".'TD::barDump()'."\n".'TD::barDumpBig()'."\n".'TD::debugAll()'."\n".'TD::dump()'."\n".'TD::dumpBig()'."\n".'TD::log()'."\n".'TD::templateVars()'."\n".'TD::timer()', __FILE__);
         $f->notes = __('If this, or one of the shortcut methods is not enabled, but is called in your templates, all users will get a "call to undefined function" fatal error, so please be aware when using the shortcut methods in your templates if they are not enabled here.', __FILE__);
         $f->columnWidth = 50;
         $f->attr('checked', $data['enableShortcutMethods'] == '1' ? 'checked' : '');
@@ -4430,8 +4437,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->addOption('d', 'd() for TD::dump()');
         $f->addOption('dumpBig', 'dumpBig() for TD::dumpBig()');
         $f->addOption('db', 'db() for TD::dumpBig()');
-        $f->addOption('fireLog', 'fireLog() for TD::fireLog()');
-        $f->addOption('fl', 'fl() for TD::fireLog()');
+        if(method_exists('Tracy\Debugger', 'getFireLogger')) {
+            $f->addOption('fireLog', 'fireLog() for TD::fireLog()');
+            $f->addOption('fl', 'fl() for TD::fireLog()');
+        }
         $f->addOption('l', 'l() for TD::log()');
         $f->addOption('templateVars', 'templateVars() for TD::templateVars()');
         $f->addOption('tv', 'tv() for TD::templateVars()');

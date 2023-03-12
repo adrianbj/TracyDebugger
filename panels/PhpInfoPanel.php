@@ -38,7 +38,7 @@ class PhpInfoPanel extends BasePanel {
         $dom = new DOMDocument();
         libxml_use_internal_errors(true);
         if(function_exists('mb_convert_encoding')) {
-            $dom->loadHTML(mb_convert_encoding($phpInfo, 'HTML-ENTITIES', 'UTF-8'));
+            $dom->loadHTML(mb_convert_encoding($phpInfo, 'UTF-8'));
         }
         else {
             $dom->loadHTML(htmlspecialchars_decode(utf8_decode(htmlentities($phpInfo, ENT_COMPAT, 'UTF-8', false))));
@@ -49,7 +49,9 @@ class PhpInfoPanel extends BasePanel {
 
         // move h1 in the first section to the root level
         $mainTitle = $dom->getElementsByTagName('h1')->item(0);
-        $body->insertBefore($mainTitle, $body->firstChild);
+        if($mainTitle) {
+            $body->insertBefore($mainTitle, $body->firstChild);
+        }
 
         $phpInfo = $dom->saveHTML($body);
 

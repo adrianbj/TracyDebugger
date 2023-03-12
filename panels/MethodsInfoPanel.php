@@ -83,13 +83,6 @@ class MethodsInfoPanel extends BasePanel {
                 TD::dumpBig()<br />
             </p>
 
-            <p><strong><a href="'.$debugMethodsRootUrl.'firelog" target="_blank">fireLog($var)</a></strong></p>
-            <p>
-                <strong>fl()</strong><br />
-                fireLog()<br />
-                TD::fireLog()<br />
-            </p>
-
             <p><strong><a href="'.$debugMethodsRootUrl.'log" target="_blank">log($str, $priority = ILogger::INFO)</a></strong></p>
             @priority: "debug", "info", "warning", "error", "exception", "critical"
             <p>

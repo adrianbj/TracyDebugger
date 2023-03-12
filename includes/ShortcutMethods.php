@@ -96,10 +96,12 @@ if(!function_exists('timer') && in_array('timer', $this->data['enabledShortcutMe
  * TD::fireLog() shortcut.
  * @tracySkipLocation
  */
-if(!function_exists('fireLog') && in_array('fireLog', $this->data['enabledShortcutMethods'])) {
-    function fireLog($message = NULL) {
-        if(tracyUnavailable()) return false;
-        return TD::fireLog($message);
+if(method_exists('Tracy\Debugger', 'getFireLogger')) {
+    if(!function_exists('fireLog') && in_array('fireLog', $this->data['enabledShortcutMethods'])) {
+        function fireLog($message = NULL) {
+            if(tracyUnavailable()) return false;
+            return TD::fireLog($message);
+        }
     }
 }
 
@@ -221,10 +223,12 @@ if(!function_exists('t') && in_array('t', $this->data['enabledShortcutMethods'])
  * TD::fireLog() shortcut.
  * @tracySkipLocation
  */
-if(!function_exists('fl') && in_array('fl', $this->data['enabledShortcutMethods'])) {
-    function fl($message = NULL) {
-        if(tracyUnavailable()) return false;
-        return TD::fireLog($message);
+if(method_exists('Tracy\Debugger', 'getFireLogger')) {
+    if(!function_exists('fl') && in_array('fl', $this->data['enabledShortcutMethods'])) {
+        function fl($message = NULL) {
+            if(tracyUnavailable()) return false;
+            return TD::fireLog($message);
+        }
     }
 }
 
