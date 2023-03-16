@@ -14,7 +14,7 @@ Integrates and extends Nette's Tracy debugging tool
 
 A huge shout-out to my premium sponsors
 
-[![Baumrock logo](https://www.baumrock.com/site/templates/img/baumrock-center.svg "Baumrock.com")](https://www.baumrock.com/)
+[![Baumrock logo](https://www.baumrock.com/site/templates/img/baumrock-center.svg | width=200)](https://www.baumrock.com/)
 
 ### Documentation
 Documentation is available at: https://adrianbj.github.io/TracyDebugger/
