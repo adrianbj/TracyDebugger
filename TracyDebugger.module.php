@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.24.0',
+            'version' => '4.24.1',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1118,6 +1118,34 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                                     $event->return = str_replace("</body>", "\n<!-- Tracy Hide Bar -->\n" . static::minify($hideBar)."\n</body>", $event->return);
                                 }
                             }
+                            else {
+                                $nonDeprecations = false;
+                                foreach($tracyErrors->data as $tracyError => $count) {
+                                    if(strpos($tracyError, 'PHP Deprecated:') === false) {
+                                        $nonDeprecations = true;
+                                        break;
+                                    }
+                                }
+                                if(!$nonDeprecations) {
+                                    $recolorErrors = '
+                                    <script>
+                                        function recolorErrors() {
+                                            if(!document.getElementById("tracy-debug-bar")) {
+                                                window.requestAnimationFrame(recolorErrors);
+                                            } else {
+                                                var els = document.getElementsByClassName("tracy-ErrorTab");
+                                                console.log(els);
+                                                Array.from(els).forEach((el) => {
+                                                    el.style.backgroundColor = "'.self::COLOR_WARN.'";
+                                                });
+                                            }
+                                        }
+                                        recolorErrors();
+                                    </script>';
+                                    $event->return = str_replace("</body>", "\n<!-- Tracy Recolor Errors -->\n" . static::minify($recolorErrors)."\n</body>", $event->return);
+                                }
+                            }
+
                             if(in_array('titlePrefix', $this->data['styleAdminType'])) {
                                 $serverTypeMatch = $this->serverStyleInfo['serverTypeMatch'];
                                 $stylesArr = $this->serverStyleInfo['styles'];
