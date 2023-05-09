@@ -4,7 +4,7 @@
  * Processwire module for running the Tracy debugger from Nette.
  * by Adrian Jones
  *
- * Copyright (C) 2022 by Adrian Jones
+ * Copyright (C) 2023 by Adrian Jones
  * Licensed under GNU/GPL v2, see LICENSE.TXT
  *
  * A big thanks to Roland Toth (https://github.com/rolandtoth/) for the idea for this module
@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.24.3',
+            'version' => '4.24.4',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',

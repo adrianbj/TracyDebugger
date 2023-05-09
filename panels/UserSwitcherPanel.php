@@ -76,7 +76,7 @@ class UserSwitcherPanel extends BasePanel {
                             <input type="submit" value="Login">';
             }
             else {
-                $out .= '<form name="userSwitcherPanel" action="'.\TracyDebugger::inputUrl(true).'" method="post">';
+                $out .= '<form id="userSwitcherPanel" name="userSwitcherPanel" action="'.\TracyDebugger::inputUrl(true).'" method="post">';
             }
 
             if(\TracyDebugger::$allowedSuperuser || $remainingSessionLength > 0) {
