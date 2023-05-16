@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.24.4',
+            'version' => '4.24.5',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -2146,14 +2146,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     /**
      * Find current page template name in cookie
      *
-     * Actually checks if a user really has the permission
-     * This works for superusers as well whereas normally they return true for any permission
-     *
      * @param string $cookie Cookie content
      * @return string|bool Name of Template or false
      *
      */
     private function findPageTemplateInCookie($cookie) {
+        if(!$cookie) return false;
         $templateEntries = explode(',', $cookie);
         foreach($templateEntries as $templateEntry) {
             $arr = explode("|", $templateEntry, 2);
