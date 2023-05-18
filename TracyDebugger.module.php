@@ -558,6 +558,36 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 });
                 $this->wire()->addHookAfter('PageFinder::getQuery', null, function($event) {
                     $event->setArgument(2, Debug::timer($this->timerkey));
+
+                    //
+                    // Add backtrace to allow tracking of caller
+                    //
+                    $trace_depth = 3;
+                    $trace = Debug::backtrace();
+
+                    // Filter out expected admin sources...
+                    $filtered_trace = array_filter($trace, function($v) {
+                        return
+                            !str_starts_with($v['file'], '/wire/') &&
+                            !str_starts_with($v['file'], '/site/assets/cache/')
+                            ;
+                    });
+
+                    // If there are any paths left in the trace, prepare a shorthand listing...
+                    if (!empty($filtered_trace)) {
+
+                        $first_idx = array_keys($filtered_trace)[0];
+                        $trace = array_slice($trace, $first_idx, $trace_depth);
+                        $filtered_trace = array_reduce($filtered_trace, function($carry, $v) use (&$first_idx) {
+                            $carry .= "\n[$first_idx] " . $v['file'] . ' ' . $v['call'];
+                            $first_idx++;
+                            return $carry;
+                        }, '');
+                        $event->backtrace = $filtered_trace;
+                    } else {
+                        $event->backtrace = '';
+                    }
+
                     static::$pageFinderQueries[] = $event;
                 });
             }
