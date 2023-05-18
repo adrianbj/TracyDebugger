@@ -241,7 +241,8 @@ class DebugModePanel extends BasePanel {
                 foreach($queryMethod as $n => $sql) {
                     $databaseQueries_oc++;
                     $sql = $this->wire('sanitizer')->entities1($sql);
-                    $databaseQueries .= "\n<tr><td>$n</td><td class='tracy-force-break'>".$sql."</td></tr>";
+                    $sql = wordwrap($sql, 240, "\n", true);
+                    $databaseQueries .= "\n<tr><td>$n</td><td class='tracy-force-break'>$sql</td></tr>";
                 }
                 $databaseQueries .= $sectionEnd;
             }
