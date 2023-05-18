@@ -252,7 +252,8 @@ class DebugModePanel extends BasePanel {
                 $selectorQueries_oc = 0;
                 $selectorQueries = $this->sectionHeader(array('Order', 'Selector', 'Caller', 'SQL Query', 'Settings', 'Time (ms)'));
                 foreach(\TracyDebugger::$pageFinderQueries as $n => $query) {
-                    $backtrace = nl2br($query->backtrace ?? '');
+                    $backtrace = $query->backtrace ?? '';
+                    $backtrace = nl2br($this->wire('sanitizer')->entities1($backtrace));
                     $caller = $query->arguments[1]['caller'] ?? '';
 
                     $selectorQueries_oc++;
