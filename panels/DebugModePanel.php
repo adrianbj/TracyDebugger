@@ -251,6 +251,9 @@ class DebugModePanel extends BasePanel {
                 $selectorQueries_oc = 0;
                 $selectorQueries = $this->sectionHeader(array('Order', 'Selector', 'Caller', 'SQL Query', 'Settings', 'Time (ms)'));
                 foreach(\TracyDebugger::$pageFinderQueries as $n => $query) {
+                    $backtrace = nl2br($query->backtrace ?? '');
+                    $caller = $query->arguments[1]['caller'] ?? '';
+
                     $selectorQueries_oc++;
                     $selector = $this->wire('sanitizer')->entities1((string)$query->arguments[0]);
                     if(method_exists($query->return, 'getDebugQuery')) {
@@ -258,12 +261,17 @@ class DebugModePanel extends BasePanel {
                         $sqlStr = $query->return->getDebugQuery();
                     }
                     else {
-                    // 3.0.157 and earlier
-                    $sqlStr = $query->return->getQuery();
+                        // 3.0.157 and earlier
+                        $sqlStr = $query->return->getQuery();
                     }
                     $options = array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false);
                     if(defined('\Tracy\Dumper::ITEMS')) array_push($options, array(Dumper::ITEMS => \TracyDebugger::getDataValue('maxItems')));
-                    $selectorQueries .= "\n<tr><td>$n</td><td class='tracy-force-break'>".$selector."</td><td>".(isset($query->arguments[1]['caller']) ? $query->arguments[1]['caller'] : '')."</td><td class='tracy-force-break'>".$sqlStr."</td><td>".(isset($query->arguments[1]) ? \Tracy\Dumper::toHtml($query->arguments[1], $options) : '')."</td><td>".($query->arguments[2]*1000)."</td></tr>";
+
+                    // Wrap long lines to make things more accessible
+                    $selector = wordwrap($selector, 120, "\n", true);
+                    $sqlStr   = wordwrap($sqlStr, 120, "\n", true);
+
+                    $selectorQueries .= "\n<tr><td>$n</td><td class='tracy-force-break'>$selector</td><td>$caller<br>$backtrace</td><td class='tracy-force-break'>$sqlStr</td><td>".(isset($query->arguments[1]) ? \Tracy\Dumper::toHtml($query->arguments[1], $options) : '')."</td><td>".($query->arguments[2]*1000)."</td></tr>";
                 }
                 $selectorQueries .= $sectionEnd;
             }
