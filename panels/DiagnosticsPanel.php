@@ -1327,16 +1327,16 @@ class DiagnosticsPanel extends BasePanel {
      * owner of the filesystem asset.
      */
     protected function getPHPUser($full = true) {
-        if(function_exists('posix_geteuid')) {
+        if(function_exists('posix_geteuid') && function_exists('posix_getpwuid')) {
             $pwu_data = posix_getpwuid(posix_geteuid());
             if($pwu_data) $username = $pwu_data['name'];
-        } 
+        }
         if(!isset($username) && function_exists('exec')) {
             $username = exec('whoami');
         }
         if(!isset($username) && !empty(getenv('APACHE_RUN_USER'))) {
             $username = getenv('APACHE_RUN_USER');
-        } 
+        }
         if(!isset($username)) {
             $username = 'Unknown';
             $tempDir  = new WireTempDir('whoami');
