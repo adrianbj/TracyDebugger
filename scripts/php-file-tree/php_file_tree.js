@@ -34,7 +34,7 @@
 
 function init_php_file_tree(linkedFilePath) {
 
-	if (!document.getElementsByTagName) return;
+	if (!document.getElementsByTagName || !document.getElementById("tracyFoldersFiles")) return;
 	var path = '';
 	var aMenus = document.getElementById("tracyFoldersFiles").getElementsByTagName("LI");
 	for (var i = 0; i < aMenus.length; i++) {
@@ -92,7 +92,7 @@ function init_php_file_tree(linkedFilePath) {
 			for (var j = 0; j < items.length; j++) {
 				if (items[j].tagName == "A") {
 					var parser = document.createElement('a');
-					queryStr = items[j].href.split('?')[1];
+					var queryStr = items[j].href.split('?')[1];
 					var currentFilePath = decodeURI(queryStr.replace('f=','').replace('&l=1',''));
 					if(document.getElementById('panelTitleFilePath').innerHTML == currentFilePath || linkedFilePath == currentFilePath) {
 						var els = document.getElementsByClassName("active");

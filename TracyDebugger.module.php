@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.24.6',
+            'version' => '4.24.7',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1060,10 +1060,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/tinycon.min.js';
                 Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/js-loader.js';
 
+                // load File Editor panel if Tracy online editor is selected
+                if(static::$useOnlineEditor && static::$onlineEditor == 'tracy' && !in_array('fileEditor', static::$showPanels)) {
+                    array_push(static::$showPanels, 'fileEditor');
+                }
+
                 if(in_array('fileEditor', static::$showPanels)) {
                     // this needs to be loaded here (not just in File Editor panel) so that File Editor links
                     // will work even if File Editor panel hasn't been opened yet
                     Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/file-editor.js';
+                    Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/php-file-tree/php_file_tree.js';
                 }
 
                 if($this->showServerTypeIndicator()) {
@@ -1140,7 +1146,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                                                 window.requestAnimationFrame(recolorErrors);
                                             } else {
                                                 var els = document.getElementsByClassName("tracy-ErrorTab");
-                                                console.log(els);
                                                 Array.from(els).forEach((el) => {
                                                     el.style.backgroundColor = "'.(!$nonWire ? self::COLOR_LIGHTGREY : self::COLOR_WARN).'";
                                                 });
@@ -1635,12 +1640,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $pwVars = function_exists('wire') ? $this->fuel : \ProcessWire\wire('all');
         foreach($pwVars->getArray() as $key => $val) {
             if(strpos($key, 'bd_') !== false) \TD::barDump($val, '$'.$key);
-        }
-
-
-        // load File Editor panel if Tracy online editor is selected
-        if(static::$useOnlineEditor && static::$onlineEditor == 'tracy' && !in_array('fileEditor', static::$showPanels)) {
-            array_push(static::$showPanels, 'fileEditor');
         }
 
 

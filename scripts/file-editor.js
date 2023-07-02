@@ -98,13 +98,12 @@ if(!tracyFileEditorLoader) {
         },
 
         populateFileEditor: function(filePath, line) {
-
             document.getElementById("fileEditorFilePath").value = filePath;
             document.cookie = "tracyFileEditorFilePath=" + filePath + "; path=/";
             document.getElementById("panelTitleFilePath").innerHTML = "/" + filePath;
 
-            if(typeof ace === "undefined" || typeof tracyFileEditor === "undefined" || !tracyFileEditor.tfe) {
-                window.requestAnimationFrame(populateFileEditor);
+            if(typeof tracyFileEditor === "undefined" || !tracyFileEditor.tfe) {
+                window.requestAnimationFrame(tracyFileEditorLoader.populateFileEditor(filePath, line));
             }
             else {
                 var xmlhttp;
@@ -119,6 +118,7 @@ if(!tracyFileEditorLoader) {
 
                             // set mode appropriately
                             var mode = tracyFileEditor.modelist.getModeForPath(filePath).mode;
+                            if(mode == 'ace/mode/log') mode = 'ace/mode/text';
                             tracyFileEditor.tfe.session.setMode(mode);
                         }
                         xmlhttp.getAllResponseHeaders();
@@ -133,13 +133,12 @@ if(!tracyFileEditorLoader) {
         },
 
         loadFileEditor: function(filePath, line) {
-
             if(document.getElementById("tracy-debug-panel-FileEditorPanel").classList.contains("tracy-mode-window")) {
                 this.populateFileEditor(filePath, line);
             }
             else {
                 if(!window.Tracy.Debug.panels || !document.getElementById("tracy-debug-panel-FileEditorPanel")) {
-                    window.requestAnimationFrame(loadFileEditor);
+                    window.requestAnimationFrame(tracyFileEditorLoader.loadFileEditor(filePath, line));
                 }
                 else {
                     var panel = window.Tracy.Debug.panels["tracy-debug-panel-FileEditorPanel"];
