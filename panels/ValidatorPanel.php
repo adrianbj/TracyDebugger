@@ -17,7 +17,7 @@ class ValidatorPanel extends BasePanel {
         if(\TracyDebugger::isAdditionalBar()) return;
         \Tracy\Debugger::timer('validator');
 
-        $this->validatorUrl = \TracyDebugger::getDataValue('validatorUrl');
+        $this->validatorUrl = 'https://validator.w3.org/nu/';
         $this->validationUrl = $this->validatorUrl . "?doc=".$this->wire('page')->httpUrl."&out=html&showimagereport=yes&showsource=yes";
 
         // get results from validator and convert any entities to UTF-8
@@ -26,19 +26,15 @@ class ValidatorPanel extends BasePanel {
         $http->setHeader('User-Agent', 'ProcessWireTracyDebugger');
 
         $this->rawResult = $http->post($this->validatorUrl, \TracyDebugger::$pageHtml);
-        if(function_exists('mb_convert_encoding')) {
-            $this->rawResult = mb_convert_encoding($this->rawResult, 'HTML-ENTITIES', 'UTF-8');
-        }
-        else {
-            $this->rawResult = htmlspecialchars_decode(utf8_decode(htmlentities($this->rawResult, ENT_COMPAT, 'UTF-8', false)));
-        }
+        //$this->rawResult = preg_replace('/[^(\x20-\x7F)]*/','', $this->rawResult);
+        $this->rawResult = mb_encode_numericentity($this->rawResult, [0x80, 0x10FFFF, 0, ~0], 'UTF-8');
 
         $showPanelLabels = \TracyDebugger::getDataValue('showPanelLabels');
 
         if($this->rawResult) {
             $doc = new DOMDocument();
             libxml_use_internal_errors(true);
-            $doc->loadHTML($this->rawResult);
+            $doc->loadHTML($this->rawResult, LIBXML_HTML_NODEFDTD | LIBXML_HTML_NOIMPLIED);
             libxml_use_internal_errors(false);
 
             $xpath = new DOMXPath($doc);
@@ -108,157 +104,164 @@ class ValidatorPanel extends BasePanel {
         <div class="tracy-inner">
             <style type="text/css">
 
-                #validatorBody ol li {
-                    list-style: initial !important;
-                    list-style-type: decimal !important;
+                #results {
+                    font-size: 14px;
+                    margin-top: 50px;
+                    padding-left: 3%;
+                    margin-right: 3%;
                 }
 
-                #validatorBody p, #validatorBody ol li p {
-                    font-size: 14px !important;
+                .alert {
+                    color: #000;
+                    background-color: #ff0;
                 }
 
-                #validatorBody #schema, #validatorBody #doc, #validatorBody #nsfilter {
-                    width: 99%;
-                }
-
-                #validatorBody table {
-                    width: 100%;
-                    table-layout: fixed;
-                }
-
-                #validatorBody h1, #validatorBody h2 {
-                    font-size: 1.2em;
-                    font-weight: bold;
-                }
-
-                #validatorBody h3 {
-                    font-size: 1em;
-                    font-weight: bold;
-                    margin-top: 2em;
-                }
-
-                #validatorBody h1 span {
-                    color: #AAAAAA;
-                }
-
-                #validatorBody tr:first-child td, #validatorBody tr:first-child th {
-                    vertical-align: top;
-                }
-
-                #validatorBody textarea, #validatorBody #doc[type="url"], #validatorBody #schema, #validatorBody #nsfilter {
-                    font-family: Monaco, Consolas, Andale Mono, monospace;
-                }
-
-                #validatorBody .stats, #validatorBody .details {
-                    font-size: 0.85em;
-                }
-
-                #validatorBody .success {
+                .success,
+                .failure,
+                .fatalfailure {
+                    border-radius: 4px;
                     padding: 0.5em;
-                    border: double 6px green;
+                    font-weight: 700;
+                    font-family: Arial, sans-serif;
                 }
 
-                #validatorBody .failure {
-                    padding: 0.5em;
-                    border: double 6px red;
+                .success {
+                    color: #000;
+                    background-color: #cfc;
+                    border: 1px solid #ccc;
                 }
 
-                #validatorBody ol {
-                    width: calc(100% - 25px) !important;
-                    list-style-position: inside;
-                    padding: 0 !important;
-                    margin: 25px !important;
-                    font-size: 13px !important;
+                .failure {
+                    color: #fff;
+                    background-color: #365d95;
                 }
 
-                #validatorBody li {
-                    margin: 0;
-                    padding: 0.5em;
+                .fatalfailure {
+                    color: #fff;
+                    background-color: #f00;
                 }
 
-                #validatorBody li ol {
-                    padding-right: 0;
-                    margin-top: 0.5em;
-                    margin-bottom: 0;
+                #results > ol:first-child {
+                    margin-top: 10px;
+                    padding: 15px;
+                    background-color: #efefef;
+                    border-radius: 4px;
                 }
 
-                #validatorBody li li {
-                    padding-right: 0;
-                    padding-bottom: 0.2em;
-                    padding-top: 0.2em;
+                #results > ol:first-child > li {
+                    border: 1px solid #ccc;
+                    margin-bottom: 8px;
+                    padding-left: 12px;
+                    border-radius: 4px;
+                    background-color: #fff;
                 }
 
-                #validatorBody .info {
-                    color: black;
-                    background-color: #CCFFFF;
+                #results > ol:first-child > li > p:first-child,
+                #results > ol:first-child > li > p:first-child code {
+                    font-size: 16px !important;
+                    font-weight: 700 !important;
                 }
 
-                #validatorBody .warning {
-                    color: black;
-                    background-color: #FFFFCC;
+                #results > ol:first-child > li > p:first-child code {
+                    font-weight: 400 !important;
                 }
 
-                #validatorBody .error {
-                    color: black;
-                    background-color: #FFCCCC;
+                #results > ol:first-child > li > p:first-child {
+                    color: transparent;
                 }
 
-                #validatorBody .io, #validatorBody .fatal, #validatorBody .schema {
-                    color: black;
-                    background-color: #FF9999;
+                #results > ol:first-child > li > p:first-child > strong,
+                #results > ol:first-child > li > p:first-child > span {
+                    color: #000;
                 }
 
-                #validatorBody .internal {
-                    color: black;
-                    background-color: #FF6666;
+                #results > ol:first-child > li > p:first-child > strong:first-child {
+                    padding: 1px 6px;
+                    border-radius: 6px;
+                    border: 1px solid #ccc;
+                    font: caption;
+                    font-weight: 700 !important;
                 }
 
+                .info,
+                .warning,
+                .error,
+                .io,
+                .fatal,
+                .schema,
+                .internal {
+                    color: #000;
+                }
 
-                #validatorBody hr {
-                    border-top: 1px dotted #666666;
+                .info > p:first-child > strong:first-child {
+                    background-color: #cfc;
+                }
+
+                .warning > p:first-child > strong:first-child {
+                    background-color: #ffc;
+                }
+
+                .error > p:first-child > strong:first-child,
+                .io > p:first-child > strong:first-child,
+                .fatal > p:first-child > strong:first-child,
+                .schema > p:first-child > strong:first-child,
+                .internal > p:first-child > strong:first-child {
+                    background-color: #fcc;
+                }
+
+                hr {
+                    border-top: 1px dotted #666;
                     border-bottom: none;
                     border-left: none;
                     border-right: none;
                     height: 0;
                 }
 
-                #validatorBody p {
+                p {
                     margin: 0.5em 0 0.5em 0;
                 }
 
-                #validatorBody li p {
+                li p {
                     margin: 0;
                 }
 
-                #validatorBody .stats, #validatorBody .details {
+                .stats,
+                .details {
                     margin-top: 0.75em;
                 }
 
-                #validatorBody .details p {
-                    margin: 0;
+                .lf {
+                    color: #222;
                 }
 
-                #validatorBody .lf {
-                    color: #222222;
+                .extract {
+                    overflow: hidden;
+                    max-height: 5.5em;
                 }
 
-                #validatorBody b {
-                    color: black;
-                    background-color: #FF6666;
+                .extract b,
+                .source b {
+                    color: #000;
+                    background-color: #ffff80;
                 }
 
-                #validatorBody ol.source li {
+                .extract b {
+                    font-weight: 400;
+                }
+
+                ol.source li {
                     padding-top: 0;
                     padding-bottom: 0;
                 }
 
-                #validatorBody ol.source b, #validatorBody ol.source .b {
-                    color: black;
-                    background-color: #FFFFCC;
-                    font-weight: bold;
+                ol.source b,
+                ol.source .b {
+                    color: #000;
+                    background-color: #ffff80;
+                    font-weight: 700;
                 }
 
-                #validatorBody code {
+                code {
                     white-space: pre;
                     white-space: -pre-wrap;
                     white-space: -o-pre-wrap;
@@ -268,213 +271,39 @@ class ValidatorPanel extends BasePanel {
                     word-wrap: break-word;
                 }
 
-                #validatorBody dl {
-                    margin-top: 0.5em;
-                    font-size: 14px;
-                    font-family: sans-serif;
-                    font-weight: normal;
-                    color: #333333;
+                .error p,
+                .info p,
+                .warning p,
+                .error dd,
+                .info dd,
+                .warning dd {
+                    line-height: 1.8;
                 }
 
-                #validatorBody dd {
-                    margin-left: 1.5em;
-                    padding-left: 0;
-                }
-
-                #validatorBody table.imagereview {
-                    width: 100%;
-                    table-layout: auto;
-                    border-collapse: collapse;
-                    border-spacing: 0;
-                }
-
-                #validatorBody col.img {
-                    width: 180px;
-                }
-
-                #validatorBody col.alt {
-                    color: black;
-                    background-color: #FFFFCC;
-                }
-
-                #validatorBody td.alt span {
-                    color: black;
-                    background-color: #FFFFAA;
-                }
-
-                #validatorBody .imagereview th {
-                    font-weight: bold;
-                    text-align: left;
-                    vertical-align: bottom;
-                }
-
-                #validatorBody .imagereview td {
-                    vertical-align: middle;
-                }
-
-                #validatorBody td.img {
-                    padding-right: 0.5em;
-                    padding-left: 0;
-                    padding-top: 0;
-                    padding-bottom: 0.5em;
-                    text-align: right;
-                }
-
-                #validatorBody img {
-                    max-height: 180px;
-                    max-width: 180px;
-                    -ms-interpolation-mode: bicubic;
-                }
-
-                #validatorBody th.img {
-                    padding-right: 0.5em;
-                    padding-left: 0;
-                    padding-top: 0;
-                    padding-bottom: 0.5em;
-                    vertical-align: bottom;
-                    text-align: right;
-                }
-
-                #validatorBody td.alt, #validatorBody td.location {
-                    text-align: left;
-                    padding-right: 0.5em;
-                    padding-left: 0.5em;
-                    padding-top: 0;
-                    padding-bottom: 0.5em;
-                }
-
-                #validatorBody th.alt, #validatorBody th.location {
-                    padding-right: 0.5em;
-                    padding-left: 0.5em;
-                    padding-top: 0;
-                    padding-bottom: 0.5em;
-                    vertical-align: bottom;
-                }
-
-                #validatorBody dd code ~ span {
-                    color: #666;
-                }
-
-                #validatorBody dl.inputattrs {
-                    display: table;
-                }
-
-                #validatorBody dl.inputattrs dt {
-                    display: table-caption;
-                }
-
-                #validatorBody dl.inputattrs dd {
-                    display: table-row;
-                }
-
-                #validatorBody dl.inputattrs > dd > a,
-                #validatorBody dl.inputattrs .inputattrname,
-                #validatorBody dl.inputattrs .inputattrtypes {
-                    display: table-cell;
-                    padding-top: 2px;
-                    padding-left: 1.5em;
-                    padding-right: 1.5em;
-                    word-wrap: normal;
-                }
-
-                #validatorBody dl.inputattrs .inputattrtypes {
+                .error p code {
+                    border: 1px dashed #999;
+                    padding: 2px;
                     padding-left: 4px;
                     padding-right: 4px;
                 }
 
-                #validatorBody .inputattrtypes > a {
-                    color: #666;
+                .warning code {
+                    border: 1px dashed #999;
+                    padding: 2px;
+                    padding-left: 4px;
+                    padding-right: 4px;
                 }
 
-                #validatorBody dl.inputattrs .highlight {
-                    background-color: #FFC;
-                    padding-bottom: 2px;
-                    font-weight: normal;
-                    color: #666;
-                }
-
-                #validatorBody *[irrelevant], #validatorBody .irrelevant {
-                    display: none;
-                }
-
-                @media all and (max-width: 24em) {
-                    #validatorBody body {
-                        padding: 3px;
-                    }
-                    #validatorBody table,
-                    #validatorBody thead,
-                    #validatorBody tfoot,
-                    #validatorBody tbody,
-                    #validatorBody tr,
-                    #validatorBody th,
-                    #validatorBody td {
-                        display: block;
-                        width: 100%;
-                    }
-                    #validatorBody th {
-                        text-align: left;
-                        padding-bottom: 0;
-
-                    }
-                }
-
-                #validatorBody #outline h2 {
-                    margin-bottom: 0;
-                }
-
-                #validatorBody #outline .heading {
-                    color: #BF4F00;
-                    font-weight: bold;
-                }
-
-                #validatorBody #outline ol {
-                    margin-top: 0;
-                    padding-top: 3px;
-                }
-
-                #validatorBody #outline li {
-                    padding: 3px 0 3px 0;
-                    margin: 0;
-                    list-style: none;
-                    position: relative;
-                }
-
-                #validatorBody #outline li li {
-                    list-style: none;
-                }
-
-                #validatorBody #outline li:first-child::before {
-                    position: absolute;
-                    top: 0;
-                    height: 0.6em;
-                    left: -0.75em;
-                    width: 0.5em;
-                    border-color: #bbb;
-                    border-style: none none solid solid;
-                    content: "";
-                    border-width: 0.1em;
-                }
-
-                #validatorBody #outline li:not(:last-child)::after {
-                    position: absolute;
-                    top: 0;
-                    bottom: -0.6em;
-                    left: -0.75em;
-                    width: 0.5em;
-                    border-color: #bbb;
-                    border-style: none none solid solid;
-                    content: "";
-                    border-width: 0.1em;
-                }
             </style>
             <br />';
 
         $validatorLink = '<a href="'.$this->validationUrl.'">Results for '.$this->wire('page')->httpUrl.' at '.$this->validatorUrl.'</a>';
+        $out .= '<h2>'.$validatorLink.'</h2>';
         if($this->rawResult) {
-            $out .= '<div id="validatorBody"><h2>'.$validatorLink.'</h2>'.$this->message.$this->filteredResult.'</div>';
+            $out .= '<div id="results">'.$this->message.$this->filteredResult.'</div>';
         }
         else {
-            $out .= '<div id="validatorBody"><h2>Sorry, but there was a problem accessing the validation server at '.$this->validatorUrl.'</h2><h2>'.$validatorLink.'</h2></div>';
+            $out .= '<h2>Sorry, but there was a problem accessing the validation server at '.$this->validatorUrl.'</h2><h2>'.$validatorLink.'</h2>';
         }
 
         $out .= \TracyDebugger::generatePanelFooter('validator', \Tracy\Debugger::timer('validator'), strlen($out));

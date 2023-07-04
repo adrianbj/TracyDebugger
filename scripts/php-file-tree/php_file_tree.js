@@ -87,6 +87,7 @@ function init_php_file_tree(linkedFilePath) {
 
 			}
 		}
+
 		if (mclass.indexOf("tft-f") > -1) {
 			var items = aMenus[i].childNodes;
 			for (var j = 0; j < items.length; j++) {
@@ -100,7 +101,9 @@ function init_php_file_tree(linkedFilePath) {
 							el.classList.remove("active");
 						});
 						items[j].classList.add("active");
-						document.getElementById("tfe_recently_opened").value = currentFilePath;
+						if(document.getElementById("tfe_recently_opened")) {
+							document.getElementById("tfe_recently_opened").value = currentFilePath;
+						}
 					}
 				}
 			}

@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.24.7',
+            'version' => '4.25.0',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -179,6 +179,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'templatePath' => 'Template Path',
         'templateResources' => 'Template Resources',
         'todo' => 'ToDo',
+        'tracyExceptions' => 'Tracy Exceptions',
         'tracyToggler' => 'Tracy Toggler',
         'tracyLogs' => 'Tracy Logs',
         'userSwitcher' => 'User Switcher',
@@ -224,8 +225,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "hideDebugBarFrontendTemplates" => array(),
             "hideDebugBarBackendTemplates" => array(),
             "hideDebugBarModals" => array(),
-            "frontendPanels" => array('processwireInfo', 'requestInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'console', 'panelSelector', 'tracyToggler'),
-            "backendPanels" => array('processwireInfo', 'requestInfo', 'processwireLogs', 'tracyLogs', 'methodsInfo', 'debugMode', 'console', 'panelSelector', 'tracyToggler'),
+            "frontendPanels" => array('processwireInfo', 'requestInfo', 'processwireLogs', 'tracyLogs', 'tracyExceptions', 'methodsInfo', 'debugMode', 'console', 'panelSelector', 'tracyToggler'),
+            "backendPanels" => array('processwireInfo', 'requestInfo', 'processwireLogs', 'tracyLogs', 'tracyExceptions', 'methodsInfo', 'debugMode', 'console', 'panelSelector', 'tracyToggler'),
             "restrictedUserDisabledPanels" => array(),
             "nonToggleablePanels" => array(),
             "panelSelectorTracyTogglerButton" => 1,
@@ -259,7 +260,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "debugModePanelSections" => array('pagesLoaded', 'modulesLoaded', 'hooks', 'databaseQueries', 'selectorQueries', 'timers', 'user', 'cache', 'autoload'),
             "diagnosticsPanelSections" => array('filesystemFolders'),
             "dumpPanelTabs" => array('debugInfo', 'fullObject'),
-            "validatorUrl" => 'https://html5.validator.nu/',
             "requestMethods" => array('GET', 'POST', 'PUT', 'DELETE', 'PATCH'),
             "requestLoggerMaxLogs" => 10,
             "requestLoggerReturnType" => 'array',
@@ -1066,10 +1066,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 }
 
                 if(in_array('fileEditor', static::$showPanels)) {
-                    // this needs to be loaded here (not just in File Editor panel) so that File Editor links
+                    // this needs to be loaded here (not just in File Editor panel) so that links
                     // will work even if File Editor panel hasn't been opened yet
                     Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/file-editor.js';
                     Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/php-file-tree/php_file_tree.js';
+                }
+
+                if(in_array('tracyExceptions', static::$showPanels)) {
+                    // this needs to be loaded here (not just in Tracy Exceptions panel) so that links
+                    // will work even if Tracy Exceptions panel hasn't been opened yet
+                    Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/exception-loader.js';
                 }
 
                 if($this->showServerTypeIndicator()) {
@@ -4065,20 +4071,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $f->addOption($name, $label);
         }
         if($data['dumpPanelTabs']) $f->attr('value', $data['dumpPanelTabs']);
-        $fieldset->add($f);
-
-        // Validator Panel
-        $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->attr('name+id', 'validatorPanel');
-        $fieldset->label = __('Validator panel', __FILE__);
-        $wrapper->add($fieldset);
-
-        $f = $this->wire('modules')->get("InputfieldText");
-        $f->attr('name', 'validatorUrl');
-        $f->label = __('Validator URL', __FILE__);
-        $f->description = __('Enter the URL for the validation service.', __FILE__);
-        $f->notes = __('Default: https://html5.validator.nu/', __FILE__);
-        if($data['validatorUrl']) $f->attr('value', $data['validatorUrl']);
         $fieldset->add($f);
 
         // ToDo Panel

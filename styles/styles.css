@@ -1222,7 +1222,7 @@ ul.pw-info-links {
     display: none !important;
 }
 
-.tracy-file-tree a[href].active {
+.tracy-file-tree a[href].active, .tracy-exceptions-file-tree a[href].active {
     color: white !important;
     background-color: #125EAE !important;
 }
@@ -1584,6 +1584,13 @@ ul.pw-info-links {
     margin: 0 0 0 5px;
     padding: 0;
     width: 290px;
+}
+
+.tracy-exceptions-file-tree ul {
+    list-style: none;
+    margin: 0 0 0 5px;
+    padding: 0;
+    width: 400px;
 }
 
 .tracy-file-tree ul ul {
