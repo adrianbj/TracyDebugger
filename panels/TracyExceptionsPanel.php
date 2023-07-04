@@ -21,9 +21,11 @@ class TracyExceptionsPanel extends BasePanel {
         $tracyExeceptionsData = $this->wire('cache')->get('TracyExceptionsData');
 
         $this->newFiles = array();
-        foreach ($this->filesArray as $file) {
-            if(!in_array($file, $tracyExeceptionsData)) {
-                $this->newFiles[] = $file;
+        if($tracyExeceptionsData) {
+            foreach ($this->filesArray as $file) {
+                if(!in_array($file, $tracyExeceptionsData)) {
+                    $this->newFiles[] = $file;
+                }
             }
         }
 
