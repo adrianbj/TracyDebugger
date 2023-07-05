@@ -26,9 +26,6 @@ if(!tracyExceptionLoader) {
 
                 document.getElementById("tracyExceptionFilePath").value = filePath;
                 document.cookie = "tracyExceptionFile=" + filePath + "; path=/";
-                if(document.getElementById('tracy-bs')) {
-                    document.getElementById('tracy-bs').remove();
-                }
                 document.getElementById("panelTitleFilePath").innerHTML = filePath.replace('site/assets/logs/tracy/', '');
 
                 var xmlhttp;
@@ -37,8 +34,11 @@ if(!tracyExceptionLoader) {
                     if(xmlhttp.readyState == XMLHttpRequest.DONE) {
                         if(xmlhttp.status == 200 && xmlhttp.responseText !== "" && xmlhttp.responseText !== "[]") {
                             var fileData = JSON.parse(xmlhttp.responseText);
+                            if(document.getElementById('tracy-bs')) {
+                                document.getElementById('tracy-bs').remove();
+                            }
                             document.getElementById("tracyExceptionsViewerCode").innerHTML = fileData.contents;
-                            document.getElementById("tracy-bs").style.zIndex = "100"
+                            document.getElementById("tracy-bs").style.zIndex = "100";
                         }
                         xmlhttp.getAllResponseHeaders();
                     }

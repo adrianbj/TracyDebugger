@@ -51,6 +51,8 @@ class TracyExceptionsPanel extends BasePanel {
 
     public function getPanel() {
 
+        $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
+
         $filePath = $this->wire('config')->paths->root . $this->tracyExceptionFile;
 
         $maximizeSvg = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="282.8 231 16 15.2" enable-background="new 282.8 231 16 15.2" xml:space="preserve"><polygon fill="#AEAEAE" points="287.6,233.6 298.8,231 295.4,242 "/><polygon fill="#AEAEAE" points="293.9,243.6 282.8,246.2 286.1,235.3 "/></svg>';
@@ -58,14 +60,23 @@ class TracyExceptionsPanel extends BasePanel {
         $out = <<< HTML
         <script>
 
-            var tracyExceptionsViewer = {};
+            var tracyExceptionsViewer = {
+                tracyModuleUrl: "$tracyModuleUrl",
+            };
 
             function clearTracyExceptionsViewer() {
                 document.getElementById("panelTitleFilePath").innerHTML = '';
                 if(document.getElementById('tracy-bs')) {
-                    document.getElementById('tracy-bs').remove();
+                    var bs = document.getElementById('tracy-bs');
+                    while (bs.firstChild) {
+                        bs.removeChild(bs.firstChild);
+                    }
+                    const footer = document.createElement("footer");
+                    bs.appendChild(footer);
                 }
             }
+
+            tracyJSLoader.load(tracyExceptionsViewer.tracyModuleUrl + "scripts/exception-loader.js");
 
         </script>
 
