@@ -36,6 +36,7 @@ class ProcesswireLogsPanel extends BasePanel {
         else {
             $this->logEntries = $this->sectionHeader(array('Type', 'Date', 'User', 'URL', 'Text'));
             $logLinesData = $this->wire('cache')->get('TracyLogData.ProcessWire');
+            if(!$logLinesData) $logLinesData = array();
             $cachedLogLinesData = $logLinesData;
 
             $errorLogs = array('errors', 'exceptions', 'files-errors');
@@ -50,7 +51,7 @@ class ProcesswireLogsPanel extends BasePanel {
                 }
 
                 $x=99;
-                if(!$logLinesData || !isset($logLinesData[$log['name']]) || filemtime($this->wire('log')->getFilename($log['name'])) > $logLinesData[$log['name']]['time']) {
+                if(!isset($logLinesData[$log['name']]) || filemtime($this->wire('log')->getFilename($log['name'])) > $logLinesData[$log['name']]['time']) {
                     $logLinesData[$log['name']]['time'] = time();
                     $logLinesData[$log['name']]['lines'] = $lines;
                     $isNew++;

@@ -37,6 +37,7 @@ class TracyLogsPanel extends BasePanel {
         else {
             $this->logEntries = $this->sectionHeader(array('Type', 'Date', 'URL', 'Text'));
             $logLinesData = $this->wire('cache')->get('TracyLogData.Tracy');
+            if(!$logLinesData) $logLinesData = array();
             $cachedLogLinesData = $logLinesData;
 
             $errorLogs = array('error', 'exception', 'critical');
@@ -47,7 +48,7 @@ class TracyLogsPanel extends BasePanel {
                 $lines = explode("\n", $lines);
 
                 $x=99;
-                if(!$logLinesData || !isset($logLinesData[$log['name']]) || filemtime($this->getFilename($log['name'])) > $logLinesData[$log['name']]['time']) {
+                if(!isset($logLinesData[$log['name']]) || filemtime($this->getFilename($log['name'])) > $logLinesData[$log['name']]['time']) {
                     $logLinesData[$log['name']]['time'] = time();
                     $logLinesData[$log['name']]['lines'] = $lines;
                     $isNew++;
