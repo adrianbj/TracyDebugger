@@ -11,12 +11,12 @@ class UsersPanel extends BasePanel {
     protected function getUsers() {
 
         $this->numNonSuperusers = 0;
-        $this->listTracyUsers = null;
-        $this->listTracyRoles = null;
+        $this->listTracyUsers = '';
+        $this->listTracyRoles = '';
         $tracyDebuggerRoles = false;
-        $tracyDebuggerRolesStr = null;
+        $tracyDebuggerRolesStr = '';
 
-        $tooManyUsers = null;
+        $tooManyUsers = '';
 
         $tracyDebuggerRoles = $this->wire('roles')->find("permissions=tracy-debugger, name!=superuser");
         $tracyDebuggerRolesStr = $tracyDebuggerRoles->implode("|","name");
@@ -37,7 +37,7 @@ class UsersPanel extends BasePanel {
         }
         if($this->listTracyRoles) {
             $this->listTracyRoles = rtrim($this->listTracyRoles, ', ');
-        }  
+        }
 
         if($this->numNonSuperusers > 0) {
             return true;

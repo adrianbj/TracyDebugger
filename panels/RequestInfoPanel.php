@@ -764,6 +764,23 @@ class RequestInfoPanel extends BasePanel {
         }
 
 
+        // Redirect Info
+        if(in_array('redirectInfo', $panelSections) && \TracyDebugger::$redirectInfo) {
+            $redirectInfo = '
+            <table>';
+            foreach(\TracyDebugger::$redirectInfo as $k => $v) {
+                $redirectInfo .= '
+                    <tr>
+                        <td>'.$k.'</td>
+                        <td>'.Dumper::toHtml($v).'</td>
+                    </tr>
+                ';
+            }
+            $redirectInfo .= '</table>
+            ';
+        }
+
+
         // Input GET, POST, & COOKIE
         if(in_array('inputGet', $panelSections) || in_array('inputPost', $panelSections) || in_array('inputCookie', $panelSections)) {
             $inputTypes = array();

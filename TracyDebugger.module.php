@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.25.3',
+            'version' => '4.25.4',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -91,6 +91,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $hideInAdmin = array('validator', 'templateResources', 'templatePath');
     public static $superUserOnlyPanels = array('console', 'fileEditor', 'adminer', 'terminal', 'adminTools');
     public static $pageHtml;
+    public static $redirectInfo;
     public static $processWireInfoSections = array(
         'configData' => 'Config Data',
         'versionsList' => 'Versions List',
@@ -114,6 +115,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         'templateExportCode' => 'Template Export Code',
         'fieldsListValues' => 'Field List & Values',
         'serverRequest' => 'Server Request',
+        'redirectInfo' => 'Redirect Info',
         'inputGet' => 'Input GET',
         'inputPost' => 'Input POST',
         'inputCookie' => 'Input COOKIE',
@@ -255,7 +257,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "apiExplorerShowDescription" => 1,
             "apiExplorerToggleDocComment" => null,
             "apiExplorerModuleClasses" => array(),
-            "requestInfoPanelSections" => array('moduleSettings', 'templateSettings', 'fieldSettings', 'pageInfo', 'pagePermissions', 'languageInfo', 'templateInfo', 'fieldsListValues', 'serverRequest', 'inputGet', 'inputPost', 'inputCookie', 'session', 'editLinks'),
+            "requestInfoPanelSections" => array('moduleSettings', 'templateSettings', 'fieldSettings', 'pageInfo', 'pagePermissions', 'languageInfo', 'templateInfo', 'fieldsListValues', 'serverRequest', 'redirectInfo', 'inputGet', 'inputPost', 'inputCookie', 'session', 'editLinks'),
             "processwireInfoPanelSections" => array('versionsList', 'adminLinks', 'documentationLinks', 'gotoId', 'processWireWebsiteSearch'),
             "debugModePanelSections" => array('pagesLoaded', 'modulesLoaded', 'hooks', 'databaseQueries', 'selectorQueries', 'timers', 'user', 'cache', 'autoload'),
             "diagnosticsPanelSections" => array('filesystemFolders'),
@@ -1321,6 +1323,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 foreach(array('variables', 'core', 'coreModules') as $type) {
                     self::getApiData($type);
                 }
+            });
+
+
+            // populate redirect info for Request Info panel
+            $this->wire()->addHookBefore('Session::redirect', function($event) {
+                static::$redirectInfo = Debug::backtrace()[0];
             });
 
 
