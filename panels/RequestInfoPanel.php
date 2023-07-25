@@ -525,8 +525,26 @@ class RequestInfoPanel extends BasePanel {
             </table>';
         }
 
+
+        // Redirect info
+        if(in_array('redirectInfo', $panelSections) && \TracyDebugger::$redirectInfo) {
+            $redirectInfo = '
+            <table>';
+            foreach(\TracyDebugger::$redirectInfo as $k => $v) {
+                $redirectInfo .= '
+                    <tr>
+                        <td>'.$k.'</td>
+                        <td>'.Dumper::toHtml($v).'</td>
+                    </tr>
+                ';
+            }
+            $redirectInfo .= '</table>
+            ';
+        }
+
+
         // Page permissions
-        if(in_array('pageInfo', $panelSections) && $isPwPage) {
+        if(in_array('pagePermissions', $panelSections) && $isPwPage) {
 
             $pagePermissionsLabels = array('', 'view', 'edit', 'add', 'publish', 'list', 'move', 'sort', 'delete', 'trash');
             $pagePermissionsPerms = array('viewable', 'editable', 'addable', 'publishable', 'listable', 'moveable', 'sortable', 'deleteable', 'trashable');
@@ -764,23 +782,6 @@ class RequestInfoPanel extends BasePanel {
         }
 
 
-        // Redirect Info
-        if(in_array('redirectInfo', $panelSections) && \TracyDebugger::$redirectInfo) {
-            $redirectInfo = '
-            <table>';
-            foreach(\TracyDebugger::$redirectInfo as $k => $v) {
-                $redirectInfo .= '
-                    <tr>
-                        <td>'.$k.'</td>
-                        <td>'.Dumper::toHtml($v).'</td>
-                    </tr>
-                ';
-            }
-            $redirectInfo .= '</table>
-            ';
-        }
-
-
         // Input GET, POST, & COOKIE
         if(in_array('inputGet', $panelSections) || in_array('inputPost', $panelSections) || in_array('inputCookie', $panelSections)) {
             $inputTypes = array();
@@ -865,8 +866,8 @@ class RequestInfoPanel extends BasePanel {
                     if($name == 'inputCookie') $counter = ' (' . $input_oc['cookie'] . ')';
                     if($name == 'session') $counter = ' (' . $session_oc . ')';
                     $out .= '
-                    <a href="#" rel="'.$name.'" class="tracy-toggle '.($name == 'pageInfo' && $i==0 ? '' : ' tracy-collapsed').'">'.$label.$counter.'</a>
-                    <div id="'.$name.'" '.($name == 'pageInfo' && $i==0 ? '' : ' class="tracy-collapsed"').'>'.${$name}.'</div><br />';
+                    <a href="#" rel="'.$name.'" class="tracy-toggle '.($name == 'redirectInfo' || ($name == 'pageInfo' && $i==0) ? '' : ' tracy-collapsed').'">'.$label.$counter.'</a>
+                    <div id="'.$name.'" '.($name == 'redirectInfo' || ($name == 'pageInfo' && $i==0) ? '' : ' class="tracy-collapsed"').'>'.${$name}.'</div><br />';
                     $i++;
                 }
             }
