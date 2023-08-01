@@ -252,7 +252,7 @@ class TD extends TracyDebugger {
                 else {
                     $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
                 }
-                $currentDump = $expandCollapseAll . Dumper::toHtml($panel == 'iterator' && method_exists($var, 'getIterator') ? self::humanize($var->getIterator()) : $var, $options);
+                $currentDump = $expandCollapseAll . Dumper::toHtml($panel == 'iterator' && is_object($var) && method_exists($var, 'getIterator') ? self::humanize($var->getIterator()) : $var, $options);
                 if(!isset($lastDump) || (isset($lastDump) && $currentDump !== $lastDump)) {
                 	$numTabs++;
                 	$tabs .= '<li id="'.$panel.'Tab_'.$classExt.'"' . ($i == 0 ? 'class="active"' : '') . '><a href="javascript:void(0)" onclick="toggleDumpType(this, \''.$panel.'\', '.$classExt.')">'.\TracyDebugger::$dumpPanelTabs[$panel].'</a></li>';

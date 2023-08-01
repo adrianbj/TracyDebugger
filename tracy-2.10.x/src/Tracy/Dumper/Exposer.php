@@ -23,7 +23,7 @@ final class Exposer
 		$props = self::getProperties($obj::class);
 
 		foreach (array_diff_key((array) $obj, $values) as $k => $v) {
-			$describer->addPropertyTo($value, $k, $v);
+			$describer->addPropertyTo($value, (string) $k, $v);
 		}
 
 		foreach (array_diff_key($values, $props) as $k => $v) {
@@ -239,7 +239,7 @@ final class Exposer
 		Describer $describer,
 	): void
 	{
-		foreach ($obj as $k => $v) {
+		foreach (clone $obj as $k => $v) {
 			$describer->addPropertyTo($value, (string) $k, $v);
 		}
 	}
