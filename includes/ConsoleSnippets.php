@@ -10,7 +10,7 @@ if(isset($_POST['deletesnippet']) && file_exists($snippetsPath.$_POST['snippetna
     unlink($snippetsPath.$_POST['snippetname']);
 }
 elseif(isset($_POST['snippetcode'])) {
-    file_put_contents($snippetsPath.$_POST['snippetname'], \TracyDebugger::getDataValue('consoleCodePrefix') . json_decode($_POST['snippetcode']));
+    $this->wire('files')->filePutContents($snippetsPath.$_POST['snippetname'], \TracyDebugger::getDataValue('consoleCodePrefix') . json_decode($_POST['snippetcode']));
 }
 else {
     echo str_replace(\TracyDebugger::getDataValue('consoleCodePrefix'), '', file_get_contents($snippetsPath.$_POST['snippetname']));

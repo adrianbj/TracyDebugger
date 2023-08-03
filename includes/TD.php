@@ -178,7 +178,7 @@ class TD extends TracyDebugger {
             $dumpsFile = wire('config')->paths->cache . 'TracyDebugger/dumps.json';
             $dumpsRecorderItems = file_exists($dumpsFile) ? json_decode(file_get_contents($dumpsFile), true) : array();
             array_push($dumpsRecorderItems, $dumpItem);
-            file_put_contents($dumpsFile, json_encode($dumpsRecorderItems));
+            wire('files')->filePutContents($dumpsFile, json_encode($dumpsRecorderItems));
         }
     }
 

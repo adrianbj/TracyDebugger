@@ -85,8 +85,9 @@ if(\TracyDebugger::$allowedSuperuser || \TracyDebugger::$validLocalUser || \Trac
     }
     $code = "$codePrefixes\n$code";
 
-    if(!file_put_contents($this->file, $code, LOCK_EX)) throw new WireException("Unable to write file: $this->file");
-    if($this->wire('config')->chmodFile) chmod($this->file, octdec($this->wire('config')->chmodFile));
+    if(!$this->wire('files')->filePutContents($this->file, $code, LOCK_EX)) {
+        throw new WireException("Unable to write file: $this->file");
+    }
 
     if($this->wire('input')->cookie->tracyCodeReturn != "no") {
 

@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.25.6',
+            'version' => '4.25.7',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -725,7 +725,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                         "\techo 'Sorry, there was a problem and the database could not be restored.';\n" .
                         "}";
 
-                        if(!file_put_contents($this->tracyCacheDir . 'restoremodules.php', $restoreModulesCode, LOCK_EX)) throw new WireException("Unable to write file: " . $this->tracyCacheDir . 'restoremodules.php');
+                        if(!$this->wire('files')->filePutContents($this->tracyCacheDir . 'restoremodules.php', $restoreModulesCode, LOCK_EX)) {
+                            throw new WireException("Unable to write file: " . $this->tracyCacheDir . 'restoremodules.php');
+                        }
                     }
 
                     // get array of modules that have been checked to disable
@@ -1592,8 +1594,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     // if changes to the template of the current page are submitted
                     // test
                     if($this->wire('input')->post->tracyTestTemplateCode) {
-                        if(!file_put_contents($this->tempTemplateFilename, $rawCode, LOCK_EX)) throw new WireException("Unable to write file: " . $this->tempTemplateFilename);
-                        if($this->wire('config')->chmodFile) chmod($this->tempTemplateFilename, octdec($this->wire('config')->chmodFile));
+                        if(!$this->wire('files')->filePutContents($this->tempTemplateFilename, $rawCode, LOCK_EX)) {
+                            throw new WireException("Unable to write file: " . $this->tempTemplateFilename);
+                        }
                         $p->template->filename = $this->tempTemplateFilename;
                     }
 
@@ -1610,7 +1613,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             }
                             copy($filePath, $cachePath);
 
-                            if(!file_put_contents($filePath, $rawCode, LOCK_EX)) throw new WireException("Unable to write file: " . $filePath);
+                            if(!$this->wire('files')->filePutContents($filePath, $rawCode, LOCK_EX)) {
+                                throw new WireException("Unable to write file: " . $filePath);
+                            }
                             if($this->wire('config')->chmodFile) chmod($filePath, octdec($this->wire('config')->chmodFile));
 
                             if($this->wire('input')->post->tracyTestFileCode) setcookie('tracyTestFileEditor', $this->wire('input')->post->fileEditorFilePath, time() + (10 * 365 * 24 * 60 * 60), '/');
@@ -4576,7 +4581,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $snippetsPath = $this->wire('config')->paths->site.$this->data['snippetsPath'].'/TracyDebugger/snippets/';
             if(!file_exists($snippetsPath)) wireMkdir($snippetsPath, true);
             foreach(json_decode($this->data['snippets']) as $snippet) {
-                file_put_contents($snippetsPath.$snippet->name.'.php', urldecode($snippet->code));
+                $this->wire('files')->filePutContents($snippetsPath.$snippet->name.'.php', urldecode($snippet->code));
                 touch($snippetsPath.$snippet->name.'.php', substr($snippet->modified, 0, -3));
             }
             $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
