@@ -22,7 +22,7 @@ class SlackLogger {
     }
 
     protected $endpointUrl = 'https://slack.com/api/';
-    protected $endPoint;
+    protected $endpoint;
     protected $query = [];
 
     public function message($message) {
