@@ -458,7 +458,7 @@ button.tracyCopyBtn:focus {
 pre.tracy-dump, .tracy-echo {
     background: transparent !important;
     color: #444444 !important;
-    margin: 0 0 10px 0 !important;
+    margin: 0 0 5px 0 !important;
     border: 1px solid #D2D2D2 !important;
     border-radius: 0 !important;
 }
@@ -470,6 +470,7 @@ pre.tracy-dump {
 
 .tracy-echo {
     padding: .7em !important;
+    margin-bottom: 15px !important;
     color: #444444 !important;
 }
 
@@ -479,7 +480,7 @@ td pre.tracy-dump {
 }
 
 .tracy-dump-location-container {
-    margin: 5px 5px 10px 0 !important;
+    margin: 5px 5px 15px 0 !important;
     padding: 0 0 5px 0 !important;
     font-size: 11px !important;
 }
