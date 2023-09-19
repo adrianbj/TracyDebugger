@@ -8,7 +8,7 @@ $userBarStyles = '
         z-index: '.\TracyDebugger::getDataValue("panelZindex").';
         position: fixed;
         margin: 0px !important;
-        background: '.\TracyDebugger::getDataValue("userBarBackgroundColor").';
+        background: '.(\TracyDebugger::getDataValue("userBarBackgroundColor") ? \TracyDebugger::getDataValue("userBarBackgroundColor") : 'none') .';
         padding: 1px;
         opacity: '.\TracyDebugger::getDataValue("userBarBackgroundOpacity").';
         line-height: 0;

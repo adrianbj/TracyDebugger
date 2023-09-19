@@ -65,6 +65,7 @@ class TracyExceptionsPanel extends BasePanel {
             };
 
             function clearTracyExceptionsViewer() {
+                document.getElementById("clearException").style = 'display: none !important';
                 document.getElementById("panelTitleFilePath").innerHTML = '';
                 if(document.getElementById('tracy-bs')) {
                     var bs = document.getElementById('tracy-bs');
@@ -76,6 +77,10 @@ class TracyExceptionsPanel extends BasePanel {
                 }
             }
 
+            function showUnloadButton() {
+                document.getElementById("clearException").style.display = "inline-block";
+            }
+
             tracyJSLoader.load(tracyExceptionsViewer.tracyModuleUrl + "scripts/exception-loader.js");
 
         </script>
@@ -85,7 +90,7 @@ HTML;
         $out .= '<h1>'.$this->icon.' Tracy Exceptions <span id="panelTitleFilePath" style="font-size:14px"></span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'TracyExceptionsPanel\')">+</a></span></span>
         <div class="tracy-inner">
             <div id="tracyExceptionsViewerContainer" style="height: 100%;">
-
+            <span style="float:right"><input style="display: none !important" type="submit" id="clearException" name="clearException" onclick="clearTracyExceptionsViewer()" value="Unload" /></span>
                 <div style="float: left; height: calc(100% - 38px);">
                     <div id="tracyExceptionFiles" style="padding: 0 !important; margin:0 !important; width: 512px !important; height: calc(100% - 40px) !important; overflow-y: auto; overflow-x: hidden; z-index: 1">';
                         $out .= "<div class='fe-file-tree'>";
@@ -93,7 +98,6 @@ HTML;
                         $out .= "</div>";
                     $out .= '
                         <input type="hidden" id="tracyExceptionFilePath" name="tracyExceptionFilePath" value="'.$this->tracyExceptionFile.'" />
-                        <p><input type="submit" id="clearException" name="clearException" onclick="clearTracyExceptionsViewer()" value="Clear" /></p>
                     </div>
                 </div>
                 <div id="tracyExceptionsViewerCodeContainer">
@@ -177,7 +181,7 @@ HTML;
                 $link = trim($link, '/');
                 $link = str_replace('//', '/', $link);
                 $link = str_replace($this->wire('config')->paths->root, '', $link);
-                $tree .= "<li style='padding: 3px 5px".(in_array($fileName, $this->newFiles) ? '; background: '.\TracyDebugger::COLOR_ALERT : '')."'><a".(in_array($fileName, $this->newFiles) ? ' style="color: #FFFFFF !important"' : '')." href='tracyexception://?f=$link&l=1'>$fileName</a></li>";
+                $tree .= "<li style='padding: 3px 5px".(in_array($fileName, $this->newFiles) ? '; background: '.\TracyDebugger::COLOR_ALERT : '')."'><a onclick='showUnloadButton()' ".(in_array($fileName, $this->newFiles) ? ' style="color: #FFFFFF !important"' : '')." href='tracyexception://?f=$link&l=1'>$fileName</a></li>";
 
             }
 
