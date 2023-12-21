@@ -198,6 +198,12 @@ class PageFilesPanel extends BasePanel {
             }
             else {
                 $files[$p->id] = array_slice(scandir($filesDir), 2);
+                // remove sub-directories from the list - these are likely from PW's new Page Versions folders, eg v2, v3, v4, etc
+                foreach ($files[$p->id] as $key => $link) {
+                    if(is_dir($filesDir.$link)) {
+                        unset($files[$p->id][$key]);
+                    }
+                }
             }
         }
         $p->of($p_of);

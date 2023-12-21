@@ -61,7 +61,7 @@ class AdminToolsPanel extends BasePanel {
                 $p = $this->wire('page');
             }
 
-            if($p->template != 'admin' && $p->hasChildren()) {
+            if($p->template != 'admin' && $p->hasChildren('include=all')) {
                 $i++;
                 $out .= '
                 <p>
