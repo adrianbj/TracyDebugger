@@ -1032,10 +1032,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 }
                 else {
                     Debugger::$editor = $this->data['editor'];
+                    // if no localRootPath is set read it from the ddev config
+                    if($this->data['localRootPath'] == '') {
+                        $this->data['localRootPath'] = getenv("DDEV_APPROOT");
+                    }
 
                     if($this->data['localRootPath'] != '') {
-                        $mappingReplacements[$compilerCachePath] = $this->data['localRootPath'];
-                        $mappingReplacements[$this->wire('config')->paths->root] = $this->data['localRootPath'];
+                        // make sure that localRootPath has a trailing slash on unix systems
+                        $localRootPath = $this->data['localRootPath'];
+                        if(strpos($localRootPath, "/") === 0) $localRootPath = rtrim($localRootPath, "/")."/";
+
+                        // set mapping replacements
+                        $mappingReplacements[$compilerCachePath] = $localRootPath;
+                        $mappingReplacements[$this->wire('config')->paths->root] = $localRootPath;
                     }
                     else {
                         $mappingReplacements[$compilerCachePath] = $this->wire('config')->paths->root;
