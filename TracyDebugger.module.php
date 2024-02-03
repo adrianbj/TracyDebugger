@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.25.13',
+            'version' => '4.26.0',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -377,10 +377,24 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             ksort(static::$allPanels);
         }
 
+        // merge in settings from environment variables
+        if(getenv("TRACY_EDITOR")) $this->data['editor'] = getenv("TRACY_EDITOR");
+        if(getenv("TRACY_LOCALROOTPATH")) $this->data['localRootPath'] = getenv("TRACY_LOCALROOTPATH");
+
         // merge in settings from config.php file
         if(isset($this->wire('config')->tracy) && is_array($this->wire('config')->tracy)) {
             $this->data = array_merge($this->data, $this->wire('config')->tracy);
         }
+
+        // make sure localRootPath has a trailing slash
+        if(array_key_exists("localRootPath", $this->data)) {
+            $path = $this->data['localRootPath'];
+            // only do this on unix paths
+            if(strpos($path, "/") === 0) {
+                $this->data['localRootPath'] = rtrim($path, "/") . "/";
+            }
+        }
+
         //populate for later static access to data
         self::$_data = $this;
 
@@ -3163,9 +3177,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         </p>
         ';
         if(isset($this->wire('config')->tracy) && is_array($this->wire('config')->tracy)) {
-            $fieldset->value .= '<p style="margin-top:35px"><i class="fa fa-fw fa-lg fa-exclamation-triangle"></i> You have specified various Tracy settings in <code>$config->tracy</code> that override settings here.</p>';
+            // merge ENV variables
+            $conf = array_merge([
+                'editor' => getenv("TRACY_EDITOR"),
+                'localRootPath' => getenv("TRACY_LOCALROOTPATH"),
+            ], $this->wire('config')->tracy);
+
+            $fieldset->value .= '<p style="margin-top:35px"><i class="fa fa-fw fa-lg fa-exclamation-triangle"></i> You have specified various Tracy settings in <code>$config->tracy</code> or environment variables that override settings here.</p>';
             $fieldset->value .= '<table class="uk-table uk-table-small uk-table-striped uk-width-1-2@m"><head><tr><th>Setting</th><th>Value</th></tr>';
-            foreach($this->wire('config')->tracy as $k => $v) {
+            foreach($conf as $k => $v) {
                 if($v === true) {
                     $v = 'true';
                 }
@@ -3175,6 +3195,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $fieldset->value .= '<tr><td>'.$k.'</td><td>'.$v.'</td></tr>';
             }
             $fieldset->value .= '</table>';
+            $fieldset->value .= '<div><small>ENV Variables: TRACY_EDITOR, TRACY_LOCALROOTPATH</small></div>';
         }
 
         $wrapper->add($fieldset);
