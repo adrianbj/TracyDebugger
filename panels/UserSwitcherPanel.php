@@ -94,7 +94,7 @@ class UserSwitcherPanel extends BasePanel {
                             $selectableUsers = $this->wire('users')->find('roles='.implode('|', \TracyDebugger::getDataValue('userSwitcherIncluded')));
                         }
                         else {
-                            $selectableUsers = $this->wire('users');
+                            $selectableUsers = $this->wire('users')->find('');
                         }
 
                         if(count($selectableUsers) > 10) {
@@ -108,7 +108,8 @@ class UserSwitcherPanel extends BasePanel {
 HTML;
                         }
 
-                        foreach($selectableUsers as $u) {
+                        foreach($selectableUsers->sort('name') as $u) {
+                            if($u->hasStatus('unpublished')) continue;
                             if(count($u->roles)>1) $out .= '<option id="user_'.$u->id.'" value="'.$u->name.'" style="padding: 2px; ' . ($this->wire('user')->name === $u->name ? 'background:'.TracyDebugger::COLOR_WARN.'; color: #FFFFFF;" selected="selected"' : '"') . '>'.$u->name.'</option>';
                         }
                 $out .= '

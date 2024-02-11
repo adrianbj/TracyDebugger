@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.25.13',
+            'version' => '4.25.14',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -554,20 +554,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
 
             if(in_array('debugMode', static::$showPanels)) {
-                // Selectors for Debug Mode panel
+                // selectors for Debug Mode panel
                 $this->wire()->addHookBefore('PageFinder::getQuery', null, function($event) {
                     $this->timerkey = Debug::timer();
                 });
                 $this->wire()->addHookAfter('PageFinder::getQuery', null, function($event) {
                     $event->setArgument(2, Debug::timer($this->timerkey));
 
-                    //
-                    // Add backtrace to allow tracking of caller
-                    //
+                    // add backtrace to allow tracking of caller
                     $trace_depth = 3;
                     $trace = Debug::backtrace();
 
-                    // Filter out expected admin sources...
+                    // filter out expected admin sources...
                     $filtered_trace = array_filter($trace, function($v) {
                         return
                             !str_starts_with($v['file'], '/wire/') &&
@@ -575,9 +573,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             ;
                     });
 
-                    // If there are any paths left in the trace, prepare a shorthand listing...
+                    // if there are any paths left in the trace, prepare a shorthand listing...
                     if (!empty($filtered_trace)) {
-
                         $first_idx = array_keys($filtered_trace)[0];
                         $trace = array_slice($trace, $first_idx, $trace_depth);
                         $filtered_trace = array_reduce($filtered_trace, function($carry, $v) use (&$first_idx) {
@@ -586,7 +583,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             return $carry;
                         }, '');
                         $event->backtrace = $filtered_trace;
-                    } else {
+                    }
+                    else {
                         $event->backtrace = '';
                     }
 
