@@ -1893,8 +1893,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     protected function addEnableButton($event) {
 
-        $execution_time_tooltip = "Execution Time: ".number_format((microtime(true) - $this->time) * 1000, 1, '.', "\u{202f}")." ms";
-
         // DON'T add comments to injected code below because it breaks my simple minify() function
         // if Tracy temporarily toggled disabled, add enable icon link
         $enableButton = '
@@ -1921,7 +1919,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 location.reload();
             }
         </script>
-        <div id="TracyEnableButton" uk-tooltip="title: Enable Tracy<br />'.$execution_time_tooltip.'" title="Enable Tracy&#10;'.$execution_time_tooltip.'" onclick="enableTracy()">
+        <div id="TracyEnableButton" title="Enable Tracy | '.number_format((microtime(true) - $this->time) * 1000, 1, '.', "\u{202f}").' ms" onclick="enableTracy()" uk-tooltip>
             <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
                  width="16px" height="16.6px" viewBox="199.6 129.9 16 16.6" enable-background="new 199.6 129.9 16 16.6" xml:space="preserve">
             <path fill="'.self::COLOR_NORMAL.'" d="M215.4,139.4c-0.1-0.1-0.3-0.2-0.4-0.2h-1v0c0-0.4-0.1-0.8-0.1-1.2c-0.1-0.7-0.4-1.4-0.8-2l1.5-1.5
