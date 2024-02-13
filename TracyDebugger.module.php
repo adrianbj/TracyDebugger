@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.25.15',
+            'version' => '4.25.16',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -571,8 +571,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     // filter out expected admin sources...
                     $filtered_trace = array_filter($trace, function($v) {
                         return
-                            !str_starts_with($v['file'], '/wire/') &&
-                            !str_starts_with($v['file'], '/site/assets/cache/')
+                            (strpos($v['file'], '/wire/') !== 0) &&
+                            (strpos($v['file'], '/site/assets/cache/') !== 0)
                             ;
                     });
 
