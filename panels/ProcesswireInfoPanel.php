@@ -257,6 +257,7 @@ HTML;
                 $versionsDetails['GD Settings']['items']['JPG'] = (isset($gd['JPEG Support']) ? $gd['JPEG Support'] : false);
                 $versionsDetails['GD Settings']['items']['PNG'] = (isset($gd['PNG Support']) ? $gd['PNG Support'] : false);
                 $versionsDetails['GD Settings']['items']['WebP'] = (isset($gd['WebP Support']) ? $gd['WebP Support'] : false);
+                $versionsDetails['GD Settings']['items']['AVIF'] = (isset($gd['AVIF Support']) ? $gd['AVIF Support'] : false);
             }
 
             if(class_exists('\Imagick')) {
@@ -272,6 +273,7 @@ HTML;
                 $versionsDetails['iMagick Settings']['items']['SVG'] = (in_array('SVG', $im) ? 1 : false);
                 $versionsDetails['iMagick Settings']['items']['PDF'] = (in_array('PDF', $im) ? 1 : false);
                 $versionsDetails['iMagick Settings']['items']['WebP'] = (in_array('WEBP', $im) ? 1 : false);
+                $versionsDetails['iMagick Settings']['items']['AVIF'] = (in_array('AVIF', $im) ? 1 : false);
             }
 
             $versionsDetails['Server Settings']['items']['EXIF Support'] = (function_exists('exif_read_data') ? '1' : false);
