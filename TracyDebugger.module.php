@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.25.18',
+            'version' => '4.25.19',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -2901,12 +2901,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         } else if(isset($_SERVER['REQUEST_URI'])) {
             // page not yet available, attempt to pull URL from request uri
             $info = parse_url($_SERVER['REQUEST_URI']);
-            $parts = explode('/', $info['path']);
-            $charset = $config->pageNameCharset;
-            $i = 0;
-            foreach($parts as $i => $part) {
-                if($i > 0) $url .= "/";
-                $url .= ($charset === 'UTF8' ? $sanitizer->pageNameUTF8($part) : $sanitizer->pageName($part, false));
+            if(isset($info['path'])) {
+                $parts = explode('/', $info['path']);
+                $charset = $config->pageNameCharset;
+                $i = 0;
+                foreach($parts as $i => $part) {
+                    if($i > 0) $url .= "/";
+                    $url .= ($charset === 'UTF8' ? $sanitizer->pageNameUTF8($part) : $sanitizer->pageName($part, false));
+                }
             }
             if(isset($info['path']) && !empty($info['path']) && substr($info['path'], -1) == '/') {
                 $url = rtrim($url, '/') . '/'; // trailing slash
