@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.25.19',
+            'version' => '4.25.20',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -564,31 +564,33 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $this->wire()->addHookAfter('PageFinder::getQuery', null, function($event) {
                     $event->setArgument(2, Debug::timer($this->timerkey));
 
-                    // add backtrace to allow tracking of caller
-                    $trace_depth = 3;
-                    $trace = Debug::backtrace();
+                    if(method_exists('\ProcessWire\Debug', 'backtrace')) {
+                        // add backtrace to allow tracking of caller
+                        $trace_depth = 3;
+                        $trace = Debug::backtrace();
 
-                    // filter out expected admin sources...
-                    $filtered_trace = array_filter($trace, function($v) {
-                        return
-                            (strpos($v['file'], '/wire/') !== 0) &&
-                            (strpos($v['file'], '/site/assets/cache/') !== 0)
-                            ;
-                    });
+                        // filter out expected admin sources...
+                        $filtered_trace = array_filter($trace, function($v) {
+                            return
+                                (strpos($v['file'], '/wire/') !== 0) &&
+                                (strpos($v['file'], '/site/assets/cache/') !== 0)
+                                ;
+                        });
 
-                    // if there are any paths left in the trace, prepare a shorthand listing...
-                    if (!empty($filtered_trace)) {
-                        $first_idx = array_keys($filtered_trace)[0];
-                        $trace = array_slice($trace, $first_idx, $trace_depth);
-                        $filtered_trace = array_reduce($filtered_trace, function($carry, $v) use (&$first_idx) {
-                            $carry .= "\n[$first_idx] " . $v['file'] . ' ' . $v['call'];
-                            $first_idx++;
-                            return $carry;
-                        }, '');
-                        $event->backtrace = $filtered_trace;
-                    }
-                    else {
-                        $event->backtrace = '';
+                        // if there are any paths left in the trace, prepare a shorthand listing...
+                        if (!empty($filtered_trace)) {
+                            $first_idx = array_keys($filtered_trace)[0];
+                            $trace = array_slice($trace, $first_idx, $trace_depth);
+                            $filtered_trace = array_reduce($filtered_trace, function($carry, $v) use (&$first_idx) {
+                                $carry .= "\n[$first_idx] " . $v['file'] . ' ' . $v['call'];
+                                $first_idx++;
+                                return $carry;
+                            }, '');
+                            $event->backtrace = $filtered_trace;
+                        }
+                        else {
+                            $event->backtrace = '';
+                        }
                     }
 
                     static::$pageFinderQueries[] = $event;
