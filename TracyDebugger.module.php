@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.25.20',
+            'version' => '4.25.21',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1352,9 +1352,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
             // populate redirect info for Request Info panel
-            $this->wire()->addHookBefore('Session::redirect', function($event) {
-                static::$redirectInfo = Debug::backtrace()[0];
-            });
+            if(method_exists('\ProcessWire\Debug', 'backtrace')) {
+                $this->wire()->addHookBefore('Session::redirect', function($event) {
+                    static::$redirectInfo = Debug::backtrace()[0];
+                });
+            }
 
 
             // MAIL INTERCEPTOR
