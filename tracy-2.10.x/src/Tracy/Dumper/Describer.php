@@ -338,7 +338,7 @@ final class Describer
 						$location = $item;
 						continue;
 					}
-				} catch (\ReflectionException $e) {
+				} catch (\ReflectionException) {
 				}
 			}
 

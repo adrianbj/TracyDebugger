@@ -485,7 +485,7 @@ class BlueScreen
 				try {
 					new \ReflectionGenerator($obj);
 					$generators[spl_object_id($obj)] = $obj;
-				} catch (\ReflectionException $e) {
+				} catch (\ReflectionException) {
 				}
 			} elseif ($obj instanceof \Fiber && $obj->isStarted() && !$obj->isTerminated()) {
 				$fibers[spl_object_id($obj)] = $obj;
@@ -493,13 +493,10 @@ class BlueScreen
 		};
 
 		foreach ($this->fibers as $k => $v) {
-			$add($this->fibers instanceof \WeakMap ? $k : $v);
+			$add($k);
 		}
 
-		if (PHP_VERSION_ID >= 80000) {
-			Helpers::traverseValue($object, $add);
-		}
-
+		Helpers::traverseValue($object, $add);
 		return [$generators, $fibers];
 	}
 }

@@ -105,7 +105,7 @@ class Helpers
 				isset($item['function'])
 				&& $item['function'] === end($m)
 				&& isset($item['class']) === isset($m[1])
-				&& (!isset($item['class']) || $m[0] === '*' || is_a($item['class'], $m[0], true))
+				&& (!isset($item['class']) || $m[0] === '*' || is_a($item['class'], $m[0], allow_string: true))
 			) {
 				$index = $i;
 				return $item;
