@@ -1,9 +1,42 @@
+.adminerPwLogo {
+	float:left;
+    padding: 13px 0 0 10px;
+}
+
+html.framed .adminerPwLogo {
+    display: none;
+}
+
 .logout input[type=submit] {
 	display: none !important;
 }
 
-.adminerPwLogo {
-	display: inline-block;
-	float:left;
-    padding: 13px 0 0 10px;
+
+#menu h1 {
+	border: 0;
+	padding: 0;
+	background: none !important;
+}
+
+h1 #h1 {
+	background: none !important;
+	text-indent: 10px !important;
+	padding-top: 10px !important;
+	font-size: 1.5em;
+}
+
+#version, .version {
+	top: -15px !important;
+}
+
+#dbs {
+	display: none;
+}
+
+a[href*="&sql="]::before {
+    content: "✎" !important;
+}
+
+.copy-to-clipboard::before {
+	content: "" !important;
 }
