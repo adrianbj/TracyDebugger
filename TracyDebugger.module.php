@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.26.2',
+            'version' => '4.26.3',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1162,7 +1162,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             </svg>
                             ';
 
-                            if(is_iterable($p->$f) && $p->$f->count > 1) {
+                            if(is_iterable($p->$f) && ((is_array($p->$f) && count($p->$f) > 1) || (!is_array($p->$f) && $p->$f->count > 1))) {
                                 $adminerQuery = 'select=field_'.$f->name.'&columns%5B0%5D%5Bfun%5D=&columns%5B0%5D%5Bcol%5D=&where%5B0%5D%5Bcol%5D=pages_id&where%5B0%5D%5Bop%5D=%3D&where%5B0%5D%5Bval%5D='.$p->id.'&where%5B01%5D%5Bcol%5D=&where%5B01%5D%5Bop%5D=%3D&where%5B01%5D%5Bval%5D=&order%5B0%5D';
                             }
                             else {
