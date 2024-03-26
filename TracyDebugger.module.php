@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.26.1',
+            'version' => '4.26.2',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -253,6 +253,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "linksNewTab" => null,
             "pWInfoPanelLinksNewTab" => null,
             "customPWInfoPanelLinks" => array(11, 16, 22, 21, 29, 30, 31, 304),
+            "adminerThemeColor" => 'blue',
+            "adminerEditFieldLink" => 1,
+            "adminerJsonMaxLevel" => 3,
+            "adminerJsonInTable" => 1,
+            "adminerJsonInEdit" => 1,
+            "adminerJsonMaxTextLength" => 200,
             "captainHookShowDescription" => 1,
             "captainHookToggleDocComment" => null,
             "apiExplorerShowDescription" => 1,
@@ -436,7 +442,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
 
         // adminer iframe
-        if(strpos(self::inputUrl(true), 'adminer') !== false) $this->earlyExit = true;
+        if(strpos(self::inputUrl(true), 'adminer-renderer') !== false) $this->earlyExit = true;
         // terminal iframe
         if(strpos(self::inputUrl(true), 'terminal') !== false) $this->earlyExit = true;
 
@@ -1127,6 +1133,54 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 </style>
                 ';
 
+                // add Adminer links to fields in Page Edit
+                if($this->data['adminerEditFieldLink'] && $this->wire('modules')->isInstalled('ProcessTracyAdminer') && in_array('adminer', static::$showPanels)) {
+
+                    $this->addHookAfter('Inputfield::render, Inputfield::renderValue', function($event) {
+                        $inputfield = $event->object;
+                        $p = $inputfield->hasPage;
+
+                        if(!$p || !$p->id || $inputfield->type === 'hidden') {
+                            return;
+                        }
+
+                        $markup = $event->return;
+
+                        if($f = $inputfield->hasField) {
+
+                            if(!is_object($f)) {
+                                return;
+                            }
+
+                            if(strpos($f->type, "FieldtypeFieldset") === 0) {
+                                return;
+                            }
+
+                            $adminerIcon = '
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="304.4 284.4 11.7 16">
+                                <path fill="#2C3D4F" d="M304.4 294.8v2.3c.3 1.3 2.7 2.3 5.8 2.3s5.7-1 5.9-2.3v-2.3c-1 .8-3.1 1.4-6 1.4-2.8 0-4.8-.6-5.7-1.4zM310.7 291.9h-1.2c-1.7-.1-3.1-.3-4-.7-.4-.2-.9-.4-1.1-.6v2.4c.7.8 2.9 1.5 5.8 1.5 3 0 5.1-.7 5.8-1.5v-2.4c-.3.2-.7.5-1.1.6-1.1.4-2.5.6-4.2.7zM310.1 285.6c-3.5 0-5.5 1.1-5.8 2.3v.7c.7.8 2.9 1.5 5.8 1.5s5.1-.7 5.8-1.5v-.6c-.3-1.3-2.3-2.4-5.8-2.4z"/>
+                            </svg>
+                            ';
+
+                            if(is_iterable($p->$f) && $p->$f->count > 1) {
+                                $adminerQuery = 'select=field_'.$f->name.'&columns%5B0%5D%5Bfun%5D=&columns%5B0%5D%5Bcol%5D=&where%5B0%5D%5Bcol%5D=pages_id&where%5B0%5D%5Bop%5D=%3D&where%5B0%5D%5Bval%5D='.$p->id.'&where%5B01%5D%5Bcol%5D=&where%5B01%5D%5Bop%5D=%3D&where%5B01%5D%5Bval%5D=&order%5B0%5D';
+                            }
+                            else {
+                                $adminerQuery = 'edit=field_'.$f->name.'&where%5Bpages_id%5D='.$p->id;
+                            }
+
+                            $link = '';
+                            // don't add link again unless it's a repeater field
+                            if(strpos($markup, 'adminer_EditFieldLink') === false || $inputfield instanceof InputfieldRepeater) {
+                                $link = '<span style="display: inline-block; width: 10px; height: 10px; float: right; margin-bottom: 20px"><a class="adminer_EditFieldLink" style="cursor:pointer" title="Edit in Adminer" style="padding-bottom:5px"  href="adminer://?'.$adminerQuery.'">'.$adminerIcon.'</a></span>';
+                            }
+
+                            $event->return = $markup . $link;
+                        }
+                    });
+
+                }
+
                 // override Tracy core default zIndex for panels
                 // add settings link on double-click to "TRACY" icon
                 // replace "close" icon link with "hide" and "unhide" links
@@ -1136,7 +1190,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                         $event->page->addHookAfter('render', function($event) {
                             if(!$event->return) return;
 
-                            $event->return = str_replace("</body>", "<script>window.TracyMaxAjaxRows = ".$this->data['maxAjaxRows']."; window.TracyPanelZIndex = " . ($this->data['panelZindex'] + 1) . ";</script></body>", $event->return);
+                            $adminerModuleId = $this->wire('modules')->getModuleID("ProcessTracyAdminerRenderer");
+                            $adminerUrl = $this->wire('pages')->get("process=$adminerModuleId")->url;
+
+                            $event->return = str_replace("</body>", "<script>window.AdminerUrl = '".$adminerUrl."'; window.TracyMaxAjaxRows = ".$this->data['maxAjaxRows']."; window.TracyPanelZIndex = " . ($this->data['panelZindex'] + 1) . ";</script></body>", $event->return);
 
                             $tracyErrors = Debugger::getBar()->getPanel('Tracy:errors');
                             if(!is_array($tracyErrors->data) || count($tracyErrors->data) === 0) {
@@ -3965,9 +4022,62 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $fieldset->label = __('Adminer panel', __FILE__);
             $wrapper->add($fieldset);
 
-            $f = $this->wire('modules')->get("InputfieldMarkup");
-            $f->attr('name', 'adminerSettings');
-            $f->value = 'Adminer settings are available <a href="'.$this->wire('config')->urls->admin.'module/edit?name=ProcessTracyAdminer">here</a>.';
+            $f = $this->wire('modules')->get("InputfieldSelect");
+            $f->attr('name', 'adminerThemeColor');
+            $f->label = __('Theme color', __FILE__);
+            $f->addOption('blue', 'Blue');
+            $f->addOption('green', 'Green');
+            $f->addOption('orange', 'Orange');
+            $f->required = true;
+            $f->columnWidth = 50;
+            if($this->data['adminerThemeColor']) $f->attr('value', $this->data['adminerThemeColor']);
+            $fieldset->add($f);
+
+            $f = $this->wire('modules')->get("InputfieldCheckbox");
+            $f->attr('name', 'adminerEditFieldLink');
+            $f->label = __('Field edit links', __FILE__);
+            $f->description = __('Add adminer links to each field in the page edit interface.', __FILE__);
+            $f->notes = __('Will only appear when Adminer panel is enabled', __FILE__);
+            $f->columnWidth = 50;
+            $f->attr('checked', $this->data['adminerEditFieldLink'] == '1' ? 'checked' : '');
+            $fieldset->add($f);
+
+            $f = $this->wire('modules')->get("InputfieldText");
+            $f->attr('name', 'adminerJsonMaxLevel');
+            $f->label = __('JSON max level', __FILE__);
+            $f->description = __('Max. level in recursion. 0 means no limit.', __FILE__);
+            $f->notes = __('Default: 3', __FILE__);
+            $f->required = true;
+            $f->columnWidth = 25;
+            if($this->data['adminerJsonMaxLevel']) $f->attr('value', $this->data['adminerJsonMaxLevel']);
+            $fieldset->add($f);
+
+            $f = $this->wire('modules')->get("InputfieldCheckbox");
+            $f->attr('name', 'adminerJsonInTable');
+            $f->label = __('JSON In Table', __FILE__);
+            $f->description = __('Whether apply JSON preview in selection table.', __FILE__);
+            $f->notes = __('Default: true', __FILE__);
+            $f->columnWidth = 25;
+            $f->attr('checked', $this->data['adminerJsonInTable'] == '1' ? 'checked' : '');
+            $fieldset->add($f);
+
+            $f = $this->wire('modules')->get("InputfieldCheckbox");
+            $f->attr('name', 'adminerJsonInEdit');
+            $f->label = __('JSON In Edit', __FILE__);
+            $f->description = __('Whether apply JSON preview in edit form.', __FILE__);
+            $f->notes = __('Default: true', __FILE__);
+            $f->columnWidth = 25;
+            $f->attr('checked', $this->data['adminerJsonInEdit'] == '1' ? 'checked' : '');
+            $fieldset->add($f);
+
+            $f = $this->wire('modules')->get("InputfieldText");
+            $f->attr('name', 'adminerJsonMaxTextLength');
+            $f->label = __('JSON max text length', __FILE__);
+            $f->description = __('Maximal length of string values. Longer texts will be truncated with ellipsis sign. 0 means no limit.', __FILE__);
+            $f->notes = __('Default: 200', __FILE__);
+            $f->required = true;
+            $f->columnWidth = 25;
+            if($this->data['adminerJsonMaxTextLength']) $f->attr('value', $this->data['adminerJsonMaxTextLength']);
             $fieldset->add($f);
         }
 
@@ -4614,6 +4724,27 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
             unset($configData['snippets']);
             $this->wire('modules')->saveModuleConfigData($this, $configData);
+        }
+
+        // make sure the ProcessTracyAdminerRenderer module is installed
+        if($this->wire('modules')->isInstalled('ProcessTracyAdminer') && !$this->wire('modules')->isInstalled('ProcessTracyAdminerRenderer')) {
+            $this->wire('modules')->install('ProcessTracyAdminerRenderer');
+        }
+
+        // initial save of default data so it's available to Adminer in case settings aren't manually saved
+        $data = wire('modules')->getModuleConfigData('TracyDebugger');
+        if(!isset($data['adminerThemeColor'])) {
+            $this->wire('modules')->saveModuleConfigData($this, $this->data);
+        }
+
+    }
+
+
+    public function ___install() {
+        // initial save of default data so it's available to Adminer in case settings aren't manually saved
+        $data = wire('modules')->getModuleConfigData('TracyDebugger');
+        if(!isset($data['adminerThemeColor'])) {
+            $this->wire('modules')->saveModuleConfigData($this, $this->data);
         }
     }
 

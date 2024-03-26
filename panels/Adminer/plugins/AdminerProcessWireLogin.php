@@ -23,7 +23,7 @@ class AdminerProcessWireLogin {
     }
 
     function name() {
-        $pwLink .= '
+        $pwLink = '
         <a class="adminerPwLogo" href="'.$this->pwAdminUrl.'" title="Return to PW admin">
             <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
                     width="16px" height="16.1px" viewBox="80 80.1 16 16.1" enable-background="new 80 80.1 16 16.1" xml:space="preserve">
