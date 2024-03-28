@@ -23,6 +23,7 @@ class AdminerPanel extends BasePanel {
 
     public function getPanel() {
 
+        $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
         $adminerModuleId = $this->wire('modules')->getModuleID("ProcessTracyAdminerRenderer");
         $adminerUrl = $this->wire('pages')->get("process=$adminerModuleId")->url;
         $contextLink = '';
@@ -121,6 +122,21 @@ class AdminerPanel extends BasePanel {
                 }
             }
         }
+
+
+        $out = <<< HTML
+        <script>
+
+            var tracyAdminer = {
+                tracyModuleUrl: "$tracyModuleUrl",
+            };
+
+            tracyJSLoader.load(tracyAdminer.tracyModuleUrl + "scripts/adminer.js");
+
+        </script>
+
+HTML;
+
 
         $out = '
         <h1>' . $this->icon . ' Adminer</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'AdminerPanel\')">+</a></span></span>';
