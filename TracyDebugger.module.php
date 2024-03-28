@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.26.5',
+            'version' => '4.26.6',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1101,7 +1101,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 if(in_array('fileEditor', static::$showPanels)) {
                     // this needs to be loaded here (not just in File Editor panel) so that links
                     // will work even if File Editor panel hasn't been opened yet
-                    Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/file-editor.js';
                     Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/php-file-tree/php_file_tree.js';
                 }
 
@@ -1109,12 +1108,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     // this needs to be loaded here (not just in Tracy Exceptions panel) so that links
                     // will work even if Tracy Exceptions panel hasn't been opened yet
                     Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/exception-loader.js';
-                }
-
-                if(in_array('adminer', static::$showPanels)) {
-                    // this needs to be loaded here (not just in Adminer panel) so that links
-                    // will work even if Adminer panel hasn't been opened yet
-                    Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/adminer.js';
                 }
 
                 if($this->showServerTypeIndicator()) {
@@ -1259,6 +1252,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 Debugger::$customBodyStr .= '
                     <div id="tracy-show-button" title="Show Tracy" onclick="unhideBar()">&#8689;</div>
                 ';
+
+                if(in_array('fileEditor', static::$showPanels)) {
+                    Debugger::$customJsStr .= file_get_contents($this->wire('config')->paths->TracyDebugger.'scripts/file-editor.js');
+                }
+                if(in_array('adminer', static::$showPanels)) {
+                    Debugger::$customJsStr .= file_get_contents($this->wire('config')->paths->TracyDebugger.'scripts/adminer.js');
+                }
 
                 Debugger::$customJsStr .= '
                     function addHideLink() {
