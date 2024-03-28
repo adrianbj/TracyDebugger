@@ -4,8 +4,11 @@ function tracyResizePanel(panel) {
     tracyPanel.elem.classList.add('tracy-panel-resized');
     tracyPanel.elem.dataset.tracyContent = true; // hack to satisy condition in Tracy's restorePosition() method
 
-    var maxPanelWidth = window.clientHeight < window.scrollHeight ? 'calc(100vw - 15px)' : '100vw';
-    var maxPanelHeight = 'calc(100vh - 44px)';
+    let vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
+    let vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
+
+    var maxPanelWidth = (window.clientHeight < window.scrollHeight ? (vw - 15) : vw) + 'px';
+    var maxPanelHeight = (vh - 44) + 'px';
 
     if(panel.style.width == maxPanelWidth && panel.style.height == maxPanelHeight) {
         tracyPanel.restorePosition();
