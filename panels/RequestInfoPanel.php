@@ -719,6 +719,35 @@ class RequestInfoPanel extends BasePanel {
         }
 
 
+        // Page meta
+        if(in_array('pageMeta', $panelSections) && $isPwPage) {
+
+            $pageMetaColumns = array('name', 'Adminer', 'value');
+
+            if(!$adminerAvailable) {
+                if (($key = array_search('Adminer', $pageMetaColumns)) !== false) {
+                    unset($pageMetaColumns[$key]);
+                }
+            }
+
+            $pageMeta = $this->sectionHeader($pageMetaColumns);
+
+            $keys = $p->meta()->getArray();
+            if($keys) {
+                foreach($keys as $key => $value) {
+                    $options = array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true);
+                    if(defined('\Tracy\Dumper::ITEMS')) array_push($options, array(Dumper::ITEMS => \TracyDebugger::getDataValue('maxItems')));
+                    $pageMeta .= "\n<tr>" .
+                        "<td>$key</td>";
+                        if($adminerAvailable) $pageMeta .= '<td><a title="Edit in Adminer" href="adminer://?edit=pages_meta&where%5Bsource_id%5D='.$p->id.'&where%5Bname%5D='.$key.'">'.$adminerIcon.'</a></td>';
+                        $pageMeta .= "<td>".Dumper::toHtml($value, array(Dumper::LIVE => true, Dumper::DEBUGINFO => \TracyDebugger::getDataValue('debugInfo'), Dumper::DEPTH => 99, Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false))."</td>" .
+                    "</tr>";
+                }
+            }
+            $pageMeta .= $sectionEnd;
+        }
+
+
         // Fields List & Values
         if(in_array('fieldsListValues', $panelSections) && $isPwPage) {
 
