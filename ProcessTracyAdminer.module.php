@@ -22,7 +22,24 @@ class ProcessTracyAdminer extends Process implements Module {
     }
 
     public function ___execute() {
-        return '<iframe src="'.str_replace('/adminer/', '/adminer-renderer/', wire('input')->url(true)).'" style="width:100%; height:calc(100vh - 25px); border: none; padding:0; margin:0;"></iframe>';
+
+        $data = wire('modules')->getModuleConfigData('TracyDebugger');
+
+        if($data['adminerStandAlone']) {
+            return $this->wire('modules')->get('ProcessTracyAdminerRenderer')->execute();
+        }
+        else {
+            // push querystring to parent window
+            return '
+            <script>
+                window.addEventListener("message", function(event) {
+                    if(event.data != "") {
+                        history.pushState(null, null, "?"+event.data);
+                    }
+                });
+            </script>
+            <iframe src="'.str_replace('/adminer/', '/adminer-renderer/', $_SERVER['REQUEST_URI']).'" style="width:100%; height:calc(100vh - 25px); border: none; padding:0; margin:0;"></iframe>';
+        }
     }
 
 }

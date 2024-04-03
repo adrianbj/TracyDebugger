@@ -1,5 +1,5 @@
 function openAdminer(queryStr) {
-    var url = window.AdminerUrl + "?" + queryStr;
+    var url = window.AdminerRendererUrl + "?" + queryStr;
     if(document.getElementById("tracy-debug-panel-AdminerPanel").classList.contains("tracy-mode-window")) {
         document.getElementById('adminer-iframe').src = url;
     }
@@ -18,7 +18,6 @@ function openAdminer(queryStr) {
         }
     }
 }
-
 document.body.addEventListener("click", function(e) {
     if(e.target) {
         var curEl = e.target;
@@ -28,7 +27,11 @@ document.body.addEventListener("click", function(e) {
         if(curEl && curEl.href && curEl.href.indexOf("adminer://") !== -1) {
             e.preventDefault();
             var queryStr = curEl.href.split('?')[1];
-            openAdminer(queryStr);
+            if (e.shiftKey) {
+                window.location = curEl.href.replace("adminer://", window.AdminerUrl);
+            } else {
+                openAdminer(queryStr);
+            }
         }
     }
 });

@@ -23,8 +23,8 @@ class AdminerPanel extends BasePanel {
 
     public function getPanel() {
 
-        $adminerModuleId = $this->wire('modules')->getModuleID("ProcessTracyAdminerRenderer");
-        $adminerUrl = $this->wire('pages')->get("process=$adminerModuleId")->url;
+        $adminerRendererModuleId = $this->wire('modules')->getModuleID("ProcessTracyAdminerRenderer");
+        $adminerRendererUrl = $this->wire('pages')->get("process=$adminerRendererModuleId")->url;
         $contextLink = '';
 
         if(\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
@@ -128,7 +128,7 @@ class AdminerPanel extends BasePanel {
         if($this->wire('modules')->isInstalled("ProcessTracyAdminer")) {
             $out .= '
             <div class="tracy-inner" style="padding: 0 !important">
-                <iframe id="adminer-iframe" src="'.$adminerUrl.'?iframe=1'.$contextLink.'" style="width:100%; height:calc(100% - 5px); border: none; padding:0; margin:0;"></iframe>';
+                <iframe id="adminer-iframe" src="'.$adminerRendererUrl.'?iframe=1'.$contextLink.'" style="width:100%; height:calc(100% - 5px); border: none; padding:0; margin:0;"></iframe>';
         }
         else {
             $out .= '

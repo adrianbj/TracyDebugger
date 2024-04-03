@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.26.9',
+            'version' => '4.26.10',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -254,8 +254,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "linksNewTab" => null,
             "pWInfoPanelLinksNewTab" => null,
             "customPWInfoPanelLinks" => array(11, 16, 22, 21, 29, 30, 31, 304),
-            "adminerThemeColor" => 'blue',
             "adminerEditFieldLink" => 1,
+            "adminerStandAlone" => null,
+            "adminerThemeColor" => 'blue',
             "adminerJsonMaxLevel" => 3,
             "adminerJsonInTable" => 1,
             "adminerJsonInEdit" => 1,
@@ -1148,10 +1149,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                         $event->page->addHookAfter('render', function($event) {
                             if(!$event->return) return;
 
-                            $adminerModuleId = $this->wire('modules')->getModuleID("ProcessTracyAdminerRenderer");
+                            $adminerRendererModuleId = $this->wire('modules')->getModuleID("ProcessTracyAdminerRenderer");
+                            $adminerRendererUrl = $this->wire('pages')->get("process=$adminerRendererModuleId")->url;
+                            $adminerModuleId = $this->wire('modules')->getModuleID("ProcessTracyAdminer");
                             $adminerUrl = $this->wire('pages')->get("process=$adminerModuleId")->url;
 
-                            $event->return = str_replace("</body>", "<script>window.AdminerUrl = '".$adminerUrl."'; window.TracyMaxAjaxRows = ".$this->data['maxAjaxRows']."; window.TracyPanelZIndex = " . ($this->data['panelZindex'] + 1) . ";</script></body>", $event->return);
+                            $event->return = str_replace("</body>", "<script>window.AdminerUrl = '".$adminerUrl."'; window.AdminerRendererUrl = '".$adminerRendererUrl."'; window.TracyMaxAjaxRows = ".$this->data['maxAjaxRows']."; window.TracyPanelZIndex = " . ($this->data['panelZindex'] + 1) . ";</script></body>", $event->return);
 
                             $tracyErrors = Debugger::getBar()->getPanel('Tracy:errors');
                             if(!is_array($tracyErrors->data) || count($tracyErrors->data) === 0) {
@@ -4033,15 +4036,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $fieldset->label = __('Adminer panel', __FILE__);
             $wrapper->add($fieldset);
 
-            $f = $this->wire('modules')->get("InputfieldSelect");
-            $f->attr('name', 'adminerThemeColor');
-            $f->label = __('Theme color', __FILE__);
-            $f->addOption('blue', 'Blue');
-            $f->addOption('green', 'Green');
-            $f->addOption('orange', 'Orange');
-            $f->required = true;
-            $f->columnWidth = 50;
-            if($this->data['adminerThemeColor']) $f->attr('value', $this->data['adminerThemeColor']);
+            $f = $this->wire('modules')->get("InputfieldCheckbox");
+            $f->attr('name', 'adminerStandAlone');
+            $f->label = __('Standalone mode', __FILE__);
+            $f->description = __('Load Setup > Adminer in standalone mode.', __FILE__);
+            $f->notes = __('Adminer won\'t be embedded in PW admin via iframe.', __FILE__);
+            $f->columnWidth = 33;
+            $f->attr('checked', $this->data['adminerStandAlone'] == '1' ? 'checked' : '');
             $fieldset->add($f);
 
             $f = $this->wire('modules')->get("InputfieldCheckbox");
@@ -4049,8 +4050,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $f->label = __('Field edit links', __FILE__);
             $f->description = __('Add adminer links to each field in the page edit interface.', __FILE__);
             $f->notes = __('Will only appear when Adminer panel is enabled', __FILE__);
-            $f->columnWidth = 50;
+            $f->columnWidth = 34;
             $f->attr('checked', $this->data['adminerEditFieldLink'] == '1' ? 'checked' : '');
+            $fieldset->add($f);
+
+            $f = $this->wire('modules')->get("InputfieldSelect");
+            $f->attr('name', 'adminerThemeColor');
+            $f->label = __('Theme color', __FILE__);
+            $f->addOption('blue', 'Blue');
+            $f->addOption('green', 'Green');
+            $f->addOption('orange', 'Orange');
+            $f->required = true;
+            $f->columnWidth = 33;
+            if($this->data['adminerThemeColor']) $f->attr('value', $this->data['adminerThemeColor']);
             $fieldset->add($f);
 
             $f = $this->wire('modules')->get("InputfieldText");
