@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.26.12',
+            'version' => '4.26.13',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -2537,7 +2537,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $link = '';
             // don't add link again unless it's a repeater field
             if(strpos($appendedMarkup, 'adminer_EditFieldLink') === false || $inputfield instanceof InputfieldRepeater) {
-                $link = '<a class="adminer_EditFieldLink" style="display: block; float: right; line-height:13px;" title="Edit in Adminer" href="adminer://?'.$adminerQuery.'">'.$adminerIcon.'</a>';
+                $link = '<br style="clear: both; visibility: hidden; height:0; margin: 0;" /><a class="adminer_EditFieldLink" style="display: block; float: right; line-height:14px;" title="Edit in Adminer" href="adminer://?'.$adminerQuery.'">'.$adminerIcon.'</a>';
             }
 
             $inputfield->appendMarkup = $inputfield->appendMarkup . $link;
