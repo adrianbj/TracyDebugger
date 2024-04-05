@@ -2537,7 +2537,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $link = '';
             // don't add link again unless it's a repeater field
             if(strpos($appendedMarkup, 'adminer_EditFieldLink') === false || $inputfield instanceof InputfieldRepeater) {
-                $link = '<br style="clear: both; visibility: hidden; height:0; margin: 0;" /><a class="adminer_EditFieldLink" style="display: block; float: right; line-height:14px;" title="Edit in Adminer" href="adminer://?'.$adminerQuery.'">'.$adminerIcon.'</a>';
+                $link = '<div class="wrap_adminer_EditFieldLink"><a class="adminer_EditFieldLink" title="Edit in Adminer" href="adminer://?'.$adminerQuery.'">'.$adminerIcon.'</a></div>';
             }
 
             $inputfield->appendMarkup = $inputfield->appendMarkup . $link;
