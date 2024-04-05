@@ -25,7 +25,7 @@ class ProcessTracyAdminer extends Process implements Module {
 
         $data = wire('modules')->getModuleConfigData('TracyDebugger');
 
-        if($data['adminerStandAlone']) {
+        if(isset($data['adminerStandAlone']) && $data['adminerStandAlone'] === 1) {
             return $this->wire('modules')->get('ProcessTracyAdminerRenderer')->execute();
         }
         else {
@@ -33,7 +33,7 @@ class ProcessTracyAdminer extends Process implements Module {
             return '
             <script>
                 window.addEventListener("message", function(event) {
-                    if(event.data != "") {
+                    if(event.data && typeof event.data !== "object" && event.data.startsWith("username=&db=")) {
                         history.pushState(null, null, "?"+event.data);
                     }
                 });
