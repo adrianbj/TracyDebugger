@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.26.11',
+            'version' => '4.26.12',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -2522,7 +2522,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
 
             $adminerIcon = '
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="304.4 284.4 11.7 16">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="304.4 284.4 11.7 16" height="13px" width="10px">
                 <path fill="#2C3D4F" d="M304.4 294.8v2.3c.3 1.3 2.7 2.3 5.8 2.3s5.7-1 5.9-2.3v-2.3c-1 .8-3.1 1.4-6 1.4-2.8 0-4.8-.6-5.7-1.4zM310.7 291.9h-1.2c-1.7-.1-3.1-.3-4-.7-.4-.2-.9-.4-1.1-.6v2.4c.7.8 2.9 1.5 5.8 1.5 3 0 5.1-.7 5.8-1.5v-2.4c-.3.2-.7.5-1.1.6-1.1.4-2.5.6-4.2.7zM310.1 285.6c-3.5 0-5.5 1.1-5.8 2.3v.7c.7.8 2.9 1.5 5.8 1.5s5.1-.7 5.8-1.5v-.6c-.3-1.3-2.3-2.4-5.8-2.4z"/>
             </svg>
             ';
@@ -2537,7 +2537,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $link = '';
             // don't add link again unless it's a repeater field
             if(strpos($appendedMarkup, 'adminer_EditFieldLink') === false || $inputfield instanceof InputfieldRepeater) {
-                $link = '<div style="width: 10px; height: 10px;"><a class="adminer_EditFieldLink" style="cursor:pointer" title="Edit in Adminer" style="padding-bottom:5px"  href="adminer://?'.$adminerQuery.'">'.$adminerIcon.'</a></div>';
+                $link = '<a class="adminer_EditFieldLink" style="display: block; float: right; line-height:13px;" title="Edit in Adminer" href="adminer://?'.$adminerQuery.'">'.$adminerIcon.'</a>';
             }
 
             $inputfield->appendMarkup = $inputfield->appendMarkup . $link;
