@@ -24,9 +24,6 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
 
     public function ___execute() {
 
-        error_reporting(0);
-        ini_set('display_errors', 0);
-
         $_GET['db'] = $this->wire('config')->dbName;
 
         function adminer_object() {

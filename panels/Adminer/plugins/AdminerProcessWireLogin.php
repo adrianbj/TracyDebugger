@@ -6,6 +6,7 @@ class AdminerProcessWireLogin {
 
         if(strpos($_SERVER['REQUEST_URI'], '&it=') !== false) {
             header("Location: " . strtok($_SERVER['REQUEST_URI'], '?'));
+            exit;
         }
 
         $this->pwAdminUrl = $pwAdminUrl;
@@ -18,7 +19,7 @@ class AdminerProcessWireLogin {
     public function head() {
     ?>
         <link rel="stylesheet" type="text/css" href="../../../site/modules/TracyDebugger/panels/Adminer/css/tweaks.css?v=1">
-        <script nonce="<?=get_nonce()?>" src="../../../site/modules/TracyDebugger/panels/Adminer/scripts/main.js"></script>
+        <script nonce="<?=get_nonce()?>" src="../../../site/modules/TracyDebugger/panels/Adminer/scripts/main.js?v=1"></script>
     <?php
     }
 
@@ -59,16 +60,16 @@ class AdminerProcessWireLogin {
     // this hides the form fields so the user won't think they need to fill them out
     function loginFormField($name, $heading, $value) {
         if($name == 'server') {
-            return '<input type="hidden" name="'.$name.'" value="'.$this->server.'" />';
+            return '<input type="hidden" name="'.$name.'" value="'.h($this->server).'" />';
         }
         if($name == 'driver') {
             return '<input type="hidden" name="auth[driver]" value="server" />';
         }
         if($name == 'db') {
-            return '<input type="hidden" name="'.$name.'" value="'.$this->db.'" />';
+            return '<input type="hidden" name="'.$name.'" value="'.h($this->db).'" />';
         }
         if($name == 'username') {
-            return '<input type="hidden" name="'.$name.'" value="'.$this->name.'" />';
+            return '<input type="hidden" name="'.$name.'" value="'.h($this->name).'" />';
         }
         if($name == 'password') {
             return '';
@@ -77,7 +78,8 @@ class AdminerProcessWireLogin {
 
     function loginForm() {
         ?>
-        <script<?php echo nonce(); ?>>
+        <input type="hidden" name="auth[permanent]" value="1" checked />
+        <script nonce="<?=get_nonce()?>">
             addEventListener('DOMContentLoaded', function () {
                 document.getElementsByTagName('body')[0].style.display = "none";
                 document.forms[0].submit();

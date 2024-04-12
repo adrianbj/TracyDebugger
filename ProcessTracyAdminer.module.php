@@ -23,7 +23,7 @@ class ProcessTracyAdminer extends Process implements Module {
 
     public function ___execute() {
 
-        $data = wire('modules')->getModuleConfigData('TracyDebugger');
+        $data = $this->wire('modules')->getModuleConfigData('TracyDebugger');
 
         if(isset($data['adminerStandAlone']) && $data['adminerStandAlone'] === 1) {
             return $this->wire('modules')->get('ProcessTracyAdminerRenderer')->execute();
@@ -31,14 +31,26 @@ class ProcessTracyAdminer extends Process implements Module {
         else {
             // push querystring to parent window
             return '
+            <iframe id="adminer-iframe" src="'.str_replace('/adminer/', '/adminer-renderer/', $_SERVER['REQUEST_URI']).'" style="width:calc(100vw - 80px); min-height:600px; border: none; padding:0; margin:0;"></iframe>
             <script>
+                const adminer_iframe = document.getElementById("adminer-iframe");
+                window.addEventListener("popstate", function (event) {
+                    adminer_iframe.src = location.href.replace("/adminer/", "/adminer-renderer/");
+                });
                 window.addEventListener("message", function(event) {
-                    if(event.data && typeof event.data !== "object" && event.data.startsWith("username=&db=")) {
-                        history.pushState(null, null, "?"+event.data);
+                    if(!event.isTrusted) return;
+                    if(event.source && event.origin === "'.trim($this->wire('config')->urls->httpRoot, '/').'" && event.source === adminer_iframe.contentWindow) {
+                        if(event.data && typeof event.data === "string" && event.data.startsWith("username=&db=")) {
+                            if(new URLSearchParams(window.location.search).toString() !== event.data) {
+                                history.replaceState(null, null, "?"+event.data);
+                            }
+                        }
+                        if(event.source.document.body && event.source.document.body.scrollHeight) {
+                            adminer_iframe.style.height = (event.source.document.body.scrollHeight + 20) + "px";
+                        }
                     }
                 });
-            </script>
-            <iframe src="'.str_replace('/adminer/', '/adminer-renderer/', $_SERVER['REQUEST_URI']).'" style="width:100%; height:calc(100vh - 25px); border: none; padding:0; margin:0;"></iframe>';
+            </script>';
         }
     }
 

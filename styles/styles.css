@@ -2061,6 +2061,7 @@ https://github.com/ajaxorg/ace/issues/2872
 
 .wrap_adminer_EditFieldLink {
     position:relative;
+    display: block !important;
 }
 
 .adminer_EditFieldLink {

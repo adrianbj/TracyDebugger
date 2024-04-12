@@ -1,5 +1,5 @@
 .adminerPwLogo {
-	float:left;
+    float:left;
     padding: 13px 0 0 10px;
 }
 
@@ -8,35 +8,44 @@ html.framed .adminerPwLogo {
 }
 
 .logout input[type=submit] {
-	display: none !important;
+    display: none !important;
 }
 
 
 #menu h1 {
-	border: 0;
-	padding: 0;
-	background: none !important;
+    border: 0;
+    padding: 0;
+    background: none !important;
 }
 
 h1 #h1 {
-	background: none !important;
-	text-indent: 10px !important;
-	padding-top: 10px !important;
-	font-size: 1.5em;
+    background: none !important;
+    text-indent: 10px !important;
+    padding-top: 10px !important;
+    font-size: 1.5em;
 }
 
 #version, .version {
-	top: -15px !important;
+    top: -15px !important;
 }
 
 #dbs {
-	display: none;
+    display: none;
 }
 
 a[href*="&sql="]::before {
     content: "✎" !important;
 }
 
-.copy-to-clipboard::before {
-	content: "" !important;
+.copy-to-clipboard:not(.jush-sql)::before {
+    content: "⎘ " !important;
+}
+
+.icon {
+    width: 16px !important;
+    height: 16px !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    outline: 0 !important;
 }
