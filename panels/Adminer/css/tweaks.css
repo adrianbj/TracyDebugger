@@ -1,3 +1,7 @@
+html {
+    overflow-y: auto;
+}
+
 .adminerPwLogo {
     float:left;
     padding: 13px 0 0 10px;
@@ -8,25 +12,25 @@ html.framed .adminerPwLogo {
 }
 
 .logout input[type=submit] {
-    display: none !important;
+    display: none;
 }
 
 
 #menu h1 {
     border: 0;
     padding: 0;
-    background: none !important;
+    background: none;
 }
 
 h1 #h1 {
-    background: none !important;
-    text-indent: 10px !important;
-    padding-top: 10px !important;
+    background: none;
+    text-indent: 10px;
+    padding-top: 10px;
     font-size: 1.5em;
 }
 
 #version, .version {
-    top: -15px !important;
+    top: -15px;
 }
 
 #dbs {
@@ -38,14 +42,14 @@ a[href*="&sql="]::before {
 }
 
 .copy-to-clipboard:not(.jush-sql)::before {
-    content: "⎘ " !important;
+    content: "⎘ ";
 }
 
 .icon {
-    width: 16px !important;
-    height: 16px !important;
-    border-radius: 0 !important;
-    padding: 0 !important;
-    border: 0 !important;
-    outline: 0 !important;
+    width: 16px;
+    height: 16px;
+    border-radius: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
 }

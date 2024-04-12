@@ -18,7 +18,6 @@ class AdminerProcessWireLogin {
 
     public function head() {
     ?>
-        <link rel="stylesheet" type="text/css" href="../../../site/modules/TracyDebugger/panels/Adminer/css/tweaks.css?v=1">
         <script nonce="<?=get_nonce()?>" src="../../../site/modules/TracyDebugger/panels/Adminer/scripts/main.js?v=1"></script>
     <?php
     }

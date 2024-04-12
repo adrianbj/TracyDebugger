@@ -11,7 +11,7 @@
  */
 class AdminerTheme
 {
-    const CSS_VERSION = 5;
+    const CSS_VERSION = 6;
     const ICONS_VERSION = 3;
 
     /** @var string */
@@ -67,6 +67,8 @@ class AdminerTheme
         <?php endif; ?>
 
         <link rel="stylesheet" type="text/css" href="../../../site/modules/TracyDebugger/panels/Adminer/css/<?php echo htmlspecialchars($this->themeName) ?>.css?<?php echo self::CSS_VERSION ?>">
+
+        <link rel="stylesheet" type="text/css" href="../../../site/modules/TracyDebugger/panels/Adminer/css/tweaks.css?<?php echo self::CSS_VERSION ?>">
 
         <script <?php echo nonce(); ?>>
             (function(document) {
