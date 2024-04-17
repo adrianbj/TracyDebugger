@@ -95,7 +95,7 @@ class AdminerProcessWireLogin {
         if($_GET['select'] == 'modules' && in_array($field['field'], ['class'])) {
             $val = '<a href="'.$this->pwAdminUrl.'module/edit/?name='.$val.'" target="_parent">'.$val.'</a>';
         }
-        elseif(is_numeric($original)) {
+        elseif(is_int($original)) {
             if(in_array($_GET['select'], ['fieldgroups', 'modules'])) {
                 // intentionally blank
             }
