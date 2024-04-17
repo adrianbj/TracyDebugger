@@ -91,4 +91,33 @@ class AdminerProcessWireLogin {
         return [$this->db];
     }
 
+    public function selectVal(&$val, $link, $field, $original) {
+        if($_GET['select'] == 'modules' && in_array($field['field'], ['class'])) {
+            $val = '<a href="'.$this->pwAdminUrl.'module/edit/?name='.$val.'" target="_parent">'.$val.'</a>';
+        }
+        elseif(is_numeric($original)) {
+            if(in_array($_GET['select'], ['fieldgroups', 'modules'])) {
+                // intentionally blank
+            }
+            elseif(($_GET['select'] == 'templates' && in_array($field['field'], ['id'])) || ($_GET['select'] == 'pages' && in_array($field['field'], ['templates_id']))) {
+                $val = '<a href="'.$this->pwAdminUrl.'setup/template/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
+            }
+            elseif($_GET['select'] == 'fields' && in_array($field['field'], ['id'])) {
+                $val = '<a href="'.$this->pwAdminUrl.'setup/field/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
+            }
+            elseif(in_array($field['field'], ['field_id', 'fields_id'])) {
+                $val = '<a href="'.$this->pwAdminUrl.'setup/field/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
+            }
+            elseif($_GET['select'] == 'pages' && in_array($field['field'], ['id'])) {
+                $val = '<a href="'.$this->pwAdminUrl.'page/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
+            }
+            elseif(in_array($field['field'], ['pid', 'pages_id', 'parent_id', 'parents_id', 'source_id', 'data'])) {
+                $val = '<a href="'.$this->pwAdminUrl.'page/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
+            }
+            elseif(in_array($field['field'], ['uid', 'created_users_id', 'modified_users_id'])) {
+                $val = '<a href="'.$this->pwAdminUrl.'access/users/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
+            }
+        }
+    }
+
 }
