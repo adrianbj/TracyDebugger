@@ -7,7 +7,7 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
             'summary' => __('Adminer renderer for TracyDebugger.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '2.0.1',
+            'version' => '2.0.2',
             'autoload' => false,
             'singular' => true,
             'icon' => 'database',
@@ -49,6 +49,7 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
                 new AdminerDumpBz2,
                 new AdminerDumpZip,
                 new AdminerDumpAlter,
+                new AdminerTableHeaderScroll(),
                 new AdminerTheme("default-".$data['adminerThemeColor'])
             ];
 
