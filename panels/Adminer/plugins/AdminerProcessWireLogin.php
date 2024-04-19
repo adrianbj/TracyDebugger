@@ -130,7 +130,7 @@ class AdminerProcessWireLogin {
                 $data_is_page = false;
                 if($field['field'] == 'data') {
                     $f = wire('fields')->get(str_replace('field_', '', $_GET['select']));
-                    if($f && ($f->type instanceof \ProcessWire\FieldtypePage || $f->type instanceof \ProcessWire\FieldtypePageIDs)) {
+                    if($f && ($f->type instanceof \ProcessWire\FieldtypePage || $f->type instanceof \ProcessWire\FieldtypePageIDs || $f->type instanceof \ProcessWire\FieldtypeRepeater)) {
                         $data_is_page = true;
                     }
                 }
