@@ -94,35 +94,39 @@ class AdminerProcessWireLogin {
     }
 
     public function selectVal(&$val, $link, $field, $original) {
-        if(!isset($_GET['select']) || in_array($_GET['select'], ['fieldgroups', 'caches'])) {
+        if(!isset($_GET['select']) || in_array($_GET['select'], array('fieldgroups', 'caches'))) {
             // intentionally blank
         }
-        elseif($_GET['select'] == 'modules' && in_array($field['field'], ['class'])) {
+        elseif($_GET['select'] == 'modules' && $field['field'] == 'class') {
             $val = '<a href="'.$this->pwAdminUrl.'module/edit/?name='.$val.'" target="_parent">'.$val.'</a>';
         }
         elseif(ctype_digit("$original")) {
-            if($_GET['select'] == 'templates' && in_array($field['field'], ['id'])) {
+            if($_GET['select'] == 'hanna_code' && $field['field'] == 'id') {
+                $val = '<a href="'.$this->pwAdminUrl.'setup/hanna-code/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
+            }
+            elseif($_GET['select'] == 'templates' && $field['field'] == 'id') {
                 $val = '<a href="'.$this->pwAdminUrl.'setup/template/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
             }
-            elseif($_GET['select'] == 'pages' && in_array($field['field'], ['templates_id'])) {
+            elseif($_GET['select'] != 'templates' && $field['field'] == 'templates_id') {
                 $name = wire('templates')->get('id='.$val)->get('label|name');
                 if($name) {
                     $val = '<a href="'.$this->pwAdminUrl.'setup/template/edit/?id='.$val.'" target="_parent" title="'.$name.'">'.$val.'</a>';
                 }
             }
-            elseif($_GET['select'] == 'fields' && in_array($field['field'], ['id'])) {
+            elseif($_GET['select'] == 'fields' && $field['field'] == 'id') {
                 $val = '<a href="'.$this->pwAdminUrl.'setup/field/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
             }
-            elseif(in_array($field['field'], ['field_id', 'fields_id'])) {
-                $name = wire('fields')->get('id='.$val)->get('label|name');
-                if($name) {
+            elseif(in_array($field['field'], array('field_id', 'fields_id'))) {
+                $f = wire('fields')->get('id='.$val);
+                if($f) {
+                    $name = $f->get('label|name');
                     $val = '<a href="'.$this->pwAdminUrl.'setup/field/edit/?id='.$val.'" target="_parent" title="'.$name.'">'.$val.'</a>';
                 }
             }
-            elseif($_GET['select'] == 'pages' && in_array($field['field'], ['id'])) {
+            elseif($_GET['select'] == 'pages' && $field['field'] == 'id') {
                 $val = '<a href="'.$this->pwAdminUrl.'page/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
             }
-            elseif(in_array($field['field'], ['pid', 'pages_id', 'parent_id', 'parents_id', 'source_id', 'data'])) {
+            elseif(in_array($field['field'], array('pid', 'pages_id', 'parent_id', 'parents_id', 'source_id', 'data'))) {
                 $data_is_page = false;
                 if($field['field'] == 'data') {
                     $f = wire('fields')->get(str_replace('field_', '', $_GET['select']));
@@ -131,14 +135,18 @@ class AdminerProcessWireLogin {
                     }
                 }
                 if($field['field'] != 'data' || ($field['field'] == 'data' && $data_is_page)) {
-                    $label = wire('modules')->isInstalled('PagePaths') ? 'url' : 'title';
+                    $label = array('title', 'name');
+                    if(wire('modules')->isInstalled('PagePaths')) {
+                        $label[] = 'url';
+                    }
                     $name = wire('pages')->getRaw('id='.$val, $label);
                     if($name) {
+                        $name = (isset($name['title']) ? $name['title'] : $name['name']) . (isset($name['url']) ? ' ('.$name['url'].')' : '');
                         $val = '<a href="'.$this->pwAdminUrl.'page/edit/?id='.$val.'" target="_parent" title="'.$name.'">'.$val.'</a>';
                     }
                 }
             }
-            elseif(in_array($field['field'], ['uid', 'created_users_id', 'modified_users_id'])) {
+            elseif(in_array($field['field'], array('uid', 'user_id', 'created_users_id', 'modified_users_id', 'user_created', 'user_updated'))) {
                 $name = wire('pages')->getRaw('id='.$val, 'name');
                 if($name) {
                     $val = '<a href="'.$this->pwAdminUrl.'access/users/edit/?id='.$val.'" target="_parent" title="'.$name.'">'.$val.'</a>';
