@@ -139,17 +139,27 @@ class AdminerProcessWireLogin {
                     if(wire('modules')->isInstalled('PagePaths')) {
                         $label[] = 'url';
                     }
-                    $name = wire('pages')->getRaw('id='.$val, $label);
-                    if($name) {
-                        $name = (isset($name['title']) ? $name['title'] : $name['name']) . (isset($name['url']) ? ' ('.$name['url'].')' : '');
-                        $val = '<a href="'.$this->pwAdminUrl.'page/edit/?id='.$val.'" target="_parent" title="'.$name.'">'.$val.'</a>';
+                    if(method_exists(wire('pages'), 'getRaw')) {
+                        $name = wire('pages')->getRaw('id='.$val, $label);
+                        if($name) {
+                            $name = (isset($name['title']) ? $name['title'] : $name['name']) . (isset($name['url']) ? ' ('.$name['url'].')' : '');
+                            $val = '<a href="'.$this->pwAdminUrl.'page/edit/?id='.$val.'" target="_parent" title="'.$name.'">'.$val.'</a>';
+                        }
+                    }
+                    else {
+                        $val = '<a href="'.$this->pwAdminUrl.'page/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
                     }
                 }
             }
             elseif(in_array($field['field'], array('uid', 'user_id', 'created_users_id', 'modified_users_id', 'user_created', 'user_updated'))) {
-                $name = wire('pages')->getRaw('id='.$val, 'name');
-                if($name) {
-                    $val = '<a href="'.$this->pwAdminUrl.'access/users/edit/?id='.$val.'" target="_parent" title="'.$name.'">'.$val.'</a>';
+                if(method_exists(wire('pages'), 'getRaw')) {
+                    $name = wire('pages')->getRaw('id='.$val, 'name');
+                    if($name) {
+                        $val = '<a href="'.$this->pwAdminUrl.'access/users/edit/?id='.$val.'" target="_parent" title="'.$name.'">'.$val.'</a>';
+                    }
+                }
+                else {
+                    $val = '<a href="'.$this->pwAdminUrl.'access/users/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
                 }
             }
         }
