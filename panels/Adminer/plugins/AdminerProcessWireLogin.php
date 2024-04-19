@@ -1,5 +1,7 @@
 <?php
 
+use function ProcessWire\wire;
+
 class AdminerProcessWireLogin {
 
     public function __construct($pwAdminUrl, $server = false, $db = false, $name = false, $pass = false) {
@@ -92,30 +94,55 @@ class AdminerProcessWireLogin {
     }
 
     public function selectVal(&$val, $link, $field, $original) {
-        if($_GET['select'] == 'modules' && in_array($field['field'], ['class'])) {
+        if(!isset($_GET['select']) || in_array($_GET['select'], ['fieldgroups', 'caches'])) {
+            // intentionally blank
+        }
+        elseif($_GET['select'] == 'modules' && in_array($field['field'], ['class'])) {
             $val = '<a href="'.$this->pwAdminUrl.'module/edit/?name='.$val.'" target="_parent">'.$val.'</a>';
         }
         elseif(ctype_digit("$original")) {
-            if(in_array($_GET['select'], ['fieldgroups', 'modules'])) {
-                // intentionally blank
-            }
-            elseif(($_GET['select'] == 'templates' && in_array($field['field'], ['id'])) || ($_GET['select'] == 'pages' && in_array($field['field'], ['templates_id']))) {
+            if($_GET['select'] == 'templates' && in_array($field['field'], ['id'])) {
                 $val = '<a href="'.$this->pwAdminUrl.'setup/template/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
+            }
+            elseif($_GET['select'] == 'pages' && in_array($field['field'], ['templates_id'])) {
+                $name = wire('templates')->get('id='.$val)->get('label|name');
+                if($name) {
+                    $val = '<a href="'.$this->pwAdminUrl.'setup/template/edit/?id='.$val.'" target="_parent" title="'.$name.'">'.$val.'</a>';
+                }
             }
             elseif($_GET['select'] == 'fields' && in_array($field['field'], ['id'])) {
                 $val = '<a href="'.$this->pwAdminUrl.'setup/field/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
             }
             elseif(in_array($field['field'], ['field_id', 'fields_id'])) {
-                $val = '<a href="'.$this->pwAdminUrl.'setup/field/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
+                $name = wire('fields')->get('id='.$val)->get('label|name');
+                if($name) {
+                    $val = '<a href="'.$this->pwAdminUrl.'setup/field/edit/?id='.$val.'" target="_parent" title="'.$name.'">'.$val.'</a>';
+                }
             }
             elseif($_GET['select'] == 'pages' && in_array($field['field'], ['id'])) {
                 $val = '<a href="'.$this->pwAdminUrl.'page/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
             }
             elseif(in_array($field['field'], ['pid', 'pages_id', 'parent_id', 'parents_id', 'source_id', 'data'])) {
-                $val = '<a href="'.$this->pwAdminUrl.'page/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
+                $data_is_page = false;
+                if($field['field'] == 'data') {
+                    $f = wire('fields')->get(str_replace('field_', '', $_GET['select']));
+                    if($f && ($f->type instanceof \ProcessWire\FieldtypePage || $f->type instanceof \ProcessWire\FieldtypePageIDs)) {
+                        $data_is_page = true;
+                    }
+                }
+                if($field['field'] != 'data' || ($field['field'] == 'data' && $data_is_page)) {
+                    $label = wire('modules')->isInstalled('PagePaths') ? 'url' : 'title';
+                    $name = wire('pages')->getRaw('id='.$val, $label);
+                    if($name) {
+                        $val = '<a href="'.$this->pwAdminUrl.'page/edit/?id='.$val.'" target="_parent" title="'.$name.'">'.$val.'</a>';
+                    }
+                }
             }
             elseif(in_array($field['field'], ['uid', 'created_users_id', 'modified_users_id'])) {
-                $val = '<a href="'.$this->pwAdminUrl.'access/users/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
+                $name = wire('pages')->getRaw('id='.$val, 'name');
+                if($name) {
+                    $val = '<a href="'.$this->pwAdminUrl.'access/users/edit/?id='.$val.'" target="_parent" title="'.$name.'">'.$val.'</a>';
+                }
             }
         }
     }
