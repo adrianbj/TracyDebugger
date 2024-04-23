@@ -100,7 +100,7 @@ class AdminerProcessWireLogin {
         elseif($_GET['select'] == 'modules' && $field['field'] == 'class') {
             $val = '<a href="'.$this->pwAdminUrl.'module/edit/?name='.$val.'" target="_parent">'.$val.'</a>';
         }
-        elseif(ctype_digit("$original")) {
+        elseif(ctype_digit("$original") || ctype_digit(str_replace(',', '', "$original"))) {
             if($_GET['select'] == 'hanna_code' && $field['field'] == 'id') {
                 $val = '<a href="'.$this->pwAdminUrl.'setup/hanna-code/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
             }
@@ -126,7 +126,7 @@ class AdminerProcessWireLogin {
             elseif($_GET['select'] == 'pages' && $field['field'] == 'id') {
                 $val = '<a href="'.$this->pwAdminUrl.'page/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
             }
-            elseif(in_array($field['field'], array('pid', 'pages_id', 'parent_id', 'parents_id', 'source_id', 'data'))) {
+            elseif(in_array($field['field'], array('pid', 'pages_id', 'parent_id', 'parents_id', 'source_id', 'language_id', 'data'))) {
                 $data_is_page = false;
                 if($field['field'] == 'data') {
                     $f = wire('fields')->get(str_replace('field_', '', $_GET['select']));
@@ -139,16 +139,20 @@ class AdminerProcessWireLogin {
                     if(wire('modules')->isInstalled('PagePaths')) {
                         $label[] = 'url';
                     }
-                    if(method_exists(wire('pages'), 'getRaw')) {
-                        $name = wire('pages')->getRaw('id='.$val, $label);
-                        if($name) {
-                            $name = (isset($name['title']) ? $name['title'] : $name['name']) . (isset($name['url']) ? ' ('.$name['url'].')' : '');
-                            $val = '<a href="'.$this->pwAdminUrl.'page/edit/?id='.$val.'" target="_parent" title="'.$name.'">'.$val.'</a>';
+                    $allids = [];
+                    foreach(explode(',', $val) as $v) {
+                        if(method_exists(wire('pages'), 'getRaw')) {
+                            $name = wire('pages')->getRaw('id='.$v, $label);
+                            if($name) {
+                                $name = (isset($name['title']) ? $name['title'] : $name['name']) . (isset($name['url']) ? ' ('.$name['url'].')' : '');
+                                $allids[] = '<a href="'.$this->pwAdminUrl.'page/edit/?id='.$v.'" target="_parent" title="'.$name.'">'.$v.'</a>';
+                            }
+                        }
+                        else {
+                            $allids[] = '<a href="'.$this->pwAdminUrl.'page/edit/?id='.$v.'" target="_parent">'.$v.'</a>';
                         }
                     }
-                    else {
-                        $val = '<a href="'.$this->pwAdminUrl.'page/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
-                    }
+                    $val = implode(',', $allids);
                 }
             }
             elseif(in_array($field['field'], array('uid', 'user_id', 'created_users_id', 'modified_users_id', 'user_created', 'user_updated'))) {
