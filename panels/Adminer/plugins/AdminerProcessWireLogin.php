@@ -94,13 +94,17 @@ class AdminerProcessWireLogin {
     }
 
     public function selectVal(&$val, $link, $field, $original) {
+
         if(!isset($_GET['select']) || in_array($_GET['select'], array('fieldgroups', 'caches'))) {
             // intentionally blank
         }
         elseif($_GET['select'] == 'modules' && $field['field'] == 'class') {
             $val = '<a href="'.$this->pwAdminUrl.'module/edit/?name='.$val.'" target="_parent">'.$val.'</a>';
         }
-        elseif(ctype_digit("$original") || ctype_digit(str_replace(',', '', "$original"))) {
+        elseif(ctype_digit("$original") || ctype_digit(str_replace(array(',', 'pid'), '', "$original"))) {
+
+            $valid_page_fields = array('pid', 'pages_id', 'parent_id', 'parents_id', 'source_id', 'language_id', 'data');
+
             if($_GET['select'] == 'hanna_code' && $field['field'] == 'id') {
                 $val = '<a href="'.$this->pwAdminUrl.'setup/hanna-code/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
             }
@@ -126,35 +130,6 @@ class AdminerProcessWireLogin {
             elseif($_GET['select'] == 'pages' && $field['field'] == 'id') {
                 $val = '<a href="'.$this->pwAdminUrl.'page/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
             }
-            elseif(in_array($field['field'], array('pid', 'pages_id', 'parent_id', 'parents_id', 'source_id', 'language_id', 'data'))) {
-                $data_is_page = false;
-                if($field['field'] == 'data') {
-                    $f = wire('fields')->get(str_replace('field_', '', $_GET['select']));
-                    if($f && ($f->type instanceof \ProcessWire\FieldtypePage || $f->type instanceof \ProcessWire\FieldtypePageIDs || $f->type instanceof \ProcessWire\FieldtypeRepeater)) {
-                        $data_is_page = true;
-                    }
-                }
-                if($field['field'] != 'data' || ($field['field'] == 'data' && $data_is_page)) {
-                    $label = array('title', 'name');
-                    if(wire('modules')->isInstalled('PagePaths')) {
-                        $label[] = 'url';
-                    }
-                    $allids = [];
-                    foreach(explode(',', $val) as $v) {
-                        if(method_exists(wire('pages'), 'getRaw')) {
-                            $name = wire('pages')->getRaw('id='.$v, $label);
-                            if($name) {
-                                $name = (isset($name['title']) ? $name['title'] : $name['name']) . (isset($name['url']) ? ' ('.$name['url'].')' : '');
-                                $allids[] = '<a href="'.$this->pwAdminUrl.'page/edit/?id='.$v.'" target="_parent" title="'.$name.'">'.$v.'</a>';
-                            }
-                        }
-                        else {
-                            $allids[] = '<a href="'.$this->pwAdminUrl.'page/edit/?id='.$v.'" target="_parent">'.$v.'</a>';
-                        }
-                    }
-                    $val = implode(',', $allids);
-                }
-            }
             elseif(in_array($field['field'], array('uid', 'user_id', 'created_users_id', 'modified_users_id', 'user_created', 'user_updated'))) {
                 if(method_exists(wire('pages'), 'getRaw')) {
                     $name = wire('pages')->getRaw('id='.$val, 'name');
@@ -165,6 +140,52 @@ class AdminerProcessWireLogin {
                 else {
                     $val = '<a href="'.$this->pwAdminUrl.'access/users/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
                 }
+            }
+            elseif(strpos($_GET['select'], 'field_') !== false || in_array($field['field'], $valid_page_fields)) {
+
+                $f = wire('fields')->get(str_replace('field_', '', $_GET['select']));
+                if($f && $f->type instanceof \ProcessWire\FieldtypeTable && strpos($f->type->getColumn($f, $field['field'])['type'], 'page') !== false) {
+                    $valid_page_fields[] = $field['field'];
+                }
+                elseif($f && $f->type instanceof \ProcessWire\FieldtypeCombo && $f->getComboSettings()->getSubfieldType($field['field']) === 'Page') {
+                    $valid_page_fields[] = $field['field'];
+                }
+
+                if($_GET['select'] == 'field_process' && $field['field'] == 'data') {
+                    $name = wire('modules')->getModuleClass($val);
+                    if($name) {
+                        $val = '<a href="'.$this->pwAdminUrl.'module/edit/?name='.$name.'" target="_parent" title="'.$name.'">'.$val.'</a>';
+                    }
+                }
+                elseif(in_array($field['field'], $valid_page_fields)) {
+                    $data_is_page = false;
+                    if($field['field'] == 'data') {
+                        if(isset($f) && ($f->type instanceof \ProcessWire\FieldtypePage || $f->type instanceof \ProcessWire\FieldtypePageIDs || $f->type instanceof \ProcessWire\FieldtypeRepeater)) {
+                            $data_is_page = true;
+                        }
+                    }
+                    if($field['field'] != 'data' || ($field['field'] == 'data' && $data_is_page)) {
+                        $label = array('title', 'name');
+                        if(wire('modules')->isInstalled('PagePaths')) {
+                            $label[] = 'url';
+                        }
+                        $allids = [];
+                        foreach(explode(',', $val) as $v) {
+                            if(method_exists(wire('pages'), 'getRaw')) {
+                                $name = wire('pages')->getRaw('id='.str_replace('pid', '', $v), $label);
+                                if($name) {
+                                    $name = (isset($name['title']) ? $name['title'] : $name['name']) . (isset($name['url']) ? ' ('.$name['url'].')' : '');
+                                    $allids[] = '<a href="'.$this->pwAdminUrl.'page/edit/?id='.str_replace('pid', '', $v).'" target="_parent" title="'.$name.'">'.$v.'</a>';
+                                }
+                            }
+                            else {
+                                $allids[] = '<a href="'.$this->pwAdminUrl.'page/edit/?id='.$v.'" target="_parent">'.$v.'</a>';
+                            }
+                        }
+                        $val = implode(',', $allids);
+                    }
+                }
+
             }
         }
     }
