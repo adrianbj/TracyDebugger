@@ -17,7 +17,7 @@ use ErrorException;
  */
 class Debugger
 {
-	public const Version = '2.10.6';
+	public const Version = '2.10.7';
 
 	/** server modes for Debugger::enable() */
 	public const
@@ -194,19 +194,14 @@ class Debugger
 				: !self::detectDebugMode($mode);
 		}
 
-		self::$reserved = str_repeat('t', self::$reservedMemorySize);
-		self::$time = $_SERVER['REQUEST_TIME_FLOAT'] ?? microtime(true);
-		self::$obLevel = ob_get_level();
-		self::$cpuUsage = !self::$productionMode && function_exists('getrusage') ? getrusage() : null;
+		self::$reserved ??= str_repeat('t', self::$reservedMemorySize);
+		self::$time ??= $_SERVER['REQUEST_TIME_FLOAT'] ?? microtime(true);
+		self::$obLevel ??= ob_get_level();
+		self::$cpuUsage ??= !self::$productionMode && function_exists('getrusage') ? getrusage() : null;
 
 		// logging configuration
-		if ($email !== null) {
-			self::$email = $email;
-		}
-
-		if ($logDirectory !== null) {
-			self::$logDirectory = $logDirectory;
-		}
+		self::$email = $email ?? self::$email;
+		self::$logDirectory = $logDirectory ?? self::$logDirectory;
 
 		if (self::$logDirectory) {
 			if (!preg_match('#([a-z]+:)?[/\\\\]#Ai', self::$logDirectory)) {
