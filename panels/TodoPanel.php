@@ -192,7 +192,7 @@ class TodoPanel extends BasePanel {
         fclose($stream);
 
         // script tags break token_get_all when forcing the file to be php with <?php so remove them
-        $fileContent = preg_replace('#<script(.*?)>(.*?)</script>#is', '', $fileContent);
+        $fileContent = str_replace(array('<script>', '</script>'), '', $fileContent);
         // remove any existing php tags and add one at the start
         // change html, latte, and "loud" comment tags into /* comment */ so they will be parsed by token_get_all
         $fileContent = '<?php ' .
