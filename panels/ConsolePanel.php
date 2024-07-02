@@ -38,7 +38,6 @@ class ConsolePanel extends BasePanel {
 
     public function getPanel() {
 
-        $pwRoot = $this->wire('config')->urls->root;
         $rootPath = $this->wire('config')->paths->root;
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
         $inAdmin = \TracyDebugger::$inAdmin;
@@ -403,7 +402,7 @@ class ConsolePanel extends BasePanel {
                     var backupFilename = document.getElementById("backupFilename").value;
                     var accessTemplateVars = !this.inAdmin ? document.getElementById("accessTemplateVars").checked : "false";
 
-                    xmlhttp.open("POST", "./", true);
+                    xmlhttp.open("POST", "/", true);
                     xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                     xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
                     xmlhttp.send("tracyConsole=1&codeReturn=codeReturn&allowBluescreen="+allowBluescreen+"&dbBackup="+dbBackup+"&backupFilename="+backupFilename+"&accessTemplateVars="+accessTemplateVars+"&pid={$pid}&fid={$fid}&tid={$tid}&mid={$mid}&code="+encodeURIComponent(code));
@@ -445,7 +444,7 @@ class ConsolePanel extends BasePanel {
                             xmlhttp.getAllResponseHeaders();
                         }
                     };
-                    xmlhttp.open("POST", "./", true);
+                    xmlhttp.open("POST", "/", true);
                     xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                     xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
                     xmlhttp.send("tracysnippets=1&snippetname=" + name);
@@ -502,7 +501,7 @@ class ConsolePanel extends BasePanel {
                             xmlhttp.getAllResponseHeaders();
                         }
                     };
-                    xmlhttp.open("POST", "./", true);
+                    xmlhttp.open("POST", "/", true);
                     xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                     xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
                     if(deleteSnippet) {
@@ -1076,7 +1075,7 @@ class ConsolePanel extends BasePanel {
                 if(!document.getElementById("fontAwesome")) {
                     var link = document.createElement("link");
                     link.rel = "stylesheet";
-                    link.href = "$pwRoot" + "wire/templates-admin/styles/font-awesome/css/font-awesome.min.css";
+                    link.href = "/wire/templates-admin/styles/font-awesome/css/font-awesome.min.css";
                     document.getElementsByTagName("head")[0].appendChild(link);
                 }
             }
