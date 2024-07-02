@@ -124,7 +124,7 @@ if(!tracyFileEditorLoader) {
                         xmlhttp.getAllResponseHeaders();
                     }
                 };
-                xmlhttp.open("POST", "./", true);
+                xmlhttp.open("POST", "/", true);
                 xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
                 xmlhttp.send("filePath=" + filePath);
