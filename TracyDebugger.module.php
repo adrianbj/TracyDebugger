@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.26.27',
+            'version' => '4.26.28',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1839,12 +1839,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     $user = $this->wire('session')->forceLogin($this->wire('input')->post->userSwitcher);
                     $this->wire('session')->tracyUserSwitcherId = $tracyUserSwitcherId;
                 }
-                if($this->wire('pages')->get(self::inputUrl())->viewable) {
-                    $this->wire('session')->redirect($this->httpReferer);
-                }
-                else {
-                    $this->wire('session')->redirect(static::$inAdmin ? $this->wire('config')->urls->admin : $this->wire('config')->urls->root);
-                }
+                $this->wire('session')->redirect($this->httpReferer);
             }
         }
 
