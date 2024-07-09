@@ -116,7 +116,7 @@ class TracyLogsPanel extends BasePanel {
                         "<td ".($lineIsNew ? 'style="background: '.$color.' !important; color: #FFFFFF !important"' : '').">".$item['log']."</td>" .
                         "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;', $item['date']))."</td>" .
                         "<td>".(isset($item['url']) ? $item['url'] : '')."</td>" .
-                        "<td>".\TracyDebugger::createEditorLink($this->wire('config')->paths->logs . 'tracy/' . $item['log'] . '.log', 1, (strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText), 'View in your code editor')."</td>" .
+                        "<td>".\TracyDebugger::createEditorLink($this->wire('config')->paths->logs . 'tracy/' . $item['log'] . '.log', 1, (strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText), 'View in your code editor').(\TracyDebugger::isJson($item['text']) ? "\n".\Tracy\Dumper::toHtml(json_decode($item['text'], true)) : '')."</td>" .
                     "</tr>";
                 }
                 $this->logEntries .= $sectionEnd;
