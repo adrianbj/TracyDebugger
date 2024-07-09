@@ -40,7 +40,16 @@ class ProcesswireLogsPanel extends BasePanel {
             $cachedLogLinesData = $logLinesData;
 
             $errorLogs = array('errors', 'exceptions', 'files-errors');
+
+            if($this->wire('modules')->isInstalled('CustomLogs')) {
+                $custom_logs = $this->wire('modules')->getModuleConfigData('CustomLogs');
+            }
+
             foreach($logs as $log) {
+
+                if(isset($custom_logs) && array_key_exists($log['name'], $custom_logs['customLogsParsed'])) {
+                    continue;
+                }
 
                 $lines = \TracyDebugger::tailCustom($this->wire('config')->paths->logs.$log['name'].'.txt', \TracyDebugger::getDataValue("numLogEntries"));
                 $lines = mb_convert_encoding($lines, 'UTF-8');
