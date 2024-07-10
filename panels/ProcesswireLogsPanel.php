@@ -48,6 +48,10 @@ class ProcesswireLogsPanel extends BasePanel {
 
             foreach($logs as $log) {
 
+                if(in_array($log['name'], \TracyDebugger::getDataValue("excludedPwLogFiles"))) {
+                    continue;
+                }
+
                 if(isset($custom_logs) && array_key_exists($log['name'], $custom_logs_config['customLogsParsed'])) {
                     $isCustom = true;
                     $lines = $custom_logs->getEntries($log['name']);

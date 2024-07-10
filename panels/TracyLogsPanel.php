@@ -43,6 +43,10 @@ class TracyLogsPanel extends BasePanel {
             $errorLogs = array('error', 'exception', 'critical');
             foreach($logs as $log) {
 
+                if(in_array($log['name'], \TracyDebugger::getDataValue("excludedTracyLogFiles"))) {
+                    continue;
+                }
+
                 $lines = \TracyDebugger::tailCustom($this->wire('config')->paths->logs.'tracy/'.$log['name'].'.log', \TracyDebugger::getDataValue("numLogEntries"));
                 $lines = mb_convert_encoding($lines, 'UTF-8');
                 $lines = explode("\n", $lines);

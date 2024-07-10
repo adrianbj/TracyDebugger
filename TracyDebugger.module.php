@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.26.31',
+            'version' => '4.26.32',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -217,6 +217,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "outputMode" => 'detect',
             "showLocation" => array('Tracy\Dumper::LOCATION_SOURCE', 'Tracy\Dumper::LOCATION_LINK', 'Tracy\Dumper::LOCATION_CLASS'),
             "logSeverity" => array(),
+            "excludedPwLogFiles" => array('session', 'modules', 'file-compiler'),
+            "excludedTracyLogFiles" => array(),
             "numLogEntries" => 10,
             "collapse" => 14,
             "collapse_count" => 7,
@@ -4288,6 +4290,32 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $fieldset->attr('name+id', 'processwireAndTracyLogsPanels');
         $fieldset->label = __('ProcessWire and Tracy Log panels', __FILE__);
         $wrapper->add($fieldset);
+
+        $f = $this->wire('modules')->get("InputfieldAsmSelect");
+        $f->attr('name', 'excludedPwLogFiles');
+        $f->label = __('Excluded PW log files', __FILE__);
+        $f->description = __('Select log files to be excluded', __FILE__);
+        $f->notes = __('Useful if you have logs that are written to regularly on user interaction that are overwhelming more useful alert/error/warning logs.', __FILE__);
+        $f->columnWidth = 50;
+        $f->setAsmSelectOption('sortable', false);
+        foreach($this->wire('log')->getLogs() as $k => $v) {
+            $f->addOption($k);
+        }
+        if($data['excludedPwLogFiles']) $f->attr('value', $data['excludedPwLogFiles']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldAsmSelect");
+        $f->attr('name', 'excludedTracyLogFiles');
+        $f->label = __('Excluded Tracy log files', __FILE__);
+        $f->description = __('Select log files to be excluded', __FILE__);
+        $f->notes = __('Useful if you have logs that are written to regularly on user interaction that are overwhelming more useful alert/error/warning logs.', __FILE__);
+        $f->columnWidth = 50;
+        $f->setAsmSelectOption('sortable', false);
+        foreach((new \TracyLogsPanel())->getLogs() as $k => $v) {
+            $f->addOption($k);
+        }
+        if($data['excludedTracyLogFiles']) $f->attr('value', $data['excludedTracyLogFiles']);
+        $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldInteger");
         $f->attr('name', 'numLogEntries');
