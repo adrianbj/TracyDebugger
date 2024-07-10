@@ -42,21 +42,25 @@ class ProcesswireLogsPanel extends BasePanel {
             $errorLogs = array('errors', 'exceptions', 'files-errors');
 
             if($this->wire('modules')->isInstalled('CustomLogs')) {
-                $custom_logs = $this->wire('modules')->getModuleConfigData('CustomLogs');
+                $custom_logs = $this->wire('modules')->get('CustomLogs');
+                $custom_logs_config = $custom_logs->data();
             }
 
             foreach($logs as $log) {
 
-                if(isset($custom_logs) && array_key_exists($log['name'], $custom_logs['customLogsParsed'])) {
-                    continue;
+                if(isset($custom_logs) && array_key_exists($log['name'], $custom_logs_config['customLogsParsed'])) {
+                    $isCustom = true;
+                    $lines = $custom_logs->getEntries($log['name']);
                 }
-
-                $lines = \TracyDebugger::tailCustom($this->wire('config')->paths->logs.$log['name'].'.txt', \TracyDebugger::getDataValue("numLogEntries"));
-                $lines = mb_convert_encoding($lines, 'UTF-8');
-                $lines = explode("\n", $lines);
-                foreach($lines as $key => $line) {
-                    $entry = $this->wire('log')->lineToEntry($line);
-                    $lines[$key] = $entry;
+                else {
+                    $isCustom = false;
+                    $lines = \TracyDebugger::tailCustom($this->wire('config')->paths->logs.$log['name'].'.txt', \TracyDebugger::getDataValue("numLogEntries"));
+                    $lines = mb_convert_encoding($lines, 'UTF-8');
+                    $lines = explode("\n", $lines);
+                    foreach($lines as $key => $line) {
+                        $entry = $this->wire('log')->lineToEntry($line);
+                        $lines[$key] = $entry;
+                    }
                 }
 
                 $x=99;
@@ -73,14 +77,30 @@ class ProcesswireLogsPanel extends BasePanel {
                 $logLines = $logLinesData[$log['name']]['lines'];
 
                 foreach($logLines as $entry) {
+
+                    if(($isCustom && !isset($entry[0])) || (!$isCustom && !isset($entry['date']))) {
+                        continue;
+                    }
+
                     $itemKey = $log['name'] . '_' . $x;
-                    $entriesArr[$itemKey]['timestamp'] = @strtotime($entry['date']); // silenced in case timezone is not set
+                    $entriesArr[$itemKey]['timestamp'] = @strtotime($isCustom ? $entry[0] : $entry['date']); // silenced in case timezone is not set
                     $entriesArr[$itemKey]['linenumber'] = 99-$x;
                     $entriesArr[$itemKey]['order'] = $itemKey;
-                    $entriesArr[$itemKey]['date'] = $entry['date'];
-                    $entriesArr[$itemKey]['text'] = $entry['text'];
-                    $entriesArr[$itemKey]['user'] = $entry['user'];
-                    $entriesArr[$itemKey]['url'] = "<a href='".$entry['url']."'>".$entry['url']."</a>";
+                    $entriesArr[$itemKey]['date'] = $isCustom ? $entry[0] : $entry['date'];
+                    if($isCustom) {
+                        unset($entry[0]);
+                        $entry = array_values($entry);
+                        $assoc_entry = array();
+                        foreach ($entry as $key => $value) {
+                            if(isset($custom_logs_config['customLogsParsed'][$log['name']][$key])) {
+                                $assoc_entry[str_replace('{url}', '', $custom_logs_config['customLogsParsed'][$log['name']][$key])] = $value;
+                            }
+                        }
+                        $entry = $assoc_entry;
+                    }
+                    $entriesArr[$itemKey]['text'] = $isCustom ? json_encode($entry) : $entry['text'];
+                    $entriesArr[$itemKey]['user'] = $isCustom ? '' : $entry['user'];
+                    $entriesArr[$itemKey]['url'] = $isCustom ? '' : "<a href='".$entry['url']."'>".$entry['url']."</a>";
                     $entriesArr[$itemKey]['log'] = $log['name'];
                     $x--;
                     $this->numLogEntries++;
