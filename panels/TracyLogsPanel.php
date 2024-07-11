@@ -233,9 +233,6 @@ class TracyLogsPanel extends BasePanel {
                 if($name != $this->wire('sanitizer')->pageName($name)) continue;
                 $logs[$name] = array(
                     'name' => $name,
-                    //'file' => $file->getPathname(),
-                    //'size' => $file->getSize(),
-                    //'modified' => $file->getMTime(),
                 );
             }
             ksort($logs);
