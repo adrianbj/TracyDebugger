@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.26.32',
+            'version' => '4.26.33',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -4295,7 +4295,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'excludedPwLogFiles');
         $f->label = __('Excluded PW log files', __FILE__);
         $f->description = __('Select log files to be excluded', __FILE__);
-        $f->notes = __('Useful if you have logs that are written to regularly on user interaction that are overwhelming more useful alert/error/warning logs.', __FILE__);
+        $f->notes = __('Useful if you have logs that are written to regularly on user interaction that are overwhelming more useful alert/warning/error logs.', __FILE__);
         $f->columnWidth = 50;
         $f->setAsmSelectOption('sortable', false);
         foreach($this->wire('log')->getLogs() as $k => $v) {
@@ -4308,7 +4308,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'excludedTracyLogFiles');
         $f->label = __('Excluded Tracy log files', __FILE__);
         $f->description = __('Select log files to be excluded', __FILE__);
-        $f->notes = __('Useful if you have logs that are written to regularly on user interaction that are overwhelming more useful alert/error/warning logs.', __FILE__);
+        $f->notes = __('Useful if you have logs that are written to regularly on user interaction that are overwhelming more useful alert/warning/error logs.', __FILE__);
         $f->columnWidth = 50;
         $f->setAsmSelectOption('sortable', false);
         foreach((new \TracyLogsPanel())->getLogs() as $k => $v) {

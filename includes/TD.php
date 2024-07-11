@@ -109,30 +109,44 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     public static function dump($var, $title = NULL, array $options = NULL) {
-        if(self::tracyUnavailable()) return false;
+        if(self::tracyUnavailable() && PHP_SAPI !== 'cli') return false;
         if(is_array($title)) {
             $options = $title;
             $title = NULL;
         }
-        if(isset($options) && is_array($options) && !static::has_string_keys($options)) {
-            if(isset($options[0])) $options['maxDepth'] = $options[0];
-            if(isset($options[1])) $options['maxLength'] = $options[1];
-            if(isset($options[2])) $options['maxItems'] = $options[2];
+
+        if(PHP_SAPI === 'cli') {
+            echo $title . PHP_EOL;
+            if(is_array($var) || is_object($var)) {
+                print_r($var);
+            }
+            else {
+                echo $var;
+            }
+            return false;
         }
-        $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
-        $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
-        if(defined('\Tracy\Dumper::ITEMS')) {
-            $options[Dumper::ITEMS] = isset($options['maxItems']) ? $options['maxItems'] : \TracyDebugger::getDataValue('maxItems');
+        else {
+
+            if(isset($options) && is_array($options) && !static::has_string_keys($options)) {
+                if(isset($options[0])) $options['maxDepth'] = $options[0];
+                if(isset($options[1])) $options['maxLength'] = $options[1];
+                if(isset($options[2])) $options['maxItems'] = $options[2];
+            }
+            $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
+            $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
+            if(defined('\Tracy\Dumper::ITEMS')) {
+                $options[Dumper::ITEMS] = isset($options['maxItems']) ? $options['maxItems'] : \TracyDebugger::getDataValue('maxItems');
+            }
+            $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
+            if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = false;
+            echo '
+            <div class="tracy-inner" style="height:auto !important">
+                <div class="tracy-DumpPanel">';
+            if($title) echo '<h2>'.$title.'</h2>';
+            echo static::generateDump($var, $options) .
+            '   </div>
+            </div>';
         }
-        $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
-        if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = false;
-        echo '
-        <div class="tracy-inner" style="height:auto !important">
-            <div class="tracy-DumpPanel">';
-        if($title) echo '<h2>'.$title.'</h2>';
-        echo static::generateDump($var, $options) .
-        '   </div>
-        </div>';
     }
 
     /**
@@ -140,28 +154,42 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     public static function dumpBig($var, $title = NULL, array $options = NULL) {
-        if(self::tracyUnavailable()) return false;
+        if(self::tracyUnavailable() && PHP_SAPI !== 'cli') return false;
         if(is_array($title)) {
             $options = $title;
             $title = NULL;
         }
-        if(isset($options) && is_array($options) && !static::has_string_keys($options)) {
-            if(isset($options[0])) $options['maxDepth'] = $options[0];
-            if(isset($options[1])) $options['maxLength'] = $options[1];
-            if(isset($options[2])) $options['maxItems'] = $options[2];
+
+        if(PHP_SAPI === 'cli') {
+            echo $title . PHP_EOL;
+            if(is_array($var) || is_object($var)) {
+                print_r($var);
+            }
+            else {
+                echo $var;
+            }
+            return false;
         }
-        $options[Dumper::DEPTH] = 6;
-        $options[Dumper::TRUNCATE] = 9999;
-        if(defined('\Tracy\Dumper::ITEMS')) $options[Dumper::ITEMS] = 250;
-        $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
-        if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = false;
-        echo '
-        <div class="tracy-inner" style="height:auto !important">
-            <div class="tracy-DumpPanel">';
-        if($title) echo '<h2>'.$title.'</h2>';
-        echo static::generateDump($var, $options) .
-        '   </div>
-        </div>';
+        else {
+
+            if(isset($options) && is_array($options) && !static::has_string_keys($options)) {
+                if(isset($options[0])) $options['maxDepth'] = $options[0];
+                if(isset($options[1])) $options['maxLength'] = $options[1];
+                if(isset($options[2])) $options['maxItems'] = $options[2];
+            }
+            $options[Dumper::DEPTH] = 6;
+            $options[Dumper::TRUNCATE] = 9999;
+            if(defined('\Tracy\Dumper::ITEMS')) $options[Dumper::ITEMS] = 250;
+            $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
+            if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = false;
+            echo '
+            <div class="tracy-inner" style="height:auto !important">
+                <div class="tracy-DumpPanel">';
+            if($title) echo '<h2>'.$title.'</h2>';
+            echo static::generateDump($var, $options) .
+            '   </div>
+            </div>';
+        }
     }
 
     /**

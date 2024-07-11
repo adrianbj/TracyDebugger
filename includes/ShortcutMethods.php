@@ -54,7 +54,7 @@ if(!function_exists('barDumpBig') && in_array('barDumpBig', $this->data['enabled
  */
 if(!function_exists('dump') && in_array('dump', $this->data['enabledShortcutMethods'])) {
     function dump($var, $title = NULL, array $options = NULL) {
-        if(tracyUnavailable()) return false;
+        if(tracyUnavailable() && PHP_SAPI !== 'cli') return false;
         return TD::dump($var, $title, $options);
     }
 }
@@ -65,7 +65,7 @@ if(!function_exists('dump') && in_array('dump', $this->data['enabledShortcutMeth
  */
 if(!function_exists('dumpBig') && in_array('dumpBig', $this->data['enabledShortcutMethods'])) {
     function dumpBig($var, $title = NULL, array $options = NULL) {
-        if(tracyUnavailable()) return false;
+        if(tracyUnavailable() && PHP_SAPI !== 'cli') return false;
         return TD::dumpBig($var, $title, $options);
     }
 }
@@ -170,7 +170,7 @@ if(!function_exists('bdb') && in_array('bdb', $this->data['enabledShortcutMethod
  */
 if(!function_exists('d') && in_array('d', $this->data['enabledShortcutMethods'])) {
     function d($var, $title = NULL, array $options = NULL) {
-        if(tracyUnavailable()) return false;
+        if(tracyUnavailable() && PHP_SAPI !== 'cli') return false;
         return TD::dump($var, $title, $options);
     }
 }
@@ -181,7 +181,7 @@ if(!function_exists('d') && in_array('d', $this->data['enabledShortcutMethods'])
  */
 if(!function_exists('db') && in_array('db', $this->data['enabledShortcutMethods'])) {
     function db($var, $title = NULL, array $options = NULL) {
-        if(tracyUnavailable()) return false;
+        if(tracyUnavailable() && PHP_SAPI !== 'cli') return false;
         return TD::dumpBig($var, $title, $options);
     }
 }
