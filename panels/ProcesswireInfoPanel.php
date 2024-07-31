@@ -86,6 +86,7 @@ class ProcesswireInfoPanel extends BasePanel {
 
         $out = '';
         $panelSections = \TracyDebugger::getDataValue('processwireInfoPanelSections');
+        $rootUrl = $this->wire('config')->urls->root;
 
         if(in_array('gotoId', $panelSections)) {
             $out .= <<< HTML
@@ -123,7 +124,7 @@ class ProcesswireInfoPanel extends BasePanel {
                                 }
                             }
 
-                            xmlhttp.open("POST", "/", true);
+                            xmlhttp.open("POST", "$rootUrl", true);
                             xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                             xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
                             xmlhttp.send("goToPage="+pid);

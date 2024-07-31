@@ -39,6 +39,7 @@ class ConsolePanel extends BasePanel {
     public function getPanel() {
 
         $rootPath = $this->wire('config')->paths->root;
+        $rootUrl = $this->wire('config')->urls->root;
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
         $inAdmin = \TracyDebugger::$inAdmin;
 
@@ -402,7 +403,7 @@ class ConsolePanel extends BasePanel {
                     var backupFilename = document.getElementById("backupFilename").value;
                     var accessTemplateVars = !this.inAdmin ? document.getElementById("accessTemplateVars").checked : "false";
 
-                    xmlhttp.open("POST", "/", true);
+                    xmlhttp.open("POST", "$rootUrl", true);
                     xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                     xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
                     xmlhttp.send("tracyConsole=1&codeReturn=codeReturn&allowBluescreen="+allowBluescreen+"&dbBackup="+dbBackup+"&backupFilename="+backupFilename+"&accessTemplateVars="+accessTemplateVars+"&pid={$pid}&fid={$fid}&tid={$tid}&mid={$mid}&code="+encodeURIComponent(code));
@@ -444,7 +445,7 @@ class ConsolePanel extends BasePanel {
                             xmlhttp.getAllResponseHeaders();
                         }
                     };
-                    xmlhttp.open("POST", "/", true);
+                    xmlhttp.open("POST", "$rootUrl", true);
                     xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                     xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
                     xmlhttp.send("tracysnippets=1&snippetname=" + name);
@@ -501,7 +502,7 @@ class ConsolePanel extends BasePanel {
                             xmlhttp.getAllResponseHeaders();
                         }
                     };
-                    xmlhttp.open("POST", "/", true);
+                    xmlhttp.open("POST", "$rootUrl", true);
                     xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                     xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
                     if(deleteSnippet) {
