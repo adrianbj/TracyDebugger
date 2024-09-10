@@ -17,7 +17,7 @@ use ErrorException;
  */
 class Debugger
 {
-	public const Version = '2.10.7';
+	public const Version = '2.10.8';
 
 	/** server modes for Debugger::enable() */
 	public const
@@ -140,16 +140,16 @@ class Debugger
 	public static array $customCssFiles = [];
 
 	/** @var array[] */
-	public static $customJsFiles = [];
+	public static array $customJsFiles = [];
 
 	/** @var string */
-	public static $customCssStr = null;
+	public static ?string $customCssStr = null;
 
 	/** @var string */
-	public static $customJsStr = null;
+	public static ?string $customJsStr = null;
 
 	/** @var string */
-	public static $customBodyStr = null;
+	public static ?string $customBodyStr = null;
 
 	/** @var callable[] */
 	private static $sourceMappers = [];
@@ -343,10 +343,7 @@ class Debugger
 				$handler($exception);
 			}
 		} catch (\Throwable $e) {
-			try {
-				self::log($e, self::EXCEPTION);
-			} catch (\Throwable) {
-			}
+			self::tryLog($e, self::EXCEPTION);
 		}
 	}
 
@@ -578,6 +575,17 @@ class Debugger
 	public static function log(mixed $message, string $level = ILogger::INFO): mixed
 	{
 		return self::getLogger()->log($message, $level);
+	}
+
+
+	/** @internal */
+	public static function tryLog(mixed $message, string $level = ILogger::INFO): ?\Throwable
+	{
+		try {
+			self::log($message, $level);
+		} catch (\Throwable $e) {
+		}
+		return $e ?? null;
 	}
 
 
