@@ -48,7 +48,7 @@ class UserSwitcherPanel extends BasePanel {
 
         $out = '
         <h1>' . $this->icon . ' User Switcher</h1>
-        <div class="tracy-inner">
+        <div id="user-switcher-wrapper" class="tracy-inner">
             <h2>' . $this->wire('user')->name . '</h2>
             <p>
                 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 548.172 548.172" style="enable-background:new 0 0 548.172 548.172;" xml:space="preserve" style="height:16px">
@@ -81,7 +81,7 @@ class UserSwitcherPanel extends BasePanel {
 
             if(\TracyDebugger::$allowedSuperuser || $remainingSessionLength > 0) {
                 $out .= '
-                    <select onchange="this.form.submit()" name="userSwitcher" size="5" style="width:100% !important; height:90px !important">';
+                    <select id="userSwitcher" onchange="this.form.submit()" name="userSwitcher" size="5" style="width:100% !important; min-height:105px !important">';
                         if(!$this->wire('user')->isLoggedin()) $out .= '<option value="guest" style="padding: 2px; background:'.TracyDebugger::COLOR_WARN.'; color: #FFFFFF;" selected="selected">guest</option>';
 
                         if(\TracyDebugger::getDataValue('userSwitcherSelector')) {
@@ -114,10 +114,17 @@ HTML;
                         }
                 $out .= '
                     </select>
-                </p>';
+                </p>
+                <script>
+                    (new MutationObserver(() => {
+                        document.getElementById("userSwitcher").setAttribute("style","width:100% !important; min-height:105px !important; height:" + (document.getElementById("user-switcher-wrapper").clientHeight - 175) + "px !important");
+                    })).observe(document.getElementById("tracy-debug-panel-UserSwitcherPanel"), { attributes: true, attributeFilter: ["style"] });
+                </script>
+                ';
             }
 
             if($this->wire('user')->isLoggedin()) $out .= '<input type="submit" name="logoutUserSwitcher" value="Logout to Guest" />&nbsp;';
+            if($this->switchedUser && \TracyDebugger::getDataValue('originalUserSwitcher')) $out .= '<input type="submit" name="revertOriginalUserSwitcher" value="Original User" />&nbsp;';
             if($this->switchedUser) $out .= '<input type="submit" name="endSessionUserSwitcher" value="End Session" />';
 
             $out .= '

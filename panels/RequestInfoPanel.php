@@ -439,7 +439,7 @@ class RequestInfoPanel extends BasePanel {
             </tr>
             <tr>
                 <td>process</td>
-                <td>'.$this->wire('page')->process.'</td>
+                <td>'.(isset($this->wire('page')->process) ? $this->wire('page')->process : $this->wire('process')).'</td>
             </tr>
             <tr>
                 <td>class</td>
@@ -511,15 +511,19 @@ class RequestInfoPanel extends BasePanel {
                     <td>'.date("Y-m-d H:i:s", $p->modified).'</td>
                 </tr>
                 <tr>
-                    <td>Hidden (status)</td>
+                    <td>Hidden</td>
                     <td>'. ($p->isHidden() ? "✔" : "✘") .'</td>
                 </tr>
                 <tr>
-                    <td>Unpublished (status)</td>
+                    <td>Unpublished</td>
                     <td>'. ($p->isUnpublished() ? "✔" : "✘") .'</td>
                 </tr>
                 <tr>
-                    <td>Locked (status)</td>
+                    <td>Trashed</td>
+                    <td>'. ($p->isTrash() ? "✔" : "✘") .'</td>
+                </tr>
+                <tr>
+                    <td>Locked</td>
                     <td>'. ($p->is(Page::statusLocked) ? "✔" : "✘") .'</td>
                 </tr>
             </table>';
