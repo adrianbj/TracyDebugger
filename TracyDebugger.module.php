@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.26.38',
+            'version' => '4.26.39',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -286,7 +286,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "todoIgnoreDirs" => 'git, svn, images, img, errors, sass-cache, node_modules',
             "todoScanAssets" => null,
             "todoScanModules" => null,
-            "todoSpecificModulesOnly" => '',
+            "todoSpecifiedDirectories" => '',
             "todoAllowedExtensions" => 'php, module, inc, txt, latte, html, htm, md, css, scss, less, js',
             "variablesShowPwObjects" => null,
             "alwaysShowDebugTools" => 1,
@@ -4305,12 +4305,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldTextarea");
-        $f->attr('name', 'todoSpecificModulesOnly');
-        $f->label = __('Specific Modules Only', __FILE__);
-        $f->description = __('Comma separated list of module folder names to be included when scanning for ToDo items.', __FILE__);
-        $f->notes = __('If blank, all modules will be scanned.', __FILE__);
-        $f->showIf = 'todoScanModules=1';
-        if($data['todoSpecificModulesOnly']) $f->attr('value', $data['todoSpecificModulesOnly']);
+        $f->attr('name', 'todoSpecifiedDirectories');
+        $f->label = __('Specified directories', __FILE__);
+        $f->description = __('Line break separated directories to be scanned for ToDo items.', __FILE__);
+        $f->notes = __('For example `site/classes` or `site/modules/MyModuleName`', __FILE__);
+        if($data['todoSpecifiedDirectories']) $f->attr('value', $data['todoSpecifiedDirectories']);
         $fieldset->add($f);
 
         // ProcessWire and Tracy Log Panels

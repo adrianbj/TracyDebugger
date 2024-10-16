@@ -12,8 +12,6 @@ class TodoPanel extends BasePanel {
         if(\TracyDebugger::isAdditionalBar()) return;
         \Tracy\Debugger::timer('todo');
 
-        $pathReplace = \TracyDebugger::getDataValue('todoScanModules') == 1 || \TracyDebugger::getDataValue('todoScanAssets') == 1 ? $this->wire('config')->paths->root : $this->wire('config')->paths->templates;
-
         $numEntries = 0;
         $thisPageNumEntries = 0;
         $files = $this->getTodos();
@@ -35,7 +33,7 @@ class TodoPanel extends BasePanel {
                     $this->entries .= "
                         \n<tr>";
                             if($currentFile !== $item['file']) {
-                                $this->entries .= "<td" . ($i==0 ? " rowspan='" . count($files[$file]) . "'" : "") . $thisPageFile . ">" . str_replace($pathReplace, '', $item['file']) . "</td>";
+                                $this->entries .= "<td" . ($i==0 ? " rowspan='" . count($files[$file]) . "'" : "") . $thisPageFile . ">" . str_replace($this->wire('config')->paths->root, '', $item['file']) . "</td>";
                             }
                             // if "todo" or other matched tag is at start of comment then remove it
                             // otherwise, underline it wherever it is in the comment
@@ -149,22 +147,19 @@ class TodoPanel extends BasePanel {
 
 
     private function getTodos() {
-        $items = array();
-        $moduleItems = array();
         $items = $this->scanDirectories($this->wire('config')->paths->templates);
-        if(\TracyDebugger::getDataValue('todoScanModules') == 1) {
-            if(\TracyDebugger::getDataValue('todoSpecificModulesOnly') != '') {
-                foreach(array_map('trim', explode(',', \TracyDebugger::getDataValue('todoSpecificModulesOnly'))) as $moduleDir) {
-                    $moduleItems += $this->scanDirectories($this->wire('config')->paths->siteModules . $moduleDir);
-                }
-            }
-            else {
-                $moduleItems += $this->scanDirectories($this->wire('config')->paths->siteModules);
-            }
-        }
+        if(\TracyDebugger::getDataValue('todoScanModules') == 1) $moduleItems = $this->scanDirectories($this->wire('config')->paths->siteModules);
         if(isset($moduleItems)) $items = array_merge($items, $moduleItems);
         if(\TracyDebugger::getDataValue('todoScanAssets') == 1) $assetsItems = $this->scanDirectories($this->wire('config')->paths->assets);
         if(isset($assetsItems)) $items = array_merge($items, $assetsItems);
+
+        if(\TracyDebugger::getDataValue('todoSpecifiedDirectories') != '') {
+            foreach(array_map('trim', explode("\n", \TracyDebugger::getDataValue('todoSpecifiedDirectories'))) as $customSpecifiedDir) {
+                $customSpecifiedItems = $this->scanDirectories($this->wire('config')->paths->root . $customSpecifiedDir);
+                $items = array_merge($items, $customSpecifiedItems);
+            }
+        }
+
         return $items;
     }
 
