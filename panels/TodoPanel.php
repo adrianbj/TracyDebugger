@@ -150,8 +150,18 @@ class TodoPanel extends BasePanel {
 
     private function getTodos() {
         $items = array();
+        $moduleItems = array();
         $items = $this->scanDirectories($this->wire('config')->paths->templates);
-        if(\TracyDebugger::getDataValue('todoScanModules') == 1) $moduleItems = $this->scanDirectories($this->wire('config')->paths->siteModules);
+        if(\TracyDebugger::getDataValue('todoScanModules') == 1) {
+            if(\TracyDebugger::getDataValue('todoSpecificModulesOnly') != '') {
+                foreach(array_map('trim', explode(',', \TracyDebugger::getDataValue('todoSpecificModulesOnly'))) as $moduleDir) {
+                    $moduleItems += $this->scanDirectories($this->wire('config')->paths->siteModules . $moduleDir);
+                }
+            }
+            else {
+                $moduleItems += $this->scanDirectories($this->wire('config')->paths->siteModules);
+            }
+        }
         if(isset($moduleItems)) $items = array_merge($items, $moduleItems);
         if(\TracyDebugger::getDataValue('todoScanAssets') == 1) $assetsItems = $this->scanDirectories($this->wire('config')->paths->assets);
         if(isset($assetsItems)) $items = array_merge($items, $assetsItems);

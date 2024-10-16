@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.26.37',
+            'version' => '4.26.38',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -284,8 +284,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "userSwitcherRestricted" => null,
             "userSwitcherIncluded" => null,
             "todoIgnoreDirs" => 'git, svn, images, img, errors, sass-cache, node_modules',
-            "todoScanModules" => null,
             "todoScanAssets" => null,
+            "todoScanModules" => null,
+            "todoSpecificModulesOnly" => '',
             "todoAllowedExtensions" => 'php, module, inc, txt, latte, html, htm, md, css, scss, less, js',
             "variablesShowPwObjects" => null,
             "alwaysShowDebugTools" => 1,
@@ -4286,6 +4287,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'todoScanAssets');
+        $f->label = __('Scan site assets', __FILE__);
+        $f->description = __('Check to allow the ToDo to scan the /site/assets directory. Otherwise it will only scan /site/templates.', __FILE__);
+        $f->notes = __('If you check this, you should add files, logs, cache, sessions and other relevant terms to the `Ignore Directories` field.', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('checked', $data['todoScanAssets'] == '1' ? 'checked' : '');
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'todoScanModules');
         $f->label = __('Scan site modules', __FILE__);
         $f->description = __('Check to allow the ToDo to scan the /site/modules directory. Otherwise it will only scan /site/templates.', __FILE__);
@@ -4294,13 +4304,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('checked', $data['todoScanModules'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
-        $f = $this->wire('modules')->get("InputfieldCheckbox");
-        $f->attr('name', 'todoScanAssets');
-        $f->label = __('Scan site assets', __FILE__);
-        $f->description = __('Check to allow the ToDo to scan the /site/assets directory. Otherwise it will only scan /site/templates.', __FILE__);
-        $f->notes = __('If you check this, you should add files, logs, cache, sessions and other relevant terms to the `Ignore Directories` field.', __FILE__);
-        $f->columnWidth = 50;
-        $f->attr('checked', $data['todoScanAssets'] == '1' ? 'checked' : '');
+        $f = $this->wire('modules')->get("InputfieldTextarea");
+        $f->attr('name', 'todoSpecificModulesOnly');
+        $f->label = __('Specific Modules Only', __FILE__);
+        $f->description = __('Comma separated list of module folder names to be included when scanning for ToDo items.', __FILE__);
+        $f->notes = __('If blank, all modules will be scanned.', __FILE__);
+        $f->showIf = 'todoScanModules=1';
+        if($data['todoSpecificModulesOnly']) $f->attr('value', $data['todoSpecificModulesOnly']);
         $fieldset->add($f);
 
         // ProcessWire and Tracy Log Panels
