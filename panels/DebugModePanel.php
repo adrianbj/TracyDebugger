@@ -69,6 +69,9 @@ class DebugModePanel extends BasePanel {
             )
         ) {
             $p = $this->wire('process')->getPage();
+            if($p instanceof NullPage) {
+                $p = $this->wire('pages')->get((int) $this->wire('input')->get('id'));
+            }
         }
         else {
             $p = $this->wire('page');

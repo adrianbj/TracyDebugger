@@ -35,6 +35,9 @@ class AdminerPanel extends BasePanel {
             )
         ) {
             $p = $this->wire('process')->getPage();
+            if($p instanceof NullPage) {
+                $p = $this->wire('pages')->get((int) $this->wire('input')->get('id'));
+            }
         }
         elseif($this->wire('process') == 'ProcessPageView') {
             $p = $this->wire('page');

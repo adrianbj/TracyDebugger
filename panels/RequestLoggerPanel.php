@@ -29,6 +29,9 @@ class RequestLoggerPanel extends BasePanel {
 
         if(\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') && $this->wire('process') == 'ProcessPageEdit') {
             $this->p = $this->wire('process')->getPage();
+            if($this->p instanceof NullPage) {
+                $this->p = $this->wire('pages')->get((int) $this->wire('input')->get('id'));
+            }
         }
         else {
             $this->p = $this->wire('page');

@@ -52,6 +52,9 @@ class AdminToolsPanel extends BasePanel {
 
             if(\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') && $this->wire('process') == 'ProcessPageEdit') {
                 $p = $this->wire('process')->getPage();
+                if($p instanceof NullPage) {
+                    $p = $this->wire('pages')->get((int) $this->wire('input')->get('id'));
+                }
             }
             else {
                 $p = $this->wire('page');

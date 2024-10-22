@@ -20,7 +20,10 @@ class FileEditorPanel extends BasePanel {
                 $this->wire('process') == 'ProcessPermission'
             )
         ) {
-            $this->p = $this->wire('process')->getPage() ?: $this->wire('page');
+            $this->p = $this->wire('process')->getPage();
+            if($this->p instanceof NullPage) {
+                $this->p = $this->wire('pages')->get((int) $this->wire('input')->get('id'));
+            }
         }
         else {
             $this->p = $this->wire('page');
