@@ -112,7 +112,8 @@ class ProcesswireInfoPanel extends BasePanel {
                                 if(xmlhttp.readyState == XMLHttpRequest.DONE) {
                                     if(xmlhttp.status == 200 && xmlhttp.responseText !== "[]") {
                                         var pageDetails = JSON.parse(xmlhttp.responseText);
-                                        document.getElementById("pageDetails").innerHTML = "<span style='font-weight:bold'>" + pageDetails.title + "</span>&nbsp;&nbsp;<a href='{$this->wire('config')->urls->admin}setup/template/edit?id="  + pageDetails.template_id + "' style='color:#888'>" + pageDetails.template_name + "</a>";
+                                        console.log(pageDetails.trash);
+                                        document.getElementById("pageDetails").innerHTML = "<span uk-tooltip title='" + pageDetails.path + "' style='" + (pageDetails.unpublished ? 'text-decoration: line-through' : '') + (pageDetails.hidden ? '; opacity: 0.5' : '') + "'>" + (pageDetails.trash ? '🗑︎ ' : '') + pageDetails.title + "</span>&nbsp;(<a href='{$this->wire('config')->urls->admin}setup/template/edit?id="  + pageDetails.template_id + "' style='color:#888'>" + pageDetails.template_name + "</a>)";
                                         document.getElementById("idGoToEdit").href = "{$this->wire('config')->urls->admin}page/edit/?id=" + pageDetails.id;
                                         document.getElementById("idGoToView").href = pageDetails.url;
                                         document.getElementById("idGoToOpen").href = "{$this->wire('config')->urls->admin}page/?open=" + pageDetails.id;
