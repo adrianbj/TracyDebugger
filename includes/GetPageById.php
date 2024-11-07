@@ -8,6 +8,7 @@ if($p->id) {
     $pageInfo['url'] = $p->url;
     $pageInfo['template_id'] = $p->template->id;
     $pageInfo['template_name'] = $p->template->name;
+    $pageInfo['template_label'] = $p->template->label;
     $pageInfo['path'] = $p->path;
     $pageInfo['unpublished'] = $p->isUnpublished();
     $pageInfo['hidden'] = $p->isHidden();
