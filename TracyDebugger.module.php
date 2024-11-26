@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.26.42',
+            'version' => '4.26.43',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1468,6 +1468,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             // TRACY SETTING
             //convert checked log severity strings to constants and array_reduce to bitwise OR (|) line
+            // remove E_STRICT in case it's still set from old version of Tracy - it's deprecated in PHP 8.4
+            if(($key = array_search('E_STRICT', $this->data['logSeverity'])) !== false) {
+                unset($this->data['logSeverity'][$key]);
+            }
             $severityOptions = array_map('constant', $this->data['logSeverity']);
             Debugger::$logSeverity = array_reduce($severityOptions, function($a, $b) { return $a | $b; }, 0);
 
@@ -3565,7 +3569,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->addOption('E_USER_ERROR', 'E_USER_ERROR');
         $f->addOption('E_USER_WARNING', 'E_USER_WARNING');
         $f->addOption('E_USER_NOTICE', 'E_USER_NOTICE');
-        $f->addOption('E_STRICT', 'E_STRICT');
         $f->addOption('E_RECOVERABLE_ERROR', 'E_RECOVERABLE_ERROR');
         $f->addOption('E_DEPRECATED', 'E_DEPRECATED');
         $f->addOption('E_USER_DEPRECATED', 'E_USER_DEPRECATED');
