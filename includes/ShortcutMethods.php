@@ -20,7 +20,7 @@ function tracyUnavailable() {
  * @tracySkipLocation
  */
 if(!function_exists('debugAll') && in_array('debugAll', $this->data['enabledShortcutMethods'])) {
-    function debugAll($var, $title = NULL, array $options = NULL) {
+    function debugAll($var, $title = NULL, $options = []) {
         if(tracyUnavailable()) return false;
         return TD::debugAll($var, $title, $options);
     }
@@ -31,7 +31,7 @@ if(!function_exists('debugAll') && in_array('debugAll', $this->data['enabledShor
  * @tracySkipLocation
  */
 if(!function_exists('barDump') && in_array('barDump', $this->data['enabledShortcutMethods'])) {
-    function barDump($var, $title = NULL, array $options = NULL) {
+    function barDump($var, $title = NULL, $options = []) {
         if(tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
         return TD::barDump($var, $title, $options);
     }
@@ -53,7 +53,7 @@ if(!function_exists('barDumpBig') && in_array('barDumpBig', $this->data['enabled
  * @tracySkipLocation
  */
 if(!function_exists('dump') && in_array('dump', $this->data['enabledShortcutMethods'])) {
-    function dump($var, $title = NULL, array $options = NULL) {
+    function dump($var, $title = NULL, $options = []) {
         if(tracyUnavailable() && PHP_SAPI !== 'cli') return false;
         return TD::dump($var, $title, $options);
     }
@@ -64,7 +64,7 @@ if(!function_exists('dump') && in_array('dump', $this->data['enabledShortcutMeth
  * @tracySkipLocation
  */
 if(!function_exists('dumpBig') && in_array('dumpBig', $this->data['enabledShortcutMethods'])) {
-    function dumpBig($var, $title = NULL, array $options = NULL) {
+    function dumpBig($var, $title = NULL, $options = []) {
         if(tracyUnavailable() && PHP_SAPI !== 'cli') return false;
         return TD::dumpBig($var, $title, $options);
     }
@@ -136,7 +136,7 @@ if(!function_exists('templateVars') && in_array('templateVars', $this->data['ena
  * @tracySkipLocation
  */
 if(!function_exists('da') && in_array('da', $this->data['enabledShortcutMethods'])) {
-    function da($var, $title = NULL, array $options = NULL) {
+    function da($var, $title = NULL, $options = []) {
         if(tracyUnavailable()) return false;
         return TD::debugAll($var, $title, $options);
     }
@@ -147,7 +147,7 @@ if(!function_exists('da') && in_array('da', $this->data['enabledShortcutMethods'
  * @tracySkipLocation
  */
 if(!function_exists('bd') && in_array('bd', $this->data['enabledShortcutMethods'])) {
-    function bd($var, $title = NULL, array $options = NULL) {
+    function bd($var, $title = NULL, $options = []) {
         if(tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
         return TD::barDump($var, $title, $options);
     }
@@ -169,7 +169,7 @@ if(!function_exists('bdb') && in_array('bdb', $this->data['enabledShortcutMethod
  * @tracySkipLocation
  */
 if(!function_exists('d') && in_array('d', $this->data['enabledShortcutMethods'])) {
-    function d($var, $title = NULL, array $options = NULL) {
+    function d($var, $title = NULL, $options = []) {
         if(tracyUnavailable() && PHP_SAPI !== 'cli') return false;
         return TD::dump($var, $title, $options);
     }
@@ -180,7 +180,7 @@ if(!function_exists('d') && in_array('d', $this->data['enabledShortcutMethods'])
  * @tracySkipLocation
  */
 if(!function_exists('db') && in_array('db', $this->data['enabledShortcutMethods'])) {
-    function db($var, $title = NULL, array $options = NULL) {
+    function db($var, $title = NULL, $options = []) {
         if(tracyUnavailable() && PHP_SAPI !== 'cli') return false;
         return TD::dumpBig($var, $title, $options);
     }

@@ -37,7 +37,7 @@ class TD extends TracyDebugger {
      * Tracy\Debugger::debugAll() shortcut.
      * @tracySkipLocation
      */
-    public static function debugAll($var, string|array|null $title = NULL, ?array $options = NULL) {
+    public static function debugAll($var, $title = NULL, $options = []) {
         if(self::tracyUnavailable()) return false;
         static::barDump($var, $title, $options);
         static::dump($var, $title, $options);
@@ -51,7 +51,7 @@ class TD extends TracyDebugger {
      * Tracy\Debugger::barEcho() shortcut.
      * @tracySkipLocation
      */
-    public static function barEcho(string $str, string|array|null $title = null) {
+    public static function barEcho($str, $title = null) {
         if(self::tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
         static::dumpToBar($str, $title, null, true);
     }
@@ -60,7 +60,7 @@ class TD extends TracyDebugger {
      * Tracy\Debugger::barDump() shortcut.
      * @tracySkipLocation
      */
-    public static function barDump($var, string|array|null $title = NULL, ?array $options = NULL) {
+    public static function barDump($var, $title = NULL, $options = []) {
         if(self::tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
         if(is_array($title)) {
             $options = $title;
@@ -85,7 +85,7 @@ class TD extends TracyDebugger {
      * Tracy\Debugger::barDumpBig() shortcut dumping with maxDepth = 6, maxLength = 9999, and maxItems = 250.
      * @tracySkipLocation
      */
-    public static function barDumpBig($var, string|array|null $title = NULL, ?array $options = NULL) {
+    public static function barDumpBig($var, $title = NULL, $options = []) {
         if(self::tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
         if(is_array($title)) {
             $options = $title;
@@ -108,7 +108,7 @@ class TD extends TracyDebugger {
      * Tracy\Debugger::dump() shortcut.
      * @tracySkipLocation
      */
-    public static function dump($var, string|array|null $title = NULL, ?array $options = NULL) {
+    public static function dump($var, $title = NULL, $options = []) {
         if(self::tracyUnavailable() && PHP_SAPI !== 'cli') return false;
         if(is_array($title)) {
             $options = $title;
@@ -153,7 +153,7 @@ class TD extends TracyDebugger {
      * Tracy\Debugger::dumpBig() shortcut dumping with maxDepth = 6, maxLength = 9999 and maxItems = 250.
      * @tracySkipLocation
      */
-    public static function dumpBig($var, string|array|null $title = NULL, ?array $options = NULL) {
+    public static function dumpBig($var, $title = NULL, $options = []) {
         if(self::tracyUnavailable() && PHP_SAPI !== 'cli') return false;
         if(is_array($title)) {
             $options = $title;
@@ -196,7 +196,7 @@ class TD extends TracyDebugger {
      * Send content to dump bar
      * @tracySkipLocation
      */
-    private static function dumpToBar($var, string|array|null $title = NULL, ?array $options = NULL, $echo = false) {
+    private static function dumpToBar($var, $title = NULL, $options = [], $echo = false) {
         $dumpItem = array();
         $dumpItem['title'] = $title;
         $dumpItem['dump'] = $echo ? '<div class="tracy-echo">' . $var . '</div>' : static::generateDump($var, $options);
@@ -214,7 +214,7 @@ class TD extends TracyDebugger {
      * Generate debugInfo and Full Object tabbed output
      * @tracySkipLocation
      */
-    private static function generateDump($var, array $options) {
+    private static function generateDump($var, $options) {
         // standard options for all dump/barDump variations
         $options[Dumper::COLLAPSE] = isset($options['collapse']) ? $options['collapse'] : \TracyDebugger::getDataValue('collapse');
         $options[Dumper::COLLAPSE_COUNT] = isset($options['collapse_count']) ? $options['collapse_count'] : \TracyDebugger::getDataValue('collapse_count');
@@ -341,7 +341,7 @@ class TD extends TracyDebugger {
      * Tracy\Debugger::log() shortcut.
      * @tracySkipLocation
      */
-    public static function log(string $message, $priority = Debugger::INFO) {
+    public static function log($message, $priority = Debugger::INFO) {
         if(self::tracyUnavailable()) return false;
         return Debugger::log($message, $priority);
     }
@@ -350,7 +350,7 @@ class TD extends TracyDebugger {
      * Tracy\Debugger::timer() shortcut.
      * @tracySkipLocation
      */
-    public static function timer(?string $name = NULL) {
+    public static function timer($name = NULL) {
         if(self::tracyUnavailable()) return false;
         $roundedTime = round(Debugger::timer($name),4);
         if($name) {
@@ -365,7 +365,7 @@ class TD extends TracyDebugger {
      * Tracy\Debugger::fireLog() shortcut.
      * @tracySkipLocation
      */
-    public static function fireLog(?string $message = NULL) {
+    public static function fireLog($message = NULL) {
         if(!method_exists('Tracy\Debugger', 'getFireLogger') || self::tracyUnavailable()) return false;
         return Debugger::fireLog($message);
     }
@@ -375,7 +375,7 @@ class TD extends TracyDebugger {
      * Zarganwar\PerformancePanel\Register::add() shortcut.
      * @tracySkipLocation
      */
-    public static function addBreakpoint(?string $name = null, ?bool $enforceParent = null) {
+    public static function addBreakpoint($name = null, $enforceParent = null) {
         if(self::tracyUnavailable() || !class_exists('\Zarganwar\PerformancePanel\Register')) return false;
         return Zarganwar\PerformancePanel\Register::add($name, $enforceParent);
     }
