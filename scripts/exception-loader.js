@@ -43,7 +43,7 @@ if(!tracyExceptionLoader) {
                         xmlhttp.getAllResponseHeaders();
                     }
                 };
-                xmlhttp.open("POST", tracyExceptionsViewer.rootUrl, true);
+                xmlhttp.open("POST", tracyExceptionsViewer.currentUrl, true);
                 xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
                 xmlhttp.send("filePath=" + filePath);
