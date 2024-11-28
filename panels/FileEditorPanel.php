@@ -61,7 +61,7 @@ class FileEditorPanel extends BasePanel {
     public function getPanel() {
 
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
-        $rootUrl = $this->wire('config')->urls->root;
+        $currentUrl = $_SERVER['REQUEST_URI'];
 
         $filePath = $this->wire('config')->paths->root . $this->tracyFileEditorFilePath;
 
@@ -144,7 +144,7 @@ class FileEditorPanel extends BasePanel {
 
                 tfe: {},
                 tracyModuleUrl: "$tracyModuleUrl",
-                rootUrl: "$rootUrl",
+                currentUrl: "$currentUrl",
                 tracyFileEditorFilePath: "{$this->tracyFileEditorFilePath}",
                 errorMessage: "{$this->errorMessage}",
                 customSnippetsUrl: "$customSnippetsUrl",

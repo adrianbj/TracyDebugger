@@ -52,7 +52,7 @@ class TracyExceptionsPanel extends BasePanel {
     public function getPanel() {
 
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
-        $rootUrl = $this->wire('config')->urls->root;
+        $currentUrl = $_SERVER['REQUEST_URI'];
 
         $filePath = $this->wire('config')->paths->root . $this->tracyExceptionFile;
 
@@ -63,7 +63,7 @@ class TracyExceptionsPanel extends BasePanel {
 
             var tracyExceptionsViewer = {
                 tracyModuleUrl: "$tracyModuleUrl",
-                rootURL: "$rootUrl",
+                currentURL: "$currentUrl",
             };
 
             function clearTracyExceptionsViewer() {
