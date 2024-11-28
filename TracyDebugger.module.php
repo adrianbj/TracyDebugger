@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.26.44',
+            'version' => '4.26.45',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1022,6 +1022,52 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if(method_exists('Tracy\Debugger', 'getFireLogger')) Debugger::$showFireLogger = $this->data['showFireLogger'];
         if(isset(Debugger::$reservedMemorySize)) Debugger::$reservedMemorySize = $this->data['reservedMemorySize'];
 
+        // EDITOR PROTOCOL HANDLER
+        // build up array of replacements to pass to Debugger::$editorMapping
+        // they have to be completely separate replacements because Tracy uses strtr()
+        // which won't replace the same substring more than once
+        $mappingReplacements = array();
+        $compilerCachePath = isset($this->wire('config')->fileCompilerOptions['cachePath']) && $this->wire('config')->fileCompilerOptions['cachePath'] != '' ? $this->wire('config')->fileCompilerOptions['cachePath'] : $this->wire('config')->paths->cache . 'FileCompiler/';
+        $compilerCachePath = str_replace('/', DIRECTORY_SEPARATOR, $compilerCachePath);
+
+        static::$useOnlineEditor = (static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser) &&
+            (static::$isLocal && in_array('local', $this->data['useOnlineEditor'])) ||
+            (!static::$isLocal && in_array('live', $this->data['useOnlineEditor']) ||
+            (isset(static::$showPanels) && in_array('fileEditor', static::$showPanels) && $this->data['forceEditorLinksToTracy'])
+        );
+
+        if(static::$useOnlineEditor) {
+            if($this->data['onlineEditor'] == 'processFileEdit' &&
+                $this->wire('modules')->isInstalled('ProcessFileEdit') &&
+                $this->wire('user')->hasPermission('file-edit'))
+            {
+                static::$onlineEditor = 'processFileEdit';
+                Debugger::$editor = $this->wire('config')->urls->admin . 'setup/file-editor/?f=%file&l=%line';
+                $processFileEditSettings = $this->wire('modules')->getModuleConfigData('ProcessFileEdit');
+                static::$onlineFileEditorDirPath = $processFileEditSettings['dirPath'];
+            }
+            else {
+                static::$onlineEditor = 'tracy';
+                Debugger::$editor = 'tracy://?f=%file&l=%line';
+                static::$onlineFileEditorDirPath = $this->wire('config')->paths->root;
+            }
+            $mappingReplacements[$compilerCachePath . str_replace($this->wire('config')->paths->root,'' , static::$onlineFileEditorDirPath)] = '';
+            $mappingReplacements[static::$onlineFileEditorDirPath] = '';
+        }
+        else {
+            Debugger::$editor = $this->data['editor'];
+
+            if($this->data['localRootPath'] != '') {
+                $mappingReplacements[$compilerCachePath] = $this->data['localRootPath'];
+                $mappingReplacements[$this->wire('config')->paths->root] = $this->data['localRootPath'];
+            }
+            else {
+                $mappingReplacements[$compilerCachePath] = $this->wire('config')->paths->root;
+            }
+        }
+
+        Debugger::$editorMapping = $mappingReplacements;
+
         if(static::$allowedTracyUser === 'development') {
 
             // TRACY TOGGLER
@@ -1041,53 +1087,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
             if(Debugger::$showBar) {
-
-                // EDITOR PROTOCOL HANDLER
-                // build up array of replacements to pass to Debugger::$editorMapping
-                // they have to be completely separate replacements because Tracy uses strtr()
-                // which won't replace the same substring more than once
-                $mappingReplacements = array();
-                $compilerCachePath = isset($this->wire('config')->fileCompilerOptions['cachePath']) && $this->wire('config')->fileCompilerOptions['cachePath'] != '' ? $this->wire('config')->fileCompilerOptions['cachePath'] : $this->wire('config')->paths->cache . 'FileCompiler/';
-                $compilerCachePath = str_replace('/', DIRECTORY_SEPARATOR, $compilerCachePath);
-
-                static::$useOnlineEditor = (static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser) &&
-                    (static::$isLocal && in_array('local', $this->data['useOnlineEditor'])) ||
-                    (!static::$isLocal && in_array('live', $this->data['useOnlineEditor']) ||
-                    (in_array('fileEditor', static::$showPanels) && $this->data['forceEditorLinksToTracy'])
-                );
-
-                if(static::$useOnlineEditor) {
-                    if($this->data['onlineEditor'] == 'processFileEdit' &&
-                        $this->wire('modules')->isInstalled('ProcessFileEdit') &&
-                        $this->wire('user')->hasPermission('file-edit'))
-                    {
-                        static::$onlineEditor = 'processFileEdit';
-                        Debugger::$editor = $this->wire('config')->urls->admin . 'setup/file-editor/?f=%file&l=%line';
-                        $processFileEditSettings = $this->wire('modules')->getModuleConfigData('ProcessFileEdit');
-                        static::$onlineFileEditorDirPath = $processFileEditSettings['dirPath'];
-                    }
-                    else {
-                        static::$onlineEditor = 'tracy';
-                        Debugger::$editor = 'tracy://?f=%file&l=%line';
-                        static::$onlineFileEditorDirPath = $this->wire('config')->paths->root;
-                    }
-                    $mappingReplacements[$compilerCachePath . str_replace($this->wire('config')->paths->root,'' , static::$onlineFileEditorDirPath)] = '';
-                    $mappingReplacements[static::$onlineFileEditorDirPath] = '';
-                }
-                else {
-                    Debugger::$editor = $this->data['editor'];
-
-                    if($this->data['localRootPath'] != '') {
-                        $mappingReplacements[$compilerCachePath] = $this->data['localRootPath'];
-                        $mappingReplacements[$this->wire('config')->paths->root] = $this->data['localRootPath'];
-                    }
-                    else {
-                        $mappingReplacements[$compilerCachePath] = $this->wire('config')->paths->root;
-                    }
-                }
-
-                Debugger::$editorMapping = $mappingReplacements;
-
 
                 //CUSTOM CSS & JS
                 Debugger::$customCssFiles = array(
@@ -1365,7 +1364,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 }
 
                 if(!$this->wire('input')->cookie->tracyHidden) {
-                    Debugger::$customJsStr .= 'document.body.classList.add("has-tracy-debugbar");';
+                    Debugger::$customJsStr .= '
+                    document.addEventListener("DOMContentLoaded", function() {
+                        document.body.classList.add("has-tracy-debugbar");
+                    });';
                 }
 
             }

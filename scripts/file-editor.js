@@ -155,22 +155,26 @@ if(!tracyFileEditorLoader) {
     };
     tracyFileEditorLoader.initializeEditor();
 
-    // click event added to body because of links on bluescreen
-    document.body.addEventListener("click", function(e) {
-        if(e.target) {
-            var curEl = e.target;
-            while(curEl && curEl.tagName != "A") {
-                curEl = curEl.parentNode;
-            }
-            if(curEl && curEl.href && curEl.href.indexOf("tracy://") !== -1) {
-                e.preventDefault();
-                var queryStr = curEl.href.split('?')[1];
-                var fullFilePath = tracyFileEditorLoader.getFileLineVars(queryStr, "f");
-                tracyFileEditorLoader.loadFileEditor(fullFilePath, tracyFileEditorLoader.getFileLineVars(queryStr, "l"));
+    document.addEventListener('DOMContentLoaded', function() {
+        // click event added to body because of links on bluescreen
+        const htmlElement = document.documentElement;
+        var doc = htmlElement.classList.contains('tracy-bs-visible') ? document.body : document;
+        doc.addEventListener("click", function(e) {
+            if(e.target) {
+                var curEl = e.target;
+                while(curEl && curEl.tagName != "A") {
+                    curEl = curEl.parentNode;
+                }
+                if(curEl && curEl.href && curEl.href.indexOf("tracy://") !== -1) {
+                    e.preventDefault();
+                    var queryStr = curEl.href.split('?')[1];
+                    var fullFilePath = tracyFileEditorLoader.getFileLineVars(queryStr, "f");
+                    tracyFileEditorLoader.loadFileEditor(fullFilePath, tracyFileEditorLoader.getFileLineVars(queryStr, "l"));
 
-                tracyFileEditorLoader.addRecentlyOpenedFile(fullFilePath);
+                    tracyFileEditorLoader.addRecentlyOpenedFile(fullFilePath);
 
+                }
             }
-        }
+        });
     });
 }
