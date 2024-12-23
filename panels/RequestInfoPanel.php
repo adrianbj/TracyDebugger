@@ -538,10 +538,16 @@ class RequestInfoPanel extends BasePanel {
             $redirectInfo = '
             <table>';
             foreach(\TracyDebugger::$redirectInfo as $k => $v) {
+
+                $filePathParts = explode(':', $v);
+
+                if($k == 'file') {
+                    $v = \TracyDebugger::createEditorLink($this->wire('config')->paths->root . ltrim($filePathParts[0], '/'), $filePathParts[1], $v, 'Edit ' . $filePathParts[0]);
+                }
                 $redirectInfo .= '
                     <tr>
                         <td>'.$k.'</td>
-                        <td>'.Dumper::toHtml($v).'</td>
+                        <td>'.$v.'</td>
                     </tr>
                 ';
             }
@@ -885,7 +891,15 @@ class RequestInfoPanel extends BasePanel {
 
         // Load all the panel sections
         $isAdditionalBar = \TracyDebugger::isAdditionalBar();
-        $out = '
+
+        $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
+        $out = <<< HTML
+        <script>
+            tracyJSLoader.load("{$tracyModuleUrl}scripts/file-editor.js");
+        </script>
+HTML;
+
+        $out .= '
         <h1>' . $this->icon . ' Request Info' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'RequestInfoPanel'.($isAdditionalBar ? '-'.$isAdditionalBar : '').'\')">+</a></span></span>
         <div class="tracy-inner">
         ';
