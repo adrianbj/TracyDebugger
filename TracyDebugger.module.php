@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.26.46',
+            'version' => '4.26.47',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -216,6 +216,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "forceScream" => null,
             "outputMode" => 'detect',
             "showLocation" => array('Tracy\Dumper::LOCATION_SOURCE', 'Tracy\Dumper::LOCATION_LINK', 'Tracy\Dumper::LOCATION_CLASS'),
+            "keysToHide" => 'dbPass, dbName, dbUser, user, username, pass, password, pwd, pw, auth, token, secret',
             "logSeverity" => array(),
             "excludedPwLogFiles" => array('session', 'modules', 'file-compiler'),
             "excludedTracyLogFiles" => array(),
@@ -948,6 +949,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         //convert checked location strings to constants and array_reduce to bitwise OR (|) line
         $locations = array_map('constant', $this->data['showLocation']);
         Debugger::$showLocation = array_reduce($locations, function($a, $b) { return $a | $b; }, 0);
+
+
+        Debugger::$keysToHide = array_map('trim', explode(',', $this->data['keysToHide']));
 
 
         // START ENABLING TRACY
@@ -3456,6 +3460,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->notes = __('This results in a smaller, cleaner dump, but you may miss some information. You can override this with the `debugInfo => true/false` option when calling `d()`, `bd()`, etc. Note that this also affects the output in the Request Info panel\'s Field List & Values section.', __FILE__);
         $f->columnWidth = 50;
         $f->attr('checked', $data['debugInfo'] == '1' ? 'checked' : '');
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'keysToHide');
+        $f->label = __('Keys to hide', __FILE__);
+        $f->description = __('Keys to redact in dumps and bluescreens.', __FILE__);
+        $f->notes = __('Enter keys separated by commas.'."\nDefault: ".self::getDefaultData()['keysToHide'], __FILE__);
+        if($data['keysToHide']) $f->attr('value', $data['keysToHide']);
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldInteger");

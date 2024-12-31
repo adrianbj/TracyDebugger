@@ -76,6 +76,7 @@ class TD extends TracyDebugger {
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
         if(defined('\Tracy\Dumper::ITEMS')) $options[Dumper::ITEMS] = isset($options['maxItems']) ? $options['maxItems'] : \TracyDebugger::getDataValue('maxItems');
         $options[Dumper::LOCATION] = Debugger::$showLocation;
+        $options[Dumper::KEYS_TO_HIDE] = Debugger::$keysToHide;
         if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = true;
         static::dumpToBar($var, $title, $options);
     }
@@ -100,6 +101,7 @@ class TD extends TracyDebugger {
         $options[Dumper::TRUNCATE] = 9999;
         if(defined('\Tracy\Dumper::ITEMS')) $options[Dumper::ITEMS] = 250;
         $options[Dumper::LOCATION] = Debugger::$showLocation;
+        $options[Dumper::KEYS_TO_HIDE] = Debugger::$keysToHide;
         if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = true;
         static::dumpToBar($var, $title, $options);
     }
@@ -138,6 +140,7 @@ class TD extends TracyDebugger {
                 $options[Dumper::ITEMS] = isset($options['maxItems']) ? $options['maxItems'] : \TracyDebugger::getDataValue('maxItems');
             }
             $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
+            $options[Dumper::KEYS_TO_HIDE] = Debugger::$keysToHide;
             if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = false;
             echo '
             <div class="tracy-inner" style="height:auto !important">
@@ -181,6 +184,7 @@ class TD extends TracyDebugger {
             $options[Dumper::TRUNCATE] = 9999;
             if(defined('\Tracy\Dumper::ITEMS')) $options[Dumper::ITEMS] = 250;
             $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
+            $options[Dumper::KEYS_TO_HIDE] = Debugger::$keysToHide;
             if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = false;
             echo '
             <div class="tracy-inner" style="height:auto !important">
@@ -205,6 +209,7 @@ class TD extends TracyDebugger {
         if((self::tracyUnavailable() && \TracyDebugger::getDataValue('recordGuestDumps')) || (isset(\TracyDebugger::$showPanels) && in_array('dumpsRecorder', \TracyDebugger::$showPanels))) {
             $dumpsFile = wire('config')->paths->cache . 'TracyDebugger/dumps.json';
             $dumpsRecorderItems = file_exists($dumpsFile) ? json_decode(file_get_contents($dumpsFile), true) : array();
+            if(!$dumpsRecorderItems) $dumpsRecorderItems = array();
             array_push($dumpsRecorderItems, $dumpItem);
             wire('files')->filePutContents($dumpsFile, json_encode($dumpsRecorderItems));
         }
