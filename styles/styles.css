@@ -55,7 +55,7 @@ body.tracyHidden:before {
 
 #tracy-debug-bar li>a:hover {
     color: black !important;
-    background: #F0F3F7 !important;
+    background: #e6ebf2 !important;
 }
 
 #tracy-debug-bar li>a {
@@ -315,7 +315,7 @@ body.tracyHidden:before {
 }
 
 #tracy-debug tr:nth-child(2n) td {
-    background: #F0F3F7 !important;
+    background: #e6ebf2 !important;
 }
 
 #tracy-debug td {
@@ -405,7 +405,7 @@ button.tracyCopyBtn:focus {
 }
 
 #tracy-debug .tracyLinkBtn {
-    background: #F0F3F7 !important;
+    background: #e6ebf2 !important;
     border: 1px solid #D2D2D2 !important;
     border-radius: 0 !important;
     padding: 5px 8px !important;
@@ -734,11 +734,79 @@ ul.pw-info-links {
     background: transparent !important;
 }
 
+#tracyTabsContainer {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+#tracyTabsWrapper {
+    width: calc(100% - 40px);
+    display: inline-block;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    margin: 0;
+    padding: 0;
+  }
+
+  #tracyTabs {
+    display: inline-flex;
+    align-items: center;
+    margin: 5px 0 0 0;
+  }
+
+  #tracyTabs button {
+    flex-shrink: 0; /* Prevent buttons from shrinking */
+    margin: 0 4px 0 0;
+    padding: 5px 7px 5px 0;
+    cursor: pointer;
+    border: solid #ccc;
+    border-width: 1px 1px 0 1px;
+    background-color: white;
+  }
+
+  #tracyTabsWrapper::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  #tracyTabsWrapper::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+  }
+
+  #tracyTabsWrapper::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+
+#tracyTabs button.active {
+    background-color: #e6ebf2;
+}
+#tracyTabs button.dragging {
+    opacity: 0.25;
+}
+#tracyConsoleContainer #addTab {
+    margin-left: 10px;
+    padding: 5px 10px;
+    font-size: 18px;
+    line-height: 18px;
+    background-color: #e6ebf2;
+    border: none;
+    cursor: pointer;
+}
+#tracyTabs button span {
+    padding-left: 7px;
+    cursor: pointer;
+}
+#tracyTabs .close-button:hover {
+    color: #EA2262 !important;
+}
+
 #tracy-debug #runInjectButton,
 #tracy-debug #historyBack,
 #tracy-debug #historyForward {
     padding: 3px 10px !important;
-    margin-right: 5px !important;
+    margin-right: 7px !important;
 }
 
 #tracy-debug #runInjectButton:hover,
@@ -916,7 +984,7 @@ ul.pw-info-links {
     padding-bottom: 5px !important;
     font-size: 15px !important;
     color: #2C3E50 !important;
-    background: #F0F3F7 !important;
+    background: #e6ebf2 !important;
     opacity: 0.6 !important;
     border-bottom: 1px solid #c9d4e1 !important;
 }
@@ -945,7 +1013,7 @@ ul.pw-info-links {
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] input[type="submit"]:not([disabled="true"]),
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] .tracyCopyBtn:not([disabled="true"]) {
-    background: #F0F3F7 !important;
+    background: #e6ebf2 !important;
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] input[type="submit"]:hover,
@@ -1009,7 +1077,7 @@ ul.pw-info-links {
     font-weight: normal !important;
     padding: 3px 8px 5px 8px;
     margin: 0 !important;
-    background: #EAF0F2 !important;
+    background: #e6ebf2 !important;
     border: 1px solid #D2D2D2 !important;
     border-bottom: 0 !important;
 }
@@ -1027,7 +1095,7 @@ ul.pw-info-links {
 }
 
 #tracy-debug [data-filterbox-active="1"] tr td {
-    background: #F0F3F7 !important;
+    background: #e6ebf2 !important;
 }
 
 [data-filterbox-active="1"] [data-filterbox-display="true"] {
@@ -1141,7 +1209,7 @@ ul.pw-info-links {
     height: 27px !important;
     line-height: 27px !important;
     padding-left: 7px !important;
-    background: #f0f3f7 !important;
+    background: #e6ebf2 !important;
 }
 #tracyFileEditorFilterBoxWrap .tracy-filterbox-counter {
     font-size: 11px !important;
@@ -1859,7 +1927,7 @@ ul.tracyDumpTabs {
     list-style: none !important;
     margin: 0 !important;
     padding: 0 !important;
-    background: #EAF0F2 !important;
+    background: #F0F3F7 !important;
     border: 1px solid #D2D2D2 !important;
     border-bottom: none !important;
 }
@@ -1924,7 +1992,7 @@ ul.tracyDumpTabs li:not(.active):not(:first-child) a:hover {
 }
 
 ul.tracyDumpTabs li.active a {
-    background: white !important;
+    background: #e6ebf2 !important;
     color: #444 !important;
     border-right-color: #D2D2D2 !important;
     border-top: 1px solid #D2D2D2 !important;

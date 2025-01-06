@@ -108,6 +108,7 @@ class ConsolePanel extends BasePanel {
                     $snippetFileName = $snippetFile->getPathname();
                     $snippets[$i]['name'] = pathinfo($snippetFileName, PATHINFO_BASENAME);
                     $snippets[$i]['filename'] = $snippetFileName;
+                    $snippets[$i]['code'] = file_get_contents($snippetFileName);
                     $snippets[$i]['modified'] = filemtime($snippetFileName);
                     $i++;
                 }
@@ -195,10 +196,13 @@ class ConsolePanel extends BasePanel {
 
                 tce: {},
                 tracyModuleUrl: "$tracyModuleUrl",
+                tabs: {},
+                tabsContainer: null,
+                addTabButton: null,
+                currentTabId: null,
                 maxHistoryItems: 25,
                 historyItem: localStorage.getItem("tracyConsoleHistoryItem") ? localStorage.getItem("tracyConsoleHistoryItem") : 1,
                 historyCount: localStorage.getItem("tracyConsoleHistoryCount"),
-                diskSnippetCode: null,
                 desc: false,
                 inAdmin: "$inAdmin",
                 customSnippetsUrl: "$customSnippetsUrl",
@@ -258,16 +262,64 @@ class ConsolePanel extends BasePanel {
                     return false;
                 },
 
-                saveToLocalStorage: function(name) {
-                    var tracyHistoryItem = {code: this.tce.getValue(), selections: this.tce.selection.toJSON(), scrollTop: this.tce.session.getScrollTop(), scrollLeft: this.tce.session.getScrollLeft()};
-                    localStorage.setItem(name, JSON.stringify(tracyHistoryItem));
+                saveToLocalStorage: function() {
+                    var code = this.tce.getValue();
+
+                    var selections = this.tce.selection.toJSON();
+
+                    var existingTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs")) || [];
+                    var tracyConsole = [];
+                    var updated = false;
+
+                    // Iterate through existing tabs and update if matching id is found
+                    for (var key in existingTabs) {
+                        if (!existingTabs.hasOwnProperty(key)) continue;
+
+                        var tab = existingTabs[key];
+                        if (tab.id == this.currentTabId) {
+                            // Update the existing tab
+                            tracyConsole.push({
+                                id: this.currentTabId,
+                                name: document.querySelector('button[data-tab-id="'+this.currentTabId+'"] .button-label').textContent,
+                                code: code,
+                                selections: selections,
+                                scrollTop: this.tce.session.getScrollTop(),
+                                scrollLeft: this.tce.session.getScrollLeft()
+                            });
+                            updated = true;
+                        } else {
+                            // Keep the existing tab as is
+                            tracyConsole.push(tab);
+                        }
+                    }
+
+                    // If no matching id was found, add a new tab
+                    if (!updated) {
+                        tracyConsole.push({
+                            id: this.currentTabId,
+                            name: document.querySelector('button[data-tab-id="'+this.currentTabId+'"] .button-label').textContent,
+                            code: '',
+                            selections: selections,
+                            scrollTop: this.tce.session.getScrollTop(),
+                            scrollLeft: this.tce.session.getScrollLeft()
+                        });
+                    }
+
+                    localStorage.setItem("tracyConsoleSelectedTab", this.currentTabId);
+                    localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsole));
+
                 },
 
                 setEditorState: function(data) {
-                    this.tce.setValue(data.code);
-                    this.tce.selection.fromJSON(data.selections);
-                    this.tce.session.setScrollTop(data.scrollTop);
-                    this.tce.session.setScrollLeft(data.scrollLeft);
+                    if(data) {
+                        this.tce.setValue(data.code);
+                        this.tce.selection.fromJSON(data.selections);
+                        this.tce.session.setScrollTop(data.scrollTop);
+                        this.tce.session.setScrollLeft(data.scrollLeft);
+                    }
+                    else {
+                        this.tce.setValue('');
+                    }
                 },
 
                 clearResults: function() {
@@ -384,6 +436,33 @@ class ConsolePanel extends BasePanel {
                             if(xmlhttp.status == 200) {
                                 resultId = Date.now();
                                 resultsDiv.innerHTML += '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.tryParseJSON(xmlhttp.responseText) + '</div>';
+
+                                // saved resultsDiv.innerHTML to localStorage in an array of values corresponding to the currentTabId
+                                var existingResults = JSON.parse(localStorage.getItem("tracyConsoleResults")) || [];
+                                var tracyConsoleResults = [];
+                                var updated = false;
+                                for (var key in existingResults) {
+                                    if (!existingResults.hasOwnProperty(key)) continue;
+                                    var result = existingResults[key];
+                                    if (result.id == tracyConsole.currentTabId) {
+                                        tracyConsoleResults.push({
+                                            id: tracyConsole.currentTabId,
+                                            results: resultsDiv.innerHTML
+                                        });
+                                        updated = true;
+                                    } else {
+                                        tracyConsoleResults.push(result);
+                                    }
+                                }
+                                if (!updated) {
+                                    tracyConsoleResults.push({
+                                        id: tracyConsole.currentTabId,
+                                        results: resultsDiv.innerHTML
+                                    });
+                                }
+                                localStorage.setItem("tracyConsoleResults", JSON.stringify(tracyConsoleResults));
+
+
                                 document.getElementById("tracyConsoleResult_"+resultId).scrollIntoView();
                                 if(!document.getElementById("tracy-debug-panel-ConsolePanel").classList.contains("tracy-mode-float")) {
                                     window.Tracy.Debug.panels["tracy-debug-panel-ConsolePanel"].toFloat();
@@ -426,8 +505,6 @@ class ConsolePanel extends BasePanel {
                     xmlhttp.onreadystatechange = function() {
                         if(xmlhttp.readyState == XMLHttpRequest.DONE) {
                             if(xmlhttp.status == 200 && xmlhttp.responseText !== "[]") {
-                                tracyConsole.diskSnippetCode = xmlhttp.responseText;
-                                localStorage.setItem("diskSnippetCode", tracyConsole.diskSnippetCode);
                                 tracyConsole.tce.setValue(xmlhttp.responseText);
                                 tracyConsole.tce.gotoLine(0, 0);
                                 if(process) tracyConsole.processTracyCode();
@@ -436,7 +513,7 @@ class ConsolePanel extends BasePanel {
                                 tracyJSLoader.load(tracyConsole.tracyModuleUrl + "scripts/ace-editor/ext-modelist.js", function() {
                                     tracyConsole.modelist = ace.require("ace/ext/modelist");
                                     var mode = tracyConsole.modelist.getModeForPath(tracyConsole.rootPath+tracyConsole.snippetsPath+name).mode;
-                                    if(tracyConsole.diskSnippetCode.indexOf('<?php') !== -1) {
+                                    if(xmlhttp.responseText.indexOf('<?php') !== -1) {
                                         mode = 'ace/mode/php';
                                     }
                                     else {
@@ -525,9 +602,12 @@ class ConsolePanel extends BasePanel {
                     var tracySnippetName = document.getElementById("tracySnippetName").value;
                     if(tracySnippetName != "") {
                         this.modifyConsoleSnippets(tracySnippetName, encodeURIComponent(this.tce.getValue()));
-                        localStorage.setItem("diskSnippetCode", this.tce.getValue());
                         this.disableButton("saveSnippet");
                         this.tce.focus();
+                        // change selected tab name to match new snippet name just saved
+                        document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"] .button-label').textContent = tracySnippetName;
+                        // update the tab name in localStorage
+                        tracyConsole.saveToLocalStorage();
                     }
                     else {
                         alert('You must enter a name to save a snippet!');
@@ -600,51 +680,68 @@ class ConsolePanel extends BasePanel {
                     }
                 },
 
+                getTabItem: function(id) {
+                    var tracyConsole = JSON.parse(localStorage.getItem("tracyConsoleTabs"));
+                    for(var key in tracyConsole) {
+                        if(!tracyConsole.hasOwnProperty(key)) continue;
+                        var obj = tracyConsole[key];
+                        if(obj.id === id) {
+                            return obj;
+                        }
+                    }
+                },
+
                 loadHistory: function(direction) {
                     var noItem = false;
+                    var historyCounts = JSON.parse(localStorage.getItem("tracyConsoleHistoryCount")) || {};
+                    var historyItems = JSON.parse(localStorage.getItem("tracyConsoleHistoryItem")) || {};
 
-                    if(direction === 'back' && tracyConsole.historyItem > 1) {
-                        var id = --tracyConsole.historyItem;
+                    // initialize count and item for the current tab
+                    var historyCount = historyCounts[this.currentTabId] || 0;
+                    var historyItem = historyItems[this.currentTabId] || 0;
+
+                    // determine the new history item ID based on direction
+                    if (direction === 'back' && historyItem > 1) {
+                        historyItem--;
                     }
-                    else if(direction === 'forward' && tracyConsole.historyCount > tracyConsole.historyItem) {
-                        var id = ++tracyConsole.historyItem;
+                    else if (direction === 'forward' && historyItem < historyCount) {
+                        historyItem++;
                     }
                     else {
-                        var id = tracyConsole.historyItem;
                         noItem = true;
                     }
 
-                    if(id == 1) {
+                    // update buttons based on the new history state
+                    if (historyItem <= 1) {
                         this.disableButton("historyBack");
-                    }
-                    else {
+                    } else {
                         this.enableButton("historyBack");
                     }
-                    if(tracyConsole.historyCount == id) {
+
+                    if (historyItem >= historyCount) {
                         this.disableButton("historyForward");
                     }
                     else {
                         this.enableButton("historyForward");
                     }
 
-                    document.getElementById("tracySnippetName").value = '';
+                    if (noItem) return;
 
-                    if(noItem) return;
-                    localStorage.setItem("tracyConsoleHistoryItem", tracyConsole.historyItem);
-                    this.setEditorState(this.getHistoryItem(id));
-                    this.tce.focus();
-                },
+                    // save the updated history item index for the current tab
+                    historyItems[this.currentTabId] = historyItem;
+                    localStorage.setItem("tracyConsoleHistoryItem", JSON.stringify(historyItems));
 
-                newSnippet: function() {
-                    tracyConsole.tce.setValue('');
-                    tracyConsole.tce.session.setMode({path:"ace/mode/php", inline:true});
-                    localStorage.removeItem("tracyConsoleSelectedSnippet");
-                    if(document.querySelector(".activeSnippet")) {
-                        document.querySelector(".activeSnippet").classList.remove("activeSnippet");
+                    // load the history item for the current tab
+                    var historyData = JSON.parse(localStorage.getItem("tracyConsoleHistory")) || {};
+
+                    var currentTabHistory = historyData[this.currentTabId] || [[]];
+                    var currentTabResults = currentTabHistory[0] || [];
+                    var historyEntry = currentTabResults.find(item => item.id === historyItem);
+
+                    if (historyEntry) {
+                        this.setEditorState(historyEntry);
+                        this.tce.focus();
                     }
-                    document.getElementById("tracySnippetName").value = '';
-                    this.disableButton("reloadSnippet");
-                    this.resizeAce();
                 },
 
                 reloadSnippet: function(process = false) {
@@ -652,51 +749,90 @@ class ConsolePanel extends BasePanel {
                     this.loadSnippet(snippetName, process);
                 },
 
-                loadSnippet: function(name, process = false) {
-                    this.getSnippet(name, process);
+                loadSnippet: function(name, process = false, get = true) {
+                    if(get) {
+                        this.addNewTab(name);
+                        this.getSnippet(name, process);
+                    }
                     this.setActiveSnippet(name);
                     localStorage.setItem("tracyConsoleSelectedSnippet", name);
                     document.getElementById("tracySnippetName").value = name;
+                    document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"] .button-label').textContent = name;
+                    tracyConsole.lockTabName();
                     this.enableButton("reloadSnippet");
                     this.disableButton("saveSnippet");
                     ++tracyConsole.historyItem;
                     this.resizeAce();
                 },
 
+                lockTabName: function() {
+                    var tabButton = document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"] .button-label');
+                    tabButton.classList.add("lockedTab");
+                },
+
                 toggleSaveButton: function() {
-                    if(localStorage.getItem("diskSnippetCode") != tracyConsole.tce.getValue()) {
-                        tracyConsole.enableButton("saveSnippet");
+                    // if code in tracyConsoleSnippets is different from the current code in the editor, enable the save button
+                    var tracyConsoleSnippets = this.getAllSnippets();
+                    var snippet = tracyConsoleSnippets.find(obj => obj.name === document.getElementById("tracySnippetName").value);
+                    if(snippet && snippet.code.replace(/\s+/g, ' ').trim() != this.tce.getValue().replace(/\s+/g, ' ').trim()) {
+                        this.enableButton("saveSnippet");
                     }
                     else {
-                        tracyConsole.disableButton("saveSnippet");
+                        this.disableButton("saveSnippet");
                     }
                 },
 
                 saveHistory: function() {
                     var code = this.tce.getValue();
                     var selections = this.tce.selection.toJSON();
-                    if(code) {
-                        var existingItems = JSON.parse(localStorage.getItem("tracyConsoleHistory"));
-                        var tracyConsoleHistory = [];
-                        var count = 0;
-                        var id = 1;
-                        // add existing items with revised "id"
-                        for(var key in existingItems) {
-                            if(!existingItems.hasOwnProperty(key)) continue;
-                            ++count;
-                            if(existingItems.length === tracyConsole.maxHistoryItems && count === 1) continue;
-                            tracyConsoleHistory.push({id: id, code: existingItems[key].code, selections: existingItems[key].selections, scrollTop: existingItems[key].scrollTop, scrollLeft: existingItems[key].scrollLeft});
-                            ++id;
+
+                    if (code) {
+                        var historyData = JSON.parse(localStorage.getItem("tracyConsoleHistory")) || {};
+                        var historyCounts = JSON.parse(localStorage.getItem("tracyConsoleHistoryCount")) || {};
+                        var historyItems = JSON.parse(localStorage.getItem("tracyConsoleHistoryItem")) || {};
+
+                        // initialize history for the current tab as needed
+                        var tracyConsoleHistory = historyData[this.currentTabId] || [[]];
+                        var currentTabResults = tracyConsoleHistory[0] || [];
+
+                        // ensure the results array does not exceed maxHistoryItems for this tab
+                        if (currentTabResults.length >= tracyConsole.maxHistoryItems) {
+                            currentTabResults.shift();
                         }
-                        // add new item
-                        tracyConsoleHistory.push({id: id, code: code, selections: selections, scrollTop: this.tce.session.getScrollTop(), scrollLeft: this.tce.session.getScrollLeft()});
 
-                        localStorage.setItem("tracyConsoleHistoryCount", tracyConsole.historyCount = id);
-                        localStorage.setItem("tracyConsoleHistoryItem", tracyConsole.historyItem = id);
-                        localStorage.setItem("tracyConsoleHistory", JSON.stringify(tracyConsoleHistory));
+                        // assign unique IDs for the current tab's history
+                        currentTabResults.forEach((item, index) => {
+                            item.id = index + 1;
+                        });
+                        var id = currentTabResults.length + 1;
 
+                        // add the new history item
+                        currentTabResults.push({
+                            id: id,
+                            code: code,
+                            selections: selections,
+                            scrollTop: this.tce.session.getScrollTop(),
+                            scrollLeft: this.tce.session.getScrollLeft()
+                        });
+
+                        // update tracyConsoleHistory for the current tab
+                        tracyConsoleHistory[0] = currentTabResults;
+                        historyData[this.currentTabId] = tracyConsoleHistory;
+
+                        // update history counts and items for the current tab
+                        historyCounts[this.currentTabId] = currentTabResults.length;
+                        historyItems[this.currentTabId] = id;
+
+                        // save back to localStorage
+                        localStorage.setItem("tracyConsoleHistory", JSON.stringify(historyData));
+                        localStorage.setItem("tracyConsoleHistoryCount", JSON.stringify(historyCounts));
+                        localStorage.setItem("tracyConsoleHistoryItem", JSON.stringify(historyItems));
+
+                        // update UI buttons
                         this.disableButton("historyForward");
-                        if(tracyConsole.historyCount > 1) this.enableButton("historyBack");
+                        if (historyCounts[this.currentTabId] > 1) {
+                            this.enableButton("historyBack");
+                        }
                     }
                 },
 
@@ -711,6 +847,199 @@ class ConsolePanel extends BasePanel {
                         document.getElementById("backupFilename").style.display = "inline-block";
                     }
                     tracyConsole.tce.focus();
+                },
+
+                switchTab: function(tabId) {
+                    tabId = Number(tabId);
+
+                    if (this.currentTabId) {
+                        document.querySelector('[data-tab-id="'+this.currentTabId+'"]').classList.remove("active");
+                        const currentButton = Array.from(this.tabsContainer.children).find(
+                            (button) => button.dataset.tabId == this.currentTabId
+                        );
+                        if (currentButton) {
+                            currentButton.classList.remove("active");
+                        }
+                    }
+
+                    this.currentTabId = tabId;
+                    const newButton = Array.from(this.tabsContainer.children).find(
+                        (button) => button.dataset.tabId == tabId
+                    );
+                    if (newButton) {
+                        newButton.classList.add("active");
+                    }
+
+                    this.setEditorState(this.getTabItem(tabId));
+                    this.tce.focus();
+
+                    //populate resultsDiv with saved results
+                    var existingResults = JSON.parse(localStorage.getItem("tracyConsoleResults")) || [];
+                    for (var key in existingResults) {
+                        if (!existingResults.hasOwnProperty(key)) continue;
+                        var result = existingResults[key];
+                        if (result.id == tabId) {
+                            document.getElementById("tracyConsoleResult").innerHTML = result.results;
+                            break;
+                        }
+                        else {
+                            document.getElementById("tracyConsoleResult").innerHTML = '';
+                        }
+                    }
+
+                    localStorage.setItem("tracyConsoleSelectedTab", this.currentTabId);
+
+                    // if tab label matches a snippet name, then select that snippet
+                    var snippetName = document.querySelector('button[data-tab-id="'+tabId+'"] .button-label').textContent;
+                    if(snippetName && document.getElementById(this.makeIdFromTitle(snippetName))) {
+                        this.loadSnippet(snippetName, false, false);
+                    }
+                    else {
+                        // remove active from all snippets
+                        if(document.querySelector(".activeSnippet")) {
+                            document.querySelector(".activeSnippet").classList.remove("activeSnippet");
+                            document.getElementById("tracySnippetName").value = '';
+                        }
+                    }
+
+                },
+
+                removeTab: function(tabId) {
+
+                    if(Object.keys(this.tabs).length === 1) {
+                        document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"] .button-label').textContent = 'Untitled‑1';
+                        tracyConsole.tce.setValue('');
+                        localStorage.removeItem('tracyConsoleResults');
+                        tracyConsole.saveToLocalStorage();
+                        tracyConsole.tce.focus();
+                    }
+                    else {
+
+                        // remove tab button
+                        const tabButton = Array.from(this.tabsContainer.children).find(
+                            (button) => button.dataset.tabId == tabId
+                        );
+                        if (tabButton) this.tabsContainer.removeChild(tabButton);
+
+                        delete tracyConsole.tabs[tabId];
+                        tracyConsole.currentTabId = Math.max(...Object.keys(tracyConsole.tabs).map(Number));
+                        localStorage.setItem("tracyConsoleSelectedTab", tracyConsole.currentTabId);
+
+                        // remove tab from tracyConsoleTabs
+                        const existingItems = JSON.parse(localStorage.getItem("tracyConsoleTabs"));
+                        const tracyConsoleTabs = [];
+                        for (var key in existingItems) {
+                            if (!existingItems.hasOwnProperty(key)) continue;
+                            var item = existingItems[key];
+                            if (item.id != tabId) {
+                                tracyConsoleTabs.push(item);
+                            }
+                        }
+                        localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
+
+                        // remove results for this tab
+                        const existingResults = JSON.parse(localStorage.getItem("tracyConsoleResults"));
+                        const tracyConsoleResults = [];
+                        for (var key in existingResults) {
+                            if (!existingResults.hasOwnProperty(key)) continue;
+                            var result = existingResults[key];
+                            if (result.id != tabId) {
+                                tracyConsoleResults.push(result);
+                            }
+                        }
+                        localStorage.setItem("tracyConsoleResults", JSON.stringify(tracyConsoleResults));
+
+                        this.switchTab(tracyConsole.currentTabId);
+                    }
+
+                },
+
+                addNewTab: function() {
+
+                    let tabId;
+
+                    if (Object.keys(tracyConsole.tabs).length == 0) {
+                        tabId = 1;
+                    }
+                    else {
+                        tabId = Math.max(...Object.keys(tracyConsole.tabs).map(Number)) + 1;
+                    }
+                    const tabButton = document.createElement("button");
+                    const buttonLabel = document.createElement("span");
+                    buttonLabel.classList.add("button-label");
+                    buttonLabel.textContent = 'Untitled‑' + tracyConsole.getNextTabNumber();
+                    tabButton.appendChild(buttonLabel);
+
+                    tabButton.dataset.tabId = tabId;
+                    tabButton.setAttribute("draggable", "true");
+                    tabButton.addEventListener("click", () => tracyConsole.switchTab(tabId));
+                    tracyConsole.tabsContainer.appendChild(tabButton);
+
+                    const closeButton = document.createElement("span");
+                    closeButton.classList.add("close-button");
+                    closeButton.textContent = "✖";
+                    closeButton.addEventListener("click", function (e) {
+                        e.stopPropagation();
+                        tracyConsole.removeTab(tabId);
+                    });
+                    tabButton.appendChild(closeButton);
+
+                    tracyConsole.tabs[tabId] = {};
+                    document.getElementById("tracyConsoleResult").innerHTML = '';
+
+                    tracyConsole.switchTab(tabId);
+
+                    tracyConsole.saveToLocalStorage();
+                },
+
+                getNextTabNumber: function() {
+                    const existingLabels = Array.from(document.querySelectorAll('.button-label')).map(span => span.textContent.trim());
+
+                    const untitledPattern = /^Untitled‑(\d+)$/;
+                    let maxNumber = 0;
+
+                    existingLabels.forEach(label => {
+                        const match = label.match(untitledPattern);
+                        if (match) {
+                            const number = parseInt(match[1], 10);
+                            if (number > maxNumber) {
+                                maxNumber = number;
+                            }
+                        }
+                    });
+
+                    return maxNumber + 1;
+                },
+
+                getDragAfterElement: function (container, x) {
+                    const draggableElements = [...container.querySelectorAll("button[draggable='true']:not(.dragging)")];
+                    return draggableElements.reduce((closest, child) => {
+                        const box = child.getBoundingClientRect();
+                        const offset = x - box.left - box.width / 2;
+                        if (offset < 0 && offset > closest.offset) {
+                            return { offset, element: child };
+                        }
+                        else {
+                            return closest;
+                        }
+                    }, { offset: Number.NEGATIVE_INFINITY }).element;
+                },
+
+                updateLocalStorageTabOrder: function() {
+                    // Get the new order of tab elements from the DOM
+                    const tabElements = document.querySelectorAll('#tracyTabs button[data-tab-id]');
+                    const newTabOrder = Array.from(tabElements).map(tab => parseInt(tab.getAttribute('data-tab-id'), 10));
+
+                    // Retrieve the current tabs from localStorage
+                    const tracyConsoleTabs = JSON.parse(localStorage.getItem('tracyConsoleTabs')) || [];
+
+                    // Reorder the tabs array based on the newTabOrder array
+                    const updatedTabs = newTabOrder
+                        .map(tabId => tracyConsoleTabs.find(tab => tab.id === tabId))
+                        .filter(Boolean);
+
+                    // Save the reordered tabs back to localStorage
+                    localStorage.setItem('tracyConsoleTabs', JSON.stringify(updatedTabs));
                 }
 
             };
@@ -724,21 +1053,49 @@ class ConsolePanel extends BasePanel {
                     tracyConsole.tce.setShowInvisibles($codeShowInvisibles);
                     tracyConsole.tce.\$blockScrolling = Infinity;
 
+                    tracyConsole.currentTabId = localStorage.getItem("tracyConsoleSelectedTab") || 1;
+
                     tracyConsole.tce.on("beforeEndOperation", function() {
-                        tracyConsole.saveToLocalStorage('tracyConsole');
+
+                        let tabName;
+                        let updateName = false;
+                        let tabButton = document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"]');
+                        let potentialTabName = tracyConsole.tce.session.getLine(0).substring(0, 15);
+                        if(potentialTabName.trim().length) {
+                            tabName = potentialTabName.trim();
+                            updateName = true;
+                        }
+                        else if(tabButton.querySelector('.button-label').textContent) {
+                            updateName = false;
+                        }
+                        else {
+                            tabName = 'Untitled‑' + tracyConsole.getNextTabNumber();
+                            updateName = true;
+                        }
+
+                        // if tab button doesn't have lockedTab class, update the tab name
+                        if(!tabButton.querySelector('.button-label').classList.contains('lockedTab') && updateName) {
+                            tabButton.querySelector('.button-label').textContent = tabName;
+                        }
+
+                        tracyConsole.saveToLocalStorage();
                         if(tracyConsole.tce.getValue().indexOf('<?php') !== -1) {
                             tracyConsole.tce.session.setMode('ace/mode/php');
+                        }
+                        else {
+                            tracyConsole.tce.session.setMode({path:"ace/mode/php", inline:true});
                         }
                         tracyConsole.toggleSaveButton();
                         // focus set to false to prevent breaking the Ace search box
                         tracyConsole.resizeAce(false);
+
                     });
 
                     tracyConsole.tce.session.on("changeScrollTop", function() {
-                        tracyConsole.saveToLocalStorage('tracyConsole');
+                        tracyConsole.saveToLocalStorage();
                     });
                     tracyConsole.tce.session.on("changeScrollLeft", function() {
-                        tracyConsole.saveToLocalStorage('tracyConsole');
+                        tracyConsole.saveToLocalStorage();
                     });
 
                     // set theme
@@ -746,29 +1103,30 @@ class ConsolePanel extends BasePanel {
 
                     // set autocomplete and other options
                     ace.config.loadModule('ace/ext/language_tools', function () {
-                        if(!!localStorage.getItem("tracyConsole") && localStorage.getItem("tracyConsole") !== "null" && localStorage.getItem("tracyConsole") !== "undefined") {
+                        /*if(!!localStorage.getItem("tracyConsoleTabs") && localStorage.getItem("tracyConsoleTabs") !== "null" && localStorage.getItem("tracyConsoleTabs") !== "undefined") {
                             try {
-                                tracyConsole.setEditorState(JSON.parse(localStorage.getItem("tracyConsole")));
+                                tracyConsole.setEditorState(tracyConsole.getTabItem(tabId));
                             }
                             catch(e) {
+                                console.log('error');
                                 // for users upgrading from old version of Console panel that didn't store selection & scroll info
-                                tracyConsole.tce.setValue(localStorage.getItem("tracyConsole"));
+                                //tracyConsole.tce.setValue(localStorage.getItem("tracyConsoleTabs"));
                             }
                         }
                         else {
                             tracyConsole.tce.setValue($code);
                             count = tracyConsole.tce.session.getLength();
                             tracyConsole.tce.gotoLine(count, tracyConsole.tce.session.getLine(count-1).length);
-                        }
+                        }*/
 
                         // set mode to php
-                        if(localStorage.getItem("tracyConsole") && JSON.parse(localStorage.getItem("tracyConsole")).code.indexOf('<?php') !== -1) {
-                            var mode = 'ace/mode/php';
+                        /*if(localStorage.getItem("tracyConsoleTabs") && JSON.parse(localStorage.getItem("tracyConsoleTabs")).code.indexOf('<?php') !== -1) {
+                            tracyConsole.tce.session.setMode('ace/mode/php');
                         }
-                        else {
-                            var mode = {path:"ace/mode/php", inline:true}
-                        }
-                        tracyConsole.tce.session.setMode(mode);
+                        else {*/
+                            tracyConsole.tce.session.setMode({path:"ace/mode/php", inline:true});
+                        //}
+
 
                         tracyConsole.tce.setOptions({
                             enableBasicAutocompletion: true,
@@ -846,6 +1204,96 @@ class ConsolePanel extends BasePanel {
 
                         // splitjs
                         tracyJSLoader.load(tracyConsole.tracyModuleUrl + "/scripts/splitjs/split.min.js", function() {
+
+
+                            // setup tabs
+                            tracyConsole.tabsContainer = document.getElementById("tracyTabs");
+                            tracyConsole.addTabButton = document.getElementById("addTab");
+                            tracyConsole.addTabButton.addEventListener("click", tracyConsole.addNewTab);
+
+
+                            let draggedTab = null;
+
+                            tracyConsole.tabsContainer.addEventListener("dragstart", (e) => {
+                                if (e.target === tracyConsole.addTabButton) return;
+                                draggedTab = e.target;
+                                e.dataTransfer.effectAllowed = "move";
+                                e.target.classList.add("dragging");
+                            });
+
+                            tracyConsole.tabsContainer.addEventListener("dragend", (e) => {
+                                e.target.classList.remove("dragging");
+                                draggedTab = null;
+                                tracyConsole.updateLocalStorageTabOrder();
+                            });
+
+                            tracyTabs.addEventListener("dragover", (e) => {
+                                e.preventDefault();
+                                const afterElement = tracyConsole.getDragAfterElement(tracyTabs, e.clientX);
+
+                                // prevent dropping tabs after the "addTab" button
+                                if (afterElement === tracyConsole.addTabButton || afterElement == null) {
+                                    tracyTabs.insertBefore(draggedTab, tracyConsole.addTabButton);
+                                }
+                                else {
+                                    tracyTabs.insertBefore(draggedTab, afterElement);
+                                }
+                            });
+
+
+                            // for users upgrading from old version of Console panel that didn't have tabs
+                            // if there are no tabs in localStorage yet, copy content from the old tracyConsole key to item 1 of tracyConsoleTabs
+                            if (!localStorage.getItem("tracyConsoleTabs") && localStorage.getItem("tracyConsole")) {
+                                var tracyConsoleData = JSON.parse(localStorage.getItem("tracyConsole"));
+                                var tracyConsoleTabs = [
+                                    {
+                                        id: 1,
+                                        ...tracyConsoleData /* spread all keys from tracyConsole */
+                                    }
+                                ];
+                                localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
+                                localStorage.removeItem("tracyConsole");
+                                localStorage.removeItem("diskSnippetCode");
+                            }
+
+                            // load all tabs from localStorage
+                            const consoleTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs"));
+                            if (consoleTabs) {
+                                consoleTabs.forEach((consoleTab) => {
+                                    const tabId = consoleTab.id;
+                                    tracyConsole.tabs[tabId] = consoleTab;
+                                    const tabButton = document.createElement("button");
+                                    const buttonLabel = document.createElement("span");
+                                    buttonLabel.classList.add("button-label");
+
+                                    if(!consoleTab.name || !consoleTab.name.trim().length) {
+                                        consoleTab.name = 'Untitled‑' + tracyConsole.getNextTabNumber();
+                                    }
+                                    buttonLabel.textContent = consoleTab.name;
+                                    tabButton.appendChild(buttonLabel);
+
+                                    tabButton.dataset.tabId = tabId;
+                                    tabButton.setAttribute("draggable", "true");
+                                    tabButton.addEventListener("click", () => tracyConsole.switchTab(tabId));
+                                    tracyConsole.tabsContainer.appendChild(tabButton);
+
+                                    // add close button
+                                    const closeButton = document.createElement("span");
+                                    closeButton.classList.add("close-button");
+                                    closeButton.textContent = "✖";
+                                    closeButton.addEventListener("click", function (e) {
+                                        e.stopPropagation();
+                                        tracyConsole.removeTab(tabId);
+                                    });
+                                    tabButton.appendChild(closeButton);
+                                });
+                                tracyConsole.switchTab(localStorage.getItem("tracyConsoleSelectedTab"));
+                            }
+                            else {
+                                tracyConsole.addNewTab();
+                            }
+
+
                             var sizes = localStorage.getItem('tracyConsoleSplitSizes');
                             tracyConsole.consoleGutterSize = 8;
                             tracyConsole.minSize = tracyConsole.lineHeight;
@@ -1085,8 +1533,8 @@ class ConsolePanel extends BasePanel {
             }
             loadFAIfNotAlreadyLoaded();
 
-
         </script>
+
 HTML;
 
         $keyboardShortcutIcon = '
@@ -1110,7 +1558,7 @@ HTML;
         <span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'ConsolePanel\')">+</a></span></span>
         <div class="tracy-inner">
 
-            <div style="position: relative; height: calc(100% - 45px)">
+            <div style="position: relative; height: calc(100% - 80px)">
 
                 <div id="tracyConsoleMainContainer" style="position: absolute; height: 100%; width: '.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '100%' : 'calc(100% - 290px)').'">
 
@@ -1124,7 +1572,6 @@ HTML;
                     $out .= '
                     <div>
                         <span style="display: inline-block; padding: 0 20px 10px 0">
-                            <input title="New snippet" type="submit" onclick="tracyConsole.newSnippet()" value="➕" />&nbsp;&nbsp;
                             <input id="reloadSnippet" title="Reload current snippet from disk" class="disabledButton" style="font-weight: 600 !important" type="submit" onclick="tracyConsole.reloadSnippet()" value="↻" disabled="true" />&nbsp;&nbsp;
                             <input style="font-family: FontAwesome !important" title="Go back (ALT + PageUp)" id="historyBack" type="submit" onclick="tracyConsole.loadHistory(\'back\')" value="&#xf060;" />&nbsp;
                             <input style="font-family: FontAwesome !important" title="Go forward (ALT + PageDown)" class="iconFlip" id="historyForward" type="submit" onclick="tracyConsole.loadHistory(\'forward\')" value="&#xf060;" />&nbsp;
@@ -1165,6 +1612,12 @@ HTML;
                     </div>
 
                     <div id="tracyConsoleContainer" class="split" style="height: 100%; min-height: '.$codeLineHeight.'px">
+                        <div id="tracyTabsContainer">
+                            <div id="tracyTabsWrapper">
+                                <div id="tracyTabs"></div>
+                            </div>
+                            <button id="addTab" title="Add Tab">+</button>
+                        </div>
                         <div id="tracyConsoleCode" class="split" style="position: relative; background: #FFFFFF;">
                             <div id="tracyConsoleEditor" style="height: 100%; min-height: '.$codeLineHeight.'px"></div>
                         </div>
