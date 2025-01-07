@@ -816,8 +816,7 @@ ul.pw-info-links {
 }
 
 #tracy-debug #historyForward {
-    margin-left: -11px !important;
-    border-right-color: transparent !important;
+    margin-left: -12px !important;
 }
 
 #tracy-debug #historyBack,
