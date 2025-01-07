@@ -462,7 +462,6 @@ class ConsolePanel extends BasePanel {
                                 }
                                 localStorage.setItem("tracyConsoleResults", JSON.stringify(tracyConsoleResults));
 
-
                                 document.getElementById("tracyConsoleResult_"+resultId).scrollIntoView();
                                 if(!document.getElementById("tracy-debug-panel-ConsolePanel").classList.contains("tracy-mode-float")) {
                                     window.Tracy.Debug.panels["tracy-debug-panel-ConsolePanel"].toFloat();
@@ -750,19 +749,47 @@ class ConsolePanel extends BasePanel {
                 },
 
                 loadSnippet: function(name, process = false, get = true) {
+
+                    let existingTabId = null;
                     if(get) {
-                        this.addNewTab(name);
-                        this.getSnippet(name, process);
+                        // check if the snippet is already open
+                        for (const tabId in tracyConsole.tabs) {
+                            if (tracyConsole.tabs[tabId].name === name) {
+                                existingTabId = tabId;
+                                break;
+                            }
+                        }
                     }
-                    this.setActiveSnippet(name);
-                    localStorage.setItem("tracyConsoleSelectedSnippet", name);
-                    document.getElementById("tracySnippetName").value = name;
-                    document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"] .button-label').textContent = name;
-                    tracyConsole.lockTabName();
-                    this.enableButton("reloadSnippet");
-                    this.disableButton("saveSnippet");
-                    ++tracyConsole.historyItem;
-                    this.resizeAce();
+
+                    if (existingTabId) {
+                        tracyConsole.switchTab(existingTabId);
+                    }
+                    else {
+                        if(get) {
+                            this.addNewTab(name);
+                            this.getSnippet(name, process);
+                        }
+                        this.setActiveSnippet(name);
+                        localStorage.setItem("tracyConsoleSelectedSnippet", name);
+                        document.getElementById("tracySnippetName").value = name;
+                        document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"] .button-label').textContent = name;
+                        tracyConsole.lockTabName();
+                        this.enableButton("reloadSnippet");
+                        this.disableButton("saveSnippet");
+                        ++tracyConsole.historyItem;
+                        this.resizeAce();
+                    }
+                },
+
+                scrollTabIntoView: function(tabId) {
+                    const tabElement = document.querySelector('[data-tab-id="'+tabId+'"]');
+                    if (tabElement) {
+                        tabElement.scrollIntoView({
+                            behavior: "smooth",
+                            block: "nearest",
+                            inline: "nearest"
+                        });
+                    }
                 },
 
                 lockTabName: function() {
@@ -872,6 +899,8 @@ class ConsolePanel extends BasePanel {
                     if (newButton) {
                         newButton.classList.add("active");
                     }
+
+                    this.scrollTabIntoView(tabId);
 
                     this.setEditorState(this.getTabItem(tabId));
                     this.tce.focus();
@@ -1233,14 +1262,26 @@ class ConsolePanel extends BasePanel {
 
                             tracyTabs.addEventListener("dragover", (e) => {
                                 e.preventDefault();
+
+                                // Find the element to insert the dragged tab after
                                 const afterElement = tracyConsole.getDragAfterElement(tracyTabs, e.clientX);
 
-                                // prevent dropping tabs after the "addTab" button
-                                if (afterElement === tracyConsole.addTabButton || afterElement == null) {
-                                    tracyTabs.insertBefore(draggedTab, tracyConsole.addTabButton);
+                                // Ensure `draggedTab` is a valid child of `tracyTabs`
+                                if (!tracyTabs.contains(draggedTab)) {
+                                    console.error("Dragged tab is not a child of tracyTabs.");
+                                    return;
                                 }
-                                else {
-                                    tracyTabs.insertBefore(draggedTab, afterElement);
+
+                                if (afterElement === tracyConsole.addTabButton || afterElement == null) {
+                                    // If dragging to the end, append draggedTab at the end of tracyTabs
+                                    tracyTabs.appendChild(draggedTab);
+                                } else {
+                                    // Ensure `afterElement` is a valid child of `tracyTabs`
+                                    if (tracyTabs.contains(afterElement)) {
+                                        tracyTabs.insertBefore(draggedTab, afterElement);
+                                    } else {
+                                        console.error("afterElement is not a child of tracyTabs.");
+                                    }
                                 }
                             });
 
