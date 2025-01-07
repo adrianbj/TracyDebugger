@@ -853,12 +853,15 @@ class ConsolePanel extends BasePanel {
                     tabId = Number(tabId);
 
                     if (this.currentTabId) {
-                        document.querySelector('[data-tab-id="'+this.currentTabId+'"]').classList.remove("active");
-                        const currentButton = Array.from(this.tabsContainer.children).find(
-                            (button) => button.dataset.tabId == this.currentTabId
-                        );
-                        if (currentButton) {
-                            currentButton.classList.remove("active");
+                        let currentTabButton = document.querySelector('button[data-tab-id="'+this.currentTabId+'"]');
+                        if(currentTabButton) {
+                            currentTabButton.classList.remove("active");
+                            const currentButton = Array.from(this.tabsContainer.children).find(
+                                (button) => button.dataset.tabId == this.currentTabId
+                            );
+                            if (currentButton) {
+                                currentButton.classList.remove("active");
+                            }
                         }
                     }
 
@@ -890,18 +893,20 @@ class ConsolePanel extends BasePanel {
                     localStorage.setItem("tracyConsoleSelectedTab", this.currentTabId);
 
                     // if tab label matches a snippet name, then select that snippet
-                    var snippetName = document.querySelector('button[data-tab-id="'+tabId+'"] .button-label').textContent;
-                    if(snippetName && document.getElementById(this.makeIdFromTitle(snippetName))) {
-                        this.loadSnippet(snippetName, false, false);
-                    }
-                    else {
-                        // remove active from all snippets
-                        if(document.querySelector(".activeSnippet")) {
-                            document.querySelector(".activeSnippet").classList.remove("activeSnippet");
-                            document.getElementById("tracySnippetName").value = '';
+                    let tabButton = document.querySelector('button[data-tab-id="'+tabId+'"] .button-label');
+                    if(tabButton) {
+                        var snippetName = tabButton.textContent;
+                        if(snippetName && document.getElementById(this.makeIdFromTitle(snippetName))) {
+                            this.loadSnippet(snippetName, false, false);
+                        }
+                        else {
+                            // remove active from all snippets
+                            if(document.querySelector(".activeSnippet")) {
+                                document.querySelector(".activeSnippet").classList.remove("activeSnippet");
+                                document.getElementById("tracySnippetName").value = '';
+                            }
                         }
                     }
-
                 },
 
                 removeTab: function(tabId) {
@@ -1211,7 +1216,6 @@ class ConsolePanel extends BasePanel {
                             tracyConsole.addTabButton = document.getElementById("addTab");
                             tracyConsole.addTabButton.addEventListener("click", tracyConsole.addNewTab);
 
-
                             let draggedTab = null;
 
                             tracyConsole.tabsContainer.addEventListener("dragstart", (e) => {
@@ -1240,7 +1244,6 @@ class ConsolePanel extends BasePanel {
                                 }
                             });
 
-
                             // for users upgrading from old version of Console panel that didn't have tabs
                             // if there are no tabs in localStorage yet, copy content from the old tracyConsole key to item 1 of tracyConsoleTabs
                             if (!localStorage.getItem("tracyConsoleTabs") && localStorage.getItem("tracyConsole")) {
@@ -1252,8 +1255,13 @@ class ConsolePanel extends BasePanel {
                                     }
                                 ];
                                 localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
+                                // remove old items that are either no longer needed, or need their structure updated to prevent errors
                                 localStorage.removeItem("tracyConsole");
                                 localStorage.removeItem("diskSnippetCode");
+                                localStorage.removeItem("tracyConsoleHistory");
+                                localStorage.removeItem("tracyConsoleHistoryCount");
+                                localStorage.removeItem("tracyConsoleHistoryItem");
+                                localStorage.removeItem("tracyConsoleResults");
                             }
 
                             // load all tabs from localStorage
