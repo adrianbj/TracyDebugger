@@ -934,6 +934,7 @@ class ConsolePanel extends BasePanel {
                                 document.querySelector(".activeSnippet").classList.remove("activeSnippet");
                                 document.getElementById("tracySnippetName").value = '';
                             }
+                            this.disableButton("reloadSnippet");
                         }
                     }
                 },
