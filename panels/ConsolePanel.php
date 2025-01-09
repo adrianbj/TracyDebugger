@@ -268,7 +268,7 @@ class ConsolePanel extends BasePanel {
                     var selections = this.tce.selection.toJSON();
 
                     var existingTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs")) || [];
-                    var tracyConsole = [];
+                    var tracyConsoleTabs = [];
                     var updated = false;
 
                     // Iterate through existing tabs and update if matching id is found
@@ -278,7 +278,7 @@ class ConsolePanel extends BasePanel {
                         var tab = existingTabs[key];
                         if (tab.id == this.currentTabId) {
                             // Update the existing tab
-                            tracyConsole.push({
+                            tracyConsoleTabs.push({
                                 id: this.currentTabId,
                                 name: document.querySelector('button[data-tab-id="'+this.currentTabId+'"] .button-label').textContent,
                                 code: code,
@@ -289,13 +289,13 @@ class ConsolePanel extends BasePanel {
                             updated = true;
                         } else {
                             // Keep the existing tab as is
-                            tracyConsole.push(tab);
+                            tracyConsoleTabs.push(tab);
                         }
                     }
 
                     // If no matching id was found, add a new tab
                     if (!updated) {
-                        tracyConsole.push({
+                        tracyConsoleTabs.push({
                             id: this.currentTabId,
                             name: document.querySelector('button[data-tab-id="'+this.currentTabId+'"] .button-label').textContent,
                             code: '',
@@ -305,8 +305,11 @@ class ConsolePanel extends BasePanel {
                         });
                     }
 
+                    // update loaded copy of tabs
+                    tracyConsole.tabs = tracyConsoleTabs;
+
                     localStorage.setItem("tracyConsoleSelectedTab", this.currentTabId);
-                    localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsole));
+                    localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
 
                 },
 
@@ -559,7 +562,7 @@ class ConsolePanel extends BasePanel {
                         if(!existingSnippets.hasOwnProperty(key)) continue;
                         var obj = existingSnippets[key];
                         if(deleteSnippet === true && obj.name === name) continue;
-                        snippetList += "<li title='Load in console' id='"+this.makeIdFromTitle(obj.name)+"' data-modified='"+obj.modified+"'><span class='consoleSnippetIcon consoleEditIcon iconFlip'>" + this.externalEditorLink.replace('ExternalEditorDummyFile', obj.name) + "</span><span class='consoleSnippetIcon' title='Delete snippet' onclick='tracyConsole.modifyConsoleSnippets(\""+obj.name+"\", null, true)'>&#10006;</span><span style='color: #125EAE; cursor: pointer; width:200px; word-break: break-all;' onclick='tracyConsole.loadSnippet(\""+obj.name+"\");'>" + obj.name + "</span></li>";
+                        snippetList += "<li title='Load in console' id='"+this.makeIdFromTitle(obj.name)+"' data-modified='"+obj.modified+"'><span class='consoleSnippetIcon consoleEditIcon iconFlip'>" + this.externalEditorLink.replace('ExternalEditorDummyFile', obj.name) + "</span><span class='consoleSnippetIcon' style='font-family: FontAwesome !important;' title='Delete snippet' onclick='tracyConsole.modifyConsoleSnippets(\""+obj.name+"\", null, true)'>&#xf1f8;</span><span style='color: #125EAE; cursor: pointer; width:200px; word-break: break-all;' onclick='tracyConsole.loadSnippet(\""+obj.name+"\");'>" + obj.name + "</span></li>";
                     }
                     snippetList += "</ul>";
                     document.getElementById("tracySnippets").innerHTML = snippetList;
@@ -602,6 +605,7 @@ class ConsolePanel extends BasePanel {
                     if(tracySnippetName != "") {
                         this.modifyConsoleSnippets(tracySnippetName, encodeURIComponent(this.tce.getValue()));
                         this.disableButton("saveSnippet");
+                        this.disableButton("reloadSnippet");
                         this.tce.focus();
                         // change selected tab name to match new snippet name just saved
                         document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"] .button-label').textContent = tracySnippetName;
@@ -680,10 +684,10 @@ class ConsolePanel extends BasePanel {
                 },
 
                 getTabItem: function(id) {
-                    var tracyConsole = JSON.parse(localStorage.getItem("tracyConsoleTabs"));
-                    for(var key in tracyConsole) {
-                        if(!tracyConsole.hasOwnProperty(key)) continue;
-                        var obj = tracyConsole[key];
+                    var tracyConsoleTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs"));
+                    for(var key in tracyConsoleTabs) {
+                        if(!tracyConsoleTabs.hasOwnProperty(key)) continue;
+                        var obj = tracyConsoleTabs[key];
                         if(obj.id === id) {
                             return obj;
                         }
@@ -745,23 +749,22 @@ class ConsolePanel extends BasePanel {
 
                 reloadSnippet: function(process = false) {
                     let snippetName = localStorage.getItem("tracyConsoleSelectedSnippet");
-                    this.loadSnippet(snippetName, process);
+                    this.loadSnippet(snippetName, process, true, true);
                 },
 
-                loadSnippet: function(name, process = false, get = true) {
-
+                loadSnippet: function(name, process = false, get = true, reload = false) {
                     let existingTabId = null;
                     if(get) {
                         // check if the snippet is already open
                         for (const tabId in tracyConsole.tabs) {
                             if (tracyConsole.tabs[tabId].name === name) {
-                                existingTabId = tabId;
+                                existingTabId = tracyConsole.tabs[tabId].id;
                                 break;
                             }
                         }
                     }
 
-                    if (existingTabId) {
+                    if(existingTabId && !reload) {
                         tracyConsole.switchTab(existingTabId);
                     }
                     else {
@@ -774,7 +777,7 @@ class ConsolePanel extends BasePanel {
                         document.getElementById("tracySnippetName").value = name;
                         document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"] .button-label').textContent = name;
                         tracyConsole.lockTabName();
-                        this.enableButton("reloadSnippet");
+                        this.disableButton("reloadSnippet");
                         this.disableButton("saveSnippet");
                         ++tracyConsole.historyItem;
                         this.resizeAce();
@@ -783,7 +786,7 @@ class ConsolePanel extends BasePanel {
 
                 scrollTabIntoView: function(tabId) {
                     const tabElement = document.querySelector('[data-tab-id="'+tabId+'"]');
-                    if (tabElement) {
+                    if(tabElement) {
                         tabElement.scrollIntoView({
                             behavior: "smooth",
                             block: "nearest",
@@ -803,9 +806,11 @@ class ConsolePanel extends BasePanel {
                     var snippet = tracyConsoleSnippets.find(obj => obj.name === document.getElementById("tracySnippetName").value);
                     if(snippet && snippet.code.replace(/\s+/g, ' ').trim() != this.tce.getValue().replace(/\s+/g, ' ').trim()) {
                         this.enableButton("saveSnippet");
+                        this.enableButton("reloadSnippet");
                     }
                     else {
                         this.disableButton("saveSnippet");
+                        this.disableButton("reloadSnippet");
                     }
                 },
 
@@ -934,6 +939,7 @@ class ConsolePanel extends BasePanel {
                                 document.querySelector(".activeSnippet").classList.remove("activeSnippet");
                                 document.getElementById("tracySnippetName").value = '';
                             }
+                            localStorage.removeItem("tracyConsoleSelectedSnippet");
                             this.disableButton("reloadSnippet");
                         }
                     }
