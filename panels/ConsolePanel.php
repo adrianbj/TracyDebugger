@@ -1102,11 +1102,12 @@ class ConsolePanel extends BasePanel {
                         let updateName = false;
                         let tabButton = document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"]');
                         let potentialTabName = tracyConsole.tce.session.getLine(0).substring(0, 15);
+
                         if(potentialTabName.trim().length) {
                             tabName = potentialTabName.trim();
                             updateName = true;
                         }
-                        else if(tabButton.querySelector('.button-label').textContent) {
+                        else if(tabButton.querySelector('.button-label').textContent.length > 1) {
                             updateName = false;
                         }
                         else {
