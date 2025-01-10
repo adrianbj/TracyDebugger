@@ -196,7 +196,6 @@ class ConsolePanel extends BasePanel {
 
                 tce: {},
                 tracyModuleUrl: "$tracyModuleUrl",
-                tabs: {},
                 tabsContainer: null,
                 addTabButton: null,
                 currentTabId: null,
@@ -276,6 +275,7 @@ class ConsolePanel extends BasePanel {
                         if (!existingTabs.hasOwnProperty(key)) continue;
 
                         var tab = existingTabs[key];
+
                         if (tab.id == this.currentTabId) {
                             // Update the existing tab
                             tracyConsoleTabs.push({
@@ -287,7 +287,8 @@ class ConsolePanel extends BasePanel {
                                 scrollLeft: this.tce.session.getScrollLeft()
                             });
                             updated = true;
-                        } else {
+                        }
+                        else {
                             // Keep the existing tab as is
                             tracyConsoleTabs.push(tab);
                         }
@@ -304,9 +305,6 @@ class ConsolePanel extends BasePanel {
                             scrollLeft: this.tce.session.getScrollLeft()
                         });
                     }
-
-                    // update loaded copy of tabs
-                    tracyConsole.tabs = tracyConsoleTabs;
 
                     localStorage.setItem("tracyConsoleSelectedTab", this.currentTabId);
                     localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
@@ -753,12 +751,16 @@ class ConsolePanel extends BasePanel {
                 },
 
                 loadSnippet: function(name, process = false, get = true, reload = false) {
+
+                    const existingTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs"));
+
                     let existingTabId = null;
                     if(get) {
                         // check if the snippet is already open
-                        for (const tabId in tracyConsole.tabs) {
-                            if (tracyConsole.tabs[tabId].name === name) {
-                                existingTabId = tracyConsole.tabs[tabId].id;
+                        for (const tabId in existingTabs) {
+
+                            if (existingTabs[tabId].name === name) {
+                                existingTabId = existingTabs[tabId].id;
                                 break;
                             }
                         }
@@ -769,7 +771,7 @@ class ConsolePanel extends BasePanel {
                     }
                     else {
                         if(get) {
-                            this.addNewTab(name);
+                            if(!reload) this.addNewTab(name);
                             this.getSnippet(name, process);
                         }
                         this.setActiveSnippet(name);
@@ -947,7 +949,9 @@ class ConsolePanel extends BasePanel {
 
                 removeTab: function(tabId) {
 
-                    if(Object.keys(this.tabs).length === 1) {
+                    const existingTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs"));
+
+                    if(Object.keys(existingTabs).length === 1) {
                         document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"] .button-label').textContent = 'Untitled‑1';
                         tracyConsole.tce.setValue('');
                         localStorage.removeItem('tracyConsoleResults');
@@ -962,16 +966,14 @@ class ConsolePanel extends BasePanel {
                         );
                         if (tabButton) this.tabsContainer.removeChild(tabButton);
 
-                        delete tracyConsole.tabs[tabId];
-                        tracyConsole.currentTabId = Math.max(...Object.keys(tracyConsole.tabs).map(Number));
+                        tracyConsole.currentTabId = Math.max(...Object.keys(existingTabs).map(Number));
                         localStorage.setItem("tracyConsoleSelectedTab", tracyConsole.currentTabId);
 
                         // remove tab from tracyConsoleTabs
-                        const existingItems = JSON.parse(localStorage.getItem("tracyConsoleTabs"));
                         const tracyConsoleTabs = [];
-                        for (var key in existingItems) {
-                            if (!existingItems.hasOwnProperty(key)) continue;
-                            var item = existingItems[key];
+                        for (var key in existingTabs) {
+                            if (!existingTabs.hasOwnProperty(key)) continue;
+                            var item = existingTabs[key];
                             if (item.id != tabId) {
                                 tracyConsoleTabs.push(item);
                             }
@@ -997,13 +999,15 @@ class ConsolePanel extends BasePanel {
 
                 addNewTab: function() {
 
+                    const existingTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs"));
+
                     let tabId;
 
-                    if (Object.keys(tracyConsole.tabs).length == 0) {
+                    if (Object.keys(existingTabs).length == 0) {
                         tabId = 1;
                     }
                     else {
-                        tabId = Math.max(...Object.keys(tracyConsole.tabs).map(Number)) + 1;
+                        tabId = Math.max(...existingTabs.map(tab => tab.id)) + 1;
                     }
                     const tabButton = document.createElement("button");
                     const buttonLabel = document.createElement("span");
@@ -1025,7 +1029,6 @@ class ConsolePanel extends BasePanel {
                     });
                     tabButton.appendChild(closeButton);
 
-                    tracyConsole.tabs[tabId] = {};
                     document.getElementById("tracyConsoleResult").innerHTML = '';
 
                     tracyConsole.switchTab(tabId);
@@ -1314,11 +1317,10 @@ class ConsolePanel extends BasePanel {
                             }
 
                             // load all tabs from localStorage
-                            const consoleTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs"));
-                            if (consoleTabs) {
-                                consoleTabs.forEach((consoleTab) => {
+                            const existingTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs"));
+                            if (existingTabs) {
+                                existingTabs.forEach((consoleTab) => {
                                     const tabId = consoleTab.id;
-                                    tracyConsole.tabs[tabId] = consoleTab;
                                     const tabButton = document.createElement("button");
                                     const buttonLabel = document.createElement("span");
                                     buttonLabel.classList.add("button-label");
