@@ -966,9 +966,6 @@ class ConsolePanel extends BasePanel {
                         );
                         if (tabButton) this.tabsContainer.removeChild(tabButton);
 
-                        tracyConsole.currentTabId = Math.max(...Object.keys(existingTabs).map(Number));
-                        localStorage.setItem("tracyConsoleSelectedTab", tracyConsole.currentTabId);
-
                         // remove tab from tracyConsoleTabs
                         const tracyConsoleTabs = [];
                         for (var key in existingTabs) {
@@ -979,6 +976,9 @@ class ConsolePanel extends BasePanel {
                             }
                         }
                         localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
+
+                        tracyConsole.currentTabId = Math.max(...tracyConsoleTabs.map(tab => tab.id));
+                        localStorage.setItem("tracyConsoleSelectedTab", tracyConsole.currentTabId);
 
                         // remove results for this tab
                         const existingResults = JSON.parse(localStorage.getItem("tracyConsoleResults"));
