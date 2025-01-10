@@ -886,17 +886,10 @@ class ConsolePanel extends BasePanel {
                 switchTab: function(tabId) {
                     tabId = Number(tabId);
 
-                    if (this.currentTabId) {
-                        let currentTabButton = document.querySelector('button[data-tab-id="'+this.currentTabId+'"]');
-                        if(currentTabButton) {
-                            currentTabButton.classList.remove("active");
-                            const currentButton = Array.from(this.tabsContainer.children).find(
-                                (button) => button.dataset.tabId == this.currentTabId
-                            );
-                            if (currentButton) {
-                                currentButton.classList.remove("active");
-                            }
-                        }
+                    if (this.tabsContainer) {
+                        Array.from(this.tabsContainer.children).forEach((tab) => {
+                            tab.classList.remove("active");
+                        });
                     }
 
                     this.currentTabId = tabId;
@@ -977,7 +970,7 @@ class ConsolePanel extends BasePanel {
                         }
                         localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
 
-                        tracyConsole.currentTabId = Math.max(...tracyConsoleTabs.map(tab => tab.id));
+                        tracyConsole.currentTabId = tracyConsoleTabs[tracyConsoleTabs.length - 1].id;
                         localStorage.setItem("tracyConsoleSelectedTab", tracyConsole.currentTabId);
 
                         // remove results for this tab
