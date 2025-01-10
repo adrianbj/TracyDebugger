@@ -185,7 +185,7 @@ class ConsolePanel extends BasePanel {
         $aceTheme = \TracyDebugger::getDataValue('aceTheme');
         $codeFontSize = \TracyDebugger::getDataValue('codeFontSize');
         $codeLineHeight = \TracyDebugger::getDataValue('codeLineHeight');
-        $externalEditorLink = str_replace('"', "'", \TracyDebugger::createEditorLink($this->wire('config')->paths->site.\TracyDebugger::getDataValue('snippetsPath').'/TracyDebugger/snippets/'.'ExternalEditorDummyFile', 0, '✎', 'Edit in external editor'));
+        $externalEditorLink = str_replace('"', "'", \TracyDebugger::createEditorLink($this->wire('config')->paths->site.\TracyDebugger::getDataValue('snippetsPath').'/TracyDebugger/snippets/'.'ExternalEditorDummyFile', 0, '&#xf040;', 'Edit in external editor'));
         $colorNormal = \TracyDebugger::COLOR_NORMAL;
         $colorWarn = \TracyDebugger::COLOR_WARN;
 
@@ -560,7 +560,7 @@ class ConsolePanel extends BasePanel {
                         if(!existingSnippets.hasOwnProperty(key)) continue;
                         var obj = existingSnippets[key];
                         if(deleteSnippet === true && obj.name === name) continue;
-                        snippetList += "<li title='Load in console' id='"+this.makeIdFromTitle(obj.name)+"' data-modified='"+obj.modified+"'><span class='consoleSnippetIcon consoleEditIcon iconFlip'>" + this.externalEditorLink.replace('ExternalEditorDummyFile', obj.name) + "</span><span class='consoleSnippetIcon' style='font-family: FontAwesome !important;' title='Delete snippet' onclick='tracyConsole.modifyConsoleSnippets(\""+obj.name+"\", null, true)'>&#xf1f8;</span><span style='color: #125EAE; cursor: pointer; width:200px; word-break: break-all;' onclick='tracyConsole.loadSnippet(\""+obj.name+"\");'>" + obj.name + "</span></li>";
+                        snippetList += "<li title='Load in console' id='"+this.makeIdFromTitle(obj.name)+"' data-modified='"+obj.modified+"'><span class='consoleSnippetIcon consoleEditIcon' style='font-family: FontAwesome !important;'>" + this.externalEditorLink.replace('ExternalEditorDummyFile', obj.name) + "</span><span class='consoleSnippetIcon' style='font-family: FontAwesome !important;' title='Delete snippet' onclick='tracyConsole.modifyConsoleSnippets(\""+obj.name+"\", null, true)'>&#xf1f8;</span><span style='color: #125EAE; cursor: pointer; width:225px; word-break: break-all;' onclick='tracyConsole.loadSnippet(\""+obj.name+"\");'>" + obj.name + "</span></li>";
                     }
                     snippetList += "</ul>";
                     document.getElementById("tracySnippets").innerHTML = snippetList;
@@ -1701,7 +1701,7 @@ HTML;
                     </div>
                     <div style="position: relative; width:100% !important;">
                         <input type="text" id="tracySnippetName" placeholder="Enter filename (eg. myscript.php)" />
-                        <input id="saveSnippet" type="submit" class="disabledButton" onclick="tracyConsole.saveSnippet()" value="&#128190;" title="Save snippet" />
+                        <input id="saveSnippet" type="submit" style="font-family: FontAwesome !important" class="disabledButton" onclick="tracyConsole.saveSnippet()" value="&#xf0c7;" title="Save snippet" />
                     </div>
                     <div id="tracySnippets"></div>
                 </div>

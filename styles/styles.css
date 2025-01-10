@@ -662,6 +662,10 @@ ul.pw-info-links {
     position: relative !important;
 }
 
+#tracySnippets li:hover {
+    background: #F5F8F9 !important;
+}
+
 #tracySnippets li:first-child {
     border-top: none;
 }
@@ -696,8 +700,8 @@ ul.pw-info-links {
     visibility: hidden;
     background: transparent !important;
     position: absolute !important;
-    padding: 5px 0 5px 5px !important;
-    top: 1px !important;
+    padding: 3px 0 5px 5px !important;
+    top: 0 !important;
     right: 5px;
     cursor: pointer !important;
     font-size: 17px;
@@ -721,6 +725,10 @@ ul.pw-info-links {
 
 .consoleEditIcon {
     right: 25px !important;
+}
+
+.consoleEditIcon a:hover {
+    text-decoration: none !important;
 }
 
 #tracy-debug #saveSnippet {
@@ -823,13 +831,6 @@ ul.pw-info-links {
 #tracy-debug #historyForward {
     border-top-right-radius: 0 !important;
     border-bottom-right-radius: 0 !important;
-}
-
-.iconFlip {
-    transform: scaleX(-1);
-    filter: flipH;
-    -ms-filter: flipH;
-    display: inline-block;
 }
 
 #tracyConsoleStatus {
