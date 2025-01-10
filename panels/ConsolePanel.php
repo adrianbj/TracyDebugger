@@ -601,7 +601,7 @@ class ConsolePanel extends BasePanel {
                 saveSnippet: function() {
                     var tracySnippetName = document.getElementById("tracySnippetName").value;
                     if(tracySnippetName != "") {
-                        this.modifyConsoleSnippets(tracySnippetName, encodeURIComponent(this.tce.getValue()));
+                        this.modifyConsoleSnippets(tracySnippetName, this.tce.getValue());
                         this.disableButton("saveSnippet");
                         this.disableButton("reloadSnippet");
                         this.tce.focus();
