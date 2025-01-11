@@ -326,6 +326,16 @@ class ConsolePanel extends BasePanel {
                 clearResults: function() {
                     document.getElementById("tracyConsoleResult").innerHTML = "";
                     document.getElementById("tracyConsoleStatus").innerHTML = "";
+                    var existingResults = JSON.parse(localStorage.getItem("tracyConsoleResults")) || [];
+                    var tracyConsoleResults = [];
+                    for (var key in existingResults) {
+                        if (!existingResults.hasOwnProperty(key)) continue;
+                        var result = existingResults[key];
+                        if (result.id != tracyConsole.currentTabId) {
+                            tracyConsoleResults.push(result);
+                        }
+                    }
+                    localStorage.setItem("tracyConsoleResults", JSON.stringify(tracyConsoleResults));
                     this.tce.focus();
                 },
 
