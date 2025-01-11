@@ -200,8 +200,6 @@ class ConsolePanel extends BasePanel {
                 addTabButton: null,
                 currentTabId: null,
                 maxHistoryItems: 25,
-                historyItem: localStorage.getItem("tracyConsoleHistoryItem") ? localStorage.getItem("tracyConsoleHistoryItem") : 1,
-                historyCount: localStorage.getItem("tracyConsoleHistoryCount"),
                 desc: false,
                 inAdmin: "$inAdmin",
                 customSnippetsUrl: "$customSnippetsUrl",
@@ -713,6 +711,128 @@ class ConsolePanel extends BasePanel {
                     return tracyConsoleTabs.find(obj => obj.id === id);
                 },
 
+                reloadSnippet: function(process = false) {
+                    let snippetName = localStorage.getItem("tracyConsoleSelectedSnippet");
+                    this.loadSnippet(snippetName, process, true, true);
+                },
+
+                loadSnippet: function(name, process = false, get = true, reload = false) {
+
+                    const existingTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs"));
+
+                    let existingTabId = null;
+                    if(get) {
+                        // check if the snippet is already open
+                        for (const tabId in existingTabs) {
+
+                            if (existingTabs[tabId].name === name) {
+                                existingTabId = existingTabs[tabId].id;
+                                break;
+                            }
+                        }
+                    }
+
+                    if(existingTabId && !reload) {
+                        tracyConsole.switchTab(existingTabId);
+                    }
+                    else {
+                        if(get) {
+                            if(!reload) this.addNewTab(name);
+                            this.getSnippet(name, process);
+                        }
+                        this.setActiveSnippet(name);
+                        localStorage.setItem("tracyConsoleSelectedSnippet", name);
+                        document.getElementById("tracySnippetName").value = name;
+                        document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"] .button-label').textContent = name;
+                        tracyConsole.lockTabName();
+                        this.enableButton("reloadSnippet");
+                        this.disableButton("saveSnippet");
+                        this.resizeAce();
+                    }
+                },
+
+                scrollTabIntoView: function(tabId) {
+                    const tabElement = document.querySelector('[data-tab-id="'+tabId+'"]');
+                    if(tabElement) {
+                        tabElement.scrollIntoView({
+                            behavior: "smooth",
+                            block: "nearest",
+                            inline: "nearest"
+                        });
+                    }
+                },
+
+                lockTabName: function() {
+                    var tabButton = document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"] .button-label');
+                    tabButton.classList.add("lockedTab");
+                },
+
+                toggleSaveButton: function() {
+                    // if code in tracyConsoleSnippets is different from the current code in the editor, enable the save button
+                    var tracyConsoleSnippets = this.getAllSnippets();
+                    var snippet = tracyConsoleSnippets.find(obj => obj.name === document.getElementById("tracySnippetName").value);
+                    if(snippet && snippet.code.replace(/\s+/g, ' ').trim() != this.tce.getValue().replace(/\s+/g, ' ').trim()) {
+                        this.enableButton("saveSnippet");
+                    }
+                    else {
+                        this.disableButton("saveSnippet");
+                    }
+                },
+
+                saveHistory: function() {
+                    var code = this.tce.getValue();
+                    var selections = this.tce.selection.toJSON();
+
+                    if (code) {
+                        var historyData = JSON.parse(localStorage.getItem("tracyConsoleHistory")) || {};
+                        var historyCounts = JSON.parse(localStorage.getItem("tracyConsoleHistoryCount")) || {};
+                        var historyItems = JSON.parse(localStorage.getItem("tracyConsoleHistoryItem")) || {};
+
+                        // initialize history for the current tab as needed
+                        var tracyConsoleHistory = historyData[this.currentTabId] || [];
+                        var currentTabHistory = tracyConsoleHistory || [];
+
+                        // ensure the results array does not exceed maxHistoryItems for this tab
+                        if (currentTabHistory.length >= tracyConsole.maxHistoryItems) {
+                            currentTabHistory.shift();
+                        }
+
+                        // assign unique IDs for the current tab's history
+                        currentTabHistory.forEach((item, index) => {
+                            item.id = index + 1;
+                        });
+                        var id = currentTabHistory.length + 1;
+
+                        // add the new history item
+                        currentTabHistory.push({
+                            id: id,
+                            code: code,
+                            selections: selections,
+                            scrollTop: this.tce.session.getScrollTop(),
+                            scrollLeft: this.tce.session.getScrollLeft()
+                        });
+
+                        // update tracyConsoleHistory for the current tab
+                        tracyConsoleHistory = currentTabHistory;
+                        historyData[this.currentTabId] = tracyConsoleHistory;
+
+                        // update history counts and items for the current tab
+                        historyCounts[this.currentTabId] = currentTabHistory.length;
+                        historyItems[this.currentTabId] = id;
+
+                        // save back to localStorage
+                        localStorage.setItem("tracyConsoleHistory", JSON.stringify(historyData));
+                        localStorage.setItem("tracyConsoleHistoryCount", JSON.stringify(historyCounts));
+                        localStorage.setItem("tracyConsoleHistoryItem", JSON.stringify(historyItems));
+
+                        // update UI buttons
+                        this.disableButton("historyForward");
+                        if (historyCounts[this.currentTabId] > 1) {
+                            this.enableButton("historyBack");
+                        }
+                    }
+                },
+
                 loadHistory: function(direction) {
                     var noItem = false;
                     var historyCounts = JSON.parse(localStorage.getItem("tracyConsoleHistoryCount")) || {};
@@ -756,135 +876,11 @@ class ConsolePanel extends BasePanel {
                     var historyData = JSON.parse(localStorage.getItem("tracyConsoleHistory")) || {};
 
                     var currentTabHistory = historyData[this.currentTabId] || [[]];
-                    var currentTabResults = currentTabHistory[0] || [];
-                    var historyEntry = currentTabResults.find(item => item.id === historyItem);
+                    var historyEntry = currentTabHistory.find(item => item.id === historyItem);
 
                     if (historyEntry) {
                         this.setEditorState(historyEntry);
                         this.tce.focus();
-                    }
-                },
-
-                reloadSnippet: function(process = false) {
-                    let snippetName = localStorage.getItem("tracyConsoleSelectedSnippet");
-                    this.loadSnippet(snippetName, process, true, true);
-                },
-
-                loadSnippet: function(name, process = false, get = true, reload = false) {
-
-                    const existingTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs"));
-
-                    let existingTabId = null;
-                    if(get) {
-                        // check if the snippet is already open
-                        for (const tabId in existingTabs) {
-
-                            if (existingTabs[tabId].name === name) {
-                                existingTabId = existingTabs[tabId].id;
-                                break;
-                            }
-                        }
-                    }
-
-                    if(existingTabId && !reload) {
-                        tracyConsole.switchTab(existingTabId);
-                    }
-                    else {
-                        if(get) {
-                            if(!reload) this.addNewTab(name);
-                            this.getSnippet(name, process);
-                        }
-                        this.setActiveSnippet(name);
-                        localStorage.setItem("tracyConsoleSelectedSnippet", name);
-                        document.getElementById("tracySnippetName").value = name;
-                        document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"] .button-label').textContent = name;
-                        tracyConsole.lockTabName();
-                        this.enableButton("reloadSnippet");
-                        this.disableButton("saveSnippet");
-                        ++tracyConsole.historyItem;
-                        this.resizeAce();
-                    }
-                },
-
-                scrollTabIntoView: function(tabId) {
-                    const tabElement = document.querySelector('[data-tab-id="'+tabId+'"]');
-                    if(tabElement) {
-                        tabElement.scrollIntoView({
-                            behavior: "smooth",
-                            block: "nearest",
-                            inline: "nearest"
-                        });
-                    }
-                },
-
-                lockTabName: function() {
-                    var tabButton = document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"] .button-label');
-                    tabButton.classList.add("lockedTab");
-                },
-
-                toggleSaveButton: function() {
-                    // if code in tracyConsoleSnippets is different from the current code in the editor, enable the save button
-                    var tracyConsoleSnippets = this.getAllSnippets();
-                    var snippet = tracyConsoleSnippets.find(obj => obj.name === document.getElementById("tracySnippetName").value);
-                    if(snippet && snippet.code.replace(/\s+/g, ' ').trim() != this.tce.getValue().replace(/\s+/g, ' ').trim()) {
-                        this.enableButton("saveSnippet");
-                    }
-                    else {
-                        this.disableButton("saveSnippet");
-                    }
-                },
-
-                saveHistory: function() {
-                    var code = this.tce.getValue();
-                    var selections = this.tce.selection.toJSON();
-
-                    if (code) {
-                        var historyData = JSON.parse(localStorage.getItem("tracyConsoleHistory")) || {};
-                        var historyCounts = JSON.parse(localStorage.getItem("tracyConsoleHistoryCount")) || {};
-                        var historyItems = JSON.parse(localStorage.getItem("tracyConsoleHistoryItem")) || {};
-
-                        // initialize history for the current tab as needed
-                        var tracyConsoleHistory = historyData[this.currentTabId] || [[]];
-                        var currentTabResults = tracyConsoleHistory[0] || [];
-
-                        // ensure the results array does not exceed maxHistoryItems for this tab
-                        if (currentTabResults.length >= tracyConsole.maxHistoryItems) {
-                            currentTabResults.shift();
-                        }
-
-                        // assign unique IDs for the current tab's history
-                        currentTabResults.forEach((item, index) => {
-                            item.id = index + 1;
-                        });
-                        var id = currentTabResults.length + 1;
-
-                        // add the new history item
-                        currentTabResults.push({
-                            id: id,
-                            code: code,
-                            selections: selections,
-                            scrollTop: this.tce.session.getScrollTop(),
-                            scrollLeft: this.tce.session.getScrollLeft()
-                        });
-
-                        // update tracyConsoleHistory for the current tab
-                        tracyConsoleHistory[0] = currentTabResults;
-                        historyData[this.currentTabId] = tracyConsoleHistory;
-
-                        // update history counts and items for the current tab
-                        historyCounts[this.currentTabId] = currentTabResults.length;
-                        historyItems[this.currentTabId] = id;
-
-                        // save back to localStorage
-                        localStorage.setItem("tracyConsoleHistory", JSON.stringify(historyData));
-                        localStorage.setItem("tracyConsoleHistoryCount", JSON.stringify(historyCounts));
-                        localStorage.setItem("tracyConsoleHistoryItem", JSON.stringify(historyItems));
-
-                        // update UI buttons
-                        this.disableButton("historyForward");
-                        if (historyCounts[this.currentTabId] > 1) {
-                            this.enableButton("historyBack");
-                        }
                     }
                 },
 
