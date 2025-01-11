@@ -723,10 +723,10 @@ class ConsolePanel extends BasePanel {
                     var historyItem = historyItems[this.currentTabId] || 0;
 
                     // determine the new history item ID based on direction
-                    if (direction === 'back' && historyItem > 1) {
+                    if (direction && direction === 'back' && historyItem > 1) {
                         historyItem--;
                     }
-                    else if (direction === 'forward' && historyItem < historyCount) {
+                    else if (direction && direction === 'forward' && historyItem < historyCount) {
                         historyItem++;
                     }
                     else {
@@ -748,7 +748,6 @@ class ConsolePanel extends BasePanel {
                     }
 
                     if (noItem) return;
-
                     // save the updated history item index for the current tab
                     historyItems[this.currentTabId] = historyItem;
                     localStorage.setItem("tracyConsoleHistoryItem", JSON.stringify(historyItems));
@@ -948,6 +947,7 @@ class ConsolePanel extends BasePanel {
                             this.disableButton("reloadSnippet");
                         }
                     }
+                    tracyConsole.loadHistory();
                 },
 
                 removeTab: function(tabId) {
@@ -1490,13 +1490,7 @@ class ConsolePanel extends BasePanel {
 
                         tracyConsole.sortList('alphabetical');
 
-                        // history buttons
-                        if(tracyConsole.historyCount == tracyConsole.historyItem || !tracyConsole.historyItem || !tracyConsole.historyCount) {
-                            tracyConsole.disableButton("historyForward");
-                        }
-                        if(!tracyConsole.historyItem || tracyConsole.historyItem == 1 || tracyConsole.historyCount < 2) {
-                            tracyConsole.disableButton("historyBack");
-                        }
+                        tracyConsole.loadHistory();
 
                         // various keyboard shortcuts
                         document.getElementById("tracyConsoleCode").querySelector(".ace_text-input").addEventListener("keydown", function(e) {
