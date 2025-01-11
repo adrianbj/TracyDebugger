@@ -266,33 +266,23 @@ class ConsolePanel extends BasePanel {
 
                     var selections = this.tce.selection.toJSON();
 
-                    var existingTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs")) || [];
-                    var tracyConsoleTabs = [];
-                    var updated = false;
+                    const existingTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs")) || [];
+                    let updated = false;
 
-                    // Iterate through existing tabs and update if matching id is found
-                    for (var key in existingTabs) {
-                        if (!existingTabs.hasOwnProperty(key)) continue;
-
-                        var tab = existingTabs[key];
-
+                    const tracyConsoleTabs = existingTabs.map(tab => {
                         if (tab.id == this.currentTabId) {
-                            // Update the existing tab
-                            tracyConsoleTabs.push({
+                            updated = true;
+                            return {
                                 id: this.currentTabId,
                                 name: document.querySelector('button[data-tab-id="'+this.currentTabId+'"] .button-label').textContent,
                                 code: code,
                                 selections: selections,
                                 scrollTop: this.tce.session.getScrollTop(),
                                 scrollLeft: this.tce.session.getScrollLeft()
-                            });
-                            updated = true;
+                            };
                         }
-                        else {
-                            // Keep the existing tab as is
-                            tracyConsoleTabs.push(tab);
-                        }
-                    }
+                        return tab;
+                    });
 
                     // If no matching id was found, add a new tab
                     if (!updated) {
@@ -327,14 +317,7 @@ class ConsolePanel extends BasePanel {
                     document.getElementById("tracyConsoleResult").innerHTML = "";
                     document.getElementById("tracyConsoleStatus").innerHTML = "";
                     var existingResults = JSON.parse(localStorage.getItem("tracyConsoleResults")) || [];
-                    var tracyConsoleResults = [];
-                    for (var key in existingResults) {
-                        if (!existingResults.hasOwnProperty(key)) continue;
-                        var result = existingResults[key];
-                        if (result.id != tracyConsole.currentTabId) {
-                            tracyConsoleResults.push(result);
-                        }
-                    }
+                    var tracyConsoleResults = existingResults.filter(result => result.id != tracyConsole.currentTabId);
                     localStorage.setItem("tracyConsoleResults", JSON.stringify(tracyConsoleResults));
                     this.tce.focus();
                 },
@@ -450,27 +433,26 @@ class ConsolePanel extends BasePanel {
 
                                 // saved resultsDiv.innerHTML to localStorage in an array of values corresponding to the currentTabId
                                 var existingResults = JSON.parse(localStorage.getItem("tracyConsoleResults")) || [];
-                                var tracyConsoleResults = [];
                                 var updated = false;
-                                for (var key in existingResults) {
-                                    if (!existingResults.hasOwnProperty(key)) continue;
-                                    var result = existingResults[key];
+
+                                var tracyConsoleResults = existingResults.map(result => {
                                     if (result.id == tracyConsole.currentTabId) {
-                                        tracyConsoleResults.push({
+                                        updated = true;
+                                        return {
                                             id: tracyConsole.currentTabId,
                                             results: resultsDiv.innerHTML
-                                        });
-                                        updated = true;
-                                    } else {
-                                        tracyConsoleResults.push(result);
+                                        };
                                     }
-                                }
+                                    return result;
+                                });
+
                                 if (!updated) {
                                     tracyConsoleResults.push({
                                         id: tracyConsole.currentTabId,
                                         results: resultsDiv.innerHTML
                                     });
                                 }
+
                                 localStorage.setItem("tracyConsoleResults", JSON.stringify(tracyConsoleResults));
 
                                 document.getElementById("tracyConsoleResult_"+resultId).scrollIntoView();
@@ -682,23 +664,14 @@ class ConsolePanel extends BasePanel {
                 },
 
                 getHistoryItem: function(id) {
-                    var tracyConsoleHistory = JSON.parse(localStorage.getItem("tracyConsoleHistory"));
-                    for(var key in tracyConsoleHistory) {
-                        if(!tracyConsoleHistory.hasOwnProperty(key)) continue;
-                        var obj = tracyConsoleHistory[key];
-                        if(obj.id === id) return obj;
-                    }
+                    var tracyConsoleHistory = JSON.parse(localStorage.getItem("tracyConsoleHistory")) || [];
+                    var obj = tracyConsoleHistory.find(obj => obj.id === id);
+                    return obj;
                 },
 
                 getTabItem: function(id) {
-                    var tracyConsoleTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs"));
-                    for(var key in tracyConsoleTabs) {
-                        if(!tracyConsoleTabs.hasOwnProperty(key)) continue;
-                        var obj = tracyConsoleTabs[key];
-                        if(obj.id === id) {
-                            return obj;
-                        }
-                    }
+                    var tracyConsoleTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs")) || [];
+                    return tracyConsoleTabs.find(obj => obj.id === id);
                 },
 
                 loadHistory: function(direction) {
@@ -914,17 +887,8 @@ class ConsolePanel extends BasePanel {
 
                     //populate resultsDiv with saved results
                     var existingResults = JSON.parse(localStorage.getItem("tracyConsoleResults")) || [];
-                    for (var key in existingResults) {
-                        if (!existingResults.hasOwnProperty(key)) continue;
-                        var result = existingResults[key];
-                        if (result.id == tabId) {
-                            document.getElementById("tracyConsoleResult").innerHTML = result.results;
-                            break;
-                        }
-                        else {
-                            document.getElementById("tracyConsoleResult").innerHTML = '';
-                        }
-                    }
+                    var result = existingResults.find(result => result.id == tabId);
+                    document.getElementById("tracyConsoleResult").innerHTML = result ? result.results : '';
 
                     localStorage.setItem("tracyConsoleSelectedTab", this.currentTabId);
 
@@ -967,29 +931,15 @@ class ConsolePanel extends BasePanel {
                         if (tabButton) this.tabsContainer.removeChild(tabButton);
 
                         // remove tab from tracyConsoleTabs
-                        const tracyConsoleTabs = [];
-                        for (var key in existingTabs) {
-                            if (!existingTabs.hasOwnProperty(key)) continue;
-                            var item = existingTabs[key];
-                            if (item.id != tabId) {
-                                tracyConsoleTabs.push(item);
-                            }
-                        }
+                        const tracyConsoleTabs = existingTabs.filter(item => item.id != tabId);
                         localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
 
-                        tracyConsole.currentTabId = tracyConsoleTabs[tracyConsoleTabs.length - 1].id;
+                        tracyConsole.currentTabId = tracyConsoleTabs.at(-1)?.id || null;
                         localStorage.setItem("tracyConsoleSelectedTab", tracyConsole.currentTabId);
 
                         // remove results for this tab
-                        const existingResults = JSON.parse(localStorage.getItem("tracyConsoleResults"));
-                        const tracyConsoleResults = [];
-                        for (var key in existingResults) {
-                            if (!existingResults.hasOwnProperty(key)) continue;
-                            var result = existingResults[key];
-                            if (result.id != tabId) {
-                                tracyConsoleResults.push(result);
-                            }
-                        }
+                        const existingResults = JSON.parse(localStorage.getItem("tracyConsoleResults")) || [];
+                        const tracyConsoleResults = existingResults.filter(result => result.id != tabId);
                         localStorage.setItem("tracyConsoleResults", JSON.stringify(tracyConsoleResults));
 
                         this.switchTab(tracyConsole.currentTabId);
