@@ -603,7 +603,6 @@ class ConsolePanel extends BasePanel {
                     if(tracySnippetName != "") {
                         this.modifyConsoleSnippets(tracySnippetName, this.tce.getValue());
                         this.disableButton("saveSnippet");
-                        this.disableButton("reloadSnippet");
                         this.tce.focus();
                         // change selected tab name to match new snippet name just saved
                         document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"] .button-label').textContent = tracySnippetName;
@@ -779,7 +778,7 @@ class ConsolePanel extends BasePanel {
                         document.getElementById("tracySnippetName").value = name;
                         document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"] .button-label').textContent = name;
                         tracyConsole.lockTabName();
-                        this.disableButton("reloadSnippet");
+                        this.enableButton("reloadSnippet");
                         this.disableButton("saveSnippet");
                         ++tracyConsole.historyItem;
                         this.resizeAce();
@@ -808,11 +807,9 @@ class ConsolePanel extends BasePanel {
                     var snippet = tracyConsoleSnippets.find(obj => obj.name === document.getElementById("tracySnippetName").value);
                     if(snippet && snippet.code.replace(/\s+/g, ' ').trim() != this.tce.getValue().replace(/\s+/g, ' ').trim()) {
                         this.enableButton("saveSnippet");
-                        this.enableButton("reloadSnippet");
                     }
                     else {
                         this.disableButton("saveSnippet");
-                        this.disableButton("reloadSnippet");
                     }
                 },
 
