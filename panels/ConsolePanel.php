@@ -943,29 +943,25 @@ class ConsolePanel extends BasePanel {
 
                     const existingTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs"));
 
+                    // remove tab button
+                    const tabButton = Array.from(this.tabsContainer.children).find(
+                        (button) => button.dataset.tabId == tabId
+                    );
+                    if (tabButton) this.tabsContainer.removeChild(tabButton);
+
+                    // remove tab from tracyConsoleTabs
+                    const tracyConsoleTabs = existingTabs.filter(item => item.id != tabId);
+                    localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
+
+                    tracyConsole.currentTabId = tracyConsoleTabs.at(-1)?.id || null;
+                    localStorage.setItem("tracyConsoleSelectedTab", tracyConsole.currentTabId);
+
+                    this.switchTab(tracyConsole.currentTabId);
+
                     if(Object.keys(existingTabs).length === 1) {
-                        document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"] .button-label').textContent = 'Untitled‑1';
-                        tracyConsole.tce.setValue('');
-                        tracyConsole.saveToLocalStorage();
-                        tracyConsole.tce.focus();
+                        this.addNewTab();
                     }
-                    else {
 
-                        // remove tab button
-                        const tabButton = Array.from(this.tabsContainer.children).find(
-                            (button) => button.dataset.tabId == tabId
-                        );
-                        if (tabButton) this.tabsContainer.removeChild(tabButton);
-
-                        // remove tab from tracyConsoleTabs
-                        const tracyConsoleTabs = existingTabs.filter(item => item.id != tabId);
-                        localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
-
-                        tracyConsole.currentTabId = tracyConsoleTabs.at(-1)?.id || null;
-                        localStorage.setItem("tracyConsoleSelectedTab", tracyConsole.currentTabId);
-
-                        this.switchTab(tracyConsole.currentTabId);
-                    }
 
                 },
 
