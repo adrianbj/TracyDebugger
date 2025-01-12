@@ -273,6 +273,9 @@ class ConsolePanel extends BasePanel {
                                 id: this.currentTabId,
                                 name: document.querySelector('button[data-tab-id="'+this.currentTabId+'"] .button-label').textContent,
                                 code: code,
+                                historyData: tab.historyData,
+                                historyItem: tab.historyItem,
+                                historyCount: tab.historyCount,
                                 result: document.getElementById("tracyConsoleResult").innerHTML,
                                 selections: selections,
                                 scrollTop: this.tce.session.getScrollTop(),
@@ -289,6 +292,9 @@ class ConsolePanel extends BasePanel {
                             id: this.currentTabId,
                             name: document.querySelector('button[data-tab-id="'+this.currentTabId+'"] .button-label').textContent,
                             code: '',
+                            historyData: [],
+                            historyItem: null,
+                            historyCount: 0,
                             selections: selections,
                             scrollTop: this.tce.session.getScrollTop(),
                             scrollLeft: this.tce.session.getScrollLeft()
@@ -700,12 +706,6 @@ class ConsolePanel extends BasePanel {
                     return false;
                 },
 
-                getHistoryItem: function(id) {
-                    var tracyConsoleHistory = JSON.parse(localStorage.getItem("tracyConsoleHistory")) || [];
-                    var obj = tracyConsoleHistory.find(obj => obj.id === id);
-                    return obj;
-                },
-
                 getTabItem: function(id) {
                     var tracyConsoleTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs")) || [];
                     return tracyConsoleTabs.find(obj => obj.id === id);
@@ -784,104 +784,97 @@ class ConsolePanel extends BasePanel {
                     var selections = this.tce.selection.toJSON();
 
                     if (code) {
-                        var historyData = JSON.parse(localStorage.getItem("tracyConsoleHistory")) || {};
-                        var historyCounts = JSON.parse(localStorage.getItem("tracyConsoleHistoryCount")) || {};
-                        var historyItems = JSON.parse(localStorage.getItem("tracyConsoleHistoryItem")) || {};
+                        var consoleTab = tracyConsole.getTabItem(tracyConsole.currentTabId);
+                        if (!consoleTab) return;
 
-                        // initialize history for the current tab as needed
-                        var tracyConsoleHistory = historyData[this.currentTabId] || [];
-                        var currentTabHistory = tracyConsoleHistory || [];
+                        var historyData = consoleTab.historyData || [];
+                        var historyCount = consoleTab.historyCount || 0;
 
-                        // ensure the results array does not exceed maxHistoryItems for this tab
-                        if (currentTabHistory.length >= tracyConsole.maxHistoryItems) {
-                            currentTabHistory.shift();
+                        if (historyData.length >= tracyConsole.maxHistoryItems) {
+                            historyData.shift();
                         }
 
-                        // assign unique IDs for the current tab's history
-                        currentTabHistory.forEach((item, index) => {
-                            item.id = index + 1;
-                        });
-                        var id = currentTabHistory.length + 1;
-
-                        // add the new history item
-                        currentTabHistory.push({
-                            id: id,
+                        historyData.push({
                             code: code,
                             selections: selections,
                             scrollTop: this.tce.session.getScrollTop(),
                             scrollLeft: this.tce.session.getScrollLeft()
                         });
 
-                        // update tracyConsoleHistory for the current tab
-                        tracyConsoleHistory = currentTabHistory;
-                        historyData[this.currentTabId] = tracyConsoleHistory;
+                        historyItem = historyData.length - 1;
+                        historyCount = historyData.length;
 
-                        // update history counts and items for the current tab
-                        historyCounts[this.currentTabId] = currentTabHistory.length;
-                        historyItems[this.currentTabId] = id;
-
-                        // save back to localStorage
-                        localStorage.setItem("tracyConsoleHistory", JSON.stringify(historyData));
-                        localStorage.setItem("tracyConsoleHistoryCount", JSON.stringify(historyCounts));
-                        localStorage.setItem("tracyConsoleHistoryItem", JSON.stringify(historyItems));
-
-                        // update UI buttons
                         this.disableButton("historyForward");
-                        if (historyCounts[this.currentTabId] > 1) {
+                        if (historyCount > 1) {
                             this.enableButton("historyBack");
                         }
+
+                        var tracyConsoleTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs")) || [];
+                        tracyConsoleTabs = tracyConsoleTabs.map(tab => {
+                            if (tab.id === this.currentTabId) {
+                                return {
+                                    ...tab,
+                                    historyData: historyData,
+                                    historyCount: historyCount,
+                                    historyItem: historyItem
+                                };
+                            }
+                            return tab;
+                        });
+                        localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
                     }
                 },
 
                 loadHistory: function(direction) {
-                    var noItem = false;
-                    var historyCounts = JSON.parse(localStorage.getItem("tracyConsoleHistoryCount")) || {};
-                    var historyItems = JSON.parse(localStorage.getItem("tracyConsoleHistoryItem")) || {};
+                    var consoleTab = tracyConsole.getTabItem(tracyConsole.currentTabId);
+                    if (!consoleTab) return;
 
-                    // initialize count and item for the current tab
-                    var historyCount = historyCounts[this.currentTabId] || 0;
-                    var historyItem = historyItems[this.currentTabId] || 0;
+                    var historyData = consoleTab.historyData || [];
+                    var historyCount = consoleTab.historyCount || 0;
+                    var historyItem = consoleTab.historyItem || 0;
 
-                    // determine the new history item ID based on direction
-                    if (direction && direction === 'back' && historyItem > 1) {
+                    if (historyCount === 0 || historyData.length === 0) return;
+
+                    if (direction === "back" && historyItem > 0) {
                         historyItem--;
                     }
-                    else if (direction && direction === 'forward' && historyItem < historyCount) {
+                    else if (direction === "forward" && historyItem < historyCount - 1) {
                         historyItem++;
                     }
-                    else {
-                        noItem = true;
-                    }
 
-                    // update buttons based on the new history state
-                    if (historyItem <= 1) {
+                    if (historyItem <= 0) {
                         this.disableButton("historyBack");
-                    } else {
+                    }
+                    else {
                         this.enableButton("historyBack");
                     }
 
-                    if (historyItem >= historyCount) {
+                    if (historyItem >= historyCount - 1) {
                         this.disableButton("historyForward");
                     }
                     else {
                         this.enableButton("historyForward");
                     }
 
-                    if (noItem) return;
-                    // save the updated history item index for the current tab
-                    historyItems[this.currentTabId] = historyItem;
-                    localStorage.setItem("tracyConsoleHistoryItem", JSON.stringify(historyItems));
-
-                    // load the history item for the current tab
-                    var historyData = JSON.parse(localStorage.getItem("tracyConsoleHistory")) || {};
-
-                    var currentTabHistory = historyData[this.currentTabId] || [[]];
-                    var historyEntry = currentTabHistory.find(item => item.id === historyItem);
-
+                    // load the selected history entry
+                    var historyEntry = historyData[historyItem];
                     if (historyEntry) {
                         this.setEditorState(historyEntry);
                         this.tce.focus();
                     }
+
+                    // save the updated history item index
+                    var tracyConsoleTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs")) || [];
+                    tracyConsoleTabs = tracyConsoleTabs.map(tab => {
+                        if (tab.id === this.currentTabId) {
+                            return {
+                                ...tab,
+                                historyItem: historyItem
+                            };
+                        }
+                        return tab;
+                    });
+                    localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
                 },
 
                 updateBackupState: function() {
@@ -982,7 +975,7 @@ class ConsolePanel extends BasePanel {
 
                     let tabId;
 
-                    if (Object.keys(existingTabs).length == 0) {
+                    if (!existingTabs || Object.keys(existingTabs).length == 0) {
                         tabId = 1;
                     }
                     else {
