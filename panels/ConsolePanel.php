@@ -1611,7 +1611,7 @@ HTML;
                             <div id="tracyTabsWrapper">
                                 <div id="tracyTabs"></div>
                             </div>
-                            <button id="addTab" title="Add Tab">+</button>
+                            <button id="addTab" title="Add Tab" style="font-weight: 600">+</button>
                         </div>
                         <div id="tracyConsoleCode" class="split" style="position: relative; background: #FFFFFF;">
                             <div id="tracyConsoleEditor" style="height: 100%; min-height: '.$codeLineHeight.'px"></div>
