@@ -1250,6 +1250,7 @@ class ConsolePanel extends BasePanel {
                                     }
                                 ];
                                 localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
+                                localStorage.setItem("tracyConsoleSelectedTab", 1);
                                 // remove old items that are either no longer needed, or need their structure updated to prevent errors
                                 localStorage.removeItem("tracyConsole");
                                 localStorage.removeItem("diskSnippetCode");
@@ -1257,6 +1258,7 @@ class ConsolePanel extends BasePanel {
                                 localStorage.removeItem("tracyConsoleHistoryCount");
                                 localStorage.removeItem("tracyConsoleHistoryItem");
                                 localStorage.removeItem("tracyConsoleResults");
+                                localStorage.removeItem("tracyConsoleSplitSizes");
                             }
 
                             // load all tabs from localStorage
