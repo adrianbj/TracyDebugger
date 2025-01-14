@@ -1246,12 +1246,16 @@ class ConsolePanel extends BasePanel {
                                 var tracyConsoleHistory = JSON.parse(localStorage.getItem("tracyConsoleHistory"));
                                 var tracyConsoleHistoryCount = JSON.parse(localStorage.getItem("tracyConsoleHistoryCount"));
                                 var tracyConsoleHistoryItem = JSON.parse(localStorage.getItem("tracyConsoleHistoryItem"));
+                                var tracyConsoleSplitSizes = localStorage.getItem("tracyConsoleSplitSizes");
+                                var tracyConsoleSelectedSnippet = localStorage.getItem("tracyConsoleSelectedSnippet");
                                 var tracyConsoleTabs = [
                                     {
                                         id: 1,
+                                        name: (tracyConsoleSelectedSnippet ? tracyConsoleSelectedSnippet : 'Untitled‑1'),
                                         historyData: tracyConsoleHistory,
                                         historyCount: tracyConsoleHistoryCount,
                                         historyItem: (tracyConsoleHistoryItem - 1),
+                                        splitSizes: tracyConsoleSplitSizes,
                                         ...tracyConsoleData /* spread all keys from tracyConsole */
                                     }
                                 ];
