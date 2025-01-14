@@ -1243,9 +1243,15 @@ class ConsolePanel extends BasePanel {
                             // if there are no tabs in localStorage yet, copy content from the old tracyConsole key to item 1 of tracyConsoleTabs
                             if (!localStorage.getItem("tracyConsoleTabs") && localStorage.getItem("tracyConsole")) {
                                 var tracyConsoleData = JSON.parse(localStorage.getItem("tracyConsole"));
+                                var tracyConsoleHistory = JSON.parse(localStorage.getItem("tracyConsoleHistory"));
+                                var tracyConsoleHistoryCount = JSON.parse(localStorage.getItem("tracyConsoleHistoryCount"));
+                                var tracyConsoleHistoryItem = JSON.parse(localStorage.getItem("tracyConsoleHistoryItem"));
                                 var tracyConsoleTabs = [
                                     {
                                         id: 1,
+                                        historyData: tracyConsoleHistory,
+                                        historyCount: tracyConsoleHistoryCount,
+                                        historyItem: (tracyConsoleHistoryItem - 1),
                                         ...tracyConsoleData /* spread all keys from tracyConsole */
                                     }
                                 ];
