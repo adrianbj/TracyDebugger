@@ -413,7 +413,7 @@ class ConsolePanel extends BasePanel {
                         document.cookie = "tracySnippetsPaneCollapsed=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
                         document.getElementById("tracyConsoleMainContainer").style.width = "calc(100% - 290px)";
                         document.getElementById("tracySnippetsContainer").classList.remove('tracyHidden');
-                        document.getElementById("snippetPaneToggle").innerHTML = ">";
+                        document.getElementById("snippetPaneToggle").innerHTML = "&#xf054;";
                     }
                     else {
                         var expires = new Date();
@@ -421,7 +421,7 @@ class ConsolePanel extends BasePanel {
                         document.cookie = "tracySnippetsPaneCollapsed=1;expires="+expires.toGMTString()+";path=/";
                         document.getElementById("tracyConsoleMainContainer").style.width = "100%";
                         document.getElementById("tracySnippetsContainer").classList.add('tracyHidden');
-                        document.getElementById("snippetPaneToggle").innerHTML = "<";
+                        document.getElementById("snippetPaneToggle").innerHTML = "&#xf053;";
                     }
                 },
 
@@ -1548,22 +1548,9 @@ class ConsolePanel extends BasePanel {
 
 HTML;
 
-        $keyboardShortcutIcon = '
-        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-        viewBox="388 298 16 16" enable-background="new 388 298 16 16" xml:space="preserve" style="width:13px !important; height:13px !important;">
-        <path fill="'.\TracyDebugger::COLOR_NORMAL.'" d="M401.1,308.1h-1.9v-4.3h1.9c1.6,0,2.9-1.3,2.9-2.9c0-1.6-1.3-2.9-2.9-2.9c-1.6,0-2.9,1.3-2.9,2.9v1.9h-4.3v-1.9
-            c0-1.6-1.3-2.9-2.9-2.9c-1.6,0-2.9,1.3-2.9,2.9c0,1.6,1.3,2.9,2.9,2.9h1.9v4.3h-1.9c-1.6,0-2.9,1.3-2.9,2.9c0,1.6,1.3,2.9,2.9,2.9
-            c1.6,0,2.9-1.3,2.9-2.9v-1.9h4.3v1.9c0,1.6,1.3,2.9,2.9,2.9c1.6,0,2.9-1.3,2.9-2.9C404,309.4,402.7,308.1,401.1,308.1z M399.2,300.9
-            c0-1,0.8-1.9,1.9-1.9c1,0,1.9,0.8,1.9,1.9c0,1-0.8,1.9-1.9,1.9h-1.9V300.9z M390.9,302.8c-1,0-1.9-0.8-1.9-1.9c0-1,0.8-1.9,1.9-1.9
-            c1,0,1.9,0.8,1.9,1.9v1.9H390.9z M392.8,311.1c0,1-0.8,1.9-1.9,1.9c-1,0-1.9-0.8-1.9-1.9c0-1,0.8-1.9,1.9-1.9h1.9V311.1z
-                M393.9,308.1v-4.3h4.3v4.3H393.9z M401.1,312.9c-1,0-1.9-0.8-1.9-1.9v-1.9h1.9c1,0,1.9,0.8,1.9,1.9
-            C402.9,312.1,402.1,312.9,401.1,312.9z"/>
-        </svg>
-        ';
-
         $out .= '
         <h1>' . $this->icon . ' Console
-            <span title="Keyboard Shortcuts" style="display: inline-block; margin-left: 5px; cursor: pointer" onclick="tracyConsole.toggleKeyboardShortcuts()">' . $keyboardShortcutIcon . '</span>
+            <span title="Keyboard Shortcuts (toggle on/off)" style="display: inline-block; margin-left: 10px; cursor: pointer" onclick="tracyConsole.toggleKeyboardShortcuts()">⌘</span>
             <span id="tracyConsoleStatus" style="padding-left: 50px"></span>
         </h1>
         <span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'ConsolePanel\')">+</a></span></span>
@@ -1619,7 +1606,7 @@ HTML;
                             </select>
                         </span>
                         <input id="runInjectButton" title="&bull; Run (CTRL/CMD + Enter)&#10;&bull; Clear & Run (ALT/OPT + Enter)&#10;&bull; Reload from Disk, Clear & Run&#10;(CTRL/CMD + ALT/OPT + Enter)" type="submit" onclick="tracyConsole.processTracyCode()" value="' . (!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? 'Run' : 'Inject') . '" />
-                        <span id="snippetPaneToggle" title="Toggle snippets pane" style="float:right; font-weight: bold; cursor: pointer" onclick="tracyConsole.toggleSnippetsPane()">'.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '<' : '>').'</span>
+                        <span id="snippetPaneToggle" title="Toggle snippets pane" style="font-family: FontAwesome !important; position:absolute; top: 0; right: 0; font-weight: bold; cursor: pointer" onclick="tracyConsole.toggleSnippetsPane()">'.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '&#xf053;' : '&#xf054;').'</span>
                     </div>
 
                     <div id="tracyConsoleContainer" class="split" style="height: 100%; min-height: '.$codeLineHeight.'px">
