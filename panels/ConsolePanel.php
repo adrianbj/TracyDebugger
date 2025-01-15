@@ -831,7 +831,11 @@ class ConsolePanel extends BasePanel {
                     var historyCount = consoleTab.historyCount || 0;
                     var historyItem = consoleTab.historyItem || 0;
 
-                    if (historyCount === 0 || historyData.length === 0) return;
+                    if (historyCount === 0 || historyData.length === 0) {
+                        tracyConsole.disableButton("historyForward");
+                        tracyConsole.disableButton("historyBack");
+                        return;
+                    }
 
                     if (direction === "back" && historyItem > 0) {
                         historyItem--;
@@ -1000,9 +1004,6 @@ class ConsolePanel extends BasePanel {
                     tabButton.appendChild(closeButton);
 
                     document.getElementById("tracyConsoleResult").innerHTML = '';
-
-                    tracyConsole.disableButton("historyForward");
-                    tracyConsole.disableButton("historyBack");
 
                     tracyConsole.switchTab(tabId);
 
@@ -1492,8 +1493,6 @@ class ConsolePanel extends BasePanel {
 
                         tracyConsole.sortList('alphabetical');
 
-                        tracyConsole.loadHistory();
-
                         // various keyboard shortcuts
                         document.getElementById("tracyConsoleCode").querySelector(".ace_text-input").addEventListener("keydown", function(e) {
                             if(document.getElementById("tracy-debug-panel-ConsolePanel").classList.contains("tracy-focused")) {
@@ -1585,8 +1584,8 @@ HTML;
                     <div>
                         <span style="display: inline-block; padding: 0 20px 10px 0">
                             <input id="reloadSnippet" title="Reload current snippet from disk" class="disabledButton" style="font-family: FontAwesome !important; padding: 3px 8px !important" type="submit" onclick="tracyConsole.reloadSnippet()" value="&#xf021" disabled="true" />&nbsp;&nbsp;
-                            <input style="font-family: FontAwesome !important" title="Go back (ALT + PageUp)" id="historyBack" type="submit" onclick="tracyConsole.loadHistory(\'back\')" value="&#xf060;" />&nbsp;
-                            <input style="font-family: FontAwesome !important" title="Go forward (ALT + PageDown)" id="historyForward" type="submit" onclick="tracyConsole.loadHistory(\'forward\')" value="&#xf061;" />&nbsp;
+                            <input style="font-family: FontAwesome !important" title="Go back (ALT + PageUp)" id="historyBack" class="disabledButton" disabled="true" type="submit" onclick="tracyConsole.loadHistory(\'back\')" value="&#xf060;" />&nbsp;
+                            <input style="font-family: FontAwesome !important" title="Go forward (ALT + PageDown)" id="historyForward" class="disabledButton" disabled="true" type="submit" onclick="tracyConsole.loadHistory(\'forward\')" value="&#xf061;" />&nbsp;
                             <input title="Clear results" type="button" class="clearResults" onclick="tracyConsole.clearResults()" value="&#10006; Clear results" />
                         </span>
 
