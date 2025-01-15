@@ -348,6 +348,7 @@ class ConsolePanel extends BasePanel {
                     else {
                         this.tce.setValue('');
                     }
+                    this.tce.focus();
                 },
 
                 clearResults: function() {
@@ -825,7 +826,7 @@ class ConsolePanel extends BasePanel {
 
                 loadHistory: function(direction) {
                     var consoleTab = tracyConsole.getTabItem(tracyConsole.currentTabId);
-                    if (!consoleTab) return;
+                    if (!consoleTab) return false;
 
                     var historyData = consoleTab.historyData || [];
                     var historyCount = consoleTab.historyCount || 0;
@@ -834,7 +835,7 @@ class ConsolePanel extends BasePanel {
                     if (historyCount === 0 || historyData.length === 0) {
                         tracyConsole.disableButton("historyForward");
                         tracyConsole.disableButton("historyBack");
-                        return;
+                        return false;
                     }
 
                     if (direction === "back" && historyItem > 0) {
@@ -866,7 +867,6 @@ class ConsolePanel extends BasePanel {
                         historyEntry.scrollLeft = historyEntry.scrollLeft || 0;
                         historyEntry.splitSizes = historyEntry.splitSizes || consoleTab.splitSizes || [40, 60];
                         this.setEditorState(historyEntry);
-                        this.tce.focus();
                     }
 
                     // save the updated history item index
@@ -881,6 +881,8 @@ class ConsolePanel extends BasePanel {
                         return tab;
                     });
                     localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
+
+                    return true;
                 },
 
                 updateBackupState: function() {
@@ -915,8 +917,9 @@ class ConsolePanel extends BasePanel {
 
                     this.scrollTabIntoView(tabId);
 
-                    this.setEditorState(this.getTabItem(tabId));
-                    this.tce.focus();
+                    if(!tracyConsole.loadHistory()) {
+                        this.setEditorState(this.getTabItem(tabId));
+                    }
 
                     //populate resultsDiv with saved results
                     var tracyConsoleTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs")) || [];
@@ -942,7 +945,7 @@ class ConsolePanel extends BasePanel {
                             this.disableButton("reloadSnippet");
                         }
                     }
-                    tracyConsole.loadHistory();
+
                 },
 
                 removeTab: function(tabId) {
@@ -1006,8 +1009,11 @@ class ConsolePanel extends BasePanel {
                     document.getElementById("tracyConsoleResult").innerHTML = '';
 
                     tracyConsole.switchTab(tabId);
-
                     tracyConsole.saveToLocalStorage();
+
+                    sizes = [40, 60];
+                    tracyConsole.split.setSizes(sizes);
+                    tracyConsole.saveSplits();
                 },
 
                 getNextTabNumber: function() {
@@ -1277,6 +1283,26 @@ class ConsolePanel extends BasePanel {
                                 localStorage.removeItem("tracyConsoleSplitSizes");
                             }
 
+                            tracyConsole.consoleGutterSize = 8;
+                            tracyConsole.minSize = tracyConsole.lineHeight;
+                            sizes = [40, 60];
+                            tracyConsole.split = Split(['#tracyConsoleCode', '#tracyConsoleResult'], {
+                                direction: 'vertical',
+                                cursor: 'row-resize',
+                                sizes: sizes,
+                                minSize: tracyConsole.minSize,
+                                expandToMin: true,
+                                gutterSize: tracyConsole.consoleGutterSize,
+                                snapOffset: 10,
+                                dragInterval: tracyConsole.lineHeight,
+                                gutterAlign: 'end',
+                                onDrag: tracyConsole.resizeAce,
+                                onDragEnd: function() {
+                                    tracyConsole.saveSplits();
+                                    tracyConsole.tce.focus();
+                                }
+                            });
+
                             // load all tabs from localStorage
                             const existingTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs"));
                             if (existingTabs) {
@@ -1312,28 +1338,6 @@ class ConsolePanel extends BasePanel {
                             else {
                                 tracyConsole.addNewTab();
                             }
-
-                            tracyConsole.consoleGutterSize = 8;
-                            tracyConsole.minSize = tracyConsole.lineHeight;
-                            sizes = [40, 60];
-                            tracyConsole.split = Split(['#tracyConsoleCode', '#tracyConsoleResult'], {
-                                direction: 'vertical',
-                                cursor: 'row-resize',
-                                sizes: sizes,
-                                minSize: tracyConsole.minSize,
-                                expandToMin: true,
-                                gutterSize: tracyConsole.consoleGutterSize,
-                                snapOffset: 10,
-                                dragInterval: tracyConsole.lineHeight,
-                                gutterAlign: 'end',
-                                onDrag: tracyConsole.resizeAce,
-                                onDragEnd: function() {
-                                    tracyConsole.saveSplits();
-                                    tracyConsole.tce.focus();
-                                }
-                            });
-
-                            tracyConsole.setEditorState(tracyConsole.getTabItem(tracyConsole.currentTabId));
 
                             document.getElementById("tracyConsoleCode").querySelector(".ace_text-input").addEventListener("keydown", function(e) {
                                 if(document.getElementById("tracy-debug-panel-ConsolePanel").classList.contains("tracy-focused")) {
@@ -1606,7 +1610,7 @@ HTML;
                             </select>
                         </span>
                         <input id="runInjectButton" title="&bull; Run (CTRL/CMD + Enter)&#10;&bull; Clear & Run (ALT/OPT + Enter)&#10;&bull; Reload from Disk, Clear & Run&#10;(CTRL/CMD + ALT/OPT + Enter)" type="submit" onclick="tracyConsole.processTracyCode()" value="' . (!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? 'Run' : 'Inject') . '" />
-                        <span id="snippetPaneToggle" title="Toggle snippets pane" style="font-family: FontAwesome !important; position:absolute; top: 0; right: 0; font-weight: bold; cursor: pointer" onclick="tracyConsole.toggleSnippetsPane()">'.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '&#xf053;' : '&#xf054;').'</span>
+                        <span id="snippetPaneToggle" title="Toggle snippets pane" style="font-family: FontAwesome !important; position:absolute; top: 0; right: -10px; font-weight: bold; cursor: pointer" onclick="tracyConsole.toggleSnippetsPane()">'.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '&#xf053;' : '&#xf054;').'</span>
                     </div>
 
                     <div id="tracyConsoleContainer" class="split" style="height: 100%; min-height: '.$codeLineHeight.'px">
