@@ -413,6 +413,7 @@ class ConsolePanel extends BasePanel {
                     if(tracyConsole.getCookie('tracySnippetsPaneCollapsed') == 1) {
                         document.cookie = "tracySnippetsPaneCollapsed=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
                         document.getElementById("tracyConsoleMainContainer").style.width = "calc(100% - 290px)";
+                        document.getElementById("snippetPaneToggle").style.right = "-290px";
                         document.getElementById("tracySnippetsContainer").classList.remove('tracyHidden');
                         document.getElementById("snippetPaneToggle").innerHTML = "&#xf054;";
                     }
@@ -421,6 +422,7 @@ class ConsolePanel extends BasePanel {
                         expires.setMinutes(expires.getMinutes() + (10 * 365 * 24 * 60));
                         document.cookie = "tracySnippetsPaneCollapsed=1;expires="+expires.toGMTString()+";path=/";
                         document.getElementById("tracyConsoleMainContainer").style.width = "100%";
+                        document.getElementById("snippetPaneToggle").style.right = "0";
                         document.getElementById("tracySnippetsContainer").classList.add('tracyHidden');
                         document.getElementById("snippetPaneToggle").innerHTML = "&#xf053;";
                     }
@@ -1610,7 +1612,7 @@ HTML;
                             </select>
                         </span>
                         <input id="runInjectButton" title="&bull; Run (CTRL/CMD + Enter)&#10;&bull; Clear & Run (ALT/OPT + Enter)&#10;&bull; Reload from Disk, Clear & Run&#10;(CTRL/CMD + ALT/OPT + Enter)" type="submit" onclick="tracyConsole.processTracyCode()" value="' . (!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? 'Run' : 'Inject') . '" />
-                        <span id="snippetPaneToggle" title="Toggle snippets pane" style="font-family: FontAwesome !important; position:absolute; top: 0; right: -10px; font-weight: bold; cursor: pointer" onclick="tracyConsole.toggleSnippetsPane()">'.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '&#xf053;' : '&#xf054;').'</span>
+                        <span id="snippetPaneToggle" title="Toggle snippets pane" style="font-family: FontAwesome !important; position:absolute; top: 0; right: '.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '0' : '-290').'px; font-weight: bold; cursor: pointer" onclick="tracyConsole.toggleSnippetsPane()">'.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '&#xf053;' : '&#xf054;').'</span>
                     </div>
 
                     <div id="tracyConsoleContainer" class="split" style="height: 100%; min-height: '.$codeLineHeight.'px">

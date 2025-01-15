@@ -632,6 +632,10 @@ ul.pw-info-links {
     /* Opera/IE 8+ */
 }
 
+#snippetPaneToggle {
+    z-index: 1;
+}
+
 #snippetTrash {
     visibility: hidden;
 }
