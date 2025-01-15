@@ -307,7 +307,7 @@ class ConsolePanel extends BasePanel {
                 },
 
                 saveSplits: function() {
-                    var splits = JSON.stringify(tracyConsole.split.getSizes());
+                    var splits = tracyConsole.split.getSizes();
                     const existingTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs")) || [];
                     let updated = false;
 
@@ -341,10 +341,7 @@ class ConsolePanel extends BasePanel {
 
                         if(tracyConsole.split) {
                             if(data.splitSizes) {
-                                tracyConsole.split.setSizes(JSON.parse(data.splitSizes));
-                            }
-                            else {
-                                tracyConsole.split.setSizes([40, 60]);
+                                tracyConsole.split.setSizes(data.splitSizes);
                             }
                         }
                     }
@@ -798,7 +795,8 @@ class ConsolePanel extends BasePanel {
                             code: code,
                             selections: selections,
                             scrollTop: this.tce.session.getScrollTop(),
-                            scrollLeft: this.tce.session.getScrollLeft()
+                            scrollLeft: this.tce.session.getScrollLeft(),
+                            splitSizes: consoleTab.splitSizes || [40, 60]
                         });
 
                         historyItem = historyData.length - 1;
@@ -859,6 +857,10 @@ class ConsolePanel extends BasePanel {
                     // load the selected history entry
                     var historyEntry = historyData[historyItem];
                     if (historyEntry) {
+                        historyEntry.selections = historyEntry.selections || {};
+                        historyEntry.scrollTop = historyEntry.scrollTop || 0;
+                        historyEntry.scrollLeft = historyEntry.scrollLeft || 0;
+                        historyEntry.splitSizes = historyEntry.splitSizes || consoleTab.splitSizes || [40, 60];
                         this.setEditorState(historyEntry);
                         this.tce.focus();
                     }
@@ -998,6 +1000,9 @@ class ConsolePanel extends BasePanel {
                     tabButton.appendChild(closeButton);
 
                     document.getElementById("tracyConsoleResult").innerHTML = '';
+
+                    tracyConsole.disableButton("historyForward");
+                    tracyConsole.disableButton("historyBack");
 
                     tracyConsole.switchTab(tabId);
 
