@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.26.52',
+            'version' => '4.26.53',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -950,8 +950,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $locations = array_map('constant', $this->data['showLocation']);
         Debugger::$showLocation = array_reduce($locations, function($a, $b) { return $a | $b; }, 0);
 
-
-        Debugger::$keysToHide = array_map('trim', explode(',', $this->data['keysToHide']));
+        if(version_compare(PHP_VERSION, '7.2.0', '>=')) {
+            Debugger::$keysToHide = array_map('trim', explode(',', $this->data['keysToHide']));
+        }
 
 
         // START ENABLING TRACY
@@ -3462,13 +3463,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('checked', $data['debugInfo'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
-        $f = $this->wire('modules')->get("InputfieldText");
-        $f->attr('name', 'keysToHide');
-        $f->label = __('Keys to hide', __FILE__);
-        $f->description = __('Keys to redact in dumps and bluescreens.', __FILE__);
-        $f->notes = __('Enter keys separated by commas.'."\nDefault: ".self::getDefaultData()['keysToHide'], __FILE__);
-        if($data['keysToHide']) $f->attr('value', $data['keysToHide']);
-        $fieldset->add($f);
+        if(version_compare(PHP_VERSION, '7.2.0', '>=')) {
+            $f = $this->wire('modules')->get("InputfieldText");
+            $f->attr('name', 'keysToHide');
+            $f->label = __('Keys to hide', __FILE__);
+            $f->description = __('Keys to redact in dumps and bluescreens.', __FILE__);
+            $f->notes = __('Enter keys separated by commas.'."\nDefault: ".self::getDefaultData()['keysToHide'], __FILE__);
+            if($data['keysToHide']) $f->attr('value', $data['keysToHide']);
+            $fieldset->add($f);
+        }
 
         $f = $this->wire('modules')->get("InputfieldInteger");
         $f->attr('name', 'maxDepth');
