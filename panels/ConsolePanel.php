@@ -108,6 +108,7 @@ class ConsolePanel extends BasePanel {
                     $snippetFileName = $snippetFile->getPathname();
                     $snippets[$i]['name'] = pathinfo($snippetFileName, PATHINFO_BASENAME);
                     $snippets[$i]['filename'] = $snippetFileName;
+                    $snippets[$i]['code'] = file_get_contents($snippetFileName);
                     $snippets[$i]['modified'] = filemtime($snippetFileName);
                     $i++;
                 }
@@ -184,7 +185,7 @@ class ConsolePanel extends BasePanel {
         $aceTheme = \TracyDebugger::getDataValue('aceTheme');
         $codeFontSize = \TracyDebugger::getDataValue('codeFontSize');
         $codeLineHeight = \TracyDebugger::getDataValue('codeLineHeight');
-        $externalEditorLink = str_replace('"', "'", \TracyDebugger::createEditorLink($this->wire('config')->paths->site.\TracyDebugger::getDataValue('snippetsPath').'/TracyDebugger/snippets/'.'ExternalEditorDummyFile', 0, '✎', 'Edit in external editor'));
+        $externalEditorLink = str_replace('"', "'", \TracyDebugger::createEditorLink($this->wire('config')->paths->site.\TracyDebugger::getDataValue('snippetsPath').'/TracyDebugger/snippets/'.'ExternalEditorDummyFile', 0, '&#xf040;', 'Edit in external editor'));
         $colorNormal = \TracyDebugger::COLOR_NORMAL;
         $colorWarn = \TracyDebugger::COLOR_WARN;
 
@@ -195,10 +196,10 @@ class ConsolePanel extends BasePanel {
 
                 tce: {},
                 tracyModuleUrl: "$tracyModuleUrl",
+                tabsContainer: null,
+                addTabButton: null,
+                currentTabId: null,
                 maxHistoryItems: 25,
-                historyItem: localStorage.getItem("tracyConsoleHistoryItem") ? localStorage.getItem("tracyConsoleHistoryItem") : 1,
-                historyCount: localStorage.getItem("tracyConsoleHistoryCount"),
-                diskSnippetCode: null,
                 desc: false,
                 inAdmin: "$inAdmin",
                 customSnippetsUrl: "$customSnippetsUrl",
@@ -258,21 +259,108 @@ class ConsolePanel extends BasePanel {
                     return false;
                 },
 
-                saveToLocalStorage: function(name) {
-                    var tracyHistoryItem = {code: this.tce.getValue(), selections: this.tce.selection.toJSON(), scrollTop: this.tce.session.getScrollTop(), scrollLeft: this.tce.session.getScrollLeft()};
-                    localStorage.setItem(name, JSON.stringify(tracyHistoryItem));
+                saveToLocalStorage: function() {
+                    var code = this.tce.getValue();
+                    var selections = this.tce.selection.toJSON();
+
+                    const existingTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs")) || [];
+                    let updated = false;
+
+                    const tracyConsoleTabs = existingTabs.map(tab => {
+                        if (tab.id == this.currentTabId) {
+                            updated = true;
+                            return {
+                                id: this.currentTabId,
+                                name: document.querySelector('button[data-tab-id="'+this.currentTabId+'"] .button-label').textContent,
+                                code: code,
+                                historyData: tab.historyData,
+                                historyItem: tab.historyItem,
+                                historyCount: tab.historyCount,
+                                result: document.getElementById("tracyConsoleResult").innerHTML,
+                                selections: selections,
+                                scrollTop: this.tce.session.getScrollTop(),
+                                scrollLeft: this.tce.session.getScrollLeft(),
+                                splitSizes: tab.splitSizes
+                            };
+                        }
+                        return tab;
+                    });
+
+                    // If no matching id was found, add a new tab
+                    if (!updated) {
+                        tracyConsoleTabs.push({
+                            id: this.currentTabId,
+                            name: document.querySelector('button[data-tab-id="'+this.currentTabId+'"] .button-label').textContent,
+                            code: '',
+                            historyData: [],
+                            historyItem: null,
+                            historyCount: 0,
+                            selections: selections,
+                            scrollTop: this.tce.session.getScrollTop(),
+                            scrollLeft: this.tce.session.getScrollLeft()
+                        });
+                    }
+
+                    localStorage.setItem("tracyConsoleSelectedTab", this.currentTabId);
+                    localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
+
+                },
+
+                saveSplits: function() {
+                    var splits = tracyConsole.split.getSizes();
+                    const existingTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs")) || [];
+                    let updated = false;
+
+                    const tracyConsoleTabs = existingTabs.map(tab => {
+                        if (tab.id == this.currentTabId) {
+                            updated = true;
+
+                            return {
+                                ...tab,
+                                splitSizes: splits
+                            };
+                        }
+                        return tab;
+                    });
+
+                    localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
+                },
+
+                getSplits: function() {
+                    const existingTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs")) || [];
+                    const tab = existingTabs.find(tab => tab.id == this.currentTabId);
+                    return tab ? tab.splitSizes : null;
                 },
 
                 setEditorState: function(data) {
-                    this.tce.setValue(data.code);
-                    this.tce.selection.fromJSON(data.selections);
-                    this.tce.session.setScrollTop(data.scrollTop);
-                    this.tce.session.setScrollLeft(data.scrollLeft);
+                    if(data) {
+                        this.tce.setValue(data.code);
+                        this.tce.selection.fromJSON(data.selections);
+                        this.tce.session.setScrollTop(data.scrollTop);
+                        this.tce.session.setScrollLeft(data.scrollLeft);
+
+                        if(tracyConsole.split) {
+                            if(data.splitSizes) {
+                                tracyConsole.split.setSizes(data.splitSizes);
+                            }
+                        }
+                    }
+                    else {
+                        this.tce.setValue('');
+                    }
+                    this.tce.focus();
                 },
 
                 clearResults: function() {
                     document.getElementById("tracyConsoleResult").innerHTML = "";
                     document.getElementById("tracyConsoleStatus").innerHTML = "";
+                    var tracyConsoleTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs")) || [];
+                    tracyConsoleTabs.forEach(tab => {
+                        if (tab.id === tracyConsole.currentTabId) {
+                            delete tab.result;
+                        }
+                    });
+                    localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
                     this.tce.focus();
                 },
 
@@ -325,16 +413,18 @@ class ConsolePanel extends BasePanel {
                     if(tracyConsole.getCookie('tracySnippetsPaneCollapsed') == 1) {
                         document.cookie = "tracySnippetsPaneCollapsed=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
                         document.getElementById("tracyConsoleMainContainer").style.width = "calc(100% - 290px)";
+                        document.getElementById("snippetPaneToggle").style.right = "-290px";
                         document.getElementById("tracySnippetsContainer").classList.remove('tracyHidden');
-                        document.getElementById("snippetPaneToggle").innerHTML = ">";
+                        document.getElementById("snippetPaneToggle").innerHTML = "&#xf054;";
                     }
                     else {
                         var expires = new Date();
                         expires.setMinutes(expires.getMinutes() + (10 * 365 * 24 * 60));
                         document.cookie = "tracySnippetsPaneCollapsed=1;expires="+expires.toGMTString()+";path=/";
                         document.getElementById("tracyConsoleMainContainer").style.width = "100%";
+                        document.getElementById("snippetPaneToggle").style.right = "0";
                         document.getElementById("tracySnippetsContainer").classList.add('tracyHidden');
-                        document.getElementById("snippetPaneToggle").innerHTML = "<";
+                        document.getElementById("snippetPaneToggle").innerHTML = "&#xf053;";
                     }
                 },
 
@@ -384,6 +474,30 @@ class ConsolePanel extends BasePanel {
                             if(xmlhttp.status == 200) {
                                 resultId = Date.now();
                                 resultsDiv.innerHTML += '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.tryParseJSON(xmlhttp.responseText) + '</div>';
+
+                                var tracyConsoleTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs")) || [];
+                                var updated = false;
+
+                                tracyConsoleTabs = tracyConsoleTabs.map(tab => {
+                                    if (tab.id == tracyConsole.currentTabId) {
+                                        updated = true;
+                                        return {
+                                            ...tab,
+                                            result: resultsDiv.innerHTML
+                                        };
+                                    }
+                                    return tab;
+                                });
+
+                                if (!updated) {
+                                    tracyConsoleTabs.push({
+                                        id: tracyConsole.currentTabId,
+                                        result: resultsDiv.innerHTML
+                                    });
+                                }
+
+                                localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
+
                                 document.getElementById("tracyConsoleResult_"+resultId).scrollIntoView();
                                 if(!document.getElementById("tracy-debug-panel-ConsolePanel").classList.contains("tracy-mode-float")) {
                                     window.Tracy.Debug.panels["tracy-debug-panel-ConsolePanel"].toFloat();
@@ -426,8 +540,6 @@ class ConsolePanel extends BasePanel {
                     xmlhttp.onreadystatechange = function() {
                         if(xmlhttp.readyState == XMLHttpRequest.DONE) {
                             if(xmlhttp.status == 200 && xmlhttp.responseText !== "[]") {
-                                tracyConsole.diskSnippetCode = xmlhttp.responseText;
-                                localStorage.setItem("diskSnippetCode", tracyConsole.diskSnippetCode);
                                 tracyConsole.tce.setValue(xmlhttp.responseText);
                                 tracyConsole.tce.gotoLine(0, 0);
                                 if(process) tracyConsole.processTracyCode();
@@ -436,7 +548,7 @@ class ConsolePanel extends BasePanel {
                                 tracyJSLoader.load(tracyConsole.tracyModuleUrl + "scripts/ace-editor/ext-modelist.js", function() {
                                     tracyConsole.modelist = ace.require("ace/ext/modelist");
                                     var mode = tracyConsole.modelist.getModeForPath(tracyConsole.rootPath+tracyConsole.snippetsPath+name).mode;
-                                    if(tracyConsole.diskSnippetCode.indexOf('<?php') !== -1) {
+                                    if(xmlhttp.responseText.indexOf('<?php') !== -1) {
                                         mode = 'ace/mode/php';
                                     }
                                     else {
@@ -483,7 +595,7 @@ class ConsolePanel extends BasePanel {
                         if(!existingSnippets.hasOwnProperty(key)) continue;
                         var obj = existingSnippets[key];
                         if(deleteSnippet === true && obj.name === name) continue;
-                        snippetList += "<li title='Load in console' id='"+this.makeIdFromTitle(obj.name)+"' data-modified='"+obj.modified+"'><span class='consoleSnippetIcon consoleEditIcon iconFlip'>" + this.externalEditorLink.replace('ExternalEditorDummyFile', obj.name) + "</span><span class='consoleSnippetIcon' title='Delete snippet' onclick='tracyConsole.modifyConsoleSnippets(\""+obj.name+"\", null, true)'>&#10006;</span><span style='color: #125EAE; cursor: pointer; width:200px; word-break: break-all;' onclick='tracyConsole.loadSnippet(\""+obj.name+"\");'>" + obj.name + "</span></li>";
+                        snippetList += "<li title='Load in console' id='"+this.makeIdFromTitle(obj.name)+"' data-modified='"+obj.modified+"'><span class='consoleSnippetIcon consoleEditIcon' style='font-family: FontAwesome !important;'>" + this.externalEditorLink.replace('ExternalEditorDummyFile', obj.name) + "</span><span class='consoleSnippetIcon' style='font-family: FontAwesome !important;' title='Delete snippet' onclick='tracyConsole.modifyConsoleSnippets(\""+obj.name+"\", null, true)'>&#xf1f8;</span><span style='color: #125EAE; cursor: pointer; width:225px; word-break: break-all;' onclick='tracyConsole.loadSnippet(\""+obj.name+"\");'>" + obj.name + "</span></li>";
                     }
                     snippetList += "</ul>";
                     document.getElementById("tracySnippets").innerHTML = snippetList;
@@ -524,10 +636,13 @@ class ConsolePanel extends BasePanel {
                 saveSnippet: function() {
                     var tracySnippetName = document.getElementById("tracySnippetName").value;
                     if(tracySnippetName != "") {
-                        this.modifyConsoleSnippets(tracySnippetName, encodeURIComponent(this.tce.getValue()));
-                        localStorage.setItem("diskSnippetCode", this.tce.getValue());
+                        this.modifyConsoleSnippets(tracySnippetName, this.tce.getValue());
                         this.disableButton("saveSnippet");
                         this.tce.focus();
+                        // change selected tab name to match new snippet name just saved
+                        document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"] .button-label').textContent = tracySnippetName;
+                        // update the tab name in localStorage
+                        tracyConsole.saveToLocalStorage();
                     }
                     else {
                         alert('You must enter a name to save a snippet!');
@@ -591,113 +706,185 @@ class ConsolePanel extends BasePanel {
                     return false;
                 },
 
-                getHistoryItem: function(id) {
-                    var tracyConsoleHistory = JSON.parse(localStorage.getItem("tracyConsoleHistory"));
-                    for(var key in tracyConsoleHistory) {
-                        if(!tracyConsoleHistory.hasOwnProperty(key)) continue;
-                        var obj = tracyConsoleHistory[key];
-                        if(obj.id === id) return obj;
-                    }
-                },
-
-                loadHistory: function(direction) {
-                    var noItem = false;
-
-                    if(direction === 'back' && tracyConsole.historyItem > 1) {
-                        var id = --tracyConsole.historyItem;
-                    }
-                    else if(direction === 'forward' && tracyConsole.historyCount > tracyConsole.historyItem) {
-                        var id = ++tracyConsole.historyItem;
-                    }
-                    else {
-                        var id = tracyConsole.historyItem;
-                        noItem = true;
-                    }
-
-                    if(id == 1) {
-                        this.disableButton("historyBack");
-                    }
-                    else {
-                        this.enableButton("historyBack");
-                    }
-                    if(tracyConsole.historyCount == id) {
-                        this.disableButton("historyForward");
-                    }
-                    else {
-                        this.enableButton("historyForward");
-                    }
-
-                    document.getElementById("tracySnippetName").value = '';
-
-                    if(noItem) return;
-                    localStorage.setItem("tracyConsoleHistoryItem", tracyConsole.historyItem);
-                    this.setEditorState(this.getHistoryItem(id));
-                    this.tce.focus();
-                },
-
-                newSnippet: function() {
-                    tracyConsole.tce.setValue('');
-                    tracyConsole.tce.session.setMode({path:"ace/mode/php", inline:true});
-                    localStorage.removeItem("tracyConsoleSelectedSnippet");
-                    if(document.querySelector(".activeSnippet")) {
-                        document.querySelector(".activeSnippet").classList.remove("activeSnippet");
-                    }
-                    document.getElementById("tracySnippetName").value = '';
-                    this.disableButton("reloadSnippet");
-                    this.resizeAce();
+                getTabItem: function(id) {
+                    var tracyConsoleTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs")) || [];
+                    return tracyConsoleTabs.find(obj => obj.id === id);
                 },
 
                 reloadSnippet: function(process = false) {
                     let snippetName = localStorage.getItem("tracyConsoleSelectedSnippet");
-                    this.loadSnippet(snippetName, process);
+                    this.loadSnippet(snippetName, process, true, true);
                 },
 
-                loadSnippet: function(name, process = false) {
-                    this.getSnippet(name, process);
-                    this.setActiveSnippet(name);
-                    localStorage.setItem("tracyConsoleSelectedSnippet", name);
-                    document.getElementById("tracySnippetName").value = name;
-                    this.enableButton("reloadSnippet");
-                    this.disableButton("saveSnippet");
-                    ++tracyConsole.historyItem;
-                    this.resizeAce();
+                loadSnippet: function(name, process = false, get = true, reload = false) {
+
+                    const existingTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs"));
+
+                    let existingTabId = null;
+                    if(get) {
+                        // check if the snippet is already open
+                        for (const tabId in existingTabs) {
+
+                            if (existingTabs[tabId].name === name) {
+                                existingTabId = existingTabs[tabId].id;
+                                break;
+                            }
+                        }
+                    }
+
+                    if(existingTabId && !reload) {
+                        tracyConsole.switchTab(existingTabId);
+                    }
+                    else {
+                        if(get) {
+                            if(!reload) this.addNewTab(name);
+                            this.getSnippet(name, process);
+                        }
+                        this.setActiveSnippet(name);
+                        localStorage.setItem("tracyConsoleSelectedSnippet", name);
+                        document.getElementById("tracySnippetName").value = name;
+                        document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"] .button-label').textContent = name;
+                        tracyConsole.lockTabName();
+                        this.enableButton("reloadSnippet");
+                        this.disableButton("saveSnippet");
+                        this.resizeAce();
+                    }
+                },
+
+                scrollTabIntoView: function(tabId) {
+                    const tabElement = document.querySelector('[data-tab-id="'+tabId+'"]');
+                    if(tabElement) {
+                        tabElement.scrollIntoView({
+                            behavior: "smooth",
+                            block: "nearest",
+                            inline: "nearest"
+                        });
+                    }
+                },
+
+                lockTabName: function() {
+                    var tabButton = document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"] .button-label');
+                    tabButton.classList.add("lockedTab");
                 },
 
                 toggleSaveButton: function() {
-                    if(localStorage.getItem("diskSnippetCode") != tracyConsole.tce.getValue()) {
-                        tracyConsole.enableButton("saveSnippet");
+                    // if code in tracyConsoleSnippets is different from the current code in the editor, enable the save button
+                    var tracyConsoleSnippets = this.getAllSnippets();
+                    var snippet = tracyConsoleSnippets.find(obj => obj.name === document.getElementById("tracySnippetName").value);
+                    if(snippet && snippet.code.replace(/\s+/g, ' ').trim() != this.tce.getValue().replace(/\s+/g, ' ').trim()) {
+                        this.enableButton("saveSnippet");
                     }
                     else {
-                        tracyConsole.disableButton("saveSnippet");
+                        this.disableButton("saveSnippet");
                     }
                 },
 
                 saveHistory: function() {
                     var code = this.tce.getValue();
                     var selections = this.tce.selection.toJSON();
-                    if(code) {
-                        var existingItems = JSON.parse(localStorage.getItem("tracyConsoleHistory"));
-                        var tracyConsoleHistory = [];
-                        var count = 0;
-                        var id = 1;
-                        // add existing items with revised "id"
-                        for(var key in existingItems) {
-                            if(!existingItems.hasOwnProperty(key)) continue;
-                            ++count;
-                            if(existingItems.length === tracyConsole.maxHistoryItems && count === 1) continue;
-                            tracyConsoleHistory.push({id: id, code: existingItems[key].code, selections: existingItems[key].selections, scrollTop: existingItems[key].scrollTop, scrollLeft: existingItems[key].scrollLeft});
-                            ++id;
-                        }
-                        // add new item
-                        tracyConsoleHistory.push({id: id, code: code, selections: selections, scrollTop: this.tce.session.getScrollTop(), scrollLeft: this.tce.session.getScrollLeft()});
 
-                        localStorage.setItem("tracyConsoleHistoryCount", tracyConsole.historyCount = id);
-                        localStorage.setItem("tracyConsoleHistoryItem", tracyConsole.historyItem = id);
-                        localStorage.setItem("tracyConsoleHistory", JSON.stringify(tracyConsoleHistory));
+                    if (code) {
+                        var consoleTab = tracyConsole.getTabItem(tracyConsole.currentTabId);
+                        if (!consoleTab) return;
+
+                        var historyData = consoleTab.historyData || [];
+                        var historyCount = consoleTab.historyCount || 0;
+
+                        if (historyData.length >= tracyConsole.maxHistoryItems) {
+                            historyData.shift();
+                        }
+
+                        historyData.push({
+                            code: code,
+                            selections: selections,
+                            scrollTop: this.tce.session.getScrollTop(),
+                            scrollLeft: this.tce.session.getScrollLeft(),
+                            splitSizes: consoleTab.splitSizes || [40, 60]
+                        });
+
+                        historyItem = historyData.length - 1;
+                        historyCount = historyData.length;
 
                         this.disableButton("historyForward");
-                        if(tracyConsole.historyCount > 1) this.enableButton("historyBack");
+                        if (historyCount > 1) {
+                            this.enableButton("historyBack");
+                        }
+
+                        var tracyConsoleTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs")) || [];
+                        tracyConsoleTabs = tracyConsoleTabs.map(tab => {
+                            if (tab.id === this.currentTabId) {
+                                return {
+                                    ...tab,
+                                    historyData: historyData,
+                                    historyCount: historyCount,
+                                    historyItem: historyItem
+                                };
+                            }
+                            return tab;
+                        });
+                        localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
                     }
+                },
+
+                loadHistory: function(direction) {
+                    var consoleTab = tracyConsole.getTabItem(tracyConsole.currentTabId);
+                    if (!consoleTab) return false;
+
+                    var historyData = consoleTab.historyData || [];
+                    var historyCount = consoleTab.historyCount || 0;
+                    var historyItem = consoleTab.historyItem || 0;
+
+                    if (historyCount === 0 || historyData.length === 0) {
+                        tracyConsole.disableButton("historyForward");
+                        tracyConsole.disableButton("historyBack");
+                        return false;
+                    }
+
+                    if (direction === "back" && historyItem > 0) {
+                        historyItem--;
+                    }
+                    else if (direction === "forward" && historyItem < historyCount - 1) {
+                        historyItem++;
+                    }
+
+                    if (historyItem <= 0) {
+                        this.disableButton("historyBack");
+                    }
+                    else {
+                        this.enableButton("historyBack");
+                    }
+
+                    if (historyItem >= historyCount - 1) {
+                        this.disableButton("historyForward");
+                    }
+                    else {
+                        this.enableButton("historyForward");
+                    }
+
+                    // load the selected history entry
+                    var historyEntry = historyData[historyItem];
+                    if (historyEntry) {
+                        historyEntry.selections = historyEntry.selections || {};
+                        historyEntry.scrollTop = historyEntry.scrollTop || 0;
+                        historyEntry.scrollLeft = historyEntry.scrollLeft || 0;
+                        historyEntry.splitSizes = historyEntry.splitSizes || consoleTab.splitSizes || [40, 60];
+                        this.setEditorState(historyEntry);
+                    }
+
+                    // save the updated history item index
+                    var tracyConsoleTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs")) || [];
+                    tracyConsoleTabs = tracyConsoleTabs.map(tab => {
+                        if (tab.id === this.currentTabId) {
+                            return {
+                                ...tab,
+                                historyItem: historyItem
+                            };
+                        }
+                        return tab;
+                    });
+                    localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
+
+                    return true;
                 },
 
                 updateBackupState: function() {
@@ -711,6 +898,174 @@ class ConsolePanel extends BasePanel {
                         document.getElementById("backupFilename").style.display = "inline-block";
                     }
                     tracyConsole.tce.focus();
+                },
+
+                switchTab: function(tabId) {
+                    tabId = Number(tabId);
+
+                    if (this.tabsContainer) {
+                        Array.from(this.tabsContainer.children).forEach((tab) => {
+                            tab.classList.remove("active");
+                        });
+                    }
+
+                    this.currentTabId = tabId;
+                    const newButton = Array.from(this.tabsContainer.children).find(
+                        (button) => button.dataset.tabId == tabId
+                    );
+                    if (newButton) {
+                        newButton.classList.add("active");
+                    }
+
+                    this.scrollTabIntoView(tabId);
+
+                    if(!tracyConsole.loadHistory()) {
+                        this.setEditorState(this.getTabItem(tabId));
+                    }
+
+                    //populate resultsDiv with saved results
+                    var tracyConsoleTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs")) || [];
+                    var tab = tracyConsoleTabs.find(tab => tab.id == tabId);
+                    document.getElementById("tracyConsoleResult").innerHTML = tab && tab.result ? tab.result : '';
+
+                    localStorage.setItem("tracyConsoleSelectedTab", this.currentTabId);
+
+                    // if tab label matches a snippet name, then select that snippet
+                    let tabButton = document.querySelector('button[data-tab-id="'+tabId+'"] .button-label');
+                    if(tabButton) {
+                        var snippetName = tabButton.textContent;
+                        if(snippetName && document.getElementById(this.makeIdFromTitle(snippetName))) {
+                            this.loadSnippet(snippetName, false, false);
+                        }
+                        else {
+                            // remove active from all snippets
+                            if(document.querySelector(".activeSnippet")) {
+                                document.querySelector(".activeSnippet").classList.remove("activeSnippet");
+                                document.getElementById("tracySnippetName").value = '';
+                            }
+                            localStorage.removeItem("tracyConsoleSelectedSnippet");
+                            this.disableButton("reloadSnippet");
+                        }
+                    }
+
+                },
+
+                removeTab: function(tabId) {
+
+                    const existingTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs"));
+
+                    // remove tab button
+                    const tabButton = Array.from(this.tabsContainer.children).find(
+                        (button) => button.dataset.tabId == tabId
+                    );
+                    if (tabButton) this.tabsContainer.removeChild(tabButton);
+
+                    // remove tab from tracyConsoleTabs
+                    const tracyConsoleTabs = existingTabs.filter(item => item.id != tabId);
+                    localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
+
+                    tracyConsole.currentTabId = tracyConsoleTabs.at(-1)?.id || null;
+                    localStorage.setItem("tracyConsoleSelectedTab", tracyConsole.currentTabId);
+
+                    this.switchTab(tracyConsole.currentTabId);
+
+                    if(Object.keys(existingTabs).length === 1) {
+                        this.addNewTab();
+                    }
+
+
+                },
+
+                addNewTab: function() {
+
+                    const existingTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs"));
+
+                    let tabId;
+
+                    if (!existingTabs || Object.keys(existingTabs).length == 0) {
+                        tabId = 1;
+                    }
+                    else {
+                        tabId = Math.max(...existingTabs.map(tab => tab.id)) + 1;
+                    }
+                    const tabButton = document.createElement("button");
+                    const buttonLabel = document.createElement("span");
+                    buttonLabel.classList.add("button-label");
+                    buttonLabel.textContent = 'Untitled‑' + tracyConsole.getNextTabNumber();
+                    tabButton.appendChild(buttonLabel);
+
+                    tabButton.dataset.tabId = tabId;
+                    tabButton.setAttribute("draggable", "true");
+                    tabButton.addEventListener("click", () => tracyConsole.switchTab(tabId));
+                    tracyConsole.tabsContainer.appendChild(tabButton);
+
+                    const closeButton = document.createElement("span");
+                    closeButton.classList.add("close-button");
+                    closeButton.textContent = "✖";
+                    closeButton.addEventListener("click", function (e) {
+                        e.stopPropagation();
+                        tracyConsole.removeTab(tabId);
+                    });
+                    tabButton.appendChild(closeButton);
+
+                    document.getElementById("tracyConsoleResult").innerHTML = '';
+
+                    tracyConsole.switchTab(tabId);
+                    tracyConsole.saveToLocalStorage();
+
+                    sizes = [40, 60];
+                    tracyConsole.split.setSizes(sizes);
+                    tracyConsole.saveSplits();
+                },
+
+                getNextTabNumber: function() {
+                    const existingLabels = Array.from(document.querySelectorAll('.button-label')).map(span => span.textContent.trim());
+
+                    const untitledPattern = /^Untitled‑(\d+)$/;
+                    let maxNumber = 0;
+
+                    existingLabels.forEach(label => {
+                        const match = label.match(untitledPattern);
+                        if (match) {
+                            const number = parseInt(match[1], 10);
+                            if (number > maxNumber) {
+                                maxNumber = number;
+                            }
+                        }
+                    });
+
+                    return maxNumber + 1;
+                },
+
+                getDragAfterElement: function (container, x) {
+                    const draggableElements = [...container.querySelectorAll("button[draggable='true']:not(.dragging)")];
+                    return draggableElements.reduce((closest, child) => {
+                        const box = child.getBoundingClientRect();
+                        const offset = x - box.left - box.width / 2;
+                        if (offset < 0 && offset > closest.offset) {
+                            return { offset, element: child };
+                        }
+                        else {
+                            return closest;
+                        }
+                    }, { offset: Number.NEGATIVE_INFINITY }).element;
+                },
+
+                updateLocalStorageTabOrder: function() {
+                    // Get the new order of tab elements from the DOM
+                    const tabElements = document.querySelectorAll('#tracyTabs button[data-tab-id]');
+                    const newTabOrder = Array.from(tabElements).map(tab => parseInt(tab.getAttribute('data-tab-id'), 10));
+
+                    // Retrieve the current tabs from localStorage
+                    const tracyConsoleTabs = JSON.parse(localStorage.getItem('tracyConsoleTabs')) || [];
+
+                    // Reorder the tabs array based on the newTabOrder array
+                    const updatedTabs = newTabOrder
+                        .map(tabId => tracyConsoleTabs.find(tab => tab.id === tabId))
+                        .filter(Boolean);
+
+                    // Save the reordered tabs back to localStorage
+                    localStorage.setItem('tracyConsoleTabs', JSON.stringify(updatedTabs));
                 }
 
             };
@@ -724,21 +1079,50 @@ class ConsolePanel extends BasePanel {
                     tracyConsole.tce.setShowInvisibles($codeShowInvisibles);
                     tracyConsole.tce.\$blockScrolling = Infinity;
 
+                    tracyConsole.currentTabId = localStorage.getItem("tracyConsoleSelectedTab") || 1;
+
                     tracyConsole.tce.on("beforeEndOperation", function() {
-                        tracyConsole.saveToLocalStorage('tracyConsole');
+
+                        let tabName;
+                        let updateName = false;
+                        let tabButton = document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"]');
+                        let potentialTabName = tracyConsole.tce.session.getLine(0).substring(0, 15);
+
+                        if(potentialTabName.trim().length) {
+                            tabName = potentialTabName.trim();
+                            updateName = true;
+                        }
+                        else if(tabButton.querySelector('.button-label').textContent.length > 1) {
+                            updateName = false;
+                        }
+                        else {
+                            tabName = 'Untitled‑' + tracyConsole.getNextTabNumber();
+                            updateName = true;
+                        }
+
+                        // if tab button doesn't have lockedTab class, update the tab name
+                        if(!tabButton.querySelector('.button-label').classList.contains('lockedTab') && updateName) {
+                            tabButton.querySelector('.button-label').textContent = tabName;
+                        }
+
+                        tracyConsole.saveToLocalStorage();
                         if(tracyConsole.tce.getValue().indexOf('<?php') !== -1) {
                             tracyConsole.tce.session.setMode('ace/mode/php');
+                        }
+                        else {
+                            tracyConsole.tce.session.setMode({path:"ace/mode/php", inline:true});
                         }
                         tracyConsole.toggleSaveButton();
                         // focus set to false to prevent breaking the Ace search box
                         tracyConsole.resizeAce(false);
+
                     });
 
                     tracyConsole.tce.session.on("changeScrollTop", function() {
-                        tracyConsole.saveToLocalStorage('tracyConsole');
+                        tracyConsole.saveToLocalStorage();
                     });
                     tracyConsole.tce.session.on("changeScrollLeft", function() {
-                        tracyConsole.saveToLocalStorage('tracyConsole');
+                        tracyConsole.saveToLocalStorage();
                     });
 
                     // set theme
@@ -746,29 +1130,6 @@ class ConsolePanel extends BasePanel {
 
                     // set autocomplete and other options
                     ace.config.loadModule('ace/ext/language_tools', function () {
-                        if(!!localStorage.getItem("tracyConsole") && localStorage.getItem("tracyConsole") !== "null" && localStorage.getItem("tracyConsole") !== "undefined") {
-                            try {
-                                tracyConsole.setEditorState(JSON.parse(localStorage.getItem("tracyConsole")));
-                            }
-                            catch(e) {
-                                // for users upgrading from old version of Console panel that didn't store selection & scroll info
-                                tracyConsole.tce.setValue(localStorage.getItem("tracyConsole"));
-                            }
-                        }
-                        else {
-                            tracyConsole.tce.setValue($code);
-                            count = tracyConsole.tce.session.getLength();
-                            tracyConsole.tce.gotoLine(count, tracyConsole.tce.session.getLine(count-1).length);
-                        }
-
-                        // set mode to php
-                        if(localStorage.getItem("tracyConsole") && JSON.parse(localStorage.getItem("tracyConsole")).code.indexOf('<?php') !== -1) {
-                            var mode = 'ace/mode/php';
-                        }
-                        else {
-                            var mode = {path:"ace/mode/php", inline:true}
-                        }
-                        tracyConsole.tce.session.setMode(mode);
 
                         tracyConsole.tce.setOptions({
                             enableBasicAutocompletion: true,
@@ -846,10 +1207,87 @@ class ConsolePanel extends BasePanel {
 
                         // splitjs
                         tracyJSLoader.load(tracyConsole.tracyModuleUrl + "/scripts/splitjs/split.min.js", function() {
-                            var sizes = localStorage.getItem('tracyConsoleSplitSizes');
+
+                            // setup tabs
+                            tracyConsole.tabsContainer = document.getElementById("tracyTabs");
+                            tracyConsole.addTabButton = document.getElementById("addTab");
+                            tracyConsole.addTabButton.addEventListener("click", tracyConsole.addNewTab);
+
+                            let draggedTab = null;
+
+                            tracyConsole.tabsContainer.addEventListener("dragstart", (e) => {
+                                if (e.target === tracyConsole.addTabButton) return;
+                                draggedTab = e.target;
+                                e.dataTransfer.effectAllowed = "move";
+                                e.target.classList.add("dragging");
+                            });
+
+                            tracyConsole.tabsContainer.addEventListener("dragend", (e) => {
+                                e.target.classList.remove("dragging");
+                                draggedTab = null;
+                                tracyConsole.updateLocalStorageTabOrder();
+                            });
+
+                            tracyTabs.addEventListener("dragover", (e) => {
+                                e.preventDefault();
+
+                                // Find the element to insert the dragged tab after
+                                const afterElement = tracyConsole.getDragAfterElement(tracyTabs, e.clientX);
+
+                                // Ensure `draggedTab` is a valid child of `tracyTabs`
+                                if (!tracyTabs.contains(draggedTab)) {
+                                    console.error("Dragged tab is not a child of tracyTabs.");
+                                    return;
+                                }
+
+                                if (afterElement === tracyConsole.addTabButton || afterElement == null) {
+                                    // If dragging to the end, append draggedTab at the end of tracyTabs
+                                    tracyTabs.appendChild(draggedTab);
+                                } else {
+                                    // Ensure `afterElement` is a valid child of `tracyTabs`
+                                    if (tracyTabs.contains(afterElement)) {
+                                        tracyTabs.insertBefore(draggedTab, afterElement);
+                                    } else {
+                                        console.error("afterElement is not a child of tracyTabs.");
+                                    }
+                                }
+                            });
+
+                            // for users upgrading from old version of Console panel that didn't have tabs
+                            // if there are no tabs in localStorage yet, copy content from the old tracyConsole key to item 1 of tracyConsoleTabs
+                            if (!localStorage.getItem("tracyConsoleTabs") && localStorage.getItem("tracyConsole")) {
+                                var tracyConsoleData = JSON.parse(localStorage.getItem("tracyConsole"));
+                                var tracyConsoleHistory = JSON.parse(localStorage.getItem("tracyConsoleHistory"));
+                                var tracyConsoleHistoryCount = JSON.parse(localStorage.getItem("tracyConsoleHistoryCount"));
+                                var tracyConsoleHistoryItem = JSON.parse(localStorage.getItem("tracyConsoleHistoryItem"));
+                                var tracyConsoleSplitSizes = localStorage.getItem("tracyConsoleSplitSizes");
+                                var tracyConsoleSelectedSnippet = localStorage.getItem("tracyConsoleSelectedSnippet");
+                                var tracyConsoleTabs = [
+                                    {
+                                        id: 1,
+                                        name: (tracyConsoleSelectedSnippet ? tracyConsoleSelectedSnippet : 'Untitled‑1'),
+                                        historyData: tracyConsoleHistory,
+                                        historyCount: tracyConsoleHistoryCount,
+                                        historyItem: (tracyConsoleHistoryItem - 1),
+                                        splitSizes: tracyConsoleSplitSizes,
+                                        ...tracyConsoleData /* spread all keys from tracyConsole */
+                                    }
+                                ];
+                                localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
+                                localStorage.setItem("tracyConsoleSelectedTab", 1);
+                                // remove old items that are either no longer needed, or need their structure updated to prevent errors
+                                localStorage.removeItem("tracyConsole");
+                                localStorage.removeItem("diskSnippetCode");
+                                localStorage.removeItem("tracyConsoleHistory");
+                                localStorage.removeItem("tracyConsoleHistoryCount");
+                                localStorage.removeItem("tracyConsoleHistoryItem");
+                                localStorage.removeItem("tracyConsoleResults");
+                                localStorage.removeItem("tracyConsoleSplitSizes");
+                            }
+
                             tracyConsole.consoleGutterSize = 8;
                             tracyConsole.minSize = tracyConsole.lineHeight;
-                            sizes = sizes ? JSON.parse(sizes) : [40, 60];
+                            sizes = [40, 60];
                             tracyConsole.split = Split(['#tracyConsoleCode', '#tracyConsoleResult'], {
                                 direction: 'vertical',
                                 cursor: 'row-resize',
@@ -862,11 +1300,46 @@ class ConsolePanel extends BasePanel {
                                 gutterAlign: 'end',
                                 onDrag: tracyConsole.resizeAce,
                                 onDragEnd: function() {
-                                    // save split
-                                    localStorage.setItem('tracyConsoleSplitSizes', JSON.stringify(tracyConsole.split.getSizes()));
+                                    tracyConsole.saveSplits();
                                     tracyConsole.tce.focus();
                                 }
                             });
+
+                            // load all tabs from localStorage
+                            const existingTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs"));
+                            if (existingTabs) {
+                                existingTabs.forEach((consoleTab) => {
+                                    const tabId = consoleTab.id;
+                                    const tabButton = document.createElement("button");
+                                    const buttonLabel = document.createElement("span");
+                                    buttonLabel.classList.add("button-label");
+
+                                    if(!consoleTab.name || !consoleTab.name.trim().length) {
+                                        consoleTab.name = 'Untitled‑' + tracyConsole.getNextTabNumber();
+                                    }
+                                    buttonLabel.textContent = consoleTab.name;
+                                    tabButton.appendChild(buttonLabel);
+
+                                    tabButton.dataset.tabId = tabId;
+                                    tabButton.setAttribute("draggable", "true");
+                                    tabButton.addEventListener("click", () => tracyConsole.switchTab(tabId));
+                                    tracyConsole.tabsContainer.appendChild(tabButton);
+
+                                    // add close button
+                                    const closeButton = document.createElement("span");
+                                    closeButton.classList.add("close-button");
+                                    closeButton.textContent = "✖";
+                                    closeButton.addEventListener("click", function (e) {
+                                        e.stopPropagation();
+                                        tracyConsole.removeTab(tabId);
+                                    });
+                                    tabButton.appendChild(closeButton);
+                                });
+                                tracyConsole.switchTab(localStorage.getItem("tracyConsoleSelectedTab"));
+                            }
+                            else {
+                                tracyConsole.addNewTab();
+                            }
 
                             document.getElementById("tracyConsoleCode").querySelector(".ace_text-input").addEventListener("keydown", function(e) {
                                 if(document.getElementById("tracy-debug-panel-ConsolePanel").classList.contains("tracy-focused")) {
@@ -881,7 +1354,7 @@ class ConsolePanel extends BasePanel {
                                         var codeLinesHeightPct = codeLinesHeight / containerHeight * 100;
                                         if(containerHeight - codeLinesHeight < tracyConsole.lineHeight) codeLinesHeightPct = 100 - collapsedCodePaneHeightPct;
                                         tracyConsole.split.setSizes([codeLinesHeightPct, 100 - codeLinesHeightPct]);
-                                        localStorage.setItem('tracyConsoleSplitSizes', JSON.stringify(tracyConsole.split.getSizes()));
+                                        tracyConsole.saveSplits();
                                     }
 
                                     if(e.ctrlKey && e.shiftKey) {
@@ -915,7 +1388,7 @@ class ConsolePanel extends BasePanel {
                                             else {
                                                 tracyConsole.split.collapse(1);
                                             }
-                                            localStorage.setItem('tracyConsoleSplitSizes', JSON.stringify(tracyConsole.split.getSizes()));
+                                            tracyConsole.saveSplits();
                                         }
                                         // page up - remove row from code pane and save
                                         if(e.keyCode==33||e.charCode==33) {
@@ -931,7 +1404,7 @@ class ConsolePanel extends BasePanel {
                                             else {
                                                 tracyConsole.split.collapse(0);
                                             }
-                                            localStorage.setItem('tracyConsoleSplitSizes', JSON.stringify(tracyConsole.split.getSizes()));
+                                            tracyConsole.saveSplits();
                                         }
                                         // right - expand to fit all code
                                         if(e.keyCode==39||e.charCode==39) {
@@ -942,7 +1415,7 @@ class ConsolePanel extends BasePanel {
                                         }
                                         // left - restore last saved pane split position
                                         if(e.keyCode==37||e.charCode==37) {
-                                            var sizes = localStorage.getItem('tracyConsoleSplitSizes');
+                                            var sizes = tracyConsole.getSplits();
                                             sizes = sizes ? JSON.parse(sizes) : [40, 60];
                                             tracyConsole.split.setSizes(sizes);
                                         }
@@ -971,7 +1444,7 @@ class ConsolePanel extends BasePanel {
                                     var containerHeight = document.getElementById('tracyConsoleContainer').offsetHeight;
                                     var sizes = tracyConsole.split.getSizes();
                                     if(sizes[0] < 0 || sizes[1] < 0) {
-                                        sizes = localStorage.getItem('tracyConsoleSplitSizes');
+                                        sizes = tracyConsole.getSplits();
                                         sizes = sizes ? JSON.parse(sizes) : [40, 60];
                                     }
                                     if(sizes[0] * containerHeight / 100 < tracyConsole.minSize - (tracyConsole.consoleGutterSize/2)) {
@@ -1026,14 +1499,6 @@ class ConsolePanel extends BasePanel {
 
                         tracyConsole.sortList('alphabetical');
 
-                        // history buttons
-                        if(tracyConsole.historyCount == tracyConsole.historyItem || !tracyConsole.historyItem || !tracyConsole.historyCount) {
-                            tracyConsole.disableButton("historyForward");
-                        }
-                        if(!tracyConsole.historyItem || tracyConsole.historyItem == 1 || tracyConsole.historyCount < 2) {
-                            tracyConsole.disableButton("historyBack");
-                        }
-
                         // various keyboard shortcuts
                         document.getElementById("tracyConsoleCode").querySelector(".ace_text-input").addEventListener("keydown", function(e) {
                             if(document.getElementById("tracy-debug-panel-ConsolePanel").classList.contains("tracy-focused")) {
@@ -1085,32 +1550,19 @@ class ConsolePanel extends BasePanel {
             }
             loadFAIfNotAlreadyLoaded();
 
-
         </script>
-HTML;
 
-        $keyboardShortcutIcon = '
-        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-        viewBox="388 298 16 16" enable-background="new 388 298 16 16" xml:space="preserve" style="width:13px !important; height:13px !important;">
-        <path fill="'.\TracyDebugger::COLOR_NORMAL.'" d="M401.1,308.1h-1.9v-4.3h1.9c1.6,0,2.9-1.3,2.9-2.9c0-1.6-1.3-2.9-2.9-2.9c-1.6,0-2.9,1.3-2.9,2.9v1.9h-4.3v-1.9
-            c0-1.6-1.3-2.9-2.9-2.9c-1.6,0-2.9,1.3-2.9,2.9c0,1.6,1.3,2.9,2.9,2.9h1.9v4.3h-1.9c-1.6,0-2.9,1.3-2.9,2.9c0,1.6,1.3,2.9,2.9,2.9
-            c1.6,0,2.9-1.3,2.9-2.9v-1.9h4.3v1.9c0,1.6,1.3,2.9,2.9,2.9c1.6,0,2.9-1.3,2.9-2.9C404,309.4,402.7,308.1,401.1,308.1z M399.2,300.9
-            c0-1,0.8-1.9,1.9-1.9c1,0,1.9,0.8,1.9,1.9c0,1-0.8,1.9-1.9,1.9h-1.9V300.9z M390.9,302.8c-1,0-1.9-0.8-1.9-1.9c0-1,0.8-1.9,1.9-1.9
-            c1,0,1.9,0.8,1.9,1.9v1.9H390.9z M392.8,311.1c0,1-0.8,1.9-1.9,1.9c-1,0-1.9-0.8-1.9-1.9c0-1,0.8-1.9,1.9-1.9h1.9V311.1z
-                M393.9,308.1v-4.3h4.3v4.3H393.9z M401.1,312.9c-1,0-1.9-0.8-1.9-1.9v-1.9h1.9c1,0,1.9,0.8,1.9,1.9
-            C402.9,312.1,402.1,312.9,401.1,312.9z"/>
-        </svg>
-        ';
+HTML;
 
         $out .= '
         <h1>' . $this->icon . ' Console
-            <span title="Keyboard Shortcuts" style="display: inline-block; margin-left: 5px; cursor: pointer" onclick="tracyConsole.toggleKeyboardShortcuts()">' . $keyboardShortcutIcon . '</span>
+            <span title="Keyboard Shortcuts (toggle on/off)" style="display: inline-block; margin-left: 10px; cursor: pointer" onclick="tracyConsole.toggleKeyboardShortcuts()">⌘</span>
             <span id="tracyConsoleStatus" style="padding-left: 50px"></span>
         </h1>
         <span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'ConsolePanel\')">+</a></span></span>
         <div class="tracy-inner">
 
-            <div style="position: relative; height: calc(100% - 45px)">
+            <div style="position: relative; height: calc(100% - 80px)">
 
                 <div id="tracyConsoleMainContainer" style="position: absolute; height: 100%; width: '.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '100%' : 'calc(100% - 290px)').'">
 
@@ -1124,10 +1576,9 @@ HTML;
                     $out .= '
                     <div>
                         <span style="display: inline-block; padding: 0 20px 10px 0">
-                            <input title="New snippet" type="submit" onclick="tracyConsole.newSnippet()" value="➕" />&nbsp;&nbsp;
-                            <input id="reloadSnippet" title="Reload current snippet from disk" class="disabledButton" style="font-weight: 600 !important" type="submit" onclick="tracyConsole.reloadSnippet()" value="↻" disabled="true" />&nbsp;&nbsp;
-                            <input style="font-family: FontAwesome !important" title="Go back (ALT + PageUp)" id="historyBack" type="submit" onclick="tracyConsole.loadHistory(\'back\')" value="&#xf060;" />&nbsp;
-                            <input style="font-family: FontAwesome !important" title="Go forward (ALT + PageDown)" class="iconFlip" id="historyForward" type="submit" onclick="tracyConsole.loadHistory(\'forward\')" value="&#xf060;" />&nbsp;
+                            <input id="reloadSnippet" title="Reload current snippet from disk" class="disabledButton" style="font-family: FontAwesome !important; padding: 3px 8px !important" type="submit" onclick="tracyConsole.reloadSnippet()" value="&#xf021" disabled="true" />&nbsp;&nbsp;
+                            <input style="font-family: FontAwesome !important" title="Go back (ALT + PageUp)" id="historyBack" class="disabledButton" disabled="true" type="submit" onclick="tracyConsole.loadHistory(\'back\')" value="&#xf060;" />&nbsp;
+                            <input style="font-family: FontAwesome !important" title="Go forward (ALT + PageDown)" id="historyForward" class="disabledButton" disabled="true" type="submit" onclick="tracyConsole.loadHistory(\'forward\')" value="&#xf061;" />&nbsp;
                             <input title="Clear results" type="button" class="clearResults" onclick="tracyConsole.clearResults()" value="&#10006; Clear results" />
                         </span>
 
@@ -1161,10 +1612,16 @@ HTML;
                             </select>
                         </span>
                         <input id="runInjectButton" title="&bull; Run (CTRL/CMD + Enter)&#10;&bull; Clear & Run (ALT/OPT + Enter)&#10;&bull; Reload from Disk, Clear & Run&#10;(CTRL/CMD + ALT/OPT + Enter)" type="submit" onclick="tracyConsole.processTracyCode()" value="' . (!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? 'Run' : 'Inject') . '" />
-                        <span id="snippetPaneToggle" title="Toggle snippets pane" style="float:right; font-weight: bold; cursor: pointer" onclick="tracyConsole.toggleSnippetsPane()">'.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '<' : '>').'</span>
+                        <span id="snippetPaneToggle" title="Toggle snippets pane" style="font-family: FontAwesome !important; position:absolute; top: 0; right: '.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '0' : '-290').'px; font-weight: bold; cursor: pointer" onclick="tracyConsole.toggleSnippetsPane()">'.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '&#xf053;' : '&#xf054;').'</span>
                     </div>
 
                     <div id="tracyConsoleContainer" class="split" style="height: 100%; min-height: '.$codeLineHeight.'px">
+                        <div id="tracyTabsContainer">
+                            <div id="tracyTabsWrapper">
+                                <div id="tracyTabs"></div>
+                            </div>
+                            <button id="addTab" title="Add Tab" style="font-weight: 600">+</button>
+                        </div>
                         <div id="tracyConsoleCode" class="split" style="position: relative; background: #FFFFFF;">
                             <div id="tracyConsoleEditor" style="height: 100%; min-height: '.$codeLineHeight.'px"></div>
                         </div>
@@ -1189,7 +1646,7 @@ HTML;
                     </div>
                     <div style="position: relative; width:100% !important;">
                         <input type="text" id="tracySnippetName" placeholder="Enter filename (eg. myscript.php)" />
-                        <input id="saveSnippet" type="submit" class="disabledButton" onclick="tracyConsole.saveSnippet()" value="&#128190;" title="Save snippet" />
+                        <input id="saveSnippet" type="submit" style="font-family: FontAwesome !important" class="disabledButton" onclick="tracyConsole.saveSnippet()" value="&#xf0c7;" title="Save snippet" />
                     </div>
                     <div id="tracySnippets"></div>
                 </div>
