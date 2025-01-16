@@ -1416,7 +1416,7 @@ class ConsolePanel extends BasePanel {
                                         // left - restore last saved pane split position
                                         if(e.keyCode==37||e.charCode==37) {
                                             var sizes = tracyConsole.getSplits();
-                                            sizes = sizes ? JSON.parse(sizes) : [40, 60];
+                                            sizes = sizes ? sizes : [40, 60];
                                             tracyConsole.split.setSizes(sizes);
                                         }
                                     }
@@ -1445,7 +1445,7 @@ class ConsolePanel extends BasePanel {
                                     var sizes = tracyConsole.split.getSizes();
                                     if(sizes[0] < 0 || sizes[1] < 0) {
                                         sizes = tracyConsole.getSplits();
-                                        sizes = sizes ? JSON.parse(sizes) : [40, 60];
+                                        sizes = sizes ? sizes : [40, 60];
                                     }
                                     if(sizes[0] * containerHeight / 100 < tracyConsole.minSize - (tracyConsole.consoleGutterSize/2)) {
                                         tracyConsole.split.collapse(0);
