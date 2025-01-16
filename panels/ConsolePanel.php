@@ -867,7 +867,7 @@ class ConsolePanel extends BasePanel {
                         historyEntry.selections = historyEntry.selections || {};
                         historyEntry.scrollTop = historyEntry.scrollTop || 0;
                         historyEntry.scrollLeft = historyEntry.scrollLeft || 0;
-                        historyEntry.splitSizes = historyEntry.splitSizes || consoleTab.splitSizes || [40, 60];
+                        historyEntry.splitSizes = (historyItem === (historyCount - 1)) ? (consoleTab.splitSizes || historyEntry.splitSizes || [40, 60]) : (historyEntry.splitSizes || [40, 60]);
                         this.setEditorState(historyEntry);
                     }
 
