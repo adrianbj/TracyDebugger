@@ -1574,21 +1574,21 @@ HTML;
                     ';
 
                     $out .= '
-                    <div>
-                        <span style="display: inline-block; padding: 0 20px 10px 0">
+                    <div style="margin-bottom: 7px">
+                        <span style="display: inline-block; padding: 0 20px 5px 0">
                             <input id="reloadSnippet" title="Reload current snippet from disk" class="disabledButton" style="font-family: FontAwesome !important; padding: 3px 8px !important" type="submit" onclick="tracyConsole.reloadSnippet()" value="&#xf021" disabled="true" />&nbsp;&nbsp;
                             <input style="font-family: FontAwesome !important" title="Go back (ALT + PageUp)" id="historyBack" class="disabledButton" disabled="true" type="submit" onclick="tracyConsole.loadHistory(\'back\')" value="&#xf060;" />&nbsp;
                             <input style="font-family: FontAwesome !important" title="Go forward (ALT + PageDown)" id="historyForward" class="disabledButton" disabled="true" type="submit" onclick="tracyConsole.loadHistory(\'forward\')" value="&#xf061;" />&nbsp;
                             <input title="Clear results" type="button" class="clearResults" onclick="tracyConsole.clearResults()" value="&#10006; Clear results" />
                         </span>
 
-                        <span style="display: inline-block; padding: 0 20px 10px 0">
+                        <span style="display: inline-block; padding: 0 20px 5px 0">
                             <label title="Backup entire database before executing script.">
                                 <input type="checkbox" id="dbBackup" '.($this->wire('input')->cookie->tracyDbBackup ? 'checked="checked"' : '').' onclick="tracyConsole.updateBackupState();" /> Backup DB
                             </label>&nbsp;&nbsp;
                             <input id="backupFilename" type="text" placeholder="Backup name (optional)" '.($this->wire('input')->cookie->tracyDbBackup ? 'style="display:inline-block !important"' : 'style="display:none !important"').' '.($this->wire('input')->cookie->tracyDbBackupFilename ? 'value="'.$this->wire('input')->cookie->tracyDbBackupFilename.'"' : '').' />
                         </span>
-                        <span style="display: inline-block; padding: 0 20px 10px 0">
+                        <span style="display: inline-block; padding: 0 20px 5px 0">
                             <label title="Send full stack trace of errors to Tracy bluescreen">
                                 <input type="checkbox" id="allowBluescreen" /> Allow bluescreen
                             </label>
@@ -1597,7 +1597,7 @@ HTML;
 
                         if(!$inAdmin) {
                             $out .= '
-                        <span style="display: inline-block; padding: 0 20px 10px 0">
+                        <span style="display: inline-block; padding: 0 20px 5px 0">
                             <label title="Access custom variables & functions from this page\'s template file & included files."><input type="checkbox" id="accessTemplateVars" onclick="tracyConsole.tce.focus();" /> Template resources</label>
                         </span>';
                         }

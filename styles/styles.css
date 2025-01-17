@@ -750,6 +750,7 @@ ul.pw-info-links {
     display: flex;
     align-items: center;
     width: 100%;
+    background: #FFFFFF;
 }
 
 #tracyTabsWrapper {
@@ -760,15 +761,16 @@ ul.pw-info-links {
     white-space: nowrap;
     margin: 0;
     padding: 0;
-  }
+    background: #FFFFFF;
+}
 
-  #tracyTabs {
+#tracyTabs {
     display: inline-flex;
     align-items: center;
-    margin: 5px 0 0 0;
-  }
+    margin: 0;
+}
 
-  #tracyTabs button {
+#tracyTabs button {
     flex-shrink: 0; /* Prevent buttons from shrinking */
     margin: 0 4px 0 0;
     padding: 5px 7px 5px 0;
@@ -776,20 +778,20 @@ ul.pw-info-links {
     border: solid #ccc;
     border-width: 1px 1px 0 1px;
     background-color: white;
-  }
+}
 
-  #tracyTabsWrapper::-webkit-scrollbar {
+#tracyTabsWrapper::-webkit-scrollbar {
     height: 6px;
-  }
+}
 
-  #tracyTabsWrapper::-webkit-scrollbar-thumb {
+#tracyTabsWrapper::-webkit-scrollbar-thumb {
     background: #888;
     border-radius: 3px;
-  }
+}
 
-  #tracyTabsWrapper::-webkit-scrollbar-thumb:hover {
+#tracyTabsWrapper::-webkit-scrollbar-thumb:hover {
     background: #555;
-  }
+}
 
 #tracyTabs button.active {
     background-color: #e6ebf2;
