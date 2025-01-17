@@ -1260,7 +1260,7 @@ class ConsolePanel extends BasePanel {
                                 var tracyConsoleHistory = JSON.parse(localStorage.getItem("tracyConsoleHistory"));
                                 var tracyConsoleHistoryCount = JSON.parse(localStorage.getItem("tracyConsoleHistoryCount"));
                                 var tracyConsoleHistoryItem = JSON.parse(localStorage.getItem("tracyConsoleHistoryItem"));
-                                var tracyConsoleSplitSizes = localStorage.getItem("tracyConsoleSplitSizes");
+                                var tracyConsoleSplitSizes = JSON.parse(localStorage.getItem("tracyConsoleSplitSizes"));
                                 var tracyConsoleSelectedSnippet = localStorage.getItem("tracyConsoleSelectedSnippet");
                                 var tracyConsoleTabs = [
                                     {
