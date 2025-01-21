@@ -988,25 +988,9 @@ class ConsolePanel extends BasePanel {
                     else {
                         tabId = Math.max(...existingTabs.map(tab => tab.id)) + 1;
                     }
-                    const tabButton = document.createElement("button");
-                    const buttonLabel = document.createElement("span");
-                    buttonLabel.classList.add("button-label");
-                    buttonLabel.textContent = 'Untitled‑' + tracyConsole.getNextTabNumber();
-                    tabButton.appendChild(buttonLabel);
 
-                    tabButton.dataset.tabId = tabId;
-                    tabButton.setAttribute("draggable", "true");
-                    tabButton.addEventListener("click", () => tracyConsole.switchTab(tabId));
-                    tracyConsole.tabsContainer.appendChild(tabButton);
+                    tracyConsole.buildTab(tabId, 'Untitled‑' + tracyConsole.getNextTabNumber());
 
-                    const closeButton = document.createElement("span");
-                    closeButton.classList.add("close-button");
-                    closeButton.textContent = "✖";
-                    closeButton.addEventListener("click", function (e) {
-                        e.stopPropagation();
-                        tracyConsole.removeTab(tabId);
-                    });
-                    tabButton.appendChild(closeButton);
 
                     document.getElementById("tracyConsoleResult").innerHTML = '';
 
@@ -1016,6 +1000,29 @@ class ConsolePanel extends BasePanel {
                     sizes = [40, 60];
                     tracyConsole.split.setSizes(sizes);
                     tracyConsole.saveSplits();
+                },
+
+                buildTab: function(tabId, name) {
+                    const tabButton = document.createElement("button");
+                    const buttonLabel = document.createElement("span");
+                    buttonLabel.classList.add("button-label");
+                    buttonLabel.textContent = name;
+                    tabButton.appendChild(buttonLabel);
+
+                    tabButton.dataset.tabId = tabId;
+                    tabButton.setAttribute("draggable", "true");
+                    tabButton.addEventListener("click", () => tracyConsole.switchTab(tabId));
+                    tracyConsole.tabsContainer.appendChild(tabButton);
+
+                    const closeButton = document.createElement("span");
+                    closeButton.classList.add("close-button");
+                    closeButton.textContent = "×";
+                    closeButton.title = "Close tab";
+                    closeButton.addEventListener("click", function (e) {
+                        e.stopPropagation();
+                        tracyConsole.removeTab(tabId);
+                    });
+                    tabButton.appendChild(closeButton);
                 },
 
                 getNextTabNumber: function() {
@@ -1309,31 +1316,13 @@ class ConsolePanel extends BasePanel {
                             const existingTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs"));
                             if (existingTabs) {
                                 existingTabs.forEach((consoleTab) => {
-                                    const tabId = consoleTab.id;
-                                    const tabButton = document.createElement("button");
-                                    const buttonLabel = document.createElement("span");
-                                    buttonLabel.classList.add("button-label");
 
                                     if(!consoleTab.name || !consoleTab.name.trim().length) {
                                         consoleTab.name = 'Untitled‑' + tracyConsole.getNextTabNumber();
                                     }
-                                    buttonLabel.textContent = consoleTab.name;
-                                    tabButton.appendChild(buttonLabel);
 
-                                    tabButton.dataset.tabId = tabId;
-                                    tabButton.setAttribute("draggable", "true");
-                                    tabButton.addEventListener("click", () => tracyConsole.switchTab(tabId));
-                                    tracyConsole.tabsContainer.appendChild(tabButton);
+                                    tracyConsole.buildTab(consoleTab.id, consoleTab.name);
 
-                                    // add close button
-                                    const closeButton = document.createElement("span");
-                                    closeButton.classList.add("close-button");
-                                    closeButton.textContent = "✖";
-                                    closeButton.addEventListener("click", function (e) {
-                                        e.stopPropagation();
-                                        tracyConsole.removeTab(tabId);
-                                    });
-                                    tabButton.appendChild(closeButton);
                                 });
                                 tracyConsole.switchTab(localStorage.getItem("tracyConsoleSelectedTab"));
                             }
@@ -1620,7 +1609,7 @@ HTML;
                             <div id="tracyTabsWrapper">
                                 <div id="tracyTabs"></div>
                             </div>
-                            <button id="addTab" title="Add Tab" style="font-weight: 600">+</button>
+                            <button id="addTab" title="Add tab" style="font-weight: 600">+</button>
                         </div>
                         <div id="tracyConsoleCode" class="split" style="position: relative; background: #FFFFFF;">
                             <div id="tracyConsoleEditor" style="height: 100%; min-height: '.$codeLineHeight.'px"></div>
