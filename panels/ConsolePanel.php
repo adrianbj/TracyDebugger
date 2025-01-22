@@ -985,7 +985,7 @@ class ConsolePanel extends BasePanel {
 
                 },
 
-                addNewTab: function() {
+                addNewTab: function(name) {
 
                     const existingTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs"));
                     let tabId;
@@ -997,7 +997,11 @@ class ConsolePanel extends BasePanel {
                         tabId = Math.max(...existingTabs.map(tab => tab.id)) + 1;
                     }
 
-                    tracyConsole.buildTab(tabId, 'Untitled‑' + tracyConsole.getNextTabNumber());
+                    if(!name) {
+                        name = 'Untitled‑' + this.getNextTabNumber();
+                    }
+
+                    tracyConsole.buildTab(tabId, name);
                     document.getElementById("tracyConsoleResult").innerHTML = '';
 
                     tracyConsole.switchTab(tabId);
@@ -1055,10 +1059,15 @@ class ConsolePanel extends BasePanel {
                     }
                     var tracyConsoleSnippets = this.getAllSnippets();
                     var snippet = tracyConsoleSnippets.find(obj => obj.name === name);
-                    if(!tab || (snippet && snippet.code.replace(/\s+/g, ' ').trim() != tab.code.replace(/\s+/g, ' ').trim()) || (!snippet && tab.code !== '')) {
+                    if(tab && tab.code === '') {
+                        return false;
+                    }
+                    else if(!tab || (snippet && snippet.code.replace(/\s+/g, ' ').trim() != tab.code.replace(/\s+/g, ' ').trim()) || (!snippet && tab.code !== '')) {
                         return true
                     }
-                    return false;
+                    else {
+                        return false;
+                    }
                 },
 
                 getNextTabNumber: function() {
@@ -1254,7 +1263,7 @@ class ConsolePanel extends BasePanel {
                             // setup tabs
                             tracyConsole.tabsContainer = document.getElementById("tracyTabs");
                             tracyConsole.addTabButton = document.getElementById("addTab");
-                            tracyConsole.addTabButton.addEventListener("click", tracyConsole.addNewTab);
+                            tracyConsole.addTabButton.addEventListener("click", () => tracyConsole.addNewTab());
 
                             let draggedTab = null;
 
