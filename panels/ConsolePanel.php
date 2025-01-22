@@ -710,8 +710,9 @@ class ConsolePanel extends BasePanel {
                 },
 
                 getTabItem: function(id) {
+                    id = Number(id);
                     var tracyConsoleTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs")) || [];
-                    return tracyConsoleTabs.find(obj => obj.id === id);
+                    return tracyConsoleTabs.find(tab => tab.id === id);
                 },
 
                 reloadSnippet: function(process = false) {
@@ -927,12 +928,13 @@ class ConsolePanel extends BasePanel {
 
                     this.scrollTabIntoView(tabId);
 
+                    var tab = this.getTabItem(tabId);
+
                     if(!tracyConsole.loadHistory()) {
-                        this.setEditorState(this.getTabItem(tabId));
+                        this.setEditorState(tab);
                     }
 
-                    //populate resultsDiv with saved results
-                    var tab = tracyConsole.getTabItem(tabId);
+                    // populate resultsDiv with saved results
                     document.getElementById("tracyConsoleResult").innerHTML = tab && tab.result ? tab.result : '';
 
                     localStorage.setItem("tracyConsoleSelectedTab", this.currentTabId);
