@@ -37,7 +37,7 @@ body.tracyHidden:before {
     top:auto !important;
     bottom:0 !important;
     font: normal normal 13px/1.55 Arial, sans-serif !important;
-    background: #F0F3F7 !important;
+    background: #F7F9FB !important;
     border: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
@@ -50,7 +50,7 @@ body.tracyHidden:before {
 }
 
 #tracy-debug-bar .tracy-row:not(:first-child) {
-    background: #F0F3F7 !important;
+    background: #F7F9FB !important;
 }
 
 #tracy-debug-bar li>a:hover {
@@ -750,9 +750,10 @@ ul.pw-info-links {
     display: flex;
     align-items: center;
     width: 100%;
-    background: #F0F3F7;
+    background: #F7F9FB;
     margin: 0;
     padding: 0;
+    border-radius: 5px 5px 0 0;
 }
 
 #tracyTabsWrapper {
@@ -761,9 +762,10 @@ ul.pw-info-links {
     overflow-x: auto;
     overflow-y: hidden;
     white-space: nowrap;
-    margin: 0;
+    margin: 0 0 -1px 0;
     padding: 0;
-    background: #F0F3F7;
+    background: #F7F9FB;
+    border-radius: 5px 5px 0 0;
 }
 
 #tracyTabsWrapper::-webkit-scrollbar {
@@ -792,15 +794,16 @@ ul.pw-info-links {
     align-items: center;
     flex-shrink: 0;
     margin: 0 2px 0 0;
-    padding: 3px 3px 3px 6px;
+    padding: 4px 3px 3px 6px;
     background-color: #e6ebf2;
     color: #777;
+    border-radius: 5px 5px 0 0;
     cursor: pointer;
 }
 
 #tracyTabs button.active {
-    background-color: #FFFFFF;
-    color: #000;
+    background-color: #000;
+    color: #FFF;
 }
 #tracyTabs button.dragging {
     opacity: 0.25;
@@ -837,6 +840,11 @@ ul.pw-info-links {
     visibility: hidden;
 }
 
+#tracyTabs button:hover {
+    background: #6E6E6E;
+    color: #FFF;
+}
+
 /* Show close button when parent button is hovered */
 #tracyTabs button:hover .close-button {
     visibility: visible !important;
@@ -862,7 +870,7 @@ ul.pw-info-links {
 }
 
 #tracyTabs .close-button:hover {
-    background: #c6d4e6;
+    background: #000;
     visibility: visible;
 }
 
@@ -1999,7 +2007,7 @@ ul.tracyDumpTabs {
     list-style: none !important;
     margin: 0 !important;
     padding: 0 !important;
-    background: #F0F3F7 !important;
+    background: #F7F9FB !important;
     border: 1px solid #D2D2D2 !important;
     border-bottom: none !important;
 }
