@@ -750,7 +750,9 @@ ul.pw-info-links {
     display: flex;
     align-items: center;
     width: 100%;
-    background: #FFFFFF;
+    background: #F0F3F7;
+    margin: 0;
+    padding: 0;
 }
 
 #tracyTabsWrapper {
@@ -761,24 +763,7 @@ ul.pw-info-links {
     white-space: nowrap;
     margin: 0;
     padding: 0;
-    background: #FFFFFF;
-}
-
-#tracyTabs {
-    display: inline-flex;
-    align-items: center;
-    margin: 0;
-}
-
-#tracyTabs button {
-    flex-shrink: 0; /* Prevent buttons from shrinking */
-    margin: 0 4px 0 0;
-    padding: 5px 7px 5px 0;
-    cursor: pointer;
-    border: solid #ccc;
-    border-width: 1px 1px 0 1px;
-    background-color: #F0F3F7;
-    color: #777;
+    background: #F0F3F7;
 }
 
 #tracyTabsWrapper::-webkit-scrollbar {
@@ -792,6 +777,25 @@ ul.pw-info-links {
 
 #tracyTabsWrapper::-webkit-scrollbar-thumb:hover {
     background: #555;
+}
+
+#tracyTabs {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+}
+
+#tracyTabs button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin: 0 2px 0 0;
+    padding: 3px 3px 3px 6px;
+    background-color: #e6ebf2;
+    color: #777;
+    cursor: pointer;
 }
 
 #tracyTabs button.active {
@@ -811,12 +815,6 @@ ul.pw-info-links {
     cursor: pointer;
 }
 
-#tracyTabs button {
-    display: inline-flex;
-    align-items: center;
-    padding: 3px 3px 3px 6px;
-}
-
 #tracyTabs .button-label {
     padding-right: 8px;
     white-space: nowrap;
@@ -824,27 +822,65 @@ ul.pw-info-links {
 
 #tracyTabs .close-button {
     visibility: hidden;
-    opacity: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     font-size: 16px;
     padding: 0 4px;
-    margin-left: 3px;
+    margin-left: 0;
     transition: opacity 0.3s ease, background 0.3s ease;
     border-radius: 2px;
 }
 
-#tracyTabs button.active .close-button,
+/* Default: close button hidden */
+#tracyTabs .close-button {
+    visibility: hidden;
+}
+
+/* Show close button when parent button is hovered */
 #tracyTabs button:hover .close-button {
+    visibility: visible !important;
+}
+
+/* Show close button when the button is active, unless unsaved changes indicator is visible */
+#tracyTabs button.active .close-button {
     visibility: visible;
-    opacity: 1;
+}
+
+#tracyTabs button.active .unsaved-changes-indicator.visible ~ .close-button {
+    visibility: hidden;
+}
+
+/* Hide close button when unsaved-changes-indicator is visible and button is not hovered */
+#tracyTabs button .unsaved-changes-indicator.visible ~ .close-button {
+    visibility: hidden;
+}
+
+/* Ensure close button is visible when hovered, regardless of unsaved indicator */
+#tracyTabs button:hover .close-button {
+    visibility: visible !important;
 }
 
 #tracyTabs .close-button:hover {
     background: #c6d4e6;
+    visibility: visible;
 }
 
+#tracyTabs .unsaved-changes-indicator {
+    position: absolute;
+    visibility: hidden;
+    top: 50%;
+    right: 8px;
+    transform: translate(0, -50%);
+    font-size: 24px;
+    z-index: 1;
+}
+#tracyTabs button:hover .unsaved-changes-indicator {
+    visibility: hidden;
+}
+#tracyTabs .unsaved-changes-indicator.visible {
+    visibility: visible;
+}
 
 #tracy-debug #runInjectButton,
 #tracy-debug #historyBack,

@@ -641,6 +641,9 @@ class ConsolePanel extends BasePanel {
                         this.tce.focus();
                         // change selected tab name to match new snippet name just saved
                         document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"] .button-label').textContent = tracySnippetName;
+                        let tabButton = document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"]');
+                        let unsavedChangesIndicator = tabButton.querySelector('.unsaved-changes-indicator');
+                        unsavedChangesIndicator.classList.remove('visible');
                         // update the tab name in localStorage
                         tracyConsole.saveToLocalStorage();
                     }
@@ -769,13 +772,18 @@ class ConsolePanel extends BasePanel {
 
                 toggleSaveButton: function() {
                     // if code in tracyConsoleSnippets is different from the current code in the editor, enable the save button
-                    var tracyConsoleSnippets = this.getAllSnippets();
-                    var snippet = tracyConsoleSnippets.find(obj => obj.name === document.getElementById("tracySnippetName").value);
-                    if(snippet && snippet.code.replace(/\s+/g, ' ').trim() != this.tce.getValue().replace(/\s+/g, ' ').trim()) {
+                    let tabButton = document.querySelector('button[data-tab-id="' + tracyConsole.currentTabId + '"]');
+                    let unsavedChangesIndicator = tabButton.querySelector('.unsaved-changes-indicator');
+                    let closeButton = tabButton.querySelector('.close-button');
+                    if(tracyConsole.checkIfUnsavedChanges(tracyConsole.currentTabId)) {
                         this.enableButton("saveSnippet");
+                        unsavedChangesIndicator.classList.add('visible');
+                        closeButton.classList.remove('visible');
                     }
                     else {
                         this.disableButton("saveSnippet");
+                        unsavedChangesIndicator.classList.remove('visible');
+                        closeButton.classList.add('visible');
                     }
                 },
 
@@ -924,8 +932,7 @@ class ConsolePanel extends BasePanel {
                     }
 
                     //populate resultsDiv with saved results
-                    var tracyConsoleTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs")) || [];
-                    var tab = tracyConsoleTabs.find(tab => tab.id == tabId);
+                    var tab = tracyConsole.getTabItem(tabId);
                     document.getElementById("tracyConsoleResult").innerHTML = tab && tab.result ? tab.result : '';
 
                     localStorage.setItem("tracyConsoleSelectedTab", this.currentTabId);
@@ -979,7 +986,6 @@ class ConsolePanel extends BasePanel {
                 addNewTab: function() {
 
                     const existingTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs"));
-
                     let tabId;
 
                     if (!existingTabs || Object.keys(existingTabs).length == 0) {
@@ -990,8 +996,6 @@ class ConsolePanel extends BasePanel {
                     }
 
                     tracyConsole.buildTab(tabId, 'Untitled‑' + tracyConsole.getNextTabNumber());
-
-
                     document.getElementById("tracyConsoleResult").innerHTML = '';
 
                     tracyConsole.switchTab(tabId);
@@ -1014,15 +1018,45 @@ class ConsolePanel extends BasePanel {
                     tabButton.addEventListener("click", () => tracyConsole.switchTab(tabId));
                     tracyConsole.tabsContainer.appendChild(tabButton);
 
+                    const unsavedChangesIndicator = document.createElement("span");
+                    unsavedChangesIndicator.classList.add("unsaved-changes-indicator");
+                    unsavedChangesIndicator.textContent = "•";
+                    tabButton.appendChild(unsavedChangesIndicator);
+
+                    if(tracyConsole.checkIfUnsavedChanges(tabId, name)) {
+                        unsavedChangesIndicator.classList.add('visible');
+                    }
+
                     const closeButton = document.createElement("span");
                     closeButton.classList.add("close-button");
                     closeButton.textContent = "×";
                     closeButton.title = "Close tab";
                     closeButton.addEventListener("click", function (e) {
                         e.stopPropagation();
-                        tracyConsole.removeTab(tabId);
+                        if(tracyConsole.checkIfUnsavedChanges(tabId, name)) {
+                            if (confirm("There are unsaved changes, are you sure you want to close this tab?")) {
+                                tracyConsole.removeTab(tabId);
+                            }
+                        }
+                        else {
+                            tracyConsole.removeTab(tabId);
+                        }
                     });
                     tabButton.appendChild(closeButton);
+                },
+
+                checkIfUnsavedChanges: function(tabId, name) {
+
+                    var tab = tracyConsole.getTabItem(tabId);
+                    if(!name) {
+                        var name = tab.name;
+                    }
+                    var tracyConsoleSnippets = this.getAllSnippets();
+                    var snippet = tracyConsoleSnippets.find(obj => obj.name === name);
+                    if(!tab || (snippet && snippet.code.replace(/\s+/g, ' ').trim() != tab.code.replace(/\s+/g, ' ').trim()) || (!snippet && tab.code !== '')) {
+                        return true
+                    }
+                    return false;
                 },
 
                 getNextTabNumber: function() {
@@ -1093,7 +1127,7 @@ class ConsolePanel extends BasePanel {
                         let tabName;
                         let updateName = false;
                         let tabButton = document.querySelector('button[data-tab-id="'+tracyConsole.currentTabId+'"]');
-                        let potentialTabName = tracyConsole.tce.session.getLine(0).substring(0, 15);
+                        let potentialTabName = tracyConsole.tce.session.getLine(0).substring(0, 20);
 
                         if(potentialTabName.trim().length) {
                             tabName = potentialTabName.trim();
