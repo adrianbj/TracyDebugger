@@ -1609,14 +1609,13 @@ HTML;
 
                     $out .= '
                     <div style="margin-bottom: 7px">
-                        <span style="display: inline-block; padding: 0 20px 5px 0">
+                        <span style="display: inline-block; padding: 0 10px 5px 0">
                             <input id="reloadSnippet" title="Reload current snippet from disk" class="disabledButton" style="font-family: FontAwesome !important; padding: 3px 8px !important; border-radius: 5px !important;" type="submit" onclick="tracyConsole.reloadSnippet()" value="&#xf021" disabled="true" />&nbsp;&nbsp;
                             <input style="font-family: FontAwesome !important" title="Go back (ALT + PageUp)" id="historyBack" class="disabledButton" disabled="true" type="submit" onclick="tracyConsole.loadHistory(\'back\')" value="&#xf060;" />&nbsp;
                             <input style="font-family: FontAwesome !important" title="Go forward (ALT + PageDown)" id="historyForward" class="disabledButton" disabled="true" type="submit" onclick="tracyConsole.loadHistory(\'forward\')" value="&#xf061;" />&nbsp;
-                            <input title="Clear results" type="submit" class="clearResults" style="border-radius: 5px !important; padding: 3px 5px !important" onclick="tracyConsole.clearResults()" value="&#10006; Clear results" />
                         </span>
 
-                        <span style="display: inline-block; padding: 0 20px 5px 0">
+                        <span style="display: inline-block; padding: 0 10px 0 0">
                             <label title="Backup entire database before executing script.">
                                 <input type="checkbox" id="dbBackup" '.($this->wire('input')->cookie->tracyDbBackup ? 'checked="checked"' : '').' onclick="tracyConsole.updateBackupState();" /> Backup DB
                             </label>&nbsp;&nbsp;
@@ -1638,6 +1637,7 @@ HTML;
 
                         $out .= '
                         <span style="display:inline-block; padding-right: 5px;">
+                            <input title="Clear results" type="submit" class="clearResults" style="border-radius: 5px !important; padding: 3px 5px !important" onclick="tracyConsole.clearResults()" value="&#10006; Clear results" />
                             <select name="includeCode" style="height: 25px !important" title="When to execute code" onchange="tracyConsole.tracyIncludeCode(this)" />
                                 <option value="off"' . (!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? ' selected' : '') . '>@ Run</option>
                                 <option value="init"' . ($this->tracyIncludeCode && $this->tracyIncludeCode['when'] === 'init' ? ' selected' : '') . '>@ Init</option>
