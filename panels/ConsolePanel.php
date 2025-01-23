@@ -1052,17 +1052,16 @@ class ConsolePanel extends BasePanel {
                 },
 
                 checkIfUnsavedChanges: function(tabId, name) {
-
                     var tab = tracyConsole.getTabItem(tabId);
                     if(!name) {
                         var name = tab.name;
                     }
                     var tracyConsoleSnippets = this.getAllSnippets();
                     var snippet = tracyConsoleSnippets.find(obj => obj.name === name);
-                    if(tab && tab.code === '') {
+                    if(!tab || (tab && tab.code == '')) {
                         return false;
                     }
-                    else if(!tab || (snippet && snippet.code.replace(/\s+/g, ' ').trim() != tab.code.replace(/\s+/g, ' ').trim()) || (!snippet && tab.code !== '')) {
+                    else if((snippet && snippet.code.replace(/\s+/g, ' ').trim() != tab.code.replace(/\s+/g, ' ').trim()) || (!snippet && tab.code !== '')) {
                         return true
                     }
                     else {
