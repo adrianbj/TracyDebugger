@@ -798,8 +798,8 @@ ul.pw-info-links {
     flex-shrink: 0;
     margin: 0 2px 0 0;
     padding: 4px 3px 3px 6px;
-    background-color: #e6ebf2;
-    color: #777;
+    background-color: #71787F;
+    color: #FFF;
     border-radius: 5px 5px 0 0 !important;
     cursor: pointer;
 }
@@ -816,7 +816,8 @@ ul.pw-info-links {
     padding: 5px 10px;
     font-size: 18px;
     line-height: 18px;
-    background-color: #e6ebf2;
+    background-color: #000;
+    color: #FFF;
     border: none;
     border-radius: 5px 5px 0 0 !important;
     cursor: pointer;
@@ -845,7 +846,7 @@ ul.pw-info-links {
 }
 
 #tracyTabs button:hover {
-    background: #6E6E6E;
+    background: #48525A;
     color: #FFF;
 }
 
