@@ -1610,10 +1610,10 @@ HTML;
                     $out .= '
                     <div style="margin-bottom: 7px">
                         <span style="display: inline-block; padding: 0 20px 5px 0">
-                            <input id="reloadSnippet" title="Reload current snippet from disk" class="disabledButton" style="font-family: FontAwesome !important; padding: 3px 8px !important" type="submit" onclick="tracyConsole.reloadSnippet()" value="&#xf021" disabled="true" />&nbsp;&nbsp;
+                            <input id="reloadSnippet" title="Reload current snippet from disk" class="disabledButton" style="font-family: FontAwesome !important; padding: 3px 8px !important; border-radius: 5px !important;" type="submit" onclick="tracyConsole.reloadSnippet()" value="&#xf021" disabled="true" />&nbsp;&nbsp;
                             <input style="font-family: FontAwesome !important" title="Go back (ALT + PageUp)" id="historyBack" class="disabledButton" disabled="true" type="submit" onclick="tracyConsole.loadHistory(\'back\')" value="&#xf060;" />&nbsp;
                             <input style="font-family: FontAwesome !important" title="Go forward (ALT + PageDown)" id="historyForward" class="disabledButton" disabled="true" type="submit" onclick="tracyConsole.loadHistory(\'forward\')" value="&#xf061;" />&nbsp;
-                            <input title="Clear results" type="button" class="clearResults" onclick="tracyConsole.clearResults()" value="&#10006; Clear results" />
+                            <input title="Clear results" type="submit" class="clearResults" style="border-radius: 5px !important; padding: 3px 5px !important" onclick="tracyConsole.clearResults()" value="&#10006; Clear results" />
                         </span>
 
                         <span style="display: inline-block; padding: 0 20px 5px 0">
@@ -1637,8 +1637,8 @@ HTML;
                         }
 
                         $out .= '
-                        <span style="display:inline-block; padding-right: 10px;">
-                            <select name="includeCode" style="height: 24px !important" title="When to execute code" onchange="tracyConsole.tracyIncludeCode(this)" />
+                        <span style="display:inline-block; padding-right: 5px;">
+                            <select name="includeCode" style="height: 25px !important" title="When to execute code" onchange="tracyConsole.tracyIncludeCode(this)" />
                                 <option value="off"' . (!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? ' selected' : '') . '>@ Run</option>
                                 <option value="init"' . ($this->tracyIncludeCode && $this->tracyIncludeCode['when'] === 'init' ? ' selected' : '') . '>@ Init</option>
                                 <option value="ready"' . ($this->tracyIncludeCode && $this->tracyIncludeCode['when'] === 'ready' ? ' selected' : '') . '>@ Ready</option>
@@ -1656,20 +1656,22 @@ HTML;
                             </div>
                             <button id="addTab" title="Add tab" style="font-weight: 600">+</button>
                         </div>
-                        <div id="tracyConsoleCode" class="split" style="position: relative; background: #FFFFFF;">
-                            <div id="tracyConsoleEditor" style="height: 100%; min-height: '.$codeLineHeight.'px"></div>
-                        </div>
-                        <div id="tracyConsoleResult" class="split" style="position:relative; padding:0 10px; overflow:auto; border:1px solid #D2D2D2;">';
+                        <div style="height: calc(100% - 28px)">
+                            <div id="tracyConsoleCode" class="split" style="position: relative; background: #FFFFFF;">
+                                <div id="tracyConsoleEditor" style="height: 100%; min-height: '.$codeLineHeight.'px"></div>
+                            </div>
+                            <div id="tracyConsoleResult" class="split" style="position:relative; padding:0 10px; overflow:auto; border:1px solid #D2D2D2;">';
 
-                if($this->dbRestoreMessage) {
-                    $out .= '<div style="padding: 10px 0">' . $this->dbRestoreMessage . '</div>' .
-                            '<div style="padding: 10px; border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;"></div>';
-                }
-                if($this->wire('input')->cookie->tracyCodeError) {
-                    $out .= '<div style="padding: 10px 0">' . $this->wire('input')->cookie->tracyCodeError . '</div>' .
-                            '<div style="padding: 10px; border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;"></div>';
-                }
-                $out .= '
+                    if($this->dbRestoreMessage) {
+                        $out .= '<div style="padding: 10px 0">' . $this->dbRestoreMessage . '</div>' .
+                                '<div style="padding: 10px; border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;"></div>';
+                    }
+                    if($this->wire('input')->cookie->tracyCodeError) {
+                        $out .= '<div style="padding: 10px 0">' . $this->wire('input')->cookie->tracyCodeError . '</div>' .
+                                '<div style="padding: 10px; border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;"></div>';
+                    }
+                    $out .= '
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -1,3 +1,7 @@
+tracy-div:not(a b), tracy-div:not(a b) * {
+    border-radius: 0 !important;
+}
+
 #tracy-show-button {
     position: fixed !important;
     bottom: 0 !important;
@@ -55,7 +59,7 @@ body.tracyHidden:before {
 
 #tracy-debug-bar li>a:hover {
     color: black !important;
-    background: #e6ebf2 !important;
+    background: #F7F9FB !important;
 }
 
 #tracy-debug-bar li>a {
@@ -624,6 +628,7 @@ ul.pw-info-links {
     margin: 0 !important;
     height: 29px !important;
     width: 100% !important;
+    border-radius: 5px !important;
     -webkit-box-sizing: border-box;
     /* Safari/Chrome, other WebKit */
     -moz-box-sizing: border-box;
@@ -750,10 +755,9 @@ ul.pw-info-links {
     display: flex;
     align-items: center;
     width: 100%;
-    background: #F7F9FB;
+    background: #fff;
     margin: 0;
     padding: 0;
-    border-radius: 5px 5px 0 0;
 }
 
 #tracyTabsWrapper {
@@ -764,8 +768,7 @@ ul.pw-info-links {
     white-space: nowrap;
     margin: 0 0 -1px 0;
     padding: 0;
-    background: #F7F9FB;
-    border-radius: 5px 5px 0 0;
+    background: #fff;
 }
 
 #tracyTabsWrapper::-webkit-scrollbar {
@@ -774,7 +777,7 @@ ul.pw-info-links {
 
 #tracyTabsWrapper::-webkit-scrollbar-thumb {
     background: #888;
-    border-radius: 3px;
+    border-radius: 3px !important;
 }
 
 #tracyTabsWrapper::-webkit-scrollbar-thumb:hover {
@@ -797,7 +800,7 @@ ul.pw-info-links {
     padding: 4px 3px 3px 6px;
     background-color: #e6ebf2;
     color: #777;
-    border-radius: 5px 5px 0 0;
+    border-radius: 5px 5px 0 0 !important;
     cursor: pointer;
 }
 
@@ -815,6 +818,7 @@ ul.pw-info-links {
     line-height: 18px;
     background-color: #e6ebf2;
     border: none;
+    border-radius: 5px 5px 0 0 !important;
     cursor: pointer;
 }
 
@@ -832,7 +836,7 @@ ul.pw-info-links {
     padding: 0 4px;
     margin-left: 0;
     transition: opacity 0.3s ease, background 0.3s ease;
-    border-radius: 2px;
+    border-radius: 2px !important;
 }
 
 /* Default: close button hidden */
@@ -897,6 +901,18 @@ ul.pw-info-links {
     margin-right: 7px !important;
 }
 
+#tracy-debug #runInjectButton {
+    border-radius: 5px !important;
+}
+
+#tracy-debug #historyBack {
+    border-radius: 5px 0 0 5px !important;
+}
+
+#tracy-debug #historyForward {
+    border-radius: 0 5px 5px 0 !important;
+}
+
 #tracy-debug #runInjectButton:hover,
 #tracy-debug #historyBack:hover,
 #tracy-debug #historyForward:hover {
@@ -905,12 +921,6 @@ ul.pw-info-links {
 
 #tracy-debug #historyForward {
     margin-left: -12px !important;
-}
-
-#tracy-debug #historyBack,
-#tracy-debug #historyForward {
-    border-top-right-radius: 0 !important;
-    border-bottom-right-radius: 0 !important;
 }
 
 #tracyConsoleStatus {
@@ -1706,14 +1716,13 @@ ul.pw-info-links {
 
 
 #tracy-debug input.clearResults {
-    background: none !important;
+    background: #e6ebf2 !important;
     padding: 3px 10px !important;
     margin-right: 5px !important;
-    border: none !important;
     cursor: pointer;
 }
 #tracy-debug input.clearResults:hover {
-    text-decoration: underline;
+    background: #F5F8F9;
 }
 
 
@@ -2135,7 +2144,7 @@ span.tracyDumpsCollapser {
     opacity: 1;
     width: 100% !important;
     height: 100% !important;
-    overflow: auto;
+    overflow: auto !important;
 }
 
 
