@@ -1655,7 +1655,7 @@ HTML;
                             </div>
                             <button id="addTab" title="Add tab" style="font-weight: 600">+</button>
                         </div>
-                        <div style="height: calc(100% - 28px)">
+                        <div style="height: calc(100% - 36px)">
                             <div id="tracyConsoleCode" class="split" style="position: relative; background: #FFFFFF;">
                                 <div id="tracyConsoleEditor" style="height: 100%; min-height: '.$codeLineHeight.'px"></div>
                             </div>

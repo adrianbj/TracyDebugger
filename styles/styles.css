@@ -751,24 +751,25 @@ ul.pw-info-links {
     background: transparent !important;
 }
 
+/* Tab bar */
 #tracyTabsContainer {
     display: flex;
     align-items: center;
     width: 100%;
-    background: #fff;
+    min-height: 30px;
+    background: #282C34;
     margin: 0;
     padding: 0;
 }
 
 #tracyTabsWrapper {
-    width: calc(100% - 40px);
-    display: inline-block;
+    flex-grow: 1;
     overflow-x: auto;
     overflow-y: hidden;
     white-space: nowrap;
-    margin: 0 0 -1px 0;
+    background: #282C34;
+    margin: 0;
     padding: 0;
-    background: #fff;
 }
 
 #tracyTabsWrapper::-webkit-scrollbar {
@@ -796,36 +797,35 @@ ul.pw-info-links {
     display: inline-flex;
     align-items: center;
     flex-shrink: 0;
-    margin: 0 2px 0 0;
-    padding: 4px 3px 3px 6px;
-    background-color: #71787F;
-    color: #FFF;
-    border-radius: 5px 5px 0 0 !important;
+    margin: 0 1px 0 0;
+    padding: 5px 3px 2px 6px;
+    height: 30px;
+    background-color: #3A3F47;
+    color: #D0D0D0;
+    border: none;
     cursor: pointer;
+    font-size: 13px;
+    transition: background-color 0.2s ease, border-bottom-color 0.2s ease;
 }
 
 #tracyTabs button.active {
-    background-color: #000;
-    color: #FFF;
+    background-color: #282C34;
+    color: #FFFFFF;
+    border-bottom: 2px solid #61AFEF;
 }
-#tracyTabs button.dragging {
-    opacity: 0.25;
-}
-#tracyConsoleContainer #addTab {
-    margin-left: 10px;
-    padding: 5px 10px;
-    font-size: 18px;
-    line-height: 18px;
-    background-color: #000;
-    color: #FFF;
-    border: none;
-    border-radius: 5px 5px 0 0 !important;
-    cursor: pointer;
+
+#tracyTabs button:hover {
+    background: #4B5258;
+    color: #FFFFFF;
 }
 
 #tracyTabs .button-label {
-    padding-right: 8px;
+    margin-right: 8px;
     white-space: nowrap;
+}
+
+#tracyTabs button.dragging {
+    opacity: 0.25;
 }
 
 #tracyTabs .close-button {
@@ -838,16 +838,18 @@ ul.pw-info-links {
     margin-left: 0;
     transition: opacity 0.3s ease, background 0.3s ease;
     border-radius: 2px !important;
+    color: #D0D0D0;
 }
 
-/* Default: close button hidden */
-#tracyTabs .close-button {
-    visibility: hidden;
+#tracyTabs button:hover .close-button,
+#tracyTabs button.active .close-button {
+    opacity: 1;
 }
 
-#tracyTabs button:hover {
-    background: #48525A;
-    color: #FFF;
+#tracyTabs .close-button:hover {
+    visibility: visible;
+    background: #61AFEF;
+    color: #FFFFFF;
 }
 
 /* Show close button when parent button is hovered */
@@ -874,15 +876,10 @@ ul.pw-info-links {
     visibility: visible !important;
 }
 
-#tracyTabs .close-button:hover {
-    background: #000;
-    visibility: visible;
-}
-
 #tracyTabs .unsaved-changes-indicator {
     position: absolute;
     visibility: hidden;
-    top: 50%;
+    top: 55%;
     right: 8px;
     transform: translate(0, -50%);
     font-size: 24px;
@@ -893,6 +890,23 @@ ul.pw-info-links {
 }
 #tracyTabs .unsaved-changes-indicator.visible {
     visibility: visible;
+}
+
+#tracyConsoleContainer #addTab {
+    margin: 0 0 0 5px;
+    padding: 6px 12px;
+    font-size: 14px;
+    line-height: 18px;
+    background-color: #3E4451;
+    color: #DCDCDC;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    align-self: flex-start;
+}
+
+#tracyConsoleContainer #addTab:hover {
+    background-color: #4B5362;
 }
 
 #tracy-debug #runInjectButton,
