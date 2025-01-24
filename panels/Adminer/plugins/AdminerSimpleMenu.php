@@ -46,7 +46,7 @@ class AdminerSimpleMenu
         $actions = [$_GET["select"], $_GET["edit"], $_GET["table"], $_GET["create"], $_GET["indexes"], $_GET["foreign"], $_GET["trigger"]];
 
         foreach ($tables as $table => $status) {
-            $name = $status['Name'];
+            $name = adminer()->tableName($status);
             if ($name == "") {
                 continue;
             }
@@ -63,9 +63,9 @@ class AdminerSimpleMenu
 
             echo "<li data-table-name='$name'>";
             if ($this->preferSelect || support("table") || support("indexes")) {
-                echo '<a href="' . h(ME) . $action . '=' . urlencode($table) . '"' . bold($active, (is_view($status) ? "view" : "")) . " data-link='main'>$name</a>";
+                echo '<a href="' . h(ME) . $action . '=' . urlencode($table) . '"' . bold($active, (is_view($status) ? "view" : "")) . "' data-link='main' data-main='true'>$name</a>";
             } else {
-                echo "<span data-link='main'>$name</span>";
+                echo "<span data-link='main' data-main='true'>$name</span>";
             }
             echo "</li>\n";
         }

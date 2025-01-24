@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.26.59',
+            'version' => '4.26.60',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -4114,7 +4114,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $f = $this->wire('modules')->get("InputfieldCheckbox");
             $f->attr('name', 'adminerJsonInTable');
             $f->label = __('JSON In Table', __FILE__);
-            $f->description = __('Whether apply JSON preview in selection table.', __FILE__);
+            $f->description = __('Whether to apply JSON preview in selection table.', __FILE__);
             $f->notes = __('Default: true', __FILE__);
             $f->columnWidth = 25;
             $f->attr('checked', $this->data['adminerJsonInTable'] == '1' ? 'checked' : '');
@@ -4123,7 +4123,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $f = $this->wire('modules')->get("InputfieldCheckbox");
             $f->attr('name', 'adminerJsonInEdit');
             $f->label = __('JSON In Edit', __FILE__);
-            $f->description = __('Whether apply JSON preview in edit form.', __FILE__);
+            $f->description = __('Whether to apply JSON preview in edit form.', __FILE__);
             $f->notes = __('Default: true', __FILE__);
             $f->columnWidth = 25;
             $f->attr('checked', $this->data['adminerJsonInEdit'] == '1' ? 'checked' : '');

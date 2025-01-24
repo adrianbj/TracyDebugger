@@ -139,9 +139,9 @@ class AdminerJsonPreview
                 document.addEventListener("DOMContentLoaded", init, false);
 
                 function init() {
-                    var links = document.querySelectorAll('a.json-icon');
+                    const links = document.querySelectorAll('a.json-icon');
 
-                    for (var i = 0; i < links.length; i++) {
+                    for (let i = 0; i < links.length; i++) {
                         links[i].addEventListener("click", function(event) {
                             event.preventDefault();
                             toggleJson(this);
@@ -150,11 +150,10 @@ class AdminerJsonPreview
                 }
 
                 function toggleJson(button) {
-                    var index = button.dataset.index;
+                    const index = button.dataset.index;
 
-                    var obj = document.getElementById("json-code-" + index);
-                    if (!obj)
-                        return;
+                    const obj = document.getElementById("json-code-" + index);
+                    if (!obj) return;
 
                     if (obj.style.display === "none") {
                         button.className += " json-up";
@@ -170,7 +169,7 @@ class AdminerJsonPreview
         <?php
     }
 
-    public function selectVal(&$val, $link, $field, $original)
+    public function selectVal(&$val, $link, array $field, $original)
     {
         static $counter = 1;
 
@@ -178,13 +177,15 @@ class AdminerJsonPreview
             return;
         }
 
-        if (is_string($original) && in_array(substr($original, 0, 1), ['{', '[']) && ($json = json_decode($original, true))) {
+        if ($this->isJson($field, $original) && ($json = json_decode($original, true)) !== null) {
             $val = "<a class='icon json-icon' href='#' title='JSON' data-index='$counter'>JSON</a> " . $val;
-            $val .= $this->convertJson($json, 1, $counter++);
+            if (is_array($json)) {
+                $val .= $this->convertJson($json, 1, $counter++);
+            }
         }
     }
 
-    public function editInput($table, $field, $attrs, $value)
+    public function editInput($table, array $field, $attrs, $value)
     {
         static $counter = 1;
 
@@ -192,21 +193,18 @@ class AdminerJsonPreview
             return;
         }
 
-        if (is_string($value) && in_array(substr($value, 0, 1), ['{', '[']) && ($json = json_decode($value, true))) {
+        if ($this->isJson($field, $value) && ($json = json_decode($value, true)) !== null && is_array($json)) {
             echo "<a class='icon json-icon json-link' href='#' title='JSON' data-index='$counter'><span>JSON</span></a><br/>";
             echo $this->convertJson($json, 1, $counter);
         }
     }
 
-    public function truncate($value)
+    private function isJson(array $field, $value)
     {
-        if ($this->maxTextLength > 0 && mb_strlen($value, "UTF-8") > $this->maxTextLength) {
-            $value = mb_substr($value, 0, $this->maxTextLength - 1, "UTF-8") . "…";
-        }
-        return $value;
+        return $field["type"] == "json" || (is_string($value) && in_array(substr($value, 0, 1), ['{', '[']));
     }
 
-    public function convertJson($json, $level = 1, $id = 0)
+    private function convertJson(array $json, $level = 1, $id = 0)
     {
         $value = "";
 
@@ -223,9 +221,12 @@ class AdminerJsonPreview
             if (is_array($val) && ($this->maxLevel <= 0 || $level < $this->maxLevel)) {
                 $value .= $this->convertJson($val, $level + 1);
             } elseif (is_array($val)) {
-                $val = json_encode($val);
-                $value .= "<code class='jush-js'>" . h(preg_replace('/([,:])([^\s])/', '$1 $2', $this->truncate($val))) . "</code>";
+                // Shorten encoded JSON to max. length.
+                $val = $this->truncate(json_encode($val));
+
+                $value .= "<code class='jush-js'>" . h(preg_replace('/([,:])([^\s])/', '$1 $2', $val)) . "</code>";
             } elseif (is_string($val)) {
+                // Shorten string to max. length.
                 $val = $this->truncate($val);
 
                 // Add extra new line to make it visible in HTML output.
@@ -245,8 +246,19 @@ class AdminerJsonPreview
             }
         }
 
+        if (empty($json)) {
+            $value .= "<tr><td>   </td></tr>";
+        }
+
         $value .= "</table>";
 
         return $value;
+    }
+
+    private function truncate($value)
+    {
+        return $this->maxTextLength > 0 && mb_strlen($value, "UTF-8") > $this->maxTextLength
+            ? mb_substr($value, 0, $this->maxTextLength - 1, "UTF-8") . "…"
+            : $value;
     }
 }

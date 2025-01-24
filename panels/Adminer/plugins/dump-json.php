@@ -9,21 +9,21 @@
 class AdminerDumpJson {
 	/** @access protected */
 	var $database = false;
-
+	
 	function dumpFormat() {
-		return ['json' => 'JSON'];
+		return array('json' => 'JSON');
 	}
 
-	function dumpTable($table, $style, $is_view = false) {
+	function dumpTable($table, $style, $is_view = 0) {
 		if ($_POST["format"] == "json") {
 			return true;
 		}
 	}
-
+	
 	function _database() {
 		echo "}\n";
 	}
-
+	
 	function dumpData($table, $style, $query) {
 		if ($_POST["format"] == "json") {
 			if ($this->database) {
@@ -31,7 +31,7 @@ class AdminerDumpJson {
 			} else {
 				$this->database = true;
 				echo "{\n";
-				register_shutdown_function([$this, '_database']);
+				register_shutdown_function(array($this, '_database'));
 			}
 			$connection = connection();
 			$result = $connection->query($query, 1);

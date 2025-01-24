@@ -41,7 +41,6 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
             $plugins = [
                 new AdminerFrames,
                 new AdminerProcessWireLogin(wire('config')->urls->admin, wire('config')->dbHost . $port, wire('config')->dbName, wire('config')->dbUser, wire('config')->dbPass, wire('config')->dbName),
-                new AdminerTablesFilter(),
                 new AdminerSimpleMenu(),
                 new AdminerCollations(),
                 new AdminerJsonPreview($data['adminerJsonMaxLevel'], $data['adminerJsonInTable'], $data['adminerJsonInEdit'], $data['adminerJsonMaxTextLength']),
