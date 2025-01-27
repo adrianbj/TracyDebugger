@@ -4016,9 +4016,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldURL");
         $f->attr('name', 'customSnippetsUrl');
-        $f->label = __('Custom snippets URL', __FILE__);
-        $f->description = __('Link to snippets file for use in Console and File Editor panels. Can be local or remote, eg. a Github Gist file.', __FILE__);
-        $f->notes = __('If Github gist, you must use a service such as [https://rawgit.com/](https://rawgit.com/)', __FILE__);
+        $f->label = __('Custom autocompletion snippets URL', __FILE__);
+        $f->description = __("Link to snippets file for serving autocompletions in Console and File Editor panels. Can be local or remote, eg. a Github Gist file.\nTracy comes with two default autocompletions: `pwfind` and `pwforeach`. Type `pw` to see available options.", __FILE__);
+        $f->notes = __('If Github gist, you must use a service such as [https://cdn.statically.io/gist/](https://cdn.statically.io/gist) or [https://gist.githubusercontent.com/](https://gist.githubusercontent.com/)', __FILE__);
         if($data['customSnippetsUrl']) $f->attr('value', $data['customSnippetsUrl']);
         $fieldset->add($f);
 
