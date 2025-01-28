@@ -45,7 +45,7 @@ class AdminerProcessWireLogin {
             </svg>
         </a>
         ';
-        return $pwLink."<a href='".h(HOME_URL)."' id='h1'>Adminer</a>";
+        return $pwLink."<a href='".h(HOME_URL)."' id='h1'>AdminerNeo</a>";
     }
 
     function credentials() {
