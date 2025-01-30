@@ -7,7 +7,7 @@ tracy-div:not(a b), tracy-div:not(a b) * {
     bottom: 0 !important;
     z-index: 99999 !important;
     width: 16px !important;
-    margin: 0 !important;
+    margin: 0 10px 10px 0 !important;
     padding: 4px 15px 2px 6px !important;
     background: white !important;
     font-size: 13px !important;
