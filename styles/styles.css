@@ -757,7 +757,7 @@ ul.pw-info-links {
     align-items: center;
     width: 100%;
     min-height: 30px;
-    background: #282C34;
+    background: #373b41;
     margin: 0;
     padding: 0;
 }
@@ -767,7 +767,7 @@ ul.pw-info-links {
     overflow-x: auto;
     overflow-y: hidden;
     white-space: nowrap;
-    background: #282C34;
+    background: #373b41;
     margin: 0;
     padding: 0;
 }
@@ -798,9 +798,9 @@ ul.pw-info-links {
     align-items: center;
     flex-shrink: 0;
     margin: 0 1px 0 0;
-    padding: 5px 3px 2px 6px;
-    height: 30px;
-    background-color: #3A3F47;
+    padding: 5px 3px 2px 8px;
+    height: 35px;
+    background-color: #2D2D2D;
     color: #D0D0D0;
     border: none;
     cursor: pointer;
@@ -809,13 +809,12 @@ ul.pw-info-links {
 }
 
 #tracyTabs button.active {
-    background-color: #282C34;
+    background-color: #000000;
     color: #FFFFFF;
-    border-bottom: 2px solid #61AFEF;
 }
 
 #tracyTabs button:hover {
-    background: #4B5258;
+    background: #000000;
     color: #FFFFFF;
 }
 
@@ -850,6 +849,60 @@ ul.pw-info-links {
     visibility: visible;
     background: #61AFEF;
     color: #FFFFFF;
+}
+
+#tracyConsoleContainer #addTab {
+    margin: 0 0 0 5px;
+    padding: 8px 12px;
+    font-size: 14px;
+    line-height: 19px;
+    background-color: #3E4451;
+    color: #DCDCDC;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    align-self: flex-start;
+}
+
+#tracyConsoleContainer #addTab:hover {
+    background-color: #4B5362;
+}
+
+/* Light Theme */
+.light-theme #tracyTabsContainer,
+.light-theme #tracyTabsWrapper {
+    background: #EAEAEA;
+}
+
+.light-theme #tracyTabsWrapper::-webkit-scrollbar-thumb {
+    background: #CCC;
+}
+
+.light-theme #tracyTabsWrapper::-webkit-scrollbar-thumb:hover {
+    background: #AAA;
+}
+
+.light-theme #tracyTabs button {
+    background-color: #DDDDDD;
+    color: #333;
+}
+
+.light-theme #tracyTabs button.active,
+.light-theme #tracyTabs button:hover {
+    background-color: #FFFFFF;
+    color: #000;
+}
+
+.light-theme #tracyTabs .close-button {
+    color: #333;
+}
+
+.light-theme #tracyConsoleContainer #addTab {
+    background-color: #CCC;
+    color: #333;
+}
+.light-theme #tracyConsoleContainer #addTab:hover {
+    background-color: #AAA;
 }
 
 /* Show close button when parent button is hovered */
@@ -892,22 +945,6 @@ ul.pw-info-links {
     visibility: visible;
 }
 
-#tracyConsoleContainer #addTab {
-    margin: 0 0 0 5px;
-    padding: 6px 12px;
-    font-size: 14px;
-    line-height: 18px;
-    background-color: #3E4451;
-    color: #DCDCDC;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    align-self: flex-start;
-}
-
-#tracyConsoleContainer #addTab:hover {
-    background-color: #4B5362;
-}
 
 #tracy-debug #runInjectButton,
 #tracy-debug #historyBack,

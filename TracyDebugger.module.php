@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.26.61',
+            'version' => '4.26.62',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -311,6 +311,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "forceEditorLinksToTracy" => 1,
             "localRootPath" => '',
             "aceTheme" => 'tomorrow_night_bright',
+            "consoleTabsTheme" => 'dark-theme',
             "codeFontSize" => 14,
             "codeLineHeight" => 24,
             "codeShowInvisibles" => true,
@@ -3872,6 +3873,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->description = __('The maximum number of automatically named backups that will be retained before pruning the oldest.', __FILE__);
         $f->notes = __('Default: 25.', __FILE__);
         $f->attr('value', $data['consoleBackupLimit']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldSelect");
+        $f->attr('name', 'consoleTabsTheme');
+        $f->label = __('Tabs Theme', __FILE__);
+        $f->columnWidth = 33;
+        $f->addOption('dark-theme', 'Dark');
+        $f->addOption('light-theme', 'Light');
+        $f->required = true;
+        if($data['consoleTabsTheme']) $f->attr('value', $data['consoleTabsTheme']);
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldTextarea");

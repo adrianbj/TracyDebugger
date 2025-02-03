@@ -1597,7 +1597,7 @@ HTML;
 
             <div style="position: relative; height: calc(100% - 80px)">
 
-                <div id="tracyConsoleMainContainer" style="position: absolute; height: 100%; width: '.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '100%' : 'calc(100% - 290px)').'">
+                <div id="tracyConsoleMainContainer" class="'.\TracyDebugger::getDataValue('consoleTabsTheme').'" style="position: absolute; height: 100%; width: '.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '100%' : 'calc(100% - 290px)').'">
 
                     <div id="consoleKeyboardShortcuts" class="keyboardShortcuts tracyHidden">';
                         $panel = 'console';
@@ -1655,7 +1655,7 @@ HTML;
                             </div>
                             <button id="addTab" title="Add tab" style="font-weight: 600">+</button>
                         </div>
-                        <div style="height: calc(100% - 36px)">
+                        <div style="height: calc(100% - 31px)">
                             <div id="tracyConsoleCode" class="split" style="position: relative; background: #FFFFFF;">
                                 <div id="tracyConsoleEditor" style="height: 100%; min-height: '.$codeLineHeight.'px"></div>
                             </div>
