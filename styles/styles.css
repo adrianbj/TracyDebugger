@@ -905,6 +905,69 @@ ul.pw-info-links {
     background-color: #AAA;
 }
 
+/* Kiwi Theme */
+.kiwi-theme #tracyTabsContainer,
+.kiwi-theme #tracyTabsWrapper {
+    background: white;
+}
+
+.kiwi-theme #tracyTabsWrapper::-webkit-scrollbar {
+    background: #c9c9c9;
+}
+
+.kiwi-theme #tracyTabsWrapper::-webkit-scrollbar-thumb {
+    background: #999999;
+}
+
+.kiwi-theme #tracyTabsWrapper::-webkit-scrollbar-thumb:hover {
+    background: #707070;
+}
+
+.kiwi-theme #tracyTabs button {
+    height: 30px;
+    padding-top: 4px;
+    background-color: #EAEAEA;
+    color: #333;
+    margin-right: 2px;
+    border: 1px solid #d8d8d8;
+    border-bottom: 0;
+    border-radius: 3px 3px 0 0 !important;
+}
+
+.kiwi-theme #tracyTabs button:last-child {
+    margin-right: 0;
+}
+
+.kiwi-theme #tracyTabs button.active,
+.kiwi-theme #tracyTabs button:hover {
+    background-color: #FFFFFF;
+    color: #000;
+    border-color: #AAA;
+}
+
+.kiwi-theme #tracyTabs .close-button {
+    color: #333;
+    visibility: visible;
+    font-size: 18px;
+    line-height: 20px;
+}
+
+.kiwi-theme #tracyConsoleContainer #addTab {
+    background-color: #CCC;
+    color: #333;
+    padding: 0;
+    text-align: center;
+    height: 30px;
+    width: 30px;
+    flex-shrink: 0;
+    line-height: 26px;
+    border-radius: 50% !important;
+    border: 2px solid white;
+}
+.kiwi-theme #tracyConsoleContainer #addTab:hover {
+    background-color: #AAA;
+}
+
 /* Show close button when parent button is hovered */
 #tracyTabs button:hover .close-button {
     visibility: visible !important;
