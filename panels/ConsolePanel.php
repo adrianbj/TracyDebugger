@@ -108,7 +108,7 @@ class ConsolePanel extends BasePanel {
                     $snippetFileName = $snippetFile->getPathname();
                     $snippets[$i]['name'] = pathinfo($snippetFileName, PATHINFO_BASENAME);
                     $snippets[$i]['filename'] = $snippetFileName;
-                    $snippets[$i]['code'] = file_get_contents($snippetFileName);
+                    $snippets[$i]['code'] = str_replace(\TracyDebugger::getDataValue('consoleCodePrefix'), '', file_get_contents($snippetFileName));
                     $snippets[$i]['modified'] = filemtime($snippetFileName);
                     $i++;
                 }
