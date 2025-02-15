@@ -65,6 +65,10 @@ class ProcessTracyAdminer extends Process implements Module {
                     padding: 0 !important;
                     margin: 0 !important;
                 }
+                #tracy-debug-bar {
+                    bottom: 15px !important;
+                    right: 15px !important;
+                }
             </style>';
         }
     }
