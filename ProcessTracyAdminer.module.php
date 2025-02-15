@@ -46,12 +46,12 @@ class ProcessTracyAdminer extends Process implements Module {
                             }
                         }
                         if(event.source.document.body && event.source.document.body.scrollHeight) {
-                            adminer_iframe.style.height = (document.documentElement.clientHeight - 100) + "px";
+                            adminer_iframe.style.height = (document.documentElement.clientHeight - 73) + "px";
                         }
                     }
                 });
                 window.addEventListener("resize", () => {
-                    adminer_iframe.style.height = (document.documentElement.clientHeight - 100) + "px";
+                    adminer_iframe.style.height = (document.documentElement.clientHeight - 73) + "px";
                 });
             </script>
             <style>
