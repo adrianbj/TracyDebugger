@@ -1,4 +1,4 @@
-<?php
+<?php namespace Adminer;
 /**
  * Adminer Table header scroll plugin.
  *
@@ -27,8 +27,8 @@ class AdminerTableHeaderScroll
 <script<?php echo nonce(); ?>>
 function tableHeaderPositionUpdate(){
     // If your theme has a fixed position header, change these for compatibility
-    var offset = 40;
-    var zindex = 99;
+    var offset = 39;
+    var zindex = 1;
 
     // Find tables in the content
     var tables = document.getElementById('content').getElementsByTagName('table');

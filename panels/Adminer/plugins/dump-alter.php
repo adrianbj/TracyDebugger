@@ -1,5 +1,7 @@
 <?php
 
+namespace Adminer;
+
 /** Exports one database (e.g. development) so that it can be synced with other database (e.g. production)
 * @link https://www.adminer.org/plugins/#use
 * @author Jakub Vrana, https://www.vrana.cz/
@@ -10,7 +12,7 @@ class AdminerDumpAlter {
 
 	function dumpFormat() {
 		if (DRIVER == 'server' || DRIVER == 'mysql') {
-			return array('sql_alter' => 'Alter');
+			return ['sql_alter' => 'Alter'];
 		}
 	}
 
@@ -59,7 +61,7 @@ SELECT @adminer_alter;
 			if ($first) {
 				$first = false;
 				echo "SET @adminer_alter = '';\n\n";
-				register_shutdown_function(array($this, '_database'));
+				register_shutdown_function([$this, '_database']);
 			} else {
 				$this->_database();
 			}
@@ -85,7 +87,7 @@ CREATE PROCEDURE adminer_alter (INOUT alter_command text) BEGIN
 	DECLARE _column_comment varchar(255);
 	DECLARE done, set_after bool DEFAULT 0;
 	DECLARE add_columns text DEFAULT '";
-				$fields = array();
+				$fields = [];
 				$after = "";
 				foreach (get_rows($query) as $row) {
 					$default = $row["COLUMN_DEFAULT"];

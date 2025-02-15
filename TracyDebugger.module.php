@@ -259,7 +259,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "customPWInfoPanelLinks" => array(11, 16, 22, 21, 29, 30, 31, 304),
             "adminerEditFieldLink" => 1,
             "adminerStandAlone" => null,
-            "adminerThemeColor" => 'blue',
             "adminerJsonMaxLevel" => 3,
             "adminerJsonInTable" => 1,
             "adminerJsonInEdit" => 1,
@@ -1741,7 +1740,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if(static::$inAdmin && in_array($panel, static::$hideInAdmin)) continue;
             if((in_array($panel, self::$superUserOnlyPanels)) && !static::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) continue;
             // special additional check for adminer
-            if($panel == 'adminer' && !static::$allowedSuperuser) continue;
+            if($panel == 'adminer' && (!static::$allowedSuperuser || $this->wire('page')->process == 'ProcessTracyAdminer')) continue;
             if($panel == 'userSwitcher') {
                 if(isset($this->data['userSwitchSession'])) $userSwitchSession = $this->data['userSwitchSession'];
                 if(!static::$allowedSuperuser && (!$this->wire('session')->tracyUserSwitcherId || (isset($userSwitchSession[$this->wire('session')->tracyUserSwitcherId]) && $userSwitchSession[$this->wire('session')->tracyUserSwitcherId] <= time()))) continue;
@@ -3694,7 +3693,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'hideDebugBar');
         $f->label = __('Hide debug bar by default', __FILE__);
         $f->description = __('Hide the debug bar by default on page load.', __FILE__);
-        $f->notes = __('This results in the bar being hidden (unless an error is reported), and replaced with a small "show bar" &#8689; icon.', __FILE__);
+        $f->notes = __('This results in the bar being hidden (unless an error is reported), and replaced with a small "show bar" ⇱ icon.', __FILE__);
         $f->columnWidth = 50;
         $f->attr('checked', $data['hideDebugBar'] == '1' ? 'checked' : '');
         $fieldset->add($f);
@@ -4097,7 +4096,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $f->label = __('Standalone mode', __FILE__);
             $f->description = __('Load Setup > Adminer in standalone mode.', __FILE__);
             $f->notes = __('Adminer won\'t be embedded in PW admin via iframe.', __FILE__);
-            $f->columnWidth = 33;
+            $f->columnWidth = 50;
             $f->attr('checked', $this->data['adminerStandAlone'] == '1' ? 'checked' : '');
             $fieldset->add($f);
 
@@ -4106,19 +4105,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $f->label = __('Field edit links', __FILE__);
             $f->description = __('Add adminer links to each field in the page edit interface.', __FILE__);
             $f->notes = __('Will only appear when Adminer panel is enabled', __FILE__);
-            $f->columnWidth = 34;
+            $f->columnWidth = 50;
             $f->attr('checked', $this->data['adminerEditFieldLink'] == '1' ? 'checked' : '');
-            $fieldset->add($f);
-
-            $f = $this->wire('modules')->get("InputfieldSelect");
-            $f->attr('name', 'adminerThemeColor');
-            $f->label = __('Theme color', __FILE__);
-            $f->addOption('blue', 'Blue');
-            $f->addOption('green', 'Green');
-            $f->addOption('orange', 'Orange');
-            $f->required = true;
-            $f->columnWidth = 33;
-            if($this->data['adminerThemeColor']) $f->attr('value', $this->data['adminerThemeColor']);
             $fieldset->add($f);
 
             $f = $this->wire('modules')->get("InputfieldText");

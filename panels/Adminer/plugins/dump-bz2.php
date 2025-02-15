@@ -1,5 +1,7 @@
 <?php
 
+namespace Adminer;
+
 /** Dump to Bzip2 format
 * @link https://www.adminer.org/plugins/#use
 * @uses bzopen(), tempnam("")
@@ -10,14 +12,14 @@
 class AdminerDumpBz2 {
 	/** @access protected */
 	var $filename, $fp;
-	
+
 	function dumpOutput() {
 		if (!function_exists('bzopen')) {
-			return array();
+			return [];
 		}
-		return array('bz2' => 'bzip2');
+		return ['bz2' => 'bzip2'];
 	}
-	
+
 	function _bz2($string, $state) {
 		bzwrite($this->fp, $string);
 		if ($state & PHP_OUTPUT_HANDLER_END) {
@@ -28,13 +30,13 @@ class AdminerDumpBz2 {
 		}
 		return "";
 	}
-	
+
 	function dumpHeaders($identifier, $multi_table = false) {
 		if ($_POST["output"] == "bz2") {
 			$this->filename = tempnam("", "bz2");
 			$this->fp = bzopen($this->filename, 'w');
 			header("Content-Type: application/x-bzip");
-			ob_start(array($this, '_bz2'), 1e6);
+			ob_start([$this, '_bz2'], 1e6);
 		}
 	}
 

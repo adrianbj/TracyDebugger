@@ -1,5 +1,8 @@
 <?php
 
+use Adminer\Pluginer;
+use Adminer\AdminerProcessWireLogin;
+
 class ProcessTracyAdminerRenderer extends Process implements Module {
     public static function getModuleInfo() {
         return array(
@@ -21,41 +24,43 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
         );
     }
 
-
     public function ___execute() {
 
-        $_GET['db'] = $this->wire('config')->dbName;
-
-        function adminer_object() {
-
-            require_once './panels/Adminer/plugins/plugin.php';
+        function create_adminer(): Pluginer {
 
             foreach (glob(__DIR__.'/panels/Adminer/plugins/*.php') as $filename) {
                 require_once $filename/*NoCompile*/;
             }
 
-            $data = wire('modules')->getModuleConfigData('TracyDebugger');
-
-            $port = wire('config')->dbPort ? ':' . wire('config')->dbPort : '';
+            $tracyConfig = wire('modules')->getModuleConfigData('TracyDebugger');
 
             $plugins = [
-                new AdminerFrames,
-                new AdminerProcessWireLogin(wire('config')->urls->admin, wire('config')->dbHost . $port, wire('config')->dbName, wire('config')->dbUser, wire('config')->dbPass, wire('config')->dbName),
-                new AdminerSimpleMenu(),
-                new AdminerCollations(),
-                new AdminerJsonPreview($data['adminerJsonMaxLevel'], $data['adminerJsonInTable'], $data['adminerJsonInEdit'], $data['adminerJsonMaxTextLength']),
-                new AdminerDumpJson,
-                new AdminerDumpBz2,
-                new AdminerDumpZip,
-                new AdminerDumpAlter,
-                new AdminerTableHeaderScroll(),
-                new AdminerTheme("default-".$data['adminerThemeColor'])
+                new \Adminer\AdminerFrames,
+                new AdminerProcessWireLogin(),
+                new \Adminer\AdminerJsonPreview($tracyConfig['adminerJsonMaxLevel'], $tracyConfig['adminerJsonInTable'], $tracyConfig['adminerJsonInEdit'], $tracyConfig['adminerJsonMaxTextLength']),
+                new \Adminer\AdminerDumpAlter,
+                new \Adminer\AdminerDumpBz2,
+                new \Adminer\AdminerDumpDate,
+                new \Adminer\AdminerDumpJson,
+                new \Adminer\AdminerDumpPhp,
+                new \Adminer\AdminerDumpXml,
+                new \Adminer\AdminerDumpZip,
+                new \Adminer\AdminerTableHeaderScroll()
             ];
 
-            return new AdminerPlugin($plugins);
+            $config = [
+                "preferSelection" => true,
+                "cssUrls" => [
+                    wire('config')->urls->root . 'site/modules/TracyDebugger/panels/Adminer/css/tweaks.css'
+                ],
+                "jsUrls" => [
+                    wire('config')->urls->root . 'site/modules/TracyDebugger/panels/Adminer/scripts/tweaks.js'
+                ]
+            ];
+
+            return new Pluginer($plugins, $config);
         }
 
-        $_GET['username'] = '';
         require_once __DIR__ . '/panels/Adminer/adminer-mysql.php'/*NoCompile*/;
         exit;
     }

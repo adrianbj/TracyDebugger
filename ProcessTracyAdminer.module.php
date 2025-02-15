@@ -31,7 +31,7 @@ class ProcessTracyAdminer extends Process implements Module {
         else {
             // push querystring to parent window
             return '
-            <iframe id="adminer-iframe" src="'.str_replace('/adminer/', '/adminer-renderer/', $_SERVER['REQUEST_URI']).'" style="width:calc(100vw - 80px); min-height:600px; border: none; padding:0; margin:0;"></iframe>
+            <iframe id="adminer-iframe" src="'.str_replace('/adminer/', '/adminer-renderer/', $_SERVER['REQUEST_URI']).'" style="width:100vw; border: none; padding:0; margin:0;"></iframe>
             <script>
                 const adminer_iframe = document.getElementById("adminer-iframe");
                 window.addEventListener("popstate", function (event) {
@@ -40,17 +40,32 @@ class ProcessTracyAdminer extends Process implements Module {
                 window.addEventListener("message", function(event) {
                     if(!event.isTrusted) return;
                     if(event.source && event.origin === "'.trim($this->wire('config')->urls->httpRoot, '/').'" && event.source === adminer_iframe.contentWindow) {
-                        if(event.data && typeof event.data === "string" && event.data.startsWith("username=&db=")) {
+                        if(event.data && typeof event.data === "string" && event.data.startsWith("mysql=")) {
                             if(new URLSearchParams(window.location.search).toString() !== event.data) {
                                 history.replaceState(null, null, "?"+event.data);
                             }
                         }
                         if(event.source.document.body && event.source.document.body.scrollHeight) {
-                            adminer_iframe.style.height = (event.source.document.body.scrollHeight + 20) + "px";
+                            adminer_iframe.style.height = (document.documentElement.clientHeight - 100) + "px";
                         }
                     }
                 });
-            </script>';
+                window.addEventListener("resize", () => {
+                    adminer_iframe.style.height = (document.documentElement.clientHeight - 100) + "px";
+                });
+            </script>
+            <style>
+                html {
+                    overflow: hidden;
+                }
+                #pw-content-head, #pw-content-title, #pw-footer, #notices {
+                    display: none;
+                }
+                #main {
+                    padding: 0 !important;
+                    margin: 0 !important;
+                }
+            </style>';
         }
     }
 
