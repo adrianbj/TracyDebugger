@@ -7,15 +7,19 @@ html {
     overflow-y: auto;
 }
 
+#pw_logo_path {
+    fill: var(--link-text);
+}
+
 .adminerPwLogo {
     display: flex;
     align-items: center;
-    margin-top: 5px;
+    margin-top: 8px;
 }
 
 .header li.adminerPwLogo::after {
     position: relative;
-    top: -2px;
+    top: -4px;
 }
 
 html.framed .adminerPwLogo {
