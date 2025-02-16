@@ -45,13 +45,7 @@ class ProcessTracyAdminer extends Process implements Module {
                                 history.replaceState(null, null, "?"+event.data);
                             }
                         }
-                        if(event.source.document.body && event.source.document.body.scrollHeight) {
-                            adminer_iframe.style.height = (document.documentElement.clientHeight - 73) + "px";
-                        }
                     }
-                });
-                window.addEventListener("resize", () => {
-                    adminer_iframe.style.height = (document.documentElement.clientHeight - 73) + "px";
                 });
             </script>
             <style>
@@ -64,6 +58,9 @@ class ProcessTracyAdminer extends Process implements Module {
                 #main {
                     padding: 0 !important;
                     margin: 0 !important;
+                }
+                #adminer-iframe {
+                    height: calc(100vh - 73px);
                 }
                 #tracy-debug-bar {
                     bottom: 15px !important;
