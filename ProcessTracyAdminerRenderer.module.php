@@ -38,6 +38,7 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
                 new \Adminer\AdminerFrames,
                 new AdminerProcessWireLogin(),
                 new \Adminer\AdminerJsonPreview($tracyConfig['adminerJsonMaxLevel'], $tracyConfig['adminerJsonInTable'], $tracyConfig['adminerJsonInEdit'], $tracyConfig['adminerJsonMaxTextLength']),
+                new \Adminer\AdminerPrettyJsonColumn,
                 new \Adminer\AdminerDumpAlter,
                 new \Adminer\AdminerDumpBz2,
                 new \Adminer\AdminerDumpDate,
