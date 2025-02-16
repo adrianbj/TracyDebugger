@@ -25,7 +25,3 @@ html.framed .adminerPwLogo {
 .logout, .db-selector, #content h1, #content h2:first-of-type {
     display: none;
 }
-
-html.framed .table-footer .field-sets {
-    padding-bottom: 0;
-}
