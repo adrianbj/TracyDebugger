@@ -45,8 +45,7 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
                 new \Adminer\AdminerDumpJson,
                 new \Adminer\AdminerDumpPhp,
                 new \Adminer\AdminerDumpXml,
-                new \Adminer\AdminerDumpZip,
-                new \Adminer\AdminerTableHeaderScroll()
+                new \Adminer\AdminerDumpZip
             ];
 
             $config = [
