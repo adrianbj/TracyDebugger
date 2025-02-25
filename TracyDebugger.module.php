@@ -2383,15 +2383,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             content: "'.str_replace('*', '', $type).'";
                             background: '.$stylesArr[$type].';
                             color: #ffffff;
-                            padding: 4px 8px;
+                            padding: 0 8px;
                             text-align: center;
                             font-family: sans-serif;
                             font-weight: 600;
                             text-transform: uppercase;
                             z-index: 999999;
-                            font-size: 12px;
-                            height: 13px;
-                            line-height: 13px;
+                            font-size: 13px;
+                            height: auto;
+                            line-height: inherit;
+                            display: inline-flex;
+                            align-items: center;
+                            vertical-align: middle;
                             pointer-events: none;
                         }
                     </style>
