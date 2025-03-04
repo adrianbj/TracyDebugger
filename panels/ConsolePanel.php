@@ -871,29 +871,34 @@ class ConsolePanel extends BasePanel {
                     }
 
                     // load the selected history entry
-                    var historyEntry = historyData[historyItem];
-                    if (historyEntry) {
-                        historyEntry.selections = historyEntry.selections || {};
-                        historyEntry.scrollTop = historyEntry.scrollTop || 0;
-                        historyEntry.scrollLeft = historyEntry.scrollLeft || 0;
-                        historyEntry.splitSizes = (historyItem === (historyCount - 1)) ? (consoleTab.splitSizes || historyEntry.splitSizes || [40, 60]) : (historyEntry.splitSizes || [40, 60]);
-                        this.setEditorState(historyEntry);
-                    }
-
-                    // save the updated history item index
-                    var tracyConsoleTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs")) || [];
-                    tracyConsoleTabs = tracyConsoleTabs.map(tab => {
-                        if (tab.id === this.currentTabId) {
-                            return {
-                                ...tab,
-                                historyItem: historyItem
-                            };
+                    if(direction) {
+                        var historyEntry = historyData[historyItem];
+                        if (historyEntry) {
+                            historyEntry.selections = historyEntry.selections || {};
+                            historyEntry.scrollTop = historyEntry.scrollTop || 0;
+                            historyEntry.scrollLeft = historyEntry.scrollLeft || 0;
+                            historyEntry.splitSizes = (historyItem === (historyCount - 1)) ? (consoleTab.splitSizes || historyEntry.splitSizes || [40, 60]) : (historyEntry.splitSizes || [40, 60]);
+                            this.setEditorState(historyEntry);
                         }
-                        return tab;
-                    });
-                    localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
 
-                    return true;
+                        // save the updated history item index
+                        var tracyConsoleTabs = JSON.parse(localStorage.getItem("tracyConsoleTabs")) || [];
+                        tracyConsoleTabs = tracyConsoleTabs.map(tab => {
+                            if (tab.id === this.currentTabId) {
+                                return {
+                                    ...tab,
+                                    historyItem: historyItem
+                                };
+                            }
+                            return tab;
+                        });
+                        localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
+
+                        return true;
+                    }
+                    else {
+                        return false;
+                    }
                 },
 
                 updateBackupState: function() {
