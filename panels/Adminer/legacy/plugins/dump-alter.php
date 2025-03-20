@@ -1,18 +1,16 @@
 <?php
 
-namespace AdminNeo;
-
 /** Exports one database (e.g. development) so that it can be synced with other database (e.g. production)
 * @link https://www.adminer.org/plugins/#use
 * @author Jakub Vrana, https://www.vrana.cz/
 * @license https://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2.0
 * @license https://www.gnu.org/licenses/gpl-2.0.html GNU General Public License, version 2 (one or other)
 */
-class AlterDumpPlugin {
+class AdminerDumpAlter {
 
 	function dumpFormat() {
 		if (DRIVER == 'server' || DRIVER == 'mysql') {
-			return ['sql_alter' => 'Alter'];
+			return array('sql_alter' => 'Alter');
 		}
 	}
 
@@ -20,7 +18,7 @@ class AlterDumpPlugin {
 		// drop old tables
 		$query = "SELECT TABLE_NAME, ENGINE, TABLE_COLLATION, TABLE_COMMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()";
 		echo "DELIMITER ;;
-CREATE PROCEDURE adminneo_alter (INOUT alter_command text) BEGIN
+CREATE PROCEDURE adminer_alter (INOUT alter_command text) BEGIN
 	DECLARE _table_name, _engine, _table_collation varchar(64);
 	DECLARE _table_comment varchar(64);
 	DECLARE done bool DEFAULT 0;
@@ -48,10 +46,10 @@ CREATE PROCEDURE adminneo_alter (INOUT alter_command text) BEGIN
 	CLOSE tables;
 END;;
 DELIMITER ;
-CALL adminneo_alter(@adminneo_alter);
-DROP PROCEDURE adminneo_alter;
+CALL adminer_alter(@adminer_alter);
+DROP PROCEDURE adminer_alter;
 
-SELECT @adminneo_alter;
+SELECT @adminer_alter;
 ";
 	}
 
@@ -60,8 +58,8 @@ SELECT @adminneo_alter;
 		if ($_POST["format"] == "sql_alter") {
 			if ($first) {
 				$first = false;
-				echo "SET @adminneo_alter = '';\n\n";
-				register_shutdown_function([$this, '_database']);
+				echo "SET @adminer_alter = '';\n\n";
+				register_shutdown_function(array($this, '_database'));
 			} else {
 				$this->_database();
 			}
@@ -79,7 +77,7 @@ SELECT @adminneo_alter;
 				// create procedure which iterates over original columns and adds new and removes old
 				$query = "SELECT COLUMN_NAME, COLUMN_DEFAULT, IS_NULLABLE, COLLATION_NAME, COLUMN_TYPE, EXTRA, COLUMN_COMMENT FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = " . q($table) . " ORDER BY ORDINAL_POSITION";
 				echo "DELIMITER ;;
-CREATE PROCEDURE adminneo_alter (INOUT alter_command text) BEGIN
+CREATE PROCEDURE adminer_alter (INOUT alter_command text) BEGIN
 	DECLARE _column_name, _collation_name, after varchar(64) DEFAULT '';
 	DECLARE _column_type, _column_default text;
 	DECLARE _is_nullable char(3);
@@ -87,7 +85,7 @@ CREATE PROCEDURE adminneo_alter (INOUT alter_command text) BEGIN
 	DECLARE _column_comment varchar(255);
 	DECLARE done, set_after bool DEFAULT 0;
 	DECLARE add_columns text DEFAULT '";
-				$fields = [];
+				$fields = array();
 				$after = "";
 				foreach (get_rows($query) as $row) {
 					$default = $row["COLUMN_DEFAULT"];
@@ -139,8 +137,8 @@ CREATE PROCEDURE adminneo_alter (INOUT alter_command text) BEGIN
 	END IF;
 END;;
 DELIMITER ;
-CALL adminneo_alter(@adminneo_alter);
-DROP PROCEDURE adminneo_alter;
+CALL adminer_alter(@adminer_alter);
+DROP PROCEDURE adminer_alter;
 
 ";
 				//! indexes

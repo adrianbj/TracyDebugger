@@ -1,55 +1,31 @@
+:root {
+    --menu-width: 12rem;
+    --font-size: 13;
+}
+
 html {
     overflow-y: auto;
 }
 
+#pw_logo_path {
+    fill: var(--link-text);
+}
+
 .adminerPwLogo {
-    float:left;
-    padding: 13px 0 0 10px;
+    display: flex;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.header li.adminerPwLogo::after {
+    position: relative;
+    top: -4px;
 }
 
 html.framed .adminerPwLogo {
     display: none;
 }
 
-.logout input[type=submit] {
+.logout, .db-selector, #content h1, #content h2:first-of-type {
     display: none;
-}
-
-
-#menu h1 {
-    border: 0;
-    padding: 0;
-    background: none;
-}
-
-h1 #h1 {
-    background: none;
-    text-indent: 10px;
-    padding-top: 10px;
-    font-size: 1.5em;
-}
-
-#version, .version {
-    top: -15px;
-}
-
-#dbs {
-    display: none;
-}
-
-a[href*="&sql="]::before {
-    content: "✎" !important;
-}
-
-.copy-to-clipboard:not(.jush-sql)::before {
-    content: "⎘ ";
-}
-
-.icon {
-    width: 16px;
-    height: 16px;
-    border-radius: 0;
-    padding: 0;
-    border: 0 !important;
-    outline: 0 !important;
 }

@@ -565,4 +565,3 @@ class TracyPwApiData extends WireData {
     }
 
 }
-

@@ -7,7 +7,7 @@ class ProcessTracyAdminer extends Process implements Module {
             'summary' => __('Adminer page for TracyDebugger.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '2.0.1',
+            'version' => '2.0.3',
             'autoload' => false,
             'singular' => true,
             'icon' => 'database',
@@ -31,7 +31,7 @@ class ProcessTracyAdminer extends Process implements Module {
         else {
             // push querystring to parent window
             return '
-            <iframe id="adminer-iframe" src="'.str_replace('/adminer/', '/adminer-renderer/', $_SERVER['REQUEST_URI']).'" style="width:calc(100vw - 80px); min-height:600px; border: none; padding:0; margin:0;"></iframe>
+            <iframe id="adminer-iframe" src="'.str_replace('/adminer/', '/adminer-renderer/', $_SERVER['REQUEST_URI']).'" style="width:100vw; border: none; padding:0; margin:0;"></iframe>
             <script>
                 const adminer_iframe = document.getElementById("adminer-iframe");
                 window.addEventListener("popstate", function (event) {
@@ -40,17 +40,103 @@ class ProcessTracyAdminer extends Process implements Module {
                 window.addEventListener("message", function(event) {
                     if(!event.isTrusted) return;
                     if(event.source && event.origin === "'.trim($this->wire('config')->urls->httpRoot, '/').'" && event.source === adminer_iframe.contentWindow) {
-                        if(event.data && typeof event.data === "string" && event.data.startsWith("username=&db=")) {
+                        if(event.data && typeof event.data === "string" && event.data.startsWith("mysql=")) {
                             if(new URLSearchParams(window.location.search).toString() !== event.data) {
                                 history.replaceState(null, null, "?"+event.data);
                             }
                         }
-                        if(event.source.document.body && event.source.document.body.scrollHeight) {
-                            adminer_iframe.style.height = (event.source.document.body.scrollHeight + 20) + "px";
-                        }
                     }
                 });
-            </script>';
+
+                window.addEventListener("load", function(event) {
+                    var masthead = document.getElementById("pw-masthead");
+                    if (masthead && adminer_iframe) {
+                        var mastheadHeight = masthead.offsetHeight;
+                        adminer_iframe.style.height = `calc(100vh - ${mastheadHeight}px)`;
+                    }
+                });
+
+                // determine scrollbarWidth
+                var div = document.createElement("div");
+                div.style.width = "100px";
+                div.style.height = "100px";
+                div.style.overflow = "scroll";
+                div.style.visibility = "hidden";
+                document.body.appendChild(div);
+                const scrollbarWidth = div.offsetWidth - div.clientWidth;
+                document.body.removeChild(div);
+
+                // move tracy debug bar to up and left to accommodate iframe scrollbars if needed
+                function adjustTracyDebugBar(iframe) {
+                    if (!iframe) return;
+
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                    if (!iframeDoc) return;
+
+                    const body = iframeDoc.body;
+                    const html = iframeDoc.documentElement;
+
+                    const hasHorizontalScrollbar = body.scrollWidth > body.clientWidth || html.scrollWidth > html.clientWidth;
+                    const hasVerticalScrollbar = body.scrollHeight > body.clientHeight || html.scrollHeight > html.clientHeight;
+
+                    const tracyDebugBar = document.getElementById("tracy-debug-bar");
+
+                    if (tracyDebugBar) {
+                        if (hasHorizontalScrollbar) {
+
+                            tracyDebugBar.style.setProperty("bottom", scrollbarWidth + "px", "important");
+                        }
+                        else {
+                            tracyDebugBar.style.removeProperty("bottom");
+                        }
+
+                        if (hasVerticalScrollbar) {
+                            tracyDebugBar.style.setProperty("right", scrollbarWidth + "px", "important");
+                        }
+                        else {
+                            tracyDebugBar.style.removeProperty("right");
+                        }
+                    }
+                }
+
+                function observeIframeChanges(iframe) {
+                    if (!iframe) return;
+
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                    if (!iframeDoc) return;
+
+                    const mutationObserver = new MutationObserver(() => adjustTracyDebugBar(iframe));
+                    mutationObserver.observe(iframeDoc.body, { childList: true, subtree: true });
+
+                    const resizeObserver = new ResizeObserver(() => adjustTracyDebugBar(iframe));
+                    resizeObserver.observe(iframeDoc.documentElement);
+
+                    iframe._tracyMutationObserver = mutationObserver;
+                    iframe._tracyResizeObserver = resizeObserver;
+                }
+
+                if (adminer_iframe) {
+                    adminer_iframe.onload = () => {
+                        adjustTracyDebugBar(adminer_iframe);
+                        observeIframeChanges(adminer_iframe);
+                    };
+                    window.addEventListener("resize", () => adjustTracyDebugBar(adminer_iframe));
+                }
+            </script>
+
+            <style>
+                #pw-content-head, #pw-content-title, #pw-footer, #notices {
+                    display: none;
+                }
+                #main {
+                    padding: 0 !important;
+                    margin: 0 !important;
+                }
+                /* Fallback in case automatic JS adjustment fails - 73px is the height of the standard UiKit masthead */
+                #adminer-iframe {
+                    height: calc(100vh - 73px);
+                }
+            </style>';
         }
     }
 

@@ -1,0 +1,59 @@
+html {
+    overflow-y: auto;
+}
+
+.adminerPwLogo svg {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+#pw_logo_path {
+    fill: #4c71a6;
+}
+
+html.framed .adminerPwLogo {
+    display: none !important;
+}
+
+.logout {
+    display: none !important;
+}
+
+
+#menu h1 {
+    border: 0;
+    padding: 0;
+    background: none;
+}
+
+h1 #h1 {
+    background: none;
+    text-indent: 10px;
+    padding-top: 10px;
+    font-size: 1.5em;
+}
+
+#version, .version {
+    top: -15px;
+}
+
+#dbs {
+    display: none;
+}
+
+a[href*="&sql="]::before {
+    content: "✎" !important;
+}
+
+.copy-to-clipboard:not(.jush-sql)::before {
+    content: "⎘ ";
+}
+
+.icon {
+    width: 16px;
+    height: 16px;
+    border-radius: 0;
+    padding: 0;
+    border: 0 !important;
+    outline: 0 !important;
+}

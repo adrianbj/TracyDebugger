@@ -45,7 +45,7 @@ class AdminerTheme
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1"/>
 
-        <link rel="icon" type="image/ico" href="../../../site/modules/TracyDebugger/panels/Adminer/images/favicon.png">
+        <link rel="icon" type="image/ico" href="../../../site/modules/TracyDebugger/panels/Adminer/legacy/images/favicon.png">
 
         <?php
             // Condition for Windows Phone has to be the first, because IE11 contains also iPhone and Android keywords.
@@ -53,22 +53,22 @@ class AdminerTheme
         ?>
             <meta name="application-name" content="Adminer"/>
             <meta name="msapplication-TileColor" content="#ffffff"/>
-            <meta name="msapplication-square150x150logo" content="../../../site/modules/TracyDebugger/panels/Adminer/images/tileIcon.png"/>
-            <meta name="msapplication-wide310x150logo" content="../../../site/modules/TracyDebugger/panels/Adminer/images/tileIcon-wide.png"/>
+            <meta name="msapplication-square150x150logo" content="../../../site/modules/TracyDebugger/panels/Adminer/legacy/images/tileIcon.png"/>
+            <meta name="msapplication-wide310x150logo" content="../../../site/modules/TracyDebugger/panels/Adminer/legacy/images/tileIcon-wide.png"/>
 
         <?php elseif (strpos($userAgent, "iPhone") !== false || strpos($userAgent, "iPad") !== false): ?>
-            <link rel="apple-touch-icon-precomposed" href="../../../site/modules/TracyDebugger/panels/Adminer/images/touchIcon.png?<?php echo self::ICONS_VERSION ?>"/>
+            <link rel="apple-touch-icon-precomposed" href="../../../site/modules/TracyDebugger/panels/Adminer/legacy/images/touchIcon.png?<?php echo self::ICONS_VERSION ?>"/>
 
         <?php elseif (strpos($userAgent, "Android") !== false): ?>
-            <link rel="apple-touch-icon-precomposed" href="../../../site/modules/TracyDebugger/panels/Adminer/images/touchIcon-android.png?<?php echo self::ICONS_VERSION ?>"/>
+            <link rel="apple-touch-icon-precomposed" href="../../../site/modules/TracyDebugger/panels/Adminer/legacy/images/touchIcon-android.png?<?php echo self::ICONS_VERSION ?>"/>
 
         <?php else: ?>
-            <link rel="apple-touch-icon" href="../../../site/modules/TracyDebugger/panels/Adminer/images/touchIcon.png?<?php echo self::ICONS_VERSION ?>"/>
+            <link rel="apple-touch-icon" href="../../../site/modules/TracyDebugger/panels/Adminer/legacy/images/touchIcon.png?<?php echo self::ICONS_VERSION ?>"/>
         <?php endif; ?>
 
-        <link rel="stylesheet" type="text/css" href="../../../site/modules/TracyDebugger/panels/Adminer/css/<?php echo htmlspecialchars($this->themeName) ?>.css?<?php echo self::CSS_VERSION ?>">
+        <link rel="stylesheet" type="text/css" href="../../../site/modules/TracyDebugger/panels/Adminer/legacy/css/<?php echo htmlspecialchars($this->themeName) ?>.css?<?php echo self::CSS_VERSION ?>">
 
-        <link rel="stylesheet" type="text/css" href="../../../site/modules/TracyDebugger/panels/Adminer/css/tweaks.css?<?php echo self::CSS_VERSION ?>">
+        <link rel="stylesheet" type="text/css" href="../../../site/modules/TracyDebugger/panels/Adminer/legacy/css/tweaks.css?<?php echo self::CSS_VERSION ?>">
 
         <script <?php echo nonce(); ?>>
             (function(document) {

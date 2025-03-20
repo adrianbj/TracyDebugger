@@ -7,7 +7,7 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
             'summary' => __('Adminer renderer for TracyDebugger.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '2.0.2',
+            'version' => '2.0.3',
             'autoload' => false,
             'singular' => true,
             'icon' => 'database',
@@ -21,42 +21,86 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
         );
     }
 
-
     public function ___execute() {
 
-        $_GET['db'] = $this->wire('config')->dbName;
+        if(version_compare(PHP_VERSION, '7.1.0', '>=')) {
 
-        function adminer_object() {
+            function create_adminneo(): \AdminNeo\Pluginer {
 
-            require_once './panels/Adminer/plugins/plugin.php';
+                foreach (glob(__DIR__.'/panels/Adminer/plugins/*.php') as $filename) {
+                    require_once $filename/*NoCompile*/;
+                }
 
-            foreach (glob(__DIR__.'/panels/Adminer/plugins/*.php') as $filename) {
-                require_once $filename/*NoCompile*/;
+                $tracyConfig = wire('modules')->getModuleConfigData('TracyDebugger');
+
+                $plugins = [
+                    new \AdminNeo\ProcessWirePlugin(),
+                    new \AdminNeo\JsonPreviewPlugin($tracyConfig['adminerJsonMaxLevel'], $tracyConfig['adminerJsonInTable'], $tracyConfig['adminerJsonInEdit'], $tracyConfig['adminerJsonMaxTextLength']),
+                    new \AdminNeo\PrettyJsonEditPlugin,
+                    new \AdminNeo\AlterDumpPlugin,
+                    new \AdminNeo\Bz2DumpPlugin,
+                    new \AdminNeo\DateDumpPlugin,
+                    new \AdminNeo\JsonDumpPlugin,
+                    new \AdminNeo\PhpDumpPlugin,
+                    new \AdminNeo\XmlDumpPlugin,
+                    new \AdminNeo\ZipDumpPlugin
+                ];
+
+                $config = [
+                    "frameAncestors" => ["self"],
+                    "preferSelection" => true,
+                    "colorVariant" => $tracyConfig['adminerThemeColor'],
+                    "cssUrls" => [
+                        wire('config')->urls->root . 'site/modules/TracyDebugger/panels/Adminer/css/tweaks.css'
+                    ],
+                    "jsUrls" => [
+                        wire('config')->urls->root . 'site/modules/TracyDebugger/panels/Adminer/scripts/tweaks.js'
+                    ]
+                ];
+
+                return new \AdminNeo\Pluginer($plugins, $config);
             }
 
-            $data = wire('modules')->getModuleConfigData('TracyDebugger');
+            require_once __DIR__ . '/panels/Adminer/adminneo-mysql.php'/*NoCompile*/;
 
-            $port = wire('config')->dbPort ? ':' . wire('config')->dbPort : '';
+        }
+        else {
 
-            $plugins = [
-                new AdminerFrames,
-                new AdminerProcessWireLogin(wire('config')->urls->admin, wire('config')->dbHost . $port, wire('config')->dbName, wire('config')->dbUser, wire('config')->dbPass, wire('config')->dbName),
-                new AdminerSimpleMenu(),
-                new AdminerCollations(),
-                new AdminerJsonPreview($data['adminerJsonMaxLevel'], $data['adminerJsonInTable'], $data['adminerJsonInEdit'], $data['adminerJsonMaxTextLength']),
-                new AdminerDumpJson,
-                new AdminerDumpBz2,
-                new AdminerDumpZip,
-                new AdminerDumpAlter,
-                new AdminerTableHeaderScroll(),
-                new AdminerTheme("default-".$data['adminerThemeColor'])
-            ];
+            function adminer_object() {
 
-            return new AdminerPlugin($plugins);
+                require_once './panels/Adminer/legacy/plugins/plugin.php';
+                require_once './panels/Adminer/plugins/ProcessWirePlugin.php';
+
+                foreach (glob(__DIR__.'/panels/Adminer/legacy/plugins/*.php') as $filename) {
+                    require_once $filename/*NoCompile*/;
+                }
+
+                $tracyConfig = wire('modules')->getModuleConfigData('TracyDebugger');
+
+                $plugins = [
+                    new AdminerFrames,
+                    new \AdminNeo\ProcessWirePlugin(),
+                    new AdminerSimpleMenu(),
+                    new AdminerCollations(),
+                    new AdminerJsonPreview($tracyConfig['adminerJsonMaxLevel'], $tracyConfig['adminerJsonInTable'], $tracyConfig['adminerJsonInEdit'], $tracyConfig['adminerJsonMaxTextLength']),
+                    new PrettyJsonEditPlugin,
+                    new AdminerDumpAlter,
+                    new AdminerDumpBz2,
+                    new AdminerDumpDate,
+                    new AdminerDumpJson,
+                    new AdminerDumpPhp,
+                    new AdminerDumpXml,
+                    new AdminerDumpZip,
+                    new AdminerTableHeaderScroll(),
+                    new AdminerTheme("default-".str_replace('red', 'orange', $tracyConfig['adminerThemeColor']))
+                ];
+
+                return new AdminerPlugin($plugins);
+            }
+
+            require_once __DIR__ . '/panels/Adminer/legacy/adminer-mysql.php'/*NoCompile*/;
         }
 
-        $_GET['username'] = '';
-        require_once __DIR__ . '/panels/Adminer/adminer-mysql.php'/*NoCompile*/;
         exit;
     }
 

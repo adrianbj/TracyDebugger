@@ -328,7 +328,7 @@ class DebugModePanel extends BasePanel {
                     $cacheDetails .= "<table class=''><thead><tr><th colspan='2'>";
                     $cacheDetails .= $cacheName;
                     if($this->wire('modules')->isInstalled('ProcessTracyAdminer') && in_array('adminer', TracyDebugger::$showPanels)) {
-                        $cacheDetails .= '<a style="float:right; cursor:pointer" title="Edit in Adminer" style="padding-bottom:5px" href="adminer://?edit=caches&where%5Bname%5D='.$cacheName.'">'.$adminerIcon.'</a>';
+                        $cacheDetails .= '<a style="float:right; cursor:pointer" title="Edit in Adminer (SHIFT+Click for full Adminer)" style="padding-bottom:5px" href="adminer://?edit=caches&where%5Bname%5D='.$cacheName.'">'.$adminerIcon.'</a>';
                     }
                     $cacheDetails .= "</th></tr></thead><tbody>";
                     foreach($info as $key => $value) {

@@ -1,9 +1,5 @@
 <?php
 
-namespace AdminNeo;
-
-use ZipArchive;
-
 /** Dump to ZIP format
 * @link https://www.adminer.org/plugins/#use
 * @uses ZipArchive, tempnam("")
@@ -11,15 +7,15 @@ use ZipArchive;
 * @license https://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2.0
 * @license https://www.gnu.org/licenses/gpl-2.0.html GNU General Public License, version 2 (one or other)
 */
-class ZipDumpPlugin {
+class AdminerDumpZip {
 	/** @access protected */
 	var $filename, $data;
 
 	function dumpOutput() {
 		if (!class_exists('ZipArchive')) {
-			return [];
+			return array();
 		}
-		return ['zip' => 'ZIP'];
+		return array('zip' => 'ZIP');
 	}
 
 	function _zip($string, $state) {
@@ -42,7 +38,7 @@ class ZipDumpPlugin {
 		if ($_POST["output"] == "zip") {
 			$this->filename = "$identifier." . ($multi_table && preg_match("~[ct]sv~", $_POST["format"]) ? "tar" : $_POST["format"]);
 			header("Content-Type: application/zip");
-			ob_start([$this, '_zip']);
+			ob_start(array($this, '_zip'));
 		}
 	}
 
