@@ -131,7 +131,7 @@ class AdminerPanel extends BasePanel {
             <span class="resizeIcons" style="display: flex; align-items: center;">
                 <a href="#" title="Back" id="backButton" onclick="history.back(); return false;">⏴</a>
                 <a href="#" title="Forward" id="forwardButton" onclick="history.forward(); return false;">⏵</a>
-                <a href="#" title="Reload" onclick="document.getElementById(\'adminer-iframe\').contentWindow.location.reload(); return false;">↺</a>
+                <a href="#" title="Reload" onclick="document.getElementById(\'adminer-iframe\').contentWindow.location.reload(); return false;">↻</a>
                 <a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'AdminerPanel\'); return false;">⛶</a>
             </span>
         </span>
