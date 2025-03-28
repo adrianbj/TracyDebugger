@@ -126,7 +126,16 @@ class AdminerPanel extends BasePanel {
         }
 
         $out = '
-        <h1>' . $this->icon . ' Adminer</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'AdminerPanel\')">+</a></span></span>';
+        <h1>' . $this->icon . ' Adminer</h1>
+        <span class="tracy-icons">
+            <span class="resizeIcons" style="display: flex; align-items: center;">
+                <a href="#" title="Back" id="backButton" onclick="history.back(); return false;">⏴</a>
+                <a href="#" title="Forward" id="forwardButton" onclick="history.forward(); return false;">⏵</a>
+                <a href="#" title="Reload" onclick="document.getElementById(\'adminer-iframe\').contentWindow.location.reload(); return false;">↺</a>
+                <a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'AdminerPanel\'); return false;">⛶</a>
+            </span>
+        </span>
+        ';
 
         if($this->wire('modules')->isInstalled("ProcessTracyAdminer")) {
             $out .= '

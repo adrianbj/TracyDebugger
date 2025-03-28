@@ -38,7 +38,7 @@ class HelloWorldPanel extends BasePanel {
         $out = "<h1>{$this->icon} {$this->label}</h1>";
 
         // example of a maximize button
-        $out .= '<span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'' . $this->className . '\')">+</a></span></span>';
+        $out .= '<span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'' . $this->className . '\')">⛶</a></span></span>';
 
         // panel body
         $out .= '<div class="tracy-inner">';

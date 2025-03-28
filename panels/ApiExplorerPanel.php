@@ -44,7 +44,7 @@ class ApiExplorerPanel extends BasePanel {
     public function getPanel() {
 
         $out = '
-        <h1>' . $this->icon . ' API Explorer</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'ApiExplorerPanel\')">+</a></span></span>';
+        <h1>' . $this->icon . ' API Explorer</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'ApiExplorerPanel\')">⛶</a></span></span>';
 
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
         $out .= <<< HTML

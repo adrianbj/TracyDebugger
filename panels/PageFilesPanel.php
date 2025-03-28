@@ -140,7 +140,7 @@ class PageFilesPanel extends BasePanel {
         $isAdditionalBar = \TracyDebugger::isAdditionalBar();
         $out = "<h1>{$this->icon} {$this->label}" . ($isAdditionalBar ? " (".$isAdditionalBar.")" : "") . "</h1>";
 
-        $out .= '<span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'' . $this->className . '\')">+</a></span></span>';
+        $out .= '<span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'' . $this->className . '\')">⛶</a></span></span>';
 
         // panel body
         $out .= '<div class="tracy-inner">';

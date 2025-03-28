@@ -29,7 +29,6 @@ class ProcessTracyAdminer extends Process implements Module {
             return $this->wire('modules')->get('ProcessTracyAdminerRenderer')->execute();
         }
         else {
-            // push querystring to parent window
             return '
             <iframe id="adminer-iframe" src="'.str_replace('/adminer/', '/adminer-renderer/', $_SERVER['REQUEST_URI']).'" style="width:100vw; border: none; padding:0; margin:0;"></iframe>
             <script>
@@ -46,7 +45,7 @@ class ProcessTracyAdminer extends Process implements Module {
                 window.addEventListener("message", function (event) {
                     if (!event.isTrusted || event.origin !== allowedOrigin || event.source !== adminneoFrame.contentWindow) {
                         return;
-                }
+                    }
 
                     const data = event.data;
 

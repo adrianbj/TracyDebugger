@@ -1597,7 +1597,7 @@ HTML;
             <span title="Keyboard Shortcuts (toggle on/off)" style="display: inline-block; margin-left: 10px; cursor: pointer" onclick="tracyConsole.toggleKeyboardShortcuts()">⌘</span>
             <span id="tracyConsoleStatus" style="padding-left: 50px"></span>
         </h1>
-        <span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'ConsolePanel\')">+</a></span></span>
+        <span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'ConsolePanel\')">⛶</a></span></span>
         <div class="tracy-inner">
 
             <div style="position: relative; height: calc(100% - 80px)">

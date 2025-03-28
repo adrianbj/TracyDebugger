@@ -51,7 +51,7 @@ class CaptainHookPanel extends BasePanel {
     public function getPanel() {
 
         $out = '
-        <h1>' . $this->icon . ' Captain Hook</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'CaptainHookPanel\')">+</a></span></span>';
+        <h1>' . $this->icon . ' Captain Hook</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'CaptainHookPanel\')">⛶</a></span></span>';
 
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
         $out .= <<< HTML

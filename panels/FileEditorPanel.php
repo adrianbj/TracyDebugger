@@ -414,7 +414,7 @@ HTML;
         </svg>
         ';
 
-        $out .= '<h1>'.$this->icon.' File Editor <span title="Keyboard Shortcuts" style="display: inline-block; margin-left: 5px; cursor: pointer" onclick="tracyFileEditor.toggleKeyboardShortcuts()">' . $keyboardShortcutIcon . '</span> <span id="panelTitleFilePath" style="font-size:14px">'.($this->tracyFileEditorFilePath ?: 'no selected file').'</span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'FileEditorPanel\')">+</a></span></span>
+        $out .= '<h1>'.$this->icon.' File Editor <span title="Keyboard Shortcuts" style="display: inline-block; margin-left: 5px; cursor: pointer" onclick="tracyFileEditor.toggleKeyboardShortcuts()">' . $keyboardShortcutIcon . '</span> <span id="panelTitleFilePath" style="font-size:14px">'.($this->tracyFileEditorFilePath ?: 'no selected file').'</span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'FileEditorPanel\')">⛶</a></span></span>
         <div class="tracy-inner">
             <div id="tracyFileEditorContainer" style="height: 100%;">
 

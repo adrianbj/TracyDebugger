@@ -89,7 +89,7 @@ class TracyExceptionsPanel extends BasePanel {
 
 HTML;
 
-        $out .= '<h1>'.$this->icon.' Tracy Exceptions <span id="panelTitleFilePath" style="font-size:14px"></span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'TracyExceptionsPanel\')">+</a></span></span>
+        $out .= '<h1>'.$this->icon.' Tracy Exceptions <span id="panelTitleFilePath" style="font-size:14px"></span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'TracyExceptionsPanel\')">⛶</a></span></span>
         <div class="tracy-inner">
             <div id="tracyExceptionsViewerContainer" style="height: 100%;">
             <span style="float:right"><input style="display: none !important" type="submit" id="clearException" name="clearException" onclick="clearTracyExceptionsViewer()" value="Unload" /></span>

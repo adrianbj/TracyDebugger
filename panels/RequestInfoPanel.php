@@ -900,7 +900,7 @@ class RequestInfoPanel extends BasePanel {
 HTML;
 
         $out .= '
-        <h1>' . $this->icon . ' Request Info' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'RequestInfoPanel'.($isAdditionalBar ? '-'.$isAdditionalBar : '').'\')">+</a></span></span>
+        <h1>' . $this->icon . ' Request Info' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'RequestInfoPanel'.($isAdditionalBar ? '-'.$isAdditionalBar : '').'\')">⛶</a></span></span>
         <div class="tracy-inner">
         ';
 
