@@ -34,9 +34,9 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
                 $tracyConfig = wire('modules')->getModuleConfigData('TracyDebugger');
 
                 $plugins = [
+                    new \AdminNeo\FrameSupportPlugin(["self"]),
                     new \AdminNeo\ProcessWirePlugin(),
                     new \AdminNeo\JsonPreviewPlugin($tracyConfig['adminerJsonMaxLevel'], $tracyConfig['adminerJsonInTable'], $tracyConfig['adminerJsonInEdit'], $tracyConfig['adminerJsonMaxTextLength']),
-                    new \AdminNeo\PrettyJsonEditPlugin,
                     new \AdminNeo\Bz2OutputPlugin,
                     new \AdminNeo\JsonDumpPlugin,
                     new \AdminNeo\XmlDumpPlugin,
@@ -44,7 +44,8 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
                 ];
 
                 $config = [
-                    "frameAncestors" => ["self"],
+                    "jsonValuesDetection" => true,
+                    "jsonValuesAutoFormat" => true,
                     "preferSelection" => true,
                     "colorVariant" => $tracyConfig['adminerThemeColor'],
                     "cssUrls" => [
@@ -75,7 +76,7 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
                 $tracyConfig = wire('modules')->getModuleConfigData('TracyDebugger');
 
                 $plugins = [
-                    new AdminerFrames,
+                    new \AdminNeo\FrameSupportPlugin(["self"]),
                     new \AdminNeo\ProcessWirePlugin(),
                     new AdminerSimpleMenu(),
                     new AdminerCollations(),

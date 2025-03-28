@@ -122,7 +122,7 @@ class Pluginer extends Admin
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	function composeLoginFormRow(string $fieldName, string $heading, string $field): string
+	public function composeLoginFormRow(string $fieldName, string $label, string $field): string
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
@@ -142,7 +142,7 @@ class Pluginer extends Admin
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function foreignKeys($table)
+	public function getForeignKeys(string $table): array
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
@@ -192,9 +192,9 @@ class Pluginer extends Admin
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	function tableStructurePrint($fields)
+	public function printTableStructure(array $fields): void
 	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
+		$this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
 	public function tablePartitionsPrint($partition_info)
@@ -367,7 +367,7 @@ class Pluginer extends Admin
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function callParent(string $function, array $args)
+	public function callParent(string $function, array $args = [])
 	{
 		return call_user_func_array([parent::class, $function], $args);
 	}

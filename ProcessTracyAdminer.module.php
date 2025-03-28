@@ -37,14 +37,24 @@ class ProcessTracyAdminer extends Process implements Module {
                 window.addEventListener("popstate", function (event) {
                     adminer_iframe.src = location.href.replace("/adminer/", "/adminer-renderer/");
                 });
-                window.addEventListener("message", function(event) {
-                    if(!event.isTrusted) return;
-                    if(event.source && event.origin === "'.trim($this->wire('config')->urls->httpRoot, '/').'" && event.source === adminer_iframe.contentWindow) {
-                        if(event.data && typeof event.data === "string" && event.data.startsWith("mysql=")) {
-                            if(new URLSearchParams(window.location.search).toString() !== event.data) {
-                                history.replaceState(null, null, "?"+event.data);
-                            }
-                        }
+
+                const baseUrl = window.location.href.split("?")[0];
+                const allowedOrigin = new URL(window.location.href).origin;
+                const serviceTitle = document.title;
+                const adminneoFrame = document.getElementById("adminer-iframe");
+
+                window.addEventListener("message", function (event) {
+                    if (!event.isTrusted || event.origin !== allowedOrigin || event.source !== adminneoFrame.contentWindow) {
+                        return;
+                }
+
+                    const data = event.data;
+
+                    if (typeof data === "object" && data.event === "adminneo-loading") {
+                        const search = new URL(data.url).search;
+
+                        document.title = `${data.title} - ${serviceTitle}`;
+                        history.replaceState(null, null, baseUrl + search);
                     }
                 });
 
