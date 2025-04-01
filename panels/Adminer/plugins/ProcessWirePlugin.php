@@ -138,20 +138,30 @@ class ProcessWirePlugin {
                 right: 20px;
             }
 
-            .file-icon {
-                padding-left: 10px;
-                color: #666;
-                font-size: 18px;
+            td {
+                position: relative;
             }
 
-            /* File type colors */
-            .icon-doc { color: #4285f4; }
-            .icon-xls { color: #0f9d58; }
-            .icon-ppt { color: #f4b400; }
-            .icon-pdf { color: #db4437; }
-            .icon-zip { color: #795548; }
-            .icon-code { color: #607d8b; }
-            .icon-media { color: #673ab7; }
+            td .image-thumb {
+                display: inline-block;
+                padding-right: 30px;
+            }
+
+            td .file-icon {
+                position: absolute;
+                right: 0;
+                top: 50%;
+                transform: translateY(-50%);
+            }
+
+            td .image-thumb-icon {
+                position: absolute;
+                right: 0;
+                top: 50%;
+                transform: translateY(-50%);
+                height: 18px;
+                width: auto;
+            }
 
         </style>
 
@@ -506,15 +516,9 @@ class ProcessWirePlugin {
         $fullpath1 = $config->paths->root . $filepath1;
         $fullpath2 = $config->paths->root . $filepath2;
 
-        if (file_exists($fullpath1)) {
-            return '<img src="' . $filepath1 . '" style="padding-left: 10px; height:18px; width: auto" />';
-        }
-        elseif (file_exists($fullpath2)) {
-            return '<img src="' . $filepath2 . '" style="padding-left: 10px; height:18px; width: auto" />';
-        }
-        else {
-            return '<img src="' . $filePath . '" style="padding-left: 10px; height:18px; width: auto" />';
-        }
+        $src = file_exists($fullpath1) ? $filepath1 : (file_exists($fullpath2) ? $filepath2 : $filePath);
+        return '<img class="image-thumb-icon" src="' . $src . '" />';
+
     }
 
     private function getFileTypeIcon($fileExtension) {
