@@ -428,21 +428,21 @@ class ProcessWirePlugin {
             $thumb = $this->getAvailableThumb($val, $pages_id);
             $fullPath = $this->getFullPath($val, $pages_id);
             $val = '<a title="Modal viewer" href="' . $fullPath . '" data-src="' . $fullPath . '" data-type="image" class="image-thumb" data-filename="' . wire('config')->urls->httpRoot.ltrim(htmlspecialchars($fullPath), '/') . '">'
-                 . htmlspecialchars($val) . '</a><a title="Download" href="' . $fullPath . '" download="' . $fullPath . '">'.$thumb.'</a>';
+                 . htmlspecialchars($val) . '</a><a title="Download" href="' . $fullPath . '" download>'.$thumb.'</a>';
         }
         elseif(preg_match('/\.(mp4|webm|ogg|ogv|mov|avi|wmv|mkv|flv)$/i', $val)) {
             $fullPath = $this->getFullPath($val, $pages_id);
             $extension = pathinfo($val, PATHINFO_EXTENSION);
             list($icon, $iconClass) = $this->getFileTypeIcon($extension);
             $val = '<a title="Modal viewer" href="' . $fullPath . '" data-src="' . $fullPath . '" data-type="video" class="image-thumb" data-filename="' . wire('config')->urls->httpRoot.ltrim(htmlspecialchars($fullPath), '/') . '">'
-                 . htmlspecialchars($val) . '</a><a title="Download" href="' . $fullPath . '" download="' . $fullPath . '"><span class="file-icon ' . $iconClass . '">' . $icon . '</span></a>';
+                 . htmlspecialchars($val) . '</a><a title="Download" href="' . $fullPath . '" download><span class="file-icon ' . $iconClass . '">' . $icon . '</span></a>';
         }
         elseif(preg_match('/\.(mp3|wav|ogg|oga|flac|m4a|aac)$/i', $val)) {
             $fullPath = $this->getFullPath($val, $pages_id);
             $extension = pathinfo($val, PATHINFO_EXTENSION);
             list($icon, $iconClass) = $this->getFileTypeIcon($extension);
             $val = '<a title="Modal viewer" href="' . $fullPath . '" data-src="' . $fullPath . '" data-type="audio" class="image-thumb" data-filename="' . wire('config')->urls->httpRoot.ltrim(htmlspecialchars($fullPath), '/') . '">'
-                 . htmlspecialchars($val) . '</a><a title="Download" href="' . $fullPath . '" download="' . $fullPath . '"><span class="file-icon ' . $iconClass . '">' . $icon . '</span></a>';
+                 . htmlspecialchars($val) . '</a><a title="Download" href="' . $fullPath . '" download><span class="file-icon ' . $iconClass . '">' . $icon . '</span></a>';
         }
         elseif(preg_match('/\.(pdf|txt)$/i', $val) || preg_match('/^https?:\/\//i', $val)) {
 
@@ -465,7 +465,7 @@ class ProcessWirePlugin {
             $extension = pathinfo($val, PATHINFO_EXTENSION);
             list($icon, $iconClass) = $this->getFileTypeIcon($extension);
             $val = '<a title="Modal viewer" href="' . $fullPath . '" data-src="' . $fullPath . '" data-type="iframe" class="image-thumb" data-filename="' . $fullUrl . '">'
-                 . htmlspecialchars($original) . '</a><a title="'.($isLink ? 'View in new tab' : 'Download').'" '.($isLink ? ' target="_blank"' : ' download="' . $fullPath . '"') . ' href="' . $fullPath . '"><span class="file-icon ' . $iconClass . '">' . $icon . '</span></a>';
+                 . htmlspecialchars($original) . '</a><a title="'.($isLink ? 'View in new tab' : 'Download').'" '.($isLink ? ' target="_blank"' : ' download') . ' href="' . $fullPath . '"><span class="file-icon ' . $iconClass . '">' . $icon . '</span></a>';
         }
         elseif (preg_match('/\.(doc|docx|xls|xlsx|ppt|pptx|odt|ods|odp|zip|rar|7z|tar|gz|bz2)$/i', $val)) {
             $fullPath = $this->getFullPath($val, $pages_id);
@@ -473,8 +473,8 @@ class ProcessWirePlugin {
             $extension = pathinfo($val, PATHINFO_EXTENSION);
             list($icon, $iconClass) = $this->getFileTypeIcon($extension);
 
-            $val = '<a title="Modal viewer" href="' . $fullUrl . '" data-src="' . $fullUrl . '" data-type="download" class="image-thumb" data-filename="' . htmlspecialchars($val) . '">'
-                 . htmlspecialchars($val) . '</a><a title="Download" href="' . $fullPath . '" download="' . $fullPath . '"><span class="file-icon ' . $iconClass . '">' . $icon . '</span></a>';
+            $val = '<a title="Modal viewer" href="' . $fullUrl . '" data-src="' . $fullUrl . '" data-type="download" class="image-thumb" data-filename="' . $fullUrl . '">'
+                 . htmlspecialchars($val) . '</a><a title="Download" href="' . $fullPath . '" download><span class="file-icon ' . $iconClass . '">' . $icon . '</span></a>';
         }
     }
 
