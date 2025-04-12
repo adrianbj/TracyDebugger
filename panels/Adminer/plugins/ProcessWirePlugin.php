@@ -30,17 +30,63 @@ class ProcessWirePlugin {
         $this->gridSize2x = $gridSize * 2;
     }
 
-    function getCredentials() {
-        // server, username and password for connecting to database
+    // v4.x
+    public function credentials() {
+        return $this->getCredentials__Code();
+    }
+    public function login($username, $password) {
+        $this->authenticate__Code($username, $password);
+    }
+    public function head() {
+        $this->printToHead__Code();
+    }
+    public function databases($flush = true) {
+        return $this->getDatabases__Code($flush);
+    }
+    public function selectVal(&$val, $link, $field, $original) {
+        return $this->formatSelectionValue__Code($val, $link, $field, $original);
+    }
+    public function messageQuery($query, $time, $failed = false) {
+        $this->formatMessageQuery__Code($query, $time, $failed);
+    }
+    public function sqlCommandQuery($query) {
+        $this->formatSqlCommandQuery__Code($query);
+    }
+
+    // v5.x
+    public function getCredentials(): array {
+        return $this->getCredentials__Code();
+    }
+    public function authenticate(string $username, string $password) {
+        $this->authenticate__Code($username, $password);
+    }
+    public function printToHead(): void {
+        $this->printToHead__Code();
+    }
+    public function getDatabases($flush = true): array {
+        return $this->getDatabases__Code($flush);
+    }
+    public function formatSelectionValue(?string $val, ?string $link, ?array $field, ?string $original): ?string {
+        return $this->formatSelectionValue__Code($val, $link, $field, $original);
+    }
+    public function formatMessageQuery(string $query, string $time, bool $failed = false) {
+        $this->formatMessageQuery__Code($query, $time, $failed);
+    }
+    public function formatSqlCommandQuery(string $query) {
+        $this->formatSqlCommandQuery__Code($query);
+    }
+
+
+    // private methods called from v4 and v5 methods above
+    private function getCredentials__Code(): array {
         return array(wire('config')->dbHost . (wire('config')->dbPort ? ':' . wire('config')->dbPort : ''), wire('config')->dbUser, wire('config')->dbPass);
     }
 
-    function authenticate() {
+    private function authenticate__Code(string $username, string $password) {
         return true;
     }
 
-
-    public function head() {
+    private function printToHead__Code(): void {
     ?>
         <style>
             .download-btn {
@@ -149,14 +195,14 @@ class ProcessWirePlugin {
 
             td .file-icon {
                 position: absolute;
-                right: 0;
+                right: 5px;
                 top: 50%;
                 transform: translateY(-50%);
             }
 
             td .image-thumb-icon {
                 position: absolute;
-                right: 0;
+                right: 5px;
                 top: 50%;
                 transform: translateY(-50%);
                 height: 18px;
@@ -302,11 +348,12 @@ class ProcessWirePlugin {
     <?php
     }
 
-    function databases($flush = true) {
+
+    private function getDatabases__Code($flush = true): array {
         return [wire('config')->dbName];
     }
 
-    public function selectVal(&$val, $link, $field, $original) {
+    private function formatSelectionValue__Code(?string $val, ?string $link, ?array $field, ?string $original): ?string {
 
         // check if the current field is the pages_id column and store for use in other columns on the same row (ie to get image paths)
         static $pages_id = null;
@@ -320,7 +367,7 @@ class ProcessWirePlugin {
         }
 
         if(!$field || !isset($_GET['select']) || in_array($_GET['select'], array('fieldgroups', 'caches'))) {
-            // intentionally blank
+            return null;
         }
         elseif ($val === null) {
 			$val = "<i>NULL</i>";
@@ -358,7 +405,7 @@ class ProcessWirePlugin {
                 if(method_exists(wire('pages'), 'getRaw')) {
                     $name = wire('pages')->getRaw('id='.$val, $label);
                     if($name) {
-                        $val_with_status = $this->formatValue($val, $name['status']);
+                        $val_with_status = $this->formatPageStatus($val, $name['status']);
                         $name = (isset($name['title']) ? $name['title'] : $name['name']) . (isset($name['url']) ? ' ('.$name['url'].')' : '');
                         $val = '<a href="'.wire('config')->urls->admin.'page/edit/?id='.$val.'" target="_parent" title="'.$name.'">'.$val_with_status.'</a>';
                     }
@@ -371,7 +418,7 @@ class ProcessWirePlugin {
                 if(method_exists(wire('pages'), 'getRaw')) {
                     $name = wire('pages')->getRaw('id='.$val, $label);
                     if($name) {
-                        $val_with_status = $this->formatValue($val, $name['status']);
+                        $val_with_status = $this->formatPageStatus($val, $name['status']);
                         $name = (isset($name['title']) ? $name['title'] : $name['name']) . (isset($name['url']) ? ' ('.$name['url'].')' : '');
                         $val = '<a href="'.wire('config')->urls->admin.'access/users/edit/?id='.$val.'" target="_parent" title="'.$name.'">'.$val_with_status.'</a>';
                     }
@@ -409,7 +456,7 @@ class ProcessWirePlugin {
                             if(method_exists(wire('pages'), 'getRaw')) {
                                 $name = wire('pages')->getRaw('id='.str_replace('pid', '', $v), $label);
                                 if($name) {
-                                    $v_with_status = $this->formatValue($v, $name['status']);
+                                    $v_with_status = $this->formatPageStatus($v, $name['status']);
                                     $name = (isset($name['title']) ? $name['title'] : $name['name']) . (isset($name['url']) ? ' ('.$name['url'].')' : '');
                                     $allids[] = '<a href="'.wire('config')->urls->admin.'page/edit/?id='.str_replace('pid', '', $v).'" target="_parent" title="'.$name.'">'.$v_with_status.'</a>';
                                 }
@@ -449,7 +496,7 @@ class ProcessWirePlugin {
             preg_match_all('/https?:\/\//i', $original, $matches);
 
             if (count($matches[0]) > 1) {
-                return;
+                return null;
             }
 
             if(preg_match('/^https?:\/\//i', $val)) {
@@ -476,9 +523,24 @@ class ProcessWirePlugin {
             $val = '<a title="Modal viewer" href="' . $fullUrl . '" data-src="' . $fullUrl . '" data-type="download" class="image-thumb" data-filename="' . $fullUrl . '">'
                  . htmlspecialchars($val) . '</a><a title="Download" href="' . $fullPath . '" download><span class="file-icon ' . $iconClass . '">' . $icon . '</span></a>';
         }
+        else {
+            return null;
+        }
+
+        return $val;
     }
 
-    private function formatValue($val, $status) {
+    private function formatMessageQuery__Code(string $query, string $time, bool $failed = false) {
+        wire('log')->save('adminer_queries', $query);
+    }
+
+    private function formatSqlCommandQuery__Code(string $query) {
+        wire('log')->save('adminer_queries', $query);
+    }
+
+
+    // helper functions
+    private function formatPageStatus($val, $status) {
         $isUnpublished = $status & \ProcessWire\Page::statusUnpublished;
         $isHidden = $status & \ProcessWire\Page::statusHidden;
         $isTrash = $status & \ProcessWire\Page::statusTrash;
@@ -565,14 +627,6 @@ class ProcessWirePlugin {
         }
 
         return [$icon, $class];
-    }
-
-    function messageQuery($query, $time, $failed = false) {
-        wire('log')->save('adminer_queries', $query);
-    }
-
-    function sqlCommandQuery($query) {
-        wire('log')->save('adminer_queries', $query);
     }
 
 }

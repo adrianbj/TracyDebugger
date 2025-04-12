@@ -36,10 +36,10 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
                 $plugins = [
                     new \AdminNeo\FrameSupportPlugin(["self"]),
                     new \AdminNeo\ProcessWirePlugin(),
-                    new \AdminNeo\JsonPreviewPlugin($tracyConfig['adminerJsonMaxLevel'], $tracyConfig['adminerJsonInTable'], $tracyConfig['adminerJsonInEdit'], $tracyConfig['adminerJsonMaxTextLength']),
-                    new \AdminNeo\Bz2OutputPlugin,
                     new \AdminNeo\JsonDumpPlugin,
+                    new \AdminNeo\JsonPreviewPlugin($tracyConfig['adminerJsonMaxLevel'], $tracyConfig['adminerJsonInTable'], $tracyConfig['adminerJsonInEdit'], $tracyConfig['adminerJsonMaxTextLength']),
                     new \AdminNeo\XmlDumpPlugin,
+                    new \AdminNeo\Bz2OutputPlugin,
                     new \AdminNeo\ZipOutputPlugin
                 ];
 

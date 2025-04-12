@@ -57,17 +57,12 @@ class Pluginer extends Admin
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function connectSsl()
+	public function getPrivateKey(bool $create = false)
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function permanentLogin(bool $create = false)
-	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
-	}
-
-	public function bruteForceKey()
+	public function getBruteForceKey(): string
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
@@ -77,22 +72,22 @@ class Pluginer extends Admin
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function database()
+	public function getDatabase(): ?string
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function schemas(): array
+	public function getDatabases($flush = true): array
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function databases($flush = true): array
+	public function getSchemas(): array
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function collations(array $keepValues = []): array
+	public function getCollations(array $keepValues = []): array
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
@@ -102,44 +97,57 @@ class Pluginer extends Admin
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function headers()
+	public function sendHeaders(): void
+	{
+		$this->applyPlugin(__FUNCTION__, func_get_args());
+	}
+
+	public function updateCspHeader(array &$csp): void
+	{
+		$args = func_get_args();
+		$this->applyPluginRef(__FUNCTION__, $args);
+
+		$csp = $args[0];
+	}
+
+	public function printFavicons(): void
+	{
+		$this->applyPlugin(__FUNCTION__, func_get_args());
+	}
+
+	public function printToHead(): void
+	{
+		$this->applyPlugin(__FUNCTION__, func_get_args());
+	}
+
+	public function printLoginForm(): void
+	{
+		$this->applyPlugin(__FUNCTION__, func_get_args());
+	}
+
+	public function getLoginFormRow(string $fieldName, string $label, string $field): string
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function getCspHeader(): array
+	public function getTableName(array $tableStatus): string
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function head()
+	public function getFieldName(array $field, int $order = 0): string
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function loginForm()
+	public function formatComment(?string $comment): string
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function composeLoginFormRow(string $fieldName, string $label, string $field): string
+	public function printTableMenu(array $tableStatus, ?string $set = ""): void
 	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
-	}
-
-	public function tableName($tableStatus)
-	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
-	}
-
-	public function fieldName($field, $order = 0)
-	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
-	}
-
-	public function selectLinks($tableStatus, $set = "")
-	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
+		$this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
 	public function getForeignKeys(string $table): array
@@ -147,47 +155,52 @@ class Pluginer extends Admin
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function backwardKeys($table, $tableName)
+	public function getBackwardKeys(string $table, string $tableName): array
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function backwardKeysPrint($backwardKeys, $row)
+	public function printBackwardKeys(array $backwardKeys, array $row): void
+	{
+		$this->applyPlugin(__FUNCTION__, func_get_args());
+	}
+
+	public function formatSelectQuery(string $query, float $start, bool $failed = false): string
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function selectQuery($query, $start, $failed = false)
+	public function formatMessageQuery(string $query, string $time, bool $failed = false): string
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function sqlCommandQuery($query)
+	public function formatSqlCommandQuery(string $query): string
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function rowDescription($table)
+	public function getTableDescriptionFieldName(string $table): string
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function rowDescriptions($rows, $foreignKeys)
+	public function fillForeignDescriptions(array $rows, array $foreignKeys): array
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function selectLink($val, $field)
+	public function getFieldValueLink($val, ?array $field): ?string
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	function selectVal($val, $link, $field, $original)
+	public function formatSelectionValue(?string $val, ?string $link, ?array $field, ?string $original): string
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	function editVal($val, $field)
+	public function formatFieldValue($value, array $field): ?string
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
@@ -197,107 +210,87 @@ class Pluginer extends Admin
 		$this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function tablePartitionsPrint($partition_info)
-	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
-	}
-
-	public function tableIndexesPrint($indexes)
-	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
-	}
-
-	public function selectColumnsPrint(array $select, array $columns)
-	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
-	}
-
-	public function selectSearchPrint(array $where, array $columns, array $indexes)
-	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
-	}
-
-	public function selectOrderPrint(array $order, array $columns, array $indexes)
-	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
-	}
-
-	public function selectLimitPrint(?int $limit): void
+	public function printTablePartitions(array $partitionInfo): void
 	{
 		$this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function selectLengthPrint($text_length)
+	public function printTableIndexes(array $indexes): void
+	{
+		$this->applyPlugin(__FUNCTION__, func_get_args());
+	}
+
+	public function printSelectionColumns(array $select, array $columns): void
+	{
+		$this->applyPlugin(__FUNCTION__, func_get_args());
+	}
+
+	public function printSelectionSearch(array $where, array $columns, array $indexes): void
+	{
+		$this->applyPlugin(__FUNCTION__, func_get_args());
+	}
+
+	public function printSelectionOrder(array $order, array $columns, array $indexes): void
+	{
+		$this->applyPlugin(__FUNCTION__, func_get_args());
+	}
+
+	public function printSelectionLimit(?int $limit): void
+	{
+		$this->applyPlugin(__FUNCTION__, func_get_args());
+	}
+
+	public function printSelectionLength(?string $textLength): void
+	{
+		$this->applyPlugin(__FUNCTION__, func_get_args());
+	}
+
+	public function printSelectionAction(array $indexes): void
+	{
+		$this->applyPlugin(__FUNCTION__, func_get_args());
+	}
+
+	public function isDataEditAllowed(): bool
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function selectActionPrint($indexes)
+	public function processSelectionColumns(array $columns, array $indexes): array
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function selectCommandPrint()
+	public function processSelectionSearch(array $fields, array $indexes): array
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function selectImportPrint()
+	public function processSelectionOrder(array $fields, array $indexes): array
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function selectEmailPrint($emailFields, $columns)
+	public function processSelectionLimit(): ?int
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function selectColumnsProcess($columns, $indexes)
+	public function processSelectionLength(): string
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function selectSearchProcess($fields, $indexes)
+	public function getFieldInput(string $table, array $field, string $attrs, $value, ?string $function): string
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function selectOrderProcess($fields, $indexes)
+	public function getFieldInputHint(string $table, array $field, ?string $value): string
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function selectLimitProcess(): ?int
-	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
-	}
-
-	public function selectLengthProcess()
-	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
-	}
-
-	public function selectEmailProcess($where, $foreignKeys)
-	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
-	}
-
-	public function messageQuery($query, $time, $failed = false)
-	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
-	}
-
-	public function editInput($table, $field, $attrs, $value, $function)
-	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
-	}
-
-	public function editHint($table, $field, $value)
-	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
-	}
-
-	public function processInput(?array $field, $value, $function = "")
+	public function processFieldInput(?array $field, string $value, string $function = ""): string
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
@@ -332,24 +325,24 @@ class Pluginer extends Admin
 		$this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function importServerPath()
+	public function getImportFilePath(): string
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function homepage()
+	public function printDatabaseMenu(): void
 	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
+		$this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function navigation($missing)
+	public function printNavigation(?string $missing): void
 	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
+		$this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function databasesPrint($missing)
+	public function printDatabaseSwitcher(?string $missing): void
 	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
+		$this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
 	public function printTablesFilter(): void
@@ -357,19 +350,14 @@ class Pluginer extends Admin
 		$this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function tablesPrint(array $tables)
+	public function printTableList(array $tables): void
 	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
+		$this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function foreignColumn($foreignKeys, $column): ?array
+	public function getForeignColumnInfo(array $foreignKeys, string $column): ?array
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
-	}
-
-	public function callParent(string $function, array $args = [])
-	{
-		return call_user_func_array([parent::class, $function], $args);
 	}
 
 	private function appendPlugin(string $function, array $args)
@@ -391,6 +379,11 @@ class Pluginer extends Admin
 	}
 
 	private function applyPlugin(string $function, array $args)
+	{
+		return $this->applyPluginRef($function, $args);
+	}
+
+	private function applyPluginRef(string $function, array &$args)
 	{
 		if (count($args) > 6) {
 			trigger_error('Too many parameters.', E_USER_WARNING);
@@ -435,5 +428,28 @@ class Pluginer extends Admin
 		}
 
 		return $this->callParent($function, $args);
+	}
+
+	public function callParent(string $function, array &$args = [])
+	{
+		// Method call_user_func_array() doesn't work well with references.
+		switch (count($args)) {
+			case 0:
+				return parent::$function();
+			case 1:
+				return parent::$function($args[0]);
+			case 2:
+				return parent::$function($args[0], $args[1]);
+			case 3:
+				return parent::$function($args[0], $args[1], $args[2]);
+			case 4:
+				return parent::$function($args[0], $args[1], $args[2], $args[3]);
+			case 5:
+				return parent::$function($args[0], $args[1], $args[2], $args[3], $args[4]);
+			case 6:
+				return parent::$function($args[0], $args[1], $args[2], $args[3], $args[4], $args[5]);
+			default:
+				return null;
+		}
 	}
 }

@@ -48,7 +48,7 @@ class JsonPreviewPlugin
 	/**
 	 * Prints HTML code inside <head>.
 	 */
-	public function head()
+	public function printToHead(): ?bool
 	{
 		?>
 
@@ -95,11 +95,12 @@ class JsonPreviewPlugin
 		</style>
 
 		<?php
+		return null;
 	}
 
-	public function selectVal(&$val, $link, array $field, $original)
+	public function formatSelectionValue(?string $val, ?string $link, ?array $field, ?string $original): ?string
 	{
-		if (!$this->inSelection) {
+		if (!$field || !$this->inSelection) {
 			return null;
 		}
 
@@ -114,7 +115,7 @@ class JsonPreviewPlugin
 
 	}
 
-	public function editInput($table, array $field, $attrs, $value)
+	public function getFieldInput(string $table, array $field, string $attrs, $value, ?string $function): ?string
 	{
 		if (!$this->inEdit) {
 			return null;

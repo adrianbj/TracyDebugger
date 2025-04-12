@@ -38,41 +38,43 @@ class FrameSupportPlugin
 		}
 	}
 
-	public function headers(): void
+	public function sendHeaders(): ?bool
 	{
 		// Note: Do not unset X-Frame-Options if ancestors list contains only URL pages without 'self' source.
 		// It would lower the security on old browsers without Content-Security-Policy support.
 		if (in_array("'self'", $this->frameAncestors)) {
 			header("X-Frame-Options: SAMEORIGIN");
 		}
+
+		return null;
 	}
 
-	public function getCspHeader(): ?array
+	public function updateCspHeader(array &$csp): ?bool
+	{
+		if ($this->frameAncestors) {
+			$current = isset($csp["frame-ancestors"]) ? $csp["frame-ancestors"] . " " : "";
+			$csp["frame-ancestors"] = $current . implode(" ", $this->frameAncestors);
+		}
+
+		return null;
+	}
+
+	public function printToHead(): ?bool
 	{
 		if (!$this->frameAncestors) {
 			return null;
 		}
+		?>
 
-		$csp = admin()->callParent(__FUNCTION__);
-		$csp["frame-ancestors"] = implode(" ", $this->frameAncestors);
-
-		return $csp;
-	}
-
-	public function head(): ?bool
-	{
-		$nonce = nonce();
-
-		echo "
-		<script $nonce>
+		<script <?= nonce(); ?>>
 			parent.postMessage({
 				event: 'adminneo-loading',
 				url: window.location.href,
 				title: document.title
 			}, '*');
 		</script>
-		";
 
+		<?php
 		return null;
 	}
 }
