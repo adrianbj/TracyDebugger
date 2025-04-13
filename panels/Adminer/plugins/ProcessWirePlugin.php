@@ -30,63 +30,40 @@ class ProcessWirePlugin {
         $this->gridSize2x = $gridSize * 2;
     }
 
-    // v4.x
+    // v4.x wrappers
     public function credentials() {
-        return $this->getCredentials__Code();
+        return $this->getCredentials();
     }
     public function login($username, $password) {
-        $this->authenticate__Code($username, $password);
+        $this->authenticate($username, $password);
     }
     public function head() {
-        $this->printToHead__Code();
+        $this->printToHead();
     }
     public function databases($flush = true) {
-        return $this->getDatabases__Code($flush);
+        return $this->getDatabases($flush);
     }
     public function selectVal(&$val, $link, $field, $original) {
-        return $this->formatSelectionValue__Code($val, $link, $field, $original);
+        return $this->formatSelectionValue($val, $link, $field, $original);
     }
     public function messageQuery($query, $time, $failed = false) {
-        $this->formatMessageQuery__Code($query, $time, $failed);
+        $this->formatMessageQuery($query, $time, $failed);
     }
     public function sqlCommandQuery($query) {
-        $this->formatSqlCommandQuery__Code($query);
+        $this->formatSqlCommandQuery($query);
     }
 
-    // v5.x
+
+    // modifier functions
     public function getCredentials(): array {
-        return $this->getCredentials__Code();
-    }
-    public function authenticate(string $username, string $password) {
-        $this->authenticate__Code($username, $password);
-    }
-    public function printToHead(): void {
-        $this->printToHead__Code();
-    }
-    public function getDatabases($flush = true): array {
-        return $this->getDatabases__Code($flush);
-    }
-    public function formatSelectionValue(?string $val, ?string $link, ?array $field, ?string $original): ?string {
-        return $this->formatSelectionValue__Code($val, $link, $field, $original);
-    }
-    public function formatMessageQuery(string $query, string $time, bool $failed = false) {
-        $this->formatMessageQuery__Code($query, $time, $failed);
-    }
-    public function formatSqlCommandQuery(string $query) {
-        $this->formatSqlCommandQuery__Code($query);
-    }
-
-
-    // private methods called from v4 and v5 methods above
-    private function getCredentials__Code(): array {
         return array(wire('config')->dbHost . (wire('config')->dbPort ? ':' . wire('config')->dbPort : ''), wire('config')->dbUser, wire('config')->dbPass);
     }
 
-    private function authenticate__Code(string $username, string $password) {
+    public function authenticate(string $username, string $password) {
         return true;
     }
 
-    private function printToHead__Code(): void {
+    public function printToHead(): void {
     ?>
         <style>
             .download-btn {
@@ -349,11 +326,11 @@ class ProcessWirePlugin {
     }
 
 
-    private function getDatabases__Code($flush = true): array {
+    public function getDatabases($flush = true): array {
         return [wire('config')->dbName];
     }
 
-    private function formatSelectionValue__Code(?string $val, ?string $link, ?array $field, ?string $original): ?string {
+    public function formatSelectionValue(?string $val, ?string $link, ?array $field, ?string $original): ?string {
 
         // check if the current field is the pages_id column and store for use in other columns on the same row (ie to get image paths)
         static $pages_id = null;
@@ -530,11 +507,11 @@ class ProcessWirePlugin {
         return $val;
     }
 
-    private function formatMessageQuery__Code(string $query, string $time, bool $failed = false) {
+    public function formatMessageQuery(string $query, string $time, bool $failed = false) {
         wire('log')->save('adminer_queries', $query);
     }
 
-    private function formatSqlCommandQuery__Code(string $query) {
+    public function formatSqlCommandQuery(string $query) {
         wire('log')->save('adminer_queries', $query);
     }
 
