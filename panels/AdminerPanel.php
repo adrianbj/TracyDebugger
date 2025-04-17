@@ -106,14 +106,14 @@ class AdminerPanel extends BasePanel {
             $contextLink = '&select=process_jumplinks';
         }
         elseif($this->wire('page')->process == 'ProcessChangelog') {
-            $contextLink = '&select=process_changelog&order=timestamp&desc=1';
+            $contextLink = '&select=process_changelog&order[0]=timestamp&desc=1';
         }
         elseif($this->wire('page')->process == 'ProcessLoginHistory') {
-            $contextLink = '&select=process_login_history&order=login_timestamp&desc=1';
+            $contextLink = '&select=process_login_history&order[0]=login_timestamp&desc=1';
         }
         elseif($this->wire('page')->process == 'ProcessFormBuilder') {
             if (strpos(\TracyDebugger::inputUrl(), 'listEntries') !== false) {
-                $contextLink = '&select=forms_entries&order=created&desc=1';
+                $contextLink = '&select=forms_entries&order[0]=created&desc=1';
             }
             else {
                 if($this->wire('input')->get('id')) {
