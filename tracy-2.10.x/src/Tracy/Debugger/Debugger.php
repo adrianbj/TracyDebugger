@@ -17,7 +17,7 @@ use ErrorException;
  */
 class Debugger
 {
-	public const Version = '2.10.9';
+	public const Version = '2.10.10';
 
 	/** server modes for Debugger::enable() */
 	public const
@@ -204,7 +204,7 @@ class Debugger
 		self::$logDirectory = $logDirectory ?? self::$logDirectory;
 
 		if (self::$logDirectory) {
-			if (!preg_match('#([a-z]+:)?[/\\\\]#Ai', self::$logDirectory)) {
+			if (!preg_match('#([a-z]+:)?[/\\\]#Ai', self::$logDirectory)) {
 				self::exceptionHandler(new \RuntimeException('Logging directory must be absolute path.'));
 				exit(255);
 			} elseif (!is_dir(self::$logDirectory)) {
