@@ -50,7 +50,6 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
                             "driver" => "mysql",
                             "server" => wire('config')->dbHost . (wire('config')->dbPort ? ':' . wire('config')->dbPort : ''),
                             "database" => wire('config')->dbName,
-                            "name" => rtrim(wire('config')->urls->httpRoot, '/'),
                             "username" => wire('config')->dbUser,
                             "password" => wire('config')->dbPass
                         ]
