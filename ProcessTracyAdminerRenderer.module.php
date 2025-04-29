@@ -47,12 +47,12 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
                 $config = [
                     "servers" => [
                         [
+                            "driver" => "mysql",
                             "server" => wire('config')->dbHost . (wire('config')->dbPort ? ':' . wire('config')->dbPort : ''),
-                            "username" => wire('config')->dbUser,
-                            "password" => wire('config')->dbPass,
                             "database" => wire('config')->dbName,
-                            "port" => wire('config')->dbPort,
-                            "driver" => "mysql"
+                            "name" => rtrim(wire('config')->urls->httpRoot, '/'),
+                            "username" => wire('config')->dbUser,
+                            "password" => wire('config')->dbPass
                         ]
                     ],
                     "jsonValuesDetection" => true,
