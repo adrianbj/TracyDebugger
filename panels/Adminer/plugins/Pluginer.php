@@ -42,6 +42,11 @@ class Pluginer extends Admin
 
 	// applyPlugin
 
+	public function init(): void
+	{
+		$this->applyPlugin(__FUNCTION__, func_get_args());
+	}
+
 	public function name()
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
@@ -128,6 +133,11 @@ class Pluginer extends Admin
 	public function getLoginFormRow(string $fieldName, string $label, string $field): string
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
+	}
+
+	public function printLogout(): void
+	{
+		$this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
 	public function getTableName(array $tableStatus): string

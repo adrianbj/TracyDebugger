@@ -8,35 +8,33 @@ class ProcessWirePlugin {
 
     public function __construct() {
 
-        // autologin based on https://steampixel.de/simply-auto-login-to-your-adminer/
-        // a more complex version is available at: https://github.com/jeliebig/Adminer-Autologin/blob/master/login-env-vars.php
-        if(!$_GET['username'] || !isset($_COOKIE['neo_permanent']) || $_COOKIE['neo_permanent'] == '') {
-            $_POST['auth'] = [
-                'driver' => 'mysql',
-                'server' => wire('config')->dbHost . (wire('config')->dbPort ? ':' . wire('config')->dbPort : ''),
-                'db' => wire('config')->dbName,
-                'username' => wire('config')->dbUser,
-                'password' => wire('config')->dbPass,
-                'permanent' => 1
-            ];
+        // v4 only because v5 uses new ExternalLoginPlugin
+        if(version_compare(PHP_VERSION, '7.1.0', '<')) {
+            // autologin based on https://steampixel.de/simply-auto-login-to-your-adminer/
+            // a more complex version is available at: https://github.com/jeliebig/Adminer-Autologin/blob/master/login-env-vars.php
+            if(!$_GET['username'] || !isset($_COOKIE['adminer_permanent']) || $_COOKIE['adminer_permanent'] == '') {
+                $_POST['auth'] = [
+                    'driver' => 'mysql',
+                    'server' => wire('config')->dbHost . (wire('config')->dbPort ? ':' . wire('config')->dbPort : ''),
+                    'db' => wire('config')->dbName,
+                    'username' => wire('config')->dbUser,
+                    'password' => wire('config')->dbPass,
+                    'permanent' => 1
+                ];
+            }
         }
 
         $defaultGridSize = 130;
-		$options = wire('config')->adminThumbOptions;
-		if(!is_array($options)) $options = array();
-		$gridSize = empty($options['gridSize']) ? $defaultGridSize : (int) $options['gridSize'];
-		if($gridSize < 100) $gridSize = $defaultGridSize; // establish min of 100
-		if($gridSize >= ($defaultGridSize * 2)) $gridSize = $defaultGridSize; // establish max of 259
+        $options = wire('config')->adminThumbOptions;
+        if(!is_array($options)) $options = array();
+        $gridSize = empty($options['gridSize']) ? $defaultGridSize : (int) $options['gridSize'];
+        if($gridSize < 100) $gridSize = $defaultGridSize; // establish min of 100
+        if($gridSize >= ($defaultGridSize * 2)) $gridSize = $defaultGridSize; // establish max of 259
         $this->gridSize2x = $gridSize * 2;
+
     }
 
     // v4.x wrappers
-    public function credentials() {
-        return $this->getCredentials();
-    }
-    public function login($username, $password) {
-        $this->authenticate($username, $password);
-    }
     public function head() {
         $this->printToHead();
     }
@@ -55,11 +53,14 @@ class ProcessWirePlugin {
 
 
     // modifier functions
-    public function getCredentials(): array {
+
+    // v4 only
+    public function credentials() {
         return array(wire('config')->dbHost . (wire('config')->dbPort ? ':' . wire('config')->dbPort : ''), wire('config')->dbUser, wire('config')->dbPass);
     }
 
-    public function authenticate(string $username, string $password) {
+    // v4 only
+    public function login($username, $password) {
         return true;
     }
 

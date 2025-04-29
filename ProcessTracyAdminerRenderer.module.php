@@ -34,6 +34,7 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
                 $tracyConfig = wire('modules')->getModuleConfigData('TracyDebugger');
 
                 $plugins = [
+                    new \AdminNeo\ExternalLoginPlugin(true),
                     new \AdminNeo\FrameSupportPlugin(["self"]),
                     new \AdminNeo\ProcessWirePlugin(),
                     new \AdminNeo\JsonDumpPlugin,
@@ -44,6 +45,16 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
                 ];
 
                 $config = [
+                    "servers" => [
+                        [
+                            "server" => wire('config')->dbHost . (wire('config')->dbPort ? ':' . wire('config')->dbPort : ''),
+                            "username" => wire('config')->dbUser,
+                            "password" => wire('config')->dbPass,
+                            "database" => wire('config')->dbName,
+                            "port" => wire('config')->dbPort,
+                            "driver" => "mysql"
+                        ]
+                    ],
                     "jsonValuesDetection" => true,
                     "jsonValuesAutoFormat" => true,
                     "preferSelection" => true,
@@ -97,6 +108,7 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
             }
 
             require_once __DIR__ . '/panels/Adminer/legacy/adminer-mysql.php'/*NoCompile*/;
+
         }
 
         exit;
