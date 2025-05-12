@@ -8,20 +8,21 @@ namespace AdminNeo;
  * @link https://www.adminer.org/plugins/#use
  *
  * @author Jakub Vrana, https://www.vrana.cz/
+ * @author Peter Knut
  *
  * @license https://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2.0
  * @license https://www.gnu.org/licenses/gpl-2.0.html GNU General Public License, version 2 (one or other)
  */
-class XmlDumpPlugin
+class XmlDumpPlugin extends Plugin
 {
 	private $database = false;
 
-	public function getDumpFormats(): array
+	public function getDumpFormats()
 	{
 		return ['xml' => 'XML'];
 	}
 
-	public function sendDumpHeaders(string $identifier, bool $multiTable = false): ?string
+	public function sendDumpHeaders($identifier, $multiTable = false)
 	{
 		if ($_POST["format"] != "xml") {
 			return null;
@@ -32,7 +33,7 @@ class XmlDumpPlugin
 		return "xml";
 	}
 
-	public function dumpTable(string $table, string $style, int $viewType = 0): ?bool
+	public function dumpTable($table, $style, $viewType = 0)
 	{
 		if ($_POST["format"] != "xml") {
 			return null;
@@ -41,7 +42,7 @@ class XmlDumpPlugin
 		return true;
 	}
 
-	public function dumpData(string $table, string $style, string $query): ?bool
+	public function dumpData($table, $style, $query)
 	{
 		if ($_POST["format"] != "xml") {
 			return null;

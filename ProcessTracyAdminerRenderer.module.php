@@ -25,7 +25,9 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
 
         if(version_compare(PHP_VERSION, '7.1.0', '>=')) {
 
-            function create_adminneo(): \AdminNeo\Pluginer {
+            function adminneo_instance() {
+
+                class CustomAdmin extends \AdminNeo\Admin {}
 
                 foreach (glob(__DIR__.'/panels/Adminer/plugins/*.php') as $filename) {
                     require_once $filename/*NoCompile*/;
@@ -66,7 +68,7 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
                     ]
                 ];
 
-                return new \AdminNeo\Pluginer($plugins, $config);
+                return CustomAdmin::create($config, $plugins);
             }
 
             require_once __DIR__ . '/panels/Adminer/adminneo-mysql.php'/*NoCompile*/;

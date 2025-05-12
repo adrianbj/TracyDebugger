@@ -8,11 +8,12 @@ namespace AdminNeo;
  * @link https://www.adminer.org/plugins/#use
  *
  * @author Jakub Vrana, https://www.vrana.cz/
+ * @author Peter Knut
  *
  * @license https://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2.0
  * @license https://www.gnu.org/licenses/gpl-2.0.html GNU General Public License, version 2 (one or other)
  */
-class Bz2OutputPlugin
+class Bz2OutputPlugin extends Plugin
 {
 	/** @var string */
 	private $filename;
@@ -20,12 +21,12 @@ class Bz2OutputPlugin
 	/** @var resource */
 	private $file;
 
-	public function getDumpOutputs(): array
+	public function getDumpOutputs()
 	{
 		return function_exists('bzopen') ? ['bz2' => 'bzip2'] : [];
 	}
 
-	public function sendDumpHeaders(string $identifier, bool $multiTable = false): ?string
+	public function sendDumpHeaders($identifier, $multiTable = false)
 	{
 		if ($_POST["output"] == "bz2") {
 			$this->filename = tempnam("", "bz2");
@@ -39,7 +40,7 @@ class Bz2OutputPlugin
 		return null;
 	}
 
-	private function compress(string $string, int $state): string
+	private function compress($string, $state)
 	{
 		bzwrite($this->file, $string);
 

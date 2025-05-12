@@ -10,11 +10,12 @@ use ZipArchive;
  * @link https://www.adminer.org/plugins/#use
  *
  * @author Jakub Vrana, https://www.vrana.cz/
+ * @author Peter Knut
  *
  * @license https://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2.0
  * @license https://www.gnu.org/licenses/gpl-2.0.html GNU General Public License, version 2 (one or other)
  */
-class ZipOutputPlugin
+class ZipOutputPlugin extends Plugin
 {
 	/** @var string */
 	private $filename;
@@ -22,12 +23,12 @@ class ZipOutputPlugin
 	/** @var string */
 	private $data;
 
-	public function getDumpOutputs(): array
+	public function getDumpOutputs()
 	{
 		return class_exists('ZipArchive') ? ['zip' => 'ZIP'] : [];
 	}
 
-	public function sendDumpHeaders(string $identifier, bool $multiTable = false): ?string
+	public function sendDumpHeaders($identifier, $multiTable = false)
 	{
 		if ($_POST["output"] == "zip") {
 			$this->filename = "$identifier." . ($multiTable && preg_match("~[ct]sv~", $_POST["format"]) ? "tar" : $_POST["format"]);
@@ -40,7 +41,7 @@ class ZipOutputPlugin
 		return null;
 	}
 
-	private function compress(string $string, int $state): string
+	private function compress($string, $state)
 	{
 		// ZIP can be created without temporary file by gzcompress - see PEAR File_Archive.
 		$this->data .= $string;

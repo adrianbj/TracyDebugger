@@ -16,7 +16,7 @@ namespace AdminNeo;
  * @license https://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2.0
  * @license https://www.gnu.org/licenses/gpl-2.0.html GNU General Public License, version 2 (one or other)
  */
-class ExternalLoginPlugin
+class ExternalLoginPlugin extends Plugin
 {
 	/** @var bool */
 	private $authenticated;
@@ -30,14 +30,14 @@ class ExternalLoginPlugin
 	/**
 	 * @param bool $authenticated Whether the user is authenticated by the external service.
 	 */
-	public function __construct(bool $authenticated)
+	public function __construct($authenticated)
 	{
 		$this->authenticated = $authenticated;
 	}
 
-	public function init(): ?bool
+	public function init()
 	{
-		$servers = admin()->getConfig()->getServerPairs(get_drivers());
+		$servers = $this->config->getServerPairs(get_drivers());
 
 		$this->hasServers = count($servers) > 0;
 		$this->autologin = count($servers) == 1;
@@ -48,7 +48,7 @@ class ExternalLoginPlugin
 			// If the password is not found or expired, store the login information.
 			if ($password === null || $password === false) {
 				$serverKey = key($servers);
-				$server = admin()->getConfig()->getServer($serverKey);
+				$server = $this->config->getServer($serverKey);
 
 				session_regenerate_id();
 				save_login($server->getDriver(), $serverKey, $server->getUsername(), $server->getPassword(), $server->getDatabase());
@@ -62,7 +62,7 @@ class ExternalLoginPlugin
 		return null;
 	}
 
-	public function getLoginFormRow(string $fieldName, string $label, string $field): ?string
+	public function getLoginFormRow($fieldName, $label, $field)
 	{
 		if (!$this->hasServers) {
 			return null;
@@ -72,15 +72,15 @@ class ExternalLoginPlugin
 		return $fieldName == "username" || $fieldName == "password" ? "" : null;
 	}
 
-	public function printLogout(): ?bool
+	public function printLogout()
 	{
 		// Hide the logout button if autologin is enabled.
 		return $this->autologin ? true : null;
 	}
 
-	public function getCredentials(): ?array
+	public function getCredentials()
 	{
-		$server = admin()->getConfig()->getServer(SERVER);
+		$server = $this->config->getServer(SERVER);
 		if (!$server) {
 			return null;
 		}
@@ -88,7 +88,7 @@ class ExternalLoginPlugin
 		return [$server->getServer(), $server->getUsername(), $server->getPassword()];
 	}
 
-	public function authenticate(string $username, string $password): ?bool
+	public function authenticate($username, $password)
 	{
 		return $this->authenticated;
 	}

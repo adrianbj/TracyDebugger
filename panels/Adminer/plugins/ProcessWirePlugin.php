@@ -2,7 +2,12 @@
 
 use function ProcessWire\wire;
 
-class ProcessWirePlugin {
+// define a dummy Plugin base class if using v4.x so the extend below isn't broken
+if (!class_exists('\AdminNeo\Plugin')) {
+    class Plugin {}
+}
+
+class ProcessWirePlugin extends Plugin {
 
     private $gridSize2x;
 
