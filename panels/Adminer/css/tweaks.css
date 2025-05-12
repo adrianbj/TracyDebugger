@@ -26,6 +26,6 @@ html.framed .adminerPwLogo {
     display: none;
 }
 
-.logout, .db-selector, #content h1, #content h2:first-of-type {
+.db-selector, #content h1, #content h2:first-of-type {
     display: none;
 }

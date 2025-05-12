@@ -2,32 +2,11 @@
 
 use function ProcessWire\wire;
 
-// define a dummy Plugin base class if using v4.x so the extend below isn't broken
-if (!class_exists('\AdminNeo\Plugin')) {
-    class Plugin {}
-}
-
 class ProcessWirePlugin extends Plugin {
 
     private $gridSize2x;
 
     public function __construct() {
-
-        // v4 only because v5 uses new ExternalLoginPlugin
-        if(version_compare(PHP_VERSION, '7.1.0', '<')) {
-            // autologin based on https://steampixel.de/simply-auto-login-to-your-adminer/
-            // a more complex version is available at: https://github.com/jeliebig/Adminer-Autologin/blob/master/login-env-vars.php
-            if(!$_GET['username'] || !isset($_COOKIE['adminer_permanent']) || $_COOKIE['adminer_permanent'] == '') {
-                $_POST['auth'] = [
-                    'driver' => 'mysql',
-                    'server' => wire('config')->dbHost . (wire('config')->dbPort ? ':' . wire('config')->dbPort : ''),
-                    'db' => wire('config')->dbName,
-                    'username' => wire('config')->dbUser,
-                    'password' => wire('config')->dbPass,
-                    'permanent' => 1
-                ];
-            }
-        }
 
         $defaultGridSize = 130;
         $options = wire('config')->adminThumbOptions;
@@ -37,36 +16,6 @@ class ProcessWirePlugin extends Plugin {
         if($gridSize >= ($defaultGridSize * 2)) $gridSize = $defaultGridSize; // establish max of 259
         $this->gridSize2x = $gridSize * 2;
 
-    }
-
-    // v4.x wrappers
-    public function head() {
-        $this->printToHead();
-    }
-    public function databases($flush = true) {
-        return $this->getDatabases($flush);
-    }
-    public function selectVal(&$val, $link, $field, $original) {
-        return $this->formatSelectionValue($val, $link, $field, $original);
-    }
-    public function messageQuery($query, $time, $failed = false) {
-        $this->formatMessageQuery($query, $time, $failed);
-    }
-    public function sqlCommandQuery($query) {
-        $this->formatSqlCommandQuery($query);
-    }
-
-
-    // modifier functions
-
-    // v4 only
-    public function credentials() {
-        return array(wire('config')->dbHost . (wire('config')->dbPort ? ':' . wire('config')->dbPort : ''), wire('config')->dbUser, wire('config')->dbPass);
-    }
-
-    // v4 only
-    public function login($username, $password) {
-        return true;
     }
 
     public function printToHead(): void {
