@@ -4118,7 +4118,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $f->label = __('Theme color', __FILE__);
             $f->addOption('blue', 'Blue');
             $f->addOption('green', 'Green');
-            $f->addOption('red', 'Red/Orange');
+            $f->addOption('red', 'Red');
             $f->required = true;
             $f->columnWidth = 33;
             if($this->data['adminerThemeColor']) $f->attr('value', $this->data['adminerThemeColor']);

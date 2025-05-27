@@ -69,7 +69,7 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
             return CustomAdmin::create($config, $plugins);
         }
 
-        require_once __DIR__ . '/panels/Adminer/adminneo-mysql.php'/*NoCompile*/;
+        require_once __DIR__ . '/panels/Adminer/adminneo.php'/*NoCompile*/;
 
         exit;
     }
