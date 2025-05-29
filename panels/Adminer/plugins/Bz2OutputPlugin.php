@@ -5,7 +5,7 @@ namespace AdminNeo;
 /**
  * Adds bzip2 compression of data export.
  *
- * @link https://www.adminer.org/plugins/#use
+ * @link https://www.adminneo.org/plugins/#usage
  *
  * @author Jakub Vrana, https://www.vrana.cz/
  * @author Peter Knut
@@ -21,12 +21,12 @@ class Bz2OutputPlugin extends Plugin
 	/** @var resource */
 	private $file;
 
-	public function getDumpOutputs()
+	public function getDumpOutputs(): array
 	{
 		return function_exists('bzopen') ? ['bz2' => 'bzip2'] : [];
 	}
 
-	public function sendDumpHeaders($identifier, $multiTable = false)
+	public function sendDumpHeaders(string $identifier, bool $multiTable = false): ?string
 	{
 		if ($_POST["output"] == "bz2") {
 			$this->filename = tempnam("", "bz2");
@@ -40,7 +40,7 @@ class Bz2OutputPlugin extends Plugin
 		return null;
 	}
 
-	private function compress($string, $state)
+	private function compress(string $string, int $state): string
 	{
 		bzwrite($this->file, $string);
 

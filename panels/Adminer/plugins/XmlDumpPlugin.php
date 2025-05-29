@@ -3,9 +3,9 @@
 namespace AdminNeo;
 
 /**
- * Exports table data to XML format in structure <database name=""><table name=""><column name="">value
+ * Adds option to export table data to XML format in structure <database name=""><table name=""><column name="">.
  *
- * @link https://www.adminer.org/plugins/#use
+ * @link https://www.adminneo.org/plugins/#usage
  *
  * @author Jakub Vrana, https://www.vrana.cz/
  * @author Peter Knut
@@ -17,12 +17,12 @@ class XmlDumpPlugin extends Plugin
 {
 	private $database = false;
 
-	public function getDumpFormats()
+	public function getDumpFormats(): array
 	{
 		return ['xml' => 'XML'];
 	}
 
-	public function sendDumpHeaders($identifier, $multiTable = false)
+	public function sendDumpHeaders(string $identifier, bool $multiTable = false): ?string
 	{
 		if ($_POST["format"] != "xml") {
 			return null;
@@ -33,7 +33,7 @@ class XmlDumpPlugin extends Plugin
 		return "xml";
 	}
 
-	public function dumpTable($table, $style, $viewType = 0)
+	public function dumpTable(string $table, string $style, int $viewType = 0): ?bool
 	{
 		if ($_POST["format"] != "xml") {
 			return null;
@@ -42,7 +42,7 @@ class XmlDumpPlugin extends Plugin
 		return true;
 	}
 
-	public function dumpData($table, $style, $query)
+	public function dumpData(string $table, string $style, string $query): ?bool
 	{
 		if ($_POST["format"] != "xml") {
 			return null;

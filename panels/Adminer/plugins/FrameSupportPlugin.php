@@ -6,7 +6,7 @@ namespace AdminNeo;
  * Allows using AdminNeo or EditorNeo inside a frame by modifying `X-Frame-Options` and `Content-Security-Policy`
  * HTTP headers.
  *
- * @link https://www.adminer.org/plugins/#use
+ * @link https://www.adminneo.org/plugins/#usage
  *
  * @author Peter Knut
  *
@@ -38,7 +38,7 @@ class FrameSupportPlugin extends Plugin
 		}
 	}
 
-	public function sendHeaders()
+	public function sendHeaders(): ?bool
 	{
 		// Note: Do not unset X-Frame-Options if ancestors list contains only URL pages without 'self' source.
 		// It would lower the security on old browsers without Content-Security-Policy support.
@@ -49,7 +49,7 @@ class FrameSupportPlugin extends Plugin
 		return null;
 	}
 
-	public function updateCspHeader(array &$csp)
+	public function updateCspHeader(array &$csp): ?bool
 	{
 		if ($this->frameAncestors) {
 			$current = isset($csp["frame-ancestors"]) ? $csp["frame-ancestors"] . " " : "";
@@ -59,7 +59,7 @@ class FrameSupportPlugin extends Plugin
 		return null;
 	}
 
-	public function printToHead()
+	public function printToHead(): ?bool
 	{
 		if (!$this->frameAncestors) {
 			return null;

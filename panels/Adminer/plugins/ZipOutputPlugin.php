@@ -7,7 +7,7 @@ use ZipArchive;
 /**
  * Adds ZIP compression of data export.
  *
- * @link https://www.adminer.org/plugins/#use
+ * @link https://www.adminneo.org/plugins/#usage
  *
  * @author Jakub Vrana, https://www.vrana.cz/
  * @author Peter Knut
@@ -23,12 +23,12 @@ class ZipOutputPlugin extends Plugin
 	/** @var string */
 	private $data;
 
-	public function getDumpOutputs()
+	public function getDumpOutputs(): array
 	{
 		return class_exists('ZipArchive') ? ['zip' => 'ZIP'] : [];
 	}
 
-	public function sendDumpHeaders($identifier, $multiTable = false)
+	public function sendDumpHeaders(string $identifier, bool $multiTable = false): ?string
 	{
 		if ($_POST["output"] == "zip") {
 			$this->filename = "$identifier." . ($multiTable && preg_match("~[ct]sv~", $_POST["format"]) ? "tar" : $_POST["format"]);
@@ -41,7 +41,7 @@ class ZipOutputPlugin extends Plugin
 		return null;
 	}
 
-	private function compress($string, $state)
+	private function compress(string $string, int $state): string
 	{
 		// ZIP can be created without temporary file by gzcompress - see PEAR File_Archive.
 		$this->data .= $string;
