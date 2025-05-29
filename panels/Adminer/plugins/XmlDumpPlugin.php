@@ -17,12 +17,12 @@ class XmlDumpPlugin extends Plugin
 {
 	private $database = false;
 
-	public function getDumpFormats(): array
+	public function getDumpFormats()
 	{
 		return ['xml' => 'XML'];
 	}
 
-	public function sendDumpHeaders(string $identifier, bool $multiTable = false): ?string
+	public function sendDumpHeaders($identifier, $multiTable = false)
 	{
 		if ($_POST["format"] != "xml") {
 			return null;
@@ -33,7 +33,7 @@ class XmlDumpPlugin extends Plugin
 		return "xml";
 	}
 
-	public function dumpTable(string $table, string $style, int $viewType = 0): ?bool
+	public function dumpTable($table, $style, $viewType = 0)
 	{
 		if ($_POST["format"] != "xml") {
 			return null;
@@ -42,7 +42,7 @@ class XmlDumpPlugin extends Plugin
 		return true;
 	}
 
-	public function dumpData(string $table, string $style, string $query): ?bool
+	public function dumpData($table, $style, $query)
 	{
 		if ($_POST["format"] != "xml") {
 			return null;

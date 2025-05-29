@@ -40,7 +40,7 @@ class JsonPreviewPlugin extends Plugin
 	 * @param int $maxLevel Max. level in recursion.
 	 * @param int $maxTextLength Maximal length of string values. Longer texts will be truncated with ellipsis sign '…'.
 	 */
-	public function __construct(bool $inSelection = true, bool $inEdit = true, int $maxLevel = 5, int $maxTextLength = 100)
+	public function __construct($inSelection = true, $inEdit = true, $maxLevel = 5, $maxTextLength = 100)
 	{
 		$this->inSelection = $inSelection;
 		$this->inEdit = $inEdit;
@@ -53,7 +53,7 @@ class JsonPreviewPlugin extends Plugin
 	/**
 	 * Prints HTML code inside <head>.
 	 */
-	public function printToHead(): ?bool
+	public function printToHead()
 	{
 		?>
 
@@ -102,7 +102,7 @@ class JsonPreviewPlugin extends Plugin
 		return null;
 	}
 
-	public function formatSelectionValue(?string $val, ?string $link, ?array $field, ?string $original): ?string
+	public function formatSelectionValue($val, $link, $field, $original)
 	{
 		if (!$field || !$this->inSelection) {
 			return null;
@@ -119,7 +119,7 @@ class JsonPreviewPlugin extends Plugin
 
 	}
 
-	public function getFieldInput(?string $table, array $field, string $attrs, $value, ?string $function): ?string
+	public function getFieldInput($table, array $field, $attrs, $value, $function)
 	{
 		if (!$this->inEdit) {
 			return null;
@@ -136,7 +136,7 @@ class JsonPreviewPlugin extends Plugin
 
 	}
 
-	private function decodeJson(array $field, $value): ?array
+	private function decodeJson(array $field, $value)
 	{
 		if (
 			preg_match('~json~', $field["type"]) ||
@@ -156,7 +156,7 @@ class JsonPreviewPlugin extends Plugin
 
 	}
 
-	private function buildTable(array $json, int $level = 1, int $counter = 0): string
+	private function buildTable(array $json, $level = 1, $counter = 0)
 	{
 		$value = "<table class='json hidden'" . ($counter && $level == 1 ? " id='json-code-$this->linkIdBase-$counter'" : "") . ">";
 

@@ -38,7 +38,7 @@ class FrameSupportPlugin extends Plugin
 		}
 	}
 
-	public function sendHeaders(): ?bool
+	public function sendHeaders()
 	{
 		// Note: Do not unset X-Frame-Options if ancestors list contains only URL pages without 'self' source.
 		// It would lower the security on old browsers without Content-Security-Policy support.
@@ -49,7 +49,7 @@ class FrameSupportPlugin extends Plugin
 		return null;
 	}
 
-	public function updateCspHeader(array &$csp): ?bool
+	public function updateCspHeader(array &$csp)
 	{
 		if ($this->frameAncestors) {
 			$current = isset($csp["frame-ancestors"]) ? $csp["frame-ancestors"] . " " : "";
@@ -59,7 +59,7 @@ class FrameSupportPlugin extends Plugin
 		return null;
 	}
 
-	public function printToHead(): ?bool
+	public function printToHead()
 	{
 		if (!$this->frameAncestors) {
 			return null;

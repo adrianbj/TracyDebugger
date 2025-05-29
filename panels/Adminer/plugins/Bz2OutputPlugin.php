@@ -21,12 +21,12 @@ class Bz2OutputPlugin extends Plugin
 	/** @var resource */
 	private $file;
 
-	public function getDumpOutputs(): array
+	public function getDumpOutputs()
 	{
 		return function_exists('bzopen') ? ['bz2' => 'bzip2'] : [];
 	}
 
-	public function sendDumpHeaders(string $identifier, bool $multiTable = false): ?string
+	public function sendDumpHeaders($identifier, $multiTable = false)
 	{
 		if ($_POST["output"] == "bz2") {
 			$this->filename = tempnam("", "bz2");
@@ -40,7 +40,7 @@ class Bz2OutputPlugin extends Plugin
 		return null;
 	}
 
-	private function compress(string $string, int $state): string
+	private function compress($string, $state)
 	{
 		bzwrite($this->file, $string);
 

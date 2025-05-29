@@ -23,12 +23,12 @@ class ZipOutputPlugin extends Plugin
 	/** @var string */
 	private $data;
 
-	public function getDumpOutputs(): array
+	public function getDumpOutputs()
 	{
 		return class_exists('ZipArchive') ? ['zip' => 'ZIP'] : [];
 	}
 
-	public function sendDumpHeaders(string $identifier, bool $multiTable = false): ?string
+	public function sendDumpHeaders($identifier, $multiTable = false)
 	{
 		if ($_POST["output"] == "zip") {
 			$this->filename = "$identifier." . ($multiTable && preg_match("~[ct]sv~", $_POST["format"]) ? "tar" : $_POST["format"]);
@@ -41,7 +41,7 @@ class ZipOutputPlugin extends Plugin
 		return null;
 	}
 
-	private function compress(string $string, int $state): string
+	private function compress($string, $state)
 	{
 		// ZIP can be created without temporary file by gzcompress - see PEAR File_Archive.
 		$this->data .= $string;

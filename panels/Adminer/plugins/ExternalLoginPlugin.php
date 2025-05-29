@@ -30,12 +30,12 @@ class ExternalLoginPlugin extends Plugin
 	/**
 	 * @param bool $authenticated Whether the user is authenticated by the external service.
 	 */
-	public function __construct(bool $authenticated)
+	public function __construct($authenticated)
 	{
 		$this->authenticated = $authenticated;
 	}
 
-	public function init(): ?bool
+	public function init()
 	{
 		$servers = $this->config->getServerPairs(get_drivers());
 
@@ -62,7 +62,7 @@ class ExternalLoginPlugin extends Plugin
 		return null;
 	}
 
-	public function getLoginFormRow(string $fieldName, string $label, string $field): ?string
+	public function getLoginFormRow($fieldName, $label, $field)
 	{
 		if (!$this->hasServers) {
 			return null;
@@ -72,13 +72,13 @@ class ExternalLoginPlugin extends Plugin
 		return $fieldName == "username" || $fieldName == "password" ? "" : null;
 	}
 
-	public function printLogout(): ?bool
+	public function printLogout()
 	{
 		// Hide the logout button if autologin is enabled.
 		return $this->autologin ? true : null;
 	}
 
-	public function getCredentials(): ?array
+	public function getCredentials()
 	{
 		$server = $this->config->getServer(SERVER);
 		if (!$server) {
@@ -88,7 +88,7 @@ class ExternalLoginPlugin extends Plugin
 		return [$server->getServer(), $server->getUsername(), $server->getPassword()];
 	}
 
-	public function authenticate(string $username, string $password): ?bool
+	public function authenticate($username, $password)
 	{
 		return $this->authenticated;
 	}
