@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.26.67',
+            'version' => '4.26.68',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1741,7 +1741,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if(static::$inAdmin && in_array($panel, static::$hideInAdmin)) continue;
             if((in_array($panel, self::$superUserOnlyPanels)) && !static::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) continue;
             // special additional check for adminer
-            if($panel == 'adminer' && !static::$allowedSuperuser) continue;
+            if($panel == 'adminer' && (!static::$allowedSuperuser || $this->wire('page')->process == 'ProcessTracyAdminer')) continue;
             if($panel == 'userSwitcher') {
                 if(isset($this->data['userSwitchSession'])) $userSwitchSession = $this->data['userSwitchSession'];
                 if(!static::$allowedSuperuser && (!$this->wire('session')->tracyUserSwitcherId || (isset($userSwitchSession[$this->wire('session')->tracyUserSwitcherId]) && $userSwitchSession[$this->wire('session')->tracyUserSwitcherId] <= time()))) continue;
@@ -2384,15 +2384,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             content: "'.str_replace('*', '', $type).'";
                             background: '.$stylesArr[$type].';
                             color: #ffffff;
-                            padding: 4px 8px;
+                            padding: 0 8px;
                             text-align: center;
                             font-family: sans-serif;
                             font-weight: 600;
                             text-transform: uppercase;
                             z-index: 999999;
-                            font-size: 12px;
-                            height: 13px;
-                            line-height: 13px;
+                            font-size: 13px;
+                            height: auto;
+                            line-height: inherit;
+                            display: inline-flex;
+                            align-items: center;
+                            vertical-align: middle;
                             pointer-events: none;
                         }
                     </style>
@@ -2573,7 +2576,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $link = '';
             // don't add link again unless it's a repeater field
             if(strpos($appendedMarkup, 'adminer_EditFieldLink') === false || $inputfield instanceof InputfieldRepeater) {
-                $link = '<div class="wrap_adminer_EditFieldLink" style="display: none"><a class="adminer_EditFieldLink" title="Edit in Adminer" href="adminer://?'.$adminerQuery.'">'.$adminerIcon.'</a></div>';
+                $link = '<div class="wrap_adminer_EditFieldLink" style="display: none"><a class="adminer_EditFieldLink" title="Edit in Adminer (SHIFT+Click for full Adminer)" href="adminer://?'.$adminerQuery.'">'.$adminerIcon.'</a></div>';
             }
 
             $inputfield->appendMarkup = $inputfield->appendMarkup . $link;
@@ -3694,7 +3697,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'hideDebugBar');
         $f->label = __('Hide debug bar by default', __FILE__);
         $f->description = __('Hide the debug bar by default on page load.', __FILE__);
-        $f->notes = __('This results in the bar being hidden (unless an error is reported), and replaced with a small "show bar" &#8689; icon.', __FILE__);
+        $f->notes = __('This results in the bar being hidden (unless an error is reported), and replaced with a small "show bar" ⇱ icon.', __FILE__);
         $f->columnWidth = 50;
         $f->attr('checked', $data['hideDebugBar'] == '1' ? 'checked' : '');
         $fieldset->add($f);
@@ -4115,7 +4118,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $f->label = __('Theme color', __FILE__);
             $f->addOption('blue', 'Blue');
             $f->addOption('green', 'Green');
-            $f->addOption('orange', 'Orange');
+            $f->addOption('red', 'Red');
             $f->required = true;
             $f->columnWidth = 33;
             if($this->data['adminerThemeColor']) $f->attr('value', $this->data['adminerThemeColor']);

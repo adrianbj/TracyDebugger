@@ -94,7 +94,7 @@ class DebugModePanel extends BasePanel {
                 <path d='M293.081,31.27c-17.795-17.795-39.352-26.696-64.667-26.696c-25.319,0-46.87,8.901-64.668,26.696    c-17.795,17.797-26.691,39.353-26.691,64.667h182.716C319.771,70.627,310.876,49.067,293.081,31.27z' fill='".$this->iconColor."'/>
             </g>
         </svg>
-        ProcessWire Debug Mode" . ($isAdditionalBar ? " (".$isAdditionalBar.") " : " ") . ($debugMode ? 'ON' : 'OFF') . "</h1>" . '<span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'DebugModePanel'.($isAdditionalBar ? '-'.$isAdditionalBar : '').'\')">+</a></span></span>' . "
+        ProcessWire Debug Mode" . ($isAdditionalBar ? " (".$isAdditionalBar.") " : " ") . ($debugMode ? 'ON' : 'OFF') . "</h1>" . '<span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'DebugModePanel'.($isAdditionalBar ? '-'.$isAdditionalBar : '').'\')">⛶</a></span></span>' . "
         <div class='tracy-inner'>
             <p>";
 
@@ -328,7 +328,7 @@ class DebugModePanel extends BasePanel {
                     $cacheDetails .= "<table class=''><thead><tr><th colspan='2'>";
                     $cacheDetails .= $cacheName;
                     if($this->wire('modules')->isInstalled('ProcessTracyAdminer') && in_array('adminer', TracyDebugger::$showPanels)) {
-                        $cacheDetails .= '<a style="float:right; cursor:pointer" title="Edit in Adminer" style="padding-bottom:5px" href="adminer://?edit=caches&where%5Bname%5D='.$cacheName.'">'.$adminerIcon.'</a>';
+                        $cacheDetails .= '<a style="float:right; cursor:pointer" title="Edit in Adminer (SHIFT+Click for full Adminer)" style="padding-bottom:5px" href="adminer://?edit=caches&where%5Bname%5D='.$cacheName.'">'.$adminerIcon.'</a>';
                     }
                     $cacheDetails .= "</th></tr></thead><tbody>";
                     foreach($info as $key => $value) {

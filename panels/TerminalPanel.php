@@ -34,7 +34,7 @@ class TerminalPanel extends BasePanel {
         $terminalUrl = $this->wire('pages')->get("process=$terminalModuleId")->url;
 
         $out = '
-        <h1>' . $this->icon . ' Terminal</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'TerminalPanel\')">+</a></span></span>';
+        <h1>' . $this->icon . ' Terminal</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'TerminalPanel\')">⛶</a></span></span>';
 
         if($this->wire('modules')->isInstalled("ProcessTerminal")) {
             $out .= '

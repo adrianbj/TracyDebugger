@@ -55,7 +55,7 @@ class DumpsRecorderPanel extends BasePanel {
     public function getPanel() {
         $isAdditionalBar = \TracyDebugger::isAdditionalBar();
         $out = '
-        <h1>' . $this->icon . ' Dumps Recorder' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'DumpsRecorderPanel'.($isAdditionalBar ? '-'.$isAdditionalBar : '').'\')">+</a></span></span>
+        <h1>' . $this->icon . ' Dumps Recorder' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'DumpsRecorderPanel'.($isAdditionalBar ? '-'.$isAdditionalBar : '').'\')">⛶</a></span></span>
 
         <script>
             function clearRecorderDumps() {

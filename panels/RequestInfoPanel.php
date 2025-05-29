@@ -106,7 +106,7 @@ class RequestInfoPanel extends BasePanel {
                 $field = $this->wire('fields')->get((int)$this->wire('input')->get('id'));
                 if($field) {
                     if($adminerAvailable) {
-                        $fieldSettings .= '<a title="Edit in Adminer" style="padding-bottom:5px" href="adminer://?edit=fields&where%5Bid%5D='.$field->id.'">'.$adminerIcon.'</a>';
+                        $fieldSettings .= '<a title="Edit in Adminer (SHIFT+Click for full Adminer)" style="padding-bottom:5px" href="adminer://?edit=fields&where%5Bid%5D='.$field->id.'">'.$adminerIcon.'</a>';
                     }
                     $fieldSettings .= '<table>';
                     $fieldSettings .= '
@@ -900,7 +900,7 @@ class RequestInfoPanel extends BasePanel {
 HTML;
 
         $out .= '
-        <h1>' . $this->icon . ' Request Info' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'RequestInfoPanel'.($isAdditionalBar ? '-'.$isAdditionalBar : '').'\')">+</a></span></span>
+        <h1>' . $this->icon . ' Request Info' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'RequestInfoPanel'.($isAdditionalBar ? '-'.$isAdditionalBar : '').'\')">⛶</a></span></span>
         <div class="tracy-inner">
         ';
 
