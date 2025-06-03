@@ -18,7 +18,7 @@ class ProcessWirePlugin extends Plugin {
 
     }
 
-    public function printToHead(): void {
+    public function printToHead() {
     ?>
         <style>
             .download-btn {
@@ -281,11 +281,11 @@ class ProcessWirePlugin extends Plugin {
     }
 
 
-    public function getDatabases($flush = true): array {
+    public function getDatabases($flush = true) {
         return [wire('config')->dbName];
     }
 
-    public function formatSelectionValue(?string $val, ?string $link, ?array $field, ?string $original): ?string {
+    public function formatSelectionValue($val, $link, $field, $original) {
 
         // check if the current field is the pages_id column and store for use in other columns on the same row (ie to get image paths)
         static $pages_id = null;
@@ -462,11 +462,11 @@ class ProcessWirePlugin extends Plugin {
         return $val;
     }
 
-    public function formatMessageQuery(string $query, string $time, bool $failed = false) {
+    public function formatMessageQuery($query, $time, $failed = false) {
         wire('log')->save('adminer_queries', $query);
     }
 
-    public function formatSqlCommandQuery(string $query) {
+    public function formatSqlCommandQuery($query) {
         wire('log')->save('adminer_queries', $query);
     }
 
