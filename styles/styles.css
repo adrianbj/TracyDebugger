@@ -874,61 +874,61 @@ ul.pw-info-links {
 }
 
 /* Light Theme */
-.light-theme #tracyTabsContainer,
-.light-theme #tracyTabsWrapper {
+.tracy-console-light-theme #tracyTabsContainer,
+.tracy-console-light-theme #tracyTabsWrapper {
     background: #EAEAEA;
 }
 
-.light-theme #tracyTabsWrapper::-webkit-scrollbar-thumb {
+.tracy-console-light-theme #tracyTabsWrapper::-webkit-scrollbar-thumb {
     background: #CCC;
 }
 
-.light-theme #tracyTabsWrapper::-webkit-scrollbar-thumb:hover {
+.tracy-console-light-theme #tracyTabsWrapper::-webkit-scrollbar-thumb:hover {
     background: #AAA;
 }
 
-.light-theme #tracyTabs button {
+.tracy-console-light-theme #tracyTabs button {
     background-color: #DDDDDD;
     color: #333;
 }
 
-.light-theme #tracyTabs button.active,
-.light-theme #tracyTabs button:hover {
+.tracy-console-light-theme #tracyTabs button.active,
+.tracy-console-light-theme #tracyTabs button:hover {
     background-color: #FFFFFF;
     color: #000;
 }
 
-.light-theme #tracyTabs .close-button {
+.tracy-console-light-theme #tracyTabs .close-button {
     color: #333;
 }
 
-.light-theme #tracyConsoleContainer #addTab {
+.tracy-console-light-theme #tracyConsoleContainer #addTab {
     background-color: #CCC;
     color: #333;
 }
-.light-theme #tracyConsoleContainer #addTab:hover {
+.tracy-console-light-theme #tracyConsoleContainer #addTab:hover {
     background-color: #AAA;
 }
 
 /* Kiwi Theme */
-.kiwi-theme #tracyTabsContainer,
-.kiwi-theme #tracyTabsWrapper {
+.tracy-console-kiwi-theme #tracyTabsContainer,
+.tracy-console-kiwi-theme #tracyTabsWrapper {
     background: white;
 }
 
-.kiwi-theme #tracyTabsWrapper::-webkit-scrollbar {
+.tracy-console-kiwi-theme #tracyTabsWrapper::-webkit-scrollbar {
     background: #c9c9c9;
 }
 
-.kiwi-theme #tracyTabsWrapper::-webkit-scrollbar-thumb {
+.tracy-console-kiwi-theme #tracyTabsWrapper::-webkit-scrollbar-thumb {
     background: #999999;
 }
 
-.kiwi-theme #tracyTabsWrapper::-webkit-scrollbar-thumb:hover {
+.tracy-console-kiwi-theme #tracyTabsWrapper::-webkit-scrollbar-thumb:hover {
     background: #707070;
 }
 
-.kiwi-theme #tracyTabs button {
+.tracy-console-kiwi-theme #tracyTabs button {
     height: 30px;
     padding-top: 4px;
     background-color: #EAEAEA;
@@ -939,25 +939,25 @@ ul.pw-info-links {
     border-radius: 3px 3px 0 0 !important;
 }
 
-.kiwi-theme #tracyTabs button:last-child {
+.tracy-console-kiwi-theme #tracyTabs button:last-child {
     margin-right: 0;
 }
 
-.kiwi-theme #tracyTabs button.active,
-.kiwi-theme #tracyTabs button:hover {
+.tracy-console-kiwi-theme #tracyTabs button.active,
+.tracy-console-kiwi-theme #tracyTabs button:hover {
     background-color: #FFFFFF;
     color: #000;
     border-color: #AAA;
 }
 
-.kiwi-theme #tracyTabs .close-button {
+.tracy-console-kiwi-theme #tracyTabs .close-button {
     color: #333;
     visibility: visible;
     font-size: 18px;
     line-height: 20px;
 }
 
-.kiwi-theme #tracyConsoleContainer #addTab {
+.tracy-console-kiwi-theme #tracyConsoleContainer #addTab {
     background-color: #CCC;
     color: #333;
     padding: 0;
@@ -969,7 +969,7 @@ ul.pw-info-links {
     border-radius: 50% !important;
     border: 2px solid white;
 }
-.kiwi-theme #tracyConsoleContainer #addTab:hover {
+.tracy-console-kiwi-theme #tracyConsoleContainer #addTab:hover {
     background-color: #AAA;
 }
 

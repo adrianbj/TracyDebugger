@@ -1602,7 +1602,7 @@ HTML;
 
             <div style="position: relative; height: calc(100% - 80px)">
 
-                <div id="tracyConsoleMainContainer" class="'.\TracyDebugger::getDataValue('consoleTabsTheme').'" style="position: absolute; height: 100%; width: '.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '100%' : 'calc(100% - 290px)').'">
+                <div id="tracyConsoleMainContainer" class="tracy-console-'.\TracyDebugger::getDataValue('consoleTabsTheme').'" style="position: absolute; height: 100%; width: '.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '100%' : 'calc(100% - 290px)').'">
 
                     <div id="consoleKeyboardShortcuts" class="keyboardShortcuts tracyHidden">';
                         $panel = 'console';
