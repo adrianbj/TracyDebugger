@@ -2389,9 +2389,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             font-weight: 600;
                             text-transform: uppercase;
                             z-index: 999999;
-                            font-size: 13px;
+                            font-size: 14px;
                             height: auto;
-                            line-height: inherit;
+                            line-height: 22px;
                             display: inline-flex;
                             align-items: center;
                             vertical-align: middle;

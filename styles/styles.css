@@ -51,7 +51,7 @@ body.tracyHidden:before {
     border-radius: 0 !important;
     box-shadow: none !important;
     opacity: 1 !important;
-    padding: 1px 0 1px 0 !important;
+    padding: 0 !important;
 }
 
 #tracy-debug-bar li:first-child {
@@ -62,13 +62,16 @@ body.tracyHidden:before {
     background: #F7F9FB !important;
 }
 
+#tracy-debug-bar li>a {
+    margin-top: 1px !important;
+    transform-origin: center center;
+    transition: transform 0.12s;
+}
+
 #tracy-debug-bar li>a:hover {
     color: black !important;
     background: #F7F9FB !important;
-}
-
-#tracy-debug-bar li>a {
-    transition: transform 0.12s;
+    padding-bottom: 1px 0 !important;
 }
 
 #tracy-debug-bar li>a:hover svg {
