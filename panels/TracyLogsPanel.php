@@ -47,12 +47,13 @@ class TracyLogsPanel extends BasePanel {
                     continue;
                 }
 
-                $lines = \TracyDebugger::tailCustom($this->wire('config')->paths->logs.'tracy/'.$log['name'].'.log', \TracyDebugger::getDataValue("numLogEntries"));
-                $lines = mb_convert_encoding($lines, 'UTF-8');
-                $lines = explode("\n", $lines);
-
                 $x=99;
                 if(!isset($logLinesData[$log['name']]) || filemtime($this->getFilename($log['name'])) > $logLinesData[$log['name']]['time']) {
+
+                    $lines = \TracyDebugger::tailCustom($this->wire('config')->paths->logs.'tracy/'.$log['name'].'.log', \TracyDebugger::getDataValue("numLogEntries"));
+                    $lines = mb_convert_encoding($lines, 'UTF-8');
+                    $lines = explode("\n", $lines);
+
                     $logLinesData[$log['name']]['time'] = time();
                     $logLinesData[$log['name']]['lines'] = $lines;
                     $isNew++;

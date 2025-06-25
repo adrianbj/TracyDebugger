@@ -54,21 +54,27 @@ class ProcesswireLogsPanel extends BasePanel {
 
                 if(isset($custom_logs) && array_key_exists($log['name'], $custom_logs_config['customLogsParsed'])) {
                     $isCustom = true;
-                    $lines = $custom_logs->getEntries($log['name']);
                 }
                 else {
                     $isCustom = false;
-                    $lines = \TracyDebugger::tailCustom($this->wire('config')->paths->logs.$log['name'].'.txt', \TracyDebugger::getDataValue("numLogEntries"));
-                    $lines = mb_convert_encoding($lines, 'UTF-8');
-                    $lines = explode("\n", $lines);
-                    foreach($lines as $key => $line) {
-                        $entry = $this->wire('log')->lineToEntry($line);
-                        $lines[$key] = $entry;
-                    }
                 }
 
                 $x=99;
                 if(!isset($logLinesData[$log['name']]) || filemtime($this->wire('log')->getFilename($log['name'])) > $logLinesData[$log['name']]['time']) {
+
+                    if($isCustom) {
+                        $lines = $custom_logs->getEntries($log['name']);
+                    }
+                    else {
+                        $lines = \TracyDebugger::tailCustom($this->wire('config')->paths->logs.$log['name'].'.txt', \TracyDebugger::getDataValue("numLogEntries"));
+                        $lines = mb_convert_encoding($lines, 'UTF-8');
+                        $lines = explode("\n", $lines);
+                        foreach($lines as $key => $line) {
+                            $entry = $this->wire('log')->lineToEntry($line);
+                            $lines[$key] = $entry;
+                        }
+                    }
+
                     $logLinesData[$log['name']]['time'] = time();
                     $logLinesData[$log['name']]['lines'] = $lines;
                     $isNew++;
