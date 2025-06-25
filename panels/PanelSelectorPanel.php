@@ -37,7 +37,6 @@ class PanelSelectorPanel extends BasePanel {
                 <path d="M320.83,140.434l-1.759-0.627l-6.87-16.399l0.745-1.685c20.812-47.201,19.377-48.609,15.925-52.031L301.11,42.61     c-1.135-1.126-3.128-1.918-4.846-1.918c-1.562,0-6.293,0-47.294,18.57L247.326,60l-16.916-6.812l-0.679-1.684     C210.45,3.762,208.475,3.762,203.677,3.762h-39.205c-4.78,0-6.957,0-24.836,47.825l-0.673,1.741l-16.828,6.86l-1.609-0.669     C92.774,47.819,76.57,41.886,72.346,41.886c-1.714,0-3.714,0.769-4.854,1.892l-27.787,27.16     c-3.525,3.477-4.987,4.933,16.915,51.149l0.805,1.714l-6.881,16.381l-1.684,0.651C0,159.715,0,161.556,0,166.474v38.418     c0,4.931,0,6.979,48.957,24.524l1.75,0.618l6.882,16.333l-0.739,1.669c-20.812,47.223-19.492,48.501-15.949,52.025L68.62,327.18     c1.162,1.117,3.173,1.915,4.888,1.915c1.552,0,6.272,0,47.3-18.561l1.643-0.769l16.927,6.846l0.658,1.693     c19.293,47.726,21.275,47.726,26.076,47.726h39.217c4.924,0,6.966,0,24.859-47.857l0.667-1.742l16.855-6.814l1.604,0.654     c27.729,11.733,43.925,17.654,48.122,17.654c1.699,0,3.717-0.745,4.876-1.893l27.832-27.219     c3.501-3.495,4.96-4.924-16.981-51.096l-0.816-1.734l6.869-16.31l1.64-0.643c48.938-18.981,48.938-20.831,48.938-25.755v-38.395     C369.793,159.95,369.793,157.914,320.83,140.434z M184.896,247.203c-35.038,0-63.542-27.959-63.542-62.3     c0-34.342,28.505-62.264,63.542-62.264c35.023,0,63.522,27.928,63.522,62.264C248.419,219.238,219.92,247.203,184.896,247.203z" fill="'.($this->wire('input')->cookie->tracyGuestDumps ? \TracyDebugger::COLOR_WARN : \TracyDebugger::COLOR_NORMAL).'"/>
             </svg>';
 
-
         return '
             <span title="Panel Selector">
                 ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Panel Selector' : '') . '
@@ -45,9 +44,7 @@ class PanelSelectorPanel extends BasePanel {
         ';
     }
 
-
     protected function isOnce($name, $defaultPanels) {
-
         $masterPanels = empty(\TracyDebugger::$stickyPanels) ? $defaultPanels : \TracyDebugger::$stickyPanels;
 
         if(empty(\TracyDebugger::$oncePanels)) {
@@ -64,6 +61,65 @@ class PanelSelectorPanel extends BasePanel {
         }
     }
 
+    private function renderPanelCell($panel, $defaultPanels, $showPanels, $onceIcon) {
+        if(!$panel) {
+            return '<td></td>';
+        }
+
+        $name = $panel['name'];
+        $label = $panel['label'];
+        $seconds = isset(\TracyDebugger::$panelGenerationTime[$name]['time']) ? \TracyDebugger::$panelGenerationTime[$name]['time'] : '';
+        $size = isset(\TracyDebugger::$panelGenerationTime[$name]['size']) ? \TracyDebugger::human_filesize(\TracyDebugger::$panelGenerationTime[$name]['size']) : '';
+
+        $out = '<td style="vertical-align: top; padding: 4px 10px; white-space: nowrap;">';
+
+        // Use flexbox container for the entire cell content
+        $out .= '<div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">';
+
+        // Left side: label with controls
+        $out .= '<label style="display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;">';
+
+        // once icon or spacer
+        $out .= $this->isOnce($name, $defaultPanels) ? $onceIcon : '<span style="display:inline-block; width:15px;"></span>';
+
+        // settings link or spaces
+        if (!empty(\TracyDebugger::$externalPanels) || !array_key_exists($name, \TracyDebugger::$externalPanels)) {
+            if (array_key_exists($name, $this->panelSettingsLinks)) {
+                $out .= \TracyDebugger::generatePanelSettingsLink($this->panelSettingsLinks[$name]);
+            }
+            else {
+                $out .= str_repeat('&nbsp;', 6);
+            }
+            $out .= '<span style="font-size:16px; font-weight:600;">
+                        <a title="Panel Info" href="https://adrianbj.github.io/TracyDebugger/#/debug-bar?id=' . str_replace(' ', '-', strtolower($label)) . '" target="_blank">ℹ</a>
+                    </span>';
+        }
+        else {
+            $out .= str_repeat('&nbsp;', 9);
+        }
+
+        // checkbox input
+        $out .= '<input type="checkbox" name="selectedPanels[]" ' .
+            ($name == 'panelSelector' || in_array($name, \TracyDebugger::getDataValue('nonToggleablePanels')) ? 'disabled="disabled"' : '') .
+            ' value="' . $name . '" ' . (in_array($name, $showPanels) ? 'checked="checked"' : '') . ' />';
+
+        // label text + asterisk if default
+        $out .= '<span style="white-space: nowrap;">&nbsp;' . $label . (in_array($name, $defaultPanels) ? '&nbsp;<strong>*</strong>' : '') . '</span>';
+
+        $out .= '</label>';
+
+        // Right side: timing and size info (only if exists)
+        if ($seconds) {
+            $out .= '<span style="color: #999; font-size: 11px; white-space: nowrap; margin-left: 8px; flex-shrink: 0;">' . \TracyDebugger::formatTime($seconds);
+            if ($size) $out .= ', ' . $size;
+            $out .= '</span>';
+        }
+
+        $out .= '</div>'; // Close flexbox container
+        $out .= '</td>';
+
+        return $out;
+    }
 
     public function getPanel() {
 
@@ -152,64 +208,65 @@ class PanelSelectorPanel extends BasePanel {
         <div class="tracy-inner">
             <fieldset>
                 <legend>*Panels with asterisk are on by default</legend><br />';
-                    $defaultPanels = $this->wire('page')->template == "admin" ? \TracyDebugger::getDataValue('backendPanels') : \TracyDebugger::getDataValue('frontendPanels');
-                    $showPanels = \TracyDebugger::$showPanels;
-                    $out .= '<label><input type="checkbox" onchange="toggleAllTracyPanels(this)" ' . (count($showPanels) == count(\TracyDebugger::$allPanels) ? 'checked="checked"' : '') . ' /> Toggle All</label><br />';
-                    $out .= '<div style="-webkit-column-count: 2; -moz-column-count: 2; column-count: 2; -webkit-column-gap: 40px; -moz-column-gap: 40px; column-gap: 40px;">';
-                    foreach(\TracyDebugger::$allPanels as $name => $label) {
 
-                        if(in_array($name, \TracyDebugger::$restrictedUserDisabledPanels)) continue;
-                        if(in_array($name, \TracyDebugger::$superUserOnlyPanels) && !\TracyDebugger::$allowedSuperuser && !\TracyDebugger::$validLocalUser && !\TracyDebugger::$validSwitchedUser) continue;
-                        // special additional check for adminer
-                        if($name == 'adminer' && !\TracyDebugger::$allowedSuperuser) continue;
-                        if($name == 'userSwitcher') {
-                            if(\TracyDebugger::getDataValue('userSwitchSession') != '') $userSwitchSession = \TracyDebugger::getDataValue('userSwitchSession');
-                            if(!\TracyDebugger::$allowedSuperuser && (!$this->wire('session')->tracyUserSwitcherId || (isset($userSwitchSession[$this->wire('session')->tracyUserSwitcherId]) && $userSwitchSession[$this->wire('session')->tracyUserSwitcherId] <= time()))) continue;
-                        }
+        $defaultPanels = $this->wire('page')->template == "admin" ? \TracyDebugger::getDataValue('backendPanels') : \TracyDebugger::getDataValue('frontendPanels');
+        $showPanels = \TracyDebugger::$showPanels;
 
-                        $seconds = isset(\TracyDebugger::$panelGenerationTime[$name]['time']) ? \TracyDebugger::$panelGenerationTime[$name]['time'] : '';
-                        $size = isset(\TracyDebugger::$panelGenerationTime[$name]['size']) ? \TracyDebugger::human_filesize(\TracyDebugger::$panelGenerationTime[$name]['size']) : '';
-                        $out .= '
-                            <label style="'.($this->wire('page')->template == 'admin' && in_array($name, \TracyDebugger::$hideInAdmin) ? ' visibility:hidden;position: absolute; left: -999em;' : '').'">' .
-                                ($this->isOnce($name, $defaultPanels) ? $onceIcon .'&nbsp;' : '<span style="display:inline-block;width:18px">&nbsp;</span>');
-                                if(!empty(\TracyDebugger::$externalPanels) || !array_key_exists($name, \TracyDebugger::$externalPanels)) {
-                                    if(array_key_exists($name, $this->panelSettingsLinks)) {
-                                        $out .= \TracyDebugger::generatePanelSettingsLink($this->panelSettingsLinks[$name]);
-                                    }
-                                    else {
-                                        $out .= '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
-                                    }
-                                    $out .= '<span style="font-size:16px; font-weight:600"><a title="Panel Info" href="https://adrianbj.github.io/TracyDebugger/#/debug-bar?id='.str_replace(' ', '-', strtolower($label)).'" target="_blank">ℹ</a></span>';
-                                }
-                                else {
-                                    $out .= '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
-                                }
-                                $out .= '&nbsp;<input type="checkbox" name="selectedPanels[]" ' . ($name == 'panelSelector' || in_array($name, \TracyDebugger::getDataValue('nonToggleablePanels')) ? 'disabled="disabled"' : '') . ' value="'.$name.'" ' . (in_array($name, $showPanels) ? 'checked="checked"' : '') . ' /> '
-                                . $label . (in_array($name, $defaultPanels) ? '&nbsp;<strong>*</strong>' : '') . ($seconds ? '<span style="color:#999999; font-size:11px; float:right; margin-left:20px">&nbsp;' . \TracyDebugger::formatTime($seconds) . ($size ? ', '.$size : '') . '</span>' : '') . '
-                            </label>';
-                    }
-                    $out .= '
-                    </div>
-                    <br />
-                    <span style="float:left">
-                        <input type="submit" onclick="changeTracyPanels(\'Once\')" value="Once" />&nbsp;
-                        <input type="submit" onclick="changeTracyPanels(\'Sticky\')" value="Sticky" />&nbsp;
-                        <input type="submit" onclick="resetTracyPanels()" value="Reset" />
-                    </span>
-                    <span style="float:right">';
-                    $out .= '<input type="submit" style="'.($this->wire('input')->cookie->tracyGuestDumps ? 'color:'.\TracyDebugger::COLOR_WARN : '').'" onclick="toggleGuestDumps()" value="' . ($this->wire('input')->cookie->tracyGuestDumps ? 'Disable' : 'Enable') .' Guest Dumps" />&nbsp;&nbsp;';
-                    if(!\TracyDebugger::getDataValue('strictMode')) {
-                        $out .= '<input type="submit" onclick="toggleStrictMode()" value="' . ($this->wire('input')->cookie->tracyStrictMode ? 'Disable' : 'Enable') .' Strict Mode" />&nbsp;&nbsp;';
-                    }
-                    if(\TracyDebugger::getDataValue('panelSelectorTracyTogglerButton')) {
-                        $out .= '<input type="submit" onclick="disableTracy()" value="Disable Tracy" />';
-                    }
-                    $out .= '
-                    </span>
+        $out .= '<label><input type="checkbox" onchange="toggleAllTracyPanels(this)" ' .
+            (count($showPanels) == count(\TracyDebugger::$allPanels) ? 'checked="checked"' : '') . ' /> Toggle All</label><br />';
+
+        $out .= '<table style="border-collapse: collapse; width: max-content; min-width: 100%;">';
+
+        // split panels into two roughly equal halves
+        $panels = [];
+        foreach(\TracyDebugger::$allPanels as $name => $label) {
+
+            if(in_array($name, \TracyDebugger::$restrictedUserDisabledPanels)) continue;
+            if(in_array($name, \TracyDebugger::$superUserOnlyPanels) && !\TracyDebugger::$allowedSuperuser && !\TracyDebugger::$validLocalUser && !\TracyDebugger::$validSwitchedUser) continue;
+            if($name == 'adminer' && !\TracyDebugger::$allowedSuperuser) continue;
+            if($name == 'userSwitcher') {
+                if(\TracyDebugger::getDataValue('userSwitchSession') != '') $userSwitchSession = \TracyDebugger::getDataValue('userSwitchSession');
+                if(!\TracyDebugger::$allowedSuperuser && (!$this->wire('session')->tracyUserSwitcherId || (isset($userSwitchSession[$this->wire('session')->tracyUserSwitcherId]) && $userSwitchSession[$this->wire('session')->tracyUserSwitcherId] <= time()))) continue;
+            }
+            $panels[] = ['name' => $name, 'label' => $label];
+        }
+
+        $half = ceil(count($panels)/2);
+        $leftPanels = array_slice($panels, 0, $half);
+        $rightPanels = array_slice($panels, $half);
+
+        $maxRows = max(count($leftPanels), count($rightPanels));
+
+        for($i=0; $i < $maxRows; $i++) {
+            $out .= '<tr>';
+            $out .= $this->renderPanelCell(isset($leftPanels[$i]) ? $leftPanels[$i] : null, $defaultPanels, $showPanels, $onceIcon);
+            $out .= $this->renderPanelCell(isset($rightPanels[$i]) ? $rightPanels[$i] : null, $defaultPanels, $showPanels, $onceIcon);
+            $out .= '</tr>';
+        }
+
+        $out .= '</table>';
+
+        $out .= '
+            <br />
+            <span style="float:left">
+                <input type="submit" onclick="changeTracyPanels(\'Once\')" value="Once" />&nbsp;
+                <input type="submit" onclick="changeTracyPanels(\'Sticky\')" value="Sticky" />&nbsp;
+                <input type="submit" onclick="resetTracyPanels()" value="Reset" />
+            </span>
+            <span style="float:right">';
+        $out .= '<input type="submit" style="' . ($this->wire('input')->cookie->tracyGuestDumps ? 'color:' . \TracyDebugger::COLOR_WARN : '') . '" onclick="toggleGuestDumps()" value="' . ($this->wire('input')->cookie->tracyGuestDumps ? 'Disable' : 'Enable') . ' Guest Dumps" />&nbsp;&nbsp;';
+        if(!\TracyDebugger::getDataValue('strictMode')) {
+            $out .= '<input type="submit" onclick="toggleStrictMode()" value="' . ($this->wire('input')->cookie->tracyStrictMode ? 'Disable' : 'Enable') . ' Strict Mode" />&nbsp;&nbsp;';
+        }
+        if(\TracyDebugger::getDataValue('panelSelectorTracyTogglerButton')) {
+            $out .= '<input type="submit" onclick="disableTracy()" value="Disable Tracy" />';
+        }
+        $out .= '
+            </span>
 
             </fieldset>';
 
-                $out .= \TracyDebugger::generatePanelFooter('panelSelector', \Tracy\Debugger::timer('panelSelector'), strlen($out), 'panelSelectorPanel');
+        $out .= \TracyDebugger::generatePanelFooter('panelSelector', \Tracy\Debugger::timer('panelSelector'), strlen($out), 'panelSelectorPanel');
 
         $out .= '
         </div>';

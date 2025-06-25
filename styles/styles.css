@@ -327,7 +327,7 @@ body.tracyHidden:before {
 }
 
 #tracy-debug tr:nth-child(2n) td {
-    background: #e6ebf2 !important;
+    background:rgba(0, 0, 0, 0.02) !important;
 }
 
 #tracy-debug td {
@@ -403,9 +403,6 @@ table.apiExplorerTable th:nth-child(4) {
     margin: 0 !important;
     padding: 3px !important;
     border: 1px solid #D2D2D2 !important;
-    -webkit-border-radius: 3px !important;
-    -moz-border-radius: 3px !important;
-    border-radius: 3px !important;
     cursor: pointer !important;
     text-transform: none !important;
     font: normal normal 13px/1.3 Arial, sans-serif;
@@ -568,20 +565,6 @@ td pre.tracy-dump {
     line-height: 1.75 !important;
 }
 
-#tracy-debug-panel-PanelSelectorPanel fieldset div label {
-    display: block !important;
-    width: 300px !important;
-    border-bottom: 1px solid #e4e4e4;
-    -webkit-column-break-inside: avoid;
-    page-break-inside: avoid;
-    break-inside: avoid-column;
-}
-
-#tracy-debug-panel-PanelSelectorPanel fieldset div label>span:last-child {
-    position: relative;
-    top: 5px;
-}
-
 #tracy-debug-panel-PanelSelectorPanel fieldset div label:hover {
     background: #E2E9EF !important;
 }
@@ -636,7 +619,6 @@ ul.pw-info-links {
     margin: 0 !important;
     height: 29px !important;
     width: 100% !important;
-    border-radius: 3px !important;
     -webkit-box-sizing: border-box;
     /* Safari/Chrome, other WebKit */
     -moz-box-sizing: border-box;
@@ -1022,18 +1004,6 @@ ul.pw-info-links {
 #tracy-debug #historyForward {
     padding: 3px 10px !important;
     margin-right: 7px !important;
-}
-
-#tracy-debug #runInjectButton {
-    border-radius: 3px !important;
-}
-
-#tracy-debug #historyBack {
-    border-radius: 3px 0 0 3px !important;
-}
-
-#tracy-debug #historyForward {
-    border-radius: 0 3px 3px 0 !important;
 }
 
 #tracy-debug #runInjectButton:hover,
