@@ -207,13 +207,13 @@ class PanelSelectorPanel extends BasePanel {
         $out .= '<h1>'.$this->icon.' Panel Selector</h1>
         <div class="tracy-inner">
             <fieldset>
-                <legend>*Panels with asterisk are on by default</legend><br />';
+                <legend style="float:right; padding-right: 5px">*Panels with asterisk are on by default</legend>';
 
         $defaultPanels = $this->wire('page')->template == "admin" ? \TracyDebugger::getDataValue('backendPanels') : \TracyDebugger::getDataValue('frontendPanels');
         $showPanels = \TracyDebugger::$showPanels;
 
         $out .= '<label><input type="checkbox" onchange="toggleAllTracyPanels(this)" ' .
-            (count($showPanels) == count(\TracyDebugger::$allPanels) ? 'checked="checked"' : '') . ' /> Toggle All</label><br />';
+            (count($showPanels) == count(\TracyDebugger::$allPanels) ? 'checked="checked"' : '') . ' /> Toggle All</label><br /><br />';
 
         $out .= '<table style="border-collapse: collapse; width: max-content; min-width: 100%;">';
 
@@ -266,7 +266,7 @@ class PanelSelectorPanel extends BasePanel {
         $out .= '
             </span>
 
-            </fieldset>';
+            </fieldset><br /><br />';
 
         $out .= \TracyDebugger::generatePanelFooter('panelSelector', \Tracy\Debugger::timer('panelSelector'), strlen($out), 'panelSelectorPanel');
 
