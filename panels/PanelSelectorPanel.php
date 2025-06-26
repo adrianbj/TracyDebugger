@@ -207,7 +207,7 @@ class PanelSelectorPanel extends BasePanel {
         $out .= '<h1>'.$this->icon.' Panel Selector</h1>
         <div class="tracy-inner">
             <fieldset>
-                <legend style="float:right; padding-right: 5px">*Panels with asterisk are on by default</legend>';
+                <legend style="float:right; padding-right: 5px">*Panels enabled via Tracy\'s settings</legend>';
 
         $defaultPanels = $this->wire('page')->template == "admin" ? \TracyDebugger::getDataValue('backendPanels') : \TracyDebugger::getDataValue('frontendPanels');
         $showPanels = \TracyDebugger::$showPanels;
