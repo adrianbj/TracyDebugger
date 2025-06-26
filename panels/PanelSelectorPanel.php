@@ -110,7 +110,7 @@ class PanelSelectorPanel extends BasePanel {
 
         // Right side: timing and size info (only if exists)
         if ($seconds) {
-            $out .= '<span style="color: #999; font-size: 11px; white-space: nowrap; margin-left: 8px; flex-shrink: 0;">' . \TracyDebugger::formatTime($seconds);
+            $out .= '<span style="color: #999; font-size: 11px; white-space: nowrap; margin: 0 15px; flex-shrink: 0;">' . \TracyDebugger::formatTime($seconds);
             if ($size) $out .= ', ' . $size;
             $out .= '</span>';
         }
