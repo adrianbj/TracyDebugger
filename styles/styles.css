@@ -216,7 +216,6 @@ body.tracyHidden:before {
 #tracy-debug select:not(#tfe_recently_opened) {
     height: 30px !important;
     width: initial !important;
-    border-radius: 3px !important;
     margin: 0 !important;
     display: inline-block !important;
     padding: 3px 3px 3px 10px !important;
