@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.26.77',
+            'version' => '4.26.78',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -284,6 +284,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "userSwitcherSelector" => '',
             "userSwitcherRestricted" => null,
             "userSwitcherIncluded" => null,
+            "userSwitcherUserLabel" => 'name',
             "todoIgnoreDirs" => 'git, svn, images, img, errors, sass-cache, node_modules',
             "todoScanAssets" => null,
             "todoScanModules" => null,
@@ -4485,6 +4486,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $f->addOption($role->id, $role->name);
         }
         if($data['userSwitcherIncluded']) $f->attr('value', $data['userSwitcherIncluded']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'userSwitcherUserLabel');
+        $f->label = __('User label field', __FILE__);
+        $f->description = __('Use this to determine which user field will be used to identify users in the selection interace.', __FILE__);
+        $f->notes = __('Default: `name`', __FILE__);
+        if($data['userSwitcherUserLabel']) $f->attr('value', $data['userSwitcherUserLabel']);
         $fieldset->add($f);
 
         // requestLogger Panel
