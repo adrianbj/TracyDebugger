@@ -25,8 +25,6 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
 
         function adminneo_instance() {
 
-            class CustomAdmin extends \AdminNeo\Admin {}
-
             foreach (glob(__DIR__.'/panels/Adminer/plugins/*.php') as $filename) {
                 require_once $filename/*NoCompile*/;
             }
@@ -66,7 +64,7 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
                 ]
             ];
 
-            return CustomAdmin::create($config, $plugins);
+            return \AdminNeo\Admin::create($config, $plugins);
         }
 
         require_once __DIR__ . '/panels/Adminer/adminneo.php'/*NoCompile*/;
