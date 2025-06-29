@@ -110,7 +110,8 @@ HTML;
 
                         foreach($selectableUsers->sort('name') as $u) {
                             if($u->hasStatus('unpublished')) continue;
-                            if(count($u->roles)>1) $out .= '<option id="user_'.$u->id.'" value="'.$u->name.'" style="padding: 2px; ' . ($this->wire('user')->name === $u->name ? 'background:'.TracyDebugger::COLOR_WARN.'; color: #FFFFFF;" selected="selected"' : '"') . '>'.str_replace('()', '', wirePopulateStringTags(\TracyDebugger::getDataValue('userSwitcherUserLabel'), $u)).'</option>';
+                            $user_label = str_replace('()', '', wirePopulateStringTags(\TracyDebugger::getDataValue('userSwitcherUserLabel'), $u));
+                            if(count($u->roles)>1) $out .= '<option id="user_'.$u->id.'" data-label="'.$user_label.'" value="'.$u->name.'" style="padding: 2px; ' . ($this->wire('user')->name === $u->name ? 'background:'.TracyDebugger::COLOR_WARN.'; color: #FFFFFF;" selected="selected"' : '"') . '>'.$user_label.'</option>';
                         }
                 $out .= '
                     </select>

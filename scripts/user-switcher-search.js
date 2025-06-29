@@ -4,6 +4,9 @@ addFilterBox({
         selector: "#tracy-debug-panel-UserSwitcherPanel select[name='userSwitcher']",
         items: "option"
     },
+    extraFilterAttrs: [
+        'data-label'
+    ],
     wrapper: {
         attrs: {
             id: "tracyUserSwitcherFilterBoxWrap",
