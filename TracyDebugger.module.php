@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.26.81',
+            'version' => '4.26.80',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1042,6 +1042,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             (isset(static::$showPanels) && in_array('fileEditor', static::$showPanels) && $this->data['forceEditorLinksToTracy'])
         );
 
+        $config = $this->wire('config');
+        $rootPath = static::getDataValue('rootPath') ?? $config->paths->root;
         if(static::$useOnlineEditor) {
             if($this->data['onlineEditor'] == 'processFileEdit' &&
                 $this->wire('modules')->isInstalled('ProcessFileEdit') &&
@@ -1055,9 +1057,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             else {
                 static::$onlineEditor = 'tracy';
                 Debugger::$editor = 'tracy://?f=%file&l=%line';
-                static::$onlineFileEditorDirPath = $this->wire('config')->paths->root;
+                static::$onlineFileEditorDirPath = $rootPath;
             }
-            $mappingReplacements[$compilerCachePath . str_replace($this->wire('config')->paths->root,'' , static::$onlineFileEditorDirPath)] = '';
+            $mappingReplacements[$compilerCachePath . str_replace($rootPath, '', static::$onlineFileEditorDirPath)] = '';
             $mappingReplacements[static::$onlineFileEditorDirPath] = '';
         }
         else {
@@ -1065,10 +1067,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             if($this->data['localRootPath'] != '') {
                 $mappingReplacements[$compilerCachePath] = $this->data['localRootPath'];
-                $mappingReplacements[$this->wire('config')->paths->root] = $this->data['localRootPath'];
+                $mappingReplacements[$rootPath] = $this->data['localRootPath'];
             }
             else {
-                $mappingReplacements[$compilerCachePath] = $this->wire('config')->paths->root;
+                $mappingReplacements[$compilerCachePath] = $rootPath;
             }
         }
 
@@ -2576,7 +2578,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $link = '';
             // don't add link again unless it's a repeater field
             if(strpos($appendedMarkup, 'adminer_EditFieldLink') === false || $inputfield instanceof InputfieldRepeater) {
-                $link = '<div class="wrap_adminer_EditFieldLink" style="display: none"><a tabindex="-1" class="adminer_EditFieldLink" title="Edit in Adminer (SHIFT+Click for full Adminer)" href="adminer://?'.$adminerQuery.'">'.$adminerIcon.'</a></div>';
+                $link = '<div tabindex="-1" class="wrap_adminer_EditFieldLink" style="display: none"><a class="adminer_EditFieldLink" title="Edit in Adminer (SHIFT+Click for full Adminer)" href="adminer://?'.$adminerQuery.'">'.$adminerIcon.'</a></div>';
             }
 
             $inputfield->appendMarkup = $inputfield->appendMarkup . $link;
