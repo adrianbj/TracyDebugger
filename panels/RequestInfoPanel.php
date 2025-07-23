@@ -461,6 +461,15 @@ class RequestInfoPanel extends BasePanel {
                 <td>' . ($p->rootParent->viewable() ? '<a title="View Root Parent" href="'.$p->rootParent->url.'">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang, true).'</span>') . ' (<a title="Edit Root Parent" href="'.$p->rootParent->editUrl().'">'.$p->rootParent->id.'</a>)</td>
             </tr>
             ';
+            if(method_exists($this->wire('pages')->get($p->id), 'getForPage')) {
+                $forPage = $this->wire('pages')->get($p->id)->getForPage();
+                $pageInfo .= '
+                <tr>
+                    <td>forPage</td>
+                    <td>' . ($forPage->viewable() ? '<a title="View ForPage" href="'.$forPage->url.'">'.$this->getLanguageVersion($forPage, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($forPage, 'name', $userLang, true).'</span>') . ' (<a title="Edit ForPage" href="'.$forPage->editUrl().'">'.$forPage->id.'</a>)</td>
+                </tr>
+                ';
+            }
             $prevPage = $p->prev("include=all");
             if($prevPage->id) {
                 $pageInfo .= '
