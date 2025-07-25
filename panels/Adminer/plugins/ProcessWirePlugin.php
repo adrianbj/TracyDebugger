@@ -293,7 +293,7 @@ class ProcessWirePlugin extends Plugin {
             $pages_id = $val;
         }
 
-        $label = array('title', 'name', 'status');
+        $label = array('title', 'name', 'status', 'template');
         if(wire('modules')->isInstalled('PagePaths')) {
             $label[] = 'url';
         }
@@ -389,7 +389,7 @@ class ProcessWirePlugin extends Plugin {
                                 $name = wire('pages')->getRaw('id='.str_replace('pid', '', $v), $label);
                                 if($name) {
                                     $v_with_status = $this->formatPageStatus($v, $name['status']);
-                                    $name = (isset($name['title']) ? $name['title'] : $name['name']) . (isset($name['url']) ? ' ('.$name['url'].')' : '');
+                                    $name = (isset($name['title']) ? $name['title'] : $name['name']) . (isset($name['url']) ? ' ('.$name['url'].')' : '') . (isset($name['template']) ? ' ('.$name['template']['name'].')' : '');
                                     $allids[] = '<a href="'.wire('config')->urls->admin.'page/edit/?id='.str_replace('pid', '', $v).'" target="_parent" title="'.$name.'">'.$v_with_status.'</a>';
                                 }
                             }

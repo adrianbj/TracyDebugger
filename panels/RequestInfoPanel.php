@@ -402,25 +402,16 @@ class RequestInfoPanel extends BasePanel {
                     </tr>';
             }
 
-            if($this->wire('page')->process == 'ProcessPageEdit') {
-                $pageInfo .= '
-                <tr>
-                    <td>id</td>
-                    <td><a title="Edit Page" href="'.$p->editUrl().'">'.$p->id.'</a></td>
-                </tr>
-                <tr>
-                    <td>path</td>
-                    <td><a title="View Page" href="'.$p->url.'">'.$p->path.'</a></td>
-                </tr>
-                ';
-            }
-            else {
-                $pageInfo .= '
-                <tr>
-                    <td>id</td>
-                    <td>'.$p->id.'</td>
-                </tr>';
-            }
+            $pageInfo .= '
+            <tr>
+                <td>id</td>
+                <td><a title="Edit Page" href="'.$p->editUrl().'">'.\TracyDebugger::formatPageStatus($p->id, $p->status).'</a></td>
+            </tr>
+            <tr>
+                <td>path</td>
+                <td><a title="View Page" href="'.$p->url.'">'.$p->path.'</a></td>
+            </tr>
+            ';
 
             if($p->template->urlSegments) {
                 $i=1;
@@ -452,13 +443,13 @@ class RequestInfoPanel extends BasePanel {
                 $pageInfo .= '
                 <tr>
                     <td>parent</td>
-                    <td>' . ($p->parent->viewable() ? '<a title="View Parent" href="'.$p->parent->url.'">'.$this->getLanguageVersion($p->parent, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->parent, 'name', $userLang, true).'</span>') . ' (<a title="Edit Parent" href="'.$p->parent->editUrl().'">'.$p->parent->id.'</a>)</td>
+                    <td>' . ($p->parent->viewable() ? '<a title="View Parent" href="'.$p->parent->url.'">'.$this->getLanguageVersion($p->parent, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->parent, 'name', $userLang, true).'</span>') . ' (<a title="Edit Parent" href="'.$p->parent->editUrl().'">'.\TracyDebugger::formatPageStatus($p->parent->id, $p->parent->status).'</a>)</td>
                 </tr>';
             }
             $pageInfo .= '
             <tr>
                 <td>rootParent</td>
-                <td>' . ($p->rootParent->viewable() ? '<a title="View Root Parent" href="'.$p->rootParent->url.'">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang, true).'</span>') . ' (<a title="Edit Root Parent" href="'.$p->rootParent->editUrl().'">'.$p->rootParent->id.'</a>)</td>
+                <td>' . ($p->rootParent->viewable() ? '<a title="View Root Parent" href="'.$p->rootParent->url.'">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang, true).'</span>') . ' (<a title="Edit Root Parent" href="'.$p->rootParent->editUrl().'">'.\TracyDebugger::formatPageStatus($p->rootParent->id, $p->rootParent->status).'</a>)</td>
             </tr>
             ';
             if(method_exists($this->wire('pages')->get($p->id), 'getForPage')) {
@@ -466,7 +457,7 @@ class RequestInfoPanel extends BasePanel {
                 $pageInfo .= '
                 <tr>
                     <td>forPage</td>
-                    <td>' . ($forPage->viewable() ? '<a title="View ForPage" href="'.$forPage->url.'">'.$this->getLanguageVersion($forPage, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($forPage, 'name', $userLang, true).'</span>') . ' (<a title="Edit ForPage" href="'.$forPage->editUrl().'">'.$forPage->id.'</a>)</td>
+                    <td>' . ($forPage->viewable() ? '<a title="View ForPage" href="'.$forPage->url.'">'.$this->getLanguageVersion($forPage, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($forPage, 'name', $userLang, true).'</span>') . ' (<a title="Edit ForPage" href="'.$forPage->editUrl().'">'.\TracyDebugger::formatPageStatus($forPage->id, $forPage->status).'</a>)</td>
                 </tr>
                 ';
             }
@@ -475,7 +466,7 @@ class RequestInfoPanel extends BasePanel {
                 $pageInfo .= '
                 <tr>
                     <td>prev (sibling)</td>
-                    <td>' . ($prevPage->viewable() ? '<a title="View Prev Sibling" href="'.$prevPage->url.'">'.$this->getLanguageVersion($prevPage, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($prevPage, 'name', $userLang, true).'</span>') . ' (<a title="Edit Prev Sibling" href="'.$prevPage->editUrl().'">'.$prevPage->id.'</a>)</td>
+                    <td>' . ($prevPage->viewable() ? '<a title="View Prev Sibling" href="'.$prevPage->url.'">'.$this->getLanguageVersion($prevPage, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($prevPage, 'name', $userLang, true).'</span>') . ' (<a title="Edit Prev Sibling" href="'.$prevPage->editUrl().'">'.\TracyDebugger::formatPageStatus($prevPage->id, $prevPage->status).'</a>)</td>
                 </tr>';
             }
             $nextPage = $p->next("include=all");
@@ -483,7 +474,7 @@ class RequestInfoPanel extends BasePanel {
                 $pageInfo .= '
                 <tr>
                     <td>next (sibling)</td>
-                    <td>' . ($nextPage->viewable() ? '<a title="View Next Sibling" href="'.$nextPage->url.'">'.$this->getLanguageVersion($nextPage, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($nextPage, 'name', $userLang, true).'</span>') . ' (<a title="Edit Next Sibling" href="'.$nextPage->editUrl().'">'.$nextPage->id.'</a>)</td>
+                    <td>' . ($nextPage->viewable() ? '<a title="View Next Sibling" href="'.$nextPage->url.'">'.$this->getLanguageVersion($nextPage, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($nextPage, 'name', $userLang, true).'</span>') . ' (<a title="Edit Next Sibling" href="'.$nextPage->editUrl().'">'.\TracyDebugger::formatPageStatus($nextPage->id, $nextPage->status).'</a>)</td>
                 </tr>';
             }
             $pageInfo .= '
@@ -497,14 +488,14 @@ class RequestInfoPanel extends BasePanel {
                 $pageInfo .= '
                 <tr>
                     <td>child</td>
-                    <td>' . ($firstChild->viewable() ? '<a title="View First Child" href="'.$firstChild->url.'">'.$this->getLanguageVersion($firstChild, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($firstChild, 'name', $userLang, true).'</span>') . ' (<a title="Edit First Child" href="'.$firstChild->editUrl().'">'.$firstChild->id.'</a>)</td>
+                    <td>' . ($firstChild->viewable() ? '<a title="View First Child" href="'.$firstChild->url.'">'.$this->getLanguageVersion($firstChild, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($firstChild, 'name', $userLang, true).'</span>') . ' (<a title="Edit First Child" href="'.$firstChild->editUrl().'">'.\TracyDebugger::formatPageStatus($firstChild->id, $firstChild->status).'</a>)</td>
                 </tr>
                 ';
             }
             $pageInfo .= '
                 <tr>
                     <td>createdUser</td>
-                    <td>'.$p->createdUser->name.' (<a title="Edit User" href="'.$this->wire('config')->urls->admin.'access/users/edit/?id='.$p->createdUser->id.'">'.$p->createdUser->id.'</a>)</td>
+                    <td>'.$p->createdUser->name.' (<a title="Edit User" href="'.$this->wire('config')->urls->admin.'access/users/edit/?id='.$p->createdUser->id.'">'.\TracyDebugger::formatPageStatus($p->createdUser->id, $p->createdUser->status).'</a>)</td>
                 </tr>
                 <tr>
                     <td>created</td>
@@ -516,7 +507,7 @@ class RequestInfoPanel extends BasePanel {
                 </tr>
                 <tr>
                     <td>modifiedUser</td>
-                    <td>'.$p->modifiedUser->name.' (<a title="Edit User" href="'.$this->wire('config')->urls->admin.'access/users/edit/?id='.$p->modifiedUser->id.'">'.$p->modifiedUser->id.'</a>)</td>
+                    <td>'.$p->modifiedUser->name.' (<a title="Edit User" href="'.$this->wire('config')->urls->admin.'access/users/edit/?id='.$p->modifiedUser->id.'">'.\TracyDebugger::formatPageStatus($p->modifiedUser->id, $p->modifiedUser->status).'</a>)</td>
                 </tr>
                 <tr>
                     <td>modified</td>

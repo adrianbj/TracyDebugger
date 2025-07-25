@@ -2181,7 +2181,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
     }
 
-
     /**
      * Delete File
      *
@@ -2205,6 +2204,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public static function minify($str) {
         return preg_replace(array('#^\s*//.+$#m', '/\/\*.*?\*\//s', '/ {2,}/','/<!--.*?-->|\t|(?:\r?\n[ \t]*)+/s'),array('', '', ' ', ''), $str);
+    }
+
+    public static function formatPageStatus($val, $status) {
+        $isUnpublished = $status & \ProcessWire\Page::statusUnpublished;
+        $isHidden = $status & \ProcessWire\Page::statusHidden;
+        $isTrash = $status & \ProcessWire\Page::statusTrash;
+        return '<span style="' . ($isUnpublished ? 'text-decoration: line-through; ' : '') . ($isHidden ? 'opacity: 0.5' : '') . '">' . $val . ($isTrash ? ' 🗑︎' : '') . '</span>';
     }
 
 
