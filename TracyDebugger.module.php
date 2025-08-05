@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.26.82',
+            'version' => '4.26.83',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -1162,7 +1162,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             $adminerModuleId = $this->wire('modules')->getModuleID("ProcessTracyAdminer");
                             $adminerUrl = $this->wire('pages')->get("process=$adminerModuleId")->url;
 
+                            ob_start();
+                            \Tracy\Debugger::renderLoader();
+                            $tracy_loader = ob_get_clean();
+                            $event->return = preg_replace(
+                                '/<head\b[^>]*>/i',
+                                '$0' . "\n" . $tracy_loader . "\n",
+                                $event->return
+                            );
+
                             $event->return = str_replace("</body>", "<script>window.HttpRootUrl = '".$this->wire('config')->urls->httpRoot."'; window.AdminerUrl = '".$adminerUrl."'; window.AdminerRendererUrl = '".$adminerRendererUrl."'; window.TracyMaxAjaxRows = ".$this->data['maxAjaxRows']."; window.TracyPanelZIndex = " . ($this->data['panelZindex'] + 1) . ";</script></body>", $event->return);
+
 
                             $tracyErrors = Debugger::getBar()->getPanel('Tracy:errors');
                             if(!is_array($tracyErrors->data) || count($tracyErrors->data) === 0) {
