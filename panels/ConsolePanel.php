@@ -168,7 +168,7 @@ class ConsolePanel extends BasePanel {
 
             // page fields
             $i = count($pwAutocompleteArr);
-            if($p) {
+            if($p && !$p instanceof NullPage) {
                 foreach($p->fields as $field) {
                     $pwAutocompleteArr[$i]['name'] = '$page->'.$field;
                     $pwAutocompleteArr[$i]['meta'] = 'PW ' . str_replace('Fieldtype', '', $field->type) . ' field';
