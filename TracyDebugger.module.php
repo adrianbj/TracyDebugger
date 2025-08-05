@@ -1162,15 +1162,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             $adminerModuleId = $this->wire('modules')->getModuleID("ProcessTracyAdminer");
                             $adminerUrl = $this->wire('pages')->get("process=$adminerModuleId")->url;
 
-                            ob_start();
-                            \Tracy\Debugger::renderLoader();
-                            $tracy_loader = ob_get_clean();
-                            $event->return = preg_replace(
-                                '/<head\b[^>]*>/i',
-                                '$0' . "\n" . $tracy_loader . "\n",
-                                $event->return
-                            );
-
                             $event->return = str_replace("</body>", "<script>window.HttpRootUrl = '".$this->wire('config')->urls->httpRoot."'; window.AdminerUrl = '".$adminerUrl."'; window.AdminerRendererUrl = '".$adminerRendererUrl."'; window.TracyMaxAjaxRows = ".$this->data['maxAjaxRows']."; window.TracyPanelZIndex = " . ($this->data['panelZindex'] + 1) . ";</script></body>", $event->return);
 
 
