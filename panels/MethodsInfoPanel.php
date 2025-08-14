@@ -1,4 +1,6 @@
-<?php
+<?php namespace ProcessWire;
+
+use Tracy\Debugger;
 
 class MethodsInfoPanel extends BasePanel {
 
@@ -6,19 +8,19 @@ class MethodsInfoPanel extends BasePanel {
 
     public function getTab() {
 
-        if(\TracyDebugger::isAdditionalBar()) return;
-        \Tracy\Debugger::timer('methodsInfo');
+        if(TracyDebugger::isAdditionalBar()) return;
+        Debugger::timer('methodsInfo');
 
         $this->icon = '
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="16px" height="16px" viewBox="0 0 16 16">
-                <path fill="'.\TracyDebugger::COLOR_NORMAL.'" d="M2.1 3.1c0.2 1.3 0.4 1.6 0.4 2.9 0 0.8-1.5 1.5-1.5 1.5v1c0 0 1.5 0.7 1.5 1.5 0 1.3-0.2 1.6-0.4 2.9-0.3 2.1 0.8 3.1 1.8 3.1s2.1 0 2.1 0v-2c0 0-1.8 0.2-1.8-1 0-0.9 0.2-0.9 0.4-2.9 0.1-0.9-0.5-1.6-1.1-2.1 0.6-0.5 1.2-1.1 1.1-2-0.3-2-0.4-2-0.4-2.9 0-1.2 1.8-1.1 1.8-1.1v-2c0 0-1 0-2.1 0s-2.1 1-1.8 3.1z"/>
-                <path fill="'.\TracyDebugger::COLOR_NORMAL.'" d="M13.9 3.1c-0.2 1.3-0.4 1.6-0.4 2.9 0 0.8 1.5 1.5 1.5 1.5v1c0 0-1.5 0.7-1.5 1.5 0 1.3 0.2 1.6 0.4 2.9 0.3 2.1-0.8 3.1-1.8 3.1s-2.1 0-2.1 0v-2c0 0 1.8 0.2 1.8-1 0-0.9-0.2-0.9-0.4-2.9-0.1-0.9 0.5-1.6 1.1-2.1-0.6-0.5-1.2-1.1-1.1-2 0.2-2 0.4-2 0.4-2.9 0-1.2-1.8-1.1-1.8-1.1v-2c0 0 1 0 2.1 0s2.1 1 1.8 3.1z"/>
+                <path fill="'.TracyDebugger::COLOR_NORMAL.'" d="M2.1 3.1c0.2 1.3 0.4 1.6 0.4 2.9 0 0.8-1.5 1.5-1.5 1.5v1c0 0 1.5 0.7 1.5 1.5 0 1.3-0.2 1.6-0.4 2.9-0.3 2.1 0.8 3.1 1.8 3.1s2.1 0 2.1 0v-2c0 0-1.8 0.2-1.8-1 0-0.9 0.2-0.9 0.4-2.9 0.1-0.9-0.5-1.6-1.1-2.1 0.6-0.5 1.2-1.1 1.1-2-0.3-2-0.4-2-0.4-2.9 0-1.2 1.8-1.1 1.8-1.1v-2c0 0-1 0-2.1 0s-2.1 1-1.8 3.1z"/>
+                <path fill="'.TracyDebugger::COLOR_NORMAL.'" d="M13.9 3.1c-0.2 1.3-0.4 1.6-0.4 2.9 0 0.8 1.5 1.5 1.5 1.5v1c0 0-1.5 0.7-1.5 1.5 0 1.3 0.2 1.6 0.4 2.9 0.3 2.1-0.8 3.1-1.8 3.1s-2.1 0-2.1 0v-2c0 0 1.8 0.2 1.8-1 0-0.9-0.2-0.9-0.4-2.9-0.1-0.9 0.5-1.6 1.1-2.1-0.6-0.5-1.2-1.1-1.1-2 0.2-2 0.4-2 0.4-2.9 0-1.2-1.8-1.1-1.8-1.1v-2c0 0 1 0 2.1 0s2.1 1 1.8 3.1z"/>
             </svg>
         ';
 
         return '
         <span title="Methods Info">
-            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Methods Info' : '') . '
+            ' . $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? 'Methods Info' : '') . '
         </span>
         ';
     }
@@ -104,7 +106,7 @@ class MethodsInfoPanel extends BasePanel {
                 TD::timer()<br />
             </p>
             ';
-            $out .= \TracyDebugger::generatePanelFooter('methodsInfo', \Tracy\Debugger::timer('methodsInfo'), strlen($out), 'methodShortcuts') . '
+            $out .= TracyDebugger::generatePanelFooter('methodsInfo', Debugger::timer('methodsInfo'), strlen($out), 'methodShortcuts') . '
         </div>
         ';
 

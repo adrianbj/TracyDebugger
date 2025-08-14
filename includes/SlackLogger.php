@@ -1,8 +1,4 @@
-<?php
-
-use Tracy\ILogger;
-use Tracy\Logger;
-use Tracy\Dumper;
+<?php namespace ProcessWire;
 
 class SlackLogger {
 
@@ -30,9 +26,9 @@ class SlackLogger {
         $this->endpoint = 'chat.postMessage';
 
         $this->query = [
-            "token" => \TracyDebugger::getDataValue('slackAppOauthToken'),
+            "token" => TracyDebugger::getDataValue('slackAppOauthToken'),
             "text" => $message,
-            "channel" => \TracyDebugger::getDataValue('slackChannel'),
+            "channel" => TracyDebugger::getDataValue('slackChannel'),
             "username" => 'TracyDebugger',
             "icon_emoji" => ':beetle:',
         ];

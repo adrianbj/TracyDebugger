@@ -1,4 +1,4 @@
-<?php
+<?php namespace ProcessWire;
 /**
  * Tracy Debugger Hello World Panel
  *
@@ -9,6 +9,9 @@
  * @license Licensed under MIT
  * @link https://www.baumrock.com
  */
+
+use Tracy\Debugger;
+
 class HelloWorldPanel extends BasePanel {
 
     // settings
@@ -26,9 +29,9 @@ class HelloWorldPanel extends BasePanel {
      * define the tab for the panel in the debug bar
      */
     public function getTab() {
-        if(\TracyDebugger::isAdditionalBar()) return;
-        \Tracy\Debugger::timer($this->name);
-        return "<span title='{$this->label}'>{$this->icon} ".(\TracyDebugger::getDataValue('showPanelLabels') ? $this->label : '')."</span>";
+        if(TracyDebugger::isAdditionalBar()) return;
+        Debugger::timer($this->name);
+        return "<span title='{$this->label}'>{$this->icon} ".(TracyDebugger::getDataValue('showPanelLabels') ? $this->label : '')."</span>";
     }
 
     /**
@@ -43,7 +46,7 @@ class HelloWorldPanel extends BasePanel {
         // panel body
         $out .= '<div class="tracy-inner">';
             $out .= $this->label;
-            $out .= \TracyDebugger::generatePanelFooter($this->name, \Tracy\Debugger::timer($this->name), strlen($out), 'yourSettingsFieldsetId');
+            $out .= TracyDebugger::generatePanelFooter($this->name, Debugger::timer($this->name), strlen($out), 'yourSettingsFieldsetId');
         $out .= '</div>';
 
         return parent::loadResources() . $out;

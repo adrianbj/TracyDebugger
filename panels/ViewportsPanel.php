@@ -1,4 +1,6 @@
-<?php
+<?php namespace ProcessWire;
+
+use Tracy\Debugger;
 
 class ViewportsPanel extends BasePanel {
 
@@ -6,13 +8,13 @@ class ViewportsPanel extends BasePanel {
 
     public function getTab() {
 
-        if(\TracyDebugger::isAdditionalBar()) return;
-        \Tracy\Debugger::timer('viewports');
+        if(TracyDebugger::isAdditionalBar()) return;
+        Debugger::timer('viewports');
 
         $this->icon = '
         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
         viewBox="0 0 20.5 16" enable-background="new 0 0 20.5 16" xml:space="preserve">
-            <path fill="'.\TracyDebugger::COLOR_NORMAL.'" d="M16.2,5.3c-0.3,0-0.5,0-0.8,0c-1.2,0-2,0.8-2,2c0,2.2,0,4.4,0,6.6c0,1.3,0.7,2,2.1,2c0.5,0,0.9-0.3,0.9-0.7
+            <path fill="'.TracyDebugger::COLOR_NORMAL.'" d="M16.2,5.3c-0.3,0-0.5,0-0.8,0c-1.2,0-2,0.8-2,2c0,2.2,0,4.4,0,6.6c0,1.3,0.7,2,2.1,2c0.5,0,0.9-0.3,0.9-0.7
                 c0-0.5-0.3-0.8-0.9-0.8c-0.5,0-0.6-0.1-0.6-0.5c0-2.2,0-4.4,0-6.6c0-0.5,0.1-0.5,0.5-0.5c1,0,1.9,0,2.9,0c0.5,0,0.6,0,0.6,0.6
                 c0,1.6,0,3.3,0,4.9c0,0.5,0.3,0.9,0.8,0.9c0.4,0,0.7-0.3,0.7-0.9c0-1.7,0-3.4,0-5c0-1.2-0.8-1.9-2-1.9c-0.3,0-0.5,0-0.8,0
                 c0-0.1,0-0.2,0-0.3c0-0.9,0-1.7,0-2.6c0-1.5-0.9-2.4-2.4-2.4C11,0,6.7,0,2.4,0C1,0,0,1,0,2.4c0,2.8,0,5.5,0,8.3C0,12,1,13,2.3,13
@@ -21,7 +23,7 @@ class ViewportsPanel extends BasePanel {
                 c0-0.5,0-1,0-1.5c0.5,0,1.1,0,1.6,0c0.5,0,0.8-0.3,0.8-0.7c0-0.4-0.3-0.8-0.8-0.8c-0.1,0-0.1,0-0.2,0c-2.9,0-5.8,0-8.7,0
                 c-0.6,0-0.8-0.2-0.8-0.8c0-2.8,0-5.5,0-8.3c0-0.7,0.2-0.9,0.9-0.9c2.9,0,5.7,0,8.6,0c1.5,0,3,0,4.5,0c0.5,0,0.8,0.2,0.8,0.6
                 C16.2,3.2,16.2,4.2,16.2,5.3z"/>
-            <path fill="'.\TracyDebugger::COLOR_NORMAL.'" d="M16.2,5.3c0-1.1,0-2.2,0-3.2c0-0.4-0.3-0.6-0.8-0.6c-1.5,0-3,0-4.5,0c-2.9,0-5.7,0-8.6,0c-0.7,0-0.9,0.2-0.9,0.9
+            <path fill="'.TracyDebugger::COLOR_NORMAL.'" d="M16.2,5.3c0-1.1,0-2.2,0-3.2c0-0.4-0.3-0.6-0.8-0.6c-1.5,0-3,0-4.5,0c-2.9,0-5.7,0-8.6,0c-0.7,0-0.9,0.2-0.9,0.9
                 c0,2.8,0,5.5,0,8.3c0,0.6,0.2,0.8,0.8,0.8c2.9,0,5.8,0,8.7,0c0.1,0,0.1,0,0.2,0c0.5,0,0.9,0.3,0.8,0.8c0,0.4-0.3,0.7-0.8,0.7
                 c-0.5,0-1,0-1.6,0c0,0.5,0,1,0,1.5c0.1,0,0.2,0,0.3,0c0.5,0,1,0,1.5,0c0.4,0,0.8,0.3,0.8,0.7c0,0.4-0.3,0.7-0.7,0.8
                 c-0.2,0-0.5,0-0.7,0c-1.5,0-2.9,0-4.4,0c-0.6,0-1-0.5-0.8-1c0.1-0.3,0.4-0.5,0.7-0.5c0.6,0,1.2,0,1.8,0c0-0.5,0-1,0-1.5
@@ -35,7 +37,7 @@ class ViewportsPanel extends BasePanel {
 
         return '
         <span title="Viewports">' .
-            $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Viewports' : '') . '
+            $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Viewports' : '') . '
         </span>';
     }
 
@@ -65,7 +67,7 @@ class ViewportsPanel extends BasePanel {
             }
 
         $out .= '
-            <div style="padding-left:5px">'.\TracyDebugger::generatePanelFooter('viewports', \Tracy\Debugger::timer('viewports'), strlen($out), 'viewportsPanel').'</div>';
+            <div style="padding-left:5px">'.TracyDebugger::generatePanelFooter('viewports', Debugger::timer('viewports'), strlen($out), 'viewportsPanel').'</div>';
         $out .= '
         </div>';
 

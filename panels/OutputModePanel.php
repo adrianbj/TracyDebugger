@@ -1,4 +1,6 @@
-<?php
+<?php namespace ProcessWire;
+
+use Tracy\Debugger;
 
 class OutputModePanel extends BasePanel {
 
@@ -6,18 +8,18 @@ class OutputModePanel extends BasePanel {
     protected $developmentIcon;
     protected $productionIcon;
 
-    protected $productionColor = \TracyDebugger::COLOR_NORMAL;
-    protected $developmentColor = \TracyDebugger::COLOR_WARN;
+    protected $productionColor = TracyDebugger::COLOR_NORMAL;
+    protected $developmentColor = TracyDebugger::COLOR_WARN;
 
     public function getTab() {
 
-        if(\TracyDebugger::isAdditionalBar()) return;
-        \Tracy\Debugger::timer('outputMode');
+        if(TracyDebugger::isAdditionalBar()) return;
+        Debugger::timer('outputMode');
 
-        $this->outputMode = \TracyDebugger::getDataValue('outputMode');
+        $this->outputMode = TracyDebugger::getDataValue('outputMode');
 
         if($this->outputMode == 'detect') {
-            $this->outputMode = \TracyDebugger::$isLocal ? 'development' : 'production';
+            $this->outputMode = TracyDebugger::$isLocal ? 'development' : 'production';
         }
 
         $iconColor = $this->outputMode == 'development' ? $this->developmentColor : $this->productionColor;
@@ -43,7 +45,7 @@ class OutputModePanel extends BasePanel {
         </svg>
         ';
 
-        $label = \TracyDebugger::getDataValue('showPanelLabels') ? ucfirst($this->outputMode) : '';
+        $label = TracyDebugger::getDataValue('showPanelLabels') ? ucfirst($this->outputMode) : '';
 
         return '
         <span title="Output Mode: '.ucfirst($this->outputMode).'">
@@ -58,7 +60,7 @@ class OutputModePanel extends BasePanel {
         $out = '<h1>' . str_replace('#FFFFFF', $this->{$this->outputMode.'Color'}, $this->{$this->outputMode.'Icon'}) . ' '.ucfirst($this->outputMode).' Mode</h1>
         <div class="tracy-inner">';
 
-            if(\TracyDebugger::getDataValue('outputMode') == 'detect') {
+            if(TracyDebugger::getDataValue('outputMode') == 'detect') {
                 $out .= '<p>This is automatically switched from the configured "DETECT" mode.</p>';
             }
             elseif($this->outputMode == 'development') {
@@ -70,7 +72,7 @@ class OutputModePanel extends BasePanel {
 
             $out .= '</p>';
 
-            $out .= \TracyDebugger::generatePanelFooter('outputMode', \Tracy\Debugger::timer('outputMode'), strlen($out));
+            $out .= TracyDebugger::generatePanelFooter('outputMode', Debugger::timer('outputMode'), strlen($out));
 
         $out .= '
         </div>';

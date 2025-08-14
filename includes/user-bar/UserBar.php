@@ -1,16 +1,16 @@
-<?php
+<?php namespace ProcessWire;
 
 $userBarStyles = '
 <style>
     div#tracyUserBar {
-        '.\TracyDebugger::getDataValue("userBarTopBottom").': 0px;
-        '.\TracyDebugger::getDataValue("userBarLeftRight").': 0px;
-        z-index: '.\TracyDebugger::getDataValue("panelZindex").';
+        '.TracyDebugger::getDataValue("userBarTopBottom").': 0px;
+        '.TracyDebugger::getDataValue("userBarLeftRight").': 0px;
+        z-index: '.TracyDebugger::getDataValue("panelZindex").';
         position: fixed;
         margin: 0px !important;
-        background: '.(\TracyDebugger::getDataValue("userBarBackgroundColor") ? \TracyDebugger::getDataValue("userBarBackgroundColor") : 'none') .';
+        background: '.(TracyDebugger::getDataValue("userBarBackgroundColor") ? TracyDebugger::getDataValue("userBarBackgroundColor") : 'none') .';
         padding: 1px;
-        opacity: '.\TracyDebugger::getDataValue("userBarBackgroundOpacity").';
+        opacity: '.TracyDebugger::getDataValue("userBarBackgroundOpacity").';
         line-height: 0;
     }
     div#tracyUserBar a {
@@ -40,7 +40,7 @@ $user = $this->wire('user');
 $page = $this->wire('page');
 $pages = $this->wire('pages');
 $config = $this->wire('config');
-$iconColor = \TracyDebugger::getDataValue("userBarIconColor");
+$iconColor = TracyDebugger::getDataValue("userBarIconColor");
 $userBar .= eval($this->data['userBarCustomFeatures']);
 
 $userBar .= '

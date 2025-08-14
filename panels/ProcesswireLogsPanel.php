@@ -1,4 +1,6 @@
-<?php
+<?php namespace ProcessWire;
+
+use Tracy\Debugger;
 
 class ProcesswireLogsPanel extends BasePanel {
 
@@ -9,7 +11,7 @@ class ProcesswireLogsPanel extends BasePanel {
 
     public function getTab() {
 
-        \Tracy\Debugger::timer('processwireLogs');
+        Debugger::timer('processwireLogs');
 
         // end for each section
         $sectionEnd = '
@@ -48,7 +50,7 @@ class ProcesswireLogsPanel extends BasePanel {
 
             foreach($logs as $log) {
 
-                if(in_array($log['name'], \TracyDebugger::getDataValue("excludedPwLogFiles"))) {
+                if(in_array($log['name'], TracyDebugger::getDataValue("excludedPwLogFiles"))) {
                     continue;
                 }
 
@@ -66,7 +68,7 @@ class ProcesswireLogsPanel extends BasePanel {
                         $lines = $custom_logs->getEntries($log['name']);
                     }
                     else {
-                        $lines = \TracyDebugger::tailCustom($this->wire('config')->paths->logs.$log['name'].'.txt', \TracyDebugger::getDataValue("numLogEntries"));
+                        $lines = TracyDebugger::tailCustom($this->wire('config')->paths->logs.$log['name'].'.txt', TracyDebugger::getDataValue("numLogEntries"));
                         $lines = mb_convert_encoding($lines, 'UTF-8');
                         $lines = explode("\n", $lines);
                         foreach($lines as $key => $line) {
@@ -130,15 +132,15 @@ class ProcesswireLogsPanel extends BasePanel {
                 array_multisort($timestamp, SORT_DESC, $order, SORT_ASC, SORT_NATURAL, $entriesArr);
 
                 //display most recent entries from all log files
-                foreach(array_slice($entriesArr, 0, \TracyDebugger::getDataValue("numLogEntries")) as $item) {
+                foreach(array_slice($entriesArr, 0, TracyDebugger::getDataValue("numLogEntries")) as $item) {
 
                     if(in_array($item['log'], $errorLogs)) {
                         $isError = true;
-                        $color = \TracyDebugger::COLOR_ALERT;
+                        $color = TracyDebugger::COLOR_ALERT;
                     }
                     else {
                         $isError = false;
-                        $color = \TracyDebugger::COLOR_WARN;
+                        $color = TracyDebugger::COLOR_WARN;
                     }
 
                     $trimmedText = trim(htmlspecialchars($item['text'], ENT_QUOTES, 'UTF-8'));
@@ -149,7 +151,7 @@ class ProcesswireLogsPanel extends BasePanel {
                         "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
                         "<td>".$item['user']."</td>" .
                         "<td>".$item['url']."</td>" .
-                        "<td>".\TracyDebugger::createEditorLink($this->wire('config')->paths->logs . $item['log'] . '.txt', 1, (strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText), 'View in your code editor').(\TracyDebugger::isJson($item['text']) ? "\n".\Tracy\Dumper::toHtml(json_decode($item['text'], true)) : '')."</td>" .
+                        "<td>".TracyDebugger::createEditorLink($this->wire('config')->paths->logs . $item['log'] . '.txt', 1, (strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText), 'View in your code editor').(TracyDebugger::isJson($item['text']) ? "\n".\Tracy\Dumper::toHtml(json_decode($item['text'], true)) : '')."</td>" .
                     "</tr>";
                 }
                 $this->logEntries .= $sectionEnd;
@@ -158,13 +160,13 @@ class ProcesswireLogsPanel extends BasePanel {
 
         // color icon based on errors/other log entries
         if($isNewErrors > 0) {
-            $this->iconColor = \TracyDebugger::COLOR_ALERT;
+            $this->iconColor = TracyDebugger::COLOR_ALERT;
         }
         elseif($isNew > 0) {
-            $this->iconColor = \TracyDebugger::COLOR_WARN;
+            $this->iconColor = TracyDebugger::COLOR_WARN;
         }
         else {
-            $this->iconColor = \TracyDebugger::COLOR_NORMAL;
+            $this->iconColor = TracyDebugger::COLOR_NORMAL;
         }
 
         $this->icon = '
@@ -174,7 +176,7 @@ class ProcesswireLogsPanel extends BasePanel {
 
         return '
         <span title="ProcessWire Logs">' .
-            $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'PW Logs' : '') . '
+            $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? 'PW Logs' : '') . '
         </span>
         ';
     }
@@ -201,7 +203,7 @@ class ProcesswireLogsPanel extends BasePanel {
     public function getPanel() {
 
         // Load all the panel sections
-        $isAdditionalBar = \TracyDebugger::isAdditionalBar();
+        $isAdditionalBar = TracyDebugger::isAdditionalBar();
         $out = '
         <h1>
             <a title="ProcessWire Logs" href="'.$this->wire('config')->urls->admin.'setup/logs/">
@@ -215,13 +217,13 @@ class ProcesswireLogsPanel extends BasePanel {
             if($this->numLogEntries > 0) {
                 $out .= '
                 <p>
-                    <form method="post" action="'.\TracyDebugger::inputUrl(true).'">
+                    <form method="post" action="'.TracyDebugger::inputUrl(true).'">
                         <input type="submit" name="deleteProcessWireLogs" value="Delete All Logs" />
                     </form>
                 </p>';
             }
 
-            $out .= \TracyDebugger::generatePanelFooter('processwireLogs', \Tracy\Debugger::timer('processwireLogs'), strlen($out), 'processwireAndTracyLogsPanels');
+            $out .= TracyDebugger::generatePanelFooter('processwireLogs', Debugger::timer('processwireLogs'), strlen($out), 'processwireAndTracyLogsPanels');
 
         $out .= '
         </div>';

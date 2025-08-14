@@ -1,4 +1,4 @@
-<?php
+<?php namespace ProcessWire;
 
 $p = $this->wire('pages')->get((int)$_POST['goToPage']);
 $pageInfo = array();

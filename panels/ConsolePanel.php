@@ -1,4 +1,6 @@
-<?php
+<?php namespace ProcessWire;
+
+use Tracy\Debugger;
 
 class ConsolePanel extends BasePanel {
 
@@ -7,18 +9,18 @@ class ConsolePanel extends BasePanel {
     private $tracyIncludeCode;
 
     public function getTab() {
-        if(\TracyDebugger::isAdditionalBar()) {
+        if(TracyDebugger::isAdditionalBar()) {
             return;
         }
 
-        \Tracy\Debugger::timer('console');
+        Debugger::timer('console');
 
         $this->tracyIncludeCode = json_decode((string)$this->wire('input')->cookie->tracyIncludeCode, true);
         if($this->tracyIncludeCode && $this->tracyIncludeCode['when'] !== 'off') {
-            $this->iconColor = $this->wire('input')->cookie->tracyCodeError ? \TracyDebugger::COLOR_ALERT : \TracyDebugger::COLOR_WARN;
+            $this->iconColor = $this->wire('input')->cookie->tracyCodeError ? TracyDebugger::COLOR_ALERT : TracyDebugger::COLOR_WARN;
         }
         else {
-            $this->iconColor = \TracyDebugger::COLOR_NORMAL;
+            $this->iconColor = TracyDebugger::COLOR_NORMAL;
         }
 
         $this->icon = '
@@ -31,7 +33,7 @@ class ConsolePanel extends BasePanel {
 
         return '
         <span title="Console">
-            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Console' : '') . '
+            ' . $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Console' : '') . '
         </span>';
     }
 
@@ -41,14 +43,14 @@ class ConsolePanel extends BasePanel {
         $rootPath = $this->wire('config')->paths->root;
         $currentUrl = $_SERVER['REQUEST_URI'];
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
-        $inAdmin = \TracyDebugger::$inAdmin;
+        $inAdmin = TracyDebugger::$inAdmin;
 
         // store various $input properties so they are available to the console
         $this->wire('session')->tracyPostData = $this->wire('input')->post->getArray();
         $this->wire('session')->tracyGetData = $this->wire('input')->get->getArray();
         $this->wire('session')->tracyWhitelistData = $this->wire('input')->whitelist->getArray();
 
-        if(\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
+        if(TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
             ($this->wire('process') == 'ProcessPageEdit' ||
                 $this->wire('process') == 'ProcessUser' ||
                 $this->wire('process') == 'ProcessRole' ||
@@ -85,7 +87,7 @@ class ConsolePanel extends BasePanel {
             $mid = null;
         }
 
-        $pageUrl = \TracyDebugger::inputUrl(true);
+        $pageUrl = TracyDebugger::inputUrl(true);
 
         $file = $this->wire('config')->paths->cache . 'TracyDebugger/consoleCode.php';
         if(file_exists($file)) {
@@ -99,16 +101,16 @@ class ConsolePanel extends BasePanel {
 
         // get snippets from filesystem
         $snippets = array();
-        $snippetsPath = \TracyDebugger::getDataValue('snippetsPath').'/TracyDebugger/snippets/';
+        $snippetsPath = TracyDebugger::getDataValue('snippetsPath').'/TracyDebugger/snippets/';
         if(file_exists($this->wire('config')->paths->site.$snippetsPath)) {
-            $snippetFiles = new DirectoryIterator($this->wire('config')->paths->site.$snippetsPath);
+            $snippetFiles = new \DirectoryIterator($this->wire('config')->paths->site.$snippetsPath);
             $i=0;
             foreach($snippetFiles as $snippetFile) {
                 if(!$snippetFile->isDot() && $snippetFile->isFile()) {
                     $snippetFileName = $snippetFile->getPathname();
                     $snippets[$i]['name'] = pathinfo($snippetFileName, PATHINFO_BASENAME);
                     $snippets[$i]['filename'] = $snippetFileName;
-                    $snippets[$i]['code'] = str_replace(\TracyDebugger::getDataValue('consoleCodePrefix'), '', file_get_contents($snippetFileName));
+                    $snippets[$i]['code'] = str_replace(TracyDebugger::getDataValue('consoleCodePrefix'), '', file_get_contents($snippetFileName));
                     $snippets[$i]['modified'] = filemtime($snippetFileName);
                     $i++;
                 }
@@ -120,7 +122,7 @@ class ConsolePanel extends BasePanel {
         $out = '<script>' . file_get_contents($this->wire('config')->paths->TracyDebugger . 'scripts/get-query-variable.js') . '</script>';
 
         // determine whether 'l' or 'line' is used for line number with current editor
-        parse_str(\Tracy\Debugger::$editor, $vars);
+        parse_str(Debugger::$editor, $vars);
         $lineVar = array_key_exists('l', $vars) ? 'l' : 'line';
 
         $maximizeSvg =
@@ -130,14 +132,14 @@ class ConsolePanel extends BasePanel {
             <polygon fill="#AEAEAE" points="293.9,243.6 282.8,246.2 286.1,235.3 "/>
         </svg>';
 
-        $codeUseSoftTabs = \TracyDebugger::getDataValue('codeUseSoftTabs');
-        $codeShowInvisibles = \TracyDebugger::getDataValue('codeShowInvisibles');
-        $codeTabSize = \TracyDebugger::getDataValue('codeTabSize');
-        $customSnippetsUrl = \TracyDebugger::getDataValue('customSnippetsUrl');
+        $codeUseSoftTabs = TracyDebugger::getDataValue('codeUseSoftTabs');
+        $codeShowInvisibles = TracyDebugger::getDataValue('codeShowInvisibles');
+        $codeTabSize = TracyDebugger::getDataValue('codeTabSize');
+        $customSnippetsUrl = TracyDebugger::getDataValue('customSnippetsUrl');
 
-        if(\TracyDebugger::getDataValue('pwAutocompletions')) {
+        if(TracyDebugger::getDataValue('pwAutocompletions')) {
             $i=0;
-            foreach(\TracyDebugger::getApiData('variables') as $key => $vars) {
+            foreach(TracyDebugger::getApiData('variables') as $key => $vars) {
                 foreach($vars as $name => $params) {
                     if(strpos($name, '()') !== false) {
                         $pwAutocompleteArr[$i]['name'] = "$$key->" . str_replace('___', '', $name) . ($this->wire()->$key && method_exists($this->wire()->$key, $name) ? '()' : '');
@@ -147,7 +149,7 @@ class ConsolePanel extends BasePanel {
                         $pwAutocompleteArr[$i]['name'] = "$$key->" . str_replace('___', '', $name);
                         $pwAutocompleteArr[$i]['meta'] = 'PW property';
                     }
-                    if(\TracyDebugger::getDataValue('codeShowDescription')) {
+                    if(TracyDebugger::getDataValue('codeShowDescription')) {
                         $pwAutocompleteArr[$i]['docHTML'] = $params['description'] . "\n" . (isset($params['params']) && !empty($params['params']) ? '('.implode(', ', $params['params']).')' : '');
                     }
                     $i++;
@@ -155,11 +157,11 @@ class ConsolePanel extends BasePanel {
             }
 
             $i=0;
-            foreach(\TracyDebugger::getApiData('proceduralFunctions') as $key => $vars) {
+            foreach(TracyDebugger::getApiData('proceduralFunctions') as $key => $vars) {
                 foreach($vars as $name => $params) {
                     $pwAutocompleteArr[$i]['name'] = $name . '()';
                     $pwAutocompleteArr[$i]['meta'] = 'PW function';
-                    if(\TracyDebugger::getDataValue('codeShowDescription')) {
+                    if(TracyDebugger::getDataValue('codeShowDescription')) {
                         $pwAutocompleteArr[$i]['docHTML'] = $params['description'] . "\n" . (isset($params['params']) && !empty($params['params']) ? '('.implode(', ', $params['params']).')' : '');
                     }
                     $i++;
@@ -172,7 +174,7 @@ class ConsolePanel extends BasePanel {
                 foreach($p->fields as $field) {
                     $pwAutocompleteArr[$i]['name'] = '$page->'.$field;
                     $pwAutocompleteArr[$i]['meta'] = 'PW ' . str_replace('Fieldtype', '', $field->type) . ' field';
-                    if(\TracyDebugger::getDataValue('codeShowDescription')) $pwAutocompleteArr[$i]['docHTML'] = $field->description;
+                    if(TracyDebugger::getDataValue('codeShowDescription')) $pwAutocompleteArr[$i]['docHTML'] = $field->description;
                     $i++;
                 }
             }
@@ -182,12 +184,12 @@ class ConsolePanel extends BasePanel {
             $pwAutocomplete = json_encode(array());
         }
 
-        $aceTheme = \TracyDebugger::getDataValue('aceTheme');
-        $codeFontSize = \TracyDebugger::getDataValue('codeFontSize');
-        $codeLineHeight = \TracyDebugger::getDataValue('codeLineHeight');
-        $externalEditorLink = str_replace('"', "'", \TracyDebugger::createEditorLink($this->wire('config')->paths->site.\TracyDebugger::getDataValue('snippetsPath').'/TracyDebugger/snippets/'.'ExternalEditorDummyFile', 0, '&#xf040;', 'Edit in external editor'));
-        $colorNormal = \TracyDebugger::COLOR_NORMAL;
-        $colorWarn = \TracyDebugger::COLOR_WARN;
+        $aceTheme = TracyDebugger::getDataValue('aceTheme');
+        $codeFontSize = TracyDebugger::getDataValue('codeFontSize');
+        $codeLineHeight = TracyDebugger::getDataValue('codeLineHeight');
+        $externalEditorLink = str_replace('"', "'", TracyDebugger::createEditorLink($this->wire('config')->paths->site.TracyDebugger::getDataValue('snippetsPath').'/TracyDebugger/snippets/'.'ExternalEditorDummyFile', 0, '&#xf040;', 'Edit in external editor'));
+        $colorNormal = TracyDebugger::COLOR_NORMAL;
+        $colorWarn = TracyDebugger::COLOR_WARN;
 
         $out .= <<< HTML
         <script>
@@ -433,9 +435,9 @@ class ConsolePanel extends BasePanel {
                 },
 
                 toggleFullscreen: function() {
-                    var tracyConsolePanel = document.getElementById('tracy-debug-panel-ConsolePanel');
+                    var tracyConsolePanel = document.getElementById('tracy-debug-panel-ProcessWire-ConsolePanel');
                     if(!document.getElementById("tracyConsoleContainer").classList.contains("maximizedConsole")) {
-                        window.Tracy.Debug.panels["tracy-debug-panel-ConsolePanel"].toFloat();
+                        window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-ConsolePanel"].toFloat();
                         // hack to hide resize handle that was showing through
                         tracyConsolePanel.style.resize = 'none';
                         if(this.isSafari()) {
@@ -499,8 +501,8 @@ class ConsolePanel extends BasePanel {
                                 localStorage.setItem("tracyConsoleTabs", JSON.stringify(tracyConsoleTabs));
 
                                 document.getElementById("tracyConsoleResult_"+resultId).scrollIntoView();
-                                if(!document.getElementById("tracy-debug-panel-ConsolePanel").classList.contains("tracy-mode-float")) {
-                                    window.Tracy.Debug.panels["tracy-debug-panel-ConsolePanel"].toFloat();
+                                if(!document.getElementById("tracy-debug-panel-ProcessWire-ConsolePanel").classList.contains("tracy-mode-float")) {
+                                    window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-ConsolePanel"].toFloat();
                                 }
                             }
                             else {
@@ -529,7 +531,7 @@ class ConsolePanel extends BasePanel {
                 resizeAce: function(focus = true) {
                     tracyConsole.tce.resize(true);
                     if(focus) {
-                        window.Tracy.Debug.panels["tracy-debug-panel-ConsolePanel"].focus();
+                        window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-ConsolePanel"].focus();
                         tracyConsole.tce.focus();
                     }
                 },
@@ -1380,7 +1382,7 @@ class ConsolePanel extends BasePanel {
                             }
 
                             document.getElementById("tracyConsoleCode").querySelector(".ace_text-input").addEventListener("keydown", function(e) {
-                                if(document.getElementById("tracy-debug-panel-ConsolePanel").classList.contains("tracy-focused")) {
+                                if(document.getElementById("tracy-debug-panel-ProcessWire-ConsolePanel").classList.contains("tracy-focused")) {
                                     // shift enter - expand to fit all code while still adding new line and save
                                     // shift backspace - delete line and row in code pane and save
                                     if(e.shiftKey && ((e.keyCode==13||e.charCode==13) || (e.keyCode==8||e.charCode==8))) {
@@ -1506,18 +1508,18 @@ class ConsolePanel extends BasePanel {
                                 }
                             });
                         });
-                        tracyConsole.observer.observe(document.getElementById("tracy-debug-panel-ConsolePanel"), config);
+                        tracyConsole.observer.observe(document.getElementById("tracy-debug-panel-ProcessWire-ConsolePanel"), config);
 
                         // this is necessary for Safari, but not Chrome and Firefox
                         // otherwise resizing panel container doesn't resize internal console panes
                         if(tracyConsole.isSafari()) {
-                            document.getElementById("tracy-debug-panel-ConsolePanel").addEventListener('mousemove', function() {
+                            document.getElementById("tracy-debug-panel-ProcessWire-ConsolePanel").addEventListener('mousemove', function() {
                                 tracyConsole.resizeAce();
                             });
                         }
 
                         window.onresize = function(event) {
-                            if(document.getElementById("tracy-debug-panel-ConsolePanel").classList.contains("tracy-focused")) {
+                            if(document.getElementById("tracy-debug-panel-ProcessWire-ConsolePanel").classList.contains("tracy-focused")) {
                                 tracyConsole.resizeAce();
                             }
                         };
@@ -1539,7 +1541,7 @@ class ConsolePanel extends BasePanel {
 
                         // various keyboard shortcuts
                         document.getElementById("tracyConsoleCode").querySelector(".ace_text-input").addEventListener("keydown", function(e) {
-                            if(document.getElementById("tracy-debug-panel-ConsolePanel").classList.contains("tracy-focused")) {
+                            if(document.getElementById("tracy-debug-panel-ProcessWire-ConsolePanel").classList.contains("tracy-focused")) {
                                 if(((e.keyCode==10||e.charCode==10)||(e.keyCode==13||e.charCode==13)) && (e.metaKey || e.ctrlKey || e.altKey) && !e.shiftKey) {
                                     e.preventDefault();
                                     if(e.altKey) tracyConsole.clearResults();
@@ -1602,7 +1604,7 @@ HTML;
 
             <div style="position: relative; height: calc(100% - 80px)">
 
-                <div id="tracyConsoleMainContainer" class="tracy-console-'.\TracyDebugger::getDataValue('consoleTabsTheme').'" style="position: absolute; height: 100%; width: '.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '100%' : 'calc(100% - 290px)').'">
+                <div id="tracyConsoleMainContainer" class="tracy-console-'.TracyDebugger::getDataValue('consoleTabsTheme').'" style="position: absolute; height: 100%; width: '.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '100%' : 'calc(100% - 290px)').'">
 
                     <div id="consoleKeyboardShortcuts" class="keyboardShortcuts tracyHidden">';
                         $panel = 'console';
@@ -1693,11 +1695,11 @@ HTML;
 
             </div>
             ';
-        $out .= \TracyDebugger::generatePanelFooter('console', \Tracy\Debugger::timer('console'), strlen($out), 'consolePanel');
+        $out .= TracyDebugger::generatePanelFooter('console', Debugger::timer('console'), strlen($out), 'consolePanel');
         $out .= '
         </div>';
 
-        return parent::loadResources() . \TracyDebugger::minify($out);
+        return parent::loadResources() . TracyDebugger::minify($out);
 
     }
 

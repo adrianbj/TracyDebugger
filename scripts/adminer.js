@@ -1,14 +1,14 @@
 function openAdminer(queryStr) {
     var url = window.AdminerRendererUrl + "?" + queryStr;
-    if(document.getElementById("tracy-debug-panel-AdminerPanel").classList.contains("tracy-mode-window")) {
+    if(document.getElementById("tracy-debug-panel-ProcessWire-AdminerPanel").classList.contains("tracy-mode-window")) {
         document.getElementById('adminer-iframe').src = url;
     }
     else {
-        if(!window.Tracy.Debug.panels || !document.getElementById("tracy-debug-panel-AdminerPanel")) {
+        if(!window.Tracy.Debug.panels || !document.getElementById("tracy-debug-panel-ProcessWire-AdminerPanel")) {
             window.requestAnimationFrame(openAdminer(url));
         }
         else {
-            var panel = window.Tracy.Debug.panels["tracy-debug-panel-AdminerPanel"];
+            var panel = window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-AdminerPanel"];
             if(panel.elem.dataset.tracyContent) {
                 panel.init();
             }

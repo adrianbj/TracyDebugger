@@ -1,4 +1,4 @@
-<?php
+<?php namespace ProcessWire;
 
 class ProcessTracyAdminer extends Process implements Module {
     public static function getModuleInfo() {

@@ -1,4 +1,4 @@
-<?php
+<?php namespace ProcessWire;
 
 use Tracy\Debugger;
 use Tracy\Dumper;
@@ -25,7 +25,7 @@ class TD extends TracyDebugger {
 	 */
 
     protected static function tracyUnavailable() {
-        if(!\TracyDebugger::getDataValue('enabled') || \TracyDebugger::$allowedTracyUser != 'development' || !class_exists('\Tracy\Debugger')) {
+        if(!\TracyDebugger::getDataValue('enabled') || \TracyDebugger::$allowedTracyUser != 'development' || !class_exists('Debugger')) {
             return true;
         }
         else {

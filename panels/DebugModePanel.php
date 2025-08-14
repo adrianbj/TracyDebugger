@@ -1,6 +1,7 @@
-<?php
+<?php namespace ProcessWire;
 
 use \Tracy\Dumper;
+use \Tracy\Debugger;
 
 class DebugModePanel extends BasePanel {
 
@@ -9,11 +10,11 @@ class DebugModePanel extends BasePanel {
 
     public function getTab() {
 
-        \Tracy\Debugger::timer('debugMode');
+        Debugger::timer('debugMode');
 
         $debugMode = $this->wire('config')->debug;
 
-        $this->iconColor = $debugMode && !\TracyDebugger::$isLocal ? \TracyDebugger::COLOR_ALERT : \TracyDebugger::COLOR_NORMAL;
+        $this->iconColor = $debugMode && !TracyDebugger::$isLocal ? TracyDebugger::COLOR_ALERT : TracyDebugger::COLOR_NORMAL;
 
         $tooltip = $label = 'PW Debug Mode ' . ($debugMode ? 'ON' : 'OFF');
 
@@ -24,7 +25,7 @@ class DebugModePanel extends BasePanel {
                     <path d='M451.383,247.54c-3.606-3.617-7.898-5.427-12.847-5.427h-63.953v-83.939l49.396-49.394    c3.614-3.615,5.428-7.898,5.428-12.85c0-4.947-1.813-9.229-5.428-12.847c-3.614-3.616-7.898-5.424-12.847-5.424    s-9.233,1.809-12.847,5.424l-49.396,49.394H107.923L58.529,83.083c-3.617-3.616-7.898-5.424-12.847-5.424    c-4.952,0-9.233,1.809-12.85,5.424c-3.617,3.617-5.424,7.9-5.424,12.847c0,4.952,1.807,9.235,5.424,12.85l49.394,49.394v83.939    H18.273c-4.949,0-9.231,1.81-12.847,5.427C1.809,251.154,0,255.442,0,260.387c0,4.949,1.809,9.237,5.426,12.848    c3.616,3.617,7.898,5.431,12.847,5.431h63.953c0,30.447,5.522,56.53,16.56,78.224l-57.67,64.809    c-3.237,3.81-4.712,8.234-4.425,13.275c0.284,5.037,2.235,9.273,5.852,12.703c3.617,3.045,7.707,4.571,12.275,4.571    c5.33,0,9.897-1.991,13.706-5.995l52.246-59.102l4.285,4.004c2.664,2.479,6.801,5.564,12.419,9.274    c5.617,3.71,11.897,7.423,18.842,11.143c6.95,3.71,15.23,6.852,24.84,9.418c9.614,2.573,19.273,3.86,28.98,3.86V169.034h36.547    V424.85c9.134,0,18.363-1.239,27.688-3.717c9.328-2.471,17.135-5.232,23.418-8.278c6.275-3.049,12.47-6.519,18.555-10.42    c6.092-3.901,10.089-6.612,11.991-8.138c1.909-1.526,3.333-2.762,4.284-3.71l56.534,56.243c3.433,3.617,7.707,5.424,12.847,5.424    c5.141,0,9.422-1.807,12.854-5.424c3.607-3.617,5.421-7.902,5.421-12.851s-1.813-9.232-5.421-12.847l-59.388-59.669    c12.755-22.651,19.13-50.251,19.13-82.796h63.953c4.949,0,9.236-1.81,12.847-5.427c3.614-3.614,5.432-7.898,5.432-12.847    C456.828,255.445,455.011,251.158,451.383,247.54z' fill='".$this->iconColor."'/>
                     <path d='M293.081,31.27c-17.795-17.795-39.352-26.696-64.667-26.696c-25.319,0-46.87,8.901-64.668,26.696    c-17.795,17.797-26.691,39.353-26.691,64.667h182.716C319.771,70.627,310.876,49.067,293.081,31.27z' fill='".$this->iconColor."'/>
                 </g>
-            </svg>&nbsp;" . (\TracyDebugger::getDataValue('showPanelLabels') ? $label : '') . "
+            </svg>&nbsp;" . (TracyDebugger::getDataValue('showPanelLabels') ? $label : '') . "
         </span>
         ";
     }
@@ -61,7 +62,7 @@ class DebugModePanel extends BasePanel {
         $PwVersion = $this->wire('config')->version;
         $debugMode = $this->wire('config')->debug;
 
-        if(\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
+        if(TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
             ($this->wire('process') == 'ProcessPageEdit' ||
                 $this->wire('process') == 'ProcessUser' ||
                 $this->wire('process') == 'ProcessRole' ||
@@ -77,7 +78,7 @@ class DebugModePanel extends BasePanel {
             $p = $this->wire('page');
         }
 
-        $panelSections = \TracyDebugger::getDataValue('debugModePanelSections');
+        $panelSections = TracyDebugger::getDataValue('debugModePanelSections');
 
         // end for each section
         $sectionEnd = '
@@ -85,7 +86,7 @@ class DebugModePanel extends BasePanel {
                 </table>
             </div>';
 
-        $isAdditionalBar = \TracyDebugger::isAdditionalBar();
+        $isAdditionalBar = TracyDebugger::isAdditionalBar();
         $out = "
         <h1>
         <svg xmlns=http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' version='1.1' x='0px' y='0px' width='16px' height='16px' viewBox='0 0 456.828 456.828' style='enable-background:new 0 0 456.828 456.828;' xml:space='preserve'>
@@ -101,13 +102,13 @@ class DebugModePanel extends BasePanel {
         if($debugMode) {
             $out .= '
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 483.537 483.537" style="enable-background:new 0 0 483.537 483.537;" xml:space="preserve" width="16px" height="16px">
-                <path d="M479.963,425.047L269.051,29.854c-5.259-9.88-15.565-16.081-26.782-16.081h-0.03     c-11.217,0-21.492,6.171-26.782,16.051L3.603,425.016c-5.046,9.485-4.773,20.854,0.699,29.974     c5.502,9.15,15.413,14.774,26.083,14.774H453.12c10.701,0,20.58-5.594,26.083-14.774     C484.705,445.84,484.979,434.471,479.963,425.047z M242.239,408.965c-16.781,0-30.399-13.619-30.399-30.399     c0-16.78,13.619-30.399,30.399-30.399c16.75,0,30.399,13.619,30.399,30.399C272.638,395.346,259.02,408.965,242.239,408.965z      M272.669,287.854c0,16.811-13.649,30.399-30.399,30.399c-16.781,0-30.399-13.589-30.399-30.399V166.256     c0-16.781,13.619-30.399,30.399-30.399c16.75,0,30.399,13.619,30.399,30.399V287.854z" fill="'.\TracyDebugger::COLOR_WARN.'"/>
+                <path d="M479.963,425.047L269.051,29.854c-5.259-9.88-15.565-16.081-26.782-16.081h-0.03     c-11.217,0-21.492,6.171-26.782,16.051L3.603,425.016c-5.046,9.485-4.773,20.854,0.699,29.974     c5.502,9.15,15.413,14.774,26.083,14.774H453.12c10.701,0,20.58-5.594,26.083-14.774     C484.705,445.84,484.979,434.471,479.963,425.047z M242.239,408.965c-16.781,0-30.399-13.619-30.399-30.399     c0-16.78,13.619-30.399,30.399-30.399c16.75,0,30.399,13.619,30.399,30.399C272.638,395.346,259.02,408.965,242.239,408.965z      M272.669,287.854c0,16.811-13.649,30.399-30.399,30.399c-16.781,0-30.399-13.589-30.399-30.399V166.256     c0-16.781,13.619-30.399,30.399-30.399c16.75,0,30.399,13.619,30.399,30.399V287.854z" fill="'.TracyDebugger::COLOR_WARN.'"/>
             </svg>&nbsp;
             <strong>WARNING</strong></p><p>ProcessWire Debug Mode is ON<br />Make sure it is OFF for live sites.';
         }
         else {
             $out .= '<strong>ProcessWire Debug Mode is OFF</strong></p>';
-            if(\TracyDebugger::getDataValue('alwaysShowDebugTools')) $out .= '<p>With debug mode off, it is not possible to access the "Database Queries", "Timers", and "Autoload" sections.';
+            if(TracyDebugger::getDataValue('alwaysShowDebugTools')) $out .= '<p>With debug mode off, it is not possible to access the "Database Queries", "Timers", and "Autoload" sections.';
         }
 
         $out .= '</p>';
@@ -117,7 +118,7 @@ class DebugModePanel extends BasePanel {
          * PW Debug Mode Tools panel sections
          */
 
-        if($debugMode || (!$debugMode && \TracyDebugger::getDataValue('alwaysShowDebugTools'))) {
+        if($debugMode || (!$debugMode && TracyDebugger::getDataValue('alwaysShowDebugTools'))) {
 
             // Pages Loaded
             if(in_array('pagesLoaded', $panelSections)) {
@@ -211,7 +212,7 @@ class DebugModePanel extends BasePanel {
                         $file = $rc->getFileName();
                         $line = $rc->getStartLine();
                         $toMethodName = str_replace('ProcessWire\\', '', $rc->getName());
-                        $visitedByStr = \TracyDebugger::createEditorLink(\TracyDebugger::removeCompilerFromPath($file), $line, ($toObject ? "$toObjectName::$toMethodName" : $toMethodName));
+                        $visitedByStr = TracyDebugger::createEditorLink(TracyDebugger::removeCompilerFromPath($file), $line, ($toObject ? "$toObjectName::$toMethodName" : $toMethodName));
                     }
                     else {
                         $visitedByStr = ($toObject ? "$toObjectName::$toMethod" : $toMethod);
@@ -251,7 +252,7 @@ class DebugModePanel extends BasePanel {
                 // Selectors Queries
                 $selectorQueries_oc = 0;
                 $selectorQueries = $this->sectionHeader(array('Order', 'Selector', 'Caller', 'SQL Query', 'Settings', 'Time (ms)'));
-                foreach(\TracyDebugger::$pageFinderQueries as $n => $query) {
+                foreach(TracyDebugger::$pageFinderQueries as $n => $query) {
 
                     if(method_exists('\ProcessWire\Debug', 'backtrace')) {
                         $backtrace = $query->backtrace ?? '';
@@ -272,8 +273,8 @@ class DebugModePanel extends BasePanel {
                     // 3.0.157 and earlier
                     $sqlStr = $query->return->getQuery();
                     }
-                    $options = array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false);
-                    if(defined('\Tracy\Dumper::ITEMS')) array_push($options, array(Dumper::ITEMS => \TracyDebugger::getDataValue('maxItems')));
+                    $options = array(Dumper::LIVE => true, Dumper::DEPTH => TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false);
+                    if(defined('\Tracy\Dumper::ITEMS')) array_push($options, array(Dumper::ITEMS => TracyDebugger::getDataValue('maxItems')));
                     $selectorQueries .= "\n<tr><td>$n</td><td style='max-width: 400px' class='tracy-force-break'>".$selector."</td><td>".$caller."<br />".$backtrace."</td><td style='max-width: 400px' class='tracy-force-break'>".$sqlStr."</td><td>".(isset($query->arguments[1]) ? \Tracy\Dumper::toHtml($query->arguments[1], $options) : '')."</td><td>".($query->arguments[2]*1000)."</td></tr>";
                 }
                 $selectorQueries .= $sectionEnd;
@@ -425,7 +426,7 @@ class DebugModePanel extends BasePanel {
 
         }
 
-        $out .= \TracyDebugger::generatePanelFooter('debugMode', \Tracy\Debugger::timer('debugMode'), strlen($out), 'debugModePanel');
+        $out .= TracyDebugger::generatePanelFooter('debugMode', Debugger::timer('debugMode'), strlen($out), 'debugModePanel');
         $out .= '<br /></div>';
 
         return parent::loadResources() . $out;

@@ -1,17 +1,18 @@
-<?php
+<?php namespace ProcessWire;
+
 unset($this->wire('input')->cookie->tracyCodeError);
 setcookie("tracyCodeError", "", time()-3600);
 if($this->wire('input')->post->allowBluescreen !== 'true') {
     set_error_handler('tracyConsoleErrorHandler');
     set_exception_handler('tracyConsoleExceptionHandler');
 }
-if(\TracyDebugger::getDataValue('use_php_session') === 1 || \TracyDebugger::$tracyVersion == '2.7.x' || \TracyDebugger::$tracyVersion == '2.5.x') {
-    \Tracy\Debugger::$disableShutdownHandler = true;
+if(TracyDebugger::getDataValue('use_php_session') === 1 || TracyDebugger::$tracyVersion == '2.7.x' || TracyDebugger::$tracyVersion == '2.5.x') {
+    Debugger::$disableShutdownHandler = true;
 }
 register_shutdown_function('tracyConsoleShutdownHandler');
 
 // remove location links from dumps - not really meaningful for console
-\TracyDebugger::$fromConsole = true;
+TracyDebugger::$fromConsole = true;
 
 // populate API variables, eg so $page equals $this->wire('page')
 $pwVars = function_exists('wire') ? $this->fuel : \ProcessWire\wire('all');
@@ -19,7 +20,7 @@ foreach($pwVars->getArray() as $key => $value) {
     $$key = $value;
 }
 
-if(\TracyDebugger::$allowedSuperuser || \TracyDebugger::$validLocalUser || \TracyDebugger::$validSwitchedUser) {
+if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser) {
 
     $page = $pages->get((int)$_POST['pid']);
     if(isset($_POST['tracyConsole'])) {
@@ -103,7 +104,7 @@ if(\TracyDebugger::$allowedSuperuser || \TracyDebugger::$validLocalUser || \Trac
                 $filename = 'tracy-console-' . date('Y-m-d-H-i-s');
                 $files = glob($backupDir . "tracy-console-*");
                 if($files) {
-                    if(count($files) >= \TracyDebugger::getDataValue('consoleBackupLimit')) {
+                    if(count($files) >= TracyDebugger::getDataValue('consoleBackupLimit')) {
                         array_multisort(
                             array_map('filemtime', $files),
                             SORT_NUMERIC,
@@ -196,7 +197,7 @@ if(\TracyDebugger::$allowedSuperuser || \TracyDebugger::$validLocalUser || \Trac
         // if in admin then $t won't have been instantiated above so do it now
         if(!isset($t) || !$t instanceof TemplateFile) $t = new TemplateFile($this->file);
 
-        \Tracy\Debugger::timer('consoleCode');
+        Debugger::timer('consoleCode');
         $initialMemory = memory_get_usage();
         // output rendered result of code
         try {
@@ -207,14 +208,14 @@ if(\TracyDebugger::$allowedSuperuser || \TracyDebugger::$validLocalUser || \Trac
         }
         echo '
         <div style="border-top: 1px dotted #cccccc; color:#A9ABAB; border-bottom: 1px solid #cccccc; color:#A9ABAB; font-size: 10px; padding: 3px; margin: 10px 0 0 0;">' .
-            \TracyDebugger::formatTime(\Tracy\Debugger::timer('consoleCode'), false) . ', ' .
-            \TracyDebugger::human_filesize((max((memory_get_usage() - $initialMemory), 0)), false) . '
+            TracyDebugger::formatTime(Debugger::timer('consoleCode'), false) . ', ' .
+            TracyDebugger::human_filesize((max((memory_get_usage() - $initialMemory), 0)), false) . '
         </div>';
 
         // fix for updating AJAX bar
-        if(\TracyDebugger::$tracyVersion == '2.7.x' || \TracyDebugger::$tracyVersion == '2.5.x') {
-            \Tracy\Debugger::getBar()->render();
-            \Tracy\Debugger::$showBar = false;
+        if(TracyDebugger::$tracyVersion == '2.7.x' || TracyDebugger::$tracyVersion == '2.5.x') {
+            Debugger::getBar()->render();
+            Debugger::$showBar = false;
         }
 
     }

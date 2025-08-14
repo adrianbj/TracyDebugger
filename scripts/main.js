@@ -1,5 +1,5 @@
 function tracyResizePanel(panel) {
-    panel = document.getElementById("tracy-debug-panel-" + panel);
+    panel = document.getElementById("tracy-debug-panel-ProcessWire-" + panel);
     var tracyPanel = window.Tracy.Debug.panels[panel.id];
     tracyPanel.elem.classList.add('tracy-panel-resized');
     tracyPanel.elem.dataset.tracyContent = true; // hack to satisy condition in Tracy's restorePosition() method
@@ -23,7 +23,7 @@ function tracyResizePanel(panel) {
 }
 
 function tracyClosePanel(panel) {
-    localStorage.setItem("remove-tracy-debug-panel-" + panel + "Panel", 1);
+    localStorage.setItem("remove-tracy-debug-panel-ProcessWire-" + panel + "Panel", 1);
 }
 
 // panel rollup thanks to @tpr / @rolandtoth

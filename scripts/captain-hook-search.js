@@ -1,7 +1,7 @@
 addFilterBox({
     suffix: "-captainhook-panel",
     target: {
-        selector: "#tracy-debug-panel-CaptainHookPanel .tracy-inner",
+        selector: "#tracy-debug-panel-ProcessWire-CaptainHookPanel .tracy-inner",
         items: "tbody tr"
     },
     wrapper: {
@@ -16,7 +16,7 @@ addFilterBox({
         }
     },
     addTo: {
-        selector: "#tracy-debug-panel-CaptainHookPanel .tracy-icons",
+        selector: "#tracy-debug-panel-ProcessWire-CaptainHookPanel .tracy-icons",
         position: "before"
     },
     inputDelay: 500,
@@ -70,7 +70,7 @@ addFilterBox({
 
                 for(var j = 0; j < $foundItems.length; j++) {
                     $item = $foundItems[j];
-                    $parents = getParentsUntil($item, "#tracy-debug-panel-CaptainHookPanel .tracy-inner");
+                    $parents = getParentsUntil($item, "#tracy-debug-panel-ProcessWire-CaptainHookPanel .tracy-inner");
 
                     $item.setAttribute(displayAttr, visibleMode);
 
@@ -88,7 +88,7 @@ addFilterBox({
             }
 
             // reposition panel so that if it's wider after filtering (expanding results), it won't be off the screen
-            window.Tracy.Debug.panels['tracy-debug-panel-CaptainHookPanel'].reposition();
+            window.Tracy.Debug.panels['tracy-debug-panel-ProcessWire-CaptainHookPanel'].reposition();
         }
     }
 });
