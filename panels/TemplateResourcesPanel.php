@@ -117,7 +117,7 @@ class TemplateResourcesPanel extends BasePanel {
         $this->resourceOutput .= '<h3>Other Searched Files</h3><p>When checking for more than one occurrence of a resource</p>';
         $this->resourceOutput .= $this->sectionHeader(array('Path'));
         foreach($this->searchedFiles as $path) {
-            if(!in_array($path, array_map(array('TracyDebugger', 'removeCompilerFromPath'), TracyDebugger::$includedFiles))) {
+            if(!in_array($path, array_map(array(__NAMESPACE__ . '\TracyDebugger', 'removeCompilerFromPath'), TracyDebugger::$includedFiles))) {
                 $path = TracyDebugger::forwardSlashPath($path);
                 $this->resourceOutput .= "\n<tr>" .
                     '<td>'.TracyDebugger::createEditorLink($path, 1, str_replace($this->wire('config')->paths->root, '/', $path), 'Edit File').'</td>' .
@@ -298,8 +298,8 @@ class TemplateResourcesPanel extends BasePanel {
 
     protected function countInTemplateFiles($resources) {
         $resourceCounts = array();
-        $dir = new RecursiveDirectoryIterator($this->wire('config')->paths->templates);
-        foreach(new RecursiveIteratorIterator($dir) as $file) {
+        $dir = new \RecursiveDirectoryIterator($this->wire('config')->paths->templates);
+        foreach(new \RecursiveIteratorIterator($dir) as $file) {
             if($file->isFile() && ($file->getExtension() == 'php' || $file->getExtension() == 'inc') && $file->getFilename() != 'admin.php') {
                 $this->searchedFiles[] = $file->getPathname();
                 $content = file_get_contents($file->getPathname());

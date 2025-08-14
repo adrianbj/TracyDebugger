@@ -34,12 +34,12 @@ class ValidatorPanel extends BasePanel {
         $showPanelLabels = TracyDebugger::getDataValue('showPanelLabels');
 
         if($this->rawResult) {
-            $doc = new DOMDocument();
+            $doc = new \DOMDocument();
             libxml_use_internal_errors(true);
             $doc->loadHTML($this->rawResult, LIBXML_HTML_NODEFDTD | LIBXML_HTML_NOIMPLIED);
             libxml_use_internal_errors(false);
 
-            $xpath = new DOMXPath($doc);
+            $xpath = new \DOMXPath($doc);
             $success = $xpath->query("//*[@class='success']");
             $failure = $xpath->query("//*[@class='failure']");
 
