@@ -78,7 +78,7 @@ body.tracyHidden:before {
     transform: scale(1.2);
 }
 
-#tracy-debug-bar li>a[rel*="tracy-debug-panel-ProcessWire-Tracy-info"] svg path {
+#tracy-debug-bar li>a[rel*="tracy-debug-panel-Tracy-info"] svg path {
     fill: #354B60;
 }
 
@@ -568,7 +568,7 @@ td pre.tracy-dump {
     background: #E2E9EF !important;
 }
 
-#tracy-debug #tracy-debug-panel-ProcessWire-Tracy-errors pre {
+#tracy-debug #tracy-debug-panel-Tracy-errors pre {
     white-space: inherit;
     margin: 0 !important;
 }
@@ -1083,18 +1083,18 @@ ul.pw-info-links {
     width: 100% !important;
 }
 
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-"] #tracyConsoleMainContainer {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] #tracyConsoleMainContainer {
     float: left;
     display: block;
 }
 
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-window"] #tracyConsoleMainContainer {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-window"] #tracyConsoleMainContainer {
     float: left;
     width: calc(100% - 240px) !important;
     display: block;
 }
 
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-"] {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] {
     min-width: 400px;
     max-width: 100% !important;
     padding: 0 !important;
@@ -1106,21 +1106,21 @@ ul.pw-info-links {
     background-clip: content-box;
 }
 
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-window"] {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-window"] {
     border: none !important;
 }
 
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-"]>* {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>* {
     padding: 10px 12px 11px 10px;
     margin: 0;
 }
 
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-"]>.tracy-inner {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>.tracy-inner {
     padding: 12px 12px 0 12px !important;
     margin: 0 0 20px 0 !important;
 }
 
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-window"]>.tracy-inner {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-window"]>.tracy-inner {
     min-width: 0 !important;
 }
 
@@ -1128,12 +1128,12 @@ ul.pw-info-links {
     text-decoration: none !important;
 }
 
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-"]>.tracy-icons {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>.tracy-icons {
     padding: 0;
     margin-right: -5px;
 }
 
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-"]>.tracy-icons a {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>.tracy-icons a {
     color: #2C3E50 !important;
     padding: 3px 11px 1px;
     display: inline-block;
@@ -1141,27 +1141,27 @@ ul.pw-info-links {
 }
 
 /*
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-"] > .tracy-icons a:first-child {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] > .tracy-icons a:first-child {
     display:none !important;
 }
 */
 
 /* Remove the open in popup window button from all panels */
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-"]>.tracy-icons a[rel="window"],
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-"]>.tracy-icons a[data-tracy-action="window"] {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>.tracy-icons a[rel="window"],
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>.tracy-icons a[data-tracy-action="window"] {
     display: none !important;
 }
 
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-"]>.tracy-icons a[rel="close"],
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-"]>.tracy-icons a[data-tracy-action="close"] {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>.tracy-icons a[rel="close"],
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>.tracy-icons a[data-tracy-action="close"] {
     float: right;
 }
 
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-"]>.tracy-icons a:hover {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>.tracy-icons a:hover {
     background: #e6e8eb !important;
 }
 
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-"]>h1 {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>h1 {
     padding-top: 5px !important;
     padding-bottom: 5px !important;
     font-size: 15px !important;
@@ -1171,12 +1171,12 @@ ul.pw-info-links {
     border-bottom: 1px solid #c9d4e1 !important;
 }
 
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-focused"]>h1 {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-focused"]>h1 {
     opacity: 1 !important;
 }
 
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-"]>h1>svg,
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-"]>h1>a>svg {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>h1>svg,
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>h1>a>svg {
     display: inline-block;
     vertical-align: text-bottom;
     margin-right: 2px;
@@ -1184,8 +1184,8 @@ ul.pw-info-links {
     top: -1px;
 }
 
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-"] input[type="submit"],
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-"] .tracyCopyBtn {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] input[type="submit"],
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] .tracyCopyBtn {
     border-radius: 0 !important;
     padding: 5px 8px !important;
     border-color: rgba(44, 62, 80, 0.2) !important;
@@ -1193,18 +1193,18 @@ ul.pw-info-links {
     transition: all 0.12s;
 }
 
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-"] input[type="submit"]:not([disabled="true"]),
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-"] .tracyCopyBtn:not([disabled="true"]) {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] input[type="submit"]:not([disabled="true"]),
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] .tracyCopyBtn:not([disabled="true"]) {
     background: #e6ebf2 !important;
 }
 
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-"] input[type="submit"]:hover,
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-"] .tracyCopyBtn:hover {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] input[type="submit"]:hover,
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] .tracyCopyBtn:hover {
     background: white !important;
     border-color: #b8c7d8 !important;
 }
 
-#tracy-debug [id^="tracy-debug-panel-ProcessWire-"][class*="tracy-mode-"] label:hover {
+#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] label:hover {
     cursor: pointer;
 }
 

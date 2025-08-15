@@ -1,15 +1,17 @@
 <?php namespace ProcessWire;
 
+use Tracy\Debugger;
+
 unset($this->wire('input')->cookie->tracyCodeError);
 setcookie("tracyCodeError", "", time()-3600);
 if($this->wire('input')->post->allowBluescreen !== 'true') {
-    set_error_handler('tracyConsoleErrorHandler');
-    set_exception_handler('tracyConsoleExceptionHandler');
+    set_error_handler(__NAMESPACE__.'\tracyConsoleErrorHandler');
+    set_exception_handler(__NAMESPACE__.'\tracyConsoleExceptionHandler');
 }
 if(TracyDebugger::getDataValue('use_php_session') === 1 || TracyDebugger::$tracyVersion == '2.7.x' || TracyDebugger::$tracyVersion == '2.5.x') {
     Debugger::$disableShutdownHandler = true;
 }
-register_shutdown_function('tracyConsoleShutdownHandler');
+register_shutdown_function(__NAMESPACE__.'\tracyConsoleShutdownHandler');
 
 // remove location links from dumps - not really meaningful for console
 TracyDebugger::$fromConsole = true;
@@ -296,8 +298,8 @@ function tracyConsoleShutdownHandler() {
 function writeError($error) {
     $customErrStr = $error['message'] . ' on line: ' . (strpos($error['file'], 'cache'.DIRECTORY_SEPARATOR.'TracyDebugger') !== false ? $error['line'] - 1 : $error['line']) . (strpos($error['file'], 'cache'.DIRECTORY_SEPARATOR.'TracyDebugger') !== false ? '' : ' in ' . str_replace(wire('config')->paths->cache . 'FileCompiler'.DIRECTORY_SEPARATOR, '../', $error['file']));
     $customErrStrLog = $customErrStr . (strpos($error['file'], 'cache'.DIRECTORY_SEPARATOR.'TracyDebugger') !== false ? ' in Tracy Console Panel' : '');
-    \TD::fireLog($customErrStrLog);
-    \TD::log($customErrStrLog, 'error');
+    TD::fireLog($customErrStrLog);
+    TD::log($customErrStrLog, 'error');
 
     setcookie('tracyCodeError', $error['type'].': '.$customErrStr, time() + (10 * 365 * 24 * 60 * 60), '/');
 

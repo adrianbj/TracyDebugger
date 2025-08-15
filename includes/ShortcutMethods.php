@@ -5,7 +5,7 @@
  */
 
 function tracyUnavailable() {
-    if(!TracyDebugger::getDataValue('enabled') || TracyDebugger::$allowedTracyUser != 'development' || !class_exists('\TD')) {
+    if(!TracyDebugger::getDataValue('enabled') || TracyDebugger::$allowedTracyUser != 'development' || !class_exists(__NAMESPACE__.'\TD')) {
         return true;
     }
     else {
