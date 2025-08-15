@@ -1360,7 +1360,7 @@ class DiagnosticsPanel extends BasePanel {
 
         $this->incorrectFiles = $this->sectionHeader(array('File', 'Permissions'));
 
-        foreach($iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($this->wire('config')->paths->root, RecursiveDirectoryIterator::SKIP_DOTS), RecursiveIteratorIterator::SELF_FIRST) as $fileinfo) {
+        foreach(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->wire('config')->paths->root, \RecursiveDirectoryIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST) as $fileinfo) {
             if((strpos($fileinfo->getPathname(), 'assets'.DIRECTORY_SEPARATOR.'sessions'.DIRECTORY_SEPARATOR) === false && !$fileinfo->isDir() && strpos($fileinfo->getPathname(), DIRECTORY_SEPARATOR.'.') === false) || $fileinfo->getFilename() == ".htaccess") {
                 $octal_perms = substr(sprintf('%o', $fileinfo->getPerms()), -4);
                 if($octal_perms != $this->wire('config')->chmodFile) $this->incorrectFiles .= '<tr><td>'.$fileinfo->getPathname() . "</td><td>" . $octal_perms . "</tr>\n";
