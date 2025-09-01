@@ -57,11 +57,9 @@ class XmlDumpPlugin extends Plugin
 			});
 		}
 
-		$connection = connection();
-
-		$result = $connection->query($query, 1);
+		$result = Connection::get()->query($query, 1);
 		if ($result) {
-			while ($row = $result->fetch_assoc()) {
+			while ($row = $result->fetchAssoc()) {
 				echo "\t<table name='" . h($table) . "'>\n";
 				foreach ($row as $key => $val) {
 					echo "\t\t<column name='" . h($key) . "'" . (isset($val) ? "" : " null='null'") . ">" . h($val) . "</column>\n";
