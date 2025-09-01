@@ -59,14 +59,12 @@ class JsonDumpPlugin extends Plugin
 			});
 		}
 
-		$connection = connection();
-
-		$result = $connection->query($query, 1);
+		$result = Connection::get()->query($query, 1);
 		if ($result) {
 			echo '"' . addcslashes($table, "\r\n\"\\") . "\": [\n";
 
 			$first = true;
-			while ($row = $result->fetch_assoc()) {
+			while ($row = $result->fetchAssoc()) {
 				echo($first ? "" : ", ");
 
 				foreach ($row as $key => $val) {

@@ -16,7 +16,7 @@ namespace AdminNeo;
 class FrameSupportPlugin extends Plugin
 {
 	/** @var string[] */
-	private $frameAncestors;
+	protected $frameAncestors;
 
 	/**
 	 * List of ancestors can contain sources that are allowed to embed AdminNeo as defined in

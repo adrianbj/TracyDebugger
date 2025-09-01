@@ -476,7 +476,7 @@ class ProcessWirePlugin extends Plugin {
         $isUnpublished = $status & \ProcessWire\Page::statusUnpublished;
         $isHidden = $status & \ProcessWire\Page::statusHidden;
         $isTrash = $status & \ProcessWire\Page::statusTrash;
-        return '<span style="' . ($isUnpublished ? 'text-decoration: line-through; ' : '') . ($isHidden ? 'opacity: 0.5' : '') . '">' . $val . ($isTrash ? ' 🗑︎' : '') . '</span>';
+        return '<span style="' . ($isUnpublished ? 'text-decoration: line-through; ' : '') . ($isHidden ? 'opacity: 0.5' : '') . '">' . ($isTrash ? '🗑︎ ' : '') . $val . '</span>';
     }
 
     private function getFullPath($val, $pages_id) {
