@@ -8,7 +8,7 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
             'summary' => __('Adminer renderer for TracyDebugger.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '2.0.3',
+            'version' => '2.0.4',
             'autoload' => false,
             'singular' => true,
             'icon' => 'database',
