@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.26.86',
+            'version' => '4.26.87',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -966,12 +966,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // now that required classes above have been loaded, we can now exit if user is not allowed
         if(!static::$allowedTracyUser) return;
 
-        // override default PW core behavior that converts exceptions to string for passing to trigger_error()
-        $this->wire()->addHookBefore('Wire::trackException', function($event) {
-            $event->wire()->config->allowExceptions = true;
-        });
-
-        // SET TRACY AS ENBALED
+        // SET TRACY AS ENABLED
         // if we get this far, Tracy is fully enabled, so set this for checking in ready()
         $this->tracyEnabled = true;
 
@@ -997,6 +992,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // TRACY MODE
         if($this->data['outputMode'] == 'development' || static::$allowedTracyUser === 'development') {
+            // override default PW core behavior that converts exceptions to string for passing to trigger_error()
+            $this->wire()->addHookBefore('Wire::trackException', function($event) {
+                $event->wire()->config->allowExceptions = true;
+            });
             $outputMode = Debugger::DEVELOPMENT;
         }
         elseif($this->data['outputMode'] == 'production' || static::$allowedTracyUser === 'production') {
@@ -2583,7 +2582,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $link = '';
             // don't add link again unless it's a repeater field
             if(strpos($appendedMarkup, 'adminer_EditFieldLink') === false || $inputfield instanceof InputfieldRepeater) {
-                $link = '<div class="wrap_adminer_EditFieldLink" style="display: none"><a tabindex="-1" class="adminer_EditFieldLink" title="Edit in Adminer (SHIFT+Click for full Adminer)" href="adminer://?'.$adminerQuery.'">'.$adminerIcon.'</a></div>';
+                $link = '<div class="wrap_adminer_EditFieldLink" style="display: none"><a tabindex="-1" class="adminer_EditFieldLink" title="Edit '.($f->label ? $f->label : $f->name).' in Adminer (SHIFT+Click for full Adminer)" href="adminer://?'.$adminerQuery.'">'.$adminerIcon.'</a></div>';
             }
 
             $inputfield->appendMarkup = $inputfield->appendMarkup . $link;
