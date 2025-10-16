@@ -82,7 +82,7 @@ class RequestInfoPanel extends BasePanel {
         }
 
         // check if request is to a PW page - otherwise it's maybe an AJAX request to an external script
-        $isPwPage = $_SERVER['PHP_SELF'] == $this->wire('config')->urls->root . 'index.php' ? true : false;
+        $isPwPage = $_SERVER['SCRIPT_NAME'] == $this->wire('config')->urls->root . 'index.php' ? true : false;
 
         $panelSections = \TracyDebugger::getDataValue('requestInfoPanelSections');
 
