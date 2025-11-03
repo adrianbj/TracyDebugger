@@ -5,6 +5,8 @@ namespace AdminNeo;
 /**
  * Adds option to export table data to JSON format.
  *
+ * Last changed in release: v5.2.0
+ *
  * @link https://www.adminneo.org/plugins/#usage
  *
  * @author Jakub Vrana, https://www.vrana.cz/
@@ -65,17 +67,15 @@ class JsonDumpPlugin extends Plugin
 
 			$first = true;
 			while ($row = $result->fetchAssoc()) {
-				echo($first ? "" : ", ");
-
-				foreach ($row as $key => $val) {
-					json_row($key, $val);
+				if (!$first) {
+					echo ",\n";
+					$first = false;
 				}
-				json_row("");
 
-				$first = false;
+				echo preg_replace('~\n\s+~', "\n\t", json_encode($row, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
 			}
 
-			echo "]";
+			echo "\n]";
 		}
 
 		return true;

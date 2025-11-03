@@ -7,6 +7,8 @@ use ZipArchive;
 /**
  * Adds ZIP compression of data export.
  *
+ * Last changed in release: v5.2.0
+ * 
  * @link https://www.adminneo.org/plugins/#usage
  *
  * @author Jakub Vrana, https://www.vrana.cz/

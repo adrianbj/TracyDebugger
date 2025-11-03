@@ -9,6 +9,8 @@ namespace AdminNeo;
  * native JSON data type and for values that are automatically detected as JSON objects or arrays if
  * `jsonValuesDetection` configuration option is enabled.
  *
+ * Last changed in release: v5.2.0
+ *
  * @author Peter Knut
  *
  * @license https://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2.0
@@ -216,7 +218,7 @@ class JsonPreviewPlugin extends Plugin
 			checkbox("jsonPreview[]", "", $useDefault, lang('Default')) .
 			checkbox("jsonPreview[]", "table",  $this->inTable, lang('Data table'), "", $useDefault ? "disabled" : "") .
 			checkbox("jsonPreview[]", "edit", $this->inEdit, lang('Edit form'), "", $useDefault ? "disabled" : "") .
-			"<input type='hidden' name='jsonPreview[]' value='x'>" .
+			input_hidden("jsonPreview[]", "x") .
 			"</span></td></tr>\n";
 
 		return $settings;

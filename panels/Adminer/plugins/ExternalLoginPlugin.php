@@ -9,6 +9,8 @@ namespace AdminNeo;
  * the `servers` configuration option to be set together with the database username and password. If only one server is
  * configured, the user will be automatically logged in.
  *
+ * Last changed in release: v5.2.0
+ * 
  * @link https://www.adminneo.org/plugins/#usage
  *
  * @author Peter Knut
