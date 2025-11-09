@@ -48,7 +48,7 @@ class SlackLogger {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         $result = curl_exec($ch);
-        curl_close($ch);
+        if (PHP_MAJOR_VERSION < 8) curl_close($ch);
         return $result;
     }
 

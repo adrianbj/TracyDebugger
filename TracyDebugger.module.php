@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.26.87',
+            'version' => '4.27.0',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -353,7 +353,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if(class_exists('\Tracy\Debugger', false) && Debugger::isEnabled()) return;
 
         // load Tracy files and our helper files
-        if(version_compare(PHP_VERSION, '8.0.0', '>=')) {
+        if(version_compare(PHP_VERSION, '8.2.0', '>=')) {
+            self::$tracyVersion = '2.11.x';
+        }
+        elseif(version_compare(PHP_VERSION, '8.0.0', '>=')) {
             self::$tracyVersion = '2.10.x';
         }
         elseif(version_compare(PHP_VERSION, '7.2.0', '>=')) {
@@ -1163,9 +1166,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
                             $event->return = str_replace("</body>", "<script>window.HttpRootUrl = '".$this->wire('config')->urls->httpRoot."'; window.AdminerUrl = '".$adminerUrl."'; window.AdminerRendererUrl = '".$adminerRendererUrl."'; window.TracyMaxAjaxRows = ".$this->data['maxAjaxRows']."; window.TracyPanelZIndex = " . ($this->data['panelZindex'] + 1) . ";</script></body>", $event->return);
 
-
-                            $tracyErrors = Debugger::getBar()->getPanel('Tracy:errors');
-                            if(!is_array($tracyErrors->data) || count($tracyErrors->data) === 0) {
+                            $tracyWarnings = Debugger::getBar()->getPanel('Tracy:warnings') ? Debugger::getBar()->getPanel('Tracy:warnings') : Debugger::getBar()->getPanel('Tracy:errors');
+                            if(!is_array($tracyWarnings->data) || count($tracyWarnings->data) === 0) {
                                 if(($this->data['hideDebugBar'] && !$this->wire('input')->cookie->tracyShow) || $this->wire('input')->cookie->tracyHidden == 1) {
                                     $hideBar = '
                                         <script>
