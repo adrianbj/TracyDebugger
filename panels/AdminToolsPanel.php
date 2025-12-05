@@ -50,7 +50,7 @@ class AdminToolsPanel extends BasePanel {
 
         <div class="tracy-inner">';
 
-            if(\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') && $this->wire('process') == 'ProcessPageEdit') {
+            if(\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') && ($this->wire('process') == 'ProcessPageEdit' || $this->wire('process') == 'ProcessLanguage')) {
                 $p = $this->wire('process')->getPage();
                 if($p instanceof NullPage) {
                     $p = $this->wire('pages')->get((int) $this->wire('input')->get('id'));
@@ -71,6 +71,17 @@ class AdminToolsPanel extends BasePanel {
                     <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete all children of this page?\');">
                         <input type="hidden" name="adminToolsId" value="'.$p->id.'" />
                         <input type="submit" name="deleteChildren" value="Delete all children" />
+                    </form>
+                </p>';
+            }
+
+            if($this->wire('process') == 'ProcessLanguage' && !$p->hasChildren('include=all')) {
+                $i++;
+                $out .= '
+                <p>
+                    <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete the '.$p->name.' language?\');">
+                        <input type="hidden" name="adminToolsId" value="'.$p->id.'" />
+                        <input type="submit" name="deleteLanguage" value="Delete language" />
                     </form>
                 </p>';
             }

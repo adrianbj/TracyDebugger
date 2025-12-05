@@ -52,7 +52,8 @@ class ConsolePanel extends BasePanel {
             ($this->wire('process') == 'ProcessPageEdit' ||
                 $this->wire('process') == 'ProcessUser' ||
                 $this->wire('process') == 'ProcessRole' ||
-                $this->wire('process') == 'ProcessPermission'
+                $this->wire('process') == 'ProcessPermission' ||
+                $this->wire('process') == 'ProcessLanguage'
             )
         ) {
             $p = $this->wire('process')->getPage();
