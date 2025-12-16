@@ -118,6 +118,7 @@ class ProcessWirePlugin extends Plugin {
 
             td {
                 position: relative;
+                padding-right: 35px;
             }
 
             td .image-thumb {
