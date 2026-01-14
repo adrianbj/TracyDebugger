@@ -95,10 +95,10 @@ class TracyPwApiData extends WireData {
                 else {
                     if(!preg_match("/^[A-Z]/", $class)) continue;
 
-                    if(class_exists("\ProcessWire\\$class")) {
+                    if(class_exists("\ProcessWire\\$class", false)) {
                         $r = new \ReflectionClass("\ProcessWire\\$class");
                     }
-                    elseif(class_exists($class)) {
+                    elseif(class_exists($class, false)) {
                         $r = new \ReflectionClass($class);
                     }
                     else {
@@ -392,10 +392,10 @@ class TracyPwApiData extends WireData {
                             $files['pwFunctions'][$name]['lineNumber'] = $token[2];
 
                             if($className) {
-                                if(class_exists("\ProcessWire\\$className")) {
+                                if(class_exists("\ProcessWire\\$className", false)) {
                                     $r = new \ReflectionMethod("\ProcessWire\\$className", '___'.$methodName);
                                 }
-                                elseif(class_exists($className)) {
+                                elseif(class_exists($className, false)) {
                                     $r = new \ReflectionMethod($className, '___'.$methodName);
                                 }
                                 if(isset($r)) {

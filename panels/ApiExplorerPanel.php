@@ -144,10 +144,10 @@ HTML;
 
         $varTitle = $type == 'variables' ? '$'.lcfirst($var) : $var;
 
-        if(class_exists("\ProcessWire\\$class")) {
+        if(class_exists("\ProcessWire\\$class", false)) {
             $r = new \ReflectionClass("\ProcessWire\\$class");
         }
-        elseif(class_exists($class)) {
+        elseif(class_exists($class, false)) {
             $r = new \ReflectionClass($class);
         }
 
