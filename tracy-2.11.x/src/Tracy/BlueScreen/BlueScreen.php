@@ -30,7 +30,7 @@ class BlueScreen
 	public int $maxLength = 150;
 	public int $maxItems = 100;
 
-	/** @var callable|null  a callable returning true for sensitive data; fn(string $key, mixed $val): bool */
+	/** @var ?(callable(string $key, mixed $value, ?string $class): bool)  callable returning true for sensitive data */
 	public $scrubber;
 
 	/** @var string[] */
@@ -41,15 +41,19 @@ class BlueScreen
 
 	public bool $showEnvironment = true;
 
-	/** @var callable[] */
+	/** @var array<\Closure(?\Throwable): ?array{tab: string, panel: string}> */
 	private array $panels = [];
 
-	/** @var callable[] functions that returns action for exceptions */
+	/** @var array<\Closure(\Throwable): ?array{link: string, label: string}> */
 	private array $actions = [];
-	private array $fileGenerators = [];
-	private ?array $snapshot = null;
 
-	/** @var \WeakMap<\Fiber|\Generator> */
+	/** @var array<\Closure(string, ?string): ?string> */
+	private array $fileGenerators = [];
+
+	/** @var array<Dumper\Value> */
+	private array $snapshot = [];
+
+	/** @var \WeakMap<\Fiber|\Generator, true> */
 	private \WeakMap $fibers;
 
 
@@ -58,18 +62,19 @@ class BlueScreen
 		$this->collapsePaths = preg_match('#(.+/vendor)/tracy/tracy/src/Tracy/BlueScreen$#', strtr(__DIR__, '\\', '/'), $m)
 			? [$m[1] . '/tracy', $m[1] . '/nette', $m[1] . '/latte']
 			: [dirname(__DIR__)];
-		$this->fileGenerators[] = [self::class, 'generateNewPhpFileContents'];
+		$this->fileGenerators[] = self::generateNewPhpFileContents(...);
 		$this->fibers = new \WeakMap;
 	}
 
 
 	/**
-	 * Add custom panel as function (?\Throwable $e): ?array
-	 * @return static
+	 * Add custom panel.
+	 * @param  callable(?\Throwable): ?array{tab: string, panel: string}  $panel
 	 */
-	public function addPanel(callable $panel): self
+	public function addPanel(callable $panel): static
 	{
-		if (!in_array($panel, $this->panels, true)) {
+		$panel = $panel(...);
+		if (!in_array($panel, $this->panels, strict: true)) {
 			$this->panels[] = $panel;
 		}
 
@@ -79,23 +84,22 @@ class BlueScreen
 
 	/**
 	 * Add action.
-	 * @return static
+	 * @param  callable(\Throwable): ?array{link: string, label: string}  $action
 	 */
-	public function addAction(callable $action): self
+	public function addAction(callable $action): static
 	{
-		$this->actions[] = $action;
+		$this->actions[] = $action(...);
 		return $this;
 	}
 
 
 	/**
 	 * Add new file generator.
-	 * @param  callable(string): ?string  $generator
-	 * @return static
+	 * @param  callable(string, ?string): ?string  $generator
 	 */
-	public function addFileGenerator(callable $generator): self
+	public function addFileGenerator(callable $generator): static
 	{
-		$this->fileGenerators[] = $generator;
+		$this->fileGenerators[] = $generator(...);
 		return $this;
 	}
 
@@ -167,7 +171,7 @@ class BlueScreen
 		if (function_exists('apache_request_headers')) {
 			$httpHeaders = apache_request_headers();
 		} else {
-			$httpHeaders = array_filter($_SERVER, fn($k) => strncmp($k, 'HTTP_', 5) === 0, ARRAY_FILTER_USE_KEY);
+			$httpHeaders = array_filter($_SERVER, fn($k) => str_starts_with($k, 'HTTP_'), ARRAY_FILTER_USE_KEY);
 			$httpHeaders = array_combine(array_map(fn($k) => strtolower(strtr(substr($k, 5), '_', '-')), array_keys($httpHeaders)), $httpHeaders);
 		}
 
@@ -175,7 +179,7 @@ class BlueScreen
 		$snapshot = [];
 		$dump = $this->getDumper();
 
-		$css = array_map('file_get_contents', array_merge([
+		$css = array_map(file_get_contents(...), array_merge([
 			__DIR__ . '/../assets/reset.css',
 			__DIR__ . '/assets/bluescreen.css',
 			__DIR__ . '/../assets/toggle.css',
@@ -227,7 +231,7 @@ class BlueScreen
 
 
 	/**
-	 * @return array[]
+	 * @return list<array{link: string, label: string, external?: bool}>
 	 */
 	private function renderActions(\Throwable $ex): array
 	{
@@ -250,7 +254,7 @@ class BlueScreen
 		if (preg_match('# ([\'"])(\w{3,}(?:\\\\\w{2,})+)\1#i', $ex->getMessage(), $m)) {
 			$class = $m[2];
 			if (
-				!class_exists($class, false) && !interface_exists($class, false) && !trait_exists($class, false)
+				!class_exists($class, autoload: false) && !interface_exists($class, autoload: false) && !trait_exists($class, autoload: false)
 				&& ($file = Helpers::guessClassFile($class)) && !@is_file($file) // @ - may trigger error
 			) {
 				[$content, $line] = $this->generateNewFileContents($file, $class);
@@ -356,7 +360,7 @@ class BlueScreen
 		$file = strtr($file, '\\', '/') . '/';
 		foreach ($this->collapsePaths as $path) {
 			$path = strtr($path, '\\', '/') . '/';
-			if (strncmp($file, $path, strlen($path)) === 0) {
+			if (str_starts_with($file, $path)) {
 				return true;
 			}
 		}
@@ -365,7 +369,10 @@ class BlueScreen
 	}
 
 
-	/** @internal */
+	/**
+	 * @return \Closure(mixed, int|string): string
+	 * @internal
+	 */
 	public function getDumper(): \Closure
 	{
 		return fn($v, $k = null): string => Dumper::toHtml($v, [
@@ -397,7 +404,7 @@ class BlueScreen
 			function ($m) {
 				if (isset($m[2]) && method_exists($m[1], $m[2])) {
 					$r = new \ReflectionMethod($m[1], $m[2]);
-				} elseif (class_exists($m[1], false) || interface_exists($m[1], false)) {
+				} elseif (class_exists($m[1], autoload: false) || interface_exists($m[1], autoload: false)) {
 					$r = new \ReflectionClass($m[1]);
 				}
 
@@ -405,7 +412,7 @@ class BlueScreen
 					return $m[0];
 				}
 
-				return '<a href="' . Helpers::escapeHtml(Helpers::editorUri($r->getFileName(), $r->getStartLine())) . '" class="tracy-editor">' . $m[0] . '</a>';
+				return '<a href="' . Helpers::escapeHtml(Helpers::editorUri($r->getFileName(), $r->getStartLine() ?: null)) . '" class="tracy-editor">' . $m[0] . '</a>';
 			},
 			$msg,
 		);
@@ -441,7 +448,7 @@ class BlueScreen
 	}
 
 
-	/** @internal */
+	/** @return array{string, int} */
 	private function generateNewFileContents(string $file, ?string $class = null): array
 	{
 		foreach (array_reverse($this->fileGenerators) as $generator) {
@@ -462,10 +469,9 @@ class BlueScreen
 	}
 
 
-	/** @internal */
-	public static function generateNewPhpFileContents(string $file, ?string $class = null): ?string
+	private static function generateNewPhpFileContents(string $file, ?string $class = null): ?string
 	{
-		if (substr($file, -4) !== '.php') {
+		if (!str_ends_with($file, '.php')) {
 			return null;
 		}
 
@@ -483,6 +489,7 @@ class BlueScreen
 	}
 
 
+	/** @return array{array<int, \Generator>, array<int, \Fiber>} */
 	private function findGeneratorsAndFibers(object $object): array
 	{
 		$generators = $fibers = [];

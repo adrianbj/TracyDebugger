@@ -1040,6 +1040,7 @@ HTML;
 
 
     private function imageStr($inputfield, $image) {
+        if(!$image instanceof PageImage) return '';
         $imagePreview = '';
         if(isset($inputfield) && $inputfield) {
             $thumb = $inputfield->getAdminThumb($image);

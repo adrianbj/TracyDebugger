@@ -50,6 +50,7 @@ class Dumper
 	/** @var Dumper\Value[] */
 	public static array $liveSnapshot = [];
 
+	/** @var ?array<string, string> */
 	public static ?array $terminalColors = [
 		'bool' => '1;33',
 		'null' => '1;33',
@@ -66,12 +67,14 @@ class Dumper
 		'indent' => '1;30',
 	];
 
+	/** @var array<string, string> */
 	public static array $resources = [
 		'stream' => 'stream_get_meta_data',
 		'stream-context' => 'stream_context_get_options',
 		'curl' => 'curl_getinfo',
 	];
 
+	/** @var array<class-string, array{class-string, string}> */
 	public static array $objectExporters = [
 		\Closure::class => [Exposer::class, 'exposeClosure'],
 		\UnitEnum::class => [Exposer::class, 'exposeEnum'],
@@ -103,6 +106,7 @@ class Dumper
 
 	/**
 	 * Dumps variable to the output.
+	 * @param  array<string, mixed>  $options
 	 */
 	public static function dump(mixed $var, array $options = []): mixed
 	{
@@ -126,6 +130,7 @@ class Dumper
 
 	/**
 	 * Dumps variable to HTML.
+	 * @param  array<string, mixed>  $options
 	 */
 	public static function toHtml(mixed $var, array $options = [], mixed $key = null): string
 	{
@@ -135,6 +140,7 @@ class Dumper
 
 	/**
 	 * Dumps variable to plain text.
+	 * @param  array<string, mixed>  $options
 	 */
 	public static function toText(mixed $var, array $options = []): string
 	{
@@ -144,6 +150,7 @@ class Dumper
 
 	/**
 	 * Dumps variable to x-terminal.
+	 * @param  array<string, mixed>  $options
 	 */
 	public static function toTerminal(mixed $var, array $options = []): string
 	{
@@ -164,12 +171,13 @@ class Dumper
 		$sent = true;
 
 		$nonceAttr = Helpers::getNonceAttr();
-		$s = file_get_contents(__DIR__ . '/../assets/toggle.css')
+		$s = (Debugger::$showBar ? '' : file_get_contents(__DIR__ . '/../assets/reset.css'))
+			. file_get_contents(__DIR__ . '/../assets/toggle.css')
 			. file_get_contents(__DIR__ . '/assets/dumper-light.css')
 			. file_get_contents(__DIR__ . '/assets/dumper-dark.css');
 		echo "<style{$nonceAttr}>", str_replace('</', '<\/', Helpers::minifyCss($s)), "</style>\n";
 
-		if (!Debugger::isEnabled()) {
+		if (!Debugger::isEnabled() || !Debugger::$showBar) {
 			$s = '(function(){' . file_get_contents(__DIR__ . '/../assets/toggle.js') . '})();'
 				. '(function(){' . file_get_contents(__DIR__ . '/../assets/helpers.js') . '})();'
 				. '(function(){' . file_get_contents(__DIR__ . '/../Dumper/assets/dumper.js') . '})();';
@@ -178,6 +186,7 @@ class Dumper
 	}
 
 
+	/** @param array<string, mixed>  $options */
 	private function __construct(array $options = [])
 	{
 		$location = $options[self::LOCATION] ?? 0;
@@ -189,7 +198,7 @@ class Dumper
 		$describer->maxItems = (int) ($options[self::ITEMS] ?? $describer->maxItems);
 		$describer->debugInfo = (bool) ($options[self::DEBUGINFO] ?? $describer->debugInfo);
 		$describer->scrubber = $options[self::SCRUBBER] ?? $describer->scrubber;
-		$describer->keysToHide = array_flip(array_map('strtolower', $options[self::KEYS_TO_HIDE] ?? []));
+		$describer->keysToHide = array_flip(array_map(strtolower(...), $options[self::KEYS_TO_HIDE] ?? []));
 		$describer->resourceExposers = ($options['resourceExporters'] ?? []) + self::$resources;
 		$describer->objectExposers = ($options[self::OBJECT_EXPORTERS] ?? []) + self::$objectExporters;
 		$describer->enumProperties = self::$enumProperties;
@@ -239,6 +248,7 @@ class Dumper
 
 	/**
 	 * Dumps variable to x-terminal.
+	 * @param  array<string, string>  $colors
 	 */
 	private function asTerminal(mixed $var, array $colors = []): string
 	{
@@ -247,6 +257,7 @@ class Dumper
 	}
 
 
+	/** @param  array{0?: Dumper\Value[], 1?: mixed[]}  $snapshot */
 	public static function formatSnapshotAttribute(array &$snapshot): string
 	{
 		$res = "'" . Renderer::jsonEncode($snapshot[0] ?? []) . "'";
@@ -255,6 +266,10 @@ class Dumper
 	}
 
 
+	/**
+	 * @param  class-string  $class
+	 * @param  string[]  $constants
+	 */
 	public static function addEnumProperty(string $class, string $property, array $constants, bool $set = false): void
 	{
 		self::$enumProperties["$class::$property"] = [$set, $constants];

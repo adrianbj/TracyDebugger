@@ -20,13 +20,13 @@ final class OutputDebugger
 {
 	private const BOM = "\xEF\xBB\xBF";
 
-	/** @var array of [file, line, output, stack] */
+	/** @var list<array{string, int, string, list<array<string, mixed>>}> */
 	private array $list = [];
 
 
 	public static function enable(): void
 	{
-		$me = new static;
+		$me = new self;
 		$me->start();
 	}
 
@@ -34,17 +34,16 @@ final class OutputDebugger
 	public function start(): void
 	{
 		foreach (get_included_files() as $file) {
-			if (fread(fopen($file, 'r'), 3) === self::BOM) {
-				$this->list[] = [$file, 1, self::BOM];
+			if (file_get_contents($file, length: 3) === self::BOM) {
+				$this->list[] = [$file, 1, self::BOM, []];
 			}
 		}
 
-		ob_start([$this, 'handler'], 1);
+		ob_start($this->handler(...), 1);
 	}
 
 
-	/** @internal */
-	public function handler(string $s, int $phase): string
+	private function handler(string $s, int $phase): string
 	{
 		$trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
 		if (isset($trace[0]['file'], $trace[0]['line'])) {

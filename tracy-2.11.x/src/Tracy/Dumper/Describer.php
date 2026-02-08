@@ -32,29 +32,31 @@ final class Describer
 	/** @var Value[] */
 	public array $snapshot = [];
 	public bool $debugInfo = false;
+
+	/** @var array<string, int> */
 	public array $keysToHide = [];
 
-	/** @var (callable(string, mixed): bool)|null */
+	/** @var ?(callable(string $key, mixed $value, ?string $class): bool) */
 	public $scrubber;
 
 	public bool $location = false;
 
-	/** @var array<string, callable(resource): array> */
+	/** @var array<string, callable(resource): array<string, mixed>> */
 	public array $resourceExposers = [];
 
-	/** @var array<string, callable(object, Value, self): ?array> */
+	/** @var array<string, callable(object, Value, self): ?array<string, mixed>> */
 	public array $objectExposers = [];
 
 	/** @var array<string, array{bool, string[]}> */
 	public array $enumProperties = [];
 
-	/** @var (int|\stdClass)[] */
+	/** @var array<string, int> */
 	public array $references = [];
 
 
 	public function describe(mixed $var): \stdClass
 	{
-		uksort($this->objectExposers, fn($a, $b): int => $b === '' || (class_exists($a, false) && is_subclass_of($a, $b)) ? -1 : 1);
+		uksort($this->objectExposers, fn($a, $b): int => $b === '' || (class_exists($a, autoload: false) && is_subclass_of($a, $b)) ? -1 : 1);
 
 		try {
 			return (object) [
@@ -118,6 +120,10 @@ final class Describer
 	}
 
 
+	/**
+	 * @param  mixed[]  $arr
+	 * @return Value|array<int, array{mixed, mixed, 2?: int}>
+	 */
 	private function describeArray(array $arr, int $depth = 0, ?int $refId = null): Value|array
 	{
 		if ($refId) {
@@ -261,6 +267,7 @@ final class Describer
 	}
 
 
+	/** @return ?array<string, mixed> */
 	private function exposeObject(object $obj, Value $value): ?array
 	{
 		foreach ($this->objectExposers as $type => $dumper) {
@@ -297,6 +304,7 @@ final class Describer
 	}
 
 
+	/** @param class-string  $class */
 	public function describeEnumProperty(string $class, string $property, mixed $value): ?Value
 	{
 		[$set, $constants] = $this->enumProperties["$class::$property"] ?? null;
@@ -312,6 +320,7 @@ final class Describer
 	}
 
 
+	/** @param  mixed[]  $arr */
 	public function getReferenceId(array $arr, string|int $key): ?int
 	{
 		return ($rr = \ReflectionReference::fromArrayElement($arr, $key))
@@ -322,34 +331,37 @@ final class Describer
 
 	/**
 	 * Finds the location where dump was called. Returns [file, line, code]
+	 * @return ?array{string, int, string}
 	 */
 	private static function findLocation(): ?array
 	{
 		foreach (debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS) as $item) {
-			if (isset($item['class']) && ($item['class'] === self::class || $item['class'] === Tracy\Dumper::class)) {
+			$reflection = null;
+			if (isset($item['class'])) {
+				if ($item['class'] === self::class || $item['class'] === Tracy\Dumper::class) {
+					$location = $item;
+					continue;
+				} elseif (method_exists($item['class'], $item['function'])) {
+					$reflection = new \ReflectionMethod($item['class'], $item['function']);
+				}
+			} elseif (function_exists($item['function'])) {
+				$reflection = new \ReflectionFunction($item['function']);
+			}
+
+			if (
+				$reflection?->isInternal()
+				|| preg_match('#\s@tracySkipLocation\s#', (string) $reflection?->getDocComment())
+			) {
 				$location = $item;
 				continue;
-			} elseif (isset($item['function'])) {
-				try {
-					$reflection = isset($item['class'])
-						? new \ReflectionMethod($item['class'], $item['function'])
-						: new \ReflectionFunction($item['function']);
-					if (
-						$reflection->isInternal()
-						|| preg_match('#\s@tracySkipLocation\s#', (string) $reflection->getDocComment())
-					) {
-						$location = $item;
-						continue;
-					}
-				} catch (\ReflectionException) {
-				}
 			}
 
 			break;
 		}
 
-		if (isset($location['file'], $location['line']) && @is_file($location['file'])) { // @ - may trigger error
-			$lines = file($location['file']);
+		if (isset($location['file'], $location['line']) && @is_file($location['file']) // @ - may trigger error
+			&& ($lines = @file($location['file'])) // @ - file may not be readable
+		) {
 			$line = $lines[$location['line'] - 1];
 			return [
 				$location['file'],

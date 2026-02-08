@@ -24,9 +24,8 @@ class Bar
 
 	/**
 	 * Add custom panel.
-	 * @return static
 	 */
-	public function addPanel(IBarPanel $panel, ?string $id = null): self
+	public function addPanel(IBarPanel $panel, ?string $id = null): static
 	{
 		if ($id === null) {
 			$c = 0;
@@ -105,13 +104,14 @@ class Bar
 			} else {
 				$nonceAttr = Helpers::getNonceAttr();
 				$async = false;
-				Debugger::removeOutputBuffers(false);
+				Debugger::removeOutputBuffers(errorOccurred: false);
 				require __DIR__ . '/assets/loader.phtml';
 			}
 		}
 	}
 
 
+	/** @return array{bar: string, panels: string} */
 	private function renderPartial(string $type, string $suffix = ''): array
 	{
 		$panels = $this->renderPanels($suffix);
@@ -127,12 +127,15 @@ class Bar
 	}
 
 
+	/** @return \stdClass[] */
 	private function renderPanels(string $suffix = ''): array
 	{
-		set_error_handler(function (int $severity, string $message, string $file, int $line) {
+		set_error_handler(function (int $severity, string $message, string $file, int $line): bool {
 			if (error_reporting() & $severity) {
 				throw new \ErrorException($message, 0, $severity, $file, $line);
 			}
+
+			return true;
 		});
 
 		$obLevel = ob_get_level();

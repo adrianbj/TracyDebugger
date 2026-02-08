@@ -17,14 +17,12 @@ namespace Tracy;
 #[\AllowDynamicProperties]
 class DefaultBarPanel implements IBarPanel
 {
-	public $data;
-
-	private $id;
+	public mixed $data = null;
 
 
-	public function __construct(string $id)
-	{
-		$this->id = $id;
+	public function __construct(
+		private readonly string $id,
+	) {
 	}
 
 

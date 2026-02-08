@@ -22,16 +22,17 @@ class FileSession implements SessionStorage
 
 	/** probability that the clean() routine is started */
 	public float $gcProbability = 0.03;
-	private string $dir;
 
-	/** @var resource */
+	/** @var ?resource */
 	private $file;
+
+	/** @var array<string, mixed> */
 	private array $data = [];
 
 
-	public function __construct(string $dir)
-	{
-		$this->dir = $dir;
+	public function __construct(
+		private readonly string $dir,
+	) {
 	}
 
 
@@ -63,7 +64,7 @@ class FileSession implements SessionStorage
 		}
 
 		if (!@flock($file, LOCK_EX)) { // intentionally @
-			throw new \RuntimeException("Unable to acquire exclusive lock on '$path'. ", error_get_last()['message']);
+			throw new \RuntimeException("Unable to acquire exclusive lock on '$path'. " . error_get_last()['message']);
 		}
 
 		$this->file = $file;

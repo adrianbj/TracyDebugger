@@ -24,11 +24,12 @@ class Bridge
 	public static function initialize(): void
 	{
 		$blueScreen = Tracy\Debugger::getBlueScreen();
-		$blueScreen->addAction([self::class, 'renderMemberAccessException']);
-		$blueScreen->addPanel([self::class, 'renderNeonError']);
+		$blueScreen->addAction(self::renderMemberAccessException(...));
+		$blueScreen->addPanel(self::renderNeonError(...));
 	}
 
 
+	/** @return array{link: string, label: string}|null */
 	public static function renderMemberAccessException(?\Throwable $e): ?array
 	{
 		if (!$e instanceof Nette\MemberAccessException && !$e instanceof \LogicException) {
@@ -39,7 +40,7 @@ class Bridge
 		do {
 			$loc = array_shift($trace);
 		} while (($loc['class'] ?? null) === Nette\Utils\ObjectHelpers::class);
-		if (!isset($loc['file'])) {
+		if (!isset($loc['file'], $loc['line'])) {
 			return null;
 		}
 
@@ -61,6 +62,7 @@ class Bridge
 	}
 
 
+	/** @return array{tab: string, panel: string}|null */
 	public static function renderNeonError(?\Throwable $e): ?array
 	{
 		if (!$e instanceof Nette\Neon\Exception || !preg_match('#line (\d+)#', $e->getMessage(), $m)) {
@@ -70,7 +72,7 @@ class Bridge
 			?? Helpers::findTrace($e->getTrace(), [Nette\DI\Config\Adapters\NeonAdapter::class, 'load'])
 		) {
 			$panel = '<p><b>File:</b> ' . Helpers::editorLink($trace['args'][0], (int) $m[1]) . '</p>'
-				. self::highlightNeon(file_get_contents($trace['args'][0]), (int) $m[1]);
+				. self::highlightNeon((string) file_get_contents($trace['args'][0]), (int) $m[1]);
 
 		} elseif ($trace = Helpers::findTrace($e->getTrace(), [Nette\Neon\Decoder::class, 'decode'])) {
 			$panel = self::highlightNeon($trace['args'][0], (int) $m[1]);

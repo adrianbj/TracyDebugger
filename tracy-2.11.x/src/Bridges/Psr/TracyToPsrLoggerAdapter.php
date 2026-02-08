@@ -32,11 +32,12 @@ class TracyToPsrLoggerAdapter extends Psr\Log\AbstractLogger
 
 
 	public function __construct(
-		private Tracy\ILogger $tracyLogger,
+		private readonly Tracy\ILogger $tracyLogger,
 	) {
 	}
 
 
+	/** @param string|\Stringable $message */
 	public function log($level, $message, array $context = []): void
 	{
 		$level = self::LevelMap[$level] ?? Tracy\ILogger::ERROR;
