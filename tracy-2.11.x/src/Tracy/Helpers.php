@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace Tracy;
 
-use function array_filter, array_map, array_merge, array_pop, array_slice, array_unique, basename, bin2hex, class_exists, constant, count, dechex, defined, dirname, end, escapeshellarg, explode, extension_loaded, func_get_args, function_exists, get_class, get_class_methods, get_declared_classes, get_defined_functions, getenv, getmypid, headers_list, htmlspecialchars, htmlspecialchars_decode, iconv_strlen, implode, in_array, is_a, is_array, is_callable, is_file, is_object, is_string, levenshtein, ltrim, mb_strlen, mb_substr, method_exists, ob_end_clean, ob_get_clean, ob_start, ord, preg_match, preg_replace, preg_replace_callback, random_bytes, rawurlencode, rtrim, sapi_windows_vt100_support, spl_object_id, str_contains, str_pad, str_replace, strcasecmp, stream_isatty, strip_tags, strlen, strtoupper, strtr, substr, trait_exists, utf8_decode;
+use function array_filter, array_map, array_merge, array_pop, array_slice, array_unique, basename, bin2hex, class_exists, constant, count, dechex, defined, dirname, end, escapeshellarg, explode, extension_loaded, func_get_args, function_exists, get_class_methods, get_declared_classes, get_defined_functions, getenv, getmypid, headers_list, htmlspecialchars, htmlspecialchars_decode, iconv_strlen, implode, in_array, is_a, is_array, is_callable, is_file, is_object, is_string, levenshtein, ltrim, mb_strlen, mb_substr, method_exists, ob_end_clean, ob_get_clean, ob_start, ord, preg_match, preg_replace, preg_replace_callback, random_bytes, rawurlencode, rtrim, sapi_windows_vt100_support, spl_object_id, str_contains, str_pad, str_replace, strcasecmp, stream_isatty, strip_tags, strlen, strtoupper, strtr, substr, trait_exists, utf8_decode;
 use const DIRECTORY_SEPARATOR, ENT_HTML5, ENT_QUOTES, ENT_SUBSTITUTE, PHP_EOL, PHP_SAPI, STDOUT, STR_PAD_LEFT;
 
 
@@ -173,7 +173,7 @@ class Helpers
 		) {
 			// do nothing
 		} elseif (preg_match('~Argument #(\d+)(?: \(\$\w+\))? must be of type callable, (.+ given)~', $message, $m)) {
-			$arg = $e->getTrace()[0]['args'][$m[1] - 1] ?? null;
+			$arg = $e->getTrace()[0]['args'][(int) $m[1] - 1] ?? null;
 			if (is_string($arg) && str_contains($arg, '::')) {
 				$arg = explode('::', $arg, 2);
 			}
@@ -204,7 +204,7 @@ class Helpers
 				$replace = ["$m[2](", "$hint("];
 			}
 
-		} elseif (preg_match('#^Undefined property: ([\w\\\]+)::\$(\w+)#', $message, $m)) {
+		} elseif (preg_match('#^Undefined property: ([\w\\\]+)::\$(\w+)#', $message, $m) && class_exists($m[1])) {
 			$rc = new \ReflectionClass($m[1]);
 			$items = array_filter($rc->getProperties(\ReflectionProperty::IS_PUBLIC), fn($prop) => !$prop->isStatic());
 			if ($hint = self::getSuggestion($items, $m[2])) {
@@ -212,7 +212,10 @@ class Helpers
 				$replace = ["->$m[2]", "->$hint"];
 			}
 
-		} elseif (preg_match('#^Access to undeclared static property:? ([\w\\\]+)::\$(\w+)#', $message, $m)) {
+		} elseif (
+			preg_match('#^Access to undeclared static property:? ([\w\\\]+)::\$(\w+)#', $message, $m)
+			&& class_exists($m[1])
+		) {
 			$rc = new \ReflectionClass($m[1]);
 			$items = array_filter($rc->getProperties(\ReflectionProperty::IS_STATIC), fn($prop) => $prop->isPublic());
 			if ($hint = self::getSuggestion($items, $m[2])) {
@@ -239,7 +242,7 @@ class Helpers
 	/** @internal */
 	public static function improveError(string $message): string
 	{
-		if (preg_match('#^Undefined property: ([\w\\\]+)::\$(\w+)#', $message, $m)) {
+		if (preg_match('#^Undefined property: ([\w\\\]+)::\$(\w+)#', $message, $m) && class_exists($m[1])) {
 			$rc = new \ReflectionClass($m[1]);
 			$items = array_filter($rc->getProperties(\ReflectionProperty::IS_PUBLIC), fn($prop) => !$prop->isStatic());
 			$hint = self::getSuggestion($items, $m[2]);
@@ -308,13 +311,6 @@ class Helpers
 
 
 	/** @internal */
-	public static function isAjax(): bool
-	{
-		return isset($_SERVER['HTTP_X_TRACY_AJAX']) && preg_match('#^\w{10,15}$#D', $_SERVER['HTTP_X_TRACY_AJAX']);
-	}
-
-
-	/** @internal */
 	public static function isRedirect(): bool
 	{
 		return (bool) preg_match('#^Location:#im', implode("\n", headers_list()));
@@ -336,11 +332,11 @@ class Helpers
 
 
 	/** @internal */
-	public static function getNonceAttr(): string
+	public static function getNonce(): ?string
 	{
 		return preg_match('#^Content-Security-Policy(?:-Report-Only)?:.*\sscript-src\s+(?:[^;]+\s)?\'nonce-([\w+/]+=*)\'#mi', implode("\n", headers_list()), $m)
-			? ' nonce="' . self::escapeHtml($m[1]) . '"'
-			: '';
+			? $m[1]
+			: null;
 	}
 
 
@@ -443,7 +439,7 @@ class Helpers
 	{
 		return match (true) {
 			extension_loaded('mbstring') => mb_strlen($s, 'UTF-8'),
-			extension_loaded('iconv') => iconv_strlen($s, 'UTF-8'),
+			extension_loaded('iconv') => iconv_strlen($s, 'UTF-8') ?: strlen($s),
 			default => strlen(@utf8_decode($s)), // deprecated
 		};
 	}
@@ -595,7 +591,7 @@ class Helpers
 	}
 
 
-	/** @return \Throwable[] */
+	/** @return list<\Throwable> */
 	public static function getExceptionChain(\Throwable $ex): array
 	{
 		$res = [$ex];
@@ -609,7 +605,7 @@ class Helpers
 
 	/**
 	 * @param  callable(object): void  $callback
-	 * @param  array<int|string, true>  $skip
+	 * @param  true[]  $skip
 	 */
 	public static function traverseValue(mixed $val, callable $callback, array &$skip = [], ?string $refId = null): void
 	{
@@ -639,7 +635,7 @@ class Helpers
 
 	/**
 	 * @param  string[]  $constants
-	 * @return string[]|null
+	 * @return list<string>|null
 	 * @internal
 	 */
 	public static function decomposeFlags(int $flags, bool $set, array $constants): ?array

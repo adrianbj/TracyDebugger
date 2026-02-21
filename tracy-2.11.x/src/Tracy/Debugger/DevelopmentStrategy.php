@@ -18,6 +18,9 @@ use function is_bool;
  */
 final class DevelopmentStrategy
 {
+	private bool $assetsSent = false;
+
+
 	public function __construct(
 		private readonly Bar $bar,
 		private readonly BlueScreen $blueScreen,
@@ -28,12 +31,15 @@ final class DevelopmentStrategy
 
 	public function initialize(): void
 	{
+		$this->bar->getPanel('Tracy:info')->cpuUsage = function_exists('getrusage')
+			? (getrusage() ?: null)
+			: null;
 	}
 
 
 	public function handleException(\Throwable $exception, bool $firstTime): void
 	{
-		if (Helpers::isAjax() && $this->defer->isAvailable()) {
+		if ($this->defer->isDeferred() && $this->defer->isAvailable()) {
 			$this->blueScreen->renderToAjax($exception, $this->defer);
 
 		} elseif ($firstTime && Helpers::isHtmlMode()) {
@@ -59,7 +65,7 @@ final class DevelopmentStrategy
 		}
 
 		if (Helpers::detectColors() && @is_file($exception->getFile())) {
-			echo "\n\n" . CodeHighlighter::highlightPhpCli(file_get_contents($exception->getFile()), $exception->getLine()) . "\n";
+			echo "\n\n" . CodeHighlighter::highlightPhpCli((string) file_get_contents($exception->getFile()), $exception->getLine()) . "\n";
 		}
 
 		echo "$exception\n" . ($logFile ? "\n(stored in $logFile)\n" : '');
@@ -93,7 +99,7 @@ final class DevelopmentStrategy
 		$message = Helpers::errorTypeToString($severity) . ': ' . Helpers::improveError($message);
 		$count = &$this->bar->getPanel('Tracy:warnings')->data["$file|$line|$message"];
 
-		if (!$count++ && !Helpers::isHtmlMode() && !Helpers::isAjax()) {
+		if (!$count++ && !Helpers::isHtmlMode() && !$this->defer->isDeferred()) {
 			echo "\n$message in $file on line $line\n";
 		}
 
@@ -103,9 +109,12 @@ final class DevelopmentStrategy
 	}
 
 
-	public function sendAssets(): bool
+	public function dispatch(): void
 	{
-		return $this->defer->sendAssets();
+		if (!Helpers::isCli() && $this->defer->sendAssets()) {
+			$this->assetsSent = true;
+			exit;
+		}
 	}
 
 
@@ -117,6 +126,10 @@ final class DevelopmentStrategy
 
 	public function renderBar(): void
 	{
+		if ($this->assetsSent || Helpers::isCli()) {
+			return;
+		}
+
 		if (function_exists('ini_set')) {
 			ini_set('display_errors', '1');
 		}

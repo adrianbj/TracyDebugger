@@ -11,7 +11,7 @@ namespace Tracy\Dumper;
 
 use Tracy;
 use Tracy\Helpers;
-use function array_map, array_slice, class_exists, count, explode, file, get_debug_type, get_resource_type, gettype, htmlspecialchars, implode, is_bool, is_file, is_finite, is_int, is_resource, is_string, is_subclass_of, json_encode, method_exists, preg_match, spl_object_id, str_replace, strlen, strpos, strtolower, trim, uksort;
+use function array_map, array_slice, class_exists, count, explode, file, get_debug_type, get_resource_type, gettype, htmlspecialchars, implode, is_bool, is_file, is_int, is_resource, is_string, is_subclass_of, json_encode, method_exists, preg_match, spl_object_id, str_replace, strlen, strpos, strtolower, trim, uksort;
 
 
 /**
@@ -187,7 +187,7 @@ final class Describer
 			$rc = $obj instanceof \Closure
 				? new \ReflectionFunction($obj)
 				: new \ReflectionClass($obj);
-			if ($rc->getFileName() && ($editor = Helpers::editorUri($rc->getFileName(), $rc->getStartLine()))) {
+			if ($rc->getFileName() && ($editor = Helpers::editorUri($rc->getFileName(), $rc->getStartLine() ?: null))) {
 				$value->editor = (object) ['file' => $rc->getFileName(), 'line' => $rc->getStartLine(), 'url' => $editor];
 			}
 		}
@@ -196,7 +196,7 @@ final class Describer
 			$value->items = [];
 			$props = $this->exposeObject($obj, $value);
 			foreach ($props ?? [] as $k => $v) {
-				$this->addPropertyTo($value, (string) $k, $v, Value::PropertyVirtual, $this->getReferenceId($props, $k));
+				$this->addPropertyTo($value, (string) $k, $v, Value::PropertyVirtual, $this->getReferenceId($props ?? [], $k));
 			}
 		}
 
@@ -252,11 +252,11 @@ final class Describer
 	): void
 	{
 		if ($value->depth && $this->maxItems && count($value->items ?? []) >= $this->maxItems) {
-			$value->length = ($value->length ?? count($value->items)) + 1;
+			$value->length = ($value->length ?? count($value->items ?? [])) + 1;
 			return;
 		}
 
-		$class ??= $value->value;
+		$class ??= is_string($value->value) ? $value->value : null;
 		$value->items[] = [
 			$this->describeKey($k),
 			$type !== Value::PropertyVirtual && $this->isSensitive($k, $v, $class)
@@ -307,7 +307,7 @@ final class Describer
 	/** @param class-string  $class */
 	public function describeEnumProperty(string $class, string $property, mixed $value): ?Value
 	{
-		[$set, $constants] = $this->enumProperties["$class::$property"] ?? null;
+		[$set, $constants] = $this->enumProperties["$class::$property"] ?? [false, []];
 		if (!is_int($value)
 			|| !$constants
 			|| !($constants = Helpers::decomposeFlags($value, $set, $constants))
