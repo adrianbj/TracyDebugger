@@ -13,4 +13,4 @@ $ref = new \ReflectionFiber($fiber);
 $stack = $ref->getTrace();
 $expanded = 0;
 
-require __DIR__ . '/section-stack-callStack.phtml';
+require __DIR__ . '/../dist/section-stack-callStack.phtml';

@@ -17,5 +17,5 @@ $refExec = new \ReflectionGenerator($execGenerator);
 $file = $refExec->getExecutingFile();
 $line = $refExec->getExecutingLine();
 
-require __DIR__ . '/section-stack-sourceFile.phtml';
-require __DIR__ . '/section-stack-callStack.phtml';
+require __DIR__ . '/../dist/section-stack-sourceFile.phtml';
+require __DIR__ . '/../dist/section-stack-callStack.phtml';
