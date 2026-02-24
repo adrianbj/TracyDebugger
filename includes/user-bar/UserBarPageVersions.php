@@ -1,4 +1,4 @@
-<?php
+<?php namespace ProcessWire;
 
 if(wire('user')->hasPermission('tracy-page-versions')) {
 
@@ -23,7 +23,7 @@ if(wire('user')->hasPermission('tracy-page-versions')) {
 
     if($countTemplateOptions > 1) {
 
-        if(\TracyDebugger::$templatePath) {
+        if(TracyDebugger::$templatePath) {
             $iconColor = '#D51616';
         }
         else {

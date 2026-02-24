@@ -1,4 +1,4 @@
-<?php
+<?php namespace ProcessWire;
 
 /**
  * Processwire module for running the Tracy debugger from Nette.
@@ -27,7 +27,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '4.27.7',
+            'version' => '4.28.0',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
@@ -220,7 +220,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "logSeverity" => array(),
             "excludedPwLogFiles" => array('session', 'modules', 'file-compiler'),
             "excludedTracyLogFiles" => array(),
-            "numLogEntries" => 10,
+            "numLogEntries" => 100,
             "collapse" => 14,
             "collapse_count" => 7,
             "maxDepth" => 3,
@@ -350,7 +350,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $this->time = $_SERVER['REQUEST_TIME_FLOAT'] ?? microtime(true);
 
-        if(class_exists('\Tracy\Debugger', false) && Debugger::isEnabled()) return;
+        if(class_exists('Debugger', false) && Debugger::isEnabled()) return;
 
         // load Tracy files and our helper files
         if(version_compare(PHP_VERSION, '8.2.0', '>=')) {
@@ -375,7 +375,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // load any custom function files if includes dir exists
         $functionsPath = 'templates/TracyDebugger/includes/';
         if(file_exists($this->wire('config')->paths->site.$functionsPath)) {
-            $functionsFiles = new RecursiveDirectoryIterator($this->wire('config')->paths->site.$functionsPath, RecursiveDirectoryIterator::SKIP_DOTS);
+            $functionsFiles = new \RecursiveDirectoryIterator($this->wire('config')->paths->site.$functionsPath, \RecursiveDirectoryIterator::SKIP_DOTS);
             foreach($functionsFiles as $functionFile) {
                 include_once $functionFile;
             }
@@ -1373,21 +1373,21 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
                 // remove localStorage items to prevent the panel from staying open
                 Debugger::$customJsStr .= '
-                    localStorage.removeItem("tracy-debug-panel-PanelSelectorPanel");
-                    if(localStorage.getItem("remove-tracy-debug-panel-ProcesswireInfoPanel")) {
-                        localStorage.removeItem("tracy-debug-panel-ProcesswireInfoPanel");
-                        localStorage.removeItem("remove-tracy-debug-panel-ProcesswireInfoPanel")
+                    localStorage.removeItem("tracy-debug-panel-ProcessWire-PanelSelectorPanel");
+                    if(localStorage.getItem("remove-tracy-debug-panel-ProcessWire-ProcesswireInfoPanel")) {
+                        localStorage.removeItem("tracy-debug-panel-ProcessWire-ProcesswireInfoPanel");
+                        localStorage.removeItem("remove-tracy-debug-panel-ProcessWire-ProcesswireInfoPanel")
                     }
-                    if(localStorage.getItem("remove-tracy-debug-panel-RequestInfoPanel")) {
-                        localStorage.removeItem("tracy-debug-panel-RequestInfoPanel");
-                        localStorage.removeItem("remove-tracy-debug-panel-RequestInfoPanel")
+                    if(localStorage.getItem("remove-tracy-debug-panel-ProcessWire-RequestInfoPanel")) {
+                        localStorage.removeItem("tracy-debug-panel-ProcessWire-RequestInfoPanel");
+                        localStorage.removeItem("remove-tracy-debug-panel-ProcessWire-RequestInfoPanel")
                     }
                 ';
 
                 if(is_null($this->wire('session')->tracyDumpsRecorderItems)) {
                     // remove localStorage items to prevent the panel from staying open
                     Debugger::$customJsStr .= '
-                        localStorage.removeItem("tracy-debug-panel-DumpsRecorderPanel");
+                        localStorage.removeItem("tracy-debug-panel-ProcessWire-DumpsRecorderPanel");
                     ';
                 }
 
@@ -1538,7 +1538,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 if (session_status() === PHP_SESSION_NONE) {
                     session_start();
                 }
-                Debugger::setSessionStorage(new Tracy\NativeSession);
+                Debugger::setSessionStorage(new \Tracy\NativeSession);
             }
             Debugger::enable($outputMode, $logFolder, $this->data['fromEmail'] != '' && $this->data['email'] != '' ? $this->data['email'] : null);
 
@@ -1764,6 +1764,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if(!empty(static::$restrictedUserDisabledPanels) && in_array($panel, static::$restrictedUserDisabledPanels)) continue;
 
             $panelName = ucfirst($panel).'Panel';
+            $fullPanelClass = __NAMESPACE__ . '\\' . $panelName;
             if(file_exists(__DIR__ . '/panels/'.$panelName.'.php')) {
                 require_once __DIR__ . '/panels/'.$panelName.'.php';
             }
@@ -1798,25 +1799,27 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                         // auto appended/prepended files
                         $this->replaceAutoAppendedPreprendedTemplateFiles($this->getFileSuffix(static::$templatePath));
                     }
-                    Debugger::getBar()->addPanel(new $panelName);
+                    Debugger::getBar()->addPanel(new $fullPanelClass);
                     break;
                 default:
-                    Debugger::getBar()->addPanel(new $panelName);
+                    Debugger::getBar()->addPanel(new $fullPanelClass);
                     break;
             }
         }
         // load custom replacement Dumps panel - this is not optional/configurable
         // at the end so it has access to bd() calls in any of the other panels - helpful for debugging these panels
         $panelName = 'DumpsPanel';
+        $fullPanelClass = __NAMESPACE__ . '\\' . $panelName;
         require_once __DIR__ . '/panels/'.$panelName.'.php';
-        Debugger::getBar()->addPanel(new $panelName);
+        Debugger::getBar()->addPanel(new $fullPanelClass);
 
         // even if dumpsRecorder isn't enabled, but there are recorded dumps to show, enable it anyway
         if(!in_array('dumpsRecorder', static::$showPanels) && file_exists($this->wire('config')->paths->cache . 'TracyDebugger/dumps.json')) {
             $panelName = 'DumpsRecorderPanel';
+            $fullPanelClass = __NAMESPACE__ . '\\' . $panelName;
             static::$showPanels[] = 'dumpsRecorder';
             require_once __DIR__ . '/panels/'.$panelName.'.php';
-            Debugger::getBar()->addPanel(new $panelName);
+            Debugger::getBar()->addPanel(new $fullPanelClass);
         }
 
 
@@ -4407,7 +4410,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if(!class_exists('\TracyLogsPanel')) {
             require_once($this->config->paths->siteModules . 'TracyDebugger/panels/TracyLogsPanel.php');
         }
-        foreach((new \TracyLogsPanel())->getLogs() as $k => $v) {
+        foreach((new TracyLogsPanel())->getLogs() as $k => $v) {
             $f->addOption($k);
         }
         if($data['excludedTracyLogFiles']) $f->attr('value', $data['excludedTracyLogFiles']);

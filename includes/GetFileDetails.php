@@ -1,7 +1,8 @@
-<?php
-if((\TracyDebugger::$allowedSuperuser || \TracyDebugger::$validLocalUser || \TracyDebugger::$validSwitchedUser) && strpos($_POST['filePath'], '..') === false && file_exists($_POST['filePath'])) {
+<?php namespace ProcessWire;
 
-    if(\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
+if((TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser) && strpos($_POST['filePath'], '..') === false && file_exists($_POST['filePath'])) {
+
+    if(TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
         ($this->wire('process') == 'ProcessPageEdit' ||
             $this->wire('process') == 'ProcessUser' ||
             $this->wire('process') == 'ProcessRole' ||

@@ -1,4 +1,6 @@
-<?php
+<?php namespace ProcessWire;
+
+use Tracy\Debugger;
 
 class PageFilesPanel extends BasePanel {
 
@@ -18,9 +20,9 @@ class PageFilesPanel extends BasePanel {
      */
     public function getTab() {
 
-        \Tracy\Debugger::timer($this->name);
+        Debugger::timer($this->name);
 
-        if(\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') && ($this->wire('process') == 'ProcessPageEdit' || $this->wire('process') == 'ProcessUser' || $this->wire('process') == 'ProcessLanguage')) {
+        if(TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') && ($this->wire('process') == 'ProcessPageEdit' || $this->wire('process') == 'ProcessUser') || $this->wire('process') == 'ProcessLanguage') {
             $this->p = $this->wire('process')->getPage();
             if($this->p instanceof NullPage) {
                 $this->p = $this->wire('pages')->get((int) $this->wire('input')->get('id'));
@@ -74,14 +76,14 @@ class PageFilesPanel extends BasePanel {
                         $fileField = $fileFields[$pid][$file];
                     }
                     else {
-                        $style = 'color: ' . \TracyDebugger::COLOR_WARN;
+                        $style = 'color: ' . TracyDebugger::COLOR_WARN;
                         $fileField = '';
                         $this->orphanFiles[] = $p->filesManager()->path . $file;
                     }
                     $this->filesListStr .= '
                     <tr>
                         <td><a style="'.$style.' !important" href="'.$p->filesManager()->url.$file.'">'.$file.'</a></td>
-                        <td>'.\TracyDebugger::human_filesize(filesize($p->filesManager()->path . $file)).'</td>
+                        <td>'.TracyDebugger::human_filesize(filesize($p->filesManager()->path . $file)).'</td>
                         <td>'.date('Y-m-d H:i:s', filemtime($p->filesManager()->path . $file)).'</td>
                         <td style="width: 1px">'.$fileField.'</td>' .
                         (count($this->tempFiles) > 0 ? '<td style="text-align: center">'.(in_array($p->filesManager()->path.$file, $this->tempFiles) ? '	✔' : '').'</td>' : '') . '
@@ -92,7 +94,7 @@ class PageFilesPanel extends BasePanel {
                     foreach($this->missingFiles[$pid] as $missingFile) {
                         $this->filesListStr .= '
                         <tr>
-                            <td><span style="color: ' . \TracyDebugger::COLOR_ALERT . ' !important">'.pathinfo($missingFile['filename'], PATHINFO_BASENAME).'</td>
+                            <td><span style="color: ' . TracyDebugger::COLOR_ALERT . ' !important">'.pathinfo($missingFile['filename'], PATHINFO_BASENAME).'</td>
                             <td></td>
                             <td></td>
                             <td>'.$missingFile['field'].'</td>' .
@@ -109,13 +111,13 @@ class PageFilesPanel extends BasePanel {
         }
 
         if($this->numMissingFiles > 0) {
-            $iconColor = \TracyDebugger::COLOR_ALERT;
+            $iconColor = TracyDebugger::COLOR_ALERT;
         }
         elseif(count($this->orphanFiles) > 0) {
-            $iconColor = \TracyDebugger::COLOR_WARN;
+            $iconColor = TracyDebugger::COLOR_WARN;
         }
         else {
-            $iconColor = \TracyDebugger::COLOR_NORMAL;
+            $iconColor = TracyDebugger::COLOR_NORMAL;
         }
 
         // the svg icon shown in the bar and in the panel header
@@ -130,14 +132,14 @@ class PageFilesPanel extends BasePanel {
             $orphanMissingCounts = $this->numMissingFiles . '/' . count($this->orphanFiles) . '/';
         }
 
-        return "<span title='{$this->label}'>{$this->icon}".(\TracyDebugger::getDataValue('showPanelLabels') ? $this->label : '')." ".$orphanMissingCounts.($numDiskFiles > 0 ? $numDiskFiles : '')."</span>";
+        return "<span title='{$this->label}'>{$this->icon}".(TracyDebugger::getDataValue('showPanelLabels') ? $this->label : '')." ".$orphanMissingCounts.($numDiskFiles > 0 ? $numDiskFiles : '')."</span>";
     }
 
     /**
      * the panel's HTML code
      */
     public function getPanel() {
-        $isAdditionalBar = \TracyDebugger::isAdditionalBar();
+        $isAdditionalBar = TracyDebugger::isAdditionalBar();
         $out = "<h1>{$this->icon} {$this->label}" . ($isAdditionalBar ? " (".$isAdditionalBar.")" : "") . "</h1>";
 
         $out .= '<span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'' . $this->className . '\')">⛶</a></span></span>';
@@ -149,17 +151,17 @@ class PageFilesPanel extends BasePanel {
 
         if($numOrphanFiles > 0) {
             $out .= '
-            <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete all the orange highlighted orphan files?\');">
+            <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete all the orange highlighted orphan files?\');">
                 <input type="hidden" name="orphanPaths" value="'.implode('|', $this->orphanFiles).'" />
-                <input type="submit" style="color:'.\TracyDebugger::COLOR_WARN.' !important; color: #FFFFFF" name="deleteOrphanFiles" value="Delete '.$numOrphanFiles.' orphan'._n('', 's', $numOrphanFiles).'" />
+                <input type="submit" style="color:'.TracyDebugger::COLOR_WARN.' !important; color: #FFFFFF" name="deleteOrphanFiles" value="Delete '.$numOrphanFiles.' orphan'._n('', 's', $numOrphanFiles).'" />
             </form>&nbsp&nbsp;';
         }
 
         if($this->numMissingFiles > 0) {
             $out .= '
-            <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete all the red highlighted missing pagefiles?\');">
+            <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete all the red highlighted missing pagefiles?\');">
                 <input type="hidden" name="missingPaths" value="'.urlencode(json_encode($this->missingFiles)).'" />
-                <input type="submit" style="color:'.\TracyDebugger::COLOR_ALERT.' !important; color: #FFFFFF" name="deleteMissingFiles" value="Delete '.$this->numMissingFiles.' missing pagefile'._n('', 's', $this->numMissingFiles).'" />
+                <input type="submit" style="color:'.TracyDebugger::COLOR_ALERT.' !important; color: #FFFFFF" name="deleteMissingFiles" value="Delete '.$this->numMissingFiles.' missing pagefile'._n('', 's', $this->numMissingFiles).'" />
             </form>';
         }
 
@@ -169,7 +171,7 @@ class PageFilesPanel extends BasePanel {
 
         $out .= '<div id="tracyPageFilesList">'.$this->filesListStr.'</div>';
 
-        $out .= \TracyDebugger::generatePanelFooter($this->name, \Tracy\Debugger::timer($this->name), strlen($out));
+        $out .= TracyDebugger::generatePanelFooter($this->name, Debugger::timer($this->name), strlen($out));
         $out .= '</div>';
 
         return parent::loadResources() . $out;

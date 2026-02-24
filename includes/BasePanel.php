@@ -1,4 +1,4 @@
-<?php
+<?php namespace ProcessWire;
 
 use Tracy\IBarPanel;
 

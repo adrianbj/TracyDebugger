@@ -1,4 +1,6 @@
-<?php
+<?php namespace ProcessWire;
+
+use Tracy\Debugger;
 
 class DumpsRecorderPanel extends BasePanel {
 
@@ -9,14 +11,14 @@ class DumpsRecorderPanel extends BasePanel {
 
     public function getTab() {
 
-        \Tracy\Debugger::timer('dumpsRecorder');
+        Debugger::timer('dumpsRecorder');
 
         $dumpsFile = $this->wire('config')->paths->cache . 'TracyDebugger/dumps.json';
         $items = file_exists($dumpsFile) ? json_decode(file_get_contents($dumpsFile), true) : array();
         $this->dumpCount = is_array($items) ? count($items) : 0;
         $this->entries .= '<div>'.($this->dumpCount > 0 ? '<span id="clearDumpsRecorderButton" style="display:inline-block;float:right"><input type="submit" onclick="clearRecorderDumps()" value="Clear Dumps" /></span>' : '') . '</div><div style="clear:both; margin-bottom:5px"></div>';
         if($this->dumpCount > 0) {
-            $this->iconColor = \TracyDebugger::COLOR_WARN;
+            $this->iconColor = TracyDebugger::COLOR_WARN;
             $this->entries .= '
             <div class="dumpsrecorder-items">';
             foreach($items as $item) {
@@ -28,7 +30,7 @@ class DumpsRecorderPanel extends BasePanel {
             $this->entries .= '</div>';
         }
         else {
-            $this->iconColor = \TracyDebugger::COLOR_NORMAL;
+            $this->iconColor = TracyDebugger::COLOR_NORMAL;
             $this->entries .= 'No Dumps Recorded';
         }
 
@@ -46,14 +48,14 @@ class DumpsRecorderPanel extends BasePanel {
 
         return '
         <span title="Dumps Recorder">
-            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Dumps Recorder' : '') . ' ' . ($this->dumpCount > 0 ? '<span class="dumpsRecorderCount">' . $this->dumpCount . '</span>' : '') . '
+            ' . $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? 'Dumps Recorder' : '') . ' ' . ($this->dumpCount > 0 ? '<span class="dumpsRecorderCount">' . $this->dumpCount . '</span>' : '') . '
         </span>
         ';
     }
 
 
     public function getPanel() {
-        $isAdditionalBar = \TracyDebugger::isAdditionalBar();
+        $isAdditionalBar = TracyDebugger::isAdditionalBar();
         $out = '
         <h1>' . $this->icon . ' Dumps Recorder' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'DumpsRecorderPanel'.($isAdditionalBar ? '-'.$isAdditionalBar : '').'\')">⛶</a></span></span>
 
@@ -68,7 +70,7 @@ class DumpsRecorderPanel extends BasePanel {
                 var icons = document.getElementsByClassName("dumpsRecorderIconPath");
                 i=0;
                 while(i < icons.length) {
-                    icons[i].style.fill="'.\TracyDebugger::COLOR_NORMAL.'";
+                    icons[i].style.fill="'.TracyDebugger::COLOR_NORMAL.'";
                     i++;
                 }
 
@@ -88,7 +90,7 @@ class DumpsRecorderPanel extends BasePanel {
 
             <div id="tracyDumpEntries">' . $this->entries . '</div>';
 
-        $out .= \TracyDebugger::generatePanelFooter('dumpsRecorder', \Tracy\Debugger::timer('dumpsRecorder'), strlen($out), 'dumpsPanel');
+        $out .= TracyDebugger::generatePanelFooter('dumpsRecorder', Debugger::timer('dumpsRecorder'), strlen($out), 'dumpsPanel');
 
         $out .= '
         </div>';

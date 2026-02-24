@@ -1,6 +1,6 @@
-<?php
+<?php namespace ProcessWire;
 
-use Tracy\Dumper;
+use Tracy\Debugger;
 
 class EventInterceptorPanel extends BasePanel {
 
@@ -11,12 +11,12 @@ class EventInterceptorPanel extends BasePanel {
 
     public function getTab() {
 
-        \Tracy\Debugger::timer('eventInterceptor');
+        Debugger::timer('eventInterceptor');
 
         $items = $this->wire('session')->tracyEventItems;
         $this->eventCount = is_array($items) ? count($items) : 0;
         if($this->eventCount > 0) {
-            $this->iconColor = $this->wire('input')->cookie->eventInterceptorHook ? \TracyDebugger::COLOR_ALERT : \TracyDebugger::COLOR_NORMAL;
+            $this->iconColor = $this->wire('input')->cookie->eventInterceptorHook ? TracyDebugger::COLOR_ALERT : TracyDebugger::COLOR_NORMAL;
             $this->entries .= '
             <div class="event-items">
                 <p><input type="submit" onclick="clearEvents()" value="Clear Events" /></p><br />';
@@ -30,11 +30,11 @@ class EventInterceptorPanel extends BasePanel {
             $this->entries .= '</div>';
         }
         elseif($this->wire('input')->cookie->eventInterceptorHook) {
-            $this->iconColor = \TracyDebugger::COLOR_WARN;
+            $this->iconColor = TracyDebugger::COLOR_WARN;
             $this->entries = 'No Events Intercepted';
         }
         else {
-            $this->iconColor = \TracyDebugger::COLOR_NORMAL;
+            $this->iconColor = TracyDebugger::COLOR_NORMAL;
             $this->entries = 'No Events Intercepted';
         }
 
@@ -48,14 +48,14 @@ class EventInterceptorPanel extends BasePanel {
 
         return '
         <span title="Event Interceptor">
-            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Event Interceptor' : '') . ' ' . ($this->eventCount > 0 ? '<span class="eventCount">' . $this->eventCount . '</span>' : '') . '
+            ' . $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? 'Event Interceptor' : '') . ' ' . ($this->eventCount > 0 ? '<span class="eventCount">' . $this->eventCount . '</span>' : '') . '
         </span>
         ';
     }
 
 
     public function getPanel() {
-        $isAdditionalBar = \TracyDebugger::isAdditionalBar();
+        $isAdditionalBar = TracyDebugger::isAdditionalBar();
 
         if($this->wire('input')->cookie->eventInterceptorHook) {
             $hookSettings = json_decode($this->wire('input')->cookie->eventInterceptorHook, true);
@@ -76,7 +76,7 @@ class EventInterceptorPanel extends BasePanel {
                 var icons = document.getElementsByClassName("eventInterceptorIconPath");
                 i=0;
                 while(i < icons.length) {
-                    icons[i].style.fill="'.\TracyDebugger::COLOR_NORMAL.'";
+                    icons[i].style.fill="'.TracyDebugger::COLOR_NORMAL.'";
                     i++;
                 }
 
@@ -104,10 +104,10 @@ class EventInterceptorPanel extends BasePanel {
                 }
 
                 if(status === "set") {
-                    var fillColor = "'.\TracyDebugger::COLOR_WARN.'";
+                    var fillColor = "'.TracyDebugger::COLOR_WARN.'";
                 }
                 else if(document.getElementById("tracyEventEntries").innerHTML == "No Events Intercepted" || document.getElementById("tracyEventEntries").innerHTML.trim() == "" || status === "remove") {
-                    var fillColor = "'.\TracyDebugger::COLOR_NORMAL.'";
+                    var fillColor = "'.TracyDebugger::COLOR_NORMAL.'";
                 }
 
                 var icons = document.getElementsByClassName("eventInterceptorIconPath");
@@ -141,7 +141,7 @@ class EventInterceptorPanel extends BasePanel {
             <br /><br />
             <div id="tracyEventEntries">'.$this->entries.'</div>';
 
-            $out .= \TracyDebugger::generatePanelFooter('eventInterceptor', \Tracy\Debugger::timer('eventInterceptor'), strlen($out));
+            $out .= TracyDebugger::generatePanelFooter('eventInterceptor', Debugger::timer('eventInterceptor'), strlen($out));
 
             $out .= '
         </div>';

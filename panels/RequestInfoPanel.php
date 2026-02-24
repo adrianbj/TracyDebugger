@@ -1,6 +1,7 @@
-<?php
+<?php namespace ProcessWire;
 
 use Tracy\Dumper;
+use Tracy\Debugger;
 
 class RequestInfoPanel extends BasePanel {
 
@@ -8,7 +9,7 @@ class RequestInfoPanel extends BasePanel {
 
     public function getTab() {
 
-        \Tracy\Debugger::timer('requestInfo');
+        Debugger::timer('requestInfo');
 
             $this->icon = '
             <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -17,17 +18,17 @@ class RequestInfoPanel extends BasePanel {
                 <path d="M225.6,216c-0.1-0.3-0.3-0.6-0.5-0.8l-3.2-3.3c-0.2-0.2-0.4-0.4-0.8-0.5c-0.3-0.1-0.6-0.2-0.9-0.2h-6.5
                     c-0.3,0-0.5,0.1-0.7,0.3c-0.2,0.2-0.3,0.4-0.3,0.7v14c0,0.3,0.1,0.5,0.3,0.7c0.2,0.2,0.4,0.3,0.7,0.3h11.1c0.3,0,0.5-0.1,0.7-0.3
                     c0.2-0.2,0.3-0.4,0.3-0.7v-9.3C225.8,216.7,225.7,216.4,225.6,216z M220.6,212.7c0.2,0.1,0.3,0.1,0.4,0.2l3.2,3.3
-                    c0.1,0.1,0.2,0.2,0.2,0.4h-3.8V212.7z M224.5,225.9h-10.4v-13.3h5.2v4.3c0,0.3,0.1,0.5,0.3,0.7c0.2,0.2,0.4,0.3,0.7,0.3h4.2V225.9z" fill="'.\TracyDebugger::COLOR_NORMAL.'"/>
+                    c0.1,0.1,0.2,0.2,0.2,0.4h-3.8V212.7z M224.5,225.9h-10.4v-13.3h5.2v4.3c0,0.3,0.1,0.5,0.3,0.7c0.2,0.2,0.4,0.3,0.7,0.3h4.2V225.9z" fill="'.TracyDebugger::COLOR_NORMAL.'"/>
                 <path d="M222.8,221.9h-7.2c-0.1,0-0.2,0-0.2,0.1c-0.1,0.1-0.1,0.1-0.1,0.2v0.7c0,0.1,0,0.2,0.1,0.2c0.1,0.1,0.1,0.1,0.2,0.1h7.2
-                    c0.1,0,0.2,0,0.2-0.1c0.1-0.1,0.1-0.1,0.1-0.2v-0.7c0-0.1,0-0.2-0.1-0.2C223,222,222.9,221.9,222.8,221.9z" fill="'.\TracyDebugger::COLOR_NORMAL.'"/>
+                    c0.1,0,0.2,0,0.2-0.1c0.1-0.1,0.1-0.1,0.1-0.2v-0.7c0-0.1,0-0.2-0.1-0.2C223,222,222.9,221.9,222.8,221.9z" fill="'.TracyDebugger::COLOR_NORMAL.'"/>
                 <path d="M215.5,219.4c-0.1,0.1-0.1,0.1-0.1,0.2v0.7c0,0.1,0,0.2,0.1,0.2c0.1,0.1,0.1,0.1,0.2,0.1h7.2c0.1,0,0.2,0,0.2-0.1
-                    c0.1-0.1,0.1-0.1,0.1-0.2v-0.7c0-0.1,0-0.2-0.1-0.2c-0.1-0.1-0.1-0.1-0.2-0.1h-7.2C215.6,219.3,215.5,219.3,215.5,219.4z" fill="'.\TracyDebugger::COLOR_NORMAL.'"/>
+                    c0.1-0.1,0.1-0.1,0.1-0.2v-0.7c0-0.1,0-0.2-0.1-0.2c-0.1-0.1-0.1-0.1-0.2-0.1h-7.2C215.6,219.3,215.5,219.3,215.5,219.4z" fill="'.TracyDebugger::COLOR_NORMAL.'"/>
             </g>
             </svg>';
 
             return '
             <span title="Request Info">' .
-                $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Request' : '') . '
+                $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Request' : '') . '
             </span>';
     }
 
@@ -56,12 +57,12 @@ class RequestInfoPanel extends BasePanel {
             $adminerAvailable = true;
             $adminerIcon = '
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="304.4 284.4 11.7 16">
-                <path fill="'.\TracyDebugger::COLOR_NORMAL.'" d="M304.4 294.8v2.3c.3 1.3 2.7 2.3 5.8 2.3s5.7-1 5.9-2.3v-2.3c-1 .8-3.1 1.4-6 1.4-2.8 0-4.8-.6-5.7-1.4zM310.7 291.9h-1.2c-1.7-.1-3.1-.3-4-.7-.4-.2-.9-.4-1.1-.6v2.4c.7.8 2.9 1.5 5.8 1.5 3 0 5.1-.7 5.8-1.5v-2.4c-.3.2-.7.5-1.1.6-1.1.4-2.5.6-4.2.7zM310.1 285.6c-3.5 0-5.5 1.1-5.8 2.3v.7c.7.8 2.9 1.5 5.8 1.5s5.1-.7 5.8-1.5v-.6c-.3-1.3-2.3-2.4-5.8-2.4z"/>
+                <path fill="'.TracyDebugger::COLOR_NORMAL.'" d="M304.4 294.8v2.3c.3 1.3 2.7 2.3 5.8 2.3s5.7-1 5.9-2.3v-2.3c-1 .8-3.1 1.4-6 1.4-2.8 0-4.8-.6-5.7-1.4zM310.7 291.9h-1.2c-1.7-.1-3.1-.3-4-.7-.4-.2-.9-.4-1.1-.6v2.4c.7.8 2.9 1.5 5.8 1.5 3 0 5.1-.7 5.8-1.5v-2.4c-.3.2-.7.5-1.1.6-1.1.4-2.5.6-4.2.7zM310.1 285.6c-3.5 0-5.5 1.1-5.8 2.3v.7c.7.8 2.9 1.5 5.8 1.5s5.1-.7 5.8-1.5v-.6c-.3-1.3-2.3-2.4-5.8-2.4z"/>
             </svg>
             ';
         }
 
-        if(\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
+        if(TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
             ($this->wire('process') == 'ProcessPageEdit' ||
                 $this->wire('process') == 'ProcessUser' ||
                 $this->wire('process') == 'ProcessRole' ||
@@ -85,7 +86,7 @@ class RequestInfoPanel extends BasePanel {
         // check if request is to a PW page - otherwise it's maybe an AJAX request to an external script
         $isPwPage = $_SERVER['SCRIPT_NAME'] == $this->wire('config')->urls->root . 'index.php' ? true : false;
 
-        $panelSections = \TracyDebugger::getDataValue('requestInfoPanelSections');
+        $panelSections = TracyDebugger::getDataValue('requestInfoPanelSections');
 
         // end for each section
         $sectionEnd = '
@@ -348,7 +349,7 @@ class RequestInfoPanel extends BasePanel {
                     $moduleInfo = $this->wire('modules')->getModuleInfoVerbose($moduleName);
                     $moduleConfigData = $this->wire('modules')->getModuleConfigData($moduleName) ?: array();
                     $moduleObject = $this->wire('modules')->getModule($moduleName, array('noInit' => true));
-                    $moduleObject = method_exists($moduleObject, 'getArray') ? $moduleObject->getArray() : array();
+                    $moduleObject = $moduleObject && method_exists($moduleObject, 'getArray') ? $moduleObject->getArray() : array();
                     ksort($moduleConfigData);
                     ksort($moduleObject);
                     if($adminerAvailable) {
@@ -406,7 +407,7 @@ class RequestInfoPanel extends BasePanel {
             $pageInfo .= '
             <tr>
                 <td>id</td>
-                <td><a title="Edit Page" href="'.$p->editUrl().'">'.\TracyDebugger::formatPageStatus($p->id, $p->status).'</a></td>
+                <td><a title="Edit Page" href="'.$p->editUrl().'">'.TracyDebugger::formatPageStatus($p->id, $p->status).'</a></td>
             </tr>
             <tr>
                 <td>path</td>
@@ -444,13 +445,13 @@ class RequestInfoPanel extends BasePanel {
                 $pageInfo .= '
                 <tr>
                     <td>parent</td>
-                    <td>' . ($p->parent->viewable() ? '<a title="View Parent" href="'.$p->parent->url.'">'.$this->getLanguageVersion($p->parent, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->parent, 'name', $userLang, true).'</span>') . ' (<a title="Edit Parent" href="'.$p->parent->editUrl().'">'.\TracyDebugger::formatPageStatus($p->parent->id, $p->parent->status).'</a>)</td>
+                    <td>' . ($p->parent->viewable() ? '<a title="View Parent" href="'.$p->parent->url.'">'.$this->getLanguageVersion($p->parent, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->parent, 'name', $userLang, true).'</span>') . ' (<a title="Edit Parent" href="'.$p->parent->editUrl().'">'.TracyDebugger::formatPageStatus($p->parent->id, $p->parent->status).'</a>)</td>
                 </tr>';
             }
             $pageInfo .= '
             <tr>
                 <td>rootParent</td>
-                <td>' . ($p->rootParent->viewable() ? '<a title="View Root Parent" href="'.$p->rootParent->url.'">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang, true).'</span>') . ' (<a title="Edit Root Parent" href="'.$p->rootParent->editUrl().'">'.\TracyDebugger::formatPageStatus($p->rootParent->id, $p->rootParent->status).'</a>)</td>
+                <td>' . ($p->rootParent->viewable() ? '<a title="View Root Parent" href="'.$p->rootParent->url.'">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($p->rootParent, 'name', $userLang, true).'</span>') . ' (<a title="Edit Root Parent" href="'.$p->rootParent->editUrl().'">'.TracyDebugger::formatPageStatus($p->rootParent->id, $p->rootParent->status).'</a>)</td>
             </tr>
             ';
             if(method_exists($this->wire('pages')->get($p->id), 'getForPage')) {
@@ -458,7 +459,7 @@ class RequestInfoPanel extends BasePanel {
                 $pageInfo .= '
                 <tr>
                     <td>forPage</td>
-                    <td>' . ($forPage->viewable() ? '<a title="View ForPage" href="'.$forPage->url.'">'.$this->getLanguageVersion($forPage, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($forPage, 'name', $userLang, true).'</span>') . ' (<a title="Edit ForPage" href="'.$forPage->editUrl().'">'.\TracyDebugger::formatPageStatus($forPage->id, $forPage->status).'</a>)</td>
+                    <td>' . ($forPage->viewable() ? '<a title="View ForPage" href="'.$forPage->url.'">'.$this->getLanguageVersion($forPage, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($forPage, 'name', $userLang, true).'</span>') . ' (<a title="Edit ForPage" href="'.$forPage->editUrl().'">'.TracyDebugger::formatPageStatus($forPage->id, $forPage->status).'</a>)</td>
                 </tr>
                 ';
             }
@@ -467,7 +468,7 @@ class RequestInfoPanel extends BasePanel {
                 $pageInfo .= '
                 <tr>
                     <td>prev (sibling)</td>
-                    <td>' . ($prevPage->viewable() ? '<a title="View Prev Sibling" href="'.$prevPage->url.'">'.$this->getLanguageVersion($prevPage, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($prevPage, 'name', $userLang, true).'</span>') . ' (<a title="Edit Prev Sibling" href="'.$prevPage->editUrl().'">'.\TracyDebugger::formatPageStatus($prevPage->id, $prevPage->status).'</a>)</td>
+                    <td>' . ($prevPage->viewable() ? '<a title="View Prev Sibling" href="'.$prevPage->url.'">'.$this->getLanguageVersion($prevPage, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($prevPage, 'name', $userLang, true).'</span>') . ' (<a title="Edit Prev Sibling" href="'.$prevPage->editUrl().'">'.TracyDebugger::formatPageStatus($prevPage->id, $prevPage->status).'</a>)</td>
                 </tr>';
             }
             $nextPage = $p->next("include=all");
@@ -475,7 +476,7 @@ class RequestInfoPanel extends BasePanel {
                 $pageInfo .= '
                 <tr>
                     <td>next (sibling)</td>
-                    <td>' . ($nextPage->viewable() ? '<a title="View Next Sibling" href="'.$nextPage->url.'">'.$this->getLanguageVersion($nextPage, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($nextPage, 'name', $userLang, true).'</span>') . ' (<a title="Edit Next Sibling" href="'.$nextPage->editUrl().'">'.\TracyDebugger::formatPageStatus($nextPage->id, $nextPage->status).'</a>)</td>
+                    <td>' . ($nextPage->viewable() ? '<a title="View Next Sibling" href="'.$nextPage->url.'">'.$this->getLanguageVersion($nextPage, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($nextPage, 'name', $userLang, true).'</span>') . ' (<a title="Edit Next Sibling" href="'.$nextPage->editUrl().'">'.TracyDebugger::formatPageStatus($nextPage->id, $nextPage->status).'</a>)</td>
                 </tr>';
             }
             $pageInfo .= '
@@ -489,14 +490,14 @@ class RequestInfoPanel extends BasePanel {
                 $pageInfo .= '
                 <tr>
                     <td>child</td>
-                    <td>' . ($firstChild->viewable() ? '<a title="View First Child" href="'.$firstChild->url.'">'.$this->getLanguageVersion($firstChild, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($firstChild, 'name', $userLang, true).'</span>') . ' (<a title="Edit First Child" href="'.$firstChild->editUrl().'">'.\TracyDebugger::formatPageStatus($firstChild->id, $firstChild->status).'</a>)</td>
+                    <td>' . ($firstChild->viewable() ? '<a title="View First Child" href="'.$firstChild->url.'">'.$this->getLanguageVersion($firstChild, 'name', $userLang, true).'</a>' : '<span title="Not Viewable">'.$this->getLanguageVersion($firstChild, 'name', $userLang, true).'</span>') . ' (<a title="Edit First Child" href="'.$firstChild->editUrl().'">'.TracyDebugger::formatPageStatus($firstChild->id, $firstChild->status).'</a>)</td>
                 </tr>
                 ';
             }
             $pageInfo .= '
                 <tr>
                     <td>createdUser</td>
-                    <td>'.$p->createdUser->name.' (<a title="Edit User" href="'.$this->wire('config')->urls->admin.'access/users/edit/?id='.$p->createdUser->id.'">'.\TracyDebugger::formatPageStatus($p->createdUser->id, $p->createdUser->status).'</a>)</td>
+                    <td>'.$p->createdUser->name.' (<a title="Edit User" href="'.$this->wire('config')->urls->admin.'access/users/edit/?id='.$p->createdUser->id.'">'.TracyDebugger::formatPageStatus($p->createdUser->id, $p->createdUser->status).'</a>)</td>
                 </tr>
                 <tr>
                     <td>created</td>
@@ -508,7 +509,7 @@ class RequestInfoPanel extends BasePanel {
                 </tr>
                 <tr>
                     <td>modifiedUser</td>
-                    <td>'.$p->modifiedUser->name.' (<a title="Edit User" href="'.$this->wire('config')->urls->admin.'access/users/edit/?id='.$p->modifiedUser->id.'">'.\TracyDebugger::formatPageStatus($p->modifiedUser->id, $p->modifiedUser->status).'</a>)</td>
+                    <td>'.$p->modifiedUser->name.' (<a title="Edit User" href="'.$this->wire('config')->urls->admin.'access/users/edit/?id='.$p->modifiedUser->id.'">'.TracyDebugger::formatPageStatus($p->modifiedUser->id, $p->modifiedUser->status).'</a>)</td>
                 </tr>
                 <tr>
                     <td>modified</td>
@@ -535,15 +536,15 @@ class RequestInfoPanel extends BasePanel {
 
 
         // Redirect info
-        if(in_array('redirectInfo', $panelSections) && \TracyDebugger::$redirectInfo) {
+        if(in_array('redirectInfo', $panelSections) && TracyDebugger::$redirectInfo) {
             $redirectInfo = '
             <table>';
-            foreach(\TracyDebugger::$redirectInfo as $k => $v) {
+            foreach(TracyDebugger::$redirectInfo as $k => $v) {
 
                 $filePathParts = explode(':', $v);
 
                 if($k == 'file') {
-                    $v = \TracyDebugger::createEditorLink($this->wire('config')->paths->root . ltrim($filePathParts[0], '/'), $filePathParts[1], $v, 'Edit ' . $filePathParts[0]);
+                    $v = TracyDebugger::createEditorLink($this->wire('config')->paths->root . ltrim($filePathParts[0], '/'), $filePathParts[1], $v, 'Edit ' . $filePathParts[0]);
                 }
                 $redirectInfo .= '
                     <tr>
@@ -622,7 +623,7 @@ class RequestInfoPanel extends BasePanel {
         $templateFileEditorLinkIcon = '
             <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
                  width="14.2px" height="16px" viewBox="388.9 298 14.2 16" enable-background="new 388.9 298 14.2 16" xml:space="preserve">
-                    <path fill="'.\TracyDebugger::COLOR_NORMAL.'" d="M394.6,307.5c-0.1,0.1-0.1,0.1-0.1,0.2l-1,3.2c0,0.1,0,0.2,0.1,0.3c0.1,0.1,0.1,0.1,0.2,0.1c0,0,0,0,0.1,0
+                    <path fill="'.TracyDebugger::COLOR_NORMAL.'" d="M394.6,307.5c-0.1,0.1-0.1,0.1-0.1,0.2l-1,3.2c0,0.1,0,0.2,0.1,0.3c0.1,0.1,0.1,0.1,0.2,0.1c0,0,0,0,0.1,0
                         c0,0,0,0,0,0l3.3-1.1c0.1,0,0.1-0.1,0.1-0.1l5.9-5.9c0.1-0.1,0.1-0.1,0.1-0.2c0-0.1,0-0.2-0.1-0.2l-2.2-2.2
                         c-0.1-0.1-0.1-0.1-0.2-0.1c-0.1,0-0.2,0-0.2,0.1l-0.2,0.2v-3.4c0-0.1,0-0.2-0.1-0.3c-0.1-0.1-0.2-0.1-0.3-0.1h-6.5l0,0h-0.8
                         c0,0,0,0,0,0h-0.1v0.1l-3.3,3.3c0,0,0,0,0,0.1h0v0.1v0.9v11.2c0,0.1,0,0.2,0.1,0.3c0.1,0.1,0.2,0.1,0.3,0.1h3.1h4.2h3.1
@@ -632,7 +633,7 @@ class RequestInfoPanel extends BasePanel {
             </svg>
         ';
 
-        if(isset($templateFilePath) && $templateFilePath != '') $templateFileEditorLink = \TracyDebugger::createEditorLink($templateFilePath, 1, $templateFileEditorLinkIcon, 'Edit ' . pathinfo($templateFilePath, PATHINFO_BASENAME));
+        if(isset($templateFilePath) && $templateFilePath != '') $templateFileEditorLink = TracyDebugger::createEditorLink($templateFilePath, 1, $templateFileEditorLinkIcon, 'Edit ' . pathinfo($templateFilePath, PATHINFO_BASENAME));
 
         if(in_array('templateInfo', $panelSections) && $isPwPage) {
             $templateInfo = '';
@@ -686,7 +687,7 @@ class RequestInfoPanel extends BasePanel {
                     </tr>
                     <tr>
                         <td>filename</td>
-                        <td>'.(isset($templateFilePath) ? \TracyDebugger::createEditorLink($templateFilePath, 1, str_replace($this->wire('config')->paths->root, '/', $templateFilePath), 'Edit Template File') . '<br />
+                        <td>'.(isset($templateFilePath) ? TracyDebugger::createEditorLink($templateFilePath, 1, str_replace($this->wire('config')->paths->root, '/', $templateFilePath), 'Edit Template File') . '<br />
                             modified: ' . date("Y-m-d H:i:s", filemtime($templateFilePath)) . '<br />' .
                             (isset($owner) && !is_bool($owner) && isset($group) && !is_bool($group) ? 'user/group: ' . $owner['name'].":".$group['name'] .'<br />' : '') . '
                             permissions: ' . $permission
@@ -749,12 +750,12 @@ class RequestInfoPanel extends BasePanel {
             $keys = $p->meta()->getArray();
             if($keys) {
                 foreach($keys as $key => $value) {
-                    $options = array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true);
-                    if(defined('\Tracy\Dumper::ITEMS')) array_push($options, array(Dumper::ITEMS => \TracyDebugger::getDataValue('maxItems')));
+                    $options = array(Dumper::LIVE => true, Dumper::DEPTH => TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true);
+                    if(defined('\Tracy\Dumper::ITEMS')) array_push($options, array(Dumper::ITEMS => TracyDebugger::getDataValue('maxItems')));
                     $pageMeta .= "\n<tr>" .
                         "<td>$key</td>";
                         if($adminerAvailable) $pageMeta .= '<td><a title="Edit in Adminer" href="adminer://?edit=pages_meta&where%5Bsource_id%5D='.$p->id.'&where%5Bname%5D='.$key.'">'.$adminerIcon.'</a></td>';
-                        $pageMeta .= "<td>".Dumper::toHtml($value, array(Dumper::LIVE => true, Dumper::DEBUGINFO => \TracyDebugger::getDataValue('debugInfo'), Dumper::DEPTH => 99, Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false))."</td>" .
+                        $pageMeta .= "<td>".Dumper::toHtml($value, array(Dumper::LIVE => true, Dumper::DEBUGINFO => TracyDebugger::getDataValue('debugInfo'), Dumper::DEPTH => 99, Dumper::TRUNCATE => TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false))."</td>" .
                     "</tr>";
                 }
             }
@@ -772,7 +773,7 @@ class RequestInfoPanel extends BasePanel {
                     unset($fieldsListValuesColumns[$key]);
                 }
             }
-            if(!\TracyDebugger::getDataValue('imagesInFieldListValues')) {
+            if(!TracyDebugger::getDataValue('imagesInFieldListValues')) {
                 if (($key = array_search('image details', $fieldsListValuesColumns)) !== false) {
                     unset($fieldsListValuesColumns[$key]);
                 }
@@ -783,8 +784,8 @@ class RequestInfoPanel extends BasePanel {
             $value = array();
             foreach($p->fields as $f) {
                 $fieldArray['settings'] = $p->template->fieldgroup->getField($f, true)->getArray();
-                $options = array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true);
-                if(defined('\Tracy\Dumper::ITEMS')) array_push($options, array(Dumper::ITEMS => \TracyDebugger::getDataValue('maxItems')));
+                $options = array(Dumper::LIVE => true, Dumper::DEPTH => TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true);
+                if(defined('\Tracy\Dumper::ITEMS')) array_push($options, array(Dumper::ITEMS => TracyDebugger::getDataValue('maxItems')));
                 $settings = Dumper::toHtml($fieldArray['settings'], $options);
                 $fieldsListValues .= "\n<tr>" .
                     "<td>$f->id</td>" .
@@ -800,7 +801,7 @@ class RequestInfoPanel extends BasePanel {
                     if($adminerAvailable) $fieldsListValues .= '<td><a title="Edit in Adminer" href="adminer://?edit=field_'.$f->name.'&where%5Bpages_id%5D='.$p->id.'">'.$adminerIcon.'</a></td>';
                     $fieldsListValues .= "<td>".$this->generateOutput($p, $f, false)."</td>" .
                     "<td>".$this->generateOutput($p, $f, true)."</td>";
-                    if(\TracyDebugger::getDataValue('imagesInFieldListValues')) $fieldsListValues .= "<td>".$this->imageDetails($p, $f)."</td>";
+                    if(TracyDebugger::getDataValue('imagesInFieldListValues')) $fieldsListValues .= "<td>".$this->imageDetails($p, $f)."</td>";
                     $fieldsListValues .= "<td>".$settings."</td>" .
                     "</tr>";
             }
@@ -881,8 +882,8 @@ class RequestInfoPanel extends BasePanel {
 
         // Page, Template, and Field Objects
         if($isPwPage) {
-            $options = array(Dumper::LIVE => true, Dumper::DEPTH => \TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true);
-            if(defined('\Tracy\Dumper::ITEMS')) array_push($options, array(Dumper::ITEMS => \TracyDebugger::getDataValue('maxItems')));
+            $options = array(Dumper::LIVE => true, Dumper::DEPTH => TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true);
+            if(defined('\Tracy\Dumper::ITEMS')) array_push($options, array(Dumper::ITEMS => TracyDebugger::getDataValue('maxItems')));
             if(in_array('pageObject', $panelSections)) $pageObject = Dumper::toHtml($p, $options);
             if(in_array('templateObject', $panelSections)) $templateObject = Dumper::toHtml($p->template, $options);
             if(in_array('fieldsObject', $panelSections)) $fieldsObject = Dumper::toHtml($p->fields, $options);
@@ -891,7 +892,7 @@ class RequestInfoPanel extends BasePanel {
 
 
         // Load all the panel sections
-        $isAdditionalBar = \TracyDebugger::isAdditionalBar();
+        $isAdditionalBar = TracyDebugger::isAdditionalBar();
 
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
         $out = <<< HTML
@@ -907,7 +908,7 @@ HTML;
 
         // all the "non" icon links sections
         $i=0;
-        foreach(\TracyDebugger::$requestInfoSections as $name => $label) {
+        foreach(TracyDebugger::$requestInfoSections as $name => $label) {
             // get all sections excluding those that are admin "links"
             $counter = '';
             if(strpos($name, 'Links') === false && in_array($name, $panelSections)) {
@@ -929,11 +930,11 @@ HTML;
             $out .= '
             <div class="pw-info-links" style="text-align: right; border-top:1px solid #CCCCCC; margin-top:10px; padding-top:10px;">
             ';
-            if($isPwPage && !\TracyDebugger::$inAdmin) {
+            if($isPwPage && !TracyDebugger::$inAdmin) {
                 $out .= '
                 <a onclick="tracyClosePanel(\'RequestInfo\')" href="'.$this->wire('config')->urls->admin.'page/edit/?id='.$p->id.'" title="Edit this page">
                     <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 528.899 528.899" style="enable-background:new 0 0 528.899 528.899;" xml:space="preserve">
-                        <path d="M328.883,89.125l107.59,107.589l-272.34,272.34L56.604,361.465L328.883,89.125z M518.113,63.177l-47.981-47.981   c-18.543-18.543-48.653-18.543-67.259,0l-45.961,45.961l107.59,107.59l53.611-53.611   C532.495,100.753,532.495,77.559,518.113,63.177z M0.3,512.69c-1.958,8.812,5.998,16.708,14.811,14.565l119.891-29.069   L27.473,390.597L0.3,512.69z" fill="'.\TracyDebugger::COLOR_NORMAL.'"/>
+                        <path d="M328.883,89.125l107.59,107.589l-272.34,272.34L56.604,361.465L328.883,89.125z M518.113,63.177l-47.981-47.981   c-18.543-18.543-48.653-18.543-67.259,0l-45.961,45.961l107.59,107.59l53.611-53.611   C532.495,100.753,532.495,77.559,518.113,63.177z M0.3,512.69c-1.958,8.812,5.998,16.708,14.811,14.565l119.891-29.069   L27.473,390.597L0.3,512.69z" fill="'.TracyDebugger::COLOR_NORMAL.'"/>
                     </svg>
                 </a>&nbsp;';
             }
@@ -944,7 +945,7 @@ HTML;
         }
 
         $out .= '<br />';
-        $out .= \TracyDebugger::generatePanelFooter('requestInfo', \Tracy\Debugger::timer('requestInfo'), strlen($out), 'requestInfoPanel');
+        $out .= TracyDebugger::generatePanelFooter('requestInfo', Debugger::timer('requestInfo'), strlen($out), 'requestInfoPanel');
         $out .= '</div>';
 
         return parent::loadResources() . $out;
@@ -955,13 +956,13 @@ HTML;
         $out = '';
         $value = $outputFormatting ? $this->wire('sanitizer')->entities1($p->getFormatted($f->name)) : $p->getUnformatted($f->name);
         if(is_string($value) && $outputFormatting) {
-            $out .= substr($value, 0, \TracyDebugger::getDataValue('maxLength')) . (strlen($value) > 99 ? '... ('.strlen($value).')' : '');
+            $out .= substr($value, 0, TracyDebugger::getDataValue('maxLength')) . (strlen($value) > 99 ? '... ('.strlen($value).')' : '');
         }
         else {
             // trycatch is to prevent panel errors if an image is missing
             // log the error to the Tracy error logs instead
             try {
-                $out .= Dumper::toHtml($value, array(Dumper::LIVE => true, Dumper::DEBUGINFO => \TracyDebugger::getDataValue('debugInfo'), Dumper::DEPTH => 99, Dumper::TRUNCATE => \TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
+                $out .= Dumper::toHtml($value, array(Dumper::LIVE => true, Dumper::DEBUGINFO => TracyDebugger::getDataValue('debugInfo'), Dumper::DEPTH => 99, Dumper::TRUNCATE => TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
             }
             catch(Exception $e) {
                 \TD::log($e);
@@ -976,7 +977,7 @@ HTML;
         $p->of(false);
         $imageStr = '';
         $imagePreview = '';
-        $inputfield = \TracyDebugger::getDataValue('imagesInFieldListValues') ? $f->getInputfield($p) : null;
+        $inputfield = TracyDebugger::getDataValue('imagesInFieldListValues') ? $f->getInputfield($p) : null;
 
         if($f->type instanceof FieldtypeRepeater) {
 						$repeaterValue = $p->get($f->name);
@@ -1027,7 +1028,7 @@ HTML;
                 }
             }
             elseif($item && $f && $f->type instanceof FieldtypeImage) {
-                $inputfield = \TracyDebugger::getDataValue('imagesInFieldListValues') ? $f->getInputfield($p) : null;
+                $inputfield = TracyDebugger::getDataValue('imagesInFieldListValues') ? $f->getInputfield($p) : null;
                 foreach($item as $image) {
                     $imageStr .= $this->imageStr($inputfield, $image);
                 }

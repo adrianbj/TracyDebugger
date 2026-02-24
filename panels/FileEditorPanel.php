@@ -1,4 +1,6 @@
-<?php
+<?php namespace ProcessWire;
+
+use Tracy\Debugger;
 
 class FileEditorPanel extends BasePanel {
 
@@ -10,10 +12,10 @@ class FileEditorPanel extends BasePanel {
 
     public function getTab() {
 
-        if(\TracyDebugger::isAdditionalBar()) return;
-        \Tracy\Debugger::timer('fileEditor');
+        if(TracyDebugger::isAdditionalBar()) return;
+        Debugger::timer('fileEditor');
 
-        if(\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
+        if(TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
             ($this->wire('process') == 'ProcessPageEdit' ||
                 $this->wire('process') == 'ProcessUser' ||
                 $this->wire('process') == 'ProcessRole' ||
@@ -33,10 +35,10 @@ class FileEditorPanel extends BasePanel {
         $this->tracyFileEditorFilePath = $this->wire('input')->cookie->tracyFileEditorFilePath ?: str_replace($this->wire('config')->paths->root, '', $this->p->template->filename);
 
         if(isset($_POST['tracyTestTemplateCode']) || $this->wire('input')->cookie->tracyTestFileEditor) {
-            $iconColor = \TracyDebugger::COLOR_ALERT;
+            $iconColor = TracyDebugger::COLOR_ALERT;
         }
         else {
-            $iconColor = \TracyDebugger::COLOR_NORMAL;
+            $iconColor = TracyDebugger::COLOR_NORMAL;
         }
 
         $this->icon = '
@@ -53,7 +55,7 @@ class FileEditorPanel extends BasePanel {
 
         return '
         <span title="File Editor">
-            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;File Editor' : '') . '
+            ' . $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;File Editor' : '') . '
         </span>
         ';
     }
@@ -83,18 +85,18 @@ class FileEditorPanel extends BasePanel {
 
         $maximizeSvg = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="282.8 231 16 15.2" enable-background="new 282.8 231 16 15.2" xml:space="preserve"><polygon fill="#AEAEAE" points="287.6,233.6 298.8,231 295.4,242 "/><polygon fill="#AEAEAE" points="293.9,243.6 282.8,246.2 286.1,235.3 "/></svg>';
 
-        $codeUseSoftTabs = \TracyDebugger::getDataValue('codeUseSoftTabs');
-        $codeShowInvisibles = \TracyDebugger::getDataValue('codeShowInvisibles');
-        $codeTabSize = \TracyDebugger::getDataValue('codeTabSize');
-        $customSnippetsUrl = \TracyDebugger::getDataValue('customSnippetsUrl');
+        $codeUseSoftTabs = TracyDebugger::getDataValue('codeUseSoftTabs');
+        $codeShowInvisibles = TracyDebugger::getDataValue('codeShowInvisibles');
+        $codeTabSize = TracyDebugger::getDataValue('codeTabSize');
+        $customSnippetsUrl = TracyDebugger::getDataValue('customSnippetsUrl');
 
-        $aceTheme = \TracyDebugger::getDataValue('aceTheme');
-        $codeFontSize = \TracyDebugger::getDataValue('codeFontSize');
-        $codeLineHeight = \TracyDebugger::getDataValue('codeLineHeight');
+        $aceTheme = TracyDebugger::getDataValue('aceTheme');
+        $codeFontSize = TracyDebugger::getDataValue('codeFontSize');
+        $codeLineHeight = TracyDebugger::getDataValue('codeLineHeight');
 
-        if(\TracyDebugger::getDataValue('pwAutocompletions')) {
+        if(TracyDebugger::getDataValue('pwAutocompletions')) {
             $i=0;
-            foreach(\TracyDebugger::getApiData('variables') as $key => $vars) {
+            foreach(TracyDebugger::getApiData('variables') as $key => $vars) {
                 foreach($vars as $name => $params) {
                     if(strpos($name, '()') !== false) {
                         $pwAutocompleteArr[$i]['name'] = "$$key->" . str_replace('___', '', $name) . ($this->wire()->$key && method_exists($this->wire()->$key, $name) ? '()' : '');
@@ -104,7 +106,7 @@ class FileEditorPanel extends BasePanel {
                         $pwAutocompleteArr[$i]['name'] = "$$key->" . str_replace('___', '', $name);
                         $pwAutocompleteArr[$i]['meta'] = 'PW property';
                     }
-                    if(\TracyDebugger::getDataValue('codeShowDescription')) {
+                    if(TracyDebugger::getDataValue('codeShowDescription')) {
                         $pwAutocompleteArr[$i]['docHTML'] = $params['description'] . "\n" . (isset($params['params']) ? '('.implode(', ', $params['params']).')' : '');
                     }
                     $i++;
@@ -112,11 +114,11 @@ class FileEditorPanel extends BasePanel {
             }
 
             $i=0;
-            foreach(\TracyDebugger::getApiData('proceduralFunctions') as $key => $vars) {
+            foreach(TracyDebugger::getApiData('proceduralFunctions') as $key => $vars) {
                 foreach($vars as $name => $params) {
                     $pwAutocompleteArr[$i]['name'] = $name . '()';
                     $pwAutocompleteArr[$i]['meta'] = 'PW function';
-                    if(\TracyDebugger::getDataValue('codeShowDescription')) {
+                    if(TracyDebugger::getDataValue('codeShowDescription')) {
                         $pwAutocompleteArr[$i]['docHTML'] = $params['description'] . "\n" . (isset($params['params']) && !empty($params['params']) ? '('.implode(', ', $params['params']).')' : '');
                     }
                     $i++;
@@ -128,7 +130,7 @@ class FileEditorPanel extends BasePanel {
             foreach($this->p->fields as $field) {
                 $pwAutocompleteArr[$i]['name'] = '$page->'.$field;
                 $pwAutocompleteArr[$i]['meta'] = 'PW ' . str_replace('Fieldtype', '', $field->type) . ' field';
-                if(\TracyDebugger::getDataValue('codeShowDescription')) $pwAutocompleteArr[$i]['docHTML'] = $field->description;
+                if(TracyDebugger::getDataValue('codeShowDescription')) $pwAutocompleteArr[$i]['docHTML'] = $field->description;
                 $i++;
             }
 
@@ -180,9 +182,9 @@ class FileEditorPanel extends BasePanel {
                 },
 
                 toggleFullscreen: function() {
-                    var tracyFileEditorPanel = document.getElementById('tracy-debug-panel-FileEditorPanel');
+                    var tracyFileEditorPanel = document.getElementById('tracy-debug-panel-ProcessWire-FileEditorPanel');
                     if(!document.getElementById("tracyFileEditorCodeContainer").classList.contains("maximizedConsole")) {
-                        window.Tracy.Debug.panels["tracy-debug-panel-FileEditorPanel"].toFloat();
+                        window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-FileEditorPanel"].toFloat();
                         // hack to hide resize handle that was showing through
                         tracyFileEditorPanel.style.resize = 'none';
                         if(this.isSafari()) {
@@ -206,7 +208,7 @@ class FileEditorPanel extends BasePanel {
 
                     if(typeof tracyFileEditor.tfe.resize == 'function') tracyFileEditor.tfe.resize(true);
                     if(focus && typeof tracyFileEditor.tfe.focus == 'function') {
-                        document.getElementById("tracy-debug-panel-FileEditorPanel").classList.add('tracy-focused');
+                        document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel").classList.add('tracy-focused');
                         tracyFileEditor.tfe.focus();
                     }
                 }
@@ -355,18 +357,18 @@ class FileEditorPanel extends BasePanel {
                                 }
                             });
                         });
-                        tracyFileEditor.observer.observe(document.getElementById("tracy-debug-panel-FileEditorPanel"), config);
+                        tracyFileEditor.observer.observe(document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel"), config);
 
                         // this is necessary for Safari, but not Chrome and Firefox
                         // otherwise resizing panel container doesn't resize internal panes
                         if(tracyFileEditor.isSafari()) {
-                            document.getElementById("tracy-debug-panel-FileEditorPanel").addEventListener('mousemove', function() {
+                            document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel").addEventListener('mousemove', function() {
                                 tracyFileEditor.resizeAce();
                             });
                         }
 
                         document.getElementById("tracyFileEditorCode").querySelector(".ace_text-input").addEventListener("keydown", function(e) {
-                            if(document.getElementById("tracy-debug-panel-FileEditorPanel").classList.contains("tracy-focused")) {
+                            if(document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel").classList.contains("tracy-focused")) {
                                 if(e.ctrlKey && e.shiftKey) {
                                     e.preventDefault();
                                     // enter
@@ -378,7 +380,7 @@ class FileEditorPanel extends BasePanel {
                         });
 
                         window.onresize = function(event) {
-                            if(document.getElementById("tracy-debug-panel-FileEditorPanel").classList.contains("tracy-focused")) {
+                            if(document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel").classList.contains("tracy-focused")) {
                                 tracyFileEditor.resizeAce();
                             }
                         };
@@ -405,7 +407,7 @@ HTML;
         $keyboardShortcutIcon = '
         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
         viewBox="388 298 16 16" enable-background="new 388 298 16 16" xml:space="preserve" style="width:13px !important; height:13px !important;">
-        <path fill="'.\TracyDebugger::COLOR_NORMAL.'" d="M401.1,308.1h-1.9v-4.3h1.9c1.6,0,2.9-1.3,2.9-2.9c0-1.6-1.3-2.9-2.9-2.9c-1.6,0-2.9,1.3-2.9,2.9v1.9h-4.3v-1.9
+        <path fill="'.TracyDebugger::COLOR_NORMAL.'" d="M401.1,308.1h-1.9v-4.3h1.9c1.6,0,2.9-1.3,2.9-2.9c0-1.6-1.3-2.9-2.9-2.9c-1.6,0-2.9,1.3-2.9,2.9v1.9h-4.3v-1.9
             c0-1.6-1.3-2.9-2.9-2.9c-1.6,0-2.9,1.3-2.9,2.9c0,1.6,1.3,2.9,2.9,2.9h1.9v4.3h-1.9c-1.6,0-2.9,1.3-2.9,2.9c0,1.6,1.3,2.9,2.9,2.9
             c1.6,0,2.9-1.3,2.9-2.9v-1.9h4.3v1.9c0,1.6,1.3,2.9,2.9,2.9c1.6,0,2.9-1.3,2.9-2.9C404,309.4,402.7,308.1,401.1,308.1z M399.2,300.9
             c0-1,0.8-1.9,1.9-1.9c1,0,1.9,0.8,1.9,1.9c0,1-0.8,1.9-1.9,1.9h-1.9V300.9z M390.9,302.8c-1,0-1.9-0.8-1.9-1.9c0-1,0.8-1.9,1.9-1.9
@@ -430,12 +432,12 @@ HTML;
                     <select style="width: 17px !important" title="Select recently opened files" onchange="tracyFileEditorLoader.loadFileEditor(this.value)" id="tfe_recently_opened"></select>
                     <div id="tracyFoldersFiles" style="padding: 0 !important; margin:40px 0 0 0 !important; width: 312px !important; height: calc(100% - 40px) !important; overflow-y: auto; overflow-x: hidden; z-index: 1">';
                         $out .= "<div class='fe-file-tree'>";
-                        $out .= $this->php_file_tree($this->wire('config')->paths->{\TracyDebugger::getDataValue('fileEditorBaseDirectory')}, $this->toArray(\TracyDebugger::getDataValue('fileEditorAllowedExtensions')));
+                        $out .= $this->php_file_tree($this->wire('config')->paths->{TracyDebugger::getDataValue('fileEditorBaseDirectory')}, $this->toArray(TracyDebugger::getDataValue('fileEditorAllowedExtensions')));
                         $out .= "</div>";
                     $out .= '
                     </div>
                     <div style="padding: 8px 12px 0 0; float:right">
-                        <form id="tracyFileEditorSubmission" style="padding: 0; margin: 0;" method="post" action="'.\TracyDebugger::inputUrl(true).'">
+                        <form id="tracyFileEditorSubmission" style="padding: 0; margin: 0;" method="post" action="'.TracyDebugger::inputUrl(true).'">
                             <fieldset>
                                 <textarea id="tracyFileEditorRawCode" name="tracyFileEditorRawCode" style="display:none"></textarea>
                                 <input type="hidden" id="fileEditorFilePath" name="fileEditorFilePath" value="'.$this->tracyFileEditorFilePath.'" />
@@ -450,7 +452,7 @@ HTML;
             </div>
             ';
 
-            $out .= \TracyDebugger::generatePanelFooter('fileEditor', \Tracy\Debugger::timer('fileEditor'), strlen($out), 'fileEditorPanel');
+            $out .= TracyDebugger::generatePanelFooter('fileEditor', Debugger::timer('fileEditor'), strlen($out), 'fileEditorPanel');
 
         $out .= '
         </div>';
@@ -496,7 +498,7 @@ HTML;
      */
     private function php_file_tree_dir($directory, $extensions = array(), $extFilter = false, $parent = "") {
 
-        if($this->strposa($directory, $this->toArray(\TracyDebugger::getDataValue('fileEditorExcludedDirs'))) !== false) {
+        if($this->strposa($directory, $this->toArray(TracyDebugger::getDataValue('fileEditorExcludedDirs'))) !== false) {
             $filesArray = array();
         }
         else {

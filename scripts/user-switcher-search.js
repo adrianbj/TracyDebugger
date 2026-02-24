@@ -1,7 +1,7 @@
 addFilterBox({
     suffix: "-userswitcher-panel",
     target: {
-        selector: "#tracy-debug-panel-UserSwitcherPanel select[name='userSwitcher']",
+        selector: "#tracy-debug-panel-ProcessWire-UserSwitcherPanel select[name='userSwitcher']",
         items: "option"
     },
     extraFilterAttrs: [
@@ -19,7 +19,7 @@ addFilterBox({
         }
     },
     addTo: {
-        selector: "#tracy-debug-panel-UserSwitcherPanel .tracy-icons",
+        selector: "#tracy-debug-panel-ProcessWire-UserSwitcherPanel .tracy-icons",
         position: "before"
     },
     displays: setupTracyPanelFilterBoxDisplays

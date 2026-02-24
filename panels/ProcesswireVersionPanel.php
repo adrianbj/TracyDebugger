@@ -1,4 +1,6 @@
-<?php
+<?php namespace ProcessWire;
+
+use Tracy\Debugger;
 
 class ProcesswireVersionPanel extends BasePanel {
 
@@ -7,14 +9,14 @@ class ProcesswireVersionPanel extends BasePanel {
 
     public function getTab() {
 
-        if(\TracyDebugger::isAdditionalBar()) return;
-        \Tracy\Debugger::timer('processwireVersion');
+        if(TracyDebugger::isAdditionalBar()) return;
+        Debugger::timer('processwireVersion');
 
         $this->versions = array();
-        foreach(new DirectoryIterator($this->wire('config')->paths->root) as $fileInfo) {
+        foreach(new \DirectoryIterator($this->wire('config')->paths->root) as $fileInfo) {
             if($fileInfo->isDot()) continue;
             $filePath = $fileInfo->getPathname();
-            $filePath = \TracyDebugger::forwardSlashPath($filePath);
+            $filePath = TracyDebugger::forwardSlashPath($filePath);
             $version = str_replace($this->wire('config')->paths->root, '', $filePath);
             $version = str_replace('.wire-', '', $version);
             if(strpos($filePath, 'wire') === false) continue;
@@ -27,10 +29,10 @@ class ProcesswireVersionPanel extends BasePanel {
         $latestVersion = end($this->versions);
 
         if($latestVersion == $this->wire('config')->version) {
-            $iconColor = \TracyDebugger::COLOR_NORMAL;
+            $iconColor = TracyDebugger::COLOR_NORMAL;
         }
         else {
-            $iconColor = \TracyDebugger::COLOR_WARN;
+            $iconColor = TracyDebugger::COLOR_WARN;
         }
 
         $this->icon = '
@@ -47,7 +49,7 @@ class ProcesswireVersionPanel extends BasePanel {
 
         return '
         <span title="ProcessWire Version">
-            ' . $this->icon .   (\TracyDebugger::getDataValue('showPanelLabels') ? 'PW Version' : '') . ' ' . $this->wire('config')->version . '
+            ' . $this->icon .   (TracyDebugger::getDataValue('showPanelLabels') ? 'PW Version' : '') . ' ' . $this->wire('config')->version . '
         </span>
         ';
     }
@@ -62,7 +64,7 @@ class ProcesswireVersionPanel extends BasePanel {
             <fieldset>
                 <legend>Choose from available versions</legend><br />';
                 $out .= '
-                <form method="post" action="'.\TracyDebugger::inputUrl(true).'">
+                <form method="post" action="'.TracyDebugger::inputUrl(true).'">
                     <select name="tracyPwVersion">';
                     foreach($this->versions as $version) {
                         $out .= '<option value="'.$version.'"'.($version == $this->wire('config')->version ? 'selected="selected"' : '').'>'.$version.'</option>';
@@ -72,7 +74,7 @@ class ProcesswireVersionPanel extends BasePanel {
                 </form>
             </fieldset>';
 
-            $out .= \TracyDebugger::generatePanelFooter('processwireVersion', \Tracy\Debugger::timer('processwireVersion'), strlen($out));
+            $out .= TracyDebugger::generatePanelFooter('processwireVersion', Debugger::timer('processwireVersion'), strlen($out));
 
         $out .= '
         </div>';

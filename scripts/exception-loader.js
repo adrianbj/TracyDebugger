@@ -51,15 +51,15 @@ if(!tracyExceptionLoader) {
         },
 
         loadExceptionFile: function(filePath) {
-            if(document.getElementById("tracy-debug-panel-TracyExceptionsPanel").classList.contains("tracy-mode-window")) {
+            if(document.getElementById("tracy-debug-panel-ProcessWire-TracyExceptionsPanel").classList.contains("tracy-mode-window")) {
                 this.populateExceptionViewer(filePath);
             }
             else {
-                if(!window.Tracy.Debug.panels || !document.getElementById("tracy-debug-panel-TracyExceptionsPanel")) {
+                if(!window.Tracy.Debug.panels || !document.getElementById("tracy-debug-panel-ProcessWire-TracyExceptionsPanel")) {
                     window.requestAnimationFrame(tracyExceptionLoader.loadExceptionFile(filePath));
                 }
                 else {
-                    var panel = window.Tracy.Debug.panels["tracy-debug-panel-TracyExceptionsPanel"];
+                    var panel = window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-TracyExceptionsPanel"];
                     if(panel.elem.dataset.tracyContent) {
                         panel.init();
                     }

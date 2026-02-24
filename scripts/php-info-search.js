@@ -16,7 +16,7 @@ addFilterBox({
         }
     },
     addTo: {
-        selector: "#tracy-debug-panel-PhpInfoPanel .tracy-icons",
+        selector: "#tracy-debug-panel-ProcessWire-PhpInfoPanel .tracy-icons",
         position: "before"
     },
     inputDelay: 500,
@@ -116,7 +116,7 @@ addFilterBox({
                 }
             }
 
-            window.Tracy.Debug.panels['tracy-debug-panel-PhpInfoPanel'].reposition();
+            window.Tracy.Debug.panels['tracy-debug-panel-ProcessWire-PhpInfoPanel'].reposition();
         }
     }
 });

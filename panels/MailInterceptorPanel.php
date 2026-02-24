@@ -1,4 +1,6 @@
-<?php
+<?php namespace ProcessWire;
+
+use Tracy\Debugger;
 
 class MailInterceptorPanel extends BasePanel {
 
@@ -9,12 +11,12 @@ class MailInterceptorPanel extends BasePanel {
 
     public function getTab() {
 
-        \Tracy\Debugger::timer('mailInterceptor');
+        Debugger::timer('mailInterceptor');
 
         $items = $this->wire('session')->tracyMailItems ? $this->wire('session')->tracyMailItems : array();
         $this->mailCount = count($items);
         if($this->mailCount > 0) {
-            $this->iconColor = \TracyDebugger::COLOR_WARN;
+            $this->iconColor = TracyDebugger::COLOR_WARN;
             $this->entries .= '
             <div class="mail-items">
                 <p>
@@ -82,7 +84,7 @@ class MailInterceptorPanel extends BasePanel {
             $this->entries .= '</div>';
         }
         else {
-            $this->iconColor = \TracyDebugger::COLOR_NORMAL;
+            $this->iconColor = TracyDebugger::COLOR_NORMAL;
             $this->entries = 'No emails sent';
         }
 
@@ -98,14 +100,14 @@ class MailInterceptorPanel extends BasePanel {
         ';
         return '
         <span title="Mail Interceptor">
-            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Mail Interceptor' : '') . ' ' . ($this->mailCount > 0 ? '<span class="mailCount">' . $this->mailCount . '</span>' : '') . '
+            ' . $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? 'Mail Interceptor' : '') . ' ' . ($this->mailCount > 0 ? '<span class="mailCount">' . $this->mailCount . '</span>' : '') . '
         </span>
         ';
     }
 
 
     public function getPanel() {
-        $isAdditionalBar = \TracyDebugger::isAdditionalBar();
+        $isAdditionalBar = TracyDebugger::isAdditionalBar();
         $out = '
         <h1>' . $this->icon . ' Mail Interceptor' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>
 
@@ -121,7 +123,7 @@ class MailInterceptorPanel extends BasePanel {
                 var icons = document.getElementsByClassName("emailInterceptorIconPath");
                 i=0;
                 while(i < icons.length) {
-                    icons[i].style.fill="'.\TracyDebugger::COLOR_NORMAL.'";
+                    icons[i].style.fill="'.TracyDebugger::COLOR_NORMAL.'";
                     i++;
                 }
 
@@ -164,7 +166,7 @@ class MailInterceptorPanel extends BasePanel {
             <br /><br />
         ';
             $out .= $this->entries;
-            $out .= \TracyDebugger::generatePanelFooter('mailInterceptor', \Tracy\Debugger::timer('mailInterceptor'), strlen($out));
+            $out .= TracyDebugger::generatePanelFooter('mailInterceptor', Debugger::timer('mailInterceptor'), strlen($out));
 
         $out .= '
         </div>';

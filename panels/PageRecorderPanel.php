@@ -1,6 +1,6 @@
-<?php
+<?php namespace ProcessWire;
 
-use Tracy\Dumper;
+use Tracy\Debugger;
 
 class PageRecorderPanel extends BasePanel {
 
@@ -11,30 +11,30 @@ class PageRecorderPanel extends BasePanel {
 
     public function getTab() {
 
-        \Tracy\Debugger::timer('pageRecorder');
+        Debugger::timer('pageRecorder');
 
-        if(\TracyDebugger::getDataValue('recordedPages') != '') {
+        if(TracyDebugger::getDataValue('recordedPages') != '') {
             $this->recordedPages .= '
             <p>
-                <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to trash all these pages?\');">
+                <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to trash all these pages?\');">
                     <input type="submit" name="trashRecordedPages" value="Trash Recorded Pages" />
                 </form>
-                <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to remove all these pages from the list?\');">
+                <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to remove all these pages from the list?\');">
                     <input type="submit" name="clearRecordedPages" value="Clear Recorded Pages List" />
                 </form>
             </p>';
-            foreach(\TracyDebugger::getDataValue('recordedPages') as $pid) {
+            foreach(TracyDebugger::getDataValue('recordedPages') as $pid) {
                 $p = $this->wire('pages')->get($pid);
                 if($p->path !=='' && !$p->is("has_parent=".$this->wire('config')->trashPageID)) {
                     $this->recordedPages .= '<a href="'.$this->wire('config')->urls->admin.'page/edit/?id='.$pid.'">'.$p->path.'</a><br />';
                     $this->pageCount++;
                 }
             }
-            $this->iconColor = \TracyDebugger::COLOR_WARN;
+            $this->iconColor = TracyDebugger::COLOR_WARN;
         }
         else {
             $this->recordedPages .= '<p>There are currently no recorded pages</p>';
-            $this->iconColor = \TracyDebugger::COLOR_NORMAL;
+            $this->iconColor = TracyDebugger::COLOR_NORMAL;
         }
 
         $this->icon = '
@@ -45,14 +45,14 @@ class PageRecorderPanel extends BasePanel {
 
         return '
         <span title="Page Recorder">
-            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Page Recorder' : '') . ' ' . ($this->pageCount > 0 ? $this->pageCount : '') . '
+            ' . $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? 'Page Recorder' : '') . ' ' . ($this->pageCount > 0 ? $this->pageCount : '') . '
         </span>
         ';
     }
 
 
     public function getPanel() {
-        $isAdditionalBar = \TracyDebugger::isAdditionalBar();
+        $isAdditionalBar = TracyDebugger::isAdditionalBar();
         $out = '
         <h1>' . $this->icon . ' Page Recorder' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>
 
@@ -60,7 +60,7 @@ class PageRecorderPanel extends BasePanel {
 
             $out .= $this->recordedPages;
 
-            $out .= \TracyDebugger::generatePanelFooter('pageRecorder', \Tracy\Debugger::timer('pageRecorder'), strlen($out));
+            $out .= TracyDebugger::generatePanelFooter('pageRecorder', Debugger::timer('pageRecorder'), strlen($out));
 
             $out .= '
         </div>';

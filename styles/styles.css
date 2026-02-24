@@ -560,11 +560,11 @@ td pre.tracy-dump {
     pointer-events: none;
 }
 
-#tracy-debug-panel-PanelSelectorPanel label {
+#tracy-debug-panel-ProcessWire-PanelSelectorPanel label {
     line-height: 1.75 !important;
 }
 
-#tracy-debug-panel-PanelSelectorPanel fieldset div label:hover {
+#tracy-debug-panel-ProcessWire-PanelSelectorPanel fieldset div label:hover {
     background: #E2E9EF !important;
 }
 
@@ -746,7 +746,7 @@ ul.pw-info-links {
     align-items: center;
     width: 100%;
     min-height: 30px;
-    background: #373b41;
+    background: #40464C;
     margin: 0;
     padding: 0;
 }
@@ -756,7 +756,7 @@ ul.pw-info-links {
     overflow-x: auto;
     overflow-y: hidden;
     white-space: nowrap;
-    background: #373b41;
+    background: #40464C;
     margin: 0;
     padding: 0;
 }
@@ -789,7 +789,7 @@ ul.pw-info-links {
     margin: 0 1px 0 0;
     padding: 5px 3px 2px 8px;
     height: 35px;
-    background-color: #2D2D2D;
+    background-color: #40464C;
     color: #D0D0D0;
     border: none;
     cursor: pointer;
@@ -845,7 +845,7 @@ ul.pw-info-links {
     padding: 8px 12px;
     font-size: 14px;
     line-height: 19px;
-    background-color: #3E4451;
+    background-color: #596069;
     color: #DCDCDC;
     border: none;
     cursor: pointer;
@@ -1041,21 +1041,21 @@ ul.pw-info-links {
     cursor: default !important;
 }
 
-#tracy-debug-panel-AdminerPanel {
+#tracy-debug-panel-ProcessWire-AdminerPanel {
     height: 75%;
     min-height: 300px !important;
     width: 1400px;
 }
 
-#tracy-debug-panel-FileEditorPanel {
+#tracy-debug-panel-ProcessWire-FileEditorPanel {
     height: 75%;
     min-height: 300px !important;
     width: 1400px;
 }
 
-#tracy-debug-panel-ConsolePanel,
-#tracy-debug-panel-ValidatorPanel,
-#tracy-debug-panel-TerminalPanel {
+#tracy-debug-panel-ProcessWire-ConsolePanel,
+#tracy-debug-panel-ProcessWire-ValidatorPanel,
+#tracy-debug-panel-ProcessWire-TerminalPanel {
     height: 75%;
     min-height: 300px !important;
     width: 1400px;
@@ -1064,22 +1064,22 @@ ul.pw-info-links {
     margin: 0px !important;
 }
 
-#tracy-debug-panel-ModuleDisablerPanel {
+#tracy-debug-panel-ProcessWire-ModuleDisablerPanel {
     width: 900px;
     min-width: 700px !important;
 }
 
-#tracy-debug-panel-TemplateResourcesPanel,
-#tracy-debug-panel-ToDoPanel {
+#tracy-debug-panel-ProcessWire-TemplateResourcesPanel,
+#tracy-debug-panel-ProcessWire-ToDoPanel {
     width: 1400px;
     height: 75%;
 }
 
-#tracy-debug-panel-ConsolePanel fieldset {
+#tracy-debug-panel-ProcessWire-ConsolePanel fieldset {
     width: 100% !important;
 }
 
-#tracy-debug-panel-ConsolePanel.tracy-mode-window {
+#tracy-debug-panel-ProcessWire-ConsolePanel.tracy-mode-window {
     width: 100% !important;
 }
 
@@ -1214,22 +1214,22 @@ ul.pw-info-links {
     vertical-align: middle !important;
 }
 
-#tracy-debug-panel-CaptainHookPanel .tracy-inner .tracy-toggle:not(.tracy-collapsed),
-#tracy-debug-panel-ApiExplorerPanel .tracy-inner .tracy-toggle:not(.tracy-collapsed) {
+#tracy-debug-panel-ProcessWire-CaptainHookPanel .tracy-inner .tracy-toggle:not(.tracy-collapsed),
+#tracy-debug-panel-ProcessWire-ApiExplorerPanel .tracy-inner .tracy-toggle:not(.tracy-collapsed) {
     color: #e83561 !important;
 }
 
-#tracy-debug-panel-CaptainHookPanel .tracy-inner .tracy-toggle,
-#tracy-debug-panel-ApiExplorerPanel .tracy-inner .tracy-toggle {
+#tracy-debug-panel-ProcessWire-CaptainHookPanel .tracy-inner .tracy-toggle,
+#tracy-debug-panel-ProcessWire-ApiExplorerPanel .tracy-inner .tracy-toggle {
     display: block;
 }
 
-#tracy-debug-panel-CaptainHookPanel .tracy-inner .tracy-toggle + div > p:first-child {
+#tracy-debug-panel-ProcessWire-CaptainHookPanel .tracy-inner .tracy-toggle + div > p:first-child {
     margin: 0 0 5px !important;
 }
 
-#tracy-debug-panel-CaptainHookPanel .tracy-inner .tracy-toggle + div,
-#tracy-debug-panel-ApiExplorerPanel .tracy-inner .tracy-toggle + div {
+#tracy-debug-panel-ProcessWire-CaptainHookPanel .tracy-inner .tracy-toggle + div,
+#tracy-debug-panel-ProcessWire-ApiExplorerPanel .tracy-inner .tracy-toggle + div {
     margin-bottom: 12px;
     padding-left: 12px;
 }
@@ -1272,7 +1272,7 @@ ul.pw-info-links {
     border-radius: 0 !important;
 }
 
-#tracy-debug-panel-FileEditorPanel.tracy-mode-window {
+#tracy-debug-panel-ProcessWire-FileEditorPanel.tracy-mode-window {
     width: 100% !important;
 }
 

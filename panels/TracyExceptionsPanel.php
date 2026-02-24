@@ -1,4 +1,6 @@
-<?php
+<?php namespace ProcessWire;
+
+use Tracy\Debugger;
 
 class TracyExceptionsPanel extends BasePanel {
 
@@ -13,7 +15,7 @@ class TracyExceptionsPanel extends BasePanel {
 
     public function getTab() {
 
-        \Tracy\Debugger::timer('tracyExceptions');
+        Debugger::timer('tracyExceptions');
 
         $this->tracyExceptionFile = $this->wire('input')->cookie->tracyExceptionFile;
 
@@ -30,10 +32,10 @@ class TracyExceptionsPanel extends BasePanel {
         }
 
         if(count($this->newFiles) > 0) {
-            $this->iconColor = \TracyDebugger::COLOR_ALERT;
+            $this->iconColor = TracyDebugger::COLOR_ALERT;
         }
         else {
-            $this->iconColor = \TracyDebugger::COLOR_NORMAL;
+            $this->iconColor = TracyDebugger::COLOR_NORMAL;
         }
 
         $this->icon = '
@@ -43,7 +45,7 @@ class TracyExceptionsPanel extends BasePanel {
 
         return '
         <span title="Tracy Exceptions">
-            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Tracy Exceptions' : '') . '
+            ' . $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Tracy Exceptions' : '') . '
         </span>
         ';
     }
@@ -108,7 +110,7 @@ HTML;
             </div>
             ';
 
-            $out .= \TracyDebugger::generatePanelFooter('tracyExceptions', \Tracy\Debugger::timer('tracyExceptions'), strlen($out), 'tracyExceptionsPanel');
+            $out .= TracyDebugger::generatePanelFooter('tracyExceptions', Debugger::timer('tracyExceptions'), strlen($out), 'tracyExceptionsPanel');
 
         $out .= '
         </div>';
@@ -183,7 +185,7 @@ HTML;
                 $link = trim($link, '/');
                 $link = str_replace('//', '/', $link);
                 $link = str_replace($this->wire('config')->paths->root, '', $link);
-                $tree .= "<li style='padding: 3px 5px".(in_array($fileName, $this->newFiles) ? '; background: '.\TracyDebugger::COLOR_ALERT : '')."'><a onclick='showUnloadButton()' ".(in_array($fileName, $this->newFiles) ? ' style="color: #FFFFFF !important"' : '')." href='tracyexception://?f=$link&l=1'>$fileName</a></li>";
+                $tree .= "<li style='padding: 3px 5px".(in_array($fileName, $this->newFiles) ? '; background: '.TracyDebugger::COLOR_ALERT : '')."'><a onclick='showUnloadButton()' ".(in_array($fileName, $this->newFiles) ? ' style="color: #FFFFFF !important"' : '')." href='tracyexception://?f=$link&l=1'>$fileName</a></li>";
 
             }
 
