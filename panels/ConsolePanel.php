@@ -618,9 +618,21 @@ class ConsolePanel extends BasePanel {
                     }
 
                     this.tce.setValue(data.code || '', -1);
-                    if (data.selections) {
-                        this.tce.selection.fromJSON(data.selections);
+
+                    // Validate selections object before attempting to restore
+                    if (data.selections && typeof data.selections === 'object' && data.selections.ranges) {
+                        try {
+                            this.tce.selection.fromJSON(data.selections);
+                        } catch (e) {
+                            console.warn('Failed to restore selections:', e);
+                            // Fall back to default cursor position
+                            this.tce.clearSelection();
+                        }
+                    } else {
+                        // No valid selections data, just clear selection
+                        this.tce.clearSelection();
                     }
+
                     if (data.scrollTop !== undefined) {
                         this.tce.session.setScrollTop(data.scrollTop);
                     }
@@ -1542,20 +1554,38 @@ class ConsolePanel extends BasePanel {
 
             // checkIfUnsavedChanges: accepts an optional pre-fetched tab and/or snippet
             // to avoid redundant DB reads when callers already have those objects.
-            checkIfUnsavedChanges: async function(tabId, name, prefetchedTab) {
-                try {
-                    const tab = prefetchedTab !== undefined ? prefetchedTab : await this.getTabItem(tabId);
-                    if (!tab) return false;
-                    if (!name) name = tab.name || '';
+            checkIfUnsavedChanges: function(tabId, name, prefetchedTab, prefetchedSnippet) {
+                return new Promise(resolve => {
+                    const withTab = (tab) => {
+                        if (!tab) { resolve(false); return; }
+                        if (!name) name = tab.name || '';
 
-                    const snippet = await this.getSnippetItem(name);
-                    const tabCode = (tab.code || '');
-                    const snippetCode = (snippet?.code || '');
-                    return (!snippet && tabCode !== '') || (snippet && tabCode !== snippetCode);
-                } catch (err) {
-                    console.warn('Error in checkIfUnsavedChanges:', err);
-                    return false;
-                }
+                        const withSnippet = (snippet) => {
+                            const tabCode = (tab.code || '').replace(/\\s+/g, ' ').trim();
+                            const snippetCode = (snippet?.code || '').replace(/\\s+/g, ' ').trim();
+                            const hasUnsavedChanges = (!snippet && tabCode !== '') || (snippet && tabCode !== snippetCode);
+                            resolve(hasUnsavedChanges);
+                        };
+
+                        if (prefetchedSnippet !== undefined) {
+                            withSnippet(prefetchedSnippet);
+                        } else {
+                            this.getSnippetItem(name).then(withSnippet).catch(err => {
+                                console.warn('Error fetching snippet in checkIfUnsavedChanges:', err);
+                                resolve(false);
+                            });
+                        }
+                    };
+
+                    if (prefetchedTab !== undefined) {
+                        withTab(prefetchedTab);
+                    } else {
+                        this.getTabItem(tabId).then(withTab).catch(err => {
+                            console.warn('Error fetching tab in checkIfUnsavedChanges:', err);
+                            resolve(false);
+                        });
+                    }
+                });
             },
 
             getNextTabNumber: function() {
