@@ -1044,13 +1044,13 @@ ul.pw-info-links {
 #tracy-debug-panel-ProcessWire-AdminerPanel {
     height: 75%;
     min-height: 300px !important;
-    width: 1400px;
+    width: 1400px !important;
 }
 
 #tracy-debug-panel-ProcessWire-FileEditorPanel {
     height: 75%;
     min-height: 300px !important;
-    width: 1400px;
+    width: 1400px !important;
 }
 
 #tracy-debug-panel-ProcessWire-ConsolePanel,
@@ -1058,20 +1058,20 @@ ul.pw-info-links {
 #tracy-debug-panel-ProcessWire-TerminalPanel {
     height: 75%;
     min-height: 300px !important;
-    width: 1400px;
+    width: 1400px !important;
     min-width: 825px !important;
     padding: 0px !important;
     margin: 0px !important;
 }
 
 #tracy-debug-panel-ProcessWire-ModuleDisablerPanel {
-    width: 900px;
+    width: 900px !important;
     min-width: 700px !important;
 }
 
 #tracy-debug-panel-ProcessWire-TemplateResourcesPanel,
 #tracy-debug-panel-ProcessWire-ToDoPanel {
-    width: 1400px;
+    width: 1400px !important;
     height: 75%;
 }
 
