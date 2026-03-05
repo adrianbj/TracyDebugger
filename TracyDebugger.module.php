@@ -221,6 +221,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "excludedPwLogFiles" => array('session', 'modules', 'file-compiler'),
             "excludedTracyLogFiles" => array(),
             "numLogEntries" => 100,
+            "numExceptions" => 25,
             "collapse" => 14,
             "collapse_count" => 7,
             "maxDepth" => 3,
@@ -4381,10 +4382,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($data['todoSpecifiedDirectories']) $f->attr('value', $data['todoSpecifiedDirectories']);
         $fieldset->add($f);
 
-        // ProcessWire and Tracy Log Panels
+        // Log & Exceptions Panels
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->attr('name+id', 'processwireAndTracyLogsPanels');
-        $fieldset->label = __('ProcessWire and Tracy Log panels', __FILE__);
+        $fieldset->attr('name+id', 'logExeptionsPanels');
+        $fieldset->label = __('Log and Exceptions panels', __FILE__);
         $wrapper->add($fieldset);
 
         $f = $this->wire('modules')->get("InputfieldAsmSelect");
@@ -4421,7 +4422,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Number of log entries', __FILE__);
         $f->description = __('Set the number of log entries to be displayed for the Tracy and ProcessWire log viewer panels.', __FILE__);
         $f->notes = __('Default: 100', __FILE__);
+        $f->columnWidth = 50;
         $f->attr('value', $data['numLogEntries']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldInteger");
+        $f->attr('name', 'numExceptions');
+        $f->label = __('Number of exceptions', __FILE__);
+        $f->description = __('Set the number of exceptions to be displayed for the Tracy Exceptions panel.', __FILE__);
+        $f->notes = __('Default: 25', __FILE__);
+        $f->columnWidth = 50;
+        $f->attr('value', $data['numExceptions']);
         $fieldset->add($f);
 
         // Template Resources Panel
