@@ -98,11 +98,10 @@ class TracyExceptionsPanel extends BasePanel {
 HTML;
 
         $out .= '<h1>'.$this->icon.' Tracy Exceptions <span id="panelTitleFilePath" style="font-size:14px"></span></h1><span class="tracy-icons"></span>
-        <div class="tracy-inner">
-            <div id="tracyExceptionsViewerContainer" style="height: 100%;">
-            <span style="float:right"><input style="display: none !important" type="submit" id="clearException" name="clearException" onclick="clearTracyExceptionsViewer()" value="Unload" /></span>
-                <div style="float: left; height: calc(100% - 38px);">
-                    <div id="tracyExceptionFiles" style="padding: 0 !important; margin:0 !important; height: calc(100% - 40px) !important; overflow-y: auto; overflow-x: hidden; z-index: 1">';
+        <div class="tracy-inner" style="display: flex; flex-direction: column; min-height: 0;">
+            <div id="tracyExceptionsViewerContainer" style="display: flex; flex: 1; min-height: 0;">
+                <div style="display: flex; flex-direction: column; flex-shrink: 0; min-height: 0;">
+                    <div id="tracyExceptionFiles" style="padding: 0 !important; margin: 0 !important; overflow-y: auto; overflow-x: hidden; flex: 1; min-height: 0;">';
                         $out .= "<div class='fe-file-tree'>";
                         $out .= $this->php_file_tree($this->wire('config')->paths->logs . 'tracy/');
                         $out .= "</div>";
@@ -110,8 +109,11 @@ HTML;
                         <input type="hidden" id="tracyExceptionFilePath" name="tracyExceptionFilePath" value="'.htmlspecialchars($this->tracyExceptionFile ?? '', ENT_QUOTES, 'UTF-8').'" />
                     </div>
                 </div>
-                <div id="tracyExceptionsViewerCodeContainer">
-                    <div id="tracyExceptionsViewerCode" style="display:none"></div>
+                <div style="display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0;">
+                    <span style="align-self: flex-end;"><input style="display: none !important" type="submit" id="clearException" name="clearException" onclick="clearTracyExceptionsViewer()" value="Unload" /></span>
+                    <div id="tracyExceptionsViewerCodeContainer" style="flex: 1; overflow: auto; min-height: 0;">
+                        <div id="tracyExceptionsViewerCode" style="display:none"></div>
+                    </div>
                 </div>
             </div>
             ';

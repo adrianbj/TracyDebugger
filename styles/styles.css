@@ -1844,6 +1844,10 @@ ul.pw-info-links {
     width: 300px;
 }
 
+#tracy-debug-panel-ProcessWire-TracyExceptionsPanel[class*="tracy-mode-"] {
+    min-width: 575px;
+}
+
 .tracy-file-tree ul ul {
     margin-left: 15px !important;
     width: 275px !important;
