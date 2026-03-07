@@ -25,7 +25,7 @@ if(!tracyExceptionLoader) {
             else {
 
                 document.getElementById("tracyExceptionFilePath").value = filePath;
-                document.cookie = "tracyExceptionFile=" + filePath + "; path=/";
+                document.cookie = "tracyExceptionFile=" + filePath + "; path=/; SameSite=Strict";
                 document.getElementById("panelTitleFilePath").innerHTML = filePath.replace('site/assets/logs/tracy/', '');
 
                 var xmlhttp;

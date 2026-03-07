@@ -100,7 +100,7 @@ if(!tracyFileEditorLoader) {
 
         populateFileEditor: function(filePath, line) {
             document.getElementById("fileEditorFilePath").value = filePath;
-            document.cookie = "tracyFileEditorFilePath=" + filePath + "; path=/";
+            document.cookie = "tracyFileEditorFilePath=" + filePath + "; path=/; SameSite=Strict";
             document.getElementById("panelTitleFilePath").innerHTML = "/" + filePath;
 
             if(typeof tracyFileEditor === "undefined" || !tracyFileEditor.tfe) {

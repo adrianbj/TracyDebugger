@@ -815,7 +815,7 @@ class ConsolePanel extends BasePanel {
 
                             const errorExpires = new Date();
                             errorExpires.setMinutes(errorExpires.getMinutes() + (10 * 365 * 24 * 60));
-                            document.cookie = "tracyCodeError=" + encodeURIComponent(errorStr) + ";expires="+errorExpires.toGMTString()+";path=/";
+                            document.cookie = "tracyCodeError=" + encodeURIComponent(errorStr) + ";expires="+errorExpires.toGMTString()+";path=/;SameSite=Strict";
                         }
                         listenerMap.delete(xmlhttp);
                         xmlhttp.getAllResponseHeaders();
