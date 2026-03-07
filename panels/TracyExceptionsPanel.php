@@ -107,7 +107,7 @@ HTML;
                         $out .= $this->php_file_tree($this->wire('config')->paths->logs . 'tracy/');
                         $out .= "</div>";
                     $out .= '
-                        <input type="hidden" id="tracyExceptionFilePath" name="tracyExceptionFilePath" value="'.$this->tracyExceptionFile.'" />
+                        <input type="hidden" id="tracyExceptionFilePath" name="tracyExceptionFilePath" value="'.htmlspecialchars($this->tracyExceptionFile, ENT_QUOTES, 'UTF-8').'" />
                     </div>
                 </div>
                 <div id="tracyExceptionsViewerCodeContainer">
@@ -173,7 +173,8 @@ HTML;
             $liStyle = 'padding: 3px 5px' . ($isNew ? '; background: ' . TracyDebugger::COLOR_ALERT : '');
             $aStyle = $isNew ? ' style="color: #FFFFFF !important"' : '';
 
-            $parts[] = "<li style='{$liStyle}'><a onclick='showUnloadButton()'{$aStyle} href='tracyexception://?f={$link}&l=1'>{$fileName}</a></li>";
+            $escapedFileName = htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8');
+            $parts[] = "<li style='{$liStyle}'><a onclick='showUnloadButton()'{$aStyle} href='tracyexception://?f={$link}&l=1'>{$escapedFileName}</a></li>";
         }
 
         $parts[] = '</ul>';

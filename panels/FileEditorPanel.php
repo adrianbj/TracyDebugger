@@ -568,23 +568,24 @@ HTML;
                     //$link = $this->wire('config')->paths->templates . $link;
                     $link = str_replace('//', '/', $link);
                     $link = str_replace($this->wire('config')->paths->root, '', $link);
+                    $safeFileName = htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8');
                     if(in_array($ext, array("jpg", "png", "gif", "bmp"))) {
                         // images
                         $rootUrl = $this->convertPathToUrl($this->dirPath);
                         $link = rtrim($rootUrl, '/\\') . $link;
-                        $tree .= "<li class='tft-f ext-$ext'><a href='$link'>$fileName</a></li>";
+                        $tree .= "<li class='tft-f ext-$ext'><a href='$link'>$safeFileName</a></li>";
                     } else if($directory == $this->templatesPath && $ext == $this->wire('config')->templateExtension) {
                         // template files
                         $a = $this->isTemplateFile($file);
                         if($a !== false) {
-                            $tpl = "<span data-href='$a[1]'>$a[0]</span>";
-                            $tree .= "<li class='tft-f ext-$ext'><a href='tracy://?f=$link&l=1'>$fileName</a>$tpl</li>";
+                            $tpl = "<span data-href='".htmlspecialchars($a[1], ENT_QUOTES, 'UTF-8')."'>".htmlspecialchars($a[0], ENT_QUOTES, 'UTF-8')."</span>";
+                            $tree .= "<li class='tft-f ext-$ext'><a href='tracy://?f=$link&l=1'>$safeFileName</a>$tpl</li>";
                         } else {
-                            $tree .= "<li class='tft-f ext-$ext'><a href='tracy://?f=$link&l=1'>$fileName</a></li>";
+                            $tree .= "<li class='tft-f ext-$ext'><a href='tracy://?f=$link&l=1'>$safeFileName</a></li>";
                         }
                     } else {
                         // just plain file
-                        $tree .= "<li class='tft-f ext-$ext'><a href='tracy://?f=$link&l=1'>$fileName</a></li>";
+                        $tree .= "<li class='tft-f ext-$ext'><a href='tracy://?f=$link&l=1'>$safeFileName</a></li>";
                     }
                 }
             }

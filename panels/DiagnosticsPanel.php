@@ -339,7 +339,7 @@ class DiagnosticsPanel extends BasePanel {
 
         // Where possible append link to more documentation...
         if (isset($asset['href']) && !empty($asset['href'])) {
-            $href = "<a href='{$asset['href']}' target='_href'>{$asset['name']} Information...</a>";
+            $href = "<a href='".htmlspecialchars($asset['href'], ENT_QUOTES, 'UTF-8')."' target='_href'>".htmlspecialchars($asset['name'], ENT_QUOTES, 'UTF-8')." Information...</a>";
             if (!empty($value) && empty($chmod)) {
                 $value .= "<br>$href";
             } else {
@@ -378,7 +378,7 @@ class DiagnosticsPanel extends BasePanel {
         $style = ' style="line-height:1.3 !important;"';
         $col   = '';
         $txt   = '';
-        $title = (isset($cell['title']) && !empty($cell['title'])) ? " title=\"{$cell['title']}\"" : '';
+        $title = (isset($cell['title']) && !empty($cell['title'])) ? " title=\"".htmlspecialchars($cell['title'], ENT_QUOTES, 'UTF-8')."\"" : '';
         $class = isset($cell['class']) ? $cell['class'] : '';
         switch($class) {
         case 'WARN':
@@ -1050,7 +1050,7 @@ class DiagnosticsPanel extends BasePanel {
 
         // Where possible append link to more documentation...
         if (isset($asset['href']) && !empty($asset['href'])) {
-            $href = "<a href='{$asset['href']}' target='_href'>{$asset['name']} Information...</a>";
+            $href = "<a href='".htmlspecialchars($asset['href'], ENT_QUOTES, 'UTF-8')."' target='_href'>".htmlspecialchars($asset['name'], ENT_QUOTES, 'UTF-8')." Information...</a>";
             if (!empty($value) && empty($chmod)) {
                 $value .= "<br>$href";
             } else {

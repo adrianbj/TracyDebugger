@@ -76,7 +76,7 @@ class TracyLogsPanel extends BasePanel {
                     $itemKey = $log['name'] . '_' . $x;
                     $entryUrlAndText = explode('@', substr($entry, 22)); // get the rest of the line after the date;
                     if(isset($entryUrlAndText[1])) {
-                        $entriesArr[$itemKey]['url'] = "<a href='".trim($entryUrlAndText[1])."'>".trim($entryUrlAndText[1])."</a>";
+                        $entriesArr[$itemKey]['url'] = "<a href='".htmlspecialchars(trim($entryUrlAndText[1]), ENT_QUOTES, 'UTF-8')."'>".htmlspecialchars(trim($entryUrlAndText[1]), ENT_QUOTES, 'UTF-8')."</a>";
                     }
                     else {
                         continue; //bit of a hack - some entries getting duplicated but with empty URL, so ignore

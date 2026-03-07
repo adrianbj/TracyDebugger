@@ -112,7 +112,7 @@ class ProcesswireLogsPanel extends BasePanel {
                     }
                     $entriesArr[$itemKey]['text'] = $isCustom ? json_encode($entry) : $entry['text'];
                     $entriesArr[$itemKey]['user'] = $isCustom ? '' : $entry['user'];
-                    $entriesArr[$itemKey]['url'] = $isCustom ? '' : "<a href='".$entry['url']."'>".$entry['url']."</a>";
+                    $entriesArr[$itemKey]['url'] = $isCustom ? '' : "<a href='".htmlspecialchars($entry['url'], ENT_QUOTES, 'UTF-8')."'>".htmlspecialchars($entry['url'], ENT_QUOTES, 'UTF-8')."</a>";
                     $entriesArr[$itemKey]['log'] = $log['name'];
                     $x--;
                     $this->numLogEntries++;
@@ -153,7 +153,7 @@ class ProcesswireLogsPanel extends BasePanel {
                     \n<tr>
                         <td ".($lineIsNew ? 'style="background: '.$color.' !important; color: #FFFFFF !important"' : '')."><a ".($lineIsNew ? 'style="color: #FFFFFF !important"' : '')." title='View \"".$item['log']."\" log file in PW admin' href='".$this->wire('config')->urls->admin."setup/logs/view/".$item['log']."/'>".str_replace('-', '&#8209;', $item['log'])."</a></td>" .
                         "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
-                        "<td>".$item['user']."</td>" .
+                        "<td>".htmlspecialchars($item['user'], ENT_QUOTES, 'UTF-8')."</td>" .
                         "<td>".$item['url']."</td>" .
                         "<td>".TracyDebugger::createEditorLink($this->wire('config')->paths->logs . $item['log'] . '.txt', 1, (strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText), 'View in your code editor').(TracyDebugger::isJson($item['text']) ? "\n".\Tracy\Dumper::toHtml(json_decode($item['text'], true)) : '')."</td>" .
                     "</tr>";
