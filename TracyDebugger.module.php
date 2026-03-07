@@ -1769,7 +1769,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // check for any "bd_" wire variables and barDump them
-        $pwVars = function_exists('wire') ? $this->fuel : \ProcessWire\wire('all');
+        $pwVars = $this->wire('all');
         foreach($pwVars->getArray() as $key => $val) {
             if(strpos($key, 'bd_') !== false) \TD::barDump($val, '$'.$key);
         }
@@ -2477,7 +2477,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($options['when'] !== $when) return;
 
         // populate API variables, eg so $page equals $this->wire('page')
-        $pwVars = function_exists('wire') ? $this->fuel : \ProcessWire\wire('all');
+        $pwVars = $this->wire('all');
         foreach($pwVars->getArray() as $key => $value) {
             $$key = $value;
         }
@@ -2724,7 +2724,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static function templateVars($vars) {
 
         $pwVars = array('fuel','options');
-        foreach(wire('config')->version >= 2.8 ? wire('fuel') : wire()->fuel as $key => $value) {
+        foreach(wire('fuel') as $key => $value) {
             if(!is_object($value)) continue;
             $pwVars[] = $key;
         }

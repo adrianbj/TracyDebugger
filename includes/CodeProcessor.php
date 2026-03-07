@@ -17,7 +17,7 @@ register_shutdown_function(__NAMESPACE__.'\tracyConsoleShutdownHandler');
 TracyDebugger::$fromConsole = true;
 
 // populate API variables, eg so $page equals $this->wire('page')
-$pwVars = function_exists('wire') ? $this->fuel : \ProcessWire\wire('all');
+$pwVars = $this->wire('all');
 foreach($pwVars->getArray() as $key => $value) {
     $$key = $value;
 }
@@ -76,7 +76,7 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
         $nameSpace = 'namespace ' . $nameSpace . ';';
         $code = str_replace($nameSpace, '', $code);
     }
-    elseif(version_compare($this->wire('config')->version, '3', '>=')) {
+    else {
         $nameSpace = 'namespace ProcessWire;';
     }
 

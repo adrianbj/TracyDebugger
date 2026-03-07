@@ -59,7 +59,6 @@ class DebugModePanel extends BasePanel {
             ';
         }
 
-        $PwVersion = $this->wire('config')->version;
         $debugMode = $this->wire('config')->debug;
 
         if(TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
@@ -124,29 +123,20 @@ class DebugModePanel extends BasePanel {
             // Pages Loaded
             if(in_array('pagesLoaded', $panelSections)) {
                 $pagesLoaded_oc = 0;
-                if($PwVersion >= 2.8) {
-                    $pagesLoaded = $this->sectionHeader(array('ID', 'Path', 'Type', 'Loader'));
-                    foreach($this->wire('pages')->getCache() as $p) {
-                        $pagesLoaded_oc++;
-                        $parts = explode('/', trim($p->path, '/'));
-                        $name = array_pop($parts);
-                        $path = implode('/', $parts) . "/$name/";
-                        $path = '/' . ltrim($path, '/');
-                        $path = str_replace("/$name/", "/<b>$name</b>/", $path);
-                        $pagesLoaded .= "\n<tr>" .
-                            "<td>$p->id</td>" .
-                            "<td>$path</td>" .
-                            "<td>" . wireClassName($p) . "</td>" .
-                            "<td>$p->_debug_loader</td>" .
-                            "</tr>";
-                    }
-                }
-                else {
-                    $pagesLoaded = $this->sectionHeader(array('ID', 'Path', 'Title'));
-                    foreach($this->wire('pages')->getCache() as $p) {
-                        $pagesLoaded_oc++;
-                        $pagesLoaded .= "\n<tr><td>$p->id</td><td>$p->path</td><td>".htmlspecialchars($p->title ?? '', ENT_QUOTES, 'UTF-8')."</td></tr>";
-                    }
+                $pagesLoaded = $this->sectionHeader(array('ID', 'Path', 'Type', 'Loader'));
+                foreach($this->wire('pages')->getCache() as $p) {
+                    $pagesLoaded_oc++;
+                    $parts = explode('/', trim($p->path, '/'));
+                    $name = array_pop($parts);
+                    $path = implode('/', $parts) . "/$name/";
+                    $path = '/' . ltrim($path, '/');
+                    $path = str_replace("/$name/", "/<b>$name</b>/", $path);
+                    $pagesLoaded .= "\n<tr>" .
+                        "<td>$p->id</td>" .
+                        "<td>$path</td>" .
+                        "<td>" . wireClassName($p) . "</td>" .
+                        "<td>$p->_debug_loader</td>" .
+                        "</tr>";
                 }
                 $pagesLoaded .= $sectionEnd;
             }
@@ -177,12 +167,7 @@ class DebugModePanel extends BasePanel {
                 // Hooks
                 $hooksCalled_oc = 0;
                 $hooksCalled = $this->sectionHeader(array('When', 'Method::object', 'Visited by', 'Type', 'Priority'));
-                if($PwVersion >= 2.8) {
-                    $hooks = array_merge($this->wire()->getHooks('*'), $this->wire('hooks')->getAllLocalHooks());
-                }
-                else {
-                    $hooks = array_merge($this->wire()->getHooks('*'), Wire::$allLocalHooks);
-                }
+                $hooks = array_merge($this->wire()->getHooks('*'), $this->wire('hooks')->getAllLocalHooks());
                 $hooksSorted = array();
                 foreach($hooks as $hook) {
                     $whenKey = $hook['options']['before'] ? '0' : '1';
@@ -235,12 +220,7 @@ class DebugModePanel extends BasePanel {
                 // Database Queries
                 $databaseQueries_oc = 0;
                 $databaseQueries = $this->sectionHeader(array('Order', 'Query'));
-                if($PwVersion >= 2.8) {
-                    $queryMethod = $this->wire('database')->queryLog();
-                }
-                else {
-                    $queryMethod = WireDatabasePDO::getQueryLog();
-                }
+                $queryMethod = $this->wire('database')->queryLog();
                 foreach($queryMethod as $n => $sql) {
                     $databaseQueries_oc++;
                     $sql = $this->wire('sanitizer')->entities1($sql);
@@ -347,16 +327,14 @@ class DebugModePanel extends BasePanel {
             if($debugMode && in_array('autoload', $panelSections)) {
                 // Autoload
                 $autoload_oc = 0;
-                if($PwVersion >= 2.8) {
-                    $autoload = $this->sectionHeader(array('Class', 'File/Details'));
-                    foreach($this->wire('classLoader')->getDebugLog() as $className => $classFile) {
-                        $autoload_oc++;
-                        $className = $this->wire('sanitizer')->entities($className);
-                        $classFile = $this->wire('sanitizer')->entities($classFile);
-                        $autoload .= "<tr><td width='40%'>$className</td><td>$classFile</td></tr>";
-                    }
-                    $autoload .= $sectionEnd;
+                $autoload = $this->sectionHeader(array('Class', 'File/Details'));
+                foreach($this->wire('classLoader')->getDebugLog() as $className => $classFile) {
+                    $autoload_oc++;
+                    $className = $this->wire('sanitizer')->entities($className);
+                    $classFile = $this->wire('sanitizer')->entities($classFile);
+                    $autoload .= "<tr><td width='40%'>$className</td><td>$classFile</td></tr>";
                 }
+                $autoload .= $sectionEnd;
             }
 
 
@@ -418,7 +396,7 @@ class DebugModePanel extends BasePanel {
                 $out .= '</div><br />';
             }
 
-            if($debugMode && in_array('autoload', $panelSections) && $PwVersion >= 2.8) {
+            if($debugMode && in_array('autoload', $panelSections)) {
                 $out .= '
                 <a href="#" rel="#autoload" class="tracy-toggle tracy-collapsed">Autoload ('.$autoload_oc.')</a>
                 <div id="autoload" class="tracy-collapsed">'.$autoload.'</div><br />

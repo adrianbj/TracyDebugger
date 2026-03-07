@@ -63,7 +63,7 @@ class TracyPwApiData extends WireData {
     private function getVariables() {
         $apiVars = array();
         $apiVariables = array();
-        $this->pwVars = $this->wire('config')->version >= 2.8 ? $this->wire('all') : $this->wire()->fuel;
+        $this->pwVars = $this->wire('all');
         if(is_object($this->pwVars)) {
             foreach($this->pwVars as $key => $value) {
                 if(!is_object($value)) continue;

@@ -11,7 +11,7 @@ class ProcessTracyAdminer extends Process implements Module {
             'autoload' => false,
             'singular' => true,
             'icon' => 'database',
-            'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4, TracyDebugger, ProcessTracyAdminerRenderer',
+            'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0, TracyDebugger, ProcessTracyAdminerRenderer',
             'installs' => array('ProcessTracyAdminerRenderer'),
             'page' => array(
                 'name' => 'adminer',
