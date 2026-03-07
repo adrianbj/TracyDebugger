@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(wc -l /Users/adrianjones/Documents/GitHub/TracyDebugger/panels/Adminer/plugins/*.php)"
-    ]
-  }
-}
