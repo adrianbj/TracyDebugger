@@ -45,8 +45,6 @@ if(!tracyExceptionLoader) {
                                 }
                                 viewerCode.innerHTML = fileData.contents;
                                 viewerCode.style.display = "";
-                                var tracyBs = document.getElementById("tracy-bs");
-                                if(tracyBs) tracyBs.style.zIndex = "100";
                             }
                             else {
                                 // Non-HTML content — display using Tracy's built-in
@@ -84,20 +82,11 @@ if(!tracyExceptionLoader) {
                                     '</tracy-div>';
 
                                 Tracy.BlueScreen.loadAjax(bsContent);
-
-                                // Keep the BlueScreen overlay below Tracy panels (z-index 20000+)
-                                var tracyBsOverlay = document.getElementById("tracy-bs");
-                                if(tracyBsOverlay) tracyBsOverlay.style.zIndex = "100";
-
-                                // Re-focus the Exceptions panel so its dynamic z-index
-                                // stays above the BlueScreen overlay on repeated loads
-                                var panelId = "tracy-debug-panel-ProcessWire-TracyExceptionsPanel";
-                                var excPanel = window.Tracy.Debug.panels[panelId];
-                                if(excPanel) {
-                                    document.getElementById(panelId).classList.remove('tracy-focused');
-                                    excPanel.focus();
-                                }
                             }
+
+                            var tracyBs = document.getElementById("tracy-bs");
+                            if(tracyBs) tracyBs.style.zIndex = "100";
+
                         }
                         xmlhttp.getAllResponseHeaders();
                     }
