@@ -828,8 +828,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             // PAGE FILES
             // delete orphaned files if requested
             if($this->wire('input')->post->deleteOrphanFiles && $this->wire('input')->post->orphanPaths) {
+                $rootPath = $this->wire('config')->paths->root;
                 foreach(explode('|', $this->wire('input')->post->orphanPaths) as $filePath) {
-                    if(file_exists($filePath)) unlink($filePath);
+                    $realPath = realpath($filePath);
+                    if($realPath !== false && strpos($realPath, $rootPath) === 0 && file_exists($realPath)) {
+                        unlink($realPath);
+                    }
                 }
                 $this->wire('session')->redirect($this->httpReferer);
             }
@@ -3205,12 +3209,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // if using Test mode in File Editor on regular files, then immediately replace loaded file with backed up version
         // this is here instead of ProcessWire::finished because this works if test version has fatal error
-        if(isset($_COOKIE['tracyTestFileEditor'])) {
-            $this->filePath = $this->wire('config')->paths->root . ($this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor);
-            $this->cachePath = $this->tracyCacheDir . ($this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor);
-            if(file_exists($this->cachePath)) {
-                copy($this->cachePath, $this->filePath);
-                unlink($this->cachePath);
+        if(isset($_COOKIE['tracyTestFileEditor']) && (static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser)) {
+            $rootPath = $this->wire('config')->paths->root;
+            $editorPath = $this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor;
+            $resolvedFilePath = realpath($rootPath . $editorPath);
+            $resolvedCachePath = realpath($this->tracyCacheDir . $editorPath);
+            if($resolvedFilePath !== false && strpos($resolvedFilePath, $rootPath) === 0 &&
+               $resolvedCachePath !== false && strpos($resolvedCachePath, $this->tracyCacheDir) === 0 &&
+               file_exists($resolvedCachePath)) {
+                copy($resolvedCachePath, $resolvedFilePath);
+                unlink($resolvedCachePath);
             }
         }
 

@@ -24,6 +24,14 @@ foreach($pwVars->getArray() as $key => $value) {
 
 if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser) {
 
+    // validate CSRF token
+    $csrfToken = isset($_POST['csrfToken']) ? $_POST['csrfToken'] : '';
+    if(!$csrfToken || !hash_equals((string)$this->wire('session')->tracyConsoleToken, $csrfToken)) {
+        http_response_code(403);
+        echo 'CSRF token validation failed';
+        exit;
+    }
+
     $page = $pages->get((int)$_POST['pid']);
     if(isset($_POST['tracyConsole'])) {
         $code = $_POST['code'];
