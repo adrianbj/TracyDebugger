@@ -38,22 +38,65 @@ if(!tracyExceptionLoader) {
                             var isBlueScreen = fileData.contents.replace(/^\s+/, '').substring(0, 15).toLowerCase() === '<!doctype html>';
 
                             if(isBlueScreen) {
+                                // Real BlueScreen HTML — display inside the panel
+                                document.documentElement.classList.remove('tracy-bs-visible');
                                 if(document.getElementById('tracy-bs')) {
                                     document.getElementById('tracy-bs').remove();
                                 }
                                 viewerCode.innerHTML = fileData.contents;
+                                viewerCode.style.display = "";
                                 var tracyBs = document.getElementById("tracy-bs");
                                 if(tracyBs) tracyBs.style.zIndex = "100";
-                            } else {
-                                // Hide old BlueScreen instead of removing to avoid ResizeObserver stickyFooter crash
-                                var oldBs = document.getElementById('tracy-bs');
-                                if(oldBs) oldBs.style.display = 'none';
-                                viewerCode.innerHTML = "";
-                                viewerCode.style.display = "";
-                                var pre = document.createElement("pre");
-                                pre.style.cssText = "padding:10px; white-space:pre-wrap; word-wrap:break-word; font-size:13px; margin:0;";
-                                pre.textContent = fileData.contents;
-                                viewerCode.appendChild(pre);
+                            }
+                            else {
+                                // Non-HTML content — display using Tracy's built-in
+                                // BlueScreen viewer which handles z-index, toggle,
+                                // ESC dismiss, and scroll management automatically
+                                var tempEl = document.createElement("div");
+                                tempEl.textContent = fileData.contents;
+                                var escapedContents = tempEl.innerHTML;
+
+                                var bsContent =
+                                    '<style>' +
+                                    '#tracy-bs{font:9pt/1.5 Verdana,sans-serif;background:white;color:#333;position:absolute;left:0;top:0;width:100%;text-align:left}' +
+                                    '#tracy-bs-toggle{position:absolute;right:.5em;top:.5em;text-decoration:none;background:#CD1818;color:white!important;padding:3px}' +
+                                    '#tracy-bs-toggle.tracy-collapsed{position:fixed}' +
+                                    '.tracy-bs-main{display:flex;flex-direction:column;padding-bottom:80vh}' +
+                                    '.tracy-bs-main.tracy-collapsed{display:none}' +
+                                    '#tracy-bs .tracy-section{padding:20px}' +
+                                    '#tracy-bs .tracy-section--error{background:#CD1818;color:white}' +
+                                    '#tracy-bs .tracy-section--error h1{font-size:15pt;font-weight:normal;text-shadow:1px 1px 2px rgba(0,0,0,.3);color:white;margin:0}' +
+                                    '#tracy-bs pre{font:9pt/1.5 Consolas,monospace!important;background:#FDF5CE;padding:.4em .7em;border:2px solid #ffffffa6;overflow:auto;white-space:pre-wrap;word-wrap:break-word}' +
+                                    '#tracy-bs footer ul{font-size:7pt;padding:20px;margin:0;color:#777;background:#F6F5F3;border-top:1px solid #DDD;list-style:none}' +
+                                    '#tracy-bs .tracy-footer--sticky{position:fixed;width:100%;bottom:0}' +
+                                    '</style>' +
+                                    '<tracy-div id="tracy-bs" itemscope>' +
+                                    '<a id="tracy-bs-toggle" href="#" class="tracy-toggle">&#xfeff;</a>' +
+                                    '<div class="tracy-bs-main">' +
+                                    '<section class="tracy-section tracy-section--error">' +
+                                    '<h1><span></span></h1>' +
+                                    '</section>' +
+                                    '<section class="tracy-section">' +
+                                    '<pre>' + escapedContents + '</pre>' +
+                                    '</section>' +
+                                    '<footer><ul><li>Exception log file</li></ul></footer>' +
+                                    '</div>' +
+                                    '</tracy-div>';
+
+                                Tracy.BlueScreen.loadAjax(bsContent);
+
+                                // Keep the BlueScreen overlay below Tracy panels (z-index 20000+)
+                                var tracyBsOverlay = document.getElementById("tracy-bs");
+                                if(tracyBsOverlay) tracyBsOverlay.style.zIndex = "100";
+
+                                // Re-focus the Exceptions panel so its dynamic z-index
+                                // stays above the BlueScreen overlay on repeated loads
+                                var panelId = "tracy-debug-panel-ProcessWire-TracyExceptionsPanel";
+                                var excPanel = window.Tracy.Debug.panels[panelId];
+                                if(excPanel) {
+                                    document.getElementById(panelId).classList.remove('tracy-focused');
+                                    excPanel.focus();
+                                }
                             }
                         }
                         xmlhttp.getAllResponseHeaders();
