@@ -149,24 +149,30 @@ class TodoPanel extends BasePanel {
 
 
     private function getTodos() {
-        $items = $this->scanDirectories($this->wire('config')->paths->templates);
-        if(TracyDebugger::getDataValue('todoScanModules') == 1) $moduleItems = $this->scanDirectories($this->wire('config')->paths->siteModules);
+        $todoLinesData = $this->wire('cache')->get('TracyToDoData');
+        $changed = false;
+
+        $items = $this->scanDirectories($this->wire('config')->paths->templates, $todoLinesData, $changed);
+        if(TracyDebugger::getDataValue('todoScanModules') == 1) $moduleItems = $this->scanDirectories($this->wire('config')->paths->siteModules, $todoLinesData, $changed);
         if(isset($moduleItems)) $items = array_merge($items, $moduleItems);
-        if(TracyDebugger::getDataValue('todoScanAssets') == 1) $assetsItems = $this->scanDirectories($this->wire('config')->paths->assets);
+        if(TracyDebugger::getDataValue('todoScanAssets') == 1) $assetsItems = $this->scanDirectories($this->wire('config')->paths->assets, $todoLinesData, $changed);
         if(isset($assetsItems)) $items = array_merge($items, $assetsItems);
 
         if(TracyDebugger::getDataValue('todoSpecifiedDirectories') != '') {
             foreach(array_map('trim', explode("\n", TracyDebugger::getDataValue('todoSpecifiedDirectories'))) as $customSpecifiedDir) {
-                $customSpecifiedItems = $this->scanDirectories($this->wire('config')->paths->root . $customSpecifiedDir);
+                $customSpecifiedItems = $this->scanDirectories($this->wire('config')->paths->root . $customSpecifiedDir, $todoLinesData, $changed);
                 $items = array_merge($items, $customSpecifiedItems);
             }
+        }
+
+        if($changed) {
+            $this->wire('cache')->save('TracyToDoData', $todoLinesData, WireCache::expireNever);
         }
 
         return $items;
     }
 
-    private function scanDirectories($dir) {
-        $todoLinesData = $this->wire('cache')->get('TracyToDoData');
+    private function scanDirectories($dir, &$todoLinesData, &$changed) {
         $items = array();
         $ignoreDirs = array_map('trim', explode(',', TracyDebugger::getDataValue('todoIgnoreDirs')));
         array_push($ignoreDirs, 'TracyDebugger');
@@ -178,7 +184,7 @@ class TodoPanel extends BasePanel {
                 if(!$todoLinesData || !isset($todoLinesData[$filePath]) || filemtime($filePath) > $todoLinesData[$filePath]['time']) {
                     $todoLinesData[$filePath]['time'] = time();
                     $todoLinesData[$filePath]['items'] = $this->parseFile($filePath, $fileSize);
-                    $this->wire('cache')->save('TracyToDoData', $todoLinesData, WireCache::expireNever);
+                    $changed = true;
                 }
                 $items[] = $todoLinesData[$filePath]['items'];
             }

@@ -62,7 +62,7 @@ class TracyLogsPanel extends BasePanel {
                     if(in_array($log['name'], $errorLogs)) {
                         $isNewErrors++;
                     }
-                    $this->wire('cache')->save('TracyLogData.Tracy', $logLinesData, WireCache::expireNever);
+                    $cacheChanged = true;
                 }
 
                 $logLines = $logLinesData[$log['name']]['lines'];
@@ -91,6 +91,10 @@ class TracyLogsPanel extends BasePanel {
                     $x--;
                     $this->numLogEntries++;
                 }
+            }
+
+            if(isset($cacheChanged)) {
+                $this->wire('cache')->save('TracyLogData.Tracy', $logLinesData, WireCache::expireNever);
             }
 
             if(count($entriesArr)) {

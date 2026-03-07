@@ -83,7 +83,7 @@ class ProcesswireLogsPanel extends BasePanel {
                     if(in_array($log['name'], $errorLogs)) {
                         $isNewErrors++;
                     }
-                    $this->wire('cache')->save('TracyLogData.ProcessWire', $logLinesData, WireCache::expireNever);
+                    $cacheChanged = true;
                 }
 
                 $logLines = $logLinesData[$log['name']]['lines'];
@@ -118,6 +118,10 @@ class ProcesswireLogsPanel extends BasePanel {
                     $this->numLogEntries++;
                 }
 
+            }
+
+            if(isset($cacheChanged)) {
+                $this->wire('cache')->save('TracyLogData.ProcessWire', $logLinesData, WireCache::expireNever);
             }
 
             if(count($entriesArr)) {
