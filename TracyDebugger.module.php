@@ -12,6 +12,18 @@
  *
  */
 
+// --- Namespace migration: bridge old non-namespaced class name to new namespaced one ---
+// If PW's module cache still has the root namespace from a pre-namespace version,
+// it will try to instantiate \TracyDebugger instead of \ProcessWire\TracyDebugger.
+// This autoloader transparently aliases the old name to the new one.
+// No PW API calls here — safe to run during module install/update.
+spl_autoload_register(function($class) {
+    if($class === 'TracyDebugger' && class_exists('ProcessWire\\TracyDebugger', false)) {
+        class_alias('ProcessWire\\TracyDebugger', 'TracyDebugger');
+    }
+});
+// --- End namespace migration ---
+
 use Tracy\Debugger;
 use Tracy\Helpers;
 use Tracy\Dumper;
