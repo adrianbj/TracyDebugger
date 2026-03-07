@@ -395,8 +395,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $panelName = lcfirst($path_parts['filename']);
             static::$externalPanels[$panelName] = $panelPath;
             static::$allPanels[$panelName] = implode(' ', preg_split('/(?=[A-Z])/', $path_parts['filename']));
-            ksort(static::$allPanels);
         }
+        ksort(static::$allPanels);
 
         // merge in settings from config.php file
         if(isset($this->wire('config')->tracy) && is_array($this->wire('config')->tracy)) {
