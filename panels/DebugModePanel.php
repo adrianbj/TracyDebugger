@@ -145,7 +145,7 @@ class DebugModePanel extends BasePanel {
                     $pagesLoaded = $this->sectionHeader(array('ID', 'Path', 'Title'));
                     foreach($this->wire('pages')->getCache() as $p) {
                         $pagesLoaded_oc++;
-                        $pagesLoaded .= "\n<tr><td>$p->id</td><td>$p->path</td><td>$p->title</td></tr>";
+                        $pagesLoaded .= "\n<tr><td>$p->id</td><td>$p->path</td><td>".htmlspecialchars($p->title, ENT_QUOTES, 'UTF-8')."</td></tr>";
                     }
                 }
                 $pagesLoaded .= $sectionEnd;

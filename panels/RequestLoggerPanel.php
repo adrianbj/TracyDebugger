@@ -136,7 +136,7 @@ class RequestLoggerPanel extends BasePanel {
                 <ul>';
                 foreach($this->requestLoggerPages as $pid) {
                     $p = $this->wire('pages')->get($pid);
-                    $out .= '<li><a href="'.$p->editUrl.'">'.$p->title.'</a></li>';
+                    $out .= '<li><a href="'.$p->editUrl.'">'.htmlspecialchars($p->title, ENT_QUOTES, 'UTF-8').'</a></li>';
                 }
             $out .= '
                 </ul>
