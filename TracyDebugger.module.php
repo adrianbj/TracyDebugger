@@ -42,7 +42,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'version' => '4.28.0',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
-            'requires'  => 'ProcessWire>=3.0.0, PHP>=7.0.0',
+            'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
             'installs' => array('ProcessTracyAdminer'),
             'icon' => 'bug',
         );
@@ -375,11 +375,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         elseif(version_compare(PHP_VERSION, '7.2.0', '>=')) {
             self::$tracyVersion = '2.9.x';
         }
-        elseif(version_compare(PHP_VERSION, '7.1.0', '>=')) {
-            self::$tracyVersion = '2.7.x';
-        }
         else {
-            self::$tracyVersion = '2.5.x';
+            self::$tracyVersion = '2.7.x';
         }
         require_once __DIR__ . '/tracy-'.self::$tracyVersion.'/src/tracy.php';
         require_once __DIR__ . '/includes/TD.php';
@@ -1557,7 +1554,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // ENABLE TRACY
         if($this->tracyEnabled) {
-            if($this->data['use_php_session'] === 1 && !$this->wire('modules')->isInstalled('SessionHandlerDB') && self::$tracyVersion != '2.7.x' && self::$tracyVersion != '2.5.x') {
+            if($this->data['use_php_session'] === 1 && !$this->wire('modules')->isInstalled('SessionHandlerDB') && self::$tracyVersion != '2.7.x') {
                 if (session_status() === PHP_SESSION_NONE) {
                     session_start();
                 }
@@ -1594,7 +1591,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         // fixes for when SessionHandlerDB module is installed
-        if(($this->data['use_php_session'] === 1 && !$this->wire('modules')->isInstalled('SessionHandlerDB')) || self::$tracyVersion == '2.7.x' || self::$tracyVersion == '2.5.x') {
+        if(($this->data['use_php_session'] === 1 && !$this->wire('modules')->isInstalled('SessionHandlerDB')) || self::$tracyVersion == '2.7.x') {
             if($this->wire('modules')->isInstalled('SessionHandlerDB') && Debugger::$showBar) {
 
                 // ensure Tracy can show AJAX bars when SessionHandlerDB module is installed and debugbar is showing
