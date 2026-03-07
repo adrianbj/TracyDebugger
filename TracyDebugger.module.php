@@ -409,7 +409,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         static::$isLocal = static::isLocal();
 
         // url for $session->redirects
-        $this->httpReferer = isset($_SERVER['HTTP_REFERER']) ? $this->wire('sanitizer')->text($_SERVER['HTTP_REFERER']) : self::inputHttpUrl(true);
+        if(isset($_SERVER['HTTP_REFERER'])) {
+            $referer = $this->wire('sanitizer')->text($_SERVER['HTTP_REFERER']);
+            $refererHost = parse_url($referer, PHP_URL_HOST);
+            $this->httpReferer = ($refererHost === $this->wire('config')->httpHost) ? $referer : self::inputHttpUrl(true);
+        } else {
+            $this->httpReferer = self::inputHttpUrl(true);
+        }
 
         // determine if we are in the admin / backend
         static::$inAdmin = $this->inAdmin();
