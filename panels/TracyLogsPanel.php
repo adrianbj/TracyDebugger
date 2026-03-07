@@ -76,7 +76,7 @@ class TracyLogsPanel extends BasePanel {
                     $itemKey = $log['name'] . '_' . $x;
                     $entryUrlAndText = explode('@', substr($entry, 22)); // get the rest of the line after the date;
                     if(isset($entryUrlAndText[1])) {
-                        $entriesArr[$itemKey]['url'] = "<a href='".htmlspecialchars(trim($entryUrlAndText[1]), ENT_QUOTES, 'UTF-8')."'>".htmlspecialchars(trim($entryUrlAndText[1]), ENT_QUOTES, 'UTF-8')."</a>";
+                        $entriesArr[$itemKey]['url'] = "<a href='".htmlspecialchars(trim($entryUrlAndText[1] ?? ''), ENT_QUOTES, 'UTF-8')."'>".htmlspecialchars(trim($entryUrlAndText[1] ?? ''), ENT_QUOTES, 'UTF-8')."</a>";
                     }
                     else {
                         continue; //bit of a hack - some entries getting duplicated but with empty URL, so ignore
@@ -120,7 +120,7 @@ class TracyLogsPanel extends BasePanel {
                         $color = TracyDebugger::COLOR_WARN;
                     }
 
-                    $trimmedText = trim(htmlspecialchars($item['text'], ENT_QUOTES, 'UTF-8'));
+                    $trimmedText = trim(htmlspecialchars($item['text'] ?? '', ENT_QUOTES, 'UTF-8'));
                     $lineIsNew = !isset($cachedLogLinesData[$item['log']]) || (isset($cachedLogLinesData[$item['log']]) && strtotime($item['date']) > $cachedLogLinesData[$item['log']]['time']);
                     $this->logEntries .= "
                     \n<tr>" .

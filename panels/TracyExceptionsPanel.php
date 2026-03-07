@@ -173,7 +173,7 @@ HTML;
             $liStyle = 'padding: 3px 5px' . ($isNew ? '; background: ' . TracyDebugger::COLOR_ALERT : '');
             $aStyle = $isNew ? ' style="color: #FFFFFF !important"' : '';
 
-            $escapedFileName = htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8');
+            $escapedFileName = htmlspecialchars($fileName ?? '', ENT_QUOTES, 'UTF-8');
             $parts[] = "<li style='{$liStyle}'><a onclick='showUnloadButton()'{$aStyle} href='tracyexception://?f={$link}&l=1'>{$escapedFileName}</a></li>";
         }
 

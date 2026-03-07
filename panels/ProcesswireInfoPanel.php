@@ -496,9 +496,9 @@ HTML;
 
                 $out .=
                 '<li ' . ($withLabels ? ' class="with-labels"' : '') . '>
-                    <a onclick="tracyClosePanel(\'ProcesswireInfo\')" '.$this->newTab.' href="'.$cp->url.'"'. (!$withLabels ? ' title="'.htmlspecialchars($cp->title, ENT_QUOTES, 'UTF-8').'"' : '') . '>
+                    <a onclick="tracyClosePanel(\'ProcesswireInfo\')" '.$this->newTab.' href="'.$cp->url.'"'. (!$withLabels ? ' title="'.htmlspecialchars($cp->title ?? '', ENT_QUOTES, 'UTF-8').'"' : '') . '>
                         <i style="color:'.TracyDebugger::COLOR_NORMAL.'; font-family: FontAwesome !important; font-size: 15px; font-style: normal !important; margin-right: 2px" class="fa fa-fw fa-'.$icon.'"></i>'
-                        . ($withLabels ? '&nbsp;'.htmlspecialchars($cp->title, ENT_QUOTES, 'UTF-8').'</a>' : '</a>&nbsp;') .
+                        . ($withLabels ? '&nbsp;'.htmlspecialchars($cp->title ?? '', ENT_QUOTES, 'UTF-8').'</a>' : '</a>&nbsp;') .
                     '</a>
                 </li>';
             }

@@ -52,7 +52,7 @@ class LanguageSwitcherPanel extends BasePanel {
                             else {
                                 $highlight = '';
                             }
-                            $out .= '<option id="lang_'.$lang->id.'" value="'.$lang->id.'" style="padding: 2px'.$highlight.'">'.htmlspecialchars($lang->title, ENT_QUOTES, 'UTF-8') . ' (#'.$lang->id.')</option>';
+                            $out .= '<option id="lang_'.$lang->id.'" value="'.$lang->id.'" style="padding: 2px'.$highlight.'">'.htmlspecialchars($lang->title ?? '', ENT_QUOTES, 'UTF-8') . ' (#'.$lang->id.')</option>';
                         }
                 $out .= '
                     </select>';

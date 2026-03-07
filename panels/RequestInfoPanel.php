@@ -400,7 +400,7 @@ class RequestInfoPanel extends BasePanel {
                 $pageInfo .= '
                     <tr>
                         <td>language</td>
-                        <td>' . htmlspecialchars($userLang->title, ENT_QUOTES, 'UTF-8') . ' ('.$userLang->name.')</td>
+                        <td>' . htmlspecialchars($userLang->title ?? '', ENT_QUOTES, 'UTF-8') . ' ('.$userLang->name.')</td>
                     </tr>';
             }
 
@@ -598,7 +598,7 @@ class RequestInfoPanel extends BasePanel {
         if($this->wire('languages') && in_array('languageInfo', $panelSections) && $isPwPage) {
             $languageInfo .= '<table><tr><th>language</th><th>id</th><th>title</th><th>name</th><th>active</th></tr>';
             foreach($this->wire('languages') as $language) {
-                $languageInfo .= '<tr><td>' . htmlspecialchars($language->title, ENT_QUOTES, 'UTF-8') . ' ('.$language->name.')</td><td><a title="Edit Language" href="'.$this->wire('config')->urls->admin.'/setup/languages/edit/?id='.$language->id.'">'.$language->id.'</a></td><td>' . htmlspecialchars($this->getLanguageVersion($p, 'title', $language), ENT_QUOTES, 'UTF-8') . '</td><td>' . $this->getLanguageVersion($p, 'name', $language) . '</td><td>' . ($language->isDefaultLanguage ? 'default' : ($p->get("status{$language->id}") ? "✔" : "✘")) . '</td></tr>';
+                $languageInfo .= '<tr><td>' . htmlspecialchars($language->title ?? '', ENT_QUOTES, 'UTF-8') . ' ('.$language->name.')</td><td><a title="Edit Language" href="'.$this->wire('config')->urls->admin.'/setup/languages/edit/?id='.$language->id.'">'.$language->id.'</a></td><td>' . htmlspecialchars($this->getLanguageVersion($p, 'title', $language) ?? '', ENT_QUOTES, 'UTF-8') . '</td><td>' . $this->getLanguageVersion($p, 'name', $language) . '</td><td>' . ($language->isDefaultLanguage ? 'default' : ($p->get("status{$language->id}") ? "✔" : "✘")) . '</td></tr>';
             }
             $languageInfo .= '</table>';
         }
@@ -1085,7 +1085,7 @@ HTML;
                     $result = $p->$fieldName;
                 }
             }
-            return $result == '' && $showDefault ? '<span title="No '.$fieldName.' for '.htmlspecialchars($lang->title, ENT_QUOTES, 'UTF-8').'" style="color:#000000; font-weight: bold" aria-hidden="true">&#9432; </span>' . $p->$fieldName : $result;
+            return $result == '' && $showDefault ? '<span title="No '.$fieldName.' for '.htmlspecialchars($lang->title ?? '', ENT_QUOTES, 'UTF-8').'" style="color:#000000; font-weight: bold" aria-hidden="true">&#9432; </span>' . $p->$fieldName : $result;
         }
         else {
             return $p->$fieldName;
