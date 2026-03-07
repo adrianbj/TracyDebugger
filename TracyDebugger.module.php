@@ -1690,8 +1690,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
                     // if changes to any other file are submitted
                     if($this->wire('input')->post->tracyTestFileCode || $this->wire('input')->post->tracySaveFileCode || $this->wire('input')->post->tracyChangeTemplateCode) {
-                        if($this->wire('input')->post->fileEditorFilePath != '' && strpos($this->wire('input')->post->fileEditorFilePath, '..') === false) {
-                            $filePath = $this->wire('config')->paths->root . $this->wire('input')->post->fileEditorFilePath;
+                        $rootPath = $this->wire('config')->paths->root;
+                        $filePath = realpath($rootPath . $this->wire('input')->post->fileEditorFilePath);
+                        if($this->wire('input')->post->fileEditorFilePath != '' && $filePath !== false && strpos($filePath, $rootPath) === 0) {
                             $rawCode = base64_decode($this->wire('input')->post->tracyFileEditorRawCode);
 
                             // backup old version to Tracy cache directory
@@ -1714,10 +1715,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
                 // if file editor restore
                 if($this->wire('input')->post->tracyRestoreFileEditorBackup) {
-                    $this->filePath = $this->wire('config')->paths->root . ($this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor);
-                    $this->cachePath = $this->tracyCacheDir . ($this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor);
-                    copy($this->cachePath, $this->filePath);
-                    unlink($this->cachePath);
+                    $rootPath = $this->wire('config')->paths->root;
+                    $editorPath = $this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor;
+                    $this->filePath = realpath($rootPath . $editorPath);
+                    $this->cachePath = realpath($this->tracyCacheDir . $editorPath);
+                    if($this->filePath !== false && strpos($this->filePath, $rootPath) === 0 &&
+                       $this->cachePath !== false && strpos($this->cachePath, $this->tracyCacheDir) === 0) {
+                        copy($this->cachePath, $this->filePath);
+                        unlink($this->cachePath);
+                    }
                     $this->wire('session')->redirect($this->httpReferer);
                 }
             }
