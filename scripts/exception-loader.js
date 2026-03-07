@@ -34,11 +34,27 @@ if(!tracyExceptionLoader) {
                     if(xmlhttp.readyState == XMLHttpRequest.DONE) {
                         if(xmlhttp.status == 200 && xmlhttp.responseText !== "" && xmlhttp.responseText !== "[]") {
                             var fileData = JSON.parse(xmlhttp.responseText);
-                            if(document.getElementById('tracy-bs')) {
-                                document.getElementById('tracy-bs').remove();
+                            var viewerCode = document.getElementById("tracyExceptionsViewerCode");
+                            var isBlueScreen = fileData.contents.replace(/^\s+/, '').substring(0, 15).toLowerCase() === '<!doctype html>';
+
+                            if(isBlueScreen) {
+                                if(document.getElementById('tracy-bs')) {
+                                    document.getElementById('tracy-bs').remove();
+                                }
+                                viewerCode.innerHTML = fileData.contents;
+                                var tracyBs = document.getElementById("tracy-bs");
+                                if(tracyBs) tracyBs.style.zIndex = "100";
+                            } else {
+                                // Hide old BlueScreen instead of removing to avoid ResizeObserver stickyFooter crash
+                                var oldBs = document.getElementById('tracy-bs');
+                                if(oldBs) oldBs.style.display = 'none';
+                                viewerCode.innerHTML = "";
+                                viewerCode.style.display = "";
+                                var pre = document.createElement("pre");
+                                pre.style.cssText = "padding:10px; white-space:pre-wrap; word-wrap:break-word; font-size:13px; margin:0;";
+                                pre.textContent = fileData.contents;
+                                viewerCode.appendChild(pre);
                             }
-                            document.getElementById("tracyExceptionsViewerCode").innerHTML = fileData.contents;
-                            document.getElementById("tracy-bs").style.zIndex = "100";
                         }
                         xmlhttp.getAllResponseHeaders();
                     }
