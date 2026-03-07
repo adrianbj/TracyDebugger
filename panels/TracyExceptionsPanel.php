@@ -107,7 +107,7 @@ HTML;
                         $out .= $this->php_file_tree($this->wire('config')->paths->logs . 'tracy/');
                         $out .= "</div>";
                     $out .= '
-                        <input type="hidden" id="tracyExceptionFilePath" name="tracyExceptionFilePath" value="'.htmlspecialchars($this->tracyExceptionFile, ENT_QUOTES, 'UTF-8').'" />
+                        <input type="hidden" id="tracyExceptionFilePath" name="tracyExceptionFilePath" value="'.htmlspecialchars($this->tracyExceptionFile ?? '', ENT_QUOTES, 'UTF-8').'" />
                     </div>
                 </div>
                 <div id="tracyExceptionsViewerCodeContainer">
