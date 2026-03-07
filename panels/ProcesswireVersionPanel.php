@@ -65,6 +65,7 @@ class ProcesswireVersionPanel extends BasePanel {
                 <legend>Choose from available versions</legend><br />';
                 $out .= '
                 <form method="post" action="'.TracyDebugger::inputUrl(true).'">
+                    <input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />
                     <select name="tracyPwVersion">';
                     foreach($this->versions as $version) {
                         $out .= '<option value="'.$version.'"'.($version == $this->wire('config')->version ? 'selected="selected"' : '').'>'.$version.'</option>';

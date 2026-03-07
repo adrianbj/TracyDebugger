@@ -2,6 +2,14 @@
 
 if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser) {
 
+    // validate CSRF token
+    $csrfToken = isset($_POST['csrfToken']) ? $_POST['csrfToken'] : '';
+    if(!$csrfToken || !hash_equals((string)$this->wire('session')->tracyFileEditorToken, $csrfToken)) {
+        http_response_code(403);
+        echo json_encode(array('error' => 'CSRF token validation failed'));
+        exit;
+    }
+
     $rootPath = $this->wire('config')->paths->root;
     $resolvedPath = realpath($rootPath . $_POST['filePath']);
 

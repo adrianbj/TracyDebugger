@@ -33,6 +33,7 @@ class AdminToolsPanel extends BasePanel {
     public function getPanel() {
 
         $i=0;
+        $csrfInput = '<input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />';
 
         $out = '
         <script>
@@ -71,6 +72,7 @@ class AdminToolsPanel extends BasePanel {
                 $out .= '
                 <p>
                     <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete all children of this page?\');">
+                        '.$csrfInput.'
                         <input type="hidden" name="adminToolsId" value="'.$p->id.'" />
                         <input type="submit" name="deleteChildren" value="Delete all children" />
                     </form>
@@ -82,6 +84,7 @@ class AdminToolsPanel extends BasePanel {
                 $out .= '
                 <p>
                     <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete the '.$p->name.' language?\');">
+                        '.$csrfInput.'
                         <input type="hidden" name="adminToolsId" value="'.$p->id.'" />
                         <input type="submit" name="deleteLanguage" value="Delete language" />
                     </form>
@@ -94,6 +97,7 @@ class AdminToolsPanel extends BasePanel {
                 $out .= '
                 <p>
                     <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete the '.$t->name.' template and all associated pages?\');">
+                        '.$csrfInput.'
                         <input type="hidden" name="adminToolsId" value="'.$t->id.'" />
                         <input type="submit" name="deleteTemplate" value="Delete \''.$t->name.'\' template" />
                     </form>
@@ -123,6 +127,7 @@ class AdminToolsPanel extends BasePanel {
                     $out .= '
                     <p>
                         <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete the '. $f->name.' field and remove it from all templates/pages?\');">
+                            '.$csrfInput.'
                             <input type="hidden" name="adminToolsId" value="'.(int)$this->wire('input')->get('id').'" />
                             <input type="submit" name="deleteField" value="Delete \''.$f->name.'\' field" />
                         </form>
@@ -130,6 +135,7 @@ class AdminToolsPanel extends BasePanel {
                     $out .= '
                     <p>
                         <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to change the type of this field?\');">
+                            '.$csrfInput.'
                             <input type="hidden" name="adminToolsId" value="'.(int)$this->wire('input')->get('id').'" />
                             <select type="submit" name="changeFieldType">';
                                 foreach($this->wire('fieldtypes')->sort('name') as $fieldtype) {
@@ -158,6 +164,7 @@ class AdminToolsPanel extends BasePanel {
                 $out .= '
                 <p>
                     <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to uninstall this module' . $confirmSuffix . '?\');">
+                        '.$csrfInput.'
                         <input type="hidden" name="adminToolsName" value="'.$moduleName.'" />
                         <input type="submit" name="uninstallModule" value="Uninstall module" />
                     </form>

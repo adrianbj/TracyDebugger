@@ -152,6 +152,7 @@ class PageFilesPanel extends BasePanel {
         if($numOrphanFiles > 0) {
             $out .= '
             <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete all the orange highlighted orphan files?\');">
+                <input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />
                 <input type="hidden" name="orphanPaths" value="'.implode('|', $this->orphanFiles).'" />
                 <input type="submit" style="color:'.TracyDebugger::COLOR_WARN.' !important; color: #FFFFFF" name="deleteOrphanFiles" value="Delete '.$numOrphanFiles.' orphan'._n('', 's', $numOrphanFiles).'" />
             </form>&nbsp&nbsp;';
@@ -160,6 +161,7 @@ class PageFilesPanel extends BasePanel {
         if($this->numMissingFiles > 0) {
             $out .= '
             <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete all the red highlighted missing pagefiles?\');">
+                <input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />
                 <input type="hidden" name="missingPaths" value="'.urlencode(json_encode($this->missingFiles)).'" />
                 <input type="submit" style="color:'.TracyDebugger::COLOR_ALERT.' !important; color: #FFFFFF" name="deleteMissingFiles" value="Delete '.$this->numMissingFiles.' missing pagefile'._n('', 's', $this->numMissingFiles).'" />
             </form>';

@@ -128,7 +128,7 @@ if(!tracyFileEditorLoader) {
                 xmlhttp.open("POST", tracyFileEditor.currentUrl, true);
                 xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-                xmlhttp.send("filePath=" + filePath);
+                xmlhttp.send("filePath=" + filePath + "&csrfToken=" + encodeURIComponent(tracyFileEditor.csrfToken));
                 init_php_file_tree(filePath);
             }
         },

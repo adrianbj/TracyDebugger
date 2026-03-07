@@ -66,6 +66,12 @@ class FileEditorPanel extends BasePanel {
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
         $currentUrl = $_SERVER['REQUEST_URI'];
 
+        // generate CSRF token for AJAX calls
+        if(!$this->wire('session')->tracyFileEditorToken) {
+            $this->wire('session')->tracyFileEditorToken = bin2hex(random_bytes(32));
+        }
+        $csrfToken = $this->wire('session')->tracyFileEditorToken;
+
         $filePath = $this->wire('config')->paths->root . $this->tracyFileEditorFilePath;
 
         $tracyFileEditorFileData = null;
@@ -148,6 +154,7 @@ class FileEditorPanel extends BasePanel {
                 tfe: {},
                 tracyModuleUrl: "$tracyModuleUrl",
                 currentUrl: "$currentUrl",
+                csrfToken: "$csrfToken",
                 tracyFileEditorFilePath: "{$this->tracyFileEditorFilePath}",
                 errorMessage: "{$this->errorMessage}",
                 customSnippetsUrl: "$customSnippetsUrl",
@@ -439,6 +446,7 @@ HTML;
                     <div style="padding: 8px 12px 0 0; float:right">
                         <form id="tracyFileEditorSubmission" style="padding: 0; margin: 0;" method="post" action="'.TracyDebugger::inputUrl(true).'">
                             <fieldset>
+                                <input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />
                                 <textarea id="tracyFileEditorRawCode" name="tracyFileEditorRawCode" style="display:none"></textarea>
                                 <input type="hidden" id="fileEditorFilePath" name="fileEditorFilePath" value="'.$this->tracyFileEditorFilePath.'" />
                                 <div id="fileEditorButtons"></div>

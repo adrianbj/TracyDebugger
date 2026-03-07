@@ -57,6 +57,12 @@ class TracyExceptionsPanel extends BasePanel {
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
         $currentUrl = $_SERVER['REQUEST_URI'];
 
+        // generate CSRF token for AJAX calls (shared with File Editor)
+        if(!$this->wire('session')->tracyFileEditorToken) {
+            $this->wire('session')->tracyFileEditorToken = bin2hex(random_bytes(32));
+        }
+        $csrfToken = $this->wire('session')->tracyFileEditorToken;
+
         $filePath = $this->wire('config')->paths->root . $this->tracyExceptionFile;
 
         $out = <<< HTML
@@ -65,6 +71,7 @@ class TracyExceptionsPanel extends BasePanel {
             var tracyExceptionsViewer = {
                 tracyModuleUrl: "$tracyModuleUrl",
                 currentURL: "$currentUrl",
+                csrfToken: "$csrfToken",
             };
 
             function clearTracyExceptionsViewer() {

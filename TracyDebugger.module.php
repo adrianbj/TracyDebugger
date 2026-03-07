@@ -686,7 +686,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             // PW VERSION SWITCHER
             // if PW version changed, reload to initialize new version
             // don't add in_array(static::$showPanels) check because that won't be true if enabled ONCE due to multiple redirects waiting for $this->wire('config')->version to update
-            if(($this->wire('input')->post->tracyPwVersion && $this->wire('input')->post->tracyPwVersion != $this->wire('config')->version) || $this->wire('session')->tracyPwVersion) {
+            if(($this->wire('input')->post->tracyPwVersion && $this->wire('input')->post->tracyPwVersion != $this->wire('config')->version && $this->wire('session')->CSRF->validate()) || $this->wire('session')->tracyPwVersion) {
                 $this->wire('session')->tracyPwVersion = $this->wire('session')->tracyPwVersion ?: $this->wire('input')->post->tracyPwVersion;
                 while($this->wire('session')->tracyPwVersion != $this->wire('config')->version) {
                     sleep(1);
@@ -698,7 +698,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             // REQUEST LOGGER
             // enable/disable page logging
-            if($this->wire('input')->post->tracyRequestLoggerEnableLogging || $this->wire('input')->post->tracyRequestLoggerDisableLogging) {
+            if(($this->wire('input')->post->tracyRequestLoggerEnableLogging || $this->wire('input')->post->tracyRequestLoggerDisableLogging) && $this->wire('session')->CSRF->validate()) {
                 $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
                 if($this->wire('input')->post->tracyRequestLoggerEnableLogging) {
                     if(!isset($configData['requestLoggerPages'])) $configData['requestLoggerPages'] = array();
@@ -827,7 +827,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             // PAGE FILES
             // delete orphaned files if requested
-            if($this->wire('input')->post->deleteOrphanFiles && $this->wire('input')->post->orphanPaths) {
+            if($this->wire('input')->post->deleteOrphanFiles && $this->wire('input')->post->orphanPaths && $this->wire('session')->CSRF->validate()) {
                 $rootPath = $this->wire('config')->paths->root;
                 foreach(explode('|', $this->wire('input')->post->orphanPaths) as $filePath) {
                     $realPath = realpath($filePath);
@@ -838,7 +838,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $this->wire('session')->redirect($this->httpReferer);
             }
             // delete missing pagefiles if requested
-            if($this->wire('input')->post->deleteMissingFiles && $this->wire('input')->post->missingPaths) {
+            if($this->wire('input')->post->deleteMissingFiles && $this->wire('input')->post->missingPaths && $this->wire('session')->CSRF->validate()) {
                 foreach(json_decode(urldecode($this->wire('input')->post->missingPaths), true) as $pid => $files) {
                     $p = $this->wire('pages')->get($pid);
                     foreach($files as $file) {
@@ -853,7 +853,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             // PAGE RECORDER
             // trash / clear recorded pages if requested
-            if($this->wire('input')->post->trashRecordedPages || $this->wire('input')->post->clearRecordedPages) {
+            if(($this->wire('input')->post->trashRecordedPages || $this->wire('input')->post->clearRecordedPages) && $this->wire('session')->CSRF->validate()) {
                 if($this->wire('input')->post->trashRecordedPages) {
                     foreach($this->data['recordedPages'] as $pid) {
                         $this->wire('pages')->trash($this->wire('pages')->get($pid));
@@ -867,7 +867,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
             // ADMIN TOOLS
-            if(static::$allowedSuperuser) {
+            if(static::$allowedSuperuser && ($this->wire('input')->post->deleteChildren || $this->wire('input')->post->deleteLanguage || $this->wire('input')->post->deleteTemplate || $this->wire('input')->post->deleteField || $this->wire('input')->post->changeFieldType || $this->wire('input')->post->uninstallModule) && $this->wire('session')->CSRF->validate()) {
                 // delete children
                 if($this->wire('input')->post->deleteChildren) {
                     foreach($this->wire('pages')->get((int)$this->wire('input')->post->adminToolsId)->children("include=all") as $child) {
@@ -993,7 +993,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // PROCESSWIRE LOGS
         // delete ProcessWire logs if requested
-        if($this->wire('input')->post->deleteProcessWireLogs) {
+        if($this->wire('input')->post->deleteProcessWireLogs && $this->wire('session')->CSRF->validate()) {
             $files = glob($this->wire('config')->paths->logs.'*');
             foreach($files as $file) {
                 if(is_file($file)) {
@@ -1005,7 +1005,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // TRACY LOGS
         // delete Tracy logs if requested
-        if($this->wire('input')->post->deleteTracyLogs) {
+        if($this->wire('input')->post->deleteTracyLogs && $this->wire('session')->CSRF->validate()) {
             wireRmdir($logFolder, true);
             wireMkdir($logFolder);
         }
@@ -1668,7 +1668,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             // FILE/TEMPLATE EDITOR
             if(static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser) {
-                if($this->wire('input')->post->fileEditorFilePath) {
+                if($this->wire('input')->post->fileEditorFilePath && $this->wire('session')->CSRF->validate()) {
                     $rawCode = base64_decode($this->wire('input')->post->tracyFileEditorRawCode);
                     if(static::$inAdmin &&
                         $this->data['referencePageEdited'] &&
@@ -1718,7 +1718,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 }
 
                 // if file editor restore
-                if($this->wire('input')->post->tracyRestoreFileEditorBackup) {
+                if($this->wire('input')->post->tracyRestoreFileEditorBackup && $this->wire('session')->CSRF->validate()) {
                     $rootPath = $this->wire('config')->paths->root;
                     $editorPath = $this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor;
                     $this->filePath = realpath($rootPath . $editorPath);
@@ -1915,7 +1915,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // LANGUAGE SWITCHER PANEL
         // process languageSwitcher if panel open and switch initiated
-        if(in_array('languageSwitcher', static::$showPanels) && ($this->wire('input')->post->tracyLanguageSwitcher || $this->wire('session')->tracyLanguageSwitcher)) {
+        if(in_array('languageSwitcher', static::$showPanels) && (($this->wire('input')->post->tracyLanguageSwitcher && $this->wire('session')->CSRF->validate()) || $this->wire('session')->tracyLanguageSwitcher)) {
             $langId = $this->wire('input')->post->int('tracyLanguageSwitcher');
             if($langId) {
                 // compare language setting from session with users profile

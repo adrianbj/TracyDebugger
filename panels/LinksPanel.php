@@ -64,6 +64,7 @@ form.addEventListener('submit', function(event) {
 <h1>{$this->icon} Links</h1>
 <div class="tracy-inner">
 <form id="tracy-add-link" action="{$this->wire('config')->urls->admin}module/edit" method="post">
+    <input type="hidden" name="{$this->wire('session')->CSRF->getTokenName()}" value="{$this->wire('session')->CSRF->getTokenValue()}" />
     <input type="hidden" name="name" value="TracyDebugger">
     <input id="tracy-lp-input" name="link" type="text" placeholder="Add link...">
     <button id="tracy-lp-btn-add" title="Add link">

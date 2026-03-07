@@ -17,9 +17,11 @@ class PageRecorderPanel extends BasePanel {
             $this->recordedPages .= '
             <p>
                 <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to trash all these pages?\');">
+                    <input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />
                     <input type="submit" name="trashRecordedPages" value="Trash Recorded Pages" />
                 </form>
                 <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to remove all these pages from the list?\');">
+                    <input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />
                     <input type="submit" name="clearRecordedPages" value="Clear Recorded Pages List" />
                 </form>
             </p>';

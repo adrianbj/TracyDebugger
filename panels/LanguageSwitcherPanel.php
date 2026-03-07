@@ -40,6 +40,7 @@ class LanguageSwitcherPanel extends BasePanel {
             $out .= '
             <div class="tracy-inner">
                 <form name="languageSwitcherPanel" action="'.TracyDebugger::inputUrl(true).'" method="post">
+                    <input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />
                     <select onchange="this.form.submit()" id="tracyLanguageSwitcher" name="tracyLanguageSwitcher" size="5" style="width:100% !important; height:150px !important">';
                         foreach($this->wire('pages')->find('template=language, include=all, sort=name') as $lang) {
                             if($this->wire('session')->tracyLanguageSwitcher && $this->wire('session')->tracyLanguageSwitcher === $lang->id) {

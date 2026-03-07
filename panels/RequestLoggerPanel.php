@@ -111,6 +111,7 @@ class RequestLoggerPanel extends BasePanel {
             if(!in_array($this->p->id, $this->requestLoggerPages)) {
                 $out .= '
                 <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'">
+                    <input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />
                     <input type="hidden" name="requestLoggerLogPageId" value="'.$this->p->id.'" />
                     <input type="submit" name="tracyRequestLoggerEnableLogging" value="Enable logging on this page" />
                 </form>
@@ -119,6 +120,7 @@ class RequestLoggerPanel extends BasePanel {
             else {
                 $out .= '
                 <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to disable logging on this page and clear logged data?\');">
+                    <input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />
                     <input type="hidden" name="requestLoggerLogPageId" value="'.$this->p->id.'" />
                     <input type="submit" name="tracyRequestLoggerDisableLogging" value="Disable logging & clear data" />
                 </form>

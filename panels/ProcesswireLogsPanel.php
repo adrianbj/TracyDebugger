@@ -222,6 +222,7 @@ class ProcesswireLogsPanel extends BasePanel {
                 $out .= '
                 <p>
                     <form method="post" action="'.TracyDebugger::inputUrl(true).'">
+                        <input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />
                         <input type="submit" name="deleteProcessWireLogs" value="Delete All Logs" />
                     </form>
                 </p>';
