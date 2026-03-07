@@ -42,7 +42,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'version' => '4.28.0',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
-            'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4',
+            'requires'  => 'ProcessWire>=3.0.0, PHP>=7.0.0',
             'installs' => array('ProcessTracyAdminer'),
             'icon' => 'bug',
         );
