@@ -22,13 +22,25 @@ spl_autoload_register(function($class) {
         class_alias('ProcessWire\\TracyDebugger', 'TracyDebugger');
         TracyDebugger::$namespaceMigration = true;
     }
-    if($class === 'ProcessWire\\BasePanel' || $class === 'BasePanel') {
-        require_once __DIR__ . '/includes/BasePanel.php';
-        if($class === 'BasePanel' && class_exists('ProcessWire\\BasePanel', false)) {
-            class_alias('ProcessWire\\BasePanel', 'BasePanel');
+    // bridge all Tracy *Panel classes between namespaced and non-namespaced versions
+    if(substr($class, -5) === 'Panel') {
+        if(strpos($class, 'ProcessWire\\') === 0) {
+            $shortClass = substr($class, strlen('ProcessWire\\'));
+            if($shortClass === 'BasePanel' && !class_exists($shortClass, false)) {
+                require_once __DIR__ . '/includes/BasePanel.php';
+            }
+            if(class_exists($shortClass, false)) {
+                class_alias($shortClass, $class);
+            }
         }
-        elseif($class === 'ProcessWire\\BasePanel' && class_exists('BasePanel', false)) {
-            class_alias('BasePanel', 'ProcessWire\\BasePanel');
+        else {
+            $nsClass = 'ProcessWire\\' . $class;
+            if($class === 'BasePanel' && !class_exists($nsClass, false)) {
+                require_once __DIR__ . '/includes/BasePanel.php';
+            }
+            if(class_exists($nsClass, false)) {
+                class_alias($nsClass, $class);
+            }
         }
     }
 });
