@@ -21,6 +21,18 @@ spl_autoload_register(function($class) {
     if($class === 'TracyDebugger' && class_exists('ProcessWire\\TracyDebugger', false)) {
         class_alias('ProcessWire\\TracyDebugger', 'TracyDebugger');
     }
+    if($class === 'ProcessWire\\BasePanel' || $class === 'BasePanel') {
+        $file = __DIR__ . '/includes/BasePanel.php';
+        if(file_exists($file)) {
+            require_once $file;
+        }
+        if($class === 'BasePanel' && class_exists('ProcessWire\\BasePanel', false)) {
+            class_alias('ProcessWire\\BasePanel', 'BasePanel');
+        }
+        elseif($class === 'ProcessWire\\BasePanel' && class_exists('BasePanel', false)) {
+            class_alias('BasePanel', 'ProcessWire\\BasePanel');
+        }
+    }
 });
 // --- End namespace migration ---
 
@@ -1776,7 +1788,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // LOAD SPECIFIED PANELS
-        require_once __DIR__ . '/includes/BasePanel.php';
         foreach(static::$showPanels as $panel) {
             if(!array_key_exists($panel, static::$allPanels)) continue;
             if(static::$inAdmin && in_array($panel, static::$hideInAdmin)) continue;
