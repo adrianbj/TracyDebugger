@@ -22,6 +22,15 @@ spl_autoload_register(function($class) {
         class_alias('ProcessWire\\TracyDebugger', 'TracyDebugger');
         TracyDebugger::$namespaceMigration = true;
     }
+    if($class === 'ProcessWire\\BasePanel' || $class === 'BasePanel') {
+        require_once __DIR__ . '/includes/BasePanel.php';
+        if($class === 'BasePanel' && class_exists('ProcessWire\\BasePanel', false)) {
+            class_alias('ProcessWire\\BasePanel', 'BasePanel');
+        }
+        elseif($class === 'ProcessWire\\BasePanel' && class_exists('BasePanel', false)) {
+            class_alias('BasePanel', 'ProcessWire\\BasePanel');
+        }
+    }
 });
 // --- End namespace migration ---
 
