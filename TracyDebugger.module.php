@@ -1812,6 +1812,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $fullPanelClass = __NAMESPACE__ . '\\' . $panelName;
             if(file_exists(__DIR__ . '/panels/'.$panelName.'.php')) {
                 require_once __DIR__ . '/panels/'.$panelName.'.php';
+                // namespace migration: bridge old non-namespaced panel class
+                if(!class_exists($fullPanelClass, false) && class_exists($panelName, false)) {
+                    class_alias($panelName, $fullPanelClass);
+                }
             }
             else {
                 // external panels
@@ -1856,6 +1860,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $panelName = 'DumpsPanel';
         $fullPanelClass = __NAMESPACE__ . '\\' . $panelName;
         require_once __DIR__ . '/panels/'.$panelName.'.php';
+        if(!class_exists($fullPanelClass, false) && class_exists($panelName, false)) {
+            class_alias($panelName, $fullPanelClass);
+        }
         Debugger::getBar()->addPanel(new $fullPanelClass);
 
         // even if dumpsRecorder isn't enabled, but there are recorded dumps to show, enable it anyway
@@ -1864,6 +1871,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $fullPanelClass = __NAMESPACE__ . '\\' . $panelName;
             static::$showPanels[] = 'dumpsRecorder';
             require_once __DIR__ . '/panels/'.$panelName.'.php';
+            if(!class_exists($fullPanelClass, false) && class_exists($panelName, false)) {
+                class_alias($panelName, $fullPanelClass);
+            }
             Debugger::getBar()->addPanel(new $fullPanelClass);
         }
 
