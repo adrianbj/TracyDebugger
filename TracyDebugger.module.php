@@ -22,6 +22,16 @@ spl_autoload_register(function($class) {
         class_alias('ProcessWire\\TracyDebugger', 'TracyDebugger');
         TracyDebugger::$namespaceMigration = true;
     }
+    // BasePanel must be in autoloader because init() may return early before loading it
+    if($class === 'ProcessWire\\BasePanel' || $class === 'BasePanel') {
+        require_once __DIR__ . '/includes/BasePanel.php';
+        if($class === 'ProcessWire\\BasePanel' && class_exists('BasePanel', false)) {
+            class_alias('BasePanel', $class);
+        }
+        elseif($class === 'BasePanel' && class_exists('ProcessWire\\BasePanel', false)) {
+            class_alias('ProcessWire\\BasePanel', $class);
+        }
+    }
 });
 // --- End namespace migration ---
 
@@ -409,10 +419,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // load base panel class
         require_once __DIR__ . '/includes/BasePanel.php';
-        // namespace migration: bridge old non-namespaced BasePanel class
-        if(!class_exists(__NAMESPACE__ . '\\BasePanel', false) && class_exists('BasePanel', false)) {
-            class_alias('BasePanel', __NAMESPACE__ . '\\BasePanel');
-        }
 
         $externalPanelPaths = glob($this->wire('config')->paths->root.'/site/modules/*/TracyPanels/*.php');
         foreach($externalPanelPaths as $panelPath) {
