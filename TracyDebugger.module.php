@@ -15,23 +15,12 @@
 // --- Namespace migration: bridge old non-namespaced class name to new namespaced one ---
 // If PW's module cache still has the root namespace from a pre-namespace version,
 // it will try to instantiate \TracyDebugger instead of \ProcessWire\TracyDebugger.
-// This autoloader transparently aliases the old name to the new one.
-// No PW API calls here — safe to run during module install/update.
+// This autoloader transparently aliases the old name to the new one,
+// sets a flag so init() can trigger a modules refresh and reload.
 spl_autoload_register(function($class) {
     if($class === 'TracyDebugger' && class_exists('ProcessWire\\TracyDebugger', false)) {
         class_alias('ProcessWire\\TracyDebugger', 'TracyDebugger');
-    }
-    if($class === 'ProcessWire\\BasePanel' || $class === 'BasePanel') {
-        $file = __DIR__ . '/includes/BasePanel.php';
-        if(file_exists($file)) {
-            require_once $file;
-        }
-        if($class === 'BasePanel' && class_exists('ProcessWire\\BasePanel', false)) {
-            class_alias('ProcessWire\\BasePanel', 'BasePanel');
-        }
-        elseif($class === 'ProcessWire\\BasePanel' && class_exists('BasePanel', false)) {
-            class_alias('BasePanel', 'ProcessWire\\BasePanel');
-        }
+        TracyDebugger::$namespaceMigration = true;
     }
 });
 // --- End namespace migration ---
@@ -81,6 +70,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     protected static $onlineEditor;
     protected static $onlineFileEditorDirPath;
     public static $inAdmin;
+    public static $namespaceMigration = false;
     public static $isLocal = false;
     public static $allowedSuperuser = false;
     public static $allowedTracyUser = false;
@@ -372,6 +362,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * Initialize the module
      */
     public function init() {
+
+        // namespace migration: PW's module cache still references the old non-namespaced class
+        // clear opcache so all files are loaded fresh, refresh module cache, and reload
+        if(static::$namespaceMigration) {
+            if(function_exists('opcache_reset')) opcache_reset();
+            $this->wire('modules')->resetCache();
+            if(!headers_sent()) {
+                header('Location: ' . $_SERVER['REQUEST_URI']);
+                exit;
+            }
+        }
 
         $this->time = $_SERVER['REQUEST_TIME_FLOAT'] ?? microtime(true);
 
@@ -1805,10 +1806,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $fullPanelClass = __NAMESPACE__ . '\\' . $panelName;
             if(file_exists(__DIR__ . '/panels/'.$panelName.'.php')) {
                 require_once __DIR__ . '/panels/'.$panelName.'.php';
-                // namespace migration: if opcache serves old non-namespaced file, bridge to namespaced class
-                if(!class_exists($fullPanelClass, false) && class_exists($panelName, false)) {
-                    class_alias($panelName, $fullPanelClass);
-                }
             }
             else {
                 // external panels
