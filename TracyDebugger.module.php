@@ -1805,6 +1805,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $fullPanelClass = __NAMESPACE__ . '\\' . $panelName;
             if(file_exists(__DIR__ . '/panels/'.$panelName.'.php')) {
                 require_once __DIR__ . '/panels/'.$panelName.'.php';
+                // namespace migration: if opcache serves old non-namespaced file, bridge to namespaced class
+                if(!class_exists($fullPanelClass, false) && class_exists($panelName, false)) {
+                    class_alias($panelName, $fullPanelClass);
+                }
             }
             else {
                 // external panels
