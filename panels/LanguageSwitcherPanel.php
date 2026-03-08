@@ -32,35 +32,35 @@ class LanguageSwitcherPanel extends BasePanel {
     public function getPanel() {
         $out = "<h1>{$this->icon} {$this->label}</h1>";
 
-        // panel body
+        $out .= '
+        <div class="tracy-inner">';
+
         if(!$this->wire('languages')) {
-            $out = "No languages installed";
+            $out .= 'No languages installed';
         }
         else {
             $out .= '
-            <div class="tracy-inner">
-                <form name="languageSwitcherPanel" action="'.TracyDebugger::inputUrl(true).'" method="post">
-                    <input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />
-                    <select onchange="this.form.submit()" id="tracyLanguageSwitcher" name="tracyLanguageSwitcher" size="5" style="width:100% !important; height:150px !important">';
-                        foreach($this->wire('pages')->find('template=language, include=all, sort=name') as $lang) {
-                            if($this->wire('session')->tracyLanguageSwitcher && $this->wire('session')->tracyLanguageSwitcher === $lang->id) {
-                                $highlight = '; background:'.TracyDebugger::COLOR_WARN.'; color: #FFFFFF;';
-                            }
-                            elseif($this->wire('user')->language->id === $lang->id) {
-                                $highlight = '; background: '.TracyDebugger::COLOR_NORMAL.'; color: #FFFFFF;"';
-                            }
-                            else {
-                                $highlight = '';
-                            }
-                            $out .= '<option id="lang_'.$lang->id.'" value="'.$lang->id.'" style="padding: 2px'.$highlight.'">'.htmlspecialchars($lang->title ?? '', ENT_QUOTES, 'UTF-8') . ' (#'.$lang->id.')</option>';
+            <form name="languageSwitcherPanel" action="'.TracyDebugger::inputUrl(true).'" method="post">
+                <input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />
+                <select onchange="this.form.submit()" id="tracyLanguageSwitcher" name="tracyLanguageSwitcher" size="5" style="width:100% !important; height:150px !important">';
+                    foreach($this->wire('pages')->find('template=language, include=all, sort=name') as $lang) {
+                        if($this->wire('session')->tracyLanguageSwitcher && $this->wire('session')->tracyLanguageSwitcher === $lang->id) {
+                            $highlight = '; background:'.TracyDebugger::COLOR_WARN.'; color: #FFFFFF;';
                         }
-                $out .= '
-                    </select>';
-                $out .= '<p><input type="submit" name="tracyResetLanguageSwitcher" value="Reset" /></p>';
-                $out .= TracyDebugger::generatePanelFooter($this->name, Debugger::timer($this->name), strlen($out));
+                        elseif($this->wire('user')->language->id === $lang->id) {
+                            $highlight = '; background: '.TracyDebugger::COLOR_NORMAL.'; color: #FFFFFF;"';
+                        }
+                        else {
+                            $highlight = '';
+                        }
+                        $out .= '<option id="lang_'.$lang->id.'" value="'.$lang->id.'" style="padding: 2px'.$highlight.'">'.htmlspecialchars($lang->title ?? '', ENT_QUOTES, 'UTF-8') . ' (#'.$lang->id.')</option>';
+                    }
             $out .= '
-                </form>
-            </div>
+                </select>';
+            $out .= '<p><input type="submit" name="tracyResetLanguageSwitcher" value="Reset" /></p>';
+            $out .= TracyDebugger::generatePanelFooter($this->name, Debugger::timer($this->name), strlen($out));
+            $out .= '
+            </form>
 
             <script>
                 document.addEventListener("DOMContentLoaded", (event) => {
@@ -68,10 +68,11 @@ class LanguageSwitcherPanel extends BasePanel {
                     var langElement = document.querySelector("#lang_'.$this->wire('user')->language->id.'");
                     selectElement.scrollTop = langElement.offsetTop - selectElement.offsetTop;
                 });
-            </script>
-            ';
-
+            </script>';
         }
+
+        $out .= '
+        </div>';
 
         return parent::loadResources() . $out;
     }
