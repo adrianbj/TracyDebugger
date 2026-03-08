@@ -1776,6 +1776,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // LOAD SPECIFIED PANELS
+        require_once __DIR__ . '/includes/BasePanel.php';
         foreach(static::$showPanels as $panel) {
             if(!array_key_exists($panel, static::$allPanels)) continue;
             if(static::$inAdmin && in_array($panel, static::$hideInAdmin)) continue;

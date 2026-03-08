@@ -1,7 +1,7 @@
 <?php namespace ProcessWire;
 
-use \Tracy\Dumper;
-use \Tracy\Debugger;
+use Tracy\Dumper;
+use Tracy\Debugger;
 
 class DebugModePanel extends BasePanel {
 
