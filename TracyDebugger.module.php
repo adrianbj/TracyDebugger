@@ -21,27 +21,29 @@ spl_autoload_register(function($class) {
     if($class === 'TracyDebugger' && class_exists('ProcessWire\\TracyDebugger', false)) {
         class_alias('ProcessWire\\TracyDebugger', 'TracyDebugger');
         TracyDebugger::$namespaceMigration = true;
-    }
-    // bridge all Tracy *Panel classes between namespaced and non-namespaced versions
-    if(substr($class, -5) === 'Panel') {
-        if(strpos($class, 'ProcessWire\\') === 0) {
-            $shortClass = substr($class, strlen('ProcessWire\\'));
-            if($shortClass === 'BasePanel' && !class_exists($shortClass, false)) {
-                require_once __DIR__ . '/includes/BasePanel.php';
+        // bridge all Tracy *Panel classes between namespaced and non-namespaced versions
+        spl_autoload_register(function($panelClass) {
+            if(substr($panelClass, -5) === 'Panel') {
+                if(strpos($panelClass, 'ProcessWire\\') === 0) {
+                    $shortClass = substr($panelClass, strlen('ProcessWire\\'));
+                    if($shortClass === 'BasePanel' && !class_exists($shortClass, false)) {
+                        require_once __DIR__ . '/includes/BasePanel.php';
+                    }
+                    if(class_exists($shortClass, false)) {
+                        class_alias($shortClass, $panelClass);
+                    }
+                }
+                else {
+                    $nsClass = 'ProcessWire\\' . $panelClass;
+                    if($panelClass === 'BasePanel' && !class_exists($nsClass, false)) {
+                        require_once __DIR__ . '/includes/BasePanel.php';
+                    }
+                    if(class_exists($nsClass, false)) {
+                        class_alias($nsClass, $panelClass);
+                    }
+                }
             }
-            if(class_exists($shortClass, false)) {
-                class_alias($shortClass, $class);
-            }
-        }
-        else {
-            $nsClass = 'ProcessWire\\' . $class;
-            if($class === 'BasePanel' && !class_exists($nsClass, false)) {
-                require_once __DIR__ . '/includes/BasePanel.php';
-            }
-            if(class_exists($nsClass, false)) {
-                class_alias($nsClass, $class);
-            }
-        }
+        });
     }
 });
 // --- End namespace migration ---
@@ -385,9 +387,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public function init() {
 
         // namespace migration: PW's module cache still references the old non-namespaced class
-        // clear opcache so all files are loaded fresh, refresh module cache, and reload
+        // refresh module cache and reload so subsequent requests work natively
         if(static::$namespaceMigration) {
-            if(function_exists('opcache_reset')) opcache_reset();
             $this->wire('modules')->resetCache();
             if(!headers_sent()) {
                 header('Location: ' . $_SERVER['REQUEST_URI']);
