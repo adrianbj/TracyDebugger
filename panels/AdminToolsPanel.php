@@ -83,7 +83,7 @@ class AdminToolsPanel extends BasePanel {
                 $i++;
                 $out .= '
                 <p>
-                    <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete the '.$p->name.' language?\');">
+                    <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete the '.$p->name.' language?\');">
                         '.$csrfInput.'
                         <input type="hidden" name="adminToolsId" value="'.$p->id.'" />
                         <input type="submit" name="deleteLanguage" value="Delete language" />
