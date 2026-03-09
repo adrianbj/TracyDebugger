@@ -67,7 +67,7 @@ class UserSwitcherPanel extends BasePanel {
             if(TracyDebugger::getDataValue('userSwitchSession') != '') {
                 $userSwitchSession = TracyDebugger::getDataValue('userSwitchSession');
                 $sessionSwitcherId = $this->wire('session')->tracyUserSwitcherId;
-                if(isset($userSwitchSession[$sessionSwitcherId])) {
+                if($sessionSwitcherId && isset($userSwitchSession[$sessionSwitcherId])) {
                     $remainingSessionLength = ($userSwitchSession[$sessionSwitcherId] - time()) / 60;
                 }
                 if($remainingSessionLength <= 0) $remainingSessionLength = 0;
