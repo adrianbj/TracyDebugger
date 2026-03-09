@@ -4,7 +4,7 @@ $p = $this->wire('pages')->get((int)$_POST['goToPage']);
 $pageInfo = array();
 if($p->id) {
     $pageInfo['id'] = $p->id;
-    $pageInfo['title'] = htmlspecialchars(truncateText($p->title ?: $p->name, 50), ENT_QUOTES, 'UTF-8');
+    $pageInfo['title'] = truncateText(htmlspecialchars($p->title ?: $p->name ?: '', ENT_QUOTES, 'UTF-8'), 50);
     $pageInfo['url'] = $p->url;
     $pageInfo['template_id'] = $p->template->id;
     $pageInfo['template_name'] = $p->template->name;
