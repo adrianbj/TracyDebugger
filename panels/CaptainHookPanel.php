@@ -136,7 +136,7 @@ HTML;
     }
 
     private function convertNamesToUrls($str) {
-        return trim(strtolower(preg_replace('/([A-Z])/', '-$1', $str)), '-');
+        return trim(strtolower(preg_replace('/([A-Z])/', '-$1', $str) ?? ''), '-');
     }
 
 }

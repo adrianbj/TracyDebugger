@@ -537,7 +537,7 @@ class TracyPwApiData extends WireData {
 
         // Trim each line from space and star chars
         $lines = array_map(function($line) {
-            return trim(preg_replace('/\t/', '', $line), " *");
+            return trim(preg_replace('/\t/', '', $line) ?? '', " *");
         }, explode("\n", $doc));
 
         // Retain lines that start with an @
@@ -561,7 +561,7 @@ class TracyPwApiData extends WireData {
 
 
     public static function convertNamesToUrls($str) {
-        return trim(strtolower(preg_replace('/([A-Z])/', '-$1', $str)), '-');
+        return trim(strtolower(preg_replace('/([A-Z])/', '-$1', $str) ?? ''), '-');
     }
 
 }

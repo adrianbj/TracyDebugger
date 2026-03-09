@@ -2946,7 +2946,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             return self::$_data->$property;
         }
         else {
-            return trim(self::$_data->$property);
+            return trim(self::$_data->$property ?? '');
         }
     }
 

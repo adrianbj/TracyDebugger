@@ -37,7 +37,7 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
         $code = $_POST['code'];
     }
     else {
-        $code = null;
+        $code = '';
     }
 
     // ready.php and finished.php weren't being loaded, so include here to monitor any bd() etc calls they might have
