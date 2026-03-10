@@ -1748,7 +1748,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             }
                             if($this->wire('config')->chmodFile) chmod($filePath, octdec($this->wire('config')->chmodFile));
 
-                            if($this->wire('input')->post->tracyTestFileCode) setcookie('tracyTestFileEditor', $this->wire('input')->post->fileEditorFilePath, time() + (10 * 365 * 24 * 60 * 60), '/; SameSite=Strict');
+                            if($this->wire('input')->post->tracyTestFileCode) {
+                                if(PHP_VERSION_ID >= 70300) {
+                                    setcookie('tracyTestFileEditor', $this->wire('input')->post->fileEditorFilePath, ['expires' => time() + (10 * 365 * 24 * 60 * 60), 'path' => '/', 'samesite' => 'Strict']);
+                                } else {
+                                    setcookie('tracyTestFileEditor', $this->wire('input')->post->fileEditorFilePath, time() + (10 * 365 * 24 * 60 * 60), '/');
+                                }
+                            }
                         }
                         $this->wire('session')->redirect($this->httpReferer);
                     }

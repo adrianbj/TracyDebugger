@@ -104,8 +104,13 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
 
         if($this->wire('input')->post->dbBackup === "true") {
 
-            setcookie('tracyDbBackup', 1, time() + 3600, '/; SameSite=Strict');
-            setcookie('tracyDbBackupFilename', $input->post->text('backupFilename'), time() + 3600, '/; SameSite=Strict');
+            if(PHP_VERSION_ID >= 70300) {
+                setcookie('tracyDbBackup', 1, ['expires' => time() + 3600, 'path' => '/', 'samesite' => 'Strict']);
+                setcookie('tracyDbBackupFilename', $input->post->text('backupFilename'), ['expires' => time() + 3600, 'path' => '/', 'samesite' => 'Strict']);
+            } else {
+                setcookie('tracyDbBackup', 1, time() + 3600, '/');
+                setcookie('tracyDbBackupFilename', $input->post->text('backupFilename'), time() + 3600, '/');
+            }
 
             $backupDir = $this->wire('config')->paths->assets . 'backups/database/';
             $filename = basename($this->wire('sanitizer')->filename($input->post('backupFilename')), '.sql');
@@ -309,7 +314,11 @@ function writeError($error) {
     TD::fireLog($customErrStrLog);
     TD::log($customErrStrLog, 'error');
 
-    setcookie('tracyCodeError', $error['type'].': '.$customErrStr, time() + (10 * 365 * 24 * 60 * 60), '/; SameSite=Strict');
+    if(PHP_VERSION_ID >= 70300) {
+        setcookie('tracyCodeError', $error['type'].': '.$customErrStr, ['expires' => time() + (10 * 365 * 24 * 60 * 60), 'path' => '/', 'samesite' => 'Strict']);
+    } else {
+        setcookie('tracyCodeError', $error['type'].': '.$customErrStr, time() + (10 * 365 * 24 * 60 * 60), '/');
+    }
 
     // echo and exit approach allows us to send error to Tracy console dump area
     // this means that the browser will receive a 200 when it may have been a 500,
