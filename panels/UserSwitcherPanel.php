@@ -86,17 +86,36 @@ class UserSwitcherPanel extends BasePanel {
                     <select id="userSwitcher" onchange="this.form.submit()" name="userSwitcher" size="5" style="width:100% !important; min-height:105px !important">';
                         if(!$this->wire('user')->isLoggedin()) $out .= '<option value="guest" style="padding: 2px; background:'.TracyDebugger::COLOR_WARN.'; color: #FFFFFF;" selected="selected">guest</option>';
 
-                        if(TracyDebugger::getDataValue('userSwitcherSelector')) {
-                            $selectableUsers = $this->wire('users')->find(TracyDebugger::getDataValue('userSwitcherSelector'));
-                        }
-                        elseif(TracyDebugger::getDataValue('userSwitcherRestricted') && count(TracyDebugger::getDataValue('userSwitcherRestricted')) > 0) {
-                            $selectableUsers = $this->wire('users')->find('roles!='.implode(', roles!=', TracyDebugger::getDataValue('userSwitcherRestricted')));
-                        }
-                        elseif(TracyDebugger::getDataValue('userSwitcherIncluded') && count(TracyDebugger::getDataValue('userSwitcherIncluded')) > 0) {
-                            $selectableUsers = $this->wire('users')->find('roles='.implode('|', TracyDebugger::getDataValue('userSwitcherIncluded')));
+                        if(method_exists($this->wire('pages'), 'findRaw')) {
+                            $findRawFields = ['id', 'name', 'email', 'roles'];
+                            $findRawSelector = 'templates_id=' . implode('|', $this->wire('config')->userTemplateIDs) . ', has_parent=' . implode('|', $this->wire('config')->usersPageIDs) . ', objects=1, nulls=1, sort=name, status<' . Page::statusUnpublished;
+                            if(TracyDebugger::getDataValue('userSwitcherSelector')) {
+                                $selectableUsers = $this->wire('pages')->findRaw($findRawSelector . ', ' . TracyDebugger::getDataValue('userSwitcherSelector'), $findRawFields);
+                            }
+                            elseif(TracyDebugger::getDataValue('userSwitcherRestricted') && count(TracyDebugger::getDataValue('userSwitcherRestricted')) > 0) {
+                                $selectableUsers = $this->wire('pages')->findRaw($findRawSelector . ', roles!='.implode(', roles!=', TracyDebugger::getDataValue('userSwitcherRestricted')), $findRawFields);
+                            }
+                            elseif(TracyDebugger::getDataValue('userSwitcherIncluded') && count(TracyDebugger::getDataValue('userSwitcherIncluded')) > 0) {
+                                $selectableUsers = $this->wire('pages')->findRaw($findRawSelector . ', roles='.implode('|', TracyDebugger::getDataValue('userSwitcherIncluded')), $findRawFields);
+                            }
+                            else {
+                                $selectableUsers = $this->wire('pages')->findRaw($findRawSelector, $findRawFields);
+                            }
                         }
                         else {
-                            $selectableUsers = $this->wire('users')->find('');
+                            if(TracyDebugger::getDataValue('userSwitcherSelector')) {
+                                $selectableUsers = $this->wire('users')->find(TracyDebugger::getDataValue('userSwitcherSelector'));
+                            }
+                            elseif(TracyDebugger::getDataValue('userSwitcherRestricted') && count(TracyDebugger::getDataValue('userSwitcherRestricted')) > 0) {
+                                $selectableUsers = $this->wire('users')->find('roles!='.implode(', roles!=', TracyDebugger::getDataValue('userSwitcherRestricted')));
+                            }
+                            elseif(TracyDebugger::getDataValue('userSwitcherIncluded') && count(TracyDebugger::getDataValue('userSwitcherIncluded')) > 0) {
+                                $selectableUsers = $this->wire('users')->find('roles='.implode('|', TracyDebugger::getDataValue('userSwitcherIncluded')));
+                            }
+                            else {
+                                $selectableUsers = $this->wire('users')->find('');
+                            }
+                            $selectableUsers = $selectableUsers->sort('name');
                         }
 
                         if(count($selectableUsers) > 10) {
@@ -110,10 +129,9 @@ class UserSwitcherPanel extends BasePanel {
 HTML;
                         }
 
-                        foreach($selectableUsers->sort('name') as $u) {
-                            if($u->hasStatus('unpublished')) continue;
+                        foreach($selectableUsers as $u) {
                             $user_label = str_replace('()', '', wirePopulateStringTags(TracyDebugger::getDataValue('userSwitcherUserLabel'), $u));
-                            if(count($u->roles)>1) $out .= '<option id="user_'.$u->id.'" data-label="'.$user_label.'" value="'.$u->name.'" style="padding: 2px; ' . ($this->wire('user')->name === $u->name ? 'background:'.TracyDebugger::COLOR_WARN.'; color: #FFFFFF;" selected="selected"' : '"') . '>'.$user_label.'</option>';
+                            if($u->roles && count($u->roles)>1) $out .= '<option id="user_'.$u->id.'" data-label="'.$user_label.'" value="'.$u->name.'" style="padding: 2px; ' . ($this->wire('user')->name === $u->name ? 'background:'.TracyDebugger::COLOR_WARN.'; color: #FFFFFF;" selected="selected"' : '"') . '>'.$user_label.'</option>';
                         }
                 $out .= '
                     </select>
