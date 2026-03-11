@@ -33,7 +33,8 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
 
         $fileData = array();
         $fileData['writeable'] = is_writable($resolvedPath);
-        $fileData['backupExists'] = file_exists($this->wire('config')->paths->cache . 'TracyDebugger/' . $_POST['filePath']) ? true : false;
+        $relPath = str_replace($rootPath, '', $resolvedPath);
+        $fileData['backupExists'] = file_exists($this->wire('config')->paths->cache . 'TracyDebugger/' . $relPath) ? true : false;
         $fileData['isTemplateFile'] = $resolvedPath === $p->template->filename;
         $fileData['contents'] = file_get_contents($resolvedPath);
         echo json_encode($fileData);

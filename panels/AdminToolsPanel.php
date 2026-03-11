@@ -53,7 +53,7 @@ class AdminToolsPanel extends BasePanel {
 
         <div class="tracy-inner">';
 
-            if(TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') && $this->wire('process') == 'ProcessPageEdit' || $this->wire('process') == 'ProcessLanguage') {
+            if(TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') && ($this->wire('process') == 'ProcessPageEdit' || $this->wire('process') == 'ProcessLanguage')) {
                 $p = $this->wire('process')->getPage();
                 if($p instanceof NullPage) {
                     $p = $this->wire('pages')->get((int) $this->wire('input')->get('id'));

@@ -378,14 +378,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if(static::$namespaceMigration) {
             $this->wire('modules')->resetCache();
             if(!headers_sent()) {
-                header('Location: ' . $_SERVER['REQUEST_URI']);
-                exit;
+                $this->wire('session')->redirect(self::inputUrl(true));
+                return;
             }
         }
 
         $this->time = $_SERVER['REQUEST_TIME_FLOAT'] ?? microtime(true);
 
-        if(class_exists('Debugger', false) && Debugger::isEnabled()) return;
+        if(class_exists('\Tracy\Debugger', false) && Debugger::isEnabled()) return;
 
         // load Tracy files and our helper files
         if(version_compare(PHP_VERSION, '8.2.0', '>=')) {
@@ -4475,7 +4475,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->notes = __('Useful if you have logs that are written to regularly on user interaction that are overwhelming more useful alert/warning/error logs.', __FILE__);
         $f->columnWidth = 50;
         $f->setAsmSelectOption('sortable', false);
-        if(!class_exists('\TracyLogsPanel')) {
+        if(!class_exists(TracyLogsPanel::class)) {
             require_once($this->config->paths->siteModules . 'TracyDebugger/panels/TracyLogsPanel.php');
         }
         foreach((new TracyLogsPanel())->getLogs() as $k => $v) {

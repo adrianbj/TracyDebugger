@@ -26,7 +26,7 @@ if(!tracyExceptionLoader) {
 
                 document.getElementById("tracyExceptionFilePath").value = filePath;
                 document.cookie = "tracyExceptionFile=" + filePath + "; path=/; SameSite=Strict";
-                document.getElementById("panelTitleFilePath").innerHTML = filePath.replace('site/assets/logs/tracy/', '');
+                document.getElementById("panelTitleFilePath").textContent = filePath.replace('site/assets/logs/tracy/', '');
 
                 var xmlhttp;
                 xmlhttp = new XMLHttpRequest();
@@ -94,7 +94,7 @@ if(!tracyExceptionLoader) {
                 xmlhttp.open("POST", tracyExceptionsViewer.currentURL, true);
                 xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-                xmlhttp.send("filePath=" + filePath + "&csrfToken=" + encodeURIComponent(tracyExceptionsViewer.csrfToken));
+                xmlhttp.send("filePath=" + encodeURIComponent(filePath) + "&csrfToken=" + encodeURIComponent(tracyExceptionsViewer.csrfToken));
             }
         },
 

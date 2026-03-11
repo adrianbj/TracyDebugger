@@ -131,7 +131,8 @@ HTML;
 
                         foreach($selectableUsers as $u) {
                             $user_label = str_replace('()', '', wirePopulateStringTags(TracyDebugger::getDataValue('userSwitcherUserLabel'), $u));
-                            if($u->roles && count($u->roles)>1) $out .= '<option id="user_'.$u->id.'" data-label="'.$user_label.'" value="'.$u->name.'" style="padding: 2px; ' . ($this->wire('user')->name === $u->name ? 'background:'.TracyDebugger::COLOR_WARN.'; color: #FFFFFF;" selected="selected"' : '"') . '>'.$user_label.'</option>';
+                            $safe_label = htmlspecialchars($user_label ?? '', ENT_QUOTES, 'UTF-8');
+                            if($u->roles && count($u->roles)>1) $out .= '<option id="user_'.$u->id.'" data-label="'.$safe_label.'" value="'.htmlspecialchars($u->name ?? '', ENT_QUOTES, 'UTF-8').'" style="padding: 2px; ' . ($this->wire('user')->name === $u->name ? 'background:'.TracyDebugger::COLOR_WARN.'; color: #FFFFFF;" selected="selected"' : '"') . '>'.$safe_label.'</option>';
                         }
                 $out .= '
                     </select>

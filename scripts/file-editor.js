@@ -25,7 +25,7 @@ if(!tracyFileEditorLoader) {
                         recentlyOpenSelect.options[recentlyOpenSelect.options.length] = new Option(storedFiles[i], storedFiles[i]);
                     }
                 }
-                var initialFile = document.getElementById('panelTitleFilePath').innerHTML;
+                var initialFile = document.getElementById('panelTitleFilePath').textContent;
                 tracyFileEditorLoader.addRecentlyOpenedFile(initialFile);
             }
         },
@@ -101,7 +101,7 @@ if(!tracyFileEditorLoader) {
         populateFileEditor: function(filePath, line) {
             document.getElementById("fileEditorFilePath").value = filePath;
             document.cookie = "tracyFileEditorFilePath=" + filePath + "; path=/; SameSite=Strict";
-            document.getElementById("panelTitleFilePath").innerHTML = "/" + filePath;
+            document.getElementById("panelTitleFilePath").textContent = "/" + filePath;
 
             if(typeof tracyFileEditor === "undefined" || !tracyFileEditor.tfe) {
                 window.requestAnimationFrame(tracyFileEditorLoader.populateFileEditor(filePath, line));
@@ -128,7 +128,7 @@ if(!tracyFileEditorLoader) {
                 xmlhttp.open("POST", tracyFileEditor.currentUrl, true);
                 xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-                xmlhttp.send("filePath=" + filePath + "&csrfToken=" + encodeURIComponent(tracyFileEditor.csrfToken));
+                xmlhttp.send("filePath=" + encodeURIComponent(filePath) + "&csrfToken=" + encodeURIComponent(tracyFileEditor.csrfToken));
                 init_php_file_tree(filePath);
             }
         },

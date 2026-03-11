@@ -407,22 +407,25 @@ class ProcessWirePlugin extends Plugin {
         elseif(preg_match('/\.(jpg|jpeg|png|gif|svg|webp|bmp)$/i', $val)) {
             $thumb = $this->getAvailableThumb($val, $pages_id);
             $fullPath = $this->getFullPath($val, $pages_id);
-            $val = '<a title="Modal viewer" href="' . $fullPath . '" data-src="' . $fullPath . '" data-type="image" class="image-thumb" data-filename="' . wire('config')->urls->httpRoot.ltrim(htmlspecialchars($fullPath ?? '', ENT_QUOTES, 'UTF-8'), '/') . '">'
-                 . htmlspecialchars($val ?? '', ENT_QUOTES, 'UTF-8') . '</a><a title="Download" href="' . $fullPath . '" download>'.$thumb.'</a>';
+            $safeFullPath = htmlspecialchars($fullPath ?? '', ENT_QUOTES, 'UTF-8');
+            $val = '<a title="Modal viewer" href="' . $safeFullPath . '" data-src="' . $safeFullPath . '" data-type="image" class="image-thumb" data-filename="' . wire('config')->urls->httpRoot.ltrim($safeFullPath, '/') . '">'
+                 . htmlspecialchars($val ?? '', ENT_QUOTES, 'UTF-8') . '</a><a title="Download" href="' . $safeFullPath . '" download>'.$thumb.'</a>';
         }
         elseif(preg_match('/\.(mp4|webm|ogg|ogv|mov|avi|wmv|mkv|flv)$/i', $val)) {
             $fullPath = $this->getFullPath($val, $pages_id);
+            $safeFullPath = htmlspecialchars($fullPath ?? '', ENT_QUOTES, 'UTF-8');
             $extension = pathinfo($val, PATHINFO_EXTENSION);
             list($icon, $iconClass) = $this->getFileTypeIcon($extension);
-            $val = '<a title="Modal viewer" href="' . $fullPath . '" data-src="' . $fullPath . '" data-type="video" class="image-thumb" data-filename="' . wire('config')->urls->httpRoot.ltrim(htmlspecialchars($fullPath ?? '', ENT_QUOTES, 'UTF-8'), '/') . '">'
-                 . htmlspecialchars($val ?? '', ENT_QUOTES, 'UTF-8') . '</a><a title="Download" href="' . $fullPath . '" download><span class="file-icon ' . $iconClass . '">' . $icon . '</span></a>';
+            $val = '<a title="Modal viewer" href="' . $safeFullPath . '" data-src="' . $safeFullPath . '" data-type="video" class="image-thumb" data-filename="' . wire('config')->urls->httpRoot.ltrim($safeFullPath, '/') . '">'
+                 . htmlspecialchars($val ?? '', ENT_QUOTES, 'UTF-8') . '</a><a title="Download" href="' . $safeFullPath . '" download><span class="file-icon ' . $iconClass . '">' . $icon . '</span></a>';
         }
         elseif(preg_match('/\.(mp3|wav|ogg|oga|flac|m4a|aac)$/i', $val)) {
             $fullPath = $this->getFullPath($val, $pages_id);
+            $safeFullPath = htmlspecialchars($fullPath ?? '', ENT_QUOTES, 'UTF-8');
             $extension = pathinfo($val, PATHINFO_EXTENSION);
             list($icon, $iconClass) = $this->getFileTypeIcon($extension);
-            $val = '<a title="Modal viewer" href="' . $fullPath . '" data-src="' . $fullPath . '" data-type="audio" class="image-thumb" data-filename="' . wire('config')->urls->httpRoot.ltrim(htmlspecialchars($fullPath ?? '', ENT_QUOTES, 'UTF-8'), '/') . '">'
-                 . htmlspecialchars($val ?? '', ENT_QUOTES, 'UTF-8') . '</a><a title="Download" href="' . $fullPath . '" download><span class="file-icon ' . $iconClass . '">' . $icon . '</span></a>';
+            $val = '<a title="Modal viewer" href="' . $safeFullPath . '" data-src="' . $safeFullPath . '" data-type="audio" class="image-thumb" data-filename="' . wire('config')->urls->httpRoot.ltrim($safeFullPath, '/') . '">'
+                 . htmlspecialchars($val ?? '', ENT_QUOTES, 'UTF-8') . '</a><a title="Download" href="' . $safeFullPath . '" download><span class="file-icon ' . $iconClass . '">' . $icon . '</span></a>';
         }
         elseif(preg_match('/\.(pdf|txt)$/i', $val) || preg_match('/^https?:\/\//i', $val)) {
 
@@ -434,7 +437,7 @@ class ProcessWirePlugin extends Plugin {
 
             if(preg_match('/^https?:\/\//i', $val)) {
                 $fullPath = $original;
-                $fullUrl = $original;
+                $fullUrl = htmlspecialchars($original ?? '', ENT_QUOTES, 'UTF-8');
                 $isLink = true;
             }
             else {
@@ -442,10 +445,11 @@ class ProcessWirePlugin extends Plugin {
                 $fullUrl = wire('config')->urls->httpRoot.ltrim(htmlspecialchars($fullPath ?? '', ENT_QUOTES, 'UTF-8'), '/');
                 $isLink = false;
             }
+            $safeFullPath = htmlspecialchars($fullPath ?? '', ENT_QUOTES, 'UTF-8');
             $extension = pathinfo($val, PATHINFO_EXTENSION);
             list($icon, $iconClass) = $this->getFileTypeIcon($extension);
-            $val = '<a title="Modal viewer" href="' . $fullPath . '" data-src="' . $fullPath . '" data-type="iframe" class="image-thumb" data-filename="' . $fullUrl . '">'
-                 . htmlspecialchars($original ?? '', ENT_QUOTES, 'UTF-8') . '</a><a title="'.($isLink ? 'View in new tab' : 'Download').'" '.($isLink ? ' target="_blank"' : ' download') . ' href="' . $fullPath . '"><span class="file-icon ' . $iconClass . '">' . $icon . '</span></a>';
+            $val = '<a title="Modal viewer" href="' . $safeFullPath . '" data-src="' . $safeFullPath . '" data-type="iframe" class="image-thumb" data-filename="' . $fullUrl . '">'
+                 . htmlspecialchars($original ?? '', ENT_QUOTES, 'UTF-8') . '</a><a title="'.($isLink ? 'View in new tab' : 'Download').'" '.($isLink ? ' target="_blank"' : ' download') . ' href="' . $safeFullPath . '"><span class="file-icon ' . $iconClass . '">' . $icon . '</span></a>';
         }
         elseif (preg_match('/\.(doc|docx|xls|xlsx|ppt|pptx|odt|ods|odp|zip|rar|7z|tar|gz|bz2)$/i', $val)) {
             $fullPath = $this->getFullPath($val, $pages_id);

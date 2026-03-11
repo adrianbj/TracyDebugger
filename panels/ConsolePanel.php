@@ -486,17 +486,19 @@ class ConsolePanel extends BasePanel {
                         }
                     }
 
-                    // clear old LocalStorage keys
-                    localStorage.removeItem('tracyConsoleTabs');
-                    localStorage.removeItem('tracyConsoleSnippets');
-                    localStorage.removeItem('tracyConsole');
-                    localStorage.removeItem('tracyConsoleHistory');
-                    localStorage.removeItem('tracyConsoleHistoryCount');
-                    localStorage.removeItem('tracyConsoleHistoryItem');
-                    localStorage.removeItem('tracyConsoleResults');
-                    localStorage.removeItem('tracyConsoleSplitSizes');
-
-                    tx.oncomplete = () => { database.close(); resolve(); };
+                    tx.oncomplete = () => {
+                        // clear old LocalStorage keys only after successful write
+                        localStorage.removeItem('tracyConsoleTabs');
+                        localStorage.removeItem('tracyConsoleSnippets');
+                        localStorage.removeItem('tracyConsole');
+                        localStorage.removeItem('tracyConsoleHistory');
+                        localStorage.removeItem('tracyConsoleHistoryCount');
+                        localStorage.removeItem('tracyConsoleHistoryItem');
+                        localStorage.removeItem('tracyConsoleResults');
+                        localStorage.removeItem('tracyConsoleSplitSizes');
+                        database.close();
+                        resolve();
+                    };
                     tx.onerror = () => {
                         console.error('migrateLocalStorageToIndexedDB: Transaction failed');
                         database.close();
@@ -1879,7 +1881,7 @@ class ConsolePanel extends BasePanel {
                                 if (selectedSnippet) {
                                     const tracyConsoleSelectedSnippetEl = document.getElementById(tracyConsole.makeIdFromTitle(selectedSnippet));
                                     if (tracyConsoleSelectedSnippetEl) {
-                                        document.getElementById("tracySnippetName").value = escapeHtml(selectedSnippet);
+                                        document.getElementById("tracySnippetName").value = selectedSnippet;
                                         tracyConsoleSelectedSnippetEl.classList.add("activeSnippet");
                                         tracyConsole.enableButton("reloadSnippet");
                                     }
@@ -2102,9 +2104,11 @@ class ConsolePanel extends BasePanel {
                                     }
                                     // Ctrl+Shift+Left → restore saved split position
                                     if (e.keyCode == 37 || e.charCode == 37) {
-                                        var sizes = tracyConsole.getSplits();
-                                        sizes = sizes ? sizes : [40, 60];
-                                        tracyConsole.split.setSizes(sizes);
+                                        (async function() {
+                                            var sizes = await tracyConsole.getSplits();
+                                            sizes = sizes ? sizes : [40, 60];
+                                            tracyConsole.split.setSizes(sizes);
+                                        })();
                                     }
                                 }
                             }

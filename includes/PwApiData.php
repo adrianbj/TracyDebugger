@@ -392,13 +392,9 @@ class TracyPwApiData extends WireData {
                             $files['pwFunctions'][$name]['lineNumber'] = $token[2];
 
                             if($className) {
-                                if(class_exists("\ProcessWire\\$className", false)) {
-                                    $r = new \ReflectionMethod("\ProcessWire\\$className", '___'.$methodName);
-                                }
-                                elseif(class_exists($className, false)) {
-                                    $r = new \ReflectionMethod($className, '___'.$methodName);
-                                }
-                                if(isset($r)) {
+                                $fqClass = class_exists("\ProcessWire\\$className", false) ? "\ProcessWire\\$className" : (class_exists($className, false) ? $className : null);
+                                if($fqClass && method_exists($fqClass, '___'.$methodName)) {
+                                    $r = new \ReflectionMethod($fqClass, '___'.$methodName);
                                     $files['pwFunctions'][$name]['params'] = $this->phpdoc_params($r);
                                 }
                             }

@@ -63,8 +63,6 @@ class TracyExceptionsPanel extends BasePanel {
         }
         $csrfToken = $this->wire('session')->tracyFileEditorToken;
 
-        $filePath = $this->wire('config')->paths->root . $this->tracyExceptionFile;
-
         $out = <<< HTML
         <script>
 
