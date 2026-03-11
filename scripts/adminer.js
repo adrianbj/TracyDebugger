@@ -5,7 +5,7 @@ function openAdminer(queryStr) {
     }
     else {
         if(!window.Tracy.Debug.panels || !document.getElementById("tracy-debug-panel-ProcessWire-AdminerPanel")) {
-            window.requestAnimationFrame(openAdminer(url));
+            window.requestAnimationFrame(function() { openAdminer(url); });
         }
         else {
             var panel = window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-AdminerPanel"];

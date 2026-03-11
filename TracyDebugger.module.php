@@ -1829,6 +1829,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             else {
                 // external panels
                 include_once static::$externalPanels[$panel];
+                // namespace migration: bridge old non-namespaced external panel class
+                if(!class_exists($fullPanelClass, false) && class_exists($panelName, false)) {
+                    class_alias($panelName, $fullPanelClass);
+                }
             }
             switch($panel) {
                 case 'performance':
@@ -4451,7 +4455,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // Log & Exceptions Panels
         $fieldset = $this->wire('modules')->get("InputfieldFieldset");
-        $fieldset->attr('name+id', 'logExeptionsPanels');
+        $fieldset->attr('name+id', 'logExceptionsPanels');
         $fieldset->label = __('Log and Exceptions panels', __FILE__);
         $wrapper->add($fieldset);
 
@@ -4927,10 +4931,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         foreach(static::$externalPanels as $name => $path) {
             $className = ucfirst($name) . 'Panel';
-            if(!class_exists($className)) {
+            $fullClassName = __NAMESPACE__ . '\\' . $className;
+            if(!class_exists($fullClassName)) {
                 include_once $path;
+                // namespace migration: bridge old non-namespaced external panel class
+                if(!class_exists($fullClassName, false) && class_exists($className, false)) {
+                    class_alias($className, $fullClassName);
+                }
             }
-            $externalPanel = new $className;
+            $externalPanel = new $fullClassName;
             if(method_exists($externalPanel, 'addSettings')) {
                 $externalPanelSettings = $externalPanel->addSettings();
                 $wrapper->add($externalPanelSettings);

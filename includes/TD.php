@@ -227,42 +227,42 @@ class TD extends TracyDebugger {
         $editCountLink = '';
         if(count(TracyDebugger::getDataValue('dumpPanelTabs')) > 0 && !is_string($var)) {
             $classExt = rand();
-            if(($var instanceof Wire || $var instanceof \ProcessWire\Wire)) {
-                if($var instanceof User || $var instanceof \ProcessWire\User) {
+            if($var instanceof Wire) {
+                if($var instanceof User) {
                     $type = 'users';
                     $section = 'access';
                 }
-                elseif($var instanceof Role || $var instanceof \ProcessWire\Role) {
+                elseif($var instanceof Role) {
                     $type = 'roles';
                     $section = 'access';
                 }
-                elseif($var instanceof Permission || $var instanceof \ProcessWire\Permission) {
+                elseif($var instanceof Permission) {
                     $type = 'permissions';
                     $section = 'access';
                 }
-                elseif($var instanceof Language || $var instanceof \ProcessWire\Language) {
+                elseif($var instanceof Language) {
                     $type = 'languages';
                     $section = 'setup';
                 }
-                elseif($var instanceof Page || $var instanceof \ProcessWire\Page) {
+                elseif($var instanceof Page) {
                     $type = 'page';
                     $section = '';
                 }
-                elseif($var instanceof Template || $var instanceof \ProcessWire\Template) {
+                elseif($var instanceof Template) {
                     $type = 'template';
                     $section = 'setup';
                 }
-                elseif($var instanceof Field || $var instanceof \ProcessWire\Field) {
+                elseif($var instanceof Field) {
                     $type = 'field';
                     $section = 'setup';
                 }
-                elseif($var instanceof Module || $var instanceof \ProcessWire\Module) {
+                elseif($var instanceof Module) {
                     $type = 'module';
                     $section = '';
                 }
                 if(isset($type)) $editCountLink .= self::generateEditViewLinks($var, $type, $section);
             }
-            if($var instanceof WireArray || $var instanceof \ProcessWire\WireArray) {
+            if($var instanceof WireArray) {
                 $editCountLink .= '<li class="tracyEditLinkCount">n = ' . $var->count() . '</li>';
             }
             $tabs = '<ul class="tracyDumpTabs">';

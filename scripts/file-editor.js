@@ -104,7 +104,7 @@ if(!tracyFileEditorLoader) {
             document.getElementById("panelTitleFilePath").textContent = "/" + filePath;
 
             if(typeof tracyFileEditor === "undefined" || !tracyFileEditor.tfe) {
-                window.requestAnimationFrame(tracyFileEditorLoader.populateFileEditor(filePath, line));
+                window.requestAnimationFrame(function() { tracyFileEditorLoader.populateFileEditor(filePath, line); });
             }
             else {
                 var xmlhttp;
@@ -140,7 +140,7 @@ if(!tracyFileEditorLoader) {
             }
             else {
                 if(!window.Tracy.Debug.panels || !document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel")) {
-                    window.requestAnimationFrame(tracyFileEditorLoader.loadFileEditor(filePath, line));
+                    window.requestAnimationFrame(function() { tracyFileEditorLoader.loadFileEditor(filePath, line); });
                 }
                 else {
                     var panel = window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-FileEditorPanel"];

@@ -20,7 +20,7 @@ if(!tracyExceptionLoader) {
         populateExceptionViewer: function(filePath) {
 
             if(typeof tracyExceptionsViewer === "undefined") {
-                window.requestAnimationFrame(tracyExceptionLoader.populateExceptionViewer(filePath));
+                window.requestAnimationFrame(function() { tracyExceptionLoader.populateExceptionViewer(filePath); });
             }
             else {
 
@@ -104,7 +104,7 @@ if(!tracyExceptionLoader) {
             }
             else {
                 if(!window.Tracy.Debug.panels || !document.getElementById("tracy-debug-panel-ProcessWire-TracyExceptionsPanel")) {
-                    window.requestAnimationFrame(tracyExceptionLoader.loadExceptionFile(filePath));
+                    window.requestAnimationFrame(function() { tracyExceptionLoader.loadExceptionFile(filePath); });
                 }
                 else {
                     var panel = window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-TracyExceptionsPanel"];
@@ -147,7 +147,7 @@ if(!tracyExceptionLoader) {
                             const queryStr = tracyExceptions[i].getElementsByTagName("a")[0].href.split('?')[1];
                             const currentFilePath = decodeURI(queryStr.replace('f=', '').replace('&l=1', '')).replace('site/assets/logs/tracy/', '');
                             tracyExceptions[i].getElementsByTagName("a")[0].className =
-                                document.getElementById('panelTitleFilePath').innerHTML === currentFilePath ? "active" : "";
+                                document.getElementById('panelTitleFilePath').textContent === currentFilePath ? "active" : "";
                         }
                     }
                 }
