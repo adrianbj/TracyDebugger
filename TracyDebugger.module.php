@@ -720,6 +720,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
 
 
+            // PW VERSION SWITCHER — auto-revert cleanup
+            // If PW booted successfully after a version switch, clean up the auto-revert files
+            // If an auto-revert occurred (previous request had fatal error), show warning and clean up
+            $this->cleanupPwVersionAutoRevert();
+
             // PW VERSION SWITCHER
             // if PW version changed, reload to initialize new version
             // don't add in_array(static::$showPanels) check because that won't be true if enabled ONCE due to multiple redirects waiting for $this->wire('config')->version to update
@@ -1638,6 +1643,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
 
+        // PW VERSION SWITCHER — marker cleanup (must be at the VERY END of init)
+        // If Tracy's init() threw an exception above (e.g. deprecation warnings from
+        // the switched-to version broke output buffering, causing sendAssets() to fail),
+        // this line is never reached and the marker survives for the auto-revert handler
+        // to trigger a revert on the next request. Only if init() completes fully do
+        // we register the shutdown function that will clean up the marker.
+        $this->cleanupPwVersionSwitchMarker();
+
     }
 
 
@@ -1645,6 +1658,32 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * Called when ProcessWire's API is ready
      */
     public function ready() {
+
+        // PW VERSION SWITCHER — show auto-revert notification
+        // Deferred to ready() because PW's session system is fully stable here.
+        // The file is only deleted on non-AJAX page requests where the admin theme
+        // will actually render the notice. AJAX requests (admin heartbeat, polling,
+        // etc.) queue the warning but keep the file, since AJAX responses don't
+        // render admin notices — without this, the warning gets silently consumed.
+        $rootPath = $this->wire('config')->paths->root;
+        $revertedFile = $rootPath . '.tracy-pw-reverted';
+        if(file_exists($revertedFile)) {
+            $revertLog = @json_decode(@file_get_contents($revertedFile), true);
+            $revertedFrom = isset($revertLog['revertedFrom']) ? $revertLog['revertedFrom'] : 'unknown';
+            $revertedTo = isset($revertLog['revertedTo']) ? $revertLog['revertedTo'] : 'unknown';
+            $reason = isset($revertLog['reason']) ? $revertLog['reason'] : '';
+            $msg = "TracyDebugger: ProcessWire version switch to v{$revertedFrom} was automatically reverted to v{$revertedTo}." .
+                ($reason ? " Reason: {$reason}" : '');
+            // Use both notice methods: session warning persists across redirects,
+            // module warning ensures display on the current request
+            $this->wire('session')->warning($msg);
+            $this->warning($msg);
+            // Only delete on a non-AJAX request where the admin theme renders notices.
+            // AJAX/redirect/error requests keep the file so it retries next page load.
+            if(!$this->wire('config')->ajax) {
+                @unlink($revertedFile);
+            }
+        }
 
         // USER BAR PAGE VERSIONS
         if(!static::$inAdmin && !$this->wire('config')->ajax && $this->wire('user')->isLoggedin() && $this->wire('user')->hasPermission('tracy-page-versions') && $this->data['showUserBar'] && in_array('pageVersions', $this->data['userBarFeatures'])) {
@@ -3304,6 +3343,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             // pre-validate: target wire directory must exist before we move anything
             if(!file_exists($rootPath.'.wire-'.$targetVersion)) return;
 
+            // Write the auto-revert handler file BEFORE renames so it's in place early.
+            // Uses @ suppression and try/catch because PW's error handler may convert
+            // file_put_contents warnings to exceptions during __destruct() shutdown.
+            $this->writePwRevertHandler($rootPath);
+
+            // track which files were swapped for auto-revert
+            $htaccessSwapped = false;
+            $indexSwapped = false;
+
             // rename wire — move current away, then move target into place
             if(!$this->renamePwVersions($rootPath.'wire', $rootPath.'.wire-'.$currentVersion, true)) return;
             if(!$this->renamePwVersions($rootPath.'.wire-'.$targetVersion, $rootPath.'wire')) {
@@ -3320,6 +3368,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     $this->renamePwVersions($rootPath.'.htaccess-'.$currentVersion, $rootPath.'.htaccess');
                     return;
                 }
+                $htaccessSwapped = true;
             }
             // rename index.php if a versioned replacement exists
             if(file_exists($rootPath.'.index-'.$targetVersion.'.php')) {
@@ -3329,9 +3378,308 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     $this->renamePwVersions($rootPath.'.index-'.$currentVersion.'.php', $rootPath.'index.php');
                     return;
                 }
+                $indexSwapped = true;
+            }
+
+            // Clear OPcache so the next request loads fresh bytecode from the new wire/ files
+            if(function_exists('opcache_reset')) @opcache_reset();
+
+            // Inject include line into now-active index.php and write the marker to arm the mechanism
+            $this->armPwVersionAutoRevert($rootPath, $currentVersion, $targetVersion, $htaccessSwapped, $indexSwapped);
+        }
+    }
+
+
+    /**
+     * Write the standalone auto-revert handler file to the site root.
+     * Called BEFORE renames so it's in place early. The handler is inert until the
+     * marker file is written (by armPwVersionAutoRevert) after all renames succeed.
+     *
+     * All file operations use @ suppression and try/catch because PW's error handler
+     * may convert warnings to exceptions during __destruct() shutdown.
+     *
+     * @param string $rootPath Site root path
+     */
+    private function writePwRevertHandler($rootPath) {
+        try {
+            $handlerCode = <<<'HANDLER'
+<?php
+/**
+ * TracyDebugger PW Version Switcher — Auto-Revert Handler
+ * This file is automatically created and removed by TracyDebugger.
+ * It runs BEFORE ProcessWire loads, at the top of index.php.
+ *
+ * Revert triggers (two independent mechanisms):
+ *
+ * 1. IMMEDIATE — via shutdown function: if the new version causes a PHP fatal
+ *    error (E_ERROR, E_PARSE, etc.), the shutdown function fires and reverts
+ *    before the next request.
+ *
+ * 2. ATTEMPTED FLAG — if TracyDebugger's init() doesn't clean up the marker
+ *    within 1 request, the version is broken (e.g. deprecation warnings flood
+ *    headers, sessions break, CSRF fails — site unusable but no fatal error).
+ *    On the 2nd request the handler finds the attempted flag and reverts
+ *    BEFORE ProcessWire even loads.
+ *
+ * The attempted flag uses touch() (empty file) instead of rewriting JSON,
+ * because file_put_contents() can fail in degraded PHP environments where
+ * PW's error handler converts warnings to exceptions.
+ */
+$tracyRevertMarker = __DIR__ . '/.tracy-pw-revert';
+$tracyRevertedLog = __DIR__ . '/.tracy-pw-reverted';
+$tracyAttemptedFlag = __DIR__ . '/.tracy-pw-revert-attempted';
+
+// Phase 1: Post-revert request — just clear opcache and let PW boot
+// Tracy init() will read the log, show a warning, and clean everything up
+if(file_exists($tracyRevertedLog)) {
+    if(function_exists('opcache_reset')) @opcache_reset();
+}
+// Phase 2: Active marker — version switch in progress
+elseif(file_exists($tracyRevertMarker)) {
+    // Clear OPcache BEFORE ProcessWire loads any wire/ files
+    if(function_exists('opcache_reset')) @opcache_reset();
+
+    // Collision-safe rename helper (standalone, no PW dependencies)
+    $tracySafeRename = function($oldPath, $newPath) {
+        if(!file_exists($oldPath)) return false;
+        if(file_exists($newPath)) {
+            $n = 0;
+            if(!is_dir($newPath) && preg_match('/^(.+)(\.[^.]+)$/', $newPath, $m)) {
+                do { $alt = $m[1] . '-' . (++$n) . $m[2]; } while(file_exists($alt) && $n < 100);
+            } else {
+                do { $alt = $newPath . '-' . (++$n); } while(file_exists($alt) && $n < 100);
+            }
+            if($n >= 100) return false;
+            if(!@rename($newPath, $alt)) return false;
+        }
+        return @rename($oldPath, $newPath);
+    };
+
+    // Revert function (shared by both trigger mechanisms)
+    $tracyDoRevert = function($tracyRevertData, $tracyRevertMarker, $tracyAttemptedFlag, $tracySafeRename, $reason) {
+        $rootPath = __DIR__ . '/';
+        $prev = $tracyRevertData['previousVersion'];
+        $target = $tracyRevertData['targetVersion'];
+
+        // revert wire/
+        if(is_dir($rootPath . '.wire-' . $prev)) {
+            $tracySafeRename($rootPath . 'wire', $rootPath . '.wire-' . $target);
+            $tracySafeRename($rootPath . '.wire-' . $prev, $rootPath . 'wire');
+        }
+
+        // revert .htaccess if it was swapped
+        if(!empty($tracyRevertData['htaccessSwapped']) && file_exists($rootPath . '.htaccess-' . $prev)) {
+            $tracySafeRename($rootPath . '.htaccess', $rootPath . '.htaccess-' . $target);
+            $tracySafeRename($rootPath . '.htaccess-' . $prev, $rootPath . '.htaccess');
+        }
+
+        // revert index.php if it was swapped
+        if(!empty($tracyRevertData['indexSwapped']) && file_exists($rootPath . '.index-' . $prev . '.php')) {
+            $tracySafeRename($rootPath . 'index.php', $rootPath . '.index-' . $target . '.php');
+            $tracySafeRename($rootPath . '.index-' . $prev . '.php', $rootPath . 'index.php');
+        }
+
+        if(function_exists('opcache_reset')) @opcache_reset();
+
+        // write log for admin visibility
+        @file_put_contents($rootPath . '.tracy-pw-reverted', json_encode(array(
+            'revertedFrom' => $target,
+            'revertedTo' => $prev,
+            'reason' => $reason,
+            'timestamp' => time()
+        )));
+
+        // remove marker and attempted flag
+        @unlink($tracyRevertMarker);
+        @unlink($tracyAttemptedFlag);
+    };
+
+    $tracyRevertData = @json_decode(@file_get_contents($tracyRevertMarker), true);
+    if(is_array($tracyRevertData) && !empty($tracyRevertData['previousVersion']) && !empty($tracyRevertData['targetVersion'])) {
+        // safety: ignore stale markers older than 1 hour
+        if(isset($tracyRevertData['timestamp']) && (time() - $tracyRevertData['timestamp']) > 3600) {
+            @unlink($tracyRevertMarker);
+            @unlink($tracyAttemptedFlag);
+        }
+        // REQUEST 2+: attempted flag exists — TracyDebugger never cleaned up — revert now
+        elseif(file_exists($tracyAttemptedFlag)) {
+            $tracyDoRevert($tracyRevertData, $tracyRevertMarker, $tracyAttemptedFlag, $tracySafeRename,
+                'TracyDebugger failed to boot after version switch (attempted flag present on request 2+)');
+        }
+        // REQUEST 1: first attempt — give PW a chance to boot
+        else {
+            // touch() is far more reliable than file_put_contents() in degraded
+            // PHP environments — it writes zero bytes and has minimal failure modes
+            @touch($tracyAttemptedFlag);
+
+            // FATAL ERROR TRIGGER: catch immediate crashes on this first request
+            register_shutdown_function(function() use ($tracyRevertData, $tracyRevertMarker, $tracyAttemptedFlag, $tracySafeRename, $tracyDoRevert) {
+                // only fire if marker still exists (init() cleanup deletes it on success)
+                if(!file_exists($tracyRevertMarker)) return;
+                $error = error_get_last();
+                if($error && in_array($error['type'], array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR))) {
+                    $tracyDoRevert($tracyRevertData, $tracyRevertMarker, $tracyAttemptedFlag, $tracySafeRename,
+                        'Fatal error: ' . (isset($error['message']) ? $error['message'] : 'unknown') .
+                        (isset($error['file']) ? ' in ' . $error['file'] : '') .
+                        (isset($error['line']) ? ' on line ' . $error['line'] : '')
+                    );
+                }
+            });
+        }
+    }
+}
+HANDLER;
+            @file_put_contents($rootPath . '.tracy-pw-revert-handler.php', $handlerCode);
+        } catch(\Exception $e) {} catch(\Error $e) {}
+    }
+
+
+    /**
+     * Inject the include line into index.php and write the marker file to arm auto-revert.
+     * Called AFTER all renames succeed. The marker is written last so the handler only
+     * activates when everything is in place.
+     *
+     * @param string $rootPath Site root path
+     * @param string $previousVersion The version we switched FROM
+     * @param string $targetVersion The version we switched TO
+     * @param bool $htaccessSwapped Whether .htaccess was swapped
+     * @param bool $indexSwapped Whether index.php was swapped
+     */
+    private function armPwVersionAutoRevert($rootPath, $previousVersion, $targetVersion, $htaccessSwapped, $indexSwapped) {
+        try {
+            // 1. Inject include line into the current active index.php (post-swap)
+            $indexPath = $rootPath . 'index.php';
+            $includeLine = "if(file_exists(__DIR__ . '/.tracy-pw-revert-handler.php')) include __DIR__ . '/.tracy-pw-revert-handler.php';";
+            if(file_exists($indexPath)) {
+                $indexContent = @file_get_contents($indexPath);
+                if($indexContent !== false) {
+                    // only inject if not already present
+                    if(strpos($indexContent, '.tracy-pw-revert-handler.php') === false) {
+                        // insert after the first line (always <?php or <?php namespace ...)
+                        $phpTagEnd = strpos($indexContent, "\n");
+                        if($phpTagEnd !== false) {
+                            $indexContent = substr($indexContent, 0, $phpTagEnd + 1) . $includeLine . "\n" . substr($indexContent, $phpTagEnd + 1);
+                            @file_put_contents($indexPath, $indexContent);
+                        }
+                    }
+                }
+            }
+
+            // 2. Write the marker file LAST — this arms the mechanism
+            $markerData = array(
+                'previousVersion' => $previousVersion,
+                'targetVersion' => $targetVersion,
+                'htaccessSwapped' => $htaccessSwapped,
+                'indexSwapped' => $indexSwapped,
+                'timestamp' => time()
+            );
+            @file_put_contents($rootPath . '.tracy-pw-revert', json_encode($markerData));
+        } catch(\Exception $e) {} catch(\Error $e) {}
+    }
+
+
+    /**
+     * Clean up auto-revert files after a successful PW version switch boot,
+     * or handle notification after an auto-revert occurred due to fatal error.
+     */
+    /**
+     * Handle cleanup after an auto-revert occurred.
+     * Called EARLY in init() (before redirect polling) so it can clear stale
+     * session vars that would otherwise trigger unnecessary redirect loops.
+     *
+     * NOTE: The .tracy-pw-reverted log file is intentionally NOT deleted here.
+     * The user notification is deferred to ready() where PW's session system is
+     * fully stable. If ready() doesn't run, the file persists and the notification
+     * shows on the next successful request.
+     */
+    private function cleanupPwVersionAutoRevert() {
+        $rootPath = $this->wire('config')->paths->root;
+        $revertedFile = $rootPath . '.tracy-pw-reverted';
+
+        if(!file_exists($revertedFile)) return;
+
+        // Auto-revert occurred — clean up all auto-revert infrastructure
+        // (.tracy-pw-reverted is kept for ready() to read and display the notification)
+        $markerFile = $rootPath . '.tracy-pw-revert';
+        $handlerFile = $rootPath . '.tracy-pw-revert-handler.php';
+        $attemptedFile = $rootPath . '.tracy-pw-revert-attempted';
+        $includeLine = "if(file_exists(__DIR__ . '/.tracy-pw-revert-handler.php')) include __DIR__ . '/.tracy-pw-revert-handler.php';";
+
+        @unlink($handlerFile);
+        @unlink($markerFile); // should already be gone, but just in case
+        @unlink($attemptedFile); // should already be gone, but just in case
+
+        // remove the include line from index.php if present
+        $this->removePwRevertIncludeLine($rootPath, $includeLine);
+
+        // clear stale session vars from the failed switch attempt
+        $this->wire('session')->remove('tracyPwVersion');
+        $this->wire('session')->remove('tracyPwVersionRetries');
+    }
+
+
+    /**
+     * Clean up auto-revert marker after a successful version switch.
+     * Called at the VERY END of init() — this is critical because if Tracy's init()
+     * fails partway through (e.g. DeferredContent::sendAssets() throws because
+     * deprecation warnings broke output buffering), this method is never reached,
+     * the shutdown function is never registered, and the marker survives for the
+     * handler to trigger a revert on the next request.
+     *
+     * Uses a shutdown function so cleanup happens AFTER ProcessWire::boot()
+     * (init runs before boot, and boot() can fail on version-mismatched wire/).
+     */
+    private function cleanupPwVersionSwitchMarker() {
+        $rootPath = $this->wire('config')->paths->root;
+        $markerFile = $rootPath . '.tracy-pw-revert';
+
+        if(!file_exists($markerFile)) return;
+
+        $handlerFile = $rootPath . '.tracy-pw-revert-handler.php';
+        $attemptedFile = $rootPath . '.tracy-pw-revert-attempted';
+        $includeLine = "if(file_exists(__DIR__ . '/.tracy-pw-revert-handler.php')) include __DIR__ . '/.tracy-pw-revert-handler.php';";
+
+        register_shutdown_function(function() use ($markerFile, $handlerFile, $attemptedFile, $includeLine, $rootPath) {
+            // Don't clean up if an HTTP 500+ error occurred (e.g. boot() failed
+            // after init() succeeded) — let the auto-revert handler fix it
+            $code = http_response_code();
+            if($code !== false && $code >= 500) return;
+            // Don't clean up if marker was already removed by the handler's
+            // fatal error shutdown function
+            if(!file_exists($markerFile)) return;
+            @unlink($markerFile);
+            @unlink($handlerFile);
+            @unlink($attemptedFile);
+            // Remove the include line from index.php
+            $indexPath = $rootPath . 'index.php';
+            if(file_exists($indexPath)) {
+                $indexContent = @file_get_contents($indexPath);
+                if($indexContent !== false && strpos($indexContent, $includeLine) !== false) {
+                    $indexContent = str_replace($includeLine . "\n", '', $indexContent);
+                    @file_put_contents($indexPath, $indexContent);
+                }
+            }
+        });
+    }
+
+
+    /**
+     * Remove the auto-revert include line from index.php
+     *
+     * @param string $rootPath Site root path
+     * @param string $includeLine The exact include line to remove
+     */
+    private function removePwRevertIncludeLine($rootPath, $includeLine) {
+        $indexPath = $rootPath . 'index.php';
+        if(file_exists($indexPath)) {
+            $indexContent = file_get_contents($indexPath);
+            if(strpos($indexContent, $includeLine) !== false) {
+                $indexContent = str_replace($includeLine . "\n", '', $indexContent);
+                file_put_contents($indexPath, $indexContent);
             }
         }
     }
+
 
     /**
      * Prepare an individual link for the Links panel
