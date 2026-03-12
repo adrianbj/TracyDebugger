@@ -884,12 +884,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
             // delete missing pagefiles if requested
             if($this->wire('input')->post->deleteMissingFiles && $this->wire('input')->post->missingPaths && $this->wire('session')->CSRF->validate()) {
-                foreach(json_decode(urldecode($this->wire('input')->post->missingPaths), true) as $pid => $files) {
-                    $p = $this->wire('pages')->get($pid);
-                    foreach($files as $file) {
-                        $pagefile = $p->{$file['field']}->get(pathinfo($file['filename'], PATHINFO_BASENAME));
-                        $p->{$file['field']}->delete($pagefile);
-                        $p->save($file['field']);
+                $decodedPaths = json_decode(urldecode($this->wire('input')->post->missingPaths), true);
+                if(is_array($decodedPaths)) {
+                    foreach($decodedPaths as $pid => $files) {
+                        $p = $this->wire('pages')->get($pid);
+                        foreach($files as $file) {
+                            $pagefile = $p->{$file['field']}->get(pathinfo($file['filename'], PATHINFO_BASENAME));
+                            $p->{$file['field']}->delete($pagefile);
+                            $p->save($file['field']);
+                        }
                     }
                 }
                 $this->wire('session')->redirect($this->httpReferer);
@@ -1520,11 +1523,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             // event interceptor hook
             if(in_array('eventInterceptor', static::$showPanels) && $this->wire('input')->cookie->eventInterceptorHook) {
                 $this->hookSettings = json_decode($this->wire('input')->cookie->eventInterceptorHook, true);
-                if($this->hookSettings['when'] == 'before') {
-                    $this->wire()->addHookBefore($this->hookSettings['hook'], $this, 'interceptEvent');
-                }
-                else {
-                    $this->wire()->addHookAfter($this->hookSettings['hook'], $this, 'interceptEvent');
+                if(is_array($this->hookSettings) && !empty($this->hookSettings['hook'])) {
+                    if(isset($this->hookSettings['when']) && $this->hookSettings['when'] == 'before') {
+                        $this->wire()->addHookBefore($this->hookSettings['hook'], $this, 'interceptEvent');
+                    }
+                    else {
+                        $this->wire()->addHookAfter($this->hookSettings['hook'], $this, 'interceptEvent');
+                    }
                 }
             }
 
@@ -3579,10 +3584,6 @@ HANDLER;
 
 
     /**
-     * Clean up auto-revert files after a successful PW version switch boot,
-     * or handle notification after an auto-revert occurred due to fatal error.
-     */
-    /**
      * Handle cleanup after an auto-revert occurred.
      * Called EARLY in init() (before redirect polling) so it can clear stale
      * session vars that would otherwise trigger unnecessary redirect loops.
@@ -3672,10 +3673,10 @@ HANDLER;
     private function removePwRevertIncludeLine($rootPath, $includeLine) {
         $indexPath = $rootPath . 'index.php';
         if(file_exists($indexPath)) {
-            $indexContent = file_get_contents($indexPath);
-            if(strpos($indexContent, $includeLine) !== false) {
+            $indexContent = @file_get_contents($indexPath);
+            if($indexContent !== false && strpos($indexContent, $includeLine) !== false) {
                 $indexContent = str_replace($includeLine . "\n", '', $indexContent);
-                file_put_contents($indexPath, $indexContent);
+                @file_put_contents($indexPath, $indexContent);
             }
         }
     }

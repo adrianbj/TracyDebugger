@@ -14,22 +14,24 @@ class ProcesswireVersionPanel extends BasePanel {
 
         $this->versions = array();
         $rootPath = $this->wire('config')->paths->root;
-        foreach(new \DirectoryIterator($rootPath) as $fileInfo) {
-            if($fileInfo->isDot()) continue;
-            if(!$fileInfo->isDir()) continue;
-            $dirName = $fileInfo->getFilename();
-            if($dirName === 'wire') {
-                $this->versions[] = $this->wire('config')->version;
+        try {
+            foreach(new \DirectoryIterator($rootPath) as $fileInfo) {
+                if($fileInfo->isDot()) continue;
+                if(!$fileInfo->isDir()) continue;
+                $dirName = $fileInfo->getFilename();
+                if($dirName === 'wire') {
+                    $this->versions[] = $this->wire('config')->version;
+                }
+                elseif(preg_match('/^\.wire-(\d+(?:\.\d+)*)$/', $dirName, $matches)) {
+                    $this->versions[] = $matches[1];
+                }
             }
-            elseif(preg_match('/^\.wire-(\d+(?:\.\d+)*)$/', $dirName, $matches)) {
-                $this->versions[] = $matches[1];
-            }
-        }
+        } catch(\Exception $e) {}
         $this->versions = array_unique($this->versions);
         usort($this->versions, 'version_compare');
-        $latestVersion = end($this->versions);
+        $latestVersion = !empty($this->versions) ? end($this->versions) : null;
 
-        if($latestVersion == $this->wire('config')->version) {
+        if(!$latestVersion || version_compare($latestVersion, $this->wire('config')->version, '==')) {
             $iconColor = TracyDebugger::COLOR_NORMAL;
         }
         else {
