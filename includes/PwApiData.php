@@ -249,7 +249,7 @@ class TracyPwApiData extends WireData {
                         $items[$class][$name]['description'] = '';
                     }
                     else {
-                        $items[$class][$name]['description'] = $info['description'];
+                        $items[$class][$name]['description'] = htmlentities(trim($info['description']));
                     }
                 }
                 if($type == 'variables') $this->n++;
@@ -296,7 +296,7 @@ class TracyPwApiData extends WireData {
                 $items[$class][$name]['comment'] = "$" . lcfirst($class) . '->' . str_replace('___', '', $name);
                 if(TracyDebugger::getDataValue('apiExplorerShowDescription') || TracyDebugger::getDataValue('codeShowDescription')) {
                     $desc = preg_replace('/#([^#\s]+)/', '', $info['description']);
-                    $items[$class][$name]['description'] = $desc;
+                    $items[$class][$name]['description'] = htmlentities(trim($desc));
                 }
                 if($type == 'variables') $this->n++;
             }
