@@ -84,28 +84,48 @@ HTML;
         $apiChanges = $this->wire('cache')->get('TracyApiChanges');
         if($apiChanges) {
             $apiChanges = json_decode(ltrim($apiChanges, '~'), true);
-            if(is_array($apiChanges) && count($apiChanges) > 1) {
+            if(is_array($apiChanges) && isset($apiChanges['cachedVersion'])) {
+                $cachedVersion = $apiChanges['cachedVersion'];
+                unset($apiChanges['cachedVersion']);
+
+                // check if there are actual changes (not just empty type arrays)
+                $hasChanges = false;
                 foreach($apiChanges as $type => $classes) {
-                    if($type == 'cachedVersion') {
-                        $apiChangesOut .= '
-                        <a href="#" rel="new-since" class="tracy-toggle tracy-collapsed new-since">
-                            <span style="font-size: 15px; font-weight: bold">NEW SINCE v'.$classes.'</span>
-                        </a>
-                        <div style="padding-left:10px" id="new-since" class="tracy-collapsed new-since">
-                        ';
-                        continue;
+                    if(!empty($classes)) {
+                        $hasChanges = true;
+                        break;
                     }
-                    if(!isset($currentType) || $currentType !== $type) {
-                        $apiChangesOut .= '<h3>' . ucfirst(strtolower(preg_replace('/([a-z0-9])([A-Z])/', "$1 $2", $type))) .($type == 'variables' || $type == 'proceduralFunctions' ? '' : ' classes').'</h3>';
-                    }
-                    foreach($classes as $class => $methods) {
-                        foreach($methods as $method) {
-                            $apiChangesOut .= ($type == 'variables' ? '$' : '').$class.'->'.$method .'<br />';
-                        }
-                    }
-                    $currentType = $type;
                 }
-                $apiChangesOut .= '</div><br /><br /><span style="font-size: 15px; font-weight: bold">CURRENT v'.$this->wire('config')->version.'</span>';
+
+                if($hasChanges) {
+                    $apiChangesOut .= '
+                    <a href="#" rel="new-since" class="tracy-toggle tracy-collapsed new-since">
+                        <span style="font-size: 15px; font-weight: bold">NEW SINCE v'.htmlentities($cachedVersion).'</span>
+                    </a>
+                    <div style="padding-left:10px" id="new-since" class="tracy-collapsed new-since">
+                    ';
+
+                    $currentType = null;
+                    foreach($apiChanges as $type => $classes) {
+                        if(empty($classes)) continue;
+                        if($currentType !== $type) {
+                            $apiChangesOut .= '<h3>' . htmlentities(ucfirst(strtolower(preg_replace('/([a-z0-9])([A-Z])/', "$1 $2", $type)))) .($type == 'variables' || $type == 'proceduralFunctions' ? '' : ' classes').'</h3>';
+                        }
+                        foreach($classes as $class => $methods) {
+                            foreach($methods as $method) {
+                                if($type == 'proceduralFunctions') {
+                                    $apiChangesOut .= htmlentities($method) .'<br />';
+                                }
+                                else {
+                                    $apiChangesOut .= ($type == 'variables' ? '$' : '').htmlentities($class).'->'.htmlentities($method) .'<br />';
+                                }
+                            }
+                        }
+                        $currentType = $type;
+                    }
+
+                    $apiChangesOut .= '</div><br /><br /><span style="font-size: 15px; font-weight: bold">CURRENT v'.htmlentities($this->wire('config')->version).'</span>';
+                }
             }
         }
 

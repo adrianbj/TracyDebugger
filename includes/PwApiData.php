@@ -8,9 +8,16 @@ class TracyPwApiData extends WireData {
     public function getApiData($type) {
         $cacheName = 'TracyApiData.'.$type;
         $apiData = $this->wire('cache')->get($cacheName);
+        $storedVersion = TracyDebugger::getDataValue('apiDataVersion');
+        $currentVersion = $this->wire('config')->version;
+        $versionChanged = $storedVersion !== null && $currentVersion != $storedVersion;
 
-        if(!$apiData || TracyDebugger::getDataValue('apiDataVersion') === null || $this->wire('config')->version != TracyDebugger::getDataValue('apiDataVersion')) {
-            if($apiData) $cachedData = json_decode(ltrim($apiData, '~'), true);
+        if(!$apiData || $storedVersion === null || $versionChanged) {
+            // decode existing cache for change detection (only needed when version actually changed)
+            if($apiData && $versionChanged) {
+                $cachedData = json_decode(ltrim($apiData, '~'), true);
+            }
+
             if($type == 'variables') {
                 $apiData = $this->getVariables();
             }
@@ -31,8 +38,8 @@ class TracyPwApiData extends WireData {
             }
 
             // if PW core version has changed, populate the "TracyApiChanges" data cache
-            if(isset($cachedData) && TracyDebugger::getDataValue('apiDataVersion') !== null && $this->wire('config')->version != TracyDebugger::getDataValue('apiDataVersion')) {
-                TracyDebugger::$apiChanges['cachedVersion'] = TracyDebugger::getDataValue('apiDataVersion');
+            if(isset($cachedData)) {
+                TracyDebugger::$apiChanges['cachedVersion'] = $storedVersion;
                 foreach($apiData as $class => $methods) {
                     $i=0;
                     foreach($methods as $method => $params) {
@@ -43,17 +50,22 @@ class TracyPwApiData extends WireData {
                     }
                 }
                 $this->wire('cache')->save('TracyApiChanges', '~'.json_encode(TracyDebugger::$apiChanges), WireCache::expireNever);
-
-                $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
-                $configData['apiDataVersion'] = $this->wire('config')->version;
-                $this->wire('modules')->saveModuleConfigData($this->wire('modules')->get("TracyDebugger"), $configData);
-
             }
 
             // tilde hack for this: https://github.com/processwire/processwire-issues/issues/775
             $apiData = '~'.json_encode($apiData);
             $this->wire('cache')->save($cacheName, $apiData, WireCache::expireNever);
 
+            // update stored version if needed (only save config once per request)
+            if($currentVersion != $storedVersion) {
+                static $versionSaved = false;
+                if(!$versionSaved) {
+                    $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
+                    $configData['apiDataVersion'] = $currentVersion;
+                    $this->wire('modules')->saveModuleConfigData($this->wire('modules')->get("TracyDebugger"), $configData);
+                    $versionSaved = true;
+                }
+            }
         }
 
         return json_decode(ltrim($apiData, '~'), true);

@@ -1445,7 +1445,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             // UPDATE CACHED API DATA on core version change
             $this->wire()->addHookBefore('SystemUpdater::coreVersionChange', null, function($event) {
-                foreach(array('variables', 'core', 'coreModules') as $type) {
+                foreach(array('variables', 'core', 'proceduralFunctions', 'coreModules') as $type) {
                     self::getApiData($type);
                 }
             });
@@ -2161,6 +2161,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if($info['core']) return;
         }
         $this->deleteCache('TracyApiData.*');
+        $this->deleteCache('TracyApiChanges');
     }
 
     private function deleteCache($cache) {
