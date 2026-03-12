@@ -13,18 +13,19 @@ class ProcesswireVersionPanel extends BasePanel {
         Debugger::timer('processwireVersion');
 
         $this->versions = array();
-        foreach(new \DirectoryIterator($this->wire('config')->paths->root) as $fileInfo) {
+        $rootPath = $this->wire('config')->paths->root;
+        foreach(new \DirectoryIterator($rootPath) as $fileInfo) {
             if($fileInfo->isDot()) continue;
-            $filePath = $fileInfo->getPathname();
-            $filePath = TracyDebugger::forwardSlashPath($filePath);
-            $version = str_replace($this->wire('config')->paths->root, '', $filePath);
-            $version = str_replace('.wire-', '', $version);
-            if(strpos($filePath, 'wire') === false) continue;
-            if(strpos($version, '-') !== false) continue;
-            if(strpos($filePath, $this->wire('config')->version) !== false) continue;
-            if($version == 'wire') $version = $this->wire('config')->version;
-            $this->versions[] = $version;
+            if(!$fileInfo->isDir()) continue;
+            $dirName = $fileInfo->getFilename();
+            if($dirName === 'wire') {
+                $this->versions[] = $this->wire('config')->version;
+            }
+            elseif(preg_match('/^\.wire-(\d+(?:\.\d+)*)$/', $dirName, $matches)) {
+                $this->versions[] = $matches[1];
+            }
         }
+        $this->versions = array_unique($this->versions);
         usort($this->versions, 'version_compare');
         $latestVersion = end($this->versions);
 
@@ -49,7 +50,7 @@ class ProcesswireVersionPanel extends BasePanel {
 
         return '
         <span title="ProcessWire Version">
-            ' . $this->icon .   (TracyDebugger::getDataValue('showPanelLabels') ? 'PW Version' : '') . ' ' . $this->wire('config')->version . '
+            ' . $this->icon .   (TracyDebugger::getDataValue('showPanelLabels') ? 'PW Version' : '') . ' ' . htmlentities($this->wire('config')->version) . '
         </span>
         ';
     }
@@ -63,16 +64,22 @@ class ProcesswireVersionPanel extends BasePanel {
         <div class="tracy-inner">
             <fieldset>
                 <legend>Choose from available versions</legend><br />';
-                $out .= '
-                <form method="post" action="'.TracyDebugger::inputUrl(true).'">
-                    <input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />
-                    <select name="tracyPwVersion">';
-                    foreach($this->versions as $version) {
-                        $out .= '<option value="'.$version.'"'.($version == $this->wire('config')->version ? 'selected="selected"' : '').'>'.$version.'</option>';
-                    }
+                if(count($this->versions) <= 1) {
+                    $out .= '<p>No alternative versions found. Place versioned wire directories (e.g. <code>.wire-3.0.200</code>) in your site root to enable version switching.</p>';
+                }
+                else {
                     $out .= '
-                    </select>&nbsp;<input type="submit" value="Change" />
-                </form>
+                    <form method="post" action="'.TracyDebugger::inputUrl(true).'">
+                        <input type="hidden" name="'.htmlentities($this->wire('session')->CSRF->getTokenName()).'" value="'.htmlentities($this->wire('session')->CSRF->getTokenValue()).'" />
+                        <select name="tracyPwVersion">';
+                        foreach($this->versions as $version) {
+                            $out .= '<option value="'.htmlentities($version).'"'.($version == $this->wire('config')->version ? ' selected="selected"' : '').'>'.htmlentities($version).'</option>';
+                        }
+                        $out .= '
+                        </select>&nbsp;<input type="submit" value="Change" />
+                    </form>';
+                }
+            $out .= '
             </fieldset>';
 
             $out .= TracyDebugger::generatePanelFooter('processwireVersion', Debugger::timer('processwireVersion'), strlen($out));

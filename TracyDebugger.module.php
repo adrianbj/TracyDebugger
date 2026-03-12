@@ -725,11 +725,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             // don't add in_array(static::$showPanels) check because that won't be true if enabled ONCE due to multiple redirects waiting for $this->wire('config')->version to update
             if(($this->wire('input')->post->tracyPwVersion && $this->wire('input')->post->tracyPwVersion != $this->wire('config')->version && $this->wire('session')->CSRF->validate()) || $this->wire('session')->tracyPwVersion) {
                 $this->wire('session')->tracyPwVersion = $this->wire('session')->tracyPwVersion ?: $this->wire('input')->post->tracyPwVersion;
-                while($this->wire('session')->tracyPwVersion != $this->wire('config')->version) {
+                $tracyPwVersionRetries = $this->wire('session')->tracyPwVersionRetries ?: 0;
+                if($this->wire('session')->tracyPwVersion != $this->wire('config')->version && $tracyPwVersionRetries < 5) {
+                    $this->wire('session')->tracyPwVersionRetries = $tracyPwVersionRetries + 1;
                     sleep(1);
                     $this->wire('session')->redirect($this->httpReferer);
                 }
                 $this->wire('session')->remove('tracyPwVersion');
+                $this->wire('session')->remove('tracyPwVersionRetries');
             }
 
 
@@ -3254,12 +3257,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     public function renamePwVersions($oldPath, $newPath, $addN = false) {
+        if(!file_exists($oldPath)) return false;
         if(file_exists($newPath) && $addN) {
             $n = 0;
-            do { $newPath2 = $newPath . "-" . (++$n); } while(file_exists($newPath2));
-            rename($newPath, $newPath2);
+            do { $newPath2 = $newPath . "-" . (++$n); } while(file_exists($newPath2) && $n < 100);
+            if($n >= 100) return false;
+            if(!rename($newPath, $newPath2)) return false;
         }
-        rename($oldPath, $newPath);
+        return rename($oldPath, $newPath);
     }
 
 
@@ -3285,23 +3290,45 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if(isset($this->tempTemplateFilename) && file_exists($this->tempTemplateFilename)) unlink($this->tempTemplateFilename);
 
         // modify paths to /wire/, index.php, and .htaccess when using PW Version Switcher
-        if($this->wire('input') && $this->wire('input')->post->tracyPwVersion && $this->wire('input')->post->tracyPwVersion != $this->wire('config')->version) {
+        if($this->wire('input') && $this->wire('input')->post->tracyPwVersion && $this->wire('input')->post->tracyPwVersion != $this->wire('config')->version
+            && (static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser)) {
+
+            $targetVersion = $this->wire('input')->post->tracyPwVersion;
+
+            // validate version format (digits and dots only)
+            if(!preg_match('/^\d+(\.\d+)*$/', $targetVersion)) return;
 
             $rootPath = $this->wire('config')->paths->root;
+            $currentVersion = $this->wire('config')->version;
 
-            // rename wire
-            $this->renamePwVersions($rootPath.'wire', $rootPath.'.wire-'.$this->wire('config')->version, true);
-            $this->renamePwVersions($rootPath.'.wire-'.$this->wire('input')->post->tracyPwVersion, $rootPath.'wire');
+            // pre-validate: target wire directory must exist before we move anything
+            if(!file_exists($rootPath.'.wire-'.$targetVersion)) return;
 
-            // rename .htaccess if previously replaced
-            if(file_exists($rootPath.'.htaccess-'.$this->wire('input')->post->tracyPwVersion)) {
-                $this->renamePwVersions($rootPath.'.htaccess', $rootPath.'.htaccess-'.$this->wire('config')->version, true);
-                $this->renamePwVersions($rootPath.'.htaccess-'.$this->wire('input')->post->tracyPwVersion, $rootPath.'.htaccess');
+            // rename wire — move current away, then move target into place
+            if(!$this->renamePwVersions($rootPath.'wire', $rootPath.'.wire-'.$currentVersion, true)) return;
+            if(!$this->renamePwVersions($rootPath.'.wire-'.$targetVersion, $rootPath.'wire')) {
+                // rollback: restore original wire directory
+                $this->renamePwVersions($rootPath.'.wire-'.$currentVersion, $rootPath.'wire');
+                return;
             }
-            // rename index.php if previously replaced
-            if(file_exists($rootPath.'.index-'.$this->wire('input')->post->tracyPwVersion.'.php')) {
-                $this->renamePwVersions($rootPath.'index.php', $rootPath.'.index-'.$this->wire('config')->version.'.php', true);
-                $this->renamePwVersions($rootPath.'.index-'.$this->wire('input')->post->tracyPwVersion.'.php', $rootPath.'index.php');
+
+            // rename .htaccess if a versioned replacement exists
+            if(file_exists($rootPath.'.htaccess-'.$targetVersion)) {
+                if(!$this->renamePwVersions($rootPath.'.htaccess', $rootPath.'.htaccess-'.$currentVersion, true)) return;
+                if(!$this->renamePwVersions($rootPath.'.htaccess-'.$targetVersion, $rootPath.'.htaccess')) {
+                    // rollback htaccess
+                    $this->renamePwVersions($rootPath.'.htaccess-'.$currentVersion, $rootPath.'.htaccess');
+                    return;
+                }
+            }
+            // rename index.php if a versioned replacement exists
+            if(file_exists($rootPath.'.index-'.$targetVersion.'.php')) {
+                if(!$this->renamePwVersions($rootPath.'index.php', $rootPath.'.index-'.$currentVersion.'.php', true)) return;
+                if(!$this->renamePwVersions($rootPath.'.index-'.$targetVersion.'.php', $rootPath.'index.php')) {
+                    // rollback index.php
+                    $this->renamePwVersions($rootPath.'.index-'.$currentVersion.'.php', $rootPath.'index.php');
+                    return;
+                }
             }
         }
     }
