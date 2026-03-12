@@ -2564,7 +2564,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 return;
 
         $options = json_decode($this->wire('input')->cookie->tracyIncludeCode, true);
-        if($options['when'] !== $when) return;
+        if(!is_array($options) || !isset($options['when']) || $options['when'] !== $when) return;
 
         // populate API variables, eg so $page equals $this->wire('page')
         $pwVars = $this->wire('all');

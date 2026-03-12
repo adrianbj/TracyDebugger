@@ -569,7 +569,8 @@ class TracyPwApiData extends WireData {
 
 
     public static function convertNamesToUrls($str) {
-        return trim(strtolower(preg_replace('/([A-Z])/', '-$1', $str) ?? ''), '-');
+        if(!is_string($str) || $str === '') return '';
+        return trim(strtolower(preg_replace('/([A-Z])/', '-$1', $str)), '-');
     }
 
 }
