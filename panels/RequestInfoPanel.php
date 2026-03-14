@@ -895,8 +895,9 @@ class RequestInfoPanel extends BasePanel {
         $isAdditionalBar = TracyDebugger::isAdditionalBar();
 
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
+        $nonceAttr = TracyDebugger::getNonceAttr();
         $out = <<< HTML
-        <script>
+        <script{$nonceAttr}>
             tracyJSLoader.load("{$tracyModuleUrl}scripts/file-editor.js");
         </script>
 HTML;

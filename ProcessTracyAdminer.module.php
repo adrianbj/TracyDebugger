@@ -31,7 +31,7 @@ class ProcessTracyAdminer extends Process implements Module {
         else {
             return '
             <iframe id="adminer-iframe" src="'.htmlspecialchars(str_replace('/adminer/', '/adminer-renderer/', $_SERVER['REQUEST_URI'] ?? ''), ENT_QUOTES, 'UTF-8').'" style="width:100vw; border: none; padding:0; margin:0;"></iframe>
-            <script>
+            <script' . TracyDebugger::getNonceAttr() . '>
                 const adminer_iframe = document.getElementById("adminer-iframe");
                 window.addEventListener("popstate", function (event) {
                     adminer_iframe.src = location.href.replace("/adminer/", "/adminer-renderer/");

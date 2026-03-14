@@ -86,12 +86,13 @@ class ProcesswireInfoPanel extends BasePanel {
     public function getPanel() {
 
         $out = '';
+        $nonceAttr = TracyDebugger::getNonceAttr();
         $panelSections = TracyDebugger::getDataValue('processwireInfoPanelSections');
         $currentUrl = substr(json_encode($_SERVER['REQUEST_URI']), 1, -1);
 
         if(in_array('gotoId', $panelSections)) {
             $out .= <<< HTML
-            <script>
+            <script{$nonceAttr}>
 
                 function tracyClearGoToPageID(matchStatus) {
                     document.getElementById("idGoToView").href = "javascript:void(0)";
@@ -140,7 +141,7 @@ HTML;
 
         if(in_array('processWireWebsiteSearch', $panelSections)) {
             $out .= <<< HTML
-            <script>
+            <script{$nonceAttr}>
                 function searchPw(form) {
                     if(form.section.value == "Github") {
                         window.open("https://github.com/processwire/processwire/search?utf8=✓&q="+form.pwquery.value);
@@ -193,7 +194,7 @@ HTML;
         // Versions Info
         if(in_array('versionsList', $panelSections)) {
             $versionsList = <<< HTML
-            <script>
+            <script{$nonceAttr}>
                 tracyJSLoader.load("{$this->wire('config')->urls->TracyDebugger}scripts/clipboardjs/clipboard.min.js", function() {
                     tracyJSLoader.load("{$this->wire('config')->urls->TracyDebugger}scripts/clipboardjs/tooltips.js", function() {
                         var versionsClipboard=new ClipboardJS(".tracyCopyBtn");
@@ -448,7 +449,7 @@ HTML;
 
             // make sure Font Awesome is loaded
             $out .= <<< HTML
-            <script>
+            <script{$nonceAttr}>
                 function loadFAIfNotAlreadyLoaded() {
                     if(!document.getElementById("fontAwesome")) {
                         var link = document.createElement("link");

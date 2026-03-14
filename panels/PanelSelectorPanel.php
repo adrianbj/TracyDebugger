@@ -125,8 +125,9 @@ class PanelSelectorPanel extends BasePanel {
 
     public function getPanel() {
 
+        $nonceAttr = TracyDebugger::getNonceAttr();
         $out = '
-        <script>
+        <script' . $nonceAttr . '>
             function getSelectedTracyPanelCheckboxes() {
                 var selchbox = [];
                 var inpfields = document.getElementsByName("selectedPanels[]");

@@ -21,7 +21,7 @@ class TracyTogglerPanel extends BasePanel {
 
 
         $out = '
-            <script>
+            <script' . TracyDebugger::getNonceAttr() . '>
                 function disableTracy() {
                     document.cookie = "tracyDisabled=1; expires=0; path=/";
                     location.reload();

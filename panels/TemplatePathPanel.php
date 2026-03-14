@@ -83,8 +83,9 @@ class TemplatePathPanel extends BasePanel {
             }
         }
 
+        $nonceAttr = TracyDebugger::getNonceAttr();
         $out = '
-        <script>
+        <script' . $nonceAttr . '>
             function getTracyTemplatePath() {
                 var e = document.getElementById("tracyTemplatePath");
                 return "'.wire("page")->template->name.'|"+e.options[e.selectedIndex].value;

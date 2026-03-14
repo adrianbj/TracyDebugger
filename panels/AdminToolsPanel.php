@@ -35,8 +35,9 @@ class AdminToolsPanel extends BasePanel {
         $i=0;
         $csrfInput = '<input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />';
 
+        $nonceAttr = TracyDebugger::getNonceAttr();
         $out = '
-        <script>
+        <script' . $nonceAttr . '>
             function unhideUnlockFields(restore) {
                 if(restore) {
                     document.cookie = "tracyUnhideUnlockFields=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";

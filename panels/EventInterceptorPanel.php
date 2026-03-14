@@ -64,7 +64,7 @@ class EventInterceptorPanel extends BasePanel {
         $out = '
         <h1>' . $this->icon . ' Event Interceptor' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>
 
-        <script>
+        <script' . TracyDebugger::getNonceAttr() . '>
             function clearEvents() {
                 document.cookie = "tracyClearEventItems=true;expires=0;path=/";
 

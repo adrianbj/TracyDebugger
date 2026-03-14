@@ -1481,8 +1481,9 @@ class DiagnosticsPanel extends BasePanel {
         $out .= TracyDebugger::generatePanelFooter('diagnostics', Debugger::timer('diagnostics'), strlen($out), 'diagnosticsPanel');
         $out .= '</div>';
 
+        $nonceAttr = TracyDebugger::getNonceAttr();
         $out .= <<< HTML
-        <script>
+        <script{$nonceAttr}>
             function getCookie(name) {
                 var value = "; " + document.cookie;
                 var parts = value.split("; " + name + "=");

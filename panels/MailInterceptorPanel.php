@@ -111,7 +111,7 @@ class MailInterceptorPanel extends BasePanel {
         $out = '
         <h1>' . $this->icon . ' Mail Interceptor' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>
 
-        <script>
+        <script' . TracyDebugger::getNonceAttr() . '>
             function clearEmails() {
                 document.cookie = "tracyClearMailItems=true;expires=0;path=/";
 

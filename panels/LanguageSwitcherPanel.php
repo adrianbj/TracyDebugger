@@ -62,7 +62,7 @@ class LanguageSwitcherPanel extends BasePanel {
             $out .= '
             </form>
 
-            <script>
+            <script' . TracyDebugger::getNonceAttr() . '>
                 document.addEventListener("DOMContentLoaded", (event) => {
                     var selectElement = document.querySelector("#tracyLanguageSwitcher");
                     var langElement = document.querySelector("#lang_'.$this->wire('user')->language->id.'");

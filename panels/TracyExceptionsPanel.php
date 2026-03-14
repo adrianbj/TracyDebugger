@@ -63,8 +63,9 @@ class TracyExceptionsPanel extends BasePanel {
         }
         $csrfToken = $this->wire('session')->tracyFileEditorToken;
 
+        $nonceAttr = TracyDebugger::getNonceAttr();
         $out = <<< HTML
-        <script>
+        <script{$nonceAttr}>
 
             var tracyExceptionsViewer = {
                 tracyModuleUrl: "$tracyModuleUrl",

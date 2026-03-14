@@ -146,8 +146,9 @@ class FileEditorPanel extends BasePanel {
             $pwAutocomplete = json_encode(array());
         }
 
+        $nonceAttr = TracyDebugger::getNonceAttr();
         $out = <<< HTML
-        <script>
+        <script{$nonceAttr}>
 
             var tracyFileEditor = {
 

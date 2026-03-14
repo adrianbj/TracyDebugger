@@ -43,6 +43,7 @@ class UserSwitcherPanel extends BasePanel {
 
     public function getPanel() {
 
+        $nonceAttr = TracyDebugger::getNonceAttr();
         $userRoles = array();
         foreach($this->wire('user')->roles as $r) {
             $userRoles[] = '<a href="'.$this->wire('config')->urls->admin.'access/roles/edit/?id='.$r->id.'">'.$r->name.'</a>';
@@ -121,7 +122,7 @@ class UserSwitcherPanel extends BasePanel {
                         if(count($selectableUsers) > 10) {
                             $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
                             $out .= <<< HTML
-                                <script>
+                                <script{$nonceAttr}>
                                     tracyJSLoader.load("{$tracyModuleUrl}scripts/filterbox/filterbox.js", function() {
                                         tracyJSLoader.load("{$tracyModuleUrl}scripts/user-switcher-search.js");
                                     });
@@ -137,7 +138,7 @@ HTML;
                 $out .= '
                     </select>
                 </p>
-                <script>
+                <script' . $nonceAttr . '>
                     (new MutationObserver(() => {
                         document.getElementById("userSwitcher").setAttribute("style","width:100% !important; min-height:105px !important; height:" + (document.getElementById("user-switcher-wrapper").clientHeight - 175) + "px !important");
                     })).observe(document.getElementById("tracy-debug-panel-ProcessWire-UserSwitcherPanel"), { attributes: true, attributeFilter: ["style"] });
@@ -155,7 +156,7 @@ HTML;
 
             if(TracyDebugger::$allowedSuperuser || $remainingSessionLength > 0) {
                 $out .= '
-                <script>
+                <script' . $nonceAttr . '>
                     document.addEventListener("DOMContentLoaded", (event) => {
                         var selectElement = document.querySelector("#userSwitcherPanel");
                         var langElement = document.querySelector("#user_'.$this->wire('user')->id.'");

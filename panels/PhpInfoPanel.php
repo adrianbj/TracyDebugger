@@ -61,8 +61,9 @@ class PhpInfoPanel extends BasePanel {
         $phpInfo .= '</section>';
 
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
+        $nonceAttr = TracyDebugger::getNonceAttr();
         $out = <<< HTML
-        <script>
+        <script{$nonceAttr}>
             tracyJSLoader.load("{$tracyModuleUrl}scripts/filterbox/filterbox.js", function() {
                 tracyJSLoader.load("{$tracyModuleUrl}scripts/php-info-search.js");
             });

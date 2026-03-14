@@ -41,8 +41,9 @@ class ModuleDisablerPanel extends BasePanel {
 
     public function getPanel() {
 
+        $nonceAttr = TracyDebugger::getNonceAttr();
         $out = '
-        <script>
+        <script' . $nonceAttr . '>
             function getSelectedTracyModuleCheckboxes() {
                 var selchbox = [];
                 var inpfields = document.getElementsByName("selectedModules[]");

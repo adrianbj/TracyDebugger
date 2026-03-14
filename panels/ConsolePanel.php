@@ -125,7 +125,8 @@ class ConsolePanel extends BasePanel {
         }
         if(!$snippets) $snippets = json_encode(array());
 
-        $out = '<script>' . file_get_contents($this->wire('config')->paths->TracyDebugger . 'scripts/get-query-variable.js') . '</script>';
+        $nonceAttr = TracyDebugger::getNonceAttr();
+        $out = '<script' . $nonceAttr . '>' . file_get_contents($this->wire('config')->paths->TracyDebugger . 'scripts/get-query-variable.js') . '</script>';
 
         $maximizeSvg =
         '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -199,7 +200,7 @@ class ConsolePanel extends BasePanel {
             : '';
 
         $out .= <<< HTML
-        <script>
+        <script{$nonceAttr}>
 
         function escapeHtml(str) {
             if (typeof str !== 'string') return str;

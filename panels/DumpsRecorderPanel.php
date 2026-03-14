@@ -59,7 +59,7 @@ class DumpsRecorderPanel extends BasePanel {
         $out = '
         <h1>' . $this->icon . ' Dumps Recorder' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'DumpsRecorderPanel'.($isAdditionalBar ? '-'.$isAdditionalBar : '').'\')">⛶</a></span></span>
 
-        <script>
+        <script' . TracyDebugger::getNonceAttr() . '>
             function clearRecorderDumps() {
                 document.cookie = "tracyClearDumpsRecorderItems=true;expires=0;path=/";
 

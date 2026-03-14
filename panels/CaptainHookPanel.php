@@ -56,8 +56,9 @@ class CaptainHookPanel extends BasePanel {
         <h1>' . $this->icon . ' Captain Hook</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'CaptainHookPanel\')">⛶</a></span></span>';
 
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
+        $nonceAttr = TracyDebugger::getNonceAttr();
         $out .= <<< HTML
-        <script>
+        <script{$nonceAttr}>
             tracyJSLoader.load("{$tracyModuleUrl}scripts/filterbox/filterbox.js", function() {
                 tracyJSLoader.load("{$tracyModuleUrl}scripts/captain-hook-search.js");
             });

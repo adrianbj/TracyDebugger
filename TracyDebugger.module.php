@@ -1229,13 +1229,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             $adminerModuleId = $this->wire('modules')->getModuleID("ProcessTracyAdminer");
                             $adminerUrl = $this->wire('pages')->get("process=$adminerModuleId")->url;
 
-                            $event->return = str_replace("</body>", "<script>window.HttpRootUrl = '".$this->wire('config')->urls->httpRoot."'; window.AdminerUrl = '".$adminerUrl."'; window.AdminerRendererUrl = '".$adminerRendererUrl."'; window.TracyMaxAjaxRows = ".$this->data['maxAjaxRows']."; window.TracyPanelZIndex = " . ($this->data['panelZindex'] + 1) . ";</script></body>", $event->return);
+                            $event->return = str_replace("</body>", "<script" . static::getNonceAttr() . ">window.HttpRootUrl = '".$this->wire('config')->urls->httpRoot."'; window.AdminerUrl = '".$adminerUrl."'; window.AdminerRendererUrl = '".$adminerRendererUrl."'; window.TracyMaxAjaxRows = ".$this->data['maxAjaxRows']."; window.TracyPanelZIndex = " . ($this->data['panelZindex'] + 1) . ";</script></body>", $event->return);
 
                             $tracyWarnings = Debugger::getBar()->getPanel('Tracy:warnings') ? Debugger::getBar()->getPanel('Tracy:warnings') : Debugger::getBar()->getPanel('Tracy:errors');
                             if(!is_array($tracyWarnings->data) || count($tracyWarnings->data) === 0) {
                                 if(($this->data['hideDebugBar'] && !$this->wire('input')->cookie->tracyShow) || $this->wire('input')->cookie->tracyHidden == 1) {
                                     $hideBar = '
-                                        <script>
+                                        <script' . static::getNonceAttr() . '>
                                             function hideDebugBar() {
                                                 if(!document.getElementById("tracy-debug-bar")) {
                                                     window.requestAnimationFrame(hideDebugBar);
@@ -1274,7 +1274,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                                 // if only deprecation errors, recolor error tab based on whether they are from ProcessWire or not
                                 if(!$nonDeprecations) {
                                     $recolorErrors = '
-                                    <script>
+                                    <script' . static::getNonceAttr() . '>
                                         function recolorErrors() {
                                             if(!document.getElementById("tracy-debug-bar")) {
                                                 window.requestAnimationFrame(recolorErrors);
@@ -1303,7 +1303,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             if(static::getDataValue('forceIsLocal')) {
 
                                 $isLocalWarnIcon = '
-                                <script>
+                                <script' . static::getNonceAttr() . '>
                                     function addLocalAlert() {
                                         if(!document.getElementById("tracy-debug-bar")) {
                                             window.requestAnimationFrame(addLocalAlert);
@@ -2110,7 +2110,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 height: 16px !important;
             }
         </style>
-        <script>
+        <script' . static::getNonceAttr() . '>
             function enableTracy() {
                 document.cookie = "tracyDisabled=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
                 location.reload();
@@ -2337,6 +2337,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public static function minify($str) {
         return preg_replace(array('#^\s*//.+$#m', '/\/\*.*?\*\//s', '/ {2,}/','/<!--.*?-->|\t|(?:\r?\n[ \t]*)+/s'),array('', '', ' ', ''), $str);
+    }
+
+    public static function getNonceAttr(): string {
+        static $nonceAttr;
+        if($nonceAttr === null) {
+            $nonce = \Tracy\Helpers::getNonce();
+            $nonceAttr = $nonce ? ' nonce="' . \Tracy\Helpers::escapeHtml($nonce) . '"' : '';
+        }
+        return $nonceAttr;
     }
 
     public static function formatPageStatus($val, $status) {

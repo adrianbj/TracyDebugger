@@ -32,6 +32,7 @@ class LinksPanel extends BasePanel {
 
     public function getPanel() {
 
+        $nonceAttr = TracyDebugger::getNonceAttr();
         $out = <<<EOT
 <style>
     #tracy-add-link { height:30px; padding-right:75px; position:relative; margin-bottom:10px; }
@@ -44,7 +45,7 @@ class LinksPanel extends BasePanel {
     #tracy-lp-btn-current { right:0; }
     #tracy-link-items { line-height:1.5; }
 </style>
-<script>
+<script{$nonceAttr}>
 var form = document.getElementById('tracy-add-link');
 document.getElementById('tracy-lp-btn-current').addEventListener('click', function(event) {
     var link = window.location.href

@@ -38,7 +38,7 @@ if(wire('user')->hasPermission('tracy-page-versions')) {
         </svg>';*/
 
         $userBar .= '
-        <script>
+        <script' . TracyDebugger::getNonceAttr() . '>
             function getTracyUserBarTemplatePath() {
                 var e = document.getElementById("tracyUserBarTemplatePath");
                 return "'.wire("page")->template->name.'|"+e.options[e.selectedIndex].value;
