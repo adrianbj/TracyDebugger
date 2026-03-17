@@ -159,7 +159,7 @@ class ProcessWirePlugin extends Plugin {
         </div>
 
 
-        <script<?= TracyDebugger::getNonceAttr() ?>>
+        <script<?= \TracyDebugger::getNonceAttr() ?>>
             window.HttpAdminUrl = '<?=wire('config')->urls->httpAdmin?>';
 
             document.addEventListener("DOMContentLoaded", function () {
