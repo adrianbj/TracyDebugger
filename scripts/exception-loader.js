@@ -99,22 +99,21 @@ if(!tracyExceptionLoader) {
         },
 
         loadExceptionFile: function(filePath) {
-            if(document.getElementById("tracy-debug-panel-ProcessWire-TracyExceptionsPanel").classList.contains("tracy-mode-window")) {
+            var panelEl = document.getElementById("tracy-debug-panel-ProcessWire-TracyExceptionsPanel");
+            if(!panelEl || !window.Tracy || !window.Tracy.Debug || !window.Tracy.Debug.panels) {
+                window.requestAnimationFrame(function() { tracyExceptionLoader.loadExceptionFile(filePath); });
+            }
+            else if(panelEl.classList.contains("tracy-mode-window")) {
                 this.populateExceptionViewer(filePath);
             }
             else {
-                if(!window.Tracy.Debug.panels || !document.getElementById("tracy-debug-panel-ProcessWire-TracyExceptionsPanel")) {
-                    window.requestAnimationFrame(function() { tracyExceptionLoader.loadExceptionFile(filePath); });
+                var panel = window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-TracyExceptionsPanel"];
+                if(panel.elem.dataset.tracyContent) {
+                    panel.init();
                 }
-                else {
-                    var panel = window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-TracyExceptionsPanel"];
-                    if(panel.elem.dataset.tracyContent) {
-                        panel.init();
-                    }
-                    this.populateExceptionViewer(filePath);
-                    panel.toFloat();
-                    panel.focus();
-                }
+                this.populateExceptionViewer(filePath);
+                panel.toFloat();
+                panel.focus();
             }
         }
     };

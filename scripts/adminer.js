@@ -1,21 +1,21 @@
 function openAdminer(queryStr) {
+    if(!window.AdminerRendererUrl) return;
     var url = window.AdminerRendererUrl + "?" + queryStr;
-    if(document.getElementById("tracy-debug-panel-ProcessWire-AdminerPanel").classList.contains("tracy-mode-window")) {
+    var panelEl = document.getElementById("tracy-debug-panel-ProcessWire-AdminerPanel");
+    if(!panelEl || !window.Tracy || !window.Tracy.Debug || !window.Tracy.Debug.panels) {
+        window.requestAnimationFrame(function() { openAdminer(queryStr); });
+    }
+    else if(panelEl.classList.contains("tracy-mode-window")) {
         document.getElementById('adminer-iframe').src = url;
     }
     else {
-        if(!window.Tracy.Debug.panels || !document.getElementById("tracy-debug-panel-ProcessWire-AdminerPanel")) {
-            window.requestAnimationFrame(function() { openAdminer(queryStr); });
+        var panel = window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-AdminerPanel"];
+        if(panel.elem.dataset.tracyContent) {
+            panel.init();
         }
-        else {
-            var panel = window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-AdminerPanel"];
-            if(panel.elem.dataset.tracyContent) {
-                panel.init();
-            }
-            document.getElementById('adminer-iframe').src = url;
-            panel.toFloat();
-            panel.focus();
-        }
+        document.getElementById('adminer-iframe').src = url;
+        panel.toFloat();
+        panel.focus();
     }
 }
 
