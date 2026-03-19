@@ -1229,7 +1229,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             $adminerModuleId = $this->wire('modules')->getModuleID("ProcessTracyAdminer");
                             $adminerUrl = $this->wire('pages')->get("process=$adminerModuleId")->url;
 
-                            $event->return = str_replace("</body>", "<script" . static::getNonceAttr() . ">window.HttpRootUrl = '".$this->wire('config')->urls->httpRoot."'; window.AdminerUrl = '".$adminerUrl."'; window.AdminerRendererUrl = '".$adminerRendererUrl."'; window.TracyMaxAjaxRows = ".$this->data['maxAjaxRows']."; window.TracyPanelZIndex = " . ($this->data['panelZindex'] + 1) . ";</script></body>", $event->return);
+                            $event->return = str_replace("</body>", "<script" . static::getNonceAttr() . ">window.HttpRootUrl = '".$this->wire('config')->urls->httpRoot."'; window.AdminerUrl = '".$adminerUrl."'; window.AdminerRendererUrl = '".$adminerRendererUrl."'; window.TracyMaxAjaxRows = ".$this->data['maxAjaxRows']."; window.TracyPanelZIndex = " . ($this->data['panelZindex'] + 1) . "; document.addEventListener('click', function(e) { var el = e.target; while(el && el.tagName !== 'A') el = el.parentNode; if(el && el.href && /^(adminer|tracy|tracyexception):\/\//.test(el.href)) e.preventDefault(); }, true);</script></body>", $event->return);
 
                             $tracyWarnings = Debugger::getBar()->getPanel('Tracy:warnings') ? Debugger::getBar()->getPanel('Tracy:warnings') : Debugger::getBar()->getPanel('Tracy:errors');
                             if(!is_array($tracyWarnings->data) || count($tracyWarnings->data) === 0) {

@@ -134,22 +134,24 @@ if(!tracyFileEditorLoader) {
         },
 
         loadFileEditor: function(filePath, line) {
-            var panelEl = document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel");
-            if(!panelEl || !window.Tracy || !window.Tracy.Debug || !window.Tracy.Debug.panels) {
-                window.requestAnimationFrame(function() { tracyFileEditorLoader.loadFileEditor(filePath, line); });
-            }
-            else if(panelEl.classList.contains("tracy-mode-window")) {
+
+            if(document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel").classList.contains("tracy-mode-window")) {
                 this.populateFileEditor(filePath, line);
             }
             else {
-                var panel = window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-FileEditorPanel"];
-                if(panel.elem.dataset.tracyContent) {
-                    panel.init();
+                if(!window.Tracy.Debug.panels || !document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel")) {
+                    window.requestAnimationFrame(function() { tracyFileEditorLoader.loadFileEditor(filePath, line); });
                 }
-                this.populateFileEditor(filePath, line);
-                panel.toFloat();
-                panel.focus();
-                tracyFileEditor.resizeAce();
+                else {
+                    var panel = window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-FileEditorPanel"];
+                    if(panel.elem.dataset.tracyContent) {
+                        panel.init();
+                    }
+                    this.populateFileEditor(filePath, line);
+                    panel.toFloat();
+                    panel.focus();
+                    tracyFileEditor.resizeAce();
+                }
             }
         }
     };

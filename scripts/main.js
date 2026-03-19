@@ -1,8 +1,6 @@
 function tracyResizePanel(panel) {
     panel = document.getElementById("tracy-debug-panel-ProcessWire-" + panel);
-    if(!panel || !window.Tracy || !window.Tracy.Debug || !window.Tracy.Debug.panels) return;
     var tracyPanel = window.Tracy.Debug.panels[panel.id];
-    if(!tracyPanel) return;
     tracyPanel.elem.classList.add('tracy-panel-resized');
     tracyPanel.elem.dataset.tracyContent = true; // hack to satisy condition in Tracy's restorePosition() method
 
