@@ -42,6 +42,11 @@ class AdminToolsPanel extends BasePanel {
                 }
                 location.reload();
             }
+
+            var restoreBtn = document.getElementById("tracyRestoreFieldStatus");
+            if(restoreBtn) restoreBtn.addEventListener("click", function() { unhideUnlockFields(true); });
+            var unhideBtn = document.getElementById("tracyUnhideUnlockFields");
+            if(unhideBtn) unhideBtn.addEventListener("click", function() { unhideUnlockFields(); });
         </script>';
 
         $out .= $this->buildPanelHeader($this->label);
@@ -53,7 +58,7 @@ class AdminToolsPanel extends BasePanel {
                 $i++;
                 $out .= '
                 <p>
-                    <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete all children of this page?\');">
+                    <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" data-confirm="Do you really want to delete all children of this page?">
                         '.$csrfInput.'
                         <input type="hidden" name="adminToolsId" value="'.$p->id.'" />
                         <input type="submit" name="deleteChildren" value="Delete all children" />
@@ -65,7 +70,7 @@ class AdminToolsPanel extends BasePanel {
                 $i++;
                 $out .= '
                 <p>
-                    <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete the '.$p->name.' language?\');">
+                    <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" data-confirm="Do you really want to delete the '.$p->name.' language?">
                         '.$csrfInput.'
                         <input type="hidden" name="adminToolsId" value="'.$p->id.'" />
                         <input type="submit" name="deleteLanguage" value="Delete language" />
@@ -78,7 +83,7 @@ class AdminToolsPanel extends BasePanel {
                 $t = $this->wire('templates')->get((int)$this->wire('input')->get('id'));
                 $out .= '
                 <p>
-                    <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete the '.$t->name.' template and all associated pages?\');">
+                    <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" data-confirm="Do you really want to delete the '.$t->name.' template and all associated pages?">
                         '.$csrfInput.'
                         <input type="hidden" name="adminToolsId" value="'.$t->id.'" />
                         <input type="submit" name="deleteTemplate" value="Delete \''.$t->name.'\' template" />
@@ -91,13 +96,13 @@ class AdminToolsPanel extends BasePanel {
                 if($this->wire('input')->cookie->tracyUnhideUnlockFields == 1) {
                     $out .= '
                     <p>
-                        <input type="submit" name="restoreFieldCollapsedStatus" onclick="unhideUnlockFields(true)" value="Restore Field Collapsed Status" />
+                        <input type="submit" id="tracyRestoreFieldStatus" name="restoreFieldCollapsedStatus" value="Restore Field Collapsed Status" />
                     </p>';
                 }
                 else {
                     $out .= '
                     <p>
-                        <input type="submit" name="unhideUnlockFields" onclick="unhideUnlockFields()" value="Unhide / Unlock Fields" />
+                        <input type="submit" id="tracyUnhideUnlockFields" name="unhideUnlockFields" value="Unhide / Unlock Fields" />
                     </p>';
                 }
             }
@@ -108,7 +113,7 @@ class AdminToolsPanel extends BasePanel {
                     $i++;
                     $out .= '
                     <p>
-                        <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete the '. $f->name.' field and remove it from all templates/pages?\');">
+                        <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" data-confirm="Do you really want to delete the '. $f->name.' field and remove it from all templates/pages?">
                             '.$csrfInput.'
                             <input type="hidden" name="adminToolsId" value="'.(int)$this->wire('input')->get('id').'" />
                             <input type="submit" name="deleteField" value="Delete \''.$f->name.'\' field" />
@@ -116,7 +121,7 @@ class AdminToolsPanel extends BasePanel {
                     </p>';
                     $out .= '
                     <p>
-                        <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to change the type of this field?\');">
+                        <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" data-confirm="Do you really want to change the type of this field?">
                             '.$csrfInput.'
                             <input type="hidden" name="adminToolsId" value="'.(int)$this->wire('input')->get('id').'" />
                             <select type="submit" name="changeFieldType">';
@@ -145,7 +150,7 @@ class AdminToolsPanel extends BasePanel {
                 }
                 $out .= '
                 <p>
-                    <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to uninstall this module' . $confirmSuffix . '?\');">
+                    <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" data-confirm="Do you really want to uninstall this module' . $confirmSuffix . '?">
                         '.$csrfInput.'
                         <input type="hidden" name="adminToolsName" value="'.$moduleName.'" />
                         <input type="submit" name="uninstallModule" value="Uninstall module" />

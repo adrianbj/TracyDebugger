@@ -75,6 +75,10 @@ if(wire('user')->hasPermission('tracy-page-versions')) {
                 var parts = value.split("; " + name + "=");
                 if (parts.length == 2) return parts.pop().split(";").shift();
             }
+
+            document.addEventListener("change", function(e) {
+                if(e.target && e.target.id === "tracyUserBarTemplatePath") changeTemplatePath();
+            }, true);
         </script>
         <style>
             select#tracyUserBarTemplatePath {
@@ -89,7 +93,7 @@ if(wire('user')->hasPermission('tracy-page-versions')) {
 
         <span title="Page Version">
         ' . $icon . '
-            <select id="tracyUserBarTemplatePath" onchange="changeTemplatePath()">' .
+            <select id="tracyUserBarTemplatePath">' .
                 $templateOptions . '
             </select>
         </span>';

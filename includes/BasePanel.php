@@ -39,9 +39,9 @@ abstract class BasePanel extends WireData implements IBarPanel {
         if($showResize) {
             $className = (new \ReflectionClass($this))->getShortName();
             $out .= '<span class="tracy-icons"><span class="resizeIcons">'
-                . '<a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\''
+                . '<a href="#" title="Maximize / Restore" data-tracy-resize="'
                 . $className . ($isAdditionalBar ? '-' . $isAdditionalBar : '')
-                . '\')">⛶</a></span></span>';
+                . '">⛶</a></span></span>';
         }
         return $out;
     }

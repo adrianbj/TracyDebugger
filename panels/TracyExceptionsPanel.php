@@ -88,6 +88,10 @@ class TracyExceptionsPanel extends BasePanel {
 
             tracyJSLoader.load(tracyExceptionsViewer.tracyModuleUrl + "scripts/exception-loader.js");
 
+            document.addEventListener('click', function(e) {
+                if(e.target && e.target.id === 'clearException') clearTracyExceptionsViewer();
+            }, true);
+
         </script>
 
 HTML;
@@ -105,7 +109,7 @@ HTML;
                     </div>
                 </div>
                 <div style="display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0;">
-                    <span style="align-self: flex-end;"><input style="display: none !important" type="submit" id="clearException" name="clearException" onclick="clearTracyExceptionsViewer()" value="Unload" /></span>
+                    <span style="align-self: flex-end;"><input style="display: none !important" type="submit" id="clearException" name="clearException"  value="Unload" /></span>
                     <div id="tracyExceptionsViewerCodeContainer" style="flex: 1; overflow: auto; min-height: 0;">
                         <div id="tracyExceptionsViewerCode" style="display:none"></div>
                     </div>
@@ -166,7 +170,7 @@ HTML;
             $aStyle = $isNew ? ' style="color: #FFFFFF !important"' : '';
 
             $escapedFileName = htmlspecialchars($fileName ?? '', ENT_QUOTES, 'UTF-8');
-            $parts[] = "<li style='{$liStyle}'><a onclick='showUnloadButton()'{$aStyle} href='tracyexception://?f={$link}&l=1'>{$escapedFileName}</a></li>";
+            $parts[] = "<li style='{$liStyle}'><a{$aStyle} href='tracyexception://?f={$link}&l=1'>{$escapedFileName}</a></li>";
         }
 
         $parts[] = '</ul>';

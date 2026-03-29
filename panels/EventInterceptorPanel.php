@@ -19,7 +19,7 @@ class EventInterceptorPanel extends BasePanel {
             $this->iconColor = $this->wire('input')->cookie->eventInterceptorHook ? TracyDebugger::COLOR_ALERT : TracyDebugger::COLOR_NORMAL;
             $this->entries .= '
             <div class="event-items">
-                <p><input type="submit" onclick="clearEvents()" value="Clear Events" /></p><br />';
+                <p><input type="submit" id="tracyClearEvents" value="Clear Events" /></p><br />';
             foreach($items as $item) {
                 $this->entries .= '<h2><strong>' . date("Y-m-d H:i:s", $item['timestamp']) . '</strong></h2>';
                 $this->entries .= '<h2>Event Object</h2>';
@@ -111,6 +111,14 @@ class EventInterceptorPanel extends BasePanel {
                     i++;
                 }
             }
+
+            var el;
+            el = document.getElementById("tracyClearEvents");
+            if(el) el.addEventListener("click", function() { clearEvents(); });
+            el = document.getElementById("tracySetEventHook");
+            if(el) el.addEventListener("click", function() { setEventInterceptorHook("set"); });
+            el = document.getElementById("tracyRemoveEventHook");
+            if(el) el.addEventListener("click", function() { setEventInterceptorHook("remove"); });
         </script>
 
         ' . $this->openPanel('tracy-DumpPanel', 'min-width:350px !important') . '
@@ -129,8 +137,8 @@ class EventInterceptorPanel extends BasePanel {
 
                 </p>
                 <br />
-                <input type="submit" onclick="setEventInterceptorHook(\'set\')" value="Set Hook" />&nbsp;
-                <input type="submit" onclick="setEventInterceptorHook(\'remove\')" value="Remove Hook" />&nbsp;
+                <input type="submit" id="tracySetEventHook" value="Set Hook" />&nbsp;
+                <input type="submit" id="tracyRemoveEventHook" value="Remove Hook" />&nbsp;
             </fieldset>
             <br /><br />
             <div id="tracyEventEntries">'.$this->entries.'</div>';

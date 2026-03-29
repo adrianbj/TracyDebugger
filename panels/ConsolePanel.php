@@ -1989,9 +1989,10 @@ class ConsolePanel extends BasePanel {
                     tracyConsole.resizeAce();
 
                     const toggleFullscreenButton = document.createElement('div');
-                    toggleFullscreenButton.innerHTML = '<span class="fullscreenToggleButton" title="Toggle fullscreen" onclick="tracyConsole.toggleFullscreen()">$maximizeSvg</span>';
+                    toggleFullscreenButton.innerHTML = '<span class="fullscreenToggleButton" title="Toggle fullscreen">$maximizeSvg</span>';
                     const aceGutter = document.getElementById("tracyConsoleContainer").querySelector('.ace_gutter');
                     if (aceGutter) aceGutter.prepend(toggleFullscreenButton);
+                    toggleFullscreenButton.querySelector('.fullscreenToggleButton').addEventListener('click', function() { tracyConsole.toggleFullscreen(); });
 
                     const codeInput = document.getElementById("tracyConsoleCode").querySelector(".ace_text-input");
                     if (codeInput) {
@@ -2194,16 +2195,44 @@ class ConsolePanel extends BasePanel {
         window.addEventListener('beforeunload', unloadHandler);
         const currentWindowHandlers = listenerMap.get(window) || {};
         listenerMap.set(window, { ...currentWindowHandlers, beforeunload: unloadHandler });
+
+        var el;
+        el = document.getElementById('tracyConsoleKeyboardShortcuts');
+        if(el) el.addEventListener('click', function() { tracyConsole.toggleKeyboardShortcuts(); });
+        el = document.getElementById('reloadSnippet');
+        if(el) el.addEventListener('click', function() { tracyConsole.reloadSnippet(); });
+        el = document.getElementById('historyBack');
+        if(el) el.addEventListener('click', function() { tracyConsole.loadHistory('back'); });
+        el = document.getElementById('historyForward');
+        if(el) el.addEventListener('click', function() { tracyConsole.loadHistory('forward'); });
+        el = document.getElementById('dbBackup');
+        if(el) el.addEventListener('click', function() { tracyConsole.updateBackupState(); });
+        el = document.getElementById('accessTemplateVars');
+        if(el) el.addEventListener('click', function() { tracyConsole.tce.focus(); });
+        el = document.getElementById('tracyConsoleClearResults');
+        if(el) el.addEventListener('click', function() { tracyConsole.clearResults(); });
+        el = document.getElementById('tracyIncludeCodeSelect');
+        if(el) el.addEventListener('change', function() { tracyConsole.tracyIncludeCode(this); });
+        el = document.getElementById('runInjectButton');
+        if(el) el.addEventListener('click', function() { tracyConsole.processTracyCode(); });
+        el = document.getElementById('snippetPaneToggle');
+        if(el) el.addEventListener('click', function() { tracyConsole.toggleSnippetsPane(); });
+        el = document.getElementById('tracySortAlpha');
+        if(el) el.addEventListener('click', function(e) { e.preventDefault(); tracyConsole.sortList('alphabetical'); });
+        el = document.getElementById('tracySortChrono');
+        if(el) el.addEventListener('click', function(e) { e.preventDefault(); tracyConsole.sortList('chronological'); });
+        el = document.getElementById('saveSnippet');
+        if(el) el.addEventListener('click', function() { tracyConsole.saveSnippet(); });
         </script>
 
 HTML;
 
         $out .= '
         <h1>' . $this->icon . ' Console
-            <span title="Keyboard Shortcuts (toggle on/off)" style="display: inline-block; margin-left: 10px; cursor: pointer" onclick="tracyConsole.toggleKeyboardShortcuts()">⌘</span>
+            <span id="tracyConsoleKeyboardShortcuts" title="Keyboard Shortcuts (toggle on/off)" style="display: inline-block; margin-left: 10px; cursor: pointer">⌘</span>
             <span id="tracyConsoleStatus" style="padding-left: 50px"></span>
         </h1>
-        <span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'ConsolePanel\')">⛶</a></span></span>
+        <span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" data-tracy-resize="ConsolePanel">⛶</a></span></span>
         ' . $this->openPanel() . '
 
             <div style="position: relative; height: calc(100% - 80px)">
@@ -2220,14 +2249,14 @@ HTML;
                     $out .= '
                     <div style="margin-bottom: 7px">
                         <span style="display: inline-block; padding: 0 10px 5px 0">
-                            <input id="reloadSnippet" title="Reload current snippet from disk" class="disabledButton" style="font-family: FontAwesome !important; padding: 3px 8px !important;" type="submit" onclick="tracyConsole.reloadSnippet()" value="&#xf021" disabled="true" />&nbsp;&nbsp;
-                            <input style="font-family: FontAwesome !important" title="Go back (ALT + PageUp)" id="historyBack" class="disabledButton" disabled="true" type="submit" onclick="tracyConsole.loadHistory(\'back\')" value="&#xf060;" />&nbsp;
-                            <input style="font-family: FontAwesome !important" title="Go forward (ALT + PageDown)" id="historyForward" class="disabledButton" disabled="true" type="submit" onclick="tracyConsole.loadHistory(\'forward\')" value="&#xf061;" />&nbsp;
+                            <input id="reloadSnippet" title="Reload current snippet from disk" class="disabledButton" style="font-family: FontAwesome !important; padding: 3px 8px !important;" type="submit" value="&#xf021" disabled="true" />&nbsp;&nbsp;
+                            <input style="font-family: FontAwesome !important" title="Go back (ALT + PageUp)" id="historyBack" class="disabledButton" disabled="true" type="submit" value="&#xf060;" />&nbsp;
+                            <input style="font-family: FontAwesome !important" title="Go forward (ALT + PageDown)" id="historyForward" class="disabledButton" disabled="true" type="submit" value="&#xf061;" />&nbsp;
                         </span>
 
                         <span style="display: inline-block; padding: 0 10px 0 0">
                             <label title="Backup entire database before executing script.">
-                                <input type="checkbox" id="dbBackup" '.($this->wire('input')->cookie->tracyDbBackup ? 'checked="checked"' : '').' onclick="tracyConsole.updateBackupState();" /> Backup DB
+                                <input type="checkbox" id="dbBackup" '.($this->wire('input')->cookie->tracyDbBackup ? 'checked="checked"' : '').' /> Backup DB
                             </label>&nbsp;&nbsp;
                             <input id="backupFilename" type="text" placeholder="Backup name (optional)" '.($this->wire('input')->cookie->tracyDbBackup ? 'style="display:inline-block !important"' : 'style="display:none !important"').' '.($this->wire('input')->cookie->tracyDbBackupFilename ? 'value="'.htmlspecialchars($this->wire('input')->cookie->tracyDbBackupFilename, ENT_QUOTES, 'UTF-8').'"' : '').' />
                         </span>
@@ -2241,22 +2270,22 @@ HTML;
                         if(!$inAdmin) {
                             $out .= '
                         <span style="display: inline-block; padding: 0 20px 5px 0">
-                            <label title="Access custom variables & functions from this page\'s template file & included files."><input type="checkbox" id="accessTemplateVars" onclick="tracyConsole.tce.focus();" /> Template resources</label>
+                            <label title="Access custom variables & functions from this page\'s template file & included files."><input type="checkbox" id="accessTemplateVars" /> Template resources</label>
                         </span>';
                         }
 
                         $out .= '
                         <span style="display:inline-block; padding-right: 5px;">
-                            <input title="Clear results" type="submit" class="clearResults" style="padding: 3px 5px !important" onclick="tracyConsole.clearResults()" value="&#10006; Clear results" />
-                            <select name="includeCode" style="height: 25px !important" title="When to execute code" onchange="tracyConsole.tracyIncludeCode(this)" />
+                            <input id="tracyConsoleClearResults" title="Clear results" type="submit" class="clearResults" style="padding: 3px 5px !important" value="&#10006; Clear results" />
+                            <select id="tracyIncludeCodeSelect" name="includeCode" style="height: 25px !important" title="When to execute code" />
                                 <option value="off"' . (!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? ' selected' : '') . '>@ Run</option>
                                 <option value="init"' . ($this->tracyIncludeCode && $this->tracyIncludeCode['when'] === 'init' ? ' selected' : '') . '>@ Init</option>
                                 <option value="ready"' . ($this->tracyIncludeCode && $this->tracyIncludeCode['when'] === 'ready' ? ' selected' : '') . '>@ Ready</option>
                                 <option value="finished"' . ($this->tracyIncludeCode && $this->tracyIncludeCode['when'] === 'finished' ? ' selected' : '') . '>@ Finished</option>
                             </select>
                         </span>
-                        <input id="runInjectButton" title="&bull; Run (CTRL/CMD + Enter)&#10;&bull; Clear & Run (ALT/OPT + Enter)&#10;&bull; Reload from Disk, Clear & Run&#10;(CTRL/CMD + ALT/OPT + Enter)" type="submit" onclick="tracyConsole.processTracyCode()" value="' . (!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? 'Run' : 'Inject') . '" />
-                        <span id="snippetPaneToggle" title="Toggle snippets pane" style="font-family: FontAwesome !important; position:absolute; top: 0; right: '.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '0' : '-290').'px; font-weight: bold; cursor: pointer" onclick="tracyConsole.toggleSnippetsPane()">'.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '&#xf053;' : '&#xf054;').'</span>
+                        <input id="runInjectButton" title="&bull; Run (CTRL/CMD + Enter)&#10;&bull; Clear & Run (ALT/OPT + Enter)&#10;&bull; Reload from Disk, Clear & Run&#10;(CTRL/CMD + ALT/OPT + Enter)" type="submit" value="' . (!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? 'Run' : 'Inject') . '" />
+                        <span id="snippetPaneToggle" title="Toggle snippets pane" style="font-family: FontAwesome !important; position:absolute; top: 0; right: '.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '0' : '-290').'px; font-weight: bold; cursor: pointer">'.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '&#xf053;' : '&#xf054;').'</span>
                     </div>
 
                     <div id="tracyConsoleContainer" class="split" style="height: 100%; min-height: '.$codeLineHeight.'px">
@@ -2288,11 +2317,11 @@ HTML;
 
                 <div id="tracySnippetsContainer" style="position: absolute; right:0; margin: 0 0 0 10px; width: 275px; height: calc(100% - 15px);"'.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? ' class="tracyHidden"' : '').'">
                     <div style="padding-bottom:5px">
-                        Sort: <a href="#" onclick="tracyConsole.sortList(\'alphabetical\')">alphabetical</a>&nbsp;|&nbsp;<a href="#" onclick="tracyConsole.sortList(\'chronological\')">chronological</a>
+                        Sort: <a id="tracySortAlpha" href="#">alphabetical</a>&nbsp;|&nbsp;<a id="tracySortChrono" href="#">chronological</a>
                     </div>
                     <div style="position: relative; width:100% !important;">
                         <input type="text" id="tracySnippetName" placeholder="Enter filename (eg. myscript.php)" />
-                        <input id="saveSnippet" type="submit" style="font-family: FontAwesome !important" class="disabledButton" onclick="tracyConsole.saveSnippet()" value="&#xf0c7;" title="Save snippet" />
+                        <input id="saveSnippet" type="submit" style="font-family: FontAwesome !important" class="disabledButton" value="&#xf0c7;" title="Save snippet" />
                     </div>
                     <div id="tracySnippets"></div>
                 </div>

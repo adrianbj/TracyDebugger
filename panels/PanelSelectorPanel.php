@@ -193,6 +193,22 @@ class PanelSelectorPanel extends BasePanel {
                 if(parts.length == 2) return parts.pop().split(";").shift();
             }
 
+            var el;
+            el = document.getElementById("tracyPanelsOnce");
+            if(el) el.addEventListener("click", function() { changeTracyPanels("Once"); });
+            el = document.getElementById("tracyPanelsSticky");
+            if(el) el.addEventListener("click", function() { changeTracyPanels("Sticky"); });
+            el = document.getElementById("tracyPanelsReset");
+            if(el) el.addEventListener("click", function() { resetTracyPanels(); });
+            el = document.getElementById("tracyGuestDumps");
+            if(el) el.addEventListener("click", function() { toggleGuestDumps(); });
+            el = document.getElementById("tracyStrictMode");
+            if(el) el.addEventListener("click", function() { toggleStrictMode(); });
+            el = document.getElementById("tracyDisable");
+            if(el) el.addEventListener("click", function() { disableTracy(); });
+            el = document.getElementById("tracyToggleAllPanels");
+            if(el) el.addEventListener("change", function() { toggleAllTracyPanels(this); });
+
         </script>
         ';
 
@@ -210,7 +226,7 @@ class PanelSelectorPanel extends BasePanel {
         $defaultPanels = $this->wire('page')->template == "admin" ? TracyDebugger::getDataValue('backendPanels') : TracyDebugger::getDataValue('frontendPanels');
         $showPanels = TracyDebugger::$showPanels;
 
-        $out .= '<label><input type="checkbox" onchange="toggleAllTracyPanels(this)" ' .
+        $out .= '<label><input type="checkbox" id="tracyToggleAllPanels" ' .
             (count($showPanels) == count(TracyDebugger::$allPanels) ? 'checked="checked"' : '') . ' /> Toggle All</label><br /><br />';
 
         $out .= '<table style="border-collapse: collapse; width: max-content; min-width: 100%;">';
@@ -249,17 +265,17 @@ class PanelSelectorPanel extends BasePanel {
         $out .= '
             <br />
             <span style="float:left">
-                <input type="submit" onclick="changeTracyPanels(\'Once\')" value="Once" />&nbsp;
-                <input type="submit" onclick="changeTracyPanels(\'Sticky\')" value="Sticky" />&nbsp;
-                <input type="submit" onclick="resetTracyPanels()" value="Reset" />
+                <input type="submit" id="tracyPanelsOnce" value="Once" />&nbsp;
+                <input type="submit" id="tracyPanelsSticky" value="Sticky" />&nbsp;
+                <input type="submit" id="tracyPanelsReset" value="Reset" />
             </span>
             <span style="float:right">';
-        $out .= '<input type="submit" style="' . ($this->wire('input')->cookie->tracyGuestDumps ? 'color:' . TracyDebugger::COLOR_WARN : '') . '" onclick="toggleGuestDumps()" value="' . ($this->wire('input')->cookie->tracyGuestDumps ? 'Disable' : 'Enable') . ' Guest Dumps" />&nbsp;&nbsp;';
+        $out .= '<input type="submit" id="tracyGuestDumps" style="' . ($this->wire('input')->cookie->tracyGuestDumps ? 'color:' . TracyDebugger::COLOR_WARN : '') . '" value="' . ($this->wire('input')->cookie->tracyGuestDumps ? 'Disable' : 'Enable') . ' Guest Dumps" />&nbsp;&nbsp;';
         if(!TracyDebugger::getDataValue('strictMode')) {
-            $out .= '<input type="submit" onclick="toggleStrictMode()" value="' . ($this->wire('input')->cookie->tracyStrictMode ? 'Disable' : 'Enable') . ' Strict Mode" />&nbsp;&nbsp;';
+            $out .= '<input type="submit" id="tracyStrictMode" value="' . ($this->wire('input')->cookie->tracyStrictMode ? 'Disable' : 'Enable') . ' Strict Mode" />&nbsp;&nbsp;';
         }
         if(TracyDebugger::getDataValue('panelSelectorTracyTogglerButton')) {
-            $out .= '<input type="submit" onclick="disableTracy()" value="Disable Tracy" />';
+            $out .= '<input type="submit" id="tracyDisable" value="Disable Tracy" />';
         }
         $out .= '
             </span>

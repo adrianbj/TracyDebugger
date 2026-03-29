@@ -1337,7 +1337,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 });
 
                 Debugger::$customBodyStr .= '
-                    <div id="tracy-show-button" title="Show Tracy" onclick="unhideBar()">&#8689;</div>
+                    <div id="tracy-show-button" title="Show Tracy">&#8689;</div>
                 ';
 
                 if(in_array('fileEditor', static::$showPanels)) {
@@ -1379,6 +1379,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                         document.cookie = "tracyHidden=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
                         document.cookie = "tracyShow=1; path=/";
                     }
+                    function attachUnhideBar() {
+                        var btn = document.getElementById("tracy-show-button");
+                        if(!btn) {
+                            window.requestAnimationFrame(attachUnhideBar);
+                        } else {
+                            btn.addEventListener("click", unhideBar);
+                        }
+                    }
+                    attachUnhideBar();
 
                     function modifyTracyLogo() {
                         if(!document.getElementById("tracy-debug-bar")) {
@@ -2115,8 +2124,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 document.cookie = "tracyDisabled=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
                 location.reload();
             }
+            document.addEventListener("DOMContentLoaded", function() {
+                document.getElementById("TracyEnableButton").addEventListener("click", enableTracy);
+            });
         </script>
-        <div id="TracyEnableButton" title="Enable Tracy | '.number_format((microtime(true) - $this->time) * 1000, 1, '.', "\u{202f}").' ms" onclick="enableTracy()" uk-tooltip>
+        <div id="TracyEnableButton" title="Enable Tracy | '.number_format((microtime(true) - $this->time) * 1000, 1, '.', "\u{202f}").' ms" uk-tooltip>
             <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
                  width="16px" height="16.6px" viewBox="199.6 129.9 16 16.6" enable-background="new 199.6 129.9 16 16.6" xml:space="preserve">
             <path fill="'.self::COLOR_NORMAL.'" d="M215.4,139.4c-0.1-0.1-0.3-0.2-0.4-0.2h-1v0c0-0.4-0.1-0.8-0.1-1.2c-0.1-0.7-0.4-1.4-0.8-2l1.5-1.5

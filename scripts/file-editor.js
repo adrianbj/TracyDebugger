@@ -60,10 +60,10 @@ if(!tracyFileEditorLoader) {
             if (parts.length == 2) return parts.pop().split(";").shift();
         },
 
-        createButton: function(name, value, onlick) {
+        createButton: function(name, value, needsRawCode) {
             var button = '<input type="submit" id="'+name+'" name="'+name+'"';
-            if(onlick) button += ' onclick="tracyFileEditor.getRawFileEditorCode()"';
-            button += 'value="'+value+'" />&nbsp;';
+            if(needsRawCode) button += ' data-raw-file-editor-code="1"';
+            button += ' value="'+value+'" />&nbsp;';
             return button;
         },
 

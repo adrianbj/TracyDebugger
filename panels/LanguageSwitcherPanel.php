@@ -41,7 +41,7 @@ class LanguageSwitcherPanel extends BasePanel {
             $out .= '
             <form name="languageSwitcherPanel" action="'.TracyDebugger::inputUrl(true).'" method="post">
                 '.$this->csrfInput().'
-                <select onchange="this.form.submit()" id="tracyLanguageSwitcher" name="tracyLanguageSwitcher" size="5" style="width:100% !important; height:150px !important">';
+                <select id="tracyLanguageSwitcher" name="tracyLanguageSwitcher" size="5" style="width:100% !important; height:150px !important">';
                     foreach($this->wire('pages')->find('template=language, include=all, sort=name') as $lang) {
                         if($this->wire('session')->tracyLanguageSwitcher && $this->wire('session')->tracyLanguageSwitcher === $lang->id) {
                             $highlight = '; background:'.TracyDebugger::COLOR_WARN.'; color: #FFFFFF;';
@@ -62,11 +62,10 @@ class LanguageSwitcherPanel extends BasePanel {
             </form>
 
             <script' . TracyDebugger::getNonceAttr() . '>
-                document.addEventListener("DOMContentLoaded", (event) => {
-                    var selectElement = document.querySelector("#tracyLanguageSwitcher");
-                    var langElement = document.querySelector("#lang_'.$this->wire('user')->language->id.'");
-                    selectElement.scrollTop = langElement.offsetTop - selectElement.offsetTop;
-                });
+                var selectElement = document.querySelector("#tracyLanguageSwitcher");
+                var langElement = document.querySelector("#lang_'.$this->wire('user')->language->id.'");
+                if(selectElement && langElement) selectElement.scrollTop = langElement.offsetTop - selectElement.offsetTop;
+                if(selectElement) selectElement.addEventListener("change", function() { this.form.submit(); });
             </script>';
         }
 

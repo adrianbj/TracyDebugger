@@ -129,10 +129,10 @@ class AdminerPanel extends BasePanel {
         <h1>' . $this->icon . ' Adminer</h1>
         <span class="tracy-icons">
             <span class="resizeIcons" style="display: flex; align-items: center;">
-                <a href="#" title="Back" id="backButton" onclick="history.back(); return false;">⏴</a>
-                <a href="#" title="Forward" id="forwardButton" onclick="history.forward(); return false;">⏵</a>
-                <a href="#" title="Reload" onclick="document.getElementById(\'adminer-iframe\').contentWindow.location.reload(); return false;">↻</a>
-                <a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'AdminerPanel\'); return false;">⛶</a>
+                <a href="#" title="Back" id="adminerBack">⏴</a>
+                <a href="#" title="Forward" id="adminerForward">⏵</a>
+                <a href="#" title="Reload" id="adminerReload">↻</a>
+                <a href="#" title="Maximize / Restore" data-tracy-resize="AdminerPanel">⛶</a>
             </span>
         </span>
         ';
@@ -151,6 +151,13 @@ class AdminerPanel extends BasePanel {
         $out .= '<div style="padding-left:5px">'.TracyDebugger::generatePanelFooter('adminer', Debugger::timer('adminer'), strlen($out), 'adminerPanel').'</div>';
         $out .= '
         </div>';
+
+        $out .= '
+        <script' . TracyDebugger::getNonceAttr() . '>
+            document.getElementById("adminerBack").addEventListener("click", function(e) { e.preventDefault(); history.back(); });
+            document.getElementById("adminerForward").addEventListener("click", function(e) { e.preventDefault(); history.forward(); });
+            document.getElementById("adminerReload").addEventListener("click", function(e) { e.preventDefault(); document.getElementById("adminer-iframe").contentWindow.location.reload(); });
+        </script>';
 
         return parent::loadResources() . $out;
     }

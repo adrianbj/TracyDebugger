@@ -16,11 +16,11 @@ class PageRecorderPanel extends BasePanel {
         if(TracyDebugger::getDataValue('recordedPages') != '') {
             $this->recordedPages .= '
             <p>
-                <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to trash all these pages?\');">
+                <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" data-confirm="Do you really want to trash all these pages?">
                     '.$this->csrfInput().'
                     <input type="submit" name="trashRecordedPages" value="Trash Recorded Pages" />
                 </form>
-                <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to remove all these pages from the list?\');">
+                <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" data-confirm="Do you really want to remove all these pages from the list?">
                     '.$this->csrfInput().'
                     <input type="submit" name="clearRecordedPages" value="Clear Recorded Pages List" />
                 </form>

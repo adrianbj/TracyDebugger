@@ -20,7 +20,7 @@ class MailInterceptorPanel extends BasePanel {
             $this->entries .= '
             <div class="mail-items">
                 <p>
-                    <input type="submit" onclick="clearEmails()" value="Clear Emails" />
+                    <input type="submit" id="tracyClearEmails" value="Clear Emails" />
                 </p><br />';
 
             foreach($items as $item) {
@@ -147,6 +147,14 @@ class MailInterceptorPanel extends BasePanel {
                     document.getElementById("tracyTestEmail").style.color = "#009900";
                 }
             }
+
+            var el;
+            el = document.getElementById("tracyClearEmails");
+            if(el) el.addEventListener("click", function() { clearEmails(); });
+            el = document.getElementById("setEmailButton");
+            if(el) el.addEventListener("click", function() { setTestEmail("set"); });
+            el = document.getElementById("removeEmailButton");
+            if(el) el.addEventListener("click", function() { setTestEmail("remove"); });
         </script>
 
         ' . $this->openPanel() . '
@@ -155,8 +163,8 @@ class MailInterceptorPanel extends BasePanel {
                 <p>
                     <input type="text" style="width:250px !important; color:'.($this->wire('input')->cookie->tracyTestEmail ? '#009900' : '#000000').'" id="tracyTestEmail" name="tracyTestEmail" placeholder="Test Email Address" value="'.$this->wire('input')->cookie->tracyTestEmail.'">
                 </p>
-                <input id="setEmailButton" type="submit" onclick="setTestEmail(\'set\')" value="Set Email" />&nbsp;
-                <input id="removeEmailButton" type="submit" onclick="setTestEmail(\'remove\')" value="Remove Email" />&nbsp;
+                <input id="setEmailButton" type="submit" value="Set Email" />&nbsp;
+                <input id="removeEmailButton" type="submit" value="Remove Email" />&nbsp;
             </fieldset>
             <br /><br />
         ';

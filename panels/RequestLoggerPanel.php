@@ -108,7 +108,7 @@ class RequestLoggerPanel extends BasePanel {
             }
             else {
                 $out .= '
-                <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to disable logging on this page and clear logged data?\');">
+                <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" data-confirm="Do you really want to disable logging on this page and clear logged data?">
                     '.$this->csrfInput().'
                     <input type="hidden" name="requestLoggerLogPageId" value="'.$this->p->id.'" />
                     <input type="submit" name="tracyRequestLoggerDisableLogging" value="Disable logging & clear data" />

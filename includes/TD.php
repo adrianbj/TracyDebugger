@@ -267,7 +267,7 @@ class TD extends TracyDebugger {
             }
             $tabs = '<ul class="tracyDumpTabs">';
             $tabDivs = '<div style="clear:both; position:relative;">';
-            $expandCollapseAll = is_string($var) || is_null($var) ? '' : '<span class="tracyDumpsToggler tracyDumpsExpander" onclick="tracyDumpsToggler(this, true)" title="Expand Level">+</span> <span class="tracyDumpsToggler tracyDumpsCollapser" onclick="tracyDumpsToggler(this, false)" title="Collapse All">–</span>';
+            $expandCollapseAll = is_string($var) || is_null($var) ? '' : '<span class="tracyDumpsToggler tracyDumpsExpander" data-dumps-toggle="expand" title="Expand Level">+</span> <span class="tracyDumpsToggler tracyDumpsCollapser" data-dumps-toggle="collapse" title="Collapse All">–</span>';
             $numTabs = 0;
             foreach(TracyDebugger::getDataValue('dumpPanelTabs') as $i => $panel) {
                 if($panel == 'debugInfo') {
@@ -282,7 +282,7 @@ class TD extends TracyDebugger {
                 $currentDump = $expandCollapseAll . Dumper::toHtml($panel == 'iterator' && is_object($var) && method_exists($var, 'getIterator') ? self::humanize($var->getIterator()) : $var, $options);
                 if(!isset($lastDump) || (isset($lastDump) && $currentDump !== $lastDump)) {
                 	$numTabs++;
-                	$tabs .= '<li id="'.$panel.'Tab_'.$classExt.'"' . ($i == 0 ? 'class="active"' : '') . '><a href="javascript:void(0)" onclick="toggleDumpType(this, \''.$panel.'\', '.$classExt.')">'.TracyDebugger::$dumpPanelTabs[$panel].'</a></li>';
+                	$tabs .= '<li id="'.$panel.'Tab_'.$classExt.'"' . ($i == 0 ? 'class="active"' : '') . '><a href="#" data-dump-type="'.$panel.'" data-dump-class-ext="'.$classExt.'">'.TracyDebugger::$dumpPanelTabs[$panel].'</a></li>';
                 	$tabDivs .= '<div id="'.$panel.'_'.$classExt.'" class="tracyDumpTabs_'.$classExt.'"' . ($i==0 ? '' : ' style="display:none"') . '>'.$currentDump.'</div>';
                 }
                 $lastDump = $currentDump;

@@ -26,8 +26,9 @@ class TracyTogglerPanel extends BasePanel {
                     document.cookie = "tracyDisabled=1; expires=0; path=/";
                     location.reload();
                 }
+                document.getElementById("tracyTogglerSpan").addEventListener("click", function() { disableTracy(); });
             </script>
-            <span onclick="disableTracy()" style="cursor: pointer;" title="Disable Tracy">
+            <span id="tracyTogglerSpan" style="cursor: pointer;" title="Disable Tracy">
                 ' . $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Disable Tracy' : '') . '
             </span>
         ';

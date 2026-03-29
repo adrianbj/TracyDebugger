@@ -1401,7 +1401,7 @@ class DiagnosticsPanel extends BasePanel {
                 </g>
             </svg>
             Diagnostics
-        </h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'DiagnosticsPanel\')">⛶</a></span></span>
+        </h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" data-tracy-resize="DiagnosticsPanel">⛶</a></span></span>
         ' . $this->openPanel();
 
         $i=0;
@@ -1416,7 +1416,7 @@ class DiagnosticsPanel extends BasePanel {
                 $context = ($is_local) ? 'Development (local)' : 'Production';
                 $type = ($this->is_dedicated_host) ? 'Dedicated' : 'Shared';
                 $out .= "<p>Running in a <strong>$context</strong> context on a <strong>$type</strong> server. &nbsp;";
-                $out .= '<input type="submit" onclick="toggleDedicatedServerMode()" value="' . ($this->wire('input')->cookie->tracyDedicatedServerMode ? 'Disable' : 'Enable') .' Dedicated Server Mode" /><br><br>';
+                $out .= '<input type="submit" id="tracyDedicatedServerMode" value="' . ($this->wire('input')->cookie->tracyDedicatedServerMode ? 'Disable' : 'Enable') .' Dedicated Server Mode" /><br><br>';
                 $out .= '</p>';
                 $out .= '<p>'.$this->file_asset_report.'</p>';
                 $out .= '<h3>Config File Settings</h3><p>'.$this->conf_asset_report.'</p>';
@@ -1500,6 +1500,9 @@ class DiagnosticsPanel extends BasePanel {
                     location.reload();
                 }
             }
+
+            var dsmBtn = document.getElementById('tracyDedicatedServerMode');
+            if(dsmBtn) dsmBtn.addEventListener('click', function() { toggleDedicatedServerMode(); });
         </script>
 HTML;
 

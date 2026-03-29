@@ -130,6 +130,16 @@ class TemplatePathPanel extends BasePanel {
                 var parts = value.split("; " + name + "=");
                 if(parts.length == 2) return parts.pop().split(";").shift();
             }
+
+            var el;
+            el = document.getElementById("tracyTemplatePathOnce");
+            if(el) el.addEventListener("click", function() { changeTemplatePath("Once"); });
+            el = document.getElementById("tracyTemplatePathSticky");
+            if(el) el.addEventListener("click", function() { changeTemplatePath("Sticky"); });
+            el = document.getElementById("tracyTemplatePathReset");
+            if(el) el.addEventListener("click", function() { resetTemplatePath(); });
+            el = document.getElementById("tracyTemplatePathResetAll");
+            if(el) el.addEventListener("click", function() { resetAllTemplatePaths(); });
         </script>
         ';
 
@@ -142,10 +152,10 @@ class TemplatePathPanel extends BasePanel {
                 <select id="tracyTemplatePath">';
                     $out .= $this->templateOptions . '
                 </select>' . $templateIcon . '<br /><br />
-                <input type="submit" onclick="changeTemplatePath(\'Once\')" value="Once" />&nbsp;
-                <input type="submit" onclick="changeTemplatePath(\'Sticky\')" value="Sticky" />&nbsp;
-                <input type="submit" onclick="resetTemplatePath()" value="Reset" />&nbsp;
-                <input type="submit" onclick="resetAllTemplatePaths()" value="Reset All" />
+                <input type="submit" id="tracyTemplatePathOnce" value="Once" />&nbsp;
+                <input type="submit" id="tracyTemplatePathSticky" value="Sticky" />&nbsp;
+                <input type="submit" id="tracyTemplatePathReset" value="Reset" />&nbsp;
+                <input type="submit" id="tracyTemplatePathResetAll" value="Reset All" />
             </fieldset>';
 
             if($this->userDevTemplatePossible) {

@@ -102,7 +102,7 @@ class ValidatorPanel extends BasePanel {
     public function getPanel() {
 
         $out = '
-        <h1>'.str_replace('#FFFFFF', $this->color, $this->icon).' '.$this->resultLabel.'</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'ValidatorPanel\')">⛶</a></span></span>
+        <h1>'.str_replace('#FFFFFF', $this->color, $this->icon).' '.$this->resultLabel.'</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" data-tracy-resize="ValidatorPanel">⛶</a></span></span>
         ' . $this->openPanel() . '
             <style type="text/css">
 

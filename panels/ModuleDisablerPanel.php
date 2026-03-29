@@ -94,6 +94,14 @@ class ModuleDisablerPanel extends BasePanel {
                 }
             }
 
+            var el;
+            el = document.getElementById("tracyDisableModules");
+            if(el) el.addEventListener("click", function() { disableTracyModules(); });
+            el = document.getElementById("tracyResetModules");
+            if(el) el.addEventListener("click", function() { resetTracyModules(); });
+            el = document.getElementById("tracyToggleAllModules");
+            if(el) el.addEventListener("change", function() { toggleAllModules(this); });
+
         </script>
         ';
 
@@ -102,7 +110,7 @@ class ModuleDisablerPanel extends BasePanel {
             <fieldset>';
                 if(count(TracyDebugger::$disabableModules) > 0 && $this->wire('config')->advanced && $this->wire('config')->debug) {
                     $out .= '<legend><p>Temporarily disable autoload modules. Check to disable.</p><p><strong>Restore Instructions</strong><br />If your site is broken after disabling modules you can restore your modules by <strong>either one</strong> of the following methods:<ul><li>Copy "/site/assets/cache/TracyDebugger/restoremodules.php" to the root of your site and load it in your browser<br /><strong>OR</strong></li><li>Execute "/site/assets/cache/TracyDebugger/modulesBackup.sql" manually (via PHPMyAdmin, the command line, etc)</li></ul></p></legend><br />';
-                    $out .= '<label><input type="checkbox" onchange="toggleAllModules(this)" ' . (count($this->disabledModules) == count(TracyDebugger::$disabableModules) ? 'checked="checked"' : '') . ' /> Toggle All</label><br />';
+                    $out .= '<label><input type="checkbox" id="tracyToggleAllModules" ' . (count($this->disabledModules) == count(TracyDebugger::$disabableModules) ? 'checked="checked"' : '') . ' /> Toggle All</label><br />';
                     foreach(TracyDebugger::$disabableModules as $name) {
                         $flags = $this->wire('modules')->getFlags($name);
                         $out .= '
@@ -114,8 +122,8 @@ class ModuleDisablerPanel extends BasePanel {
                     $out .= '
                     <br /><br />
                     <p>
-                        <input type="submit" onclick="disableTracyModules()" value="Disable Modules" />&nbsp;
-                        <input type="submit" onclick="resetTracyModules()" value="Reset" />
+                        <input type="submit" id="tracyDisableModules" value="Disable Modules" />&nbsp;
+                        <input type="submit" id="tracyResetModules" value="Reset" />
                     </p>';
                 }
                 else {

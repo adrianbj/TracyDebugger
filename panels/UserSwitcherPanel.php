@@ -79,7 +79,7 @@ class UserSwitcherPanel extends BasePanel {
 
             if(TracyDebugger::$allowedSuperuser || $remainingSessionLength > 0) {
                 $out .= '
-                    <select id="userSwitcher" onchange="this.form.submit()" name="userSwitcher" size="5" style="width:100% !important; min-height:105px !important">';
+                    <select id="userSwitcher" name="userSwitcher" size="5" style="width:100% !important; min-height:105px !important">';
                         if(!$this->wire('user')->isLoggedin()) $out .= '<option value="guest" style="padding: 2px; background:'.TracyDebugger::COLOR_WARN.'; color: #FFFFFF;" selected="selected">guest</option>';
 
                         if(method_exists($this->wire('pages'), 'findRaw')) {
@@ -135,9 +135,14 @@ HTML;
                     </select>
                 </p>
                 <script' . TracyDebugger::getNonceAttr() . '>
-                    (new MutationObserver(() => {
-                        document.getElementById("userSwitcher").setAttribute("style","width:100% !important; min-height:105px !important; height:" + (document.getElementById("user-switcher-wrapper").clientHeight - 175) + "px !important");
-                    })).observe(document.getElementById("tracy-debug-panel-ProcessWire-UserSwitcherPanel"), { attributes: true, attributeFilter: ["style"] });
+                    var userSwitcherEl = document.getElementById("userSwitcher");
+                    var panelEl = document.getElementById("tracy-debug-panel-ProcessWire-UserSwitcherPanel");
+                    if(userSwitcherEl && panelEl) {
+                        (new MutationObserver(() => {
+                            userSwitcherEl.setAttribute("style","width:100% !important; min-height:105px !important; height:" + (document.getElementById("user-switcher-wrapper").clientHeight - 175) + "px !important");
+                        })).observe(panelEl, { attributes: true, attributeFilter: ["style"] });
+                        userSwitcherEl.addEventListener("change", function() { this.form.submit(); });
+                    }
                 </script>
                 ';
             }
@@ -153,11 +158,9 @@ HTML;
             if(TracyDebugger::$allowedSuperuser || $remainingSessionLength > 0) {
                 $out .= '
                 <script' . TracyDebugger::getNonceAttr() . '>
-                    document.addEventListener("DOMContentLoaded", (event) => {
-                        var selectElement = document.querySelector("#userSwitcherPanel");
-                        var langElement = document.querySelector("#user_'.$this->wire('user')->id.'");
-                        selectElement.scrollTop = langElement.offsetTop - selectElement.offsetTop;
-                    });
+                    var selectElement = document.querySelector("#userSwitcherPanel");
+                    var userElement = document.querySelector("#user_'.$this->wire('user')->id.'");
+                    if(selectElement && userElement) selectElement.scrollTop = userElement.offsetTop - selectElement.offsetTop;
                 </script>';
             }
 

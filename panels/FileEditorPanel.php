@@ -329,8 +329,9 @@ class FileEditorPanel extends BasePanel {
 
                         // create and append toggle fullscreen/restore buttons
                         var toggleFullscreenButton = document.createElement('div');
-                        toggleFullscreenButton.innerHTML = '<span class="fullscreenToggleButton" title="Toggle fullscreen" onclick="tracyFileEditor.toggleFullscreen()">$maximizeSvg</span>';
+                        toggleFullscreenButton.innerHTML = '<span class="fullscreenToggleButton" title="Toggle fullscreen">$maximizeSvg</span>';
                         document.getElementById("tracyFileEditorContainer").querySelector('.ace_gutter').prepend(toggleFullscreenButton);
+                        toggleFullscreenButton.querySelector('.fullscreenToggleButton').addEventListener('click', function() { tracyFileEditor.toggleFullscreen(); });
 
                         // checks for changes to the panel
                         var config = { attributes: true, attributeOldValue: true };
@@ -389,6 +390,9 @@ class FileEditorPanel extends BasePanel {
 
             document.cookie = "tracyTestFileEditor=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
 
+            document.getElementById('tracyFileEditorKeyboardShortcuts').addEventListener('click', function() { tracyFileEditor.toggleKeyboardShortcuts(); });
+            document.getElementById('tfe_recently_opened').addEventListener('change', function() { tracyFileEditorLoader.loadFileEditor(this.value); });
+
         </script>
 
 HTML;
@@ -406,7 +410,7 @@ HTML;
         </svg>
         ';
 
-        $out .= '<h1>'.$this->icon.' File Editor <span title="Keyboard Shortcuts" style="display: inline-block; margin-left: 5px; cursor: pointer" onclick="tracyFileEditor.toggleKeyboardShortcuts()">' . $keyboardShortcutIcon . '</span> <span id="panelTitleFilePath" style="font-size:14px">'.($this->tracyFileEditorFilePath ?: 'no selected file').'</span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'FileEditorPanel\')">⛶</a></span></span>
+        $out .= '<h1>'.$this->icon.' File Editor <span id="tracyFileEditorKeyboardShortcuts" title="Keyboard Shortcuts" style="display: inline-block; margin-left: 5px; cursor: pointer">' . $keyboardShortcutIcon . '</span> <span id="panelTitleFilePath" style="font-size:14px">'.($this->tracyFileEditorFilePath ?: 'no selected file').'</span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" data-tracy-resize="FileEditorPanel">⛶</a></span></span>
         <div class="tracy-inner">
             <div id="tracyFileEditorContainer" style="height: 100%;">
 
@@ -418,7 +422,7 @@ HTML;
 
                 $out .= '
                 <div style="float: left; height: calc(100% - 38px);">
-                    <select style="width: 17px !important" title="Select recently opened files" onchange="tracyFileEditorLoader.loadFileEditor(this.value)" id="tfe_recently_opened"></select>
+                    <select style="width: 17px !important" title="Select recently opened files" id="tfe_recently_opened"></select>
                     <div id="tracyFoldersFiles" style="padding: 0 !important; margin:40px 0 0 0 !important; width: 312px !important; height: calc(100% - 40px) !important; overflow-y: auto; overflow-x: hidden; z-index: 1">';
                         $out .= "<div class='fe-file-tree'>";
                         $out .= $this->php_file_tree($this->wire('config')->paths->{TracyDebugger::getDataValue('fileEditorBaseDirectory')}, $this->toArray(TracyDebugger::getDataValue('fileEditorAllowedExtensions')));
