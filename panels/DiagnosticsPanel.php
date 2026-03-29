@@ -1402,7 +1402,7 @@ class DiagnosticsPanel extends BasePanel {
             </svg>
             Diagnostics
         </h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'DiagnosticsPanel\')">⛶</a></span></span>
-        <div class="tracy-inner">';
+        ' . $this->openPanel();
 
         $i=0;
         if(in_array('filesystemFolders', $panelSections)) {

@@ -5,7 +5,7 @@ use Tracy\Debugger;
 
 class ApiExplorerPanel extends BasePanel {
 
-    private $icon;
+    protected $icon;
     private $apiBaseUrl;
     private $tracyPwApiData;
 
@@ -35,17 +35,13 @@ class ApiExplorerPanel extends BasePanel {
             <path stroke="'.TracyDebugger::COLOR_NORMAL.'" stroke-width=".913" stroke-miterlimit="10" d="M403.4 310.5c-.2 0-.3.2-.3.3v1c0 .2-.2.3-.3.3h-5.6c-.1 0-.2 0-.2.1l-1.1 1.1-1.1-1.1c-.1-.1-.2-.1-.2-.1H389c-.2 0-.3-.2-.3-.3v-1c0-.2-.2-.3-.3-.3s-.3.2-.3.3v1c0 .6.5 1 1 1h5.4l1.3 1.3c.1.1.2.1.2.1.1 0 .2 0 .2-.1l1.3-1.3h5.4c.6 0 1-.5 1-1v-1c-.2-.2-.3-.3-.5-.3z"/>
         </svg>';
 
-        return '
-        <span title="API Explorer">' .
-            $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;API Explorer' : '') . '
-        </span>';
+        return $this->buildTab('API Explorer');
     }
 
 
     public function getPanel() {
 
-        $out = '
-        <h1>' . $this->icon . ' API Explorer</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'ApiExplorerPanel\')">⛶</a></span></span>';
+        $out = $this->buildPanelHeader('API Explorer', true);
 
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
         $nonceAttr = TracyDebugger::getNonceAttr();
@@ -57,8 +53,7 @@ class ApiExplorerPanel extends BasePanel {
         </script>
 HTML;
 
-        $out .= '
-        <div class="tracy-inner">';
+        $out .= $this->openPanel();
 
         // variables
         $currentApiOut = $this->buildTypes('variables');
@@ -132,11 +127,7 @@ HTML;
 
         $out .= $apiChangesOut . $currentApiOut;
 
-        $out .= TracyDebugger::generatePanelFooter('apiExplorer', Debugger::timer('apiExplorer'), strlen($out), 'apiExplorerPanel');
-        $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'apiExplorer', 'apiExplorerPanel');
     }
 
 

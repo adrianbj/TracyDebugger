@@ -178,11 +178,7 @@ class ProcesswireLogsPanel extends BasePanel {
             <polygon points="353.763,379.942 279.854,234.57 322.024,250.717 253.857,116.637 276.286,127.997 216.747,0 157.209,127.997     179.64,116.636 111.471,250.717 153.642,234.569 79.731,379.942 200.872,337.52 200.872,433.494 232.624,433.494 232.624,337.518       " fill="'.$this->iconColor.'"/>
         </svg>';
 
-        return '
-        <span title="ProcessWire Logs">' .
-            $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? 'PW Logs' : '') . '
-        </span>
-        ';
+        return $this->buildTab('ProcessWire Logs', 'PW Logs');
     }
 
     protected function sectionHeader($columnNames = array()) {
@@ -215,25 +211,20 @@ class ProcesswireLogsPanel extends BasePanel {
             </a>' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '
         </h1>
 
-        <div class="tracy-inner">';
+        ' . $this->openPanel();
             $out .= $this->logEntries;
 
             if($this->numLogEntries > 0) {
                 $out .= '
                 <p>
                     <form method="post" action="'.TracyDebugger::inputUrl(true).'">
-                        <input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />
+                        '.$this->csrfInput().'
                         <input type="submit" name="deleteProcessWireLogs" value="Delete All Logs" />
                     </form>
                 </p>';
             }
 
-            $out .= TracyDebugger::generatePanelFooter('processwireLogs', Debugger::timer('processwireLogs'), strlen($out), 'processwireAndTracyLogsPanels');
-
-        $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'processwireLogs', 'processwireAndTracyLogsPanels');
     }
 
 }

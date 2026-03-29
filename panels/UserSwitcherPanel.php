@@ -32,25 +32,20 @@ class UserSwitcherPanel extends BasePanel {
         </svg>
         ';
 
-        return '
-        <span title="User Switcher">
-            ' . $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? $this->wire('user')->name : '') . '
-        </span>
-        ';
+        return $this->buildTab('User Switcher', $this->wire('user')->name);
     }
 
 
 
     public function getPanel() {
 
-        $nonceAttr = TracyDebugger::getNonceAttr();
         $userRoles = array();
         foreach($this->wire('user')->roles as $r) {
             $userRoles[] = '<a href="'.$this->wire('config')->urls->admin.'access/roles/edit/?id='.$r->id.'">'.$r->name.'</a>';
         }
 
-        $out = '
-        <h1>' . $this->icon . ' User Switcher</h1>
+        $out = $this->buildPanelHeader('User Switcher');
+        $out .= '
         <div id="user-switcher-wrapper" class="tracy-inner">
             <h2>' . $this->wire('user')->name . '</h2>
             <p>
@@ -121,6 +116,7 @@ class UserSwitcherPanel extends BasePanel {
 
                         if(count($selectableUsers) > 10) {
                             $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
+                            $nonceAttr = TracyDebugger::getNonceAttr();
                             $out .= <<< HTML
                                 <script{$nonceAttr}>
                                     tracyJSLoader.load("{$tracyModuleUrl}scripts/filterbox/filterbox.js", function() {
@@ -138,7 +134,7 @@ HTML;
                 $out .= '
                     </select>
                 </p>
-                <script' . $nonceAttr . '>
+                <script' . TracyDebugger::getNonceAttr() . '>
                     (new MutationObserver(() => {
                         document.getElementById("userSwitcher").setAttribute("style","width:100% !important; min-height:105px !important; height:" + (document.getElementById("user-switcher-wrapper").clientHeight - 175) + "px !important");
                     })).observe(document.getElementById("tracy-debug-panel-ProcessWire-UserSwitcherPanel"), { attributes: true, attributeFilter: ["style"] });
@@ -156,7 +152,7 @@ HTML;
 
             if(TracyDebugger::$allowedSuperuser || $remainingSessionLength > 0) {
                 $out .= '
-                <script' . $nonceAttr . '>
+                <script' . TracyDebugger::getNonceAttr() . '>
                     document.addEventListener("DOMContentLoaded", (event) => {
                         var selectElement = document.querySelector("#userSwitcherPanel");
                         var langElement = document.querySelector("#user_'.$this->wire('user')->id.'");
@@ -165,11 +161,6 @@ HTML;
                 </script>';
             }
 
-        $out .= TracyDebugger::generatePanelFooter('userSwitcher', Debugger::timer('userSwitcher'), strlen($out), 'userSwitcherPanel');
-
-        $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'userSwitcher', 'userSwitcherPanel');
     }
 }

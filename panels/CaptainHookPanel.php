@@ -44,16 +44,12 @@ class CaptainHookPanel extends BasePanel {
                 C11.2,15.5,11.1,15.6,10.9,15.6z"/>
             </svg>';
 
-        return '
-        <span title="Captain Hook">' .
-            $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Captain Hook' : '') . '
-        </span>';
+        return $this->buildTab('Captain Hook');
     }
 
     public function getPanel() {
 
-        $out = '
-        <h1>' . $this->icon . ' Captain Hook</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'CaptainHookPanel\')">⛶</a></span></span>';
+        $out = $this->buildPanelHeader('Captain Hook', true);
 
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
         $nonceAttr = TracyDebugger::getNonceAttr();
@@ -65,9 +61,7 @@ class CaptainHookPanel extends BasePanel {
         </script>
 HTML;
 
-        $out .= '
-        <div class="tracy-inner">
-        ';
+        $out .= $this->openPanel();
 
         $hooks = TracyDebugger::getApiData('hooks');
 
@@ -93,11 +87,7 @@ HTML;
 
         $out .= $sections['wire_core'] . $sections['wire_modules'] . $sections['site_modules'];
 
-        $out .= TracyDebugger::generatePanelFooter('captainHook', Debugger::timer('captainHook'), strlen($out), 'captainHookPanel');
-        $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'captainHook', 'captainHookPanel');
     }
 
     private function buildHookTable($info) {

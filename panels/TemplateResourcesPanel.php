@@ -324,18 +324,13 @@ class TemplateResourcesPanel extends BasePanel {
             Template Resources
         </h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'TemplateResourcesPanel\')">⛶</a></span></span>
 
-        <div class="tracy-inner">
+        ' . $this->openPanel() . '
             <p>These are all the non-PW resources that are available in the template for this page. If you are looking for the fields and their values for this page, look in the ProcessWire Info panel under "Fields List & Values".<br />An orange warning background indicates that the variable/constant/function only occurs once in the files included for this page as well as all other files in the /site/templates directory.</p>
             ';
 
         $out .= $this->resourceOutput;
 
-        $out .= TracyDebugger::generatePanelFooter('templateResources', Debugger::timer('templateResources'), strlen($out), 'templateResourcesPanel');
-
-        $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'templateResources', 'templateResourcesPanel');
     }
 
 }

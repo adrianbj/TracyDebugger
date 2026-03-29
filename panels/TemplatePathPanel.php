@@ -53,11 +53,7 @@ class TemplatePathPanel extends BasePanel {
             </svg>';
 
 
-        return '
-            <span title="Template Path">
-                ' . $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Template Path' : '') . '
-            </span>
-        ';
+        return $this->buildTab('Template Path');
     }
 
 
@@ -83,9 +79,8 @@ class TemplatePathPanel extends BasePanel {
             }
         }
 
-        $nonceAttr = TracyDebugger::getNonceAttr();
         $out = '
-        <script' . $nonceAttr . '>
+        <script' . TracyDebugger::getNonceAttr() . '>
             function getTracyTemplatePath() {
                 var e = document.getElementById("tracyTemplatePath");
                 return "'.wire("page")->template->name.'|"+e.options[e.selectedIndex].value;
@@ -139,8 +134,8 @@ class TemplatePathPanel extends BasePanel {
         ';
 
 
-        $out .= '<h1>'.$this->icon.' Template Path</h1>
-        <div class="tracy-inner">
+        $out .= $this->buildPanelHeader('Template Path');
+        $out .= $this->openPanel() . '
             <fieldset>
                 <legend>Temporarily use a template file with a suffix.<br />eg. '.$this->wire('page')->template->name.'-dev.php.<br /><br />Select an alternate from the list.<br />Create the file in your templates directory first.</legend><br />';
                 $out .= '
@@ -165,11 +160,7 @@ class TemplatePathPanel extends BasePanel {
                 </legend>';
             }
 
-        $out .= TracyDebugger::generatePanelFooter('templatePath', Debugger::timer('templatePath'), strlen($out));
-
-        $out .= '</div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'templatePath');
     }
 
 }

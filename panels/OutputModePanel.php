@@ -58,7 +58,7 @@ class OutputModePanel extends BasePanel {
     public function getPanel() {
 
         $out = '<h1>' . str_replace('#FFFFFF', $this->{$this->outputMode.'Color'}, $this->{$this->outputMode.'Icon'}) . ' '.ucfirst($this->outputMode).' Mode</h1>
-        <div class="tracy-inner">';
+        ' . $this->openPanel();
 
             if(TracyDebugger::getDataValue('outputMode') == 'detect') {
                 $out .= '<p>This is automatically switched from the configured "DETECT" mode.</p>';
@@ -72,12 +72,7 @@ class OutputModePanel extends BasePanel {
 
             $out .= '</p>';
 
-            $out .= TracyDebugger::generatePanelFooter('outputMode', Debugger::timer('outputMode'), strlen($out));
-
-        $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+            return $this->closePanel($out, 'outputMode');
     }
 
 }

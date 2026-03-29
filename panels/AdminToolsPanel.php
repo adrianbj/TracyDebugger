@@ -22,22 +22,17 @@ class AdminToolsPanel extends BasePanel {
         </svg>
         ';
 
-        return '
-        <span title="'.$this->label.'">
-            ' . $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? $this->label : '') . '
-        </span>
-        ';
+        return $this->buildTab($this->label);
     }
 
 
     public function getPanel() {
 
         $i=0;
-        $csrfInput = '<input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />';
+        $csrfInput = $this->csrfInput();
 
-        $nonceAttr = TracyDebugger::getNonceAttr();
         $out = '
-        <script' . $nonceAttr . '>
+        <script' . TracyDebugger::getNonceAttr() . '>
             function unhideUnlockFields(restore) {
                 if(restore) {
                     document.cookie = "tracyUnhideUnlockFields=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
@@ -49,24 +44,10 @@ class AdminToolsPanel extends BasePanel {
             }
         </script>';
 
-        $out .= '
-        <h1>' . $this->icon . ' ' . $this->label . '</h1>
+        $out .= $this->buildPanelHeader($this->label);
+        $out .= $this->openPanel();
 
-        <div class="tracy-inner">';
-
-            if(TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') && ($this->wire('process') == 'ProcessPageEdit' || $this->wire('process') == 'ProcessLanguage')) {
-                $p = $this->wire('process')->getPage();
-                if($p instanceof NullPage) {
-                    $p = $this->wire('pages')->get((int) $this->wire('input')->get('id'));
-                }
-            }
-            else {
-                $p = $this->wire('page');
-            }
-
-            if(is_null($p)) {
-                $p = $this->wire('page');
-            }
+            $p = $this->getReferencePage(array('ProcessPageEdit', 'ProcessLanguage'));
 
             if($p->template != 'admin' && $p->hasChildren('include=all')) {
                 $i++;
@@ -177,12 +158,7 @@ class AdminToolsPanel extends BasePanel {
             }
 
 
-            $out .= TracyDebugger::generatePanelFooter($this->name, Debugger::timer($this->name), strlen($out));
-
-            $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+            return $this->closePanel($out, $this->name);
     }
 
 }

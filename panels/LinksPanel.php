@@ -22,11 +22,7 @@ class LinksPanel extends BasePanel {
         </svg>
         ';
 
-        return '
-        <span title="Links">' .
-            $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? 'Links' : '') . '
-        </span>
-        ';
+        return $this->buildTab('Links');
     }
 
 
@@ -65,7 +61,7 @@ form.addEventListener('submit', function(event) {
 <h1>{$this->icon} Links</h1>
 <div class="tracy-inner">
 <form id="tracy-add-link" action="{$this->wire('config')->urls->admin}module/edit" method="post">
-    <input type="hidden" name="{$this->wire('session')->CSRF->getTokenName()}" value="{$this->wire('session')->CSRF->getTokenValue()}" />
+    {$this->csrfInput()}
     <input type="hidden" name="name" value="TracyDebugger">
     <input id="tracy-lp-input" name="link" type="text" placeholder="Add link...">
     <button id="tracy-lp-btn-add" title="Add link">
@@ -93,10 +89,7 @@ EOT;
         }
         $out .= '</div>';
 
-        $out .= TracyDebugger::generatePanelFooter('links', Debugger::timer('links'), strlen($out), 'linksPanel');
-        $out .= '</div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'links', 'linksPanel');
     }
 
 }

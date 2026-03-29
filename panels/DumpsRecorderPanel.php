@@ -46,19 +46,14 @@ class DumpsRecorderPanel extends BasePanel {
         </svg>
         ';
 
-        return '
-        <span title="Dumps Recorder">
-            ' . $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? 'Dumps Recorder' : '') . ' ' . ($this->dumpCount > 0 ? '<span class="dumpsRecorderCount">' . $this->dumpCount . '</span>' : '') . '
-        </span>
-        ';
+        return $this->buildTab('Dumps Recorder', null, ' ' . ($this->dumpCount > 0 ? '<span class="dumpsRecorderCount">' . $this->dumpCount . '</span>' : ''));
     }
 
 
     public function getPanel() {
-        $isAdditionalBar = TracyDebugger::isAdditionalBar();
-        $out = '
-        <h1>' . $this->icon . ' Dumps Recorder' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'DumpsRecorderPanel'.($isAdditionalBar ? '-'.$isAdditionalBar : '').'\')">⛶</a></span></span>
+        $out = $this->buildPanelHeader('Dumps Recorder', true, true);
 
+        $out .= '
         <script' . TracyDebugger::getNonceAttr() . '>
             function clearRecorderDumps() {
                 document.cookie = "tracyClearDumpsRecorderItems=true;expires=0;path=/";
@@ -86,16 +81,11 @@ class DumpsRecorderPanel extends BasePanel {
             }
         </script>
 
-        <div class="tracy-inner tracy-DumpPanel">
+        ' . $this->openPanel('tracy-DumpPanel') . '
 
             <div id="tracyDumpEntries">' . $this->entries . '</div>';
 
-        $out .= TracyDebugger::generatePanelFooter('dumpsRecorder', Debugger::timer('dumpsRecorder'), strlen($out), 'dumpsPanel');
-
-        $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'dumpsRecorder', 'dumpsPanel');
     }
 
 }

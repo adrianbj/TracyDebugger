@@ -53,20 +53,14 @@ class DumpsPanel extends BasePanel {
 
 
     public function getPanel() {
-        $isAdditionalBar = TracyDebugger::isAdditionalBar();
-        $out = '
-        <h1>' . $this->icon . ' Dumps' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'DumpsPanel'.($isAdditionalBar ? '-'.$isAdditionalBar : '').'\')">⛶</a></span></span>
+        $out = $this->buildPanelHeader('Dumps', true, true);
 
-        <div class="tracy-inner tracy-DumpPanel">
-
-            <div id="tracyDumpEntries">' . $this->entries . '</div>';
-
-        $out .= TracyDebugger::generatePanelFooter('dumps', Debugger::timer('dumps'), strlen($out), 'dumpsPanel');
+        $out .= $this->openPanel('tracy-DumpPanel');
 
         $out .= '
-        </div>';
+            <div id="tracyDumpEntries">' . $this->entries . '</div>';
 
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'dumps', 'dumpsPanel');
     }
 
 }

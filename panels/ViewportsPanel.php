@@ -35,24 +35,21 @@ class ViewportsPanel extends BasePanel {
         </svg>
         ';
 
-        return '
-        <span title="Viewports">' .
-            $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Viewports' : '') . '
-        </span>';
+        return $this->buildTab('Viewports');
     }
 
 
     public function getPanel() {
 
-        $out = '
-        <h1>' . $this->icon . ' Viewports</h1>';
+        $out = $this->buildPanelHeader('Viewports');
 
         $pageUrl = $this->wire('input')->url(true);
         $pageUrl .= strpos($pageUrl,'?') !== false ? '&' : '?';
         $pageUrl .= 'tracyDisabled=1';
 
         $out .= '
-        <div class="tracy-inner" style="padding: 0 !important">';
+        ' . $this->openPanel('', 'padding: 0 !important') . '
+        ';
             $sizes = array(
                 '1366x768',
                 '1024x768',

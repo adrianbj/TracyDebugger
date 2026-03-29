@@ -23,10 +23,7 @@ class TerminalPanel extends BasePanel {
             </g>
         </svg>';
 
-        return '
-        <span title="Terminal">' .
-            $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Terminal' : '') . '
-        </span>';
+        return $this->buildTab('Terminal');
     }
 
 
@@ -35,17 +32,14 @@ class TerminalPanel extends BasePanel {
         $terminalModuleId = $this->wire('modules')->getModuleID("ProcessTerminal");
         $terminalUrl = $this->wire('pages')->get("process=$terminalModuleId")->url;
 
-        $out = '
-        <h1>' . $this->icon . ' Terminal</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'TerminalPanel\')">⛶</a></span></span>';
+        $out = $this->buildPanelHeader('Terminal', true);
 
         if($this->wire('modules')->isInstalled("ProcessTerminal")) {
-            $out .= '
-            <div class="tracy-inner" style="padding: 0 !important">
+            $out .= $this->openPanel('', 'padding: 0 !important') . '
                 <iframe src="'.$terminalUrl.'" style="width:100%; height:calc(100% - 5px); border: none; padding:0; margin:0;"></iframe>';
         }
         else {
-            $out .= '
-            <div class="tracy-inner">
+            $out .= $this->openPanel() . '
                 <p>This panel is not available because the <a href="http://modules.processwire.com/modules/process-terminal/">ProcessTerminal module</a> has not been installed.</p>';
         }
 

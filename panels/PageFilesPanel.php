@@ -5,7 +5,7 @@ use Tracy\Debugger;
 class PageFilesPanel extends BasePanel {
 
     // settings
-    private $icon;
+    protected $icon;
     private $name = 'pageFiles';
     private $label = 'Page Files';
     private $p = false;
@@ -132,27 +132,24 @@ class PageFilesPanel extends BasePanel {
             $orphanMissingCounts = $this->numMissingFiles . '/' . count($this->orphanFiles) . '/';
         }
 
-        return "<span title='{$this->label}'>{$this->icon}".(TracyDebugger::getDataValue('showPanelLabels') ? $this->label : '')." ".$orphanMissingCounts.($numDiskFiles > 0 ? $numDiskFiles : '')."</span>";
+        return $this->buildTab($this->label, $this->label, ' ' . $orphanMissingCounts . ($numDiskFiles > 0 ? $numDiskFiles : ''));
     }
 
     /**
      * the panel's HTML code
      */
     public function getPanel() {
-        $isAdditionalBar = TracyDebugger::isAdditionalBar();
-        $out = "<h1>{$this->icon} {$this->label}" . ($isAdditionalBar ? " (".$isAdditionalBar.")" : "") . "</h1>";
-
-        $out .= '<span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'' . $this->className . '\')">⛶</a></span></span>';
+        $out = $this->buildPanelHeader($this->label, true, true);
 
         // panel body
-        $out .= '<div class="tracy-inner">';
+        $out .= $this->openPanel();
 
         $numOrphanFiles = count($this->orphanFiles);
 
         if($numOrphanFiles > 0) {
             $out .= '
             <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete all the orange highlighted orphan files?\');">
-                <input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />
+                '.$this->csrfInput().'
                 <input type="hidden" name="orphanPaths" value="'.implode('|', $this->orphanFiles).'" />
                 <input type="submit" style="color:'.TracyDebugger::COLOR_WARN.' !important; color: #FFFFFF" name="deleteOrphanFiles" value="Delete '.$numOrphanFiles.' orphan'._n('', 's', $numOrphanFiles).'" />
             </form>&nbsp&nbsp;';
@@ -161,7 +158,7 @@ class PageFilesPanel extends BasePanel {
         if($this->numMissingFiles > 0) {
             $out .= '
             <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to delete all the red highlighted missing pagefiles?\');">
-                <input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />
+                '.$this->csrfInput().'
                 <input type="hidden" name="missingPaths" value="'.urlencode(json_encode($this->missingFiles)).'" />
                 <input type="submit" style="color:'.TracyDebugger::COLOR_ALERT.' !important; color: #FFFFFF" name="deleteMissingFiles" value="Delete '.$this->numMissingFiles.' missing pagefile'._n('', 's', $this->numMissingFiles).'" />
             </form>';
@@ -173,10 +170,7 @@ class PageFilesPanel extends BasePanel {
 
         $out .= '<div id="tracyPageFilesList">'.$this->filesListStr.'</div>';
 
-        $out .= TracyDebugger::generatePanelFooter($this->name, Debugger::timer($this->name), strlen($out));
-        $out .= '</div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, $this->name);
     }
 
 

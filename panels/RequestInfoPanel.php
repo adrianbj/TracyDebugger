@@ -26,10 +26,7 @@ class RequestInfoPanel extends BasePanel {
             </g>
             </svg>';
 
-            return '
-            <span title="Request Info">' .
-                $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Request' : '') . '
-            </span>';
+            return $this->buildTab('Request Info', 'Request');
     }
 
     protected function sectionHeader($columnNames = array()) {
@@ -62,22 +59,7 @@ class RequestInfoPanel extends BasePanel {
             ';
         }
 
-        if(TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
-            ($this->wire('process') == 'ProcessPageEdit' ||
-                $this->wire('process') == 'ProcessUser' ||
-                $this->wire('process') == 'ProcessRole' ||
-                $this->wire('process') == 'ProcessPermission' ||
-                $this->wire('process') == 'ProcessLanguage'
-            )
-        ) {
-            $p = $this->wire('process')->getPage();
-            if($p instanceof NullPage) {
-                $p = $this->wire('pages')->get((int) $this->wire('input')->get('id'));
-            }
-        }
-        else {
-            $p = $this->wire('page');
-        }
+        $p = $this->getReferencePage();
 
         if(is_null($p)) {
             $p = $this->wire('page');
@@ -892,8 +874,6 @@ class RequestInfoPanel extends BasePanel {
 
 
         // Load all the panel sections
-        $isAdditionalBar = TracyDebugger::isAdditionalBar();
-
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
         $nonceAttr = TracyDebugger::getNonceAttr();
         $out = <<< HTML
@@ -902,10 +882,9 @@ class RequestInfoPanel extends BasePanel {
         </script>
 HTML;
 
-        $out .= '
-        <h1>' . $this->icon . ' Request Info' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'RequestInfoPanel'.($isAdditionalBar ? '-'.$isAdditionalBar : '').'\')">⛶</a></span></span>
-        <div class="tracy-inner">
-        ';
+        $out .= $this->buildPanelHeader('Request Info', true, true);
+        $out .= $this->openPanel();
+
 
         // all the "non" icon links sections
         $i=0;
@@ -946,10 +925,7 @@ HTML;
         }
 
         $out .= '<br />';
-        $out .= TracyDebugger::generatePanelFooter('requestInfo', Debugger::timer('requestInfo'), strlen($out), 'requestInfoPanel');
-        $out .= '</div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'requestInfo', 'requestInfoPanel');
     }
 
 

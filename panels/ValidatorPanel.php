@@ -103,7 +103,7 @@ class ValidatorPanel extends BasePanel {
 
         $out = '
         <h1>'.str_replace('#FFFFFF', $this->color, $this->icon).' '.$this->resultLabel.'</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'ValidatorPanel\')">⛶</a></span></span>
-        <div class="tracy-inner">
+        ' . $this->openPanel() . '
             <style type="text/css">
 
                 #results {
@@ -308,11 +308,7 @@ class ValidatorPanel extends BasePanel {
             $out .= '<h2>Sorry, but there was a problem accessing the validation server at '.$this->validatorUrl.'</h2><h2>'.$validatorLink.'</h2>';
         }
 
-        $out .= TracyDebugger::generatePanelFooter('validator', Debugger::timer('validator'), strlen($out));
-
-        $out .= '</div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'validator');
     }
 
 }

@@ -4,8 +4,8 @@ use Tracy\Debugger;
 
 class ConsolePanel extends BasePanel {
 
-    private $icon;
-    private $iconColor;
+    protected $icon;
+    protected $iconColor;
     private $tracyIncludeCode;
 
     public function getTab() {
@@ -31,10 +31,7 @@ class ConsolePanel extends BasePanel {
                 h4.6V513.3z"/>
             </svg>';
 
-        return '
-        <span title="Console">
-            ' . $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Console' : '') . '
-        </span>';
+        return $this->buildTab('Console');
     }
 
 
@@ -56,22 +53,7 @@ class ConsolePanel extends BasePanel {
         }
         $csrfToken = $this->wire('session')->tracyConsoleToken;
 
-        if(TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
-            ($this->wire('process') == 'ProcessPageEdit' ||
-                $this->wire('process') == 'ProcessUser' ||
-                $this->wire('process') == 'ProcessRole' ||
-                $this->wire('process') == 'ProcessPermission' ||
-                $this->wire('process') == 'ProcessLanguage'
-            )
-        ) {
-            $p = $this->wire('process')->getPage();
-            if($p instanceof NullPage) {
-                $p = $this->wire('pages')->get((int) $this->wire('input')->get('id'));
-            }
-        }
-        else {
-            $p = $this->wire('page');
-        }
+        $p = $this->getReferencePage();
 
         $pid = $p ? $p->id : 'null';
 
@@ -125,8 +107,7 @@ class ConsolePanel extends BasePanel {
         }
         if(!$snippets) $snippets = json_encode(array());
 
-        $nonceAttr = TracyDebugger::getNonceAttr();
-        $out = '<script' . $nonceAttr . '>' . file_get_contents($this->wire('config')->paths->TracyDebugger . 'scripts/get-query-variable.js') . '</script>';
+        $out = '<script' . TracyDebugger::getNonceAttr() . '>' . file_get_contents($this->wire('config')->paths->TracyDebugger . 'scripts/get-query-variable.js') . '</script>';
 
         $maximizeSvg =
         '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -199,6 +180,7 @@ class ConsolePanel extends BasePanel {
             ? htmlspecialchars($this->wire('input')->cookie->tracyCodeError, ENT_QUOTES, 'UTF-8')
             : '';
 
+        $nonceAttr = TracyDebugger::getNonceAttr();
         $out .= <<< HTML
         <script{$nonceAttr}>
 
@@ -2222,7 +2204,7 @@ HTML;
             <span id="tracyConsoleStatus" style="padding-left: 50px"></span>
         </h1>
         <span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'ConsolePanel\')">⛶</a></span></span>
-        <div class="tracy-inner">
+        ' . $this->openPanel() . '
 
             <div style="position: relative; height: calc(100% - 80px)">
 

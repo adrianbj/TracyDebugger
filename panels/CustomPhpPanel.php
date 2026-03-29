@@ -16,21 +16,15 @@ class CustomPhpPanel extends BasePanel {
         </svg>
         ';
 
-        return '
-        <span title="Custom">' .
-            $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? 'Custom' : '') . '
-        </span>
-        ';
+        return $this->buildTab('Custom');
     }
 
 
     public function getPanel() {
 
         // panel title
-        $out = '
-        <h1>' . $this->icon . ' Custom</h1>
-        <div class="tracy-inner">
-        ';
+        $out = $this->buildPanelHeader('Custom');
+        $out .= $this->openPanel();
 
         $user = $this->wire('user');
         $page = $this->wire('page');
@@ -38,11 +32,7 @@ class CustomPhpPanel extends BasePanel {
         $config = $this->wire('config');
         $out .= eval(TracyDebugger::getDataValue('customPhpCode'));
 
-        $out .= TracyDebugger::generatePanelFooter('customPhp', Debugger::timer('customPhp'), strlen($out), 'customPhpPanel');
-        $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'customPhp', 'customPhpPanel');
     }
 
 }

@@ -98,19 +98,14 @@ class MailInterceptorPanel extends BasePanel {
             </g>
         </svg>
         ';
-        return '
-        <span title="Mail Interceptor">
-            ' . $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? 'Mail Interceptor' : '') . ' ' . ($this->mailCount > 0 ? '<span class="mailCount">' . $this->mailCount . '</span>' : '') . '
-        </span>
-        ';
+        return $this->buildTab('Mail Interceptor', 'Mail Interceptor', ' ' . ($this->mailCount > 0 ? '<span class="mailCount">' . $this->mailCount . '</span>' : ''));
     }
 
 
     public function getPanel() {
-        $isAdditionalBar = TracyDebugger::isAdditionalBar();
-        $out = '
-        <h1>' . $this->icon . ' Mail Interceptor' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>
+        $out = $this->buildPanelHeader('Mail Interceptor', false, true);
 
+        $out .= '
         <script' . TracyDebugger::getNonceAttr() . '>
             function clearEmails() {
                 document.cookie = "tracyClearMailItems=true;expires=0;path=/";
@@ -154,7 +149,7 @@ class MailInterceptorPanel extends BasePanel {
             }
         </script>
 
-        <div class="tracy-inner">
+        ' . $this->openPanel() . '
             <fieldset id="mailInterceptor">';
                 $out .= '
                 <p>
@@ -166,12 +161,7 @@ class MailInterceptorPanel extends BasePanel {
             <br /><br />
         ';
             $out .= $this->entries;
-            $out .= TracyDebugger::generatePanelFooter('mailInterceptor', Debugger::timer('mailInterceptor'), strlen($out));
-
-        $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+            return $this->closePanel($out, 'mailInterceptor');
     }
 
     protected function formatEmailAddress($addresses, $names) {

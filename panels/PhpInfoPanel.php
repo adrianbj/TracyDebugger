@@ -82,17 +82,12 @@ HTML;
             </svg>
             PHP Info
         </h1>
-        <div class="tracy-inner">
+        ' . $this->openPanel() . '
             <div id="phpinfoBody">'
                 .$phpInfo.
             '</div>';
 
-            $out .= TracyDebugger::generatePanelFooter('phpInfo', Debugger::timer('phpInfo'), strlen($out));
-        $out .= '
-        </div>
-        ';
-
-        return parent::loadResources() . $out;
+            return $this->closePanel($out, 'phpInfo');
     }
 
 }

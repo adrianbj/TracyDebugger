@@ -50,20 +50,14 @@ class ProcesswireVersionPanel extends BasePanel {
             </svg>
         ';
 
-        return '
-        <span title="ProcessWire Version">
-            ' . $this->icon .   (TracyDebugger::getDataValue('showPanelLabels') ? 'PW Version' : '') . ' ' . htmlentities($this->wire('config')->version) . '
-        </span>
-        ';
+        return $this->buildTab('ProcessWire Version', 'PW Version', ' ' . htmlentities($this->wire('config')->version));
     }
 
 
     public function getPanel() {
 
-        $out = '
-        <h1>' . $this->icon . ' ProcessWire Version</h1>
-
-        <div class="tracy-inner">
+        $out = $this->buildPanelHeader('ProcessWire Version');
+        $out .= $this->openPanel() . '
             <fieldset>
                 <legend>Choose from available versions.<br />If there are any fatal errors, reload the page and the original version will be restored.</legend><br />';
                 if(count($this->versions) <= 1) {
@@ -84,12 +78,7 @@ class ProcesswireVersionPanel extends BasePanel {
             $out .= '
             </fieldset>';
 
-            $out .= TracyDebugger::generatePanelFooter('processwireVersion', Debugger::timer('processwireVersion'), strlen($out));
-
-        $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'processwireVersion');
     }
 
 }

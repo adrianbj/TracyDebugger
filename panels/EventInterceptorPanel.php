@@ -46,24 +46,18 @@ class EventInterceptorPanel extends BasePanel {
         </svg>
         ';
 
-        return '
-        <span title="Event Interceptor">
-            ' . $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? 'Event Interceptor' : '') . ' ' . ($this->eventCount > 0 ? '<span class="eventCount">' . $this->eventCount . '</span>' : '') . '
-        </span>
-        ';
+        return $this->buildTab('Event Interceptor', null, ' ' . ($this->eventCount > 0 ? '<span class="eventCount">' . $this->eventCount . '</span>' : ''));
     }
 
 
     public function getPanel() {
-        $isAdditionalBar = TracyDebugger::isAdditionalBar();
-
         if($this->wire('input')->cookie->eventInterceptorHook) {
             $hookSettings = json_decode($this->wire('input')->cookie->eventInterceptorHook, true);
         }
 
-        $out = '
-        <h1>' . $this->icon . ' Event Interceptor' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>
+        $out = $this->buildPanelHeader('Event Interceptor', false, true);
 
+        $out .= '
         <script' . TracyDebugger::getNonceAttr() . '>
             function clearEvents() {
                 document.cookie = "tracyClearEventItems=true;expires=0;path=/";
@@ -119,7 +113,7 @@ class EventInterceptorPanel extends BasePanel {
             }
         </script>
 
-        <div class="tracy-inner tracy-DumpPanel" style="min-width:350px !important">
+        ' . $this->openPanel('tracy-DumpPanel', 'min-width:350px !important') . '
 
             <fieldset id="eventInterceptor">
                 <legend><span id="eventHookLegend">'.(isset($hookSettings['hook']) ? '<strong>' . $hookSettings['hook'] . '</strong> <em>' . $hookSettings['when'] . '</em> hook is set to return <em>' . $hookSettings['return'] . '</em>' : 'Enter an Event Hook (eg. PageRender::renderPage)') .'</span></legend><br />';
@@ -141,12 +135,7 @@ class EventInterceptorPanel extends BasePanel {
             <br /><br />
             <div id="tracyEventEntries">'.$this->entries.'</div>';
 
-            $out .= TracyDebugger::generatePanelFooter('eventInterceptor', Debugger::timer('eventInterceptor'), strlen($out));
-
-            $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'eventInterceptor');
     }
 
 }

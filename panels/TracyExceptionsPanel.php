@@ -4,8 +4,8 @@ use Tracy\Debugger;
 
 class TracyExceptionsPanel extends BasePanel {
 
-    private $icon;
-    private $iconColor;
+    protected $icon;
+    protected $iconColor;
     private $tracyExceptionFile;
     private $filesArray = array();
     private $newFiles = array();
@@ -44,11 +44,7 @@ class TracyExceptionsPanel extends BasePanel {
             <path fill="'.$this->iconColor.'" d="M13.98 0C6.259 0 0 6.261 0 13.983C0 21.704 6.259 27.965 13.98 27.965C21.705 27.965 27.965 21.703 27.965 13.983C27.965 6.261 21.705 0 13.98 0ZM4.25218 15.775L4.19488 11.907L23.6416 11.9299L23.7405 15.759L4.25218 15.775Z" fill-rule="nonzero" opacity="1" stroke="none"/>
         </svg>';
 
-        return '
-        <span title="Tracy Exceptions">
-            ' . $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Tracy Exceptions' : '') . '
-        </span>
-        ';
+        return $this->buildTab('Tracy Exceptions');
     }
 
 
@@ -97,7 +93,7 @@ class TracyExceptionsPanel extends BasePanel {
 HTML;
 
         $out .= '<h1>'.$this->icon.' Tracy Exceptions <span id="panelTitleFilePath" style="font-size:14px"></span></h1><span class="tracy-icons"></span>
-        <div class="tracy-inner" style="display: flex; flex-direction: column; min-height: 0;">
+        ' . $this->openPanel('', 'display: flex; flex-direction: column; min-height: 0;') . '
             <div id="tracyExceptionsViewerContainer" style="display: flex; flex: 1; min-height: 0;">
                 <div style="display: flex; flex-direction: column; flex-shrink: 0; min-height: 0;">
                     <div id="tracyExceptionFiles" style="padding: 0 !important; margin: 0 !important; overflow-y: auto; overflow-x: hidden; flex: 1; min-height: 0;">';
@@ -117,12 +113,7 @@ HTML;
             </div>
             ';
 
-            $out .= TracyDebugger::generatePanelFooter('tracyExceptions', Debugger::timer('tracyExceptions'), strlen($out), 'tracyExceptionsPanel');
-
-        $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'tracyExceptions', 'tracyExceptionsPanel');
     }
 
     /**

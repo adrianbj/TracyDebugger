@@ -59,10 +59,7 @@ class ProcesswireInfoPanel extends BasePanel {
                     c0.1-0.1,0.2-0.3,0.2-0.4C215.6,139.6,215.6,139.5,215.4,139.4L215.4,139.4z"/>
                 </svg>';
 
-            return '
-            <span title="ProcessWire Info & Links">' .
-                $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;ProcessWire' : '') . '
-            </span>';
+            return $this->buildTab('ProcessWire Info & Links', 'ProcessWire');
     }
 
     protected function sectionHeader($columnNames = array()) {
@@ -86,10 +83,10 @@ class ProcesswireInfoPanel extends BasePanel {
     public function getPanel() {
 
         $out = '';
-        $nonceAttr = TracyDebugger::getNonceAttr();
         $panelSections = TracyDebugger::getDataValue('processwireInfoPanelSections');
         $currentUrl = substr(json_encode($_SERVER['REQUEST_URI']), 1, -1);
 
+        $nonceAttr = TracyDebugger::getNonceAttr();
         if(in_array('gotoId', $panelSections)) {
             $out .= <<< HTML
             <script{$nonceAttr}>
@@ -328,10 +325,9 @@ HTML;
 
 
         // Load all the panel sections
-        $out .= '
-        <h1>' . $this->icon . ' ProcessWire Info</h1>
-        <div class="tracy-inner">
-        ';
+        $out .= $this->buildPanelHeader('ProcessWire Info');
+        $out .= $this->openPanel();
+
 
         // all the "non" icon links sections
         foreach(TracyDebugger::$processWireInfoSections as $name => $label) {
@@ -607,11 +603,7 @@ HTML;
 
         }
 
-        $out .= TracyDebugger::generatePanelFooter('processwireInfo', Debugger::timer('processwireInfo'), strlen($out), 'processwireInfoPanel');
-
-        $out .= '</div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'processwireInfo', 'processwireInfoPanel');
     }
 
 

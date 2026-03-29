@@ -17,11 +17,11 @@ class PageRecorderPanel extends BasePanel {
             $this->recordedPages .= '
             <p>
                 <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to trash all these pages?\');">
-                    <input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />
+                    '.$this->csrfInput().'
                     <input type="submit" name="trashRecordedPages" value="Trash Recorded Pages" />
                 </form>
                 <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to remove all these pages from the list?\');">
-                    <input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />
+                    '.$this->csrfInput().'
                     <input type="submit" name="clearRecordedPages" value="Clear Recorded Pages List" />
                 </form>
             </p>';
@@ -45,29 +45,18 @@ class PageRecorderPanel extends BasePanel {
         </svg>
         ';
 
-        return '
-        <span title="Page Recorder">
-            ' . $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? 'Page Recorder' : '') . ' ' . ($this->pageCount > 0 ? $this->pageCount : '') . '
-        </span>
-        ';
+        return $this->buildTab('Page Recorder', 'Page Recorder', ' ' . ($this->pageCount > 0 ? $this->pageCount : ''));
     }
 
 
     public function getPanel() {
-        $isAdditionalBar = TracyDebugger::isAdditionalBar();
-        $out = '
-        <h1>' . $this->icon . ' Page Recorder' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>
+        $out = $this->buildPanelHeader('Page Recorder', false, true);
 
-        <div class="tracy-inner">';
+        $out .= $this->openPanel();
 
             $out .= $this->recordedPages;
 
-            $out .= TracyDebugger::generatePanelFooter('pageRecorder', Debugger::timer('pageRecorder'), strlen($out));
-
-            $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+            return $this->closePanel($out, 'pageRecorder');
     }
 
 }

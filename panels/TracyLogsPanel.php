@@ -154,11 +154,7 @@ class TracyLogsPanel extends BasePanel {
             </g>
         </svg>';
 
-        return '
-        <span title="Tracy Logs">' .
-            $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? 'Tracy Logs' : '') . '
-        </span>
-        ';
+        return $this->buildTab('Tracy Logs');
     }
 
     protected function sectionHeader($columnNames = array()) {
@@ -252,27 +248,20 @@ class TracyLogsPanel extends BasePanel {
     public function getPanel() {
 
         // Load all the panel sections
-        $isAdditionalBar = TracyDebugger::isAdditionalBar();
-        $out = '<h1>' . $this->icon . ' Tracy Logs' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>
-
-        <div class="tracy-inner">';
+        $out = $this->buildPanelHeader('Tracy Logs', false, true);
+        $out .= $this->openPanel();
             $out .= $this->logEntries;
             if($this->numLogEntries > 0) {
                 $out .= '
                 <p>
                     <form method="post" action="'.TracyDebugger::inputUrl(true).'">
-                        <input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />
+                        '.$this->csrfInput().'
                         <input type="submit" name="deleteTracyLogs" value="Delete All Logs" />
                     </form>
                 </p>';
             }
 
-            $out .= TracyDebugger::generatePanelFooter('tracyLogs', Debugger::timer('tracyLogs'), strlen($out), 'processwireAndTracyLogsPanels');
-
-        $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'tracyLogs', 'processwireAndTracyLogsPanels');
     }
 
 }

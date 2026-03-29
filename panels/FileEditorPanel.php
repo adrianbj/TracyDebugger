@@ -4,7 +4,7 @@ use Tracy\Debugger;
 
 class FileEditorPanel extends BasePanel {
 
-    private $icon;
+    protected $icon;
     private $tracyFileEditorFilePath;
     private $errorMessage = null;
     private $encoding = 'auto';
@@ -15,22 +15,7 @@ class FileEditorPanel extends BasePanel {
         if(TracyDebugger::isAdditionalBar()) return;
         Debugger::timer('fileEditor');
 
-        if(TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
-            ($this->wire('process') == 'ProcessPageEdit' ||
-                $this->wire('process') == 'ProcessUser' ||
-                $this->wire('process') == 'ProcessRole' ||
-                $this->wire('process') == 'ProcessPermission' ||
-                $this->wire('process') == 'ProcessLanguage'
-            )
-        ) {
-            $this->p = $this->wire('process')->getPage();
-            if($this->p instanceof NullPage) {
-                $this->p = $this->wire('pages')->get((int) $this->wire('input')->get('id'));
-            }
-        }
-        else {
-            $this->p = $this->wire('page');
-        }
+        $this->p = $this->getReferencePage();
 
         $this->tracyFileEditorFilePath = $this->wire('input')->cookie->tracyFileEditorFilePath ?: str_replace($this->wire('config')->paths->root, '', $this->p->template->filename);
 
@@ -53,11 +38,7 @@ class FileEditorPanel extends BasePanel {
                         l1.2,1.2L394.6,310z"/>
             </svg>';
 
-        return '
-        <span title="File Editor">
-            ' . $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;File Editor' : '') . '
-        </span>
-        ';
+        return $this->buildTab('File Editor');
     }
 
 
@@ -447,7 +428,7 @@ HTML;
                     <div style="padding: 8px 12px 0 0; float:right">
                         <form id="tracyFileEditorSubmission" style="padding: 0; margin: 0;" method="post" action="'.TracyDebugger::inputUrl(true).'">
                             <fieldset>
-                                <input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />
+                                '.$this->csrfInput().'
                                 <textarea id="tracyFileEditorRawCode" name="tracyFileEditorRawCode" style="display:none"></textarea>
                                 <input type="hidden" id="fileEditorFilePath" name="fileEditorFilePath" value="'.$this->tracyFileEditorFilePath.'" />
                                 <div id="fileEditorButtons"></div>
@@ -461,12 +442,7 @@ HTML;
             </div>
             ';
 
-            $out .= TracyDebugger::generatePanelFooter('fileEditor', Debugger::timer('fileEditor'), strlen($out), 'fileEditorPanel');
-
-        $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'fileEditor', 'fileEditorPanel');
     }
 
     /**

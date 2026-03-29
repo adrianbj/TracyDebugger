@@ -75,28 +75,17 @@ class TodoPanel extends BasePanel {
                 </g>
             </svg>
         ';
-        return '
-        <span title="ToDo">
-            ' . $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? 'Todo' : '') . ' ' . $thisPageNumEntries . '/' . $numEntries . '
-        </span>
-        ';
+        return $this->buildTab('ToDo', 'Todo', ' ' . $thisPageNumEntries . '/' . $numEntries);
     }
 
 
     public function getPanel() {
 
-        $out = '
-        <h1>' . $this->icon . ' ToDo</h1>
-
-        <div class="tracy-inner">';
+        $out = $this->buildPanelHeader('ToDo');
+        $out .= $this->openPanel();
             $out .= $this->entries;
 
-        $out .= TracyDebugger::generatePanelFooter('todo', Debugger::timer('todo'), strlen($out), 'todoPanel');
-
-        $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'todo', 'todoPanel');
     }
 
 

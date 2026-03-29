@@ -61,22 +61,7 @@ class DebugModePanel extends BasePanel {
 
         $debugMode = $this->wire('config')->debug;
 
-        if(TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
-            ($this->wire('process') == 'ProcessPageEdit' ||
-                $this->wire('process') == 'ProcessUser' ||
-                $this->wire('process') == 'ProcessRole' ||
-                $this->wire('process') == 'ProcessPermission' ||
-                $this->wire('process') == 'ProcessLanguage'
-            )
-        ) {
-            $p = $this->wire('process')->getPage();
-            if($p instanceof NullPage) {
-                $p = $this->wire('pages')->get((int) $this->wire('input')->get('id'));
-            }
-        }
-        else {
-            $p = $this->wire('page');
-        }
+        $p = $this->getReferencePage();
 
         $panelSections = TracyDebugger::getDataValue('debugModePanelSections');
 
@@ -405,10 +390,8 @@ class DebugModePanel extends BasePanel {
 
         }
 
-        $out .= TracyDebugger::generatePanelFooter('debugMode', Debugger::timer('debugMode'), strlen($out), 'debugModePanel');
-        $out .= '<br /></div>';
-
-        return parent::loadResources() . $out;
+        $out .= '<br />';
+        return $this->closePanel($out, 'debugMode', 'debugModePanel');
     }
 
 

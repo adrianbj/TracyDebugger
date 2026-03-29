@@ -31,19 +31,14 @@ class ModuleDisablerPanel extends BasePanel {
             </svg>';
 
 
-        return '
-            <span title="Module Disabler">
-                ' . $this->icon . (TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Module Disabler' : '') . '
-            </span>
-        ';
+        return $this->buildTab('Module Disabler');
     }
 
 
     public function getPanel() {
 
-        $nonceAttr = TracyDebugger::getNonceAttr();
         $out = '
-        <script' . $nonceAttr . '>
+        <script' . TracyDebugger::getNonceAttr() . '>
             function getSelectedTracyModuleCheckboxes() {
                 var selchbox = [];
                 var inpfields = document.getElementsByName("selectedModules[]");
@@ -102,8 +97,8 @@ class ModuleDisablerPanel extends BasePanel {
         </script>
         ';
 
-        $out .= '<h1>'.$this->icon.' Module Disabler</h1>
-        <div class="tracy-inner">
+        $out .= $this->buildPanelHeader('Module Disabler');
+        $out .= $this->openPanel() . '
             <fieldset>';
                 if(count(TracyDebugger::$disabableModules) > 0 && $this->wire('config')->advanced && $this->wire('config')->debug) {
                     $out .= '<legend><p>Temporarily disable autoload modules. Check to disable.</p><p><strong>Restore Instructions</strong><br />If your site is broken after disabling modules you can restore your modules by <strong>either one</strong> of the following methods:<ul><li>Copy "/site/assets/cache/TracyDebugger/restoremodules.php" to the root of your site and load it in your browser<br /><strong>OR</strong></li><li>Execute "/site/assets/cache/TracyDebugger/modulesBackup.sql" manually (via PHPMyAdmin, the command line, etc)</li></ul></p></legend><br />';
@@ -134,12 +129,7 @@ class ModuleDisablerPanel extends BasePanel {
 
             $out .= '</fieldset>';
 
-            $out .= TracyDebugger::generatePanelFooter('moduleDisabler', Debugger::timer('moduleDisabler'), strlen($out));
-
-        $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+            return $this->closePanel($out, 'moduleDisabler');
     }
 
 }

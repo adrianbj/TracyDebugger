@@ -20,7 +20,7 @@ class RequestLoggerPanel extends BasePanel {
     private $requestLoggerPages = array();
 
     // the svg icon shown in the bar and in the panel header
-    private $icon = '';
+    protected $icon = '';
 
     /**
      * define the tab for the panel in the debug bar
@@ -29,15 +29,7 @@ class RequestLoggerPanel extends BasePanel {
         if(TracyDebugger::isAdditionalBar()) return;
         Debugger::timer($this->name);
 
-        if(TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') && $this->wire('process') == 'ProcessPageEdit') {
-            $this->p = $this->wire('process')->getPage();
-            if($this->p instanceof NullPage) {
-                $this->p = $this->wire('pages')->get((int) $this->wire('input')->get('id'));
-            }
-        }
-        else {
-            $this->p = $this->wire('page');
-        }
+        $this->p = $this->getReferencePage(array('ProcessPageEdit'));
 
         $this->requestData = $this->p->getRequestData('all', true); // true forces array
         $this->requestLoggerPages = TracyDebugger::getDataValue('requestLoggerPages') ?: array();
@@ -64,16 +56,13 @@ class RequestLoggerPanel extends BasePanel {
      */
     public function getPanel() {
 
-        $out = "<h1>{$this->icon} {$this->label}</h1>";
-        $out .= '<span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'' . $this->className . '\')">⛶</a></span></span>';
+        $out = $this->buildPanelHeader($this->label, true);
 
         // panel body
-        $out .= '<div class="tracy-inner">';
+        $out .= $this->openPanel();
             $out .= $this->generateRequestDumps();
-            $out .= TracyDebugger::generatePanelFooter($this->name, Debugger::timer($this->name), strlen($out), 'requestLoggerPanel');
-        $out .= '<br /></div>';
-
-        return parent::loadResources() . $out;
+        $out .= '<br />';
+        return $this->closePanel($out, $this->name, 'requestLoggerPanel');
     }
 
     /**
@@ -111,7 +100,7 @@ class RequestLoggerPanel extends BasePanel {
             if(!in_array($this->p->id, $this->requestLoggerPages)) {
                 $out .= '
                 <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'">
-                    <input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />
+                    '.$this->csrfInput().'
                     <input type="hidden" name="requestLoggerLogPageId" value="'.$this->p->id.'" />
                     <input type="submit" name="tracyRequestLoggerEnableLogging" value="Enable logging on this page" />
                 </form>
@@ -120,7 +109,7 @@ class RequestLoggerPanel extends BasePanel {
             else {
                 $out .= '
                 <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to disable logging on this page and clear logged data?\');">
-                    <input type="hidden" name="'.$this->wire('session')->CSRF->getTokenName().'" value="'.$this->wire('session')->CSRF->getTokenValue().'" />
+                    '.$this->csrfInput().'
                     <input type="hidden" name="requestLoggerLogPageId" value="'.$this->p->id.'" />
                     <input type="submit" name="tracyRequestLoggerDisableLogging" value="Disable logging & clear data" />
                 </form>
