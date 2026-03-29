@@ -294,7 +294,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "apiExplorerShowDescription" => 1,
             "apiExplorerToggleDocComment" => null,
             "apiExplorerModuleClasses" => array(),
-            "requestInfoPanelSections" => array('moduleSettings', 'templateSettings', 'fieldSettings', 'pageInfo', 'redirectInfo', 'pagePermissions', 'languageInfo', 'templateInfo', 'pageMeta', 'fieldsListValues', 'serverRequest', 'inputGet', 'inputPost', 'inputCookie', 'session', 'editLinks'),
+            "requestInfoPanelSections" => array('moduleSettings', 'templateSettings', 'fieldSettings', 'fieldExportCode', 'pageInfo', 'redirectInfo', 'pagePermissions', 'languageInfo', 'templateInfo', 'pageMeta', 'fieldsListValues', 'serverRequest', 'inputGet', 'inputPost', 'inputCookie', 'session', 'editLinks'),
             "processwireInfoPanelSections" => array('versionsList', 'adminLinks', 'documentationLinks', 'gotoId', 'processWireWebsiteSearch'),
             "debugModePanelSections" => array('pagesLoaded', 'modulesLoaded', 'hooks', 'databaseQueries', 'selectorQueries', 'timers', 'user', 'cache', 'autoload'),
             "diagnosticsPanelSections" => array('filesystemFolders'),
