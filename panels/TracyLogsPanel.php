@@ -13,12 +13,6 @@ class TracyLogsPanel extends BasePanel {
 
         Debugger::timer('tracyLogs');
 
-        // end for each section
-        $sectionEnd = '
-                    </tbody>
-                </table>
-            </div>';
-
         /**
          * Tracy log panel sections
          */
@@ -130,7 +124,7 @@ class TracyLogsPanel extends BasePanel {
                         "<td>".TracyDebugger::createEditorLink($this->wire('config')->paths->logs . 'tracy/' . $item['log'] . '.log', 1, (strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText), 'View in your code editor').(TracyDebugger::isJson($item['text']) ? "\n".\Tracy\Dumper::toHtml(json_decode($item['text'], true)) : '')."</td>" .
                     "</tr>";
                 }
-                $this->logEntries .= $sectionEnd;
+                $this->logEntries .= $this->sectionEnd();
             }
         }
 
@@ -156,25 +150,6 @@ class TracyLogsPanel extends BasePanel {
 
         return $this->buildTab('Tracy Logs');
     }
-
-    protected function sectionHeader($columnNames = array()) {
-        $out = '
-        <div>
-            <table>
-                <thead>
-                    <tr>';
-        foreach($columnNames as $columnName) {
-            $out .= '<th>'.$columnName.'</th>';
-        }
-
-        $out .= '
-                    </tr>
-                </thead>
-            <tbody>
-        ';
-        return $out;
-    }
-
 
     /**
      * Returns instance of FileLog for given log name

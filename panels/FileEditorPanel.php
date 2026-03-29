@@ -17,7 +17,7 @@ class FileEditorPanel extends BasePanel {
 
         $this->p = $this->getReferencePage();
 
-        $this->tracyFileEditorFilePath = $this->wire('input')->cookie->tracyFileEditorFilePath ?: str_replace($this->wire('config')->paths->root, '', $this->p->template->filename);
+        $this->tracyFileEditorFilePath = $this->wire('input')->cookie->tracyFileEditorFilePath ?: $this->stripRootPath($this->p->template->filename, '');
 
         if(isset($_POST['tracyTestTemplateCode']) || $this->wire('input')->cookie->tracyTestFileEditor) {
             $iconColor = TracyDebugger::COLOR_ALERT;
@@ -530,7 +530,7 @@ HTML;
             foreach($filesArray as $file) {
                 $fileName = $this->toUTF8($file, $this->encoding);
 
-                $parentDir = "/" . str_replace($this->wire('config')->paths->root, "", $directory . "/"); // directory is without trailing slash
+                $parentDir = "/" . $this->stripRootPath($directory . "/", ""); // directory is without trailing slash
                 $dirPath = $this->toUTF8("$parentDir/$file/", $this->encoding);
                 $dirPath = str_replace("//", "/", $dirPath);
 
@@ -548,7 +548,7 @@ HTML;
                     $link = trim($link, '/');
                     //$link = $this->wire('config')->paths->templates . $link;
                     $link = str_replace('//', '/', $link);
-                    $link = str_replace($this->wire('config')->paths->root, '', $link);
+                    $link = $this->stripRootPath($link, '');
                     $safeFileName = htmlspecialchars($fileName ?? '', ENT_QUOTES, 'UTF-8');
                     if(in_array($ext, array("jpg", "png", "gif", "bmp"))) {
                         // images

@@ -29,24 +29,6 @@ class RequestInfoPanel extends BasePanel {
             return $this->buildTab('Request Info', 'Request');
     }
 
-    protected function sectionHeader($columnNames = array()) {
-        $out = '
-        <div>
-            <table>
-                <thead>
-                    <tr>';
-        foreach($columnNames as $columnName) {
-            $out .= '<th>'.$columnName.'</th>';
-        }
-
-        $out .= '
-                    </tr>
-                </thead>
-            <tbody>
-        ';
-        return $out;
-    }
-
     public function getPanel() {
 
         $adminerAvailable = false;
@@ -65,12 +47,6 @@ class RequestInfoPanel extends BasePanel {
         $isPwPage = $_SERVER['SCRIPT_NAME'] == $this->wire('config')->urls->root . 'index.php' ? true : false;
 
         $panelSections = TracyDebugger::getDataValue('requestInfoPanelSections');
-
-        // end for each section
-        $sectionEnd = '
-                    </tbody>
-                </table>
-            </div>';
 
         $userLang = $this->wire('user')->language;
 
@@ -566,7 +542,7 @@ class RequestInfoPanel extends BasePanel {
                 }
                 $pagePermissions .= '</tr>';
             }
-            $pagePermissions .= $sectionEnd;
+            $pagePermissions .= $this->sectionEnd();
 
             $this->wire('users')->setCurrentUser($currentUser);
         }
@@ -665,7 +641,7 @@ class RequestInfoPanel extends BasePanel {
                     </tr>
                     <tr>
                         <td>filename</td>
-                        <td>'.(isset($templateFilePath) ? TracyDebugger::createEditorLink($templateFilePath, 1, str_replace($this->wire('config')->paths->root, '/', $templateFilePath), 'Edit Template File') . '<br />
+                        <td>'.(isset($templateFilePath) ? TracyDebugger::createEditorLink($templateFilePath, 1, $this->stripRootPath($templateFilePath), 'Edit Template File') . '<br />
                             modified: ' . date("Y-m-d H:i:s", filemtime($templateFilePath)) . '<br />' .
                             (isset($owner) && !is_bool($owner) && isset($group) && !is_bool($group) ? 'user/group: ' . $owner['name'].":".$group['name'] .'<br />' : '') . '
                             permissions: ' . $permission
@@ -737,7 +713,7 @@ class RequestInfoPanel extends BasePanel {
                     "</tr>";
                 }
             }
-            $pageMeta .= $sectionEnd;
+            $pageMeta .= $this->sectionEnd();
         }
 
 
@@ -783,7 +759,7 @@ class RequestInfoPanel extends BasePanel {
                     $fieldsListValues .= "<td>".$settings."</td>" .
                     "</tr>";
             }
-            $fieldsListValues .= $sectionEnd;
+            $fieldsListValues .= $this->sectionEnd();
         }
 
 
@@ -829,7 +805,7 @@ class RequestInfoPanel extends BasePanel {
                     if(is_array($value)) $value = print_r($value, true);
                     ${"input$typeuc"} .= "<tr><td>" . $this->wire('sanitizer')->entities($key) . "</td><td><pre>" . $this->wire('sanitizer')->entities($value) . "</pre></td></tr>";
                 }
-                ${"input$typeuc"} .= $sectionEnd;
+                ${"input$typeuc"} .= $this->sectionEnd();
             }
         }
 
@@ -854,7 +830,7 @@ class RequestInfoPanel extends BasePanel {
                 if(is_array($value)) $value = print_r($value, true);
                 $session .= "<tr><td>".$this->wire('sanitizer')->entities($key)."</td><td><pre>" . $this->wire('sanitizer')->entities($value) . "</pre></td></tr>";
             }
-            $session .= $sectionEnd;
+            $session .= $this->sectionEnd();
         }
 
 

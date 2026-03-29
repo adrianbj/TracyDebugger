@@ -1124,7 +1124,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 Debugger::$editor = 'tracy://?f=%file&l=%line';
                 static::$onlineFileEditorDirPath = $this->wire('config')->paths->root;
             }
-            $mappingReplacements[$compilerCachePath . str_replace($this->wire('config')->paths->root,'' , static::$onlineFileEditorDirPath)] = '';
+            $mappingReplacements[$compilerCachePath . self::stripRootPath(static::$onlineFileEditorDirPath, '')] = '';
             $mappingReplacements[static::$onlineFileEditorDirPath] = '';
         }
         else {
@@ -2932,6 +2932,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static function forwardSlashPath($path) {
         if(DIRECTORY_SEPARATOR != '/') $path = str_replace(DIRECTORY_SEPARATOR, '/', $path);
         return $path;
+    }
+
+
+    /**
+     * Strip the site root path from an absolute path.
+     *
+     * @param string $path The absolute file path
+     * @param string $prefix What to replace the root with (default '/')
+     * @return string
+     */
+    public static function stripRootPath($path, $prefix = '/') {
+        return str_replace(wire('config')->paths->root, $prefix, $path);
     }
 
 

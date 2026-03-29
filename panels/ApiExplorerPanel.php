@@ -175,7 +175,7 @@ HTML;
             <td colspan="'.(TracyDebugger::getDataValue('apiExplorerShowDescription') ? '3' : '2').'"><a '.$this->newTab.' href="'.$this->apiBaseUrl.$this->convertNamesToUrls(str_replace('$', '', $className)).'/">' . $className . '</a></td>';
 
         $out .= '
-                <td>'.TracyDebugger::createEditorLink(TracyDebugger::removeCompilerFromPath($filename), 1, str_replace($this->wire('config')->paths->root, '', '/'.TracyDebugger::removeCompilerFromPath($filename))).'</td>
+                <td>'.TracyDebugger::createEditorLink(TracyDebugger::removeCompilerFromPath($filename), 1, $this->stripRootPath('/'.TracyDebugger::removeCompilerFromPath($filename), '')).'</td>
             </tr>';
 
         if(empty($items)) {

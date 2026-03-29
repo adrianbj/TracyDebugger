@@ -108,4 +108,35 @@ abstract class BasePanel extends WireData implements IBarPanel {
         return $this->wire('page');
     }
 
+    /**
+     * Build a section header with a table and column headings.
+     *
+     * @param array $columnNames Column heading labels
+     * @param string $thStyle Optional inline style for th elements
+     * @return string
+     */
+    protected function sectionEnd() {
+        return '</tbody></table></div>';
+    }
+
+    protected function sectionHeader($columnNames = array()) {
+        $out = '<div><table><thead><tr>';
+        foreach($columnNames as $columnName) {
+            $out .= '<th>' . $columnName . '</th>';
+        }
+        $out .= '</tr></thead><tbody>';
+        return $out;
+    }
+
+    /**
+     * Strip the site root path from an absolute path.
+     *
+     * @param string $path The absolute file path
+     * @param string $prefix What to replace the root with (default '/')
+     * @return string
+     */
+    protected function stripRootPath($path, $prefix = '/') {
+        return TracyDebugger::stripRootPath($path, $prefix);
+    }
+
 }

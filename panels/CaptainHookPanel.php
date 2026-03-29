@@ -69,7 +69,7 @@ HTML;
         $sections = array();
         foreach($hooks as $file => $info) {
             $name = pathinfo($info['filename'], PATHINFO_FILENAME);
-            $label = str_replace($this->wire('config')->paths->root, '', $info['filename']);
+            $label = $this->stripRootPath($info['filename'], '');
             $label = TracyDebugger::forwardSlashPath($label);
             $path = parse_url($label, PHP_URL_PATH);
             $segments = explode('/', $path);

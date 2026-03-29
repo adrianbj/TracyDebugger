@@ -62,24 +62,6 @@ class ProcesswireInfoPanel extends BasePanel {
             return $this->buildTab('ProcessWire Info & Links', 'ProcessWire');
     }
 
-    protected function sectionHeader($columnNames = array()) {
-        $out = '
-        <div>
-            <table>
-                <thead>
-                    <tr>';
-        foreach($columnNames as $columnName) {
-            $out .= '<th>'.$columnName.'</th>';
-        }
-
-        $out .= '
-                    </tr>
-                </thead>
-            <tbody>
-        ';
-        return $out;
-    }
-
     public function getPanel() {
 
         $out = '';
@@ -163,12 +145,6 @@ HTML;
 HTML;
         }
 
-        // end for each section
-        $sectionEnd = '
-                    </tbody>
-                </table>
-            </div>';
-
         $userLang = $this->wire('user')->language;
 
         /**
@@ -192,7 +168,7 @@ HTML;
                 $value = Dumper::toHtml($value, $options);
                 $configData .= "<tr><td>".$this->wire('sanitizer')->entities($key)."</td><td>" . $value . "</td></tr>";
             }
-            $configData .= $sectionEnd;
+            $configData .= $this->sectionEnd();
         }
 
 

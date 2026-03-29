@@ -31,24 +31,6 @@ class DebugModePanel extends BasePanel {
     }
 
 
-    protected function sectionHeader($columnNames = array()) {
-        $out = '
-        <div>
-            <table>
-                <thead>
-                    <tr>';
-        foreach($columnNames as $columnName) {
-            $out .= '<th>'.$columnName.'</th>';
-        }
-
-        $out .= '
-                    </tr>
-                </thead>
-            <tbody>
-        ';
-        return $out;
-    }
-
     public function getPanel() {
 
         if($this->wire('modules')->isInstalled('ProcessTracyAdminer') && in_array('adminer', TracyDebugger::$showPanels)) {
@@ -64,12 +46,6 @@ class DebugModePanel extends BasePanel {
         $p = $this->getReferencePage();
 
         $panelSections = TracyDebugger::getDataValue('debugModePanelSections');
-
-        // end for each section
-        $sectionEnd = '
-                    </tbody>
-                </table>
-            </div>';
 
         $isAdditionalBar = TracyDebugger::isAdditionalBar();
         $out = "
@@ -123,7 +99,7 @@ class DebugModePanel extends BasePanel {
                         "<td>$p->_debug_loader</td>" .
                         "</tr>";
                 }
-                $pagesLoaded .= $sectionEnd;
+                $pagesLoaded .= $this->sectionEnd();
             }
 
 
@@ -145,7 +121,7 @@ class DebugModePanel extends BasePanel {
                     $modulesLoaded .= "<td>".$info['title']."</td>";
                     $modulesLoaded .= "</tr>";
                 }
-                $modulesLoaded .= $sectionEnd;
+                $modulesLoaded .= $this->sectionEnd();
             }
 
             if(in_array('hooks', $panelSections)) {
@@ -198,7 +174,7 @@ class DebugModePanel extends BasePanel {
                     $hooksCalled .= "<td>" . $hook['options']['priority'] . "</td>";
                     $hooksCalled .= "</tr>";
                 }
-                $hooksCalled .= $sectionEnd;
+                $hooksCalled .= $this->sectionEnd();
             }
 
             if($debugMode && in_array('databaseQueries', $panelSections)) {
@@ -211,7 +187,7 @@ class DebugModePanel extends BasePanel {
                     $sql = $this->wire('sanitizer')->entities1($sql);
                     $databaseQueries .= "\n<tr><td>$n</td><td style='max-width: 400px' class='tracy-force-break'>".$sql."</td></tr>";
                 }
-                $databaseQueries .= $sectionEnd;
+                $databaseQueries .= $this->sectionEnd();
             }
 
             if(in_array('selectorQueries', $panelSections)) {
@@ -243,7 +219,7 @@ class DebugModePanel extends BasePanel {
                     if(defined('\Tracy\Dumper::ITEMS')) array_push($options, array(Dumper::ITEMS => TracyDebugger::getDataValue('maxItems')));
                     $selectorQueries .= "\n<tr><td>$n</td><td style='max-width: 400px' class='tracy-force-break'>".$selector."</td><td>".$caller."<br />".$backtrace."</td><td style='max-width: 400px' class='tracy-force-break'>".$sqlStr."</td><td>".(isset($query->arguments[1]) ? Dumper::toHtml($query->arguments[1], $options) : '')."</td><td>".($query->arguments[2]*1000)."</td></tr>";
                 }
-                $selectorQueries .= $sectionEnd;
+                $selectorQueries .= $this->sectionEnd();
             }
 
             if($debugMode && in_array('timers', $panelSections)) {
@@ -255,7 +231,7 @@ class DebugModePanel extends BasePanel {
                     $timers_oc++;
                     $timers .= "\n<tr><td>$name</td><td>$timer</td></tr>";
                 }
-                $timers .= $sectionEnd;
+                $timers .= $this->sectionEnd();
             }
 
             if(in_array('user', $panelSections)) {
@@ -319,7 +295,7 @@ class DebugModePanel extends BasePanel {
                     $classFile = $this->wire('sanitizer')->entities($classFile);
                     $autoload .= "<tr><td width='40%'>$className</td><td>$classFile</td></tr>";
                 }
-                $autoload .= $sectionEnd;
+                $autoload .= $this->sectionEnd();
             }
 
 

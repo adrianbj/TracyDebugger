@@ -13,12 +13,6 @@ class ProcesswireLogsPanel extends BasePanel {
 
         Debugger::timer('processwireLogs');
 
-        // end for each section
-        $sectionEnd = '
-                    </tbody>
-                </table>
-            </div>';
-
         /**
          * PW log panel sections
          */
@@ -158,7 +152,7 @@ class ProcesswireLogsPanel extends BasePanel {
                         "<td>".TracyDebugger::createEditorLink($this->wire('config')->paths->logs . $item['log'] . '.txt', 1, (strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText), 'View in your code editor').(TracyDebugger::isJson($item['text']) ? "\n".\Tracy\Dumper::toHtml(json_decode($item['text'], true)) : '')."</td>" .
                     "</tr>";
                 }
-                $this->logEntries .= $sectionEnd;
+                $this->logEntries .= $this->sectionEnd();
             }
         }
 
@@ -180,25 +174,6 @@ class ProcesswireLogsPanel extends BasePanel {
 
         return $this->buildTab('ProcessWire Logs', 'PW Logs');
     }
-
-    protected function sectionHeader($columnNames = array()) {
-        $out = '
-        <div>
-            <table>
-                <thead>
-                    <tr>';
-        foreach($columnNames as $columnName) {
-            $out .= '<th>'.$columnName.'</th>';
-        }
-
-        $out .= '
-                    </tr>
-                </thead>
-            <tbody>
-        ';
-        return $out;
-    }
-
 
     public function getPanel() {
 

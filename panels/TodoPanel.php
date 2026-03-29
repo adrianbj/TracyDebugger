@@ -35,7 +35,7 @@ class TodoPanel extends BasePanel {
                     $this->entries .= "
                         \n<tr>";
                             if($currentFile !== $item['file']) {
-                                $this->entries .= "<td" . ($i==0 ? " rowspan='" . count($files[$file]) . "'" : "") . $thisPageFile . ">" . str_replace($this->wire('config')->paths->root, '', $item['file']) . "</td>";
+                                $this->entries .= "<td" . ($i==0 ? " rowspan='" . count($files[$file]) . "'" : "") . $thisPageFile . ">" . $this->stripRootPath($item['file'], '') . "</td>";
                             }
                             // if "todo" or other matched tag is at start of comment then remove it
                             // otherwise, underline it wherever it is in the comment
@@ -53,9 +53,7 @@ class TodoPanel extends BasePanel {
                 $i++;
             }
         }
-        $this->entries .= '</tbody>
-                </table>
-            </div>';
+        $this->entries .= $this->sectionEnd();
 
         if($thisPageNumEntries > 0) {
             $this->iconColor = TracyDebugger::COLOR_ALERT;
@@ -115,25 +113,6 @@ class TodoPanel extends BasePanel {
             if(isset($match[0][1])) return $todoType;
         }
         return false;
-    }
-
-
-    protected function sectionHeader($columnNames = array()) {
-        $out = '
-        <div>
-            <table>
-                <thead>
-                    <tr>';
-        foreach($columnNames as $columnName) {
-            $out .= '<th>'.$columnName.'</th>';
-        }
-
-        $out .= '
-                    </tr>
-                </thead>
-            <tbody>
-        ';
-        return $out;
     }
 
 

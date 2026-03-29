@@ -5,7 +5,6 @@ use Tracy\Debugger;
 
 class TemplateResourcesPanel extends BasePanel {
 
-    protected $sectionEnd;
     protected $variables = array();
     protected $allResources = array();
     protected $resourceCounts = array();
@@ -18,11 +17,7 @@ class TemplateResourcesPanel extends BasePanel {
         if(TracyDebugger::isAdditionalBar()) return;
         Debugger::timer('templateResources');
 
-        // end for each section
-        $this->sectionEnd = '
-                    </tbody>
-                </table>
-            </div>';
+
 
         // Included Files
         $functions = array();
@@ -34,10 +29,10 @@ class TemplateResourcesPanel extends BasePanel {
                 $path = TracyDebugger::removeCompilerFromPath($path);
                 $path = TracyDebugger::forwardSlashPath($path);
                 $includedFilesOut .= "\n<tr>" .
-                    '<td>'.TracyDebugger::createEditorLink($path, 1, str_replace($this->wire('config')->paths->root, '/', $path), 'Edit File').'</td>' .
+                    '<td>'.TracyDebugger::createEditorLink($path, 1, $this->stripRootPath($path), 'Edit File').'</td>' .
                     "</tr>";
             }
-            $includedFilesOut .= $this->sectionEnd;
+            $includedFilesOut .= $this->sectionEnd();
         }
         else {
             $includedFilesOut .= 'There are no included files.';
@@ -89,7 +84,7 @@ class TemplateResourcesPanel extends BasePanel {
                             }
                             $this->resourceOutput .= "\n<tr>" .
                                 '<td'.($warn ? ' style="background:'.TracyDebugger::COLOR_WARN.'"' : '').'>'.TracyDebugger::createEditorLink($path, $details['line'], $name).'</td>' .
-                                '<td>'.str_replace($this->wire('config')->paths->root, '/', $path).'</td>' .
+                                '<td>'.$this->stripRootPath($path).'</td>' .
                                 '<td>'.$details['line'].'</td>' .
                                 "</tr>";
                         }
@@ -105,7 +100,7 @@ class TemplateResourcesPanel extends BasePanel {
                         "</tr>";
                 }
             }
-            $this->resourceOutput .= $this->sectionEnd;
+            $this->resourceOutput .= $this->sectionEnd();
         }
         else {
             $this->resourceOutput .= 'There are no defined template file functions.';
@@ -120,11 +115,11 @@ class TemplateResourcesPanel extends BasePanel {
             if(!in_array($path, array_map(array(__NAMESPACE__ . '\TracyDebugger', 'removeCompilerFromPath'), TracyDebugger::$includedFiles))) {
                 $path = TracyDebugger::forwardSlashPath($path);
                 $this->resourceOutput .= "\n<tr>" .
-                    '<td>'.TracyDebugger::createEditorLink($path, 1, str_replace($this->wire('config')->paths->root, '/', $path), 'Edit File').'</td>' .
+                    '<td>'.TracyDebugger::createEditorLink($path, 1, $this->stripRootPath($path), 'Edit File').'</td>' .
                     "</tr>";
             }
         }
-        $this->resourceOutput .= $this->sectionEnd;
+        $this->resourceOutput .= $this->sectionEnd();
 
 
         return '
@@ -134,25 +129,6 @@ class TemplateResourcesPanel extends BasePanel {
             </svg>' . (TracyDebugger::getDataValue('showPanelLabels') ? 'Template Resources' : '') . '
         </span>
         ';
-    }
-
-
-    protected function sectionHeader($columnNames = array()) {
-        $out = '
-        <div>
-            <table>
-                <thead>
-                    <tr>';
-        foreach($columnNames as $columnName) {
-            $out .= '<th>'.$columnName.'</th>';
-        }
-
-        $out .= '
-                    </tr>
-                </thead>
-            <tbody>
-        ';
-        return $out;
     }
 
 
@@ -200,7 +176,7 @@ class TemplateResourcesPanel extends BasePanel {
                 foreach($this->variables['$'.$var] as $item) {
                     $path = TracyDebugger::removeCompilerFromPath($item['file']);
                     $path = TracyDebugger::forwardSlashPath($path);
-                    $fileLines[$var][str_replace($this->wire('config')->paths->root, '/', $path)]['lines'][] = TracyDebugger::createEditorLink($path, $item['line'], $item['line']);
+                    $fileLines[$var][$this->stripRootPath($path)]['lines'][] = TracyDebugger::createEditorLink($path, $item['line'], $item['line']);
                     $i++;
                 }
                 $currentFile = null;
@@ -228,7 +204,7 @@ class TemplateResourcesPanel extends BasePanel {
                 if($type == 'var') $out .= isset($varOut) ? $varOut : '<td></td>';
                 $out .= "</tr>";
         }
-        $out .= $this->sectionEnd;
+        $out .= $this->sectionEnd();
         return $out;
     }
 

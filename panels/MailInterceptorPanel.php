@@ -191,7 +191,7 @@ class MailInterceptorPanel extends BasePanel {
         if(!is_array($attachments)) $attachments = array($attachments);
         foreach($attachments as $key => $val) {
             $attachment = is_numeric($key) ? $val : $key;
-            $styledAttachments .= '<a href="'.str_replace($this->wire('config')->paths->root, $this->wire('config')->urls->root, $attachment).'">'.str_replace($this->wire('config')->paths->root, '/', $attachment) . '</a><br />';
+            $styledAttachments .= '<a href="'.str_replace($this->wire('config')->paths->root, $this->wire('config')->urls->root, $attachment).'">'.$this->stripRootPath($attachment) . '</a><br />';
         }
         return $styledAttachments;
     }

@@ -1215,7 +1215,7 @@ class DiagnosticsPanel extends BasePanel {
                 $needs_world_access = (!$puser_matches_owner && !$puser_matches_group);
             }
 
-            $asset['shortpath']   = str_replace($config->paths->root, '/', $asset['path']);
+            $asset['shortpath']   = TracyDebugger::stripRootPath($asset['path']);
             $asset['name']        = $name;
             $asset['exists']      = $exists;
             $asset['int_perms']   = $perms;
@@ -1247,25 +1247,6 @@ class DiagnosticsPanel extends BasePanel {
     /**
      *
      */
-    protected function sectionHeader($columnNames = array()) {
-        $out = '
-        <div>
-            <table>
-                <thead>
-                    <tr>';
-                        foreach($columnNames as $columnName) {
-                            $out .= '<th style="white-space:nowrap; padding:0.5em !important; line-height:1.3 !important">'.$columnName.'</th>';
-                        }
-                    $out .= '
-                    </tr>
-                </thead>
-            <tbody>
-        ';
-        return $out;
-    }
-
-
-
     /**
      *
      */
@@ -1383,11 +1364,6 @@ class DiagnosticsPanel extends BasePanel {
         $panelSections = TracyDebugger::getDataValue('diagnosticsPanelSections');
         $is_local  = TracyDebugger::$isLocal;
 
-        // end for each section
-        $sectionEnd = '
-                    </tbody>
-                </table>
-            </div>';
 
 
         // Load all the panel sections
@@ -1468,7 +1444,7 @@ class DiagnosticsPanel extends BasePanel {
                     "</tr>";
             }
 
-            $dbInfo .= $sectionEnd;
+            $dbInfo .= $this->sectionEnd();
 
             $out .= '
             <a href="#" rel="#mysqlinfo" class="tracy-toggle '.($i>0 ? ' tracy-collapsed' : '').'">MySQL Info</a>
