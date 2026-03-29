@@ -61,10 +61,6 @@ class RequestInfoPanel extends BasePanel {
 
         $p = $this->getReferencePage();
 
-        if(is_null($p)) {
-            $p = $this->wire('page');
-        }
-
         // check if request is to a PW page - otherwise it's maybe an AJAX request to an external script
         $isPwPage = $_SERVER['SCRIPT_NAME'] == $this->wire('config')->urls->root . 'index.php' ? true : false;
 

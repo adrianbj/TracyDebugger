@@ -97,8 +97,11 @@ abstract class BasePanel extends WireData implements IBarPanel {
             && in_array((string)$this->wire('process'), $processTypes)
         ) {
             $p = $this->wire('process')->getPage();
-            if($p instanceof NullPage) {
+            if(!$p || $p instanceof NullPage) {
                 $p = $this->wire('pages')->get((int) $this->wire('input')->get('id'));
+            }
+            if(!$p || $p instanceof NullPage) {
+                return $this->wire('page');
             }
             return $p;
         }
