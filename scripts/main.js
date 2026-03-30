@@ -65,6 +65,7 @@ document.addEventListener('click', function(e) {
 }, true);
 
 document.addEventListener('submit', function(e) {
+    if(!e.target.closest || !e.target.closest('.tracy-panel')) return;
     var confirm_msg = e.target.getAttribute('data-confirm');
     if(confirm_msg) {
         if(!confirm(confirm_msg)) {
