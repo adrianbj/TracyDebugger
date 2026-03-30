@@ -65,9 +65,9 @@ document.addEventListener('click', function(e) {
 }, true);
 
 document.addEventListener('submit', function(e) {
-    var form = e.target.closest('form[data-confirm]');
-    if(form) {
-        if(!confirm(form.getAttribute('data-confirm'))) {
+    var confirm_msg = e.target.getAttribute('data-confirm');
+    if(confirm_msg) {
+        if(!confirm(confirm_msg)) {
             e.preventDefault();
         }
     }
