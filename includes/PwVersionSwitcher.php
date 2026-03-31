@@ -87,12 +87,16 @@ class PwVersionSwitcher {
         if($module->wire('input') && $module->wire('input')->post->tracyPwVersion && $module->wire('input')->post->tracyPwVersion != $module->wire('config')->version
             && (TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser)) {
 
+            $rootPath = $module->wire('config')->paths->root;
+
+            // Don't re-swap if a revert just occurred or is in progress
+            // (e.g. browser reload resends the POST data after a failed switch)
+            if(file_exists($rootPath . '.tracy-pw-reverted') || file_exists($rootPath . '.tracy-pw-revert')) return;
+
             $targetVersion = $module->wire('input')->post->tracyPwVersion;
 
             // validate version format (digits and dots only)
             if(!preg_match('/^\d+(\.\d+)*$/', $targetVersion)) return;
-
-            $rootPath = $module->wire('config')->paths->root;
             $currentVersion = $module->wire('config')->version;
 
             // pre-validate: target wire directory must exist before we move anything
@@ -187,8 +191,8 @@ class PwVersionSwitcher {
  * Revert triggers (two independent mechanisms):
  *
  * 1. IMMEDIATE — via shutdown function: if the new version causes a PHP fatal
- *    error (E_ERROR, E_PARSE, etc.), the shutdown function fires and reverts
- *    before the next request.
+ *    error (E_ERROR, E_PARSE, etc.) or an HTTP 500+ response, the shutdown
+ *    function fires and reverts before the next request.
  *
  * 2. ATTEMPTED FLAG — if TracyDebugger's init() doesn't clean up the marker
  *    within 1 request, the version is broken (e.g. deprecation warnings flood
@@ -287,17 +291,24 @@ elseif(file_exists($tracyRevertMarker)) {
             // PHP environments — it writes zero bytes and has minimal failure modes
             @touch($tracyAttemptedFlag);
 
-            // FATAL ERROR TRIGGER: catch immediate crashes on this first request
+            // FATAL/500 ERROR TRIGGER: catch immediate crashes on this first request
             register_shutdown_function(function() use ($tracyRevertData, $tracyRevertMarker, $tracyAttemptedFlag, $tracySafeRename, $tracyDoRevert) {
                 // only fire if marker still exists (init() cleanup deletes it on success)
                 if(!file_exists($tracyRevertMarker)) return;
                 $error = error_get_last();
-                if($error && in_array($error['type'], array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR))) {
-                    $tracyDoRevert($tracyRevertData, $tracyRevertMarker, $tracyAttemptedFlag, $tracySafeRename,
-                        'Fatal error: ' . (isset($error['message']) ? $error['message'] : 'unknown') .
-                        (isset($error['file']) ? ' in ' . $error['file'] : '') .
-                        (isset($error['line']) ? ' on line ' . $error['line'] : '')
-                    );
+                $httpCode = http_response_code();
+                $isFatal = $error && in_array($error['type'], array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR));
+                $isServerError = $httpCode !== false && $httpCode >= 500;
+                if($isFatal || $isServerError) {
+                    if($isFatal) {
+                        $reason = 'Fatal error: ' . (isset($error['message']) ? $error['message'] : 'unknown') .
+                            (isset($error['file']) ? ' in ' . $error['file'] : '') .
+                            (isset($error['line']) ? ' on line ' . $error['line'] : '');
+                    } else {
+                        $reason = 'HTTP ' . $httpCode . ' error' .
+                            ($error ? ': ' . $error['message'] : '');
+                    }
+                    $tracyDoRevert($tracyRevertData, $tracyRevertMarker, $tracyAttemptedFlag, $tracySafeRename, $reason);
                 }
             });
         }
