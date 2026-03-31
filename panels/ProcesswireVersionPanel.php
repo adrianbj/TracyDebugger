@@ -59,7 +59,7 @@ class ProcesswireVersionPanel extends BasePanel {
         $out = $this->buildPanelHeader('ProcessWire Version');
         $out .= $this->openPanel() . '
             <fieldset>
-                <legend>Choose from available versions.<br />If there are any fatal errors, reload the page and the original version will be restored.</legend><br />';
+                <legend>Choose from available versions.<br />If there are any errors, navigate to the page URL again (don\'t use browser reload) and the original version will be automatically restored.</legend><br />';
                 if(count($this->versions) <= 1) {
                     $out .= '<p>No alternative versions found. Place versioned wire directories (e.g. <code>.wire-3.0.200</code>) in your site root to enable version switching.</p>';
                 }
