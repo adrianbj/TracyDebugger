@@ -1,3 +1,4 @@
+<?php namespace ProcessWire;
 // Post processor for ProcessWire Logs panel - delete all ProcessWire log files
 // PROCESSWIRE LOGS
 // delete ProcessWire logs if requested

@@ -1,3 +1,4 @@
+<?php namespace ProcessWire;
 // Post processor for Page Recorder panel - trash or clear recorded pages
 // PAGE RECORDER
 // trash / clear recorded pages if requested

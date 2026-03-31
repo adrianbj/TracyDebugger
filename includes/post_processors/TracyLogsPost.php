@@ -1,3 +1,4 @@
+<?php namespace ProcessWire;
 // Post processor for Tracy Logs panel - delete all Tracy log files
 // TRACY LOGS
 // delete Tracy logs if requested

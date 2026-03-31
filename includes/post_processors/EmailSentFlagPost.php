@@ -1,3 +1,4 @@
+<?php namespace ProcessWire;
 // Post processor for Email Sent Flag - clear the email-sent flag and show warning if it exists
 // notify user about email sent flag and provide option to clear it
 $emailSentPath = $this->wire('config')->paths->logs.'tracy/email-sent';

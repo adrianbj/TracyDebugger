@@ -1,3 +1,4 @@
+<?php namespace ProcessWire;
 // Post processor for Request Logger panel - enable/disable page logging
 // REQUEST LOGGER
 // enable/disable page logging

@@ -1,3 +1,4 @@
+<?php namespace ProcessWire;
 // Post processor for User Switcher panel - session management, logout, revert, switch user
 
         // USER SWITCHER

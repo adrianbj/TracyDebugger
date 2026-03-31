@@ -1,3 +1,4 @@
+<?php namespace ProcessWire;
 // Post processor for Page Files panel - delete orphaned and missing page files
 // PAGE FILES
 // delete orphaned files if requested

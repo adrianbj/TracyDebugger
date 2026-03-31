@@ -1,3 +1,4 @@
+<?php namespace ProcessWire;
 // Post processor for Admin Tools panel - delete children, language, template, field, change field type, uninstall module
 // ADMIN TOOLS
 if(static::$allowedSuperuser && ($this->wire('input')->post->deleteChildren || $this->wire('input')->post->deleteLanguage || $this->wire('input')->post->deleteTemplate || $this->wire('input')->post->deleteField || $this->wire('input')->post->changeFieldType || $this->wire('input')->post->uninstallModule) && $this->wire('session')->CSRF->validate()) {

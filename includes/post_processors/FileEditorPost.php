@@ -1,3 +1,4 @@
+<?php namespace ProcessWire;
 // Post processor for File Editor panel - test, save, restore template/file code
 
             // FILE/TEMPLATE EDITOR

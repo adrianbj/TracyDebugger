@@ -1,3 +1,4 @@
+<?php namespace ProcessWire;
 // Post processor for Language Switcher panel - switch, reset, and persist language selection
 
         // LANGUAGE SWITCHER PANEL
