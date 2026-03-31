@@ -742,27 +742,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
             // REQUEST LOGGER
-            // enable/disable page logging
-            if(($this->wire('input')->post->tracyRequestLoggerEnableLogging || $this->wire('input')->post->tracyRequestLoggerDisableLogging) && $this->wire('session')->CSRF->validate()) {
-                $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
-                if($this->wire('input')->post->tracyRequestLoggerEnableLogging) {
-                    if(!isset($configData['requestLoggerPages'])) $configData['requestLoggerPages'] = array();
-                    array_push($configData['requestLoggerPages'], $this->wire('input')->post->requestLoggerLogPageId);
-                }
-                else {
-                    if(($key = array_search($this->wire('input')->post->requestLoggerLogPageId, $configData['requestLoggerPages'])) !== false) {
-                        unset($configData['requestLoggerPages'][$key]);
-                    }
-                    $data = $this->wire('cache')->get("tracyRequestLogger_id_*_page_".$this->wire('input')->post->requestLoggerLogPageId);
-                    if(count($data) > 0) {
-                        foreach($data as $id => $datum) {
-                            $this->wire('cache')->delete($id);
-                        }
-                    }
-                }
-                $this->wire('modules')->saveModuleConfigData($this, $configData);
-                $this->wire('session')->redirect($this->httpReferer);
-            }
+            require_once(__DIR__ . '/includes/post_processors/RequestLoggerPost.php');
 
 
             if($this->data['recordGuestDumps'] || $this->wire('input')->cookie->tracyGuestDumps) {
@@ -871,147 +851,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
             // PAGE FILES
-            // delete orphaned files if requested
-            if($this->wire('input')->post->deleteOrphanFiles && $this->wire('input')->post->orphanPaths && $this->wire('session')->CSRF->validate()) {
-                $rootPath = $this->wire('config')->paths->root;
-                foreach(explode('|', $this->wire('input')->post->orphanPaths) as $filePath) {
-                    $realPath = realpath($filePath);
-                    if($realPath !== false && strpos($realPath, $rootPath) === 0 && file_exists($realPath)) {
-                        unlink($realPath);
-                    }
-                }
-                $this->wire('session')->redirect($this->httpReferer);
-            }
-            // delete missing pagefiles if requested
-            if($this->wire('input')->post->deleteMissingFiles && $this->wire('input')->post->missingPaths && $this->wire('session')->CSRF->validate()) {
-                $decodedPaths = json_decode(urldecode($this->wire('input')->post->missingPaths), true);
-                if(is_array($decodedPaths)) {
-                    foreach($decodedPaths as $pid => $files) {
-                        $p = $this->wire('pages')->get($pid);
-                        foreach($files as $file) {
-                            $pagefile = $p->{$file['field']}->get(pathinfo($file['filename'], PATHINFO_BASENAME));
-                            $p->{$file['field']}->delete($pagefile);
-                            $p->save($file['field']);
-                        }
-                    }
-                }
-                $this->wire('session')->redirect($this->httpReferer);
-            }
+            require_once(__DIR__ . '/includes/post_processors/PageFilesPost.php');
 
 
             // PAGE RECORDER
-            // trash / clear recorded pages if requested
-            if(($this->wire('input')->post->trashRecordedPages || $this->wire('input')->post->clearRecordedPages) && $this->wire('session')->CSRF->validate()) {
-                if($this->wire('input')->post->trashRecordedPages) {
-                    foreach($this->data['recordedPages'] as $pid) {
-                        $this->wire('pages')->trash($this->wire('pages')->get($pid));
-                    }
-                }
-                $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
-                unset($configData['recordedPages']);
-                $this->wire('modules')->saveModuleConfigData($this, $configData);
-                $this->wire('session')->redirect($this->httpReferer);
-            }
+            require_once(__DIR__ . '/includes/post_processors/PageRecorderPost.php');
 
 
             // ADMIN TOOLS
-            if(static::$allowedSuperuser && ($this->wire('input')->post->deleteChildren || $this->wire('input')->post->deleteLanguage || $this->wire('input')->post->deleteTemplate || $this->wire('input')->post->deleteField || $this->wire('input')->post->changeFieldType || $this->wire('input')->post->uninstallModule) && $this->wire('session')->CSRF->validate()) {
-                // delete children
-                if($this->wire('input')->post->deleteChildren) {
-                    foreach($this->wire('pages')->get((int)$this->wire('input')->post->adminToolsId)->children("include=all") as $child) {
-                        $child->delete(true);
-                    }
-                }
-                // delete language
-                if($this->wire('input')->post->deleteLanguage) {
-                    $lang = $this->wire('pages')->get((int)$this->wire('input')->post->adminToolsId);
-                    $lang_parent = $lang->parent;
-                    $lang->addStatus(Page::statusSystemOverride);
-                    $lang->removeStatus('system');
-                    $lang->save();
-                    $lang->removeStatus(Page::statusSystem);
-                    $lang->save();
-                    $this->wire('pages')->delete($lang);
-                    $this->wire('session')->redirect($lang_parent->url);
-                }
-                // delete template
-                if($this->wire('input')->post->deleteTemplate) {
-                    foreach($this->wire('pages')->find("template=".(int)$this->wire('input')->post->adminToolsId.", include=all") as $p) {
-                        $p->delete();
-                    }
-                    $template = $this->wire('templates')->get((int)$this->wire('input')->post->adminToolsId);
-                    $this->wire('templates')->delete($template);
-                    $templateName = $template->name;
-                    $fieldgroup = $this->wire('fieldgroups')->get($templateName);
-                    if($fieldgroup) $this->wire('fieldgroups')->delete($fieldgroup);
-                    $this->wire('session')->redirect($this->wire('config')->urls->admin);
-                }
-                // delete field
-                if($this->wire('input')->post->deleteField) {
-                    $field = $this->wire('fields')->get((int)$this->wire('input')->post->adminToolsId);
-                    foreach($this->wire('templates') as $template) {
-                        if(!$template->hasField($field)) continue;
-                        $template->fields->remove($field);
-                        $template->fields->save();
-                    }
-                    $this->wire('fields')->delete($field);
-                    $this->wire('session')->redirect($this->wire('config')->urls->admin.'setup/field');
-                }
-                // change field type
-                if($this->wire('input')->post->changeFieldType) {
-                    $field = $this->wire('fields')->get((int)$this->wire('input')->post->adminToolsId);
-                    $field->type = $this->wire('input')->post->changeFieldType;
-                    $field->save();
-                }
-                // uninstall module
-                if($this->wire('input')->post->uninstallModule) {
-                    $moduleName = $this->wire('input')->post->adminToolsName;
-                    $reason = $this->wire('modules')->isUninstallable($moduleName, true);
-                    $class = $this->wire('modules')->getModuleClass($moduleName);
-                    if($reason !== true) {
-                        if(strpos($reason, 'Fieldtype') !== false) {
-                            foreach($this->wire('fields') as $field) {
-                                $fieldtype = wireClassName($field->type, false);
-                                if($fieldtype == $class) {
-                                    foreach($this->wire('templates') as $template) {
-                                        if(!$template->hasField($field)) continue;
-                                        $template->fields->remove($field);
-                                        $template->fields->save();
-                                    }
-                                    $this->wire('fields')->delete($field);
-                                }
-                            }
-                        }
-                        elseif(strpos($reason, 'required') !== false) {
-                            $dependents = $this->wire('modules')->getRequiresForUninstall($class);
-                            foreach($dependents as $dependent) {
-                                $this->wire('modules')->uninstall($dependent);
-                            }
-                        }
-                    }
-                    $this->wire('modules')->uninstall($moduleName);
-                    $this->wire('session')->redirect($this->wire('config')->urls->admin.'module');
-                }
-            }
+            require_once(__DIR__ . '/includes/post_processors/AdminToolsPost.php');
 
-            // notify user about email sent flag and provide option to clear it
-            $emailSentPath = $this->wire('config')->paths->logs.'tracy/email-sent';
-            if($this->wire('input')->post->clearEmailSent || $this->wire('input')->get->clearEmailSent) {
-                if(file_exists($emailSentPath)) {
-                    $removed = unlink($emailSentPath);
-                }
-                if (!isset($removed) || !$removed) {
-                    $this->wire()->error( __('No file to remove'));
-                }
-                else {
-                    $this->wire()->message(__("email-sent file deleted successfully"));
-                    $this->wire('session')->redirect(str_replace(array('?clearEmailSent=1', '&clearEmailSent=1'), '', $this->wire('input')->url(true)));
-                }
-            }
-
-            if(file_exists($emailSentPath)) {
-                $this->wire()->warning('Tracy Debugger "Email Sent" flag has been set. <a href="'.$this->wire('input')->url(true).($this->wire('input')->queryString() ? '&' : '?').'clearEmailSent=1">Clear it</a> to continue receiving further emails', Notice::allowMarkup);
-            }
+            // EMAIL SENT FLAG
+            require_once(__DIR__ . '/includes/post_processors/EmailSentFlagPost.php');
 
             // CONSOLE PANEL CODE INJECTION
             $this->insertCode('init');
@@ -1040,23 +891,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // PROCESSWIRE LOGS
-        // delete ProcessWire logs if requested
-        if($this->wire('input')->post->deleteProcessWireLogs && $this->wire('session')->CSRF->validate()) {
-            $files = glob($this->wire('config')->paths->logs.'*');
-            foreach($files as $file) {
-                if(is_file($file)) {
-                    unlink($file);
-                }
-            }
-        }
+        require_once(__DIR__ . '/includes/post_processors/ProcesswireLogsPost.php');
 
 
         // TRACY LOGS
-        // delete Tracy logs if requested
-        if($this->wire('input')->post->deleteTracyLogs && $this->wire('session')->CSRF->validate()) {
-            wireRmdir($logFolder, true);
-            wireMkdir($logFolder);
-        }
+        require_once(__DIR__ . '/includes/post_processors/TracyLogsPost.php');
 
         // TRACY MODE
         if($this->data['outputMode'] == 'development' || static::$allowedTracyUser === 'development') {
@@ -1760,76 +1599,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
             // FILE/TEMPLATE EDITOR
-            if(static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser) {
-                if($this->wire('input')->post->fileEditorFilePath && $this->wire('session')->CSRF->validate()) {
-                    $rawCode = base64_decode($this->wire('input')->post->tracyFileEditorRawCode);
-                    if(static::$inAdmin &&
-                        $this->data['referencePageEdited'] &&
-                        $this->wire('input')->get('id') &&
-                        $this->wire('pages')->get($this->wire('input')->get('id'))->template->filename === $this->wire('config')->paths->root . $this->wire('input')->post->fileEditorFilePath
-                    ) {
-                        $p = $this->wire('pages')->get($this->wire('input')->get('id'));
-                    }
-                    else {
-                        $p = $this->wire('page');
-                    }
-
-                    $templateExt = pathinfo($p->template->filename, PATHINFO_EXTENSION);
-                    $this->tempTemplateFilename = str_replace('.'.$templateExt, '-tracytemp.'.$templateExt, $p->template->filename);
-                    // if changes to the template of the current page are submitted
-                    // test
-                    if($this->wire('input')->post->tracyTestTemplateCode) {
-                        if(!$this->wire('files')->filePutContents($this->tempTemplateFilename, $rawCode, LOCK_EX)) {
-                            throw new WireException("Unable to write file: " . $this->tempTemplateFilename);
-                        }
-                        $p->template->filename = $this->tempTemplateFilename;
-                    }
-
-                    // if changes to any other file are submitted
-                    if($this->wire('input')->post->tracyTestFileCode || $this->wire('input')->post->tracySaveFileCode || $this->wire('input')->post->tracyChangeTemplateCode) {
-                        $rootPath = $this->wire('config')->paths->root;
-                        $filePath = realpath($rootPath . $this->wire('input')->post->fileEditorFilePath);
-                        if($this->wire('input')->post->fileEditorFilePath != '' && $filePath !== false && strpos($filePath, $rootPath) === 0) {
-                            $rawCode = base64_decode($this->wire('input')->post->tracyFileEditorRawCode);
-
-                            // backup old version to Tracy cache directory
-                            $cachePath = $this->tracyCacheDir . $this->wire('input')->post->fileEditorFilePath;
-                            if(!is_dir($cachePath)) if(!wireMkdir(pathinfo($cachePath, PATHINFO_DIRNAME), true)) {
-                                throw new WireException("Unable to create cache path: $cachePath");
-                            }
-                            copy($filePath, $cachePath);
-
-                            if(!$this->wire('files')->filePutContents($filePath, $rawCode, LOCK_EX)) {
-                                throw new WireException("Unable to write file: " . $filePath);
-                            }
-                            if($this->wire('config')->chmodFile) chmod($filePath, octdec($this->wire('config')->chmodFile));
-
-                            if($this->wire('input')->post->tracyTestFileCode) {
-                                if(PHP_VERSION_ID >= 70300) {
-                                    setcookie('tracyTestFileEditor', $this->wire('input')->post->fileEditorFilePath, ['expires' => time() + (10 * 365 * 24 * 60 * 60), 'path' => '/', 'samesite' => 'Strict']);
-                                } else {
-                                    setcookie('tracyTestFileEditor', $this->wire('input')->post->fileEditorFilePath, time() + (10 * 365 * 24 * 60 * 60), '/');
-                                }
-                            }
-                        }
-                        $this->wire('session')->redirect($this->httpReferer);
-                    }
-                }
-
-                // if file editor restore
-                if($this->wire('input')->post->tracyRestoreFileEditorBackup && $this->wire('session')->CSRF->validate()) {
-                    $rootPath = $this->wire('config')->paths->root;
-                    $editorPath = $this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor;
-                    $this->filePath = realpath($rootPath . $editorPath);
-                    $this->cachePath = realpath($this->tracyCacheDir . $editorPath);
-                    if($this->filePath !== false && strpos($this->filePath, $rootPath) === 0 &&
-                       $this->cachePath !== false && strpos($this->cachePath, $this->tracyCacheDir) === 0) {
-                        copy($this->cachePath, $this->filePath);
-                        unlink($this->cachePath);
-                    }
-                    $this->wire('session')->redirect($this->httpReferer);
-                }
-            }
+            require_once(__DIR__ . '/includes/post_processors/FileEditorPost.php');
 
 
             // DEBUG BAR & PANELS
@@ -1948,113 +1718,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // USER SWITCHER
-        // process userSwitcher if panel open and switch initiated
-        if(in_array('userSwitcher', static::$showPanels) && $this->wire('input')->post->userSwitcher) {
-            // if user is superuser and session length is set, save to config settings
-            if(static::$allowedSuperuser && ($this->wire('input')->post->userSwitcher || $this->wire('input')->post->logoutUserSwitcher) && $this->wire('session')->CSRF->validate()) {
-                // cleanup expired sessions
-                if(isset($this->data['userSwitchSession'])) {
-                    foreach($this->data['userSwitchSession'] as $id => $expireTime) {
-                        if($expireTime < time()) unset($this->data['userSwitchSession'][$id]);
-                    }
-                }
-                // if no existing session ID, start a new session
-                if(!$this->wire('session')->tracyUserSwitcherId) {
-                    $pass = new Password();
-                    $challenge = $pass->randomBase64String(32);
-                    $this->wire('session')->tracyUserSwitcherId = $challenge;
-
-                    $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
-                    $this->data['originalUserSwitcher'][$this->wire('session')->tracyUserSwitcherId] = $this->wire('user')->name;
-                    $configData['originalUserSwitcher'] = $this->data['originalUserSwitcher'];
-                    $this->wire('modules')->saveModuleConfigData($this, $configData);
-
-                }
-                // save session ID and expiry time in module config settings
-                $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
-                $this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId] = time() + $this->wire('config')->sessionExpireSeconds;
-                $configData['userSwitchSession'] = $this->data['userSwitchSession'];
-                $this->wire('modules')->saveModuleConfigData($this, $configData);
-            }
-
-            // if logout button clicked
-            if($this->wire('input')->post->logoutUserSwitcher && $this->wire('session')->CSRF->validate()) {
-                if($this->wire('session')->tracyUserSwitcherId) {
-                    // if session variable exists, grab it and add to the new session after logging out
-                    $tracyUserSwitcherId = $this->wire('session')->tracyUserSwitcherId;
-                    $this->wire('session')->logout();
-                    $this->wire('session')->tracyUserSwitcherId = $tracyUserSwitcherId;
-                }
-                else {
-                    $this->wire('session')->logout();
-                }
-                $this->wire('session')->redirect($this->httpReferer);
-            }
-            // if end session clicked, remove session variable and config settings entry
-            elseif($this->wire('input')->post->endSessionUserSwitcher && $this->wire('session')->CSRF->validate()) {
-                $this->wire('session')->remove("tracyUserSwitcherId");
-                $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
-                unset($this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId]);
-                unset($configData['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId]);
-                $this->wire('modules')->saveModuleConfigData($this, $configData);
-                $this->wire('session')->redirect($this->httpReferer);
-            }
-            // if session not expired, switch to original user
-            elseif($this->wire('input')->post->revertOriginalUserSwitcher && $this->wire('session')->CSRF->validate()) {
-                if(isset($this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId]) && $this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId] > time() && $this->wire('session')->tracyUserSwitcherId) {
-                    // if session variable exists, grab it and add to the new session after logging out
-                    // and forceLogin the original user
-                    $tracyUserSwitcherId = $this->wire('session')->tracyUserSwitcherId;
-                    if($this->wire('user')->isLoggedin()) $this->wire('session')->logout();
-                    $this->wire('session')->forceLogin($this->data['originalUserSwitcher'][$tracyUserSwitcherId]);
-                    $this->wire('session')->tracyUserSwitcherId = $tracyUserSwitcherId;
-                }
-                $this->wire('session')->redirect($this->httpReferer);
-            }
-            // if session not expired, switch to requested user
-            elseif($this->wire('input')->post->userSwitcher && $this->wire('session')->CSRF->validate()) {
-                if(isset($this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId]) && $this->data['userSwitchSession'][$this->wire('session')->tracyUserSwitcherId] > time() && $this->wire('session')->tracyUserSwitcherId) {
-                    // if session variable exists, grab it and add to the new session after logging out
-                    // and forceLogin the new switched user
-                    $tracyUserSwitcherId = $this->wire('session')->tracyUserSwitcherId;
-                    if($this->wire('user')->isLoggedin()) $this->wire('session')->logout();
-                    $this->wire('session')->forceLogin($this->wire('input')->post->userSwitcher);
-                    $this->wire('session')->tracyUserSwitcherId = $tracyUserSwitcherId;
-                }
-                $this->wire('session')->redirect($this->httpReferer);
-            }
-        }
+        require_once(__DIR__ . '/includes/post_processors/UserSwitcherPost.php');
 
 
-        // LANGUAGE SWITCHER PANEL
-        // process languageSwitcher if panel open and switch initiated
-        if(in_array('languageSwitcher', static::$showPanels) && (($this->wire('input')->post->tracyLanguageSwitcher && $this->wire('session')->CSRF->validate()) || $this->wire('session')->tracyLanguageSwitcher)) {
-            $langId = $this->wire('input')->post->int('tracyLanguageSwitcher');
-            if($langId) {
-                // compare language setting from session with users profile
-                if($this->wire('user')->language->id === $langId) {
-                    // language is users profile language -> reset session
-                    $this->wire('session')->remove('tracyLanguageSwitcher');
-                }
-                else {
-                    // language is different from profile -> save it
-                    $this->wire('session')->set('tracyLanguageSwitcher', $langId);
-                }
-            }
-
-            // reset cache for nav
-            // thx @toutouwai https://github.com/Toutouwai/CustomAdminMenus/blob/8dfdfa7d07c40ab2d93e3191d2d960e317738169/CustomAdminMenus.module#L35
-            $this->wire('session')->removeFor('AdminThemeUikit', 'prnav');
-            $this->wire('session')->removeFor('AdminThemeUikit', 'sidenav');
-
-            if($this->wire('input')->post->tracyResetLanguageSwitcher) {
-                $this->wire('session')->remove('tracyLanguageSwitcher');
-            }
-            // set users language dynamically from session value
-            elseif($sessionLangId = $this->wire('session')->get('tracyLanguageSwitcher')) {
-                $this->wire('user')->language = $this->wire('languages')->get($sessionLangId);
-            }
-        }
+        // LANGUAGE SWITCHER
+        require_once(__DIR__ . '/includes/post_processors/LanguageSwitcherPost.php');
 
 
         // if it's an ajax request from the Tracy Console panel snippets, then process and return
