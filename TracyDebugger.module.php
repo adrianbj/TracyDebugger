@@ -402,6 +402,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
         require_once __DIR__ . '/tracy-'.self::$tracyVersion.'/src/tracy.php';
         require_once __DIR__ . '/includes/TD.php';
+        if(!class_exists('TD', false)) {
+            class_alias('ProcessWire\\TD', 'TD');
+        }
         require_once __DIR__ . '/includes/PwVersionSwitcher.php';
 
 
