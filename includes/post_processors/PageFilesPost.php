@@ -5,7 +5,7 @@
 if($this->wire('input')->post->deleteOrphanFiles && $this->wire('input')->post->orphanPaths && $this->wire('session')->CSRF->validate()) {
     $rootPath = $this->wire('config')->paths->root;
     foreach(explode('|', $this->wire('input')->post->orphanPaths) as $filePath) {
-        $realPath = realpath($filePath);
+        $realPath = str_replace('\\', '/', realpath($filePath));
         if($realPath !== false && strpos($realPath, $rootPath) === 0 && file_exists($realPath)) {
             unlink($realPath);
         }

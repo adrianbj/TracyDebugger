@@ -2961,8 +2961,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if(isset($_COOKIE['tracyTestFileEditor']) && (static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser)) {
             $rootPath = $this->wire('config')->paths->root;
             $editorPath = $this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor;
-            $resolvedFilePath = realpath($rootPath . $editorPath);
-            $resolvedCachePath = realpath($this->tracyCacheDir . $editorPath);
+            $resolvedFilePath = str_replace('\\', '/', realpath($rootPath . $editorPath));
+            $resolvedCachePath = str_replace('\\', '/', realpath($this->tracyCacheDir . $editorPath));
             if($resolvedFilePath !== false && strpos($resolvedFilePath, $rootPath) === 0 &&
                $resolvedCachePath !== false && strpos($resolvedCachePath, $this->tracyCacheDir) === 0 &&
                file_exists($resolvedCachePath)) {

@@ -30,7 +30,7 @@
                     // if changes to any other file are submitted
                     if($this->wire('input')->post->tracyTestFileCode || $this->wire('input')->post->tracySaveFileCode || $this->wire('input')->post->tracyChangeTemplateCode) {
                         $rootPath = $this->wire('config')->paths->root;
-                        $filePath = realpath($rootPath . $this->wire('input')->post->fileEditorFilePath);
+                        $filePath = str_replace('\\', '/', realpath($rootPath . $this->wire('input')->post->fileEditorFilePath));
                         if($this->wire('input')->post->fileEditorFilePath != '' && $filePath !== false && strpos($filePath, $rootPath) === 0) {
                             $rawCode = base64_decode($this->wire('input')->post->tracyFileEditorRawCode);
 
@@ -62,8 +62,8 @@
                 if($this->wire('input')->post->tracyRestoreFileEditorBackup && $this->wire('session')->CSRF->validate()) {
                     $rootPath = $this->wire('config')->paths->root;
                     $editorPath = $this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor;
-                    $this->filePath = realpath($rootPath . $editorPath);
-                    $this->cachePath = realpath($this->tracyCacheDir . $editorPath);
+                    $this->filePath = str_replace('\\', '/', realpath($rootPath . $editorPath));
+                    $this->cachePath = str_replace('\\', '/', realpath($this->tracyCacheDir . $editorPath));
                     if($this->filePath !== false && strpos($this->filePath, $rootPath) === 0 &&
                        $this->cachePath !== false && strpos($this->cachePath, $this->tracyCacheDir) === 0) {
                         copy($this->cachePath, $this->filePath);
