@@ -2220,7 +2220,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         foreach($pwVars->getArray() as $key => $value) {
             $$key = $value;
         }
-        $page = $pages->get((int)$options['pid']);
+        $page = $this->wire('pages')->get((int)$options['pid']);
         $consoleCodeFile = $this->tracyCacheDir . 'consoleCode.php';
         if(file_exists($consoleCodeFile)) {
             require_once($consoleCodeFile);
