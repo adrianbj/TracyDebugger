@@ -327,7 +327,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "clearEmailSent" => null,
             "slackChannel" => '',
             "slackAppOauthToken" => '',
-            "showFireLogger" => 1,
             "reservedMemorySize" => 500000,
             "referencePageEdited" => 1,
             "debugInfo" => 1,
@@ -925,8 +924,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
 
-        if(method_exists('Tracy\Debugger', 'getFireLogger')) Debugger::$showFireLogger = $this->data['showFireLogger'];
-        if(isset(Debugger::$reservedMemorySize)) Debugger::$reservedMemorySize = $this->data['reservedMemorySize'];
+        if(property_exists(Debugger::class, 'reservedMemorySize')) Debugger::$reservedMemorySize = $this->data['reservedMemorySize'];
 
         // EDITOR PROTOCOL HANDLER
         // build up array of replacements to pass to Debugger::$editorMapping
@@ -1406,11 +1404,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             Debugger::$maxLength = $this->data['maxLength'];
             if(property_exists(Debugger::class, 'maxItems')) {
                 Debugger::$maxItems = $this->data['maxItems'];
-            }
-            if(method_exists('Tracy\Debugger', 'getFireLogger')) {
-                Debugger::getFireLogger()->maxDepth = $this->data['maxDepth'];
-                Debugger::getFireLogger()->maxLength = $this->data['maxLength'];
-                Debugger::getFireLogger()->maxItems = $this->data['maxItems'];
             }
             Debugger::getBlueScreen()->maxDepth = $this->data['maxDepth'];
             Debugger::getBlueScreen()->maxLength = $this->data['maxLength'];
@@ -3324,16 +3317,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('value', $data['reservedMemorySize']);
         $fieldset->add($f);
 
-        if(method_exists('Tracy\Debugger', 'getFireLogger')) {
-            $f = $this->wire('modules')->get("InputfieldCheckbox");
-            $f->attr('name', 'showFireLogger');
-            $f->label = __('Send data to FireLogger', __FILE__);
-            $f->description = __('When checked, certain errors and `fl()` calls will be sent to FireLogger in the browser console.', __FILE__);
-            $f->notes = __('If you are running on nginx and don\'t have access to adjust `fastcgi_buffers` and `fastcgi_buffer_size` settings, you may want to uncheck this to avoid 502 bad gateway errors because of `upstream sent too big header while reading response header from upstream` issues.', __FILE__);
-            $f->attr('checked', $data['showFireLogger'] == '1' ? 'checked' : '');
-            $fieldset->add($f);
-        }
-
         $f = $this->wire('modules')->get("InputfieldCheckbox");
         $f->attr('name', 'referencePageEdited');
         $f->label = __('Reference page being edited', __FILE__);
@@ -4523,10 +4506,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->addOption('d', 'd() for TD::dump()');
         $f->addOption('dumpBig', 'dumpBig() for TD::dumpBig()');
         $f->addOption('db', 'db() for TD::dumpBig()');
-        if(method_exists('Tracy\Debugger', 'getFireLogger')) {
-            $f->addOption('fireLog', 'fireLog() for TD::fireLog()');
-            $f->addOption('fl', 'fl() for TD::fireLog()');
-        }
         $f->addOption('l', 'l() for TD::log()');
         $f->addOption('templateVars', 'templateVars() for TD::templateVars()');
         $f->addOption('tv', 'tv() for TD::templateVars()');
