@@ -1586,7 +1586,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // check for any "bd_" wire variables and barDump them
         $pwVars = $this->wire('all');
         foreach($pwVars->getArray() as $key => $val) {
-            if(strpos($key, 'bd_') !== false) \TD::barDump($val, '$'.$key);
+            if(strpos($key, 'bd_') !== false) TD::barDump($val, '$'.$key);
         }
 
 
