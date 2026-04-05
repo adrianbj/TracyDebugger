@@ -652,6 +652,7 @@ class ConsolePanel extends BasePanel {
             },
 
             processTracyCode: function() {
+                if(document.getElementById("runInjectButton")?.disabled) return;
                 const code = this.tce.getSelectedText() || this.tce.getValue();
                 const statusDiv = document.getElementById("tracyConsoleStatus");
                 if (statusDiv) {
@@ -764,6 +765,140 @@ class ConsolePanel extends BasePanel {
                 }
             },
 
+            _pollXhr: null,
+
+            cleanupRunFiles: function(runId) {
+                if(!runId) return;
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "$currentUrl", true);
+                xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+                xhr.send("tracyConsoleCleanup=1&csrfToken=" + encodeURIComponent(tracyConsole.csrfToken) + "&runId=" + encodeURIComponent(runId));
+            },
+
+            fetchAndCleanup: function(runId, status) {
+                if(!runId || tracyConsole._inlineDelivered) return;
+                var xhr = new XMLHttpRequest();
+                xhr.onreadystatechange = function() {
+                    if(xhr.readyState == XMLHttpRequest.DONE) {
+                        if(tracyConsole._inlineDelivered) return;
+                        var resultsDiv = document.getElementById("tracyConsoleResult");
+                        var statusDiv = document.getElementById("tracyConsoleStatus");
+                        if(xhr.status == 200 && resultsDiv) {
+                            try {
+                                var data = JSON.parse(xhr.responseText);
+                                var resultId = Date.now();
+                                resultsDiv.innerHTML += '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.tryParseJSON(data.output) + '</div>';
+                                tracyConsole.saveToIndexedDB().catch(function(err) { console.warn('Error updating tab result:', err); });
+                                var resultElement = document.getElementById("tracyConsoleResult_"+resultId);
+                                if(resultElement) resultElement.scrollIntoView();
+                                if(!document.getElementById("tracy-debug-panel-ProcessWire-ConsolePanel").classList.contains("tracy-mode-float")) {
+                                    window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-ConsolePanel"].toFloat();
+                                }
+                            } catch(e) {
+                                resultsDiv.innerHTML += '<div style="padding:10px 0; color:#e22006;">Error fetching results: ' + escapeHtml(xhr.responseText) + '</div>';
+                            }
+                        }
+                        if(statusDiv) {
+                            statusDiv.innerHTML = status === 'error' ? "✘ Error" : "✔ Executed";
+                        }
+                        tracyConsole.setRunButtonEnabled(true);
+                        tracyConsole._activeRunId = null;
+                    }
+                };
+                xhr.open("POST", "$currentUrl", true);
+                xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+                xhr.send("tracyConsoleCleanup=1&returnResult=1&csrfToken=" + encodeURIComponent(tracyConsole.csrfToken) + "&runId=" + encodeURIComponent(runId));
+            },
+
+            setRunButtonEnabled: function(enabled) {
+                const btn = document.getElementById("runInjectButton");
+                if(btn) {
+                    btn.disabled = !enabled;
+                    btn.style.opacity = enabled ? '' : '0.5';
+                }
+            },
+
+            stopPolling: function() {
+                tracyConsole._stopPolling = true;
+                if(tracyConsole._pollXhr) {
+                    tracyConsole._pollXhr.abort();
+                    tracyConsole._pollXhr = null;
+                }
+                if(tracyConsole._bgTimer) {
+                    clearInterval(tracyConsole._bgTimer);
+                    tracyConsole._bgTimer = null;
+                }
+            },
+
+            pollForResults: function(runId) {
+                if(tracyConsole._stopPolling) {
+                    return;
+                }
+
+                /* safety net: if polling for over 1 hour, assume process is dead */
+                if(tracyConsole._bgStartTime && (Date.now() - tracyConsole._bgStartTime > 3600000)) {
+                    if(tracyConsole._bgTimer) { clearInterval(tracyConsole._bgTimer); tracyConsole._bgTimer = null; }
+                    var statusDiv = document.getElementById("tracyConsoleStatus");
+                    if(statusDiv) statusDiv.innerHTML = "✘ Process appears to have been terminated by the server";
+                    tracyConsole.setRunButtonEnabled(true);
+                    tracyConsole._activeRunId = null;
+                    tracyConsole.cleanupRunFiles(runId);
+                    return;
+                }
+
+                const container = document.getElementById("tracyConsoleContainer");
+                const pollUrl = container ? container.getAttribute("data-poll-url") : "";
+                if(!pollUrl) return;
+
+                const xmlhttp = new XMLHttpRequest();
+                tracyConsole._pollXhr = xmlhttp;
+                xmlhttp.timeout = 10000;
+                xmlhttp.ontimeout = function() {
+                    if(!tracyConsole._stopPolling) {
+                        setTimeout(function() { tracyConsole.pollForResults(runId); }, 3000);
+                    }
+                };
+                xmlhttp.onreadystatechange = function() {
+                    if(xmlhttp.readyState == XMLHttpRequest.DONE) {
+                        if(xmlhttp.status === 0) return;
+                        if(tracyConsole._inlineDelivered) return;
+                        if(xmlhttp.status == 200) {
+                            try {
+                                const data = JSON.parse(xmlhttp.responseText);
+                                if(data.status === 'running') {
+                                    setTimeout(function() { tracyConsole.pollForResults(runId); }, 3000);
+                                    return;
+                                }
+                                tracyConsole._pollDelivered = true;
+                                if(tracyConsole._bgTimer) { clearInterval(tracyConsole._bgTimer); tracyConsole._bgTimer = null; }
+                                tracyConsole.fetchAndCleanup(runId, data.status);
+                            } catch(e) {
+                                if(!tracyConsole._stopPolling) {
+                                    setTimeout(function() { tracyConsole.pollForResults(runId); }, 3000);
+                                }
+                            }
+                        }
+                        else if(xmlhttp.status == 404) {
+                            setTimeout(function() { tracyConsole.pollForResults(runId); }, 3000);
+                        }
+                        else {
+                            if(!tracyConsole._stopPolling) {
+                                setTimeout(function() { tracyConsole.pollForResults(runId); }, 3000);
+                            }
+                        }
+                    }
+                };
+                xmlhttp.onerror = function() {
+                    if(!tracyConsole._stopPolling) {
+                        setTimeout(function() { tracyConsole.pollForResults(runId); }, 3000);
+                    }
+                };
+                xmlhttp.open("GET", pollUrl + encodeURIComponent(runId) + ".json?" + Date.now(), true);
+                xmlhttp.send();
+            },
+
             callPhp: function(code, codeReturn = true) {
                 if (!codeReturn) {
                     const expires = new Date();
@@ -774,9 +909,53 @@ class ConsolePanel extends BasePanel {
                     document.cookie = "tracyCodeReturn=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
                 }
 
+                tracyConsole.setRunButtonEnabled(false);
+
+                /* generate unique run ID for background execution support */
+                const runId = Date.now() + '_' + Math.random().toString(36).substr(2);
+                tracyConsole._pollingActive = false;
+                tracyConsole._pollDelivered = false;
+                tracyConsole._stopPolling = false;
+                tracyConsole._inlineDelivered = false;
+
+                /* calculate XHR timeout from server max_execution_time */
+                const container = document.getElementById("tracyConsoleContainer");
+                const maxExecTime = container ? parseInt(container.getAttribute("data-max-execution-time") || "0", 10) : 0;
+                const xhrTimeout = maxExecTime > 0 ? Math.floor(maxExecTime * 0.8) * 1000 : 0;
+
                 const xmlhttp = new XMLHttpRequest();
                 const onReadyStateChange = function() {
                     if (xmlhttp.readyState == XMLHttpRequest.DONE) {
+                        if(xmlhttp.status === 0) {
+                            if(!tracyConsole._pollingActive) tracyConsole.setRunButtonEnabled(true);
+                            return;
+                        }
+                        /* original XHR completed — cancel poll timer if it hasn't fired */
+                        if(typeof pollTimer !== 'undefined') clearTimeout(pollTimer);
+                        /* if polling already delivered results, ignore this response */
+                        if(tracyConsole._pollingActive && tracyConsole._pollDelivered) return;
+                        /* mark inline as delivered immediately so any queued poll callbacks bail out */
+                        tracyConsole._inlineDelivered = true;
+                        if(tracyConsole._pollingActive) { tracyConsole.stopPolling(); }
+                        /* gateway timeout or error — switch to background polling */
+                        if(xmlhttp.status === 502 || xmlhttp.status === 504) {
+                            tracyConsole._inlineDelivered = false;
+                            tracyConsole._activeRunId = runId;
+                            tracyConsole.setRunButtonEnabled(false);
+                            tracyConsole._bgStartTime = Date.now();
+                            tracyConsole._bgTimer = setInterval(function() {
+                                var elapsed = Math.round((Date.now() - tracyConsole._bgStartTime) / 1000);
+                                var mins = Math.floor(elapsed / 60);
+                                var secs = elapsed % 60;
+                                var timeStr = mins > 0 ? mins + 'm ' + secs + 's' : secs + 's';
+                                var sd = document.getElementById("tracyConsoleStatus");
+                                if(sd) sd.innerHTML = "<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> Running in background... " + timeStr;
+                            }, 1000);
+                            tracyConsole._stopPolling = false;
+                            tracyConsole.pollForResults(runId);
+                            listenerMap.delete(xmlhttp);
+                            return;
+                        }
                         const statusDiv = document.getElementById("tracyConsoleStatus");
                         if (statusDiv) {
                             statusDiv.innerHTML = "✔ " + (codeReturn ? "Executed" : "Injected @ " + escapeHtml(JSON.parse(tracyConsole.getCookie('tracyIncludeCode')).when));
@@ -804,10 +983,34 @@ class ConsolePanel extends BasePanel {
                         }
                         listenerMap.delete(xmlhttp);
                         xmlhttp.getAllResponseHeaders();
+                        tracyConsole.setRunButtonEnabled(true);
+                        tracyConsole.cleanupRunFiles(runId);
                     }
                 };
                 xmlhttp.onreadystatechange = onReadyStateChange;
                 listenerMap.set(xmlhttp, { onreadystatechange: onReadyStateChange });
+
+                /* start background polling after timeout WITHOUT aborting the original XHR,
+                   so the server connection stays alive and PHP keeps running */
+                if(xhrTimeout > 0) {
+                    var pollTimer = setTimeout(function() {
+                        if(tracyConsole._pollingActive) return;
+                        tracyConsole._pollingActive = true;
+                        tracyConsole._activeRunId = runId;
+                        tracyConsole.setRunButtonEnabled(false);
+                        tracyConsole._bgStartTime = Date.now();
+                        tracyConsole._bgTimer = setInterval(function() {
+                            var elapsed = Math.round((Date.now() - tracyConsole._bgStartTime) / 1000);
+                            var mins = Math.floor(elapsed / 60);
+                            var secs = elapsed % 60;
+                            var timeStr = mins > 0 ? mins + 'm ' + secs + 's' : secs + 's';
+                            var sd = document.getElementById("tracyConsoleStatus");
+                            if(sd) sd.innerHTML = "<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> Running in background... " + timeStr;
+                        }, 1000);
+                        tracyConsole._stopPolling = false;
+                        tracyConsole.pollForResults(runId);
+                    }, xhrTimeout);
+                }
 
                 const dbBackup = document.getElementById("dbBackup")?.checked || false;
                 const allowBluescreen = document.getElementById("allowBluescreen")?.checked || false;
@@ -817,7 +1020,7 @@ class ConsolePanel extends BasePanel {
                 xmlhttp.open("POST", "$currentUrl", true);
                 xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-                xmlhttp.send("tracyConsole=1&csrfToken=" + encodeURIComponent(this.csrfToken) + "&codeReturn=" + encodeURIComponent(codeReturn) + "&allowBluescreen=" + encodeURIComponent(allowBluescreen) +
+                xmlhttp.send("tracyConsole=1&runId=" + encodeURIComponent(runId) + "&csrfToken=" + encodeURIComponent(this.csrfToken) + "&codeReturn=" + encodeURIComponent(codeReturn) + "&allowBluescreen=" + encodeURIComponent(allowBluescreen) +
                     "&dbBackup=" + encodeURIComponent(dbBackup) + "&backupFilename=" + encodeURIComponent(backupFilename) +
                     "&accessTemplateVars=" + encodeURIComponent(accessTemplateVars) + "&pid=" + encodeURIComponent($pid) +
                     "&fid=" + encodeURIComponent($fid) + "&tid=" + encodeURIComponent($tid) + "&mid=" + encodeURIComponent($mid) +
@@ -2001,6 +2204,7 @@ class ConsolePanel extends BasePanel {
 
                                 // --- Existing: Ctrl/Meta/Alt + Enter (no shift) → run code ---
                                 if (((e.keyCode == 10 || e.charCode == 10) || (e.keyCode == 13 || e.charCode == 13)) && (e.metaKey || e.ctrlKey || e.altKey) && !e.shiftKey) {
+                                    if(document.getElementById("runInjectButton")?.disabled) { e.preventDefault(); return; }
                                     e.preventDefault();
                                     if (e.altKey) tracyConsole.clearResults();
                                     if ((e.metaKey || e.ctrlKey) && e.altKey) {
@@ -2288,7 +2492,7 @@ HTML;
                         <span id="snippetPaneToggle" title="Toggle snippets pane" style="font-family: FontAwesome !important; position:absolute; top: 0; right: '.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '0' : '-290').'px; font-weight: bold; cursor: pointer">'.($this->wire('input')->cookie->tracySnippetsPaneCollapsed ? '&#xf053;' : '&#xf054;').'</span>
                     </div>
 
-                    <div id="tracyConsoleContainer" class="split" style="height: 100%; min-height: '.$codeLineHeight.'px">
+                    <div id="tracyConsoleContainer" data-max-execution-time="' . (int) ini_get('max_execution_time') . '" data-poll-url="' . $this->wire('config')->urls->assets . 'TracyDebugger/console_runs/" class="split" style="height: 100%; min-height: '.$codeLineHeight.'px">
                         <div id="tracyTabsContainer">
                             <div id="tracyTabsWrapper">
                                 <div id="tracyTabs"></div>
@@ -2332,7 +2536,7 @@ HTML;
         $out .= '
         </div>';
 
-        return parent::loadResources() . TracyDebugger::minify($out);
+        return TracyDebugger::minify($out);
 
     }
 

@@ -4,6 +4,26 @@ use Tracy\Debugger;
 
 unset($this->wire('input')->cookie->tracyCodeError);
 setcookie("tracyCodeError", "", time()-3600);
+// Background execution support: accept run ID and make PHP resilient to connection abort
+$tracyRunId = isset($_POST['runId']) ? preg_replace('/[^a-zA-Z0-9_.]/', '', $_POST['runId']) : '';
+$tracyRunStatusDir = $this->wire('config')->paths->assets . 'TracyDebugger/console_runs/';
+$tracyRunCacheDir = $this->wire('config')->paths->cache . 'TracyDebugger/console_runs/';
+if($tracyRunId) {
+    if(!is_dir($tracyRunStatusDir)) {
+        wireMkdir($tracyRunStatusDir, true);
+        file_put_contents($tracyRunStatusDir . '.htaccess', "Options -Indexes\n");
+    }
+    if(!is_dir($tracyRunCacheDir)) wireMkdir($tracyRunCacheDir, true);
+    /* write initial "running" status marker (no sensitive data — publicly accessible) */
+    file_put_contents($tracyRunStatusDir . $tracyRunId . '.json', json_encode(array(
+        'status' => 'running'
+    )));
+    ignore_user_abort(true);
+    set_time_limit(0);
+}
+$GLOBALS['tracyRunId'] = $tracyRunId;
+$GLOBALS['tracyRunStatusDir'] = $tracyRunStatusDir;
+$GLOBALS['tracyRunCacheDir'] = $tracyRunCacheDir;
 if($this->wire('input')->post->allowBluescreen !== 'true') {
     set_error_handler(__NAMESPACE__.'\tracyConsoleErrorHandler');
     set_exception_handler(__NAMESPACE__.'\tracyConsoleExceptionHandler');
@@ -30,6 +50,18 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
         http_response_code(403);
         echo 'CSRF token validation failed';
         exit;
+    }
+
+    /* cache all session data we need, then release session lock immediately
+       so poll requests aren't blocked during long-running code execution */
+    if($tracyRunId) {
+        $tracySessionCache = array(
+            'includedFiles' => $this->wire('session')->tracyIncludedFiles,
+            'getData' => $this->wire('session')->tracyGetData,
+            'postData' => $this->wire('session')->tracyPostData,
+            'whitelistData' => $this->wire('session')->tracyWhitelistData,
+        );
+        session_write_close();
     }
 
     $page = $pages->get((int)$_POST['pid']);
@@ -161,7 +193,8 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
             $currentVars = get_defined_vars();
             // get vars from the page's template file
             ob_start();
-            foreach($this->wire('session')->tracyIncludedFiles as $key => $path) {
+            $includedFiles = isset($tracySessionCache) ? $tracySessionCache['includedFiles'] : $this->wire('session')->tracyIncludedFiles;
+            foreach($includedFiles as $key => $path) {
                 if($path != $this->file && $path != $page->template->filename) {
                     include_once($path);
                 }
@@ -189,14 +222,15 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
         }
 
         // re-populate various $input properties from version stored in session
-        if($this->wire('session')->tracyGetData) {
-            foreach($this->wire('session')->tracyGetData as $k => $v) {
+        $getData = isset($tracySessionCache) ? $tracySessionCache['getData'] : $this->wire('session')->tracyGetData;
+        if($getData) {
+            foreach($getData as $k => $v) {
                 $this->wire('input')->get->$k = $v;
             }
         }
 
-        if($this->wire('session')->tracyPostData) {
-            $postData = $this->wire('session')->tracyPostData;
+        $postData = isset($tracySessionCache) ? $tracySessionCache['postData'] : $this->wire('session')->tracyPostData;
+        if($postData) {
             foreach($this->wire('input')->post as $k => $v) {
                 unset($this->wire('input')->post->$k);
             }
@@ -205,30 +239,51 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
             }
         }
 
-        if($this->wire('session')->tracyWhitelistData) {
-            foreach($this->wire('session')->tracyWhitelistData as $k => $v) {
+        $whitelistData = isset($tracySessionCache) ? $tracySessionCache['whitelistData'] : $this->wire('session')->tracyWhitelistData;
+        if($whitelistData) {
+            foreach($whitelistData as $k => $v) {
                 $this->wire('input')->whitelist->$k = $v;
             }
         }
-
 
         // if in admin then $t won't have been instantiated above so do it now
         if(!isset($t) || !$t instanceof TemplateFile) $t = new TemplateFile($this->file);
 
         Debugger::timer('consoleCode');
         $initialMemory = memory_get_usage();
-        // output rendered result of code
+
+        // capture output so we can write it to cache file for background polling
+        ob_start();
         try {
             echo $t->render();
         }
         catch (\Exception $e) {
             tracyConsoleExceptionHandler($e);
         }
-        echo '
+        $renderedOutput = ob_get_clean();
+
+        $timeStr = TracyDebugger::formatTime(Debugger::timer('consoleCode'), false);
+        $memStr = TracyDebugger::human_filesize((max((memory_get_usage() - $initialMemory), 0)), false);
+        $metricsHtml = '
         <div style="border-top: 1px dotted #cccccc; color:#A9ABAB; border-bottom: 1px solid #cccccc; color:#A9ABAB; font-size: 10px; padding: 3px; margin: 10px 0 0 0;">' .
-            TracyDebugger::formatTime(Debugger::timer('consoleCode'), false) . ', ' .
-            TracyDebugger::human_filesize((max((memory_get_usage() - $initialMemory), 0)), false) . '
+            $timeStr . ', ' . $memStr . '
         </div>';
+
+        // write result to protected cache file, update public status marker
+        if($tracyRunId) {
+            $result = array(
+                'status' => 'complete',
+                'output' => $renderedOutput . $metricsHtml,
+                'time' => $timeStr,
+                'memory' => $memStr
+            );
+            file_put_contents($tracyRunCacheDir . $tracyRunId . '.json', json_encode($result));
+            file_put_contents($tracyRunStatusDir . $tracyRunId . '.json', json_encode(array('status' => 'complete')));
+        }
+
+        // also output inline for normal (non-timed-out) responses
+        echo $renderedOutput;
+        echo $metricsHtml;
 
         // fix for updating AJAX bar
         if(TracyDebugger::$tracyVersion == '2.7.x') {
@@ -314,7 +369,6 @@ function tracyConsoleShutdownHandler() {
 function writeError($error) {
     $customErrStr = $error['message'] . ' on line: ' . (strpos($error['file'], 'cache'.DIRECTORY_SEPARATOR.'TracyDebugger') !== false ? $error['line'] - 1 : $error['line']) . (strpos($error['file'], 'cache'.DIRECTORY_SEPARATOR.'TracyDebugger') !== false ? '' : ' in ' . str_replace(wire('config')->paths->cache . 'FileCompiler'.DIRECTORY_SEPARATOR, '../', $error['file']));
     $customErrStrLog = $customErrStr . (strpos($error['file'], 'cache'.DIRECTORY_SEPARATOR.'TracyDebugger') !== false ? ' in Tracy Console Panel' : '');
-    TD::fireLog($customErrStrLog);
     TD::log($customErrStrLog, 'error');
 
     if(PHP_VERSION_ID >= 70300) {
@@ -327,4 +381,18 @@ function writeError($error) {
     // this means that the browser will receive a 200 when it may have been a 500,
     // but think that is ok in this case
     echo $error['type'].': '.$customErrStr;
+    // write error to protected cache, update public status marker
+    $runId = isset($GLOBALS['tracyRunId']) ? $GLOBALS['tracyRunId'] : '';
+    $statusDir = isset($GLOBALS['tracyRunStatusDir']) ? $GLOBALS['tracyRunStatusDir'] : '';
+    $cacheDir = isset($GLOBALS['tracyRunCacheDir']) ? $GLOBALS['tracyRunCacheDir'] : '';
+    if($runId && $statusDir && $cacheDir) {
+        $result = array(
+            'status' => 'error',
+            'output' => $error['type'].': '.$customErrStr,
+            'time' => '',
+            'memory' => ''
+        );
+        file_put_contents($cacheDir . $runId . '.json', json_encode($result));
+        file_put_contents($statusDir . $runId . '.json', json_encode(array('status' => 'error')));
+    }
 }

@@ -536,8 +536,53 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // include the Console panel's codeProcessor after ready so it has access to any properties/methods added by other modules
         $this->wire()->addHookAfter('ProcessWire::ready', function($event) {
-            // if it's an ajax request from the Tracy Console panel for code execution, then process and return
-            if($this->wire('config')->ajax && $this->wire('input')->post->tracyConsole == 1) {
+            if(!$this->wire('config')->ajax) return;
+
+            // background execution: fetch result from cache and cleanup
+            if($this->wire('input')->post->tracyConsoleCleanup == 1) {
+                if(!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) {
+                    http_response_code(403);
+                    exit;
+                }
+                $csrfToken = isset($_POST['csrfToken']) ? $_POST['csrfToken'] : '';
+                if(!$csrfToken || !hash_equals((string)$this->wire('session')->tracyConsoleToken, $csrfToken)) {
+                    http_response_code(403);
+                    exit;
+                }
+                $runId = isset($_POST['runId']) ? preg_replace('/[^a-zA-Z0-9_.]/', '', $_POST['runId']) : '';
+                if($runId) {
+                    $statusDir = $this->wire('config')->paths->assets . 'TracyDebugger/console_runs/';
+                    $cacheDir = $this->wire('config')->paths->cache . 'TracyDebugger/console_runs/';
+                    $cacheFile = $cacheDir . $runId . '.json';
+                    $returnResult = !empty($_POST['returnResult']);
+                    header('Content-Type: application/json');
+                    if($returnResult && file_exists($cacheFile)) {
+                        echo file_get_contents($cacheFile);
+                    }
+                    else if($returnResult) {
+                        echo json_encode(array('status' => 'error', 'output' => 'Result file not found'));
+                    }
+                    @unlink($cacheFile);
+                    @unlink($statusDir . $runId . '.json');
+                }
+                exit;
+            }
+
+            // code execution
+            if($this->wire('input')->post->tracyConsole == 1) {
+                // garbage collect old console run files (older than 1 hour)
+                foreach(array(
+                    $this->wire('config')->paths->assets . 'TracyDebugger/console_runs/',
+                    $this->wire('config')->paths->cache . 'TracyDebugger/console_runs/'
+                ) as $runDir) {
+                    if(is_dir($runDir)) {
+                        foreach(glob($runDir . '*.json') as $file) {
+                            if(filemtime($file) < time() - 3600) {
+                                @unlink($file);
+                            }
+                        }
+                    }
+                }
                 require_once(__DIR__ . '/includes/CodeProcessor.php');
                 return;
             }
