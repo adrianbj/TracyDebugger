@@ -70,6 +70,7 @@ class GitInfoPanel extends BasePanel
 
             return $this->closePanel($out, 'gitInfo');
         }
+        return '';
     }
 
     protected function getBranchName() {

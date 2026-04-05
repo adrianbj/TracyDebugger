@@ -914,7 +914,7 @@ HTML;
                 $out .= Dumper::toHtml($value, array(Dumper::LIVE => true, Dumper::DEBUGINFO => TracyDebugger::getDataValue('debugInfo'), Dumper::DEPTH => 99, Dumper::TRUNCATE => TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE_COUNT => 1, Dumper::COLLAPSE => false));
             }
             catch(Exception $e) {
-                \TD::log($e);
+                TD::log($e);
             }
         }
         return $out;

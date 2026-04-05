@@ -37,9 +37,6 @@ class TD extends TracyDebugger {
         if(self::tracyUnavailable()) return false;
         static::barDump($var, $title, $options);
         static::dump($var, $title, $options);
-        if(method_exists('Tracy\Debugger', 'getFireLogger')) {
-            static::fireLog($var);
-        }
         static::log($var);
     }
 
@@ -354,15 +351,6 @@ class TD extends TracyDebugger {
         else{
             return $roundedTime;
         }
-    }
-
-    /**
-     * Tracy\Debugger::fireLog() shortcut.
-     * @tracySkipLocation
-     */
-    public static function fireLog($message = NULL) {
-        if(!method_exists('Tracy\Debugger', 'getFireLogger') || self::tracyUnavailable()) return false;
-        return Debugger::fireLog($message);
     }
 
     /**
