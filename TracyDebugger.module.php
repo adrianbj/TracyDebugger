@@ -1397,15 +1397,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             Debugger::$logSeverity = array_reduce($severityOptions, function($a, $b) { return $a | $b; }, 0);
 
             Debugger::$maxDepth = $this->data['maxDepth'];
-            if(property_exists('Debugger', 'maxLength')) {
-                Debugger::$maxLength = $this->data['maxLength'];
-            }
-            else {
-                // backwards compatibility with older versions of Tracy core before
-                // https://github.com/nette/tracy/commit/12d5cafa9264f2dfc3dfccb302a0eea404dcc24e
-                if(isset(Debugger::$maxLen)) Debugger::$maxLen = $this->data['maxLength'];
-            }
-            if(property_exists('Debugger', 'maxItems')) {
+            Debugger::$maxLength = $this->data['maxLength'];
+            if(property_exists(Debugger::class, 'maxItems')) {
                 Debugger::$maxItems = $this->data['maxItems'];
             }
             if(method_exists('Tracy\Debugger', 'getFireLogger')) {
