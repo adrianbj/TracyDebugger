@@ -44,8 +44,8 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
     // the other approach to fix this is to call an external CodeProcessor.php file via ajax as per PM with @bernhard
     $readyPath = $this->wire('config')->paths->root . 'site/ready.php';
     $finishedPath = $this->wire('config')->paths->root . 'site/finished.php';
-    if(file_exists($readyPath)) include_once($readyPath);
-    if(file_exists($finishedPath)) include_once($finishedPath);
+    if(file_exists($readyPath)) $this->wire('files')->compileIncludeOnce($readyPath);
+    if(file_exists($finishedPath)) $this->wire('files')->compileIncludeOnce($finishedPath);
 
     $cachePath = $this->wire('config')->paths->cache . 'TracyDebugger/';
 
