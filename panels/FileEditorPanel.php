@@ -45,7 +45,7 @@ class FileEditorPanel extends BasePanel {
     public function getPanel() {
 
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
-        $currentUrl = substr(json_encode($_SERVER['REQUEST_URI']), 1, -1);
+        $currentUrl = htmlspecialchars($_SERVER['REQUEST_URI'] ?? '', ENT_QUOTES, 'UTF-8');
 
         // generate CSRF token for AJAX calls
         if(!$this->wire('session')->tracyFileEditorToken) {

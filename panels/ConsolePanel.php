@@ -38,7 +38,7 @@ class ConsolePanel extends BasePanel {
     public function getPanel() {
 
         $rootPath = $this->wire('config')->paths->root;
-        $currentUrl = substr(json_encode($_SERVER['REQUEST_URI']), 1, -1);
+        $currentUrl = htmlspecialchars($_SERVER['REQUEST_URI'] ?? '', ENT_QUOTES, 'UTF-8');
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
         $inAdmin = TracyDebugger::$inAdmin;
 
