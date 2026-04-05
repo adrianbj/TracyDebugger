@@ -865,7 +865,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         Debugger::$showLocation = array_reduce($locations, function($a, $b) { return $a | $b; }, 0);
 
         if(version_compare(PHP_VERSION, '7.2.0', '>=')) {
-            Debugger::$keysToHide = array_map('trim', explode(',', $this->data['keysToHide']));
+            $keys = array_map('trim', explode(',', $this->data['keysToHide']));
+            if(property_exists(Debugger::class, 'keysToHide')) {
+                Debugger::$keysToHide = $keys;
+            }
+            elseif(method_exists(Debugger::class, 'getBlueScreen')) {
+                Debugger::getBlueScreen()->keysToHide = $keys;
+            }
         }
 
 
@@ -1422,7 +1428,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 if (session_status() === PHP_SESSION_NONE) {
                     session_start();
                 }
-                Debugger::setSessionStorage(new \Tracy\NativeSession);
+                if(method_exists(Debugger::class, 'setSessionStorage')) {
+                    Debugger::setSessionStorage(new \Tracy\NativeSession);
+                }
             }
             Debugger::enable($outputMode, $logFolder, $this->data['fromEmail'] != '' && $this->data['email'] != '' ? $this->data['email'] : null);
 
@@ -1865,7 +1873,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $options[Dumper::COLLAPSE] = true;
         $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : $this->data['maxDepth'];
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : $this->data['maxLength'];
-        $options[Dumper::ITEMS] = isset($options['maxItems']) ? $options['maxItems'] : $this->data['maxItems'];
+        if(defined('Tracy\Dumper::ITEMS')) {
+            $options[Dumper::ITEMS] = isset($options['maxItems']) ? $options['maxItems'] : $this->data['maxItems'];
+        }
         $eventItem['object'] = Dumper::toHtml($event->object, $options);
         $eventItem['arguments'] = Dumper::toHtml($event->arguments, $options);
         array_push($eventItems, $eventItem);
@@ -2259,7 +2269,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * get a standardized array or object of the current request
      *
      * @param HookEvent $event
-     * @return array | object
+     * @return void
      */
     public function getRequestData($event) {
         $page = $event->object;
