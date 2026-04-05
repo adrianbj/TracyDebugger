@@ -495,7 +495,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // formbuilder iframe
         if(in_array('formBuilderIframe', $this->data['hideDebugBarModals']) &&
             !static::$inAdmin &&
-            strpos(self::inputUrl(true), DIRECTORY_SEPARATOR.'form-builder'.DIRECTORY_SEPARATOR) !== false) {
+            strpos(self::inputUrl(true), '/form-builder/') !== false) {
                 $this->earlyExit = true;
             }
 
@@ -585,7 +585,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             count($this->data['userBarFeatures'])>0 &&
             !$this->wire('config')->ajax &&
             (static::$allowedTracyUser !== 'development' || $this->data['showUserBarTracyUsers']) &&
-            (strpos(self::inputUrl(true), DIRECTORY_SEPARATOR.'form-builder'.DIRECTORY_SEPARATOR) === false)
+            (strpos(self::inputUrl(true), '/form-builder/') === false)
         ) {
             $this->wire()->addHookAfter('ProcessWire::ready', function($event) {
                 if(!method_exists($event->page, 'render')) {

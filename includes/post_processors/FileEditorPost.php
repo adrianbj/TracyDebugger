@@ -44,7 +44,7 @@
                             if(!$this->wire('files')->filePutContents($filePath, $rawCode, LOCK_EX)) {
                                 throw new WireException("Unable to write file: " . $filePath);
                             }
-                            if($this->wire('config')->chmodFile) chmod($filePath, octdec($this->wire('config')->chmodFile));
+                            if($this->wire('config')->chmodFile && PHP_OS_FAMILY !== 'Windows') chmod($filePath, octdec($this->wire('config')->chmodFile));
 
                             if($this->wire('input')->post->tracyTestFileCode) {
                                 if(PHP_VERSION_ID >= 70300) {

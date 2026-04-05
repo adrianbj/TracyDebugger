@@ -441,7 +441,7 @@ HANDLER;
             if(file_exists($indexPath)) {
                 $indexContent = @file_get_contents($indexPath);
                 if($indexContent !== false && strpos($indexContent, $includeLine) !== false) {
-                    $indexContent = str_replace($includeLine . "\n", '', $indexContent);
+                    $indexContent = str_replace([$includeLine . "\r\n", $includeLine . "\n"], '', $indexContent);
                     @file_put_contents($indexPath, $indexContent);
                 }
             }
@@ -460,7 +460,7 @@ HANDLER;
         if(file_exists($indexPath)) {
             $indexContent = @file_get_contents($indexPath);
             if($indexContent !== false && strpos($indexContent, $includeLine) !== false) {
-                $indexContent = str_replace($includeLine . "\n", '', $indexContent);
+                $indexContent = str_replace([$includeLine . "\r\n", $includeLine . "\n"], '', $indexContent);
                 @file_put_contents($indexPath, $indexContent);
             }
         }
