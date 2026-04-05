@@ -72,7 +72,7 @@ class LanguageSwitcherPanel extends BasePanel {
         $out .= '
         </div>';
 
-        return parent::loadResources() . $out;
+        return $out;
     }
 
 }

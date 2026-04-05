@@ -68,7 +68,7 @@ class ViewportsPanel extends BasePanel {
         $out .= '
         </div>';
 
-        return parent::loadResources() . $out;
+        return $out;
     }
 
 }

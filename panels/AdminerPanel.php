@@ -159,7 +159,7 @@ class AdminerPanel extends BasePanel {
             document.getElementById("adminerReload").addEventListener("click", function(e) { e.preventDefault(); document.getElementById("adminer-iframe").contentWindow.location.reload(); });
         </script>';
 
-        return parent::loadResources() . $out;
+        return $out;
     }
 
 }

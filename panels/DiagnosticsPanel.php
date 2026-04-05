@@ -1482,6 +1482,6 @@ class DiagnosticsPanel extends BasePanel {
         </script>
 HTML;
 
-        return parent::loadResources() . $out;
+        return $out;
     }
 }

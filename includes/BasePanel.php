@@ -5,10 +5,6 @@ use Tracy\Debugger;
 
 abstract class BasePanel extends WireData implements IBarPanel {
 
-    function loadResources() {
-        // currently not being used, but keep for possible future application
-    }
-
     /**
      * Build the standard tab span for the debug bar.
      *
@@ -59,7 +55,7 @@ abstract class BasePanel extends WireData implements IBarPanel {
     }
 
     /**
-     * Close the panel with footer, closing div, and loadResources prefix.
+     * Close the panel with footer and closing div.
      *
      * @param string $out The accumulated panel HTML (used for size calculation)
      * @param string $panelName The panel identifier for timer/footer
@@ -69,7 +65,7 @@ abstract class BasePanel extends WireData implements IBarPanel {
     protected function closePanel($out, $panelName, $settingsFieldsetId = null) {
         $out .= TracyDebugger::generatePanelFooter($panelName, Debugger::timer($panelName), strlen($out), $settingsFieldsetId);
         $out .= '</div>';
-        return parent::loadResources() . $out;
+        return $out;
     }
 
     /**

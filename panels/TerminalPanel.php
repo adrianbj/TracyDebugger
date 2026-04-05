@@ -47,7 +47,7 @@ class TerminalPanel extends BasePanel {
         $out .= '
         </div>';
 
-        return parent::loadResources() . $out;
+        return $out;
     }
 
 }
