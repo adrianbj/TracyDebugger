@@ -1,69 +1,72 @@
-<?php
+<?php namespace ProcessWire;
+
+use Tracy\Debugger;
 
 class TracyExceptionsPanel extends BasePanel {
 
-    private $icon;
-    private $iconColor;
+    protected $icon;
+    protected $iconColor;
     private $tracyExceptionFile;
-    private $errorMessage = null;
-    private $encoding = 'auto';
-    private $tracyPwApiData;
     private $filesArray = array();
     private $newFiles = array();
+    private $newFilesMap = array();
+    private $needsUtf8 = null;
+
+    private function needsUtf8Convert() {
+        if($this->needsUtf8 === null) {
+            $this->needsUtf8 = PHP_VERSION_ID < 70100
+                && extension_loaded('mbstring')
+                && function_exists('iconv');
+        }
+        return $this->needsUtf8;
+    }
 
     public function getTab() {
 
-        \Tracy\Debugger::timer('tracyExceptions');
+        Debugger::timer('tracyExceptions');
 
         $this->tracyExceptionFile = $this->wire('input')->cookie->tracyExceptionFile;
 
-        $this->filesArray = $this->getFilesArray($this->wire('config')->paths->logs . 'tracy/', array('html'));
-        $tracyExeceptionsData = $this->wire('cache')->get('TracyExceptionsData');
+        $this->filesArray = $this->getFilesArray($this->wire('config')->paths->logs . 'tracy/');
+        $tracyExceptionsData = $this->wire('cache')->get('TracyExceptionsData');
 
-        $this->newFiles = array();
-        if($tracyExeceptionsData) {
-            foreach ($this->filesArray as $file) {
-                if(!in_array($file, $tracyExeceptionsData)) {
-                    $this->newFiles[] = $file;
-                }
-            }
+        if($tracyExceptionsData) {
+            $this->newFiles = array_diff($this->filesArray, $tracyExceptionsData);
         }
 
-        if(count($this->newFiles) > 0) {
-            $this->iconColor = \TracyDebugger::COLOR_ALERT;
-        }
-        else {
-            $this->iconColor = \TracyDebugger::COLOR_NORMAL;
-        }
+        $this->wire('cache')->save('TracyExceptionsData', $this->filesArray, WireCache::expireNever);
+
+        $this->newFilesMap = array_flip($this->newFiles);
+        $this->iconColor = count($this->newFiles) > 0 ? TracyDebugger::COLOR_ALERT : TracyDebugger::COLOR_NORMAL;
 
         $this->icon = '
         <svg height="16px" stroke-miterlimit="10" style="fill-rule:nonzero;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;" version="1.1" viewBox="0 0 27.965 27.965" width="16px" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
             <path fill="'.$this->iconColor.'" d="M13.98 0C6.259 0 0 6.261 0 13.983C0 21.704 6.259 27.965 13.98 27.965C21.705 27.965 27.965 21.703 27.965 13.983C27.965 6.261 21.705 0 13.98 0ZM4.25218 15.775L4.19488 11.907L23.6416 11.9299L23.7405 15.759L4.25218 15.775Z" fill-rule="nonzero" opacity="1" stroke="none"/>
         </svg>';
 
-        return '
-        <span title="Tracy Exceptions">
-            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Tracy Exceptions' : '') . '
-        </span>
-        ';
+        return $this->buildTab('Tracy Exceptions');
     }
 
 
     public function getPanel() {
 
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
-        $currentUrl = $_SERVER['REQUEST_URI'];
+        $currentUrl = htmlspecialchars($_SERVER['REQUEST_URI'] ?? '', ENT_QUOTES, 'UTF-8');
 
-        $filePath = $this->wire('config')->paths->root . $this->tracyExceptionFile;
+        // generate CSRF token for AJAX calls (shared with File Editor)
+        if(!$this->wire('session')->tracyFileEditorToken) {
+            $this->wire('session')->tracyFileEditorToken = bin2hex(random_bytes(32));
+        }
+        $csrfToken = $this->wire('session')->tracyFileEditorToken;
 
-        $maximizeSvg = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="282.8 231 16 15.2" enable-background="new 282.8 231 16 15.2" xml:space="preserve"><polygon fill="#AEAEAE" points="287.6,233.6 298.8,231 295.4,242 "/><polygon fill="#AEAEAE" points="293.9,243.6 282.8,246.2 286.1,235.3 "/></svg>';
-
+        $nonceAttr = TracyDebugger::getNonceAttr();
         $out = <<< HTML
-        <script>
+        <script{$nonceAttr}>
 
             var tracyExceptionsViewer = {
                 tracyModuleUrl: "$tracyModuleUrl",
                 currentURL: "$currentUrl",
+                csrfToken: "$csrfToken",
             };
 
             function clearTracyExceptionsViewer() {
@@ -85,135 +88,107 @@ class TracyExceptionsPanel extends BasePanel {
 
             tracyJSLoader.load(tracyExceptionsViewer.tracyModuleUrl + "scripts/exception-loader.js");
 
+            document.addEventListener('click', function(e) {
+                if(e.target && e.target.id === 'clearException') clearTracyExceptionsViewer();
+            }, true);
+
         </script>
 
 HTML;
 
-        $out .= '<h1>'.$this->icon.' Tracy Exceptions <span id="panelTitleFilePath" style="font-size:14px"></span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'TracyExceptionsPanel\')">⛶</a></span></span>
-        <div class="tracy-inner">
-            <div id="tracyExceptionsViewerContainer" style="height: 100%;">
-            <span style="float:right"><input style="display: none !important" type="submit" id="clearException" name="clearException" onclick="clearTracyExceptionsViewer()" value="Unload" /></span>
-                <div style="float: left; height: calc(100% - 38px);">
-                    <div id="tracyExceptionFiles" style="padding: 0 !important; margin:0 !important; width: 512px !important; height: calc(100% - 40px) !important; overflow-y: auto; overflow-x: hidden; z-index: 1">';
+        $out .= '<h1>'.$this->icon.' Tracy Exceptions <span id="panelTitleFilePath" style="font-size:14px"></span></h1><span class="tracy-icons"></span>
+        ' . $this->openPanel('', 'display: flex; flex-direction: column; min-height: 0;') . '
+            <div id="tracyExceptionsViewerContainer" style="display: flex; flex: 1; min-height: 0;">
+                <div style="display: flex; flex-direction: column; flex-shrink: 0; min-height: 0;">
+                    <div id="tracyExceptionFiles" style="padding: 0 !important; margin: 0 !important; overflow-y: auto; overflow-x: hidden; flex: 1; min-height: 0;">';
                         $out .= "<div class='fe-file-tree'>";
-                        $out .= $this->php_file_tree($this->wire('config')->paths->logs . 'tracy/', array('html'));
+                        $out .= $this->php_file_tree($this->wire('config')->paths->logs . 'tracy/');
                         $out .= "</div>";
                     $out .= '
-                        <input type="hidden" id="tracyExceptionFilePath" name="tracyExceptionFilePath" value="'.$this->tracyExceptionFile.'" />
+                        <input type="hidden" id="tracyExceptionFilePath" name="tracyExceptionFilePath" value="'.htmlspecialchars($this->tracyExceptionFile ?? '', ENT_QUOTES, 'UTF-8').'" />
                     </div>
                 </div>
-                <div id="tracyExceptionsViewerCodeContainer">
-                    <div id="tracyExceptionsViewerCode" style="display:none"></div>
+                <div style="display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0;">
+                    <span style="align-self: flex-end;"><input style="display: none !important" type="submit" id="clearException" name="clearException"  value="Unload" /></span>
+                    <div id="tracyExceptionsViewerCodeContainer" style="flex: 1; overflow: auto; min-height: 0;">
+                        <div id="tracyExceptionsViewerCode" style="display:none"></div>
+                    </div>
                 </div>
             </div>
             ';
 
-            $out .= \TracyDebugger::generatePanelFooter('tracyExceptions', \Tracy\Debugger::timer('tracyExceptions'), strlen($out), 'tracyExceptionsPanel');
-
-        $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'tracyExceptions', 'tracyExceptionsPanel');
     }
 
     /**
-     * Generates a valid HTML list of all directories, sub-directories and files
+     * Generates a valid HTML list of all files
      *
      * @param string $directory starting point, valid path, with or without trailing slash
-     * @param array $extensions array of strings with extension types (without dot), default: empty array, show all files
-     * @param bool $extFilter to include (false) or exclude (true) files with that extension, default: false
      * @return string html markup
      *
      */
-     public function php_file_tree($directory, $extensions = array(), $extFilter = false) {
+    public function php_file_tree($directory) {
 
-        if(!function_exists("scandir")) {
-            $msg = $this->_('Error: scandir function does not exist.');
-            $this->error($msg);
-            return;
-        }
-
-        $directory = rtrim($directory, '/\\'); // strip both slash and backslash at the end
+        $directory = rtrim($directory, '/\\');
 
         $tree  = "<div class='tracy-exceptions-file-tree'>";
-        $tree .= $this->php_file_tree_dir($directory, $extensions, (bool) $extFilter);
+        $tree .= $this->php_file_tree_dir($directory);
         $tree .= "</div>";
 
         return $tree;
     }
 
     /**
-     * Recursive function to generate the list of directories/files.
+     * Generate the list of exception files.
      *
      * @param string $directory starting point, full valid path, without trailing slash
-     * @param array $extensions array of strings with extension types (without dot), default: empty array
-     * @param bool $extFilter to include (false) or exclude (true) files with that extension, default: false (include)
-     * @param string $parent relative directory path, for internal use only
      * @return string html markup
      *
      */
-    private function php_file_tree_dir($directory, $extensions = array(), $extFilter = false, $parent = "") {
+    private function php_file_tree_dir($directory) {
 
-        $tree = "";
-
-        if(count($this->filesArray) > 0) {
-            // Sort directories/files
-            natcasesort($this->filesArray);
-            $this->filesArray = array_reverse($this->filesArray, false);
-
-            // Make directories first, then files
-            $fls = $dirs = array();
-            foreach($this->filesArray as $f) {
-                if(@is_dir("$directory/$f")) $dirs[] = $f; else $fls[] = $f;
-            }
-            $this->filesArray = array_merge($dirs, $fls);
-            $this->wire('cache')->save('TracyExceptionsData', $this->filesArray, WireCache::expireNever);
-
-            $tree .= "<ul>";
-
-            foreach($this->filesArray as $file) {
-                $fileName = $this->toUTF8($file, $this->encoding);
-
-                $parentDir = "/" . str_replace($this->wire('config')->paths->root, "", $directory . "/"); // directory is without trailing slash
-                $dirPath = $this->toUTF8("$parentDir/$file/", $this->encoding);
-                $dirPath = str_replace("//", "/", $dirPath);
-
-                $ext = strtolower(substr($file, strrpos($file, ".") + 1));
-                $link = str_replace("%2F", "/", rawurlencode("$dirPath")); // to overcome bug/feature on apache
-                $link = trim($link, '/');
-                $link = str_replace('//', '/', $link);
-                $link = str_replace($this->wire('config')->paths->root, '', $link);
-                $tree .= "<li style='padding: 3px 5px".(in_array($fileName, $this->newFiles) ? '; background: '.\TracyDebugger::COLOR_ALERT : '')."'><a onclick='showUnloadButton()' ".(in_array($fileName, $this->newFiles) ? ' style="color: #FFFFFF !important"' : '')." href='tracyexception://?f=$link&l=1'>$fileName</a></li>";
-
-            }
-
-            $tree .= "</ul>";
+        if(count($this->filesArray) === 0) {
+            return "";
         }
-        return $tree;
+
+        $rootPath = $this->wire('config')->paths->root;
+        $parentDir = "/" . str_replace($rootPath, "", $directory . "/");
+        $parentDir = str_replace("//", "/", $parentDir);
+        $needsUtf8 = $this->needsUtf8Convert();
+
+        $parts = array('<ul>');
+
+        foreach($this->filesArray as $file) {
+            $fileName = $needsUtf8 ? $this->toUTF8($file) : $file;
+            $isNew = isset($this->newFilesMap[$fileName]);
+
+            $link = str_replace('%2F', '/', rawurlencode($parentDir . $file));
+            $link = trim($link, '/');
+            $link = str_replace($rootPath, '', $link);
+
+            $liStyle = 'padding: 3px 5px' . ($isNew ? '; background: ' . TracyDebugger::COLOR_ALERT : '');
+            $aStyle = $isNew ? ' style="color: #FFFFFF !important"' : '';
+
+            $escapedFileName = htmlspecialchars($fileName ?? '', ENT_QUOTES, 'UTF-8');
+            $parts[] = "<li style='{$liStyle}'><a{$aStyle} href='tracyexception://?f={$link}&l=1'>{$escapedFileName}</a></li>";
+        }
+
+        $parts[] = '</ul>';
+        return implode("\n", $parts);
     }
 
-    private function getFilesArray($directory, $extensions = array(), $extFilter = false) {
-        $filesArray = array();
-        // Get directories/files
-        $filesArray = array_diff(@scandir($directory, SCANDIR_SORT_DESCENDING), array('.', '..')); // array_diff removes . and ..
-
-        // Filter unwanted extensions
-        // currently empty extensions array returns all files in folders
-        // comment if statement if you want empty extensions array to return no files at all
-        if(!empty($extensions)) {
-            foreach(array_keys($filesArray) as $key) {
-
-                // exclude dotfiles, but leave files in extensions filter
-                // substr($filesArray[$key], 1) removes first char
-                if($filesArray[$key][0] == '.' && !in_array(substr($filesArray[$key], 1), $extensions) ) unset($filesArray[$key]);
-
-                if(!@is_dir("$directory/$filesArray[$key]")) {
-                    $ext = substr($filesArray[$key], strrpos($filesArray[$key], ".") + 1);
-                    if($extFilter == in_array($ext, $extensions)) unset($filesArray[$key]);
-                }
-            }
-        }
-        return $filesArray;
+    /**
+     * Get the latest exception files sorted newest first.
+     *
+     * @param string $directory path to tracy log directory
+     * @return array filenames (basename only)
+     *
+     */
+    private function getFilesArray($directory) {
+        $files = glob($directory . '*.html');
+        if(!$files) return array();
+        rsort($files);
+        return array_map('basename', array_slice($files, 0, TracyDebugger::getDataValue("numExceptions")));
     }
 
     /**
@@ -227,76 +202,22 @@ HTML;
      */
     private function toUTF8($str, $encoding = 'auto', $c = false) {
 
-        if(PHP_VERSION_ID >= 70100) return $str;
+        if(!$this->needsUtf8Convert()) return $str;
 
-        // http://stackoverflow.com/questions/7979567/php-convert-any-string-to-utf-8-without-knowing-the-original-character-set-or
-        if(extension_loaded('mbstring') && function_exists('iconv')) {
-            if($encoding == 'auto') {
-                if(DIRECTORY_SEPARATOR != '/') {
-                    // windows
-                    $str = @iconv(mb_detect_encoding($str, mb_detect_order(), true), 'UTF-8', $str);
-                } else {
-                    // linux
-                    $str = @iconv('Windows-1250', 'UTF-8', $str); // wild guess!!! could be ISO-8859-2, UTF-8, ...
-                }
+        if($encoding == 'auto') {
+            if(DIRECTORY_SEPARATOR != '/') {
+                $str = @iconv(mb_detect_encoding($str, mb_detect_order(), true), 'UTF-8', $str);
             } else {
-                if($encoding == 'urldecode') $str = @urldecode($str);
-                else if($encoding == 'none') $str = $str;
-                else if($encoding != 'UTF-8') $str = @iconv($encoding, 'UTF-8', $str);
+                $str = @iconv('Windows-1250', 'UTF-8', $str);
             }
+        } else {
+            if($encoding == 'urldecode') $str = @urldecode($str);
+            else if($encoding == 'none') $str = $str;
+            else if($encoding != 'UTF-8') $str = @iconv($encoding, 'UTF-8', $str);
         }
-        // replacement of % must be first!!!
+
         if($c) $str = str_replace(array("%", "#", " ", "{", "}", "^", "+"), array("%25", "%23", "%20", "%7B", "%7D", "%5E", "%2B"), $str);
         return $str;
-    }
-
-    /**
-     * Convert $config->paths->key to $config->urls->key
-     *
-     * @param string $path eg. $config->paths->templates
-     * @param array $pathTypes eg. array('site','templates'), if not specified, array is constructed from $config->paths
-     * @return string path converted to url, empty string if path not found
-     *
-     */
-    private function convertPathToUrl($path, $pathTypes = array()) {
-        $path = rtrim($path, '/\\') . '/'; // strip both slash and backslash at the end and then re-add separator
-        $url = '';
-
-        if(!$pathTypes) {
-            $pathTypes = array('root'); // root is missing
-            foreach($this->wire('config')->paths as $pathType => $dummy) $pathTypes[] = $pathType;
-        }
-
-        foreach($pathTypes as $pathType) {
-            if($this->wire('config')->paths->{$pathType} == $path) {
-                $url = $this->wire('config')->urls->{$pathType};
-                break;
-            }
-        }
-        return $url;
-    }
-
-    /**
-     * Convert string delimited by delimiter into an array. Removes empty array keys.
-     *
-     * @param string $extensions string with delimiters
-     * @param string $delimiter, default is comma
-     * @return array
-     *
-     */
-    private function toArray($extensions, $delimiter = ',') {
-        $ext = preg_replace('# +#', '', $extensions); // remove all spaces
-        $ext = array_filter(explode($delimiter, $ext), 'strlen'); // convert to array splitting by delimiter
-        return $ext;
-    }
-
-
-    private function strposa($haystack, $needle, $offset=0) {
-        if(!is_array($needle)) $needle = array($needle);
-        foreach($needle as $query) {
-            if(strpos($haystack, $query, $offset) !== false) return true; // stop on first true result
-        }
-        return false;
     }
 
 }

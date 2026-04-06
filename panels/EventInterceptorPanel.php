@@ -1,6 +1,6 @@
-<?php
+<?php namespace ProcessWire;
 
-use Tracy\Dumper;
+use Tracy\Debugger;
 
 class EventInterceptorPanel extends BasePanel {
 
@@ -11,15 +11,15 @@ class EventInterceptorPanel extends BasePanel {
 
     public function getTab() {
 
-        \Tracy\Debugger::timer('eventInterceptor');
+        Debugger::timer('eventInterceptor');
 
         $items = $this->wire('session')->tracyEventItems;
         $this->eventCount = is_array($items) ? count($items) : 0;
         if($this->eventCount > 0) {
-            $this->iconColor = $this->wire('input')->cookie->eventInterceptorHook ? \TracyDebugger::COLOR_ALERT : \TracyDebugger::COLOR_NORMAL;
+            $this->iconColor = $this->wire('input')->cookie->eventInterceptorHook ? TracyDebugger::COLOR_ALERT : TracyDebugger::COLOR_NORMAL;
             $this->entries .= '
             <div class="event-items">
-                <p><input type="submit" onclick="clearEvents()" value="Clear Events" /></p><br />';
+                <p><input type="submit" id="tracyClearEvents" value="Clear Events" /></p><br />';
             foreach($items as $item) {
                 $this->entries .= '<h2><strong>' . date("Y-m-d H:i:s", $item['timestamp']) . '</strong></h2>';
                 $this->entries .= '<h2>Event Object</h2>';
@@ -30,11 +30,11 @@ class EventInterceptorPanel extends BasePanel {
             $this->entries .= '</div>';
         }
         elseif($this->wire('input')->cookie->eventInterceptorHook) {
-            $this->iconColor = \TracyDebugger::COLOR_WARN;
+            $this->iconColor = TracyDebugger::COLOR_WARN;
             $this->entries = 'No Events Intercepted';
         }
         else {
-            $this->iconColor = \TracyDebugger::COLOR_NORMAL;
+            $this->iconColor = TracyDebugger::COLOR_NORMAL;
             $this->entries = 'No Events Intercepted';
         }
 
@@ -46,25 +46,19 @@ class EventInterceptorPanel extends BasePanel {
         </svg>
         ';
 
-        return '
-        <span title="Event Interceptor">
-            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Event Interceptor' : '') . ' ' . ($this->eventCount > 0 ? '<span class="eventCount">' . $this->eventCount . '</span>' : '') . '
-        </span>
-        ';
+        return $this->buildTab('Event Interceptor', null, ' ' . ($this->eventCount > 0 ? '<span class="eventCount">' . $this->eventCount . '</span>' : ''));
     }
 
 
     public function getPanel() {
-        $isAdditionalBar = \TracyDebugger::isAdditionalBar();
-
         if($this->wire('input')->cookie->eventInterceptorHook) {
             $hookSettings = json_decode($this->wire('input')->cookie->eventInterceptorHook, true);
         }
 
-        $out = '
-        <h1>' . $this->icon . ' Event Interceptor' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>
+        $out = $this->buildPanelHeader('Event Interceptor', false, true);
 
-        <script>
+        $out .= '
+        <script' . TracyDebugger::getNonceAttr() . '>
             function clearEvents() {
                 document.cookie = "tracyClearEventItems=true;expires=0;path=/";
 
@@ -76,7 +70,7 @@ class EventInterceptorPanel extends BasePanel {
                 var icons = document.getElementsByClassName("eventInterceptorIconPath");
                 i=0;
                 while(i < icons.length) {
-                    icons[i].style.fill="'.\TracyDebugger::COLOR_NORMAL.'";
+                    icons[i].style.fill="'.TracyDebugger::COLOR_NORMAL.'";
                     i++;
                 }
 
@@ -104,10 +98,10 @@ class EventInterceptorPanel extends BasePanel {
                 }
 
                 if(status === "set") {
-                    var fillColor = "'.\TracyDebugger::COLOR_WARN.'";
+                    var fillColor = "'.TracyDebugger::COLOR_WARN.'";
                 }
                 else if(document.getElementById("tracyEventEntries").innerHTML == "No Events Intercepted" || document.getElementById("tracyEventEntries").innerHTML.trim() == "" || status === "remove") {
-                    var fillColor = "'.\TracyDebugger::COLOR_NORMAL.'";
+                    var fillColor = "'.TracyDebugger::COLOR_NORMAL.'";
                 }
 
                 var icons = document.getElementsByClassName("eventInterceptorIconPath");
@@ -117,9 +111,17 @@ class EventInterceptorPanel extends BasePanel {
                     i++;
                 }
             }
+
+            var el;
+            el = document.getElementById("tracyClearEvents");
+            if(el) el.addEventListener("click", function() { clearEvents(); });
+            el = document.getElementById("tracySetEventHook");
+            if(el) el.addEventListener("click", function() { setEventInterceptorHook("set"); });
+            el = document.getElementById("tracyRemoveEventHook");
+            if(el) el.addEventListener("click", function() { setEventInterceptorHook("remove"); });
         </script>
 
-        <div class="tracy-inner tracy-DumpPanel" style="min-width:350px !important">
+        ' . $this->openPanel('tracy-DumpPanel', 'min-width:350px !important') . '
 
             <fieldset id="eventInterceptor">
                 <legend><span id="eventHookLegend">'.(isset($hookSettings['hook']) ? '<strong>' . $hookSettings['hook'] . '</strong> <em>' . $hookSettings['when'] . '</em> hook is set to return <em>' . $hookSettings['return'] . '</em>' : 'Enter an Event Hook (eg. PageRender::renderPage)') .'</span></legend><br />';
@@ -135,18 +137,13 @@ class EventInterceptorPanel extends BasePanel {
 
                 </p>
                 <br />
-                <input type="submit" onclick="setEventInterceptorHook(\'set\')" value="Set Hook" />&nbsp;
-                <input type="submit" onclick="setEventInterceptorHook(\'remove\')" value="Remove Hook" />&nbsp;
+                <input type="submit" id="tracySetEventHook" value="Set Hook" />&nbsp;
+                <input type="submit" id="tracyRemoveEventHook" value="Remove Hook" />&nbsp;
             </fieldset>
             <br /><br />
             <div id="tracyEventEntries">'.$this->entries.'</div>';
 
-            $out .= \TracyDebugger::generatePanelFooter('eventInterceptor', \Tracy\Debugger::timer('eventInterceptor'), strlen($out));
-
-            $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'eventInterceptor');
     }
 
 }

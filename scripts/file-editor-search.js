@@ -16,7 +16,7 @@ addFilterBox({
         }
     },
     addTo: {
-        selector: "#tracy-debug-panel-FileEditorPanel .tracy-inner",
+        selector: "#tracy-debug-panel-ProcessWire-FileEditorPanel .tracy-inner",
         position: "append"
     },
     inputDelay: 500,

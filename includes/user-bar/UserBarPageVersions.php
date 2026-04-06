@@ -1,4 +1,4 @@
-<?php
+<?php namespace ProcessWire;
 
 if(wire('user')->hasPermission('tracy-page-versions')) {
 
@@ -23,7 +23,7 @@ if(wire('user')->hasPermission('tracy-page-versions')) {
 
     if($countTemplateOptions > 1) {
 
-        if(\TracyDebugger::$templatePath) {
+        if(TracyDebugger::$templatePath) {
             $iconColor = '#D51616';
         }
         else {
@@ -38,7 +38,7 @@ if(wire('user')->hasPermission('tracy-page-versions')) {
         </svg>';*/
 
         $userBar .= '
-        <script>
+        <script' . TracyDebugger::getNonceAttr() . '>
             function getTracyUserBarTemplatePath() {
                 var e = document.getElementById("tracyUserBarTemplatePath");
                 return "'.wire("page")->template->name.'|"+e.options[e.selectedIndex].value;
@@ -75,6 +75,10 @@ if(wire('user')->hasPermission('tracy-page-versions')) {
                 var parts = value.split("; " + name + "=");
                 if (parts.length == 2) return parts.pop().split(";").shift();
             }
+
+            document.addEventListener("change", function(e) {
+                if(e.target && e.target.id === "tracyUserBarTemplatePath") changeTemplatePath();
+            }, true);
         </script>
         <style>
             select#tracyUserBarTemplatePath {
@@ -89,7 +93,7 @@ if(wire('user')->hasPermission('tracy-page-versions')) {
 
         <span title="Page Version">
         ' . $icon . '
-            <select id="tracyUserBarTemplatePath" onchange="changeTemplatePath()">' .
+            <select id="tracyUserBarTemplatePath">' .
                 $templateOptions . '
             </select>
         </span>';

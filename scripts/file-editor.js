@@ -25,7 +25,7 @@ if(!tracyFileEditorLoader) {
                         recentlyOpenSelect.options[recentlyOpenSelect.options.length] = new Option(storedFiles[i], storedFiles[i]);
                     }
                 }
-                var initialFile = document.getElementById('panelTitleFilePath').innerHTML;
+                var initialFile = document.getElementById('panelTitleFilePath').textContent;
                 tracyFileEditorLoader.addRecentlyOpenedFile(initialFile);
             }
         },
@@ -60,10 +60,10 @@ if(!tracyFileEditorLoader) {
             if (parts.length == 2) return parts.pop().split(";").shift();
         },
 
-        createButton: function(name, value, onlick) {
+        createButton: function(name, value, needsRawCode) {
             var button = '<input type="submit" id="'+name+'" name="'+name+'"';
-            if(onlick) button += ' onclick="tracyFileEditor.getRawFileEditorCode()"';
-            button += 'value="'+value+'" />&nbsp;';
+            if(needsRawCode) button += ' data-raw-file-editor-code="1"';
+            button += ' value="'+value+'" />&nbsp;';
             return button;
         },
 
@@ -100,11 +100,11 @@ if(!tracyFileEditorLoader) {
 
         populateFileEditor: function(filePath, line) {
             document.getElementById("fileEditorFilePath").value = filePath;
-            document.cookie = "tracyFileEditorFilePath=" + filePath + "; path=/";
-            document.getElementById("panelTitleFilePath").innerHTML = "/" + filePath;
+            document.cookie = "tracyFileEditorFilePath=" + filePath + "; path=/; SameSite=Strict";
+            document.getElementById("panelTitleFilePath").textContent = "/" + filePath;
 
             if(typeof tracyFileEditor === "undefined" || !tracyFileEditor.tfe) {
-                window.requestAnimationFrame(tracyFileEditorLoader.populateFileEditor(filePath, line));
+                window.requestAnimationFrame(function() { tracyFileEditorLoader.populateFileEditor(filePath, line); });
             }
             else {
                 var xmlhttp;
@@ -128,22 +128,22 @@ if(!tracyFileEditorLoader) {
                 xmlhttp.open("POST", tracyFileEditor.currentUrl, true);
                 xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-                xmlhttp.send("filePath=" + filePath);
+                xmlhttp.send("filePath=" + encodeURIComponent(filePath) + "&csrfToken=" + encodeURIComponent(tracyFileEditor.csrfToken));
                 init_php_file_tree(filePath);
             }
         },
 
         loadFileEditor: function(filePath, line) {
 
-            if(document.getElementById("tracy-debug-panel-FileEditorPanel").classList.contains("tracy-mode-window")) {
+            if(document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel").classList.contains("tracy-mode-window")) {
                 this.populateFileEditor(filePath, line);
             }
             else {
-                if(!window.Tracy.Debug.panels || !document.getElementById("tracy-debug-panel-FileEditorPanel")) {
-                    window.requestAnimationFrame(tracyFileEditorLoader.loadFileEditor(filePath, line));
+                if(!window.Tracy.Debug.panels || !document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel")) {
+                    window.requestAnimationFrame(function() { tracyFileEditorLoader.loadFileEditor(filePath, line); });
                 }
                 else {
-                    var panel = window.Tracy.Debug.panels["tracy-debug-panel-FileEditorPanel"];
+                    var panel = window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-FileEditorPanel"];
                     if(panel.elem.dataset.tracyContent) {
                         panel.init();
                     }
