@@ -917,6 +917,7 @@ class ConsolePanel extends BasePanel {
                 tracyConsole._pollDelivered = false;
                 tracyConsole._stopPolling = false;
                 tracyConsole._inlineDelivered = false;
+                tracyConsole._bgStartTime = Date.now();
 
                 /* calculate XHR timeout from server max_execution_time */
                 const container = document.getElementById("tracyConsoleContainer");
@@ -927,7 +928,11 @@ class ConsolePanel extends BasePanel {
                 const onReadyStateChange = function() {
                     if (xmlhttp.readyState == XMLHttpRequest.DONE) {
                         if(xmlhttp.status === 0) {
-                            if(!tracyConsole._pollingActive) tracyConsole.setRunButtonEnabled(true);
+                            if(!tracyConsole._pollingActive) {
+                                tracyConsole.setRunButtonEnabled(true);
+                                var sd = document.getElementById("tracyConsoleStatus");
+                                if(sd) sd.innerHTML = "✘ Connection lost";
+                            }
                             return;
                         }
                         /* original XHR completed — cancel poll timer if it hasn't fired */
@@ -942,7 +947,6 @@ class ConsolePanel extends BasePanel {
                             tracyConsole._inlineDelivered = false;
                             tracyConsole._activeRunId = runId;
                             tracyConsole.setRunButtonEnabled(false);
-                            tracyConsole._bgStartTime = Date.now();
                             tracyConsole._bgTimer = setInterval(function() {
                                 var elapsed = Math.round((Date.now() - tracyConsole._bgStartTime) / 1000);
                                 var mins = Math.floor(elapsed / 60);
@@ -998,7 +1002,6 @@ class ConsolePanel extends BasePanel {
                         tracyConsole._pollingActive = true;
                         tracyConsole._activeRunId = runId;
                         tracyConsole.setRunButtonEnabled(false);
-                        tracyConsole._bgStartTime = Date.now();
                         tracyConsole._bgTimer = setInterval(function() {
                             var elapsed = Math.round((Date.now() - tracyConsole._bgStartTime) / 1000);
                             var mins = Math.floor(elapsed / 60);
