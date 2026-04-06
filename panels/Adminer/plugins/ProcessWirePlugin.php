@@ -488,7 +488,11 @@ class ProcessWirePlugin extends Plugin {
         if(preg_match('/^https?:\/\//i', $val)) {
             return $val;
         }
-        return wire('config')->urls->files . $pages_id . '/' . $val;
+        $filesUrl = wire('config')->urls->files;
+        if(strpos($val, ltrim($filesUrl, '/')) === 0 || strpos($val, $filesUrl) === 0) {
+            return '/' . ltrim($val, '/');
+        }
+        return $filesUrl . $pages_id . '/' . $val;
     }
 
     private function getAvailableThumb($val, $pages_id) {
@@ -505,7 +509,13 @@ class ProcessWirePlugin extends Plugin {
         }
 
         // process local file normally
-        $filePath = $config->urls->files . $pages_id . '/' . $val;
+        $filesUrl = $config->urls->files;
+        if(strpos($val, ltrim($filesUrl, '/')) === 0 || strpos($val, $filesUrl) === 0) {
+            $filePath = '/' . ltrim($val, '/');
+        }
+        else {
+            $filePath = $filesUrl . $pages_id . '/' . $val;
+        }
         $directory = dirname($filePath);
         $filename = pathinfo($filePath, PATHINFO_FILENAME);
         $extension = pathinfo($filePath, PATHINFO_EXTENSION);
