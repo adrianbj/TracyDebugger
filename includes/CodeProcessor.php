@@ -80,15 +80,10 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
         $code = '';
     }
 
-    // ready.php and finished.php weren't being loaded, so include here to monitor any bd() etc calls they might have
-    // the other approach to fix this is to call an external CodeProcessor.php file via ajax as per PM with @bernhard
-    $readyPath = $this->wire('config')->paths->root . 'site/ready.php';
-    $finishedPath = $this->wire('config')->paths->root . 'site/finished.php';
-    // Compile via FileCompiler (adds PW namespace to non-namespaced files) then
-    // include_once in the current scope so API variables ($user, $wire, $pages, etc.)
-    // extracted above on lines 40-43 are visible inside the included files.
-    if(file_exists($readyPath)) include_once($this->wire('files')->compile($readyPath));
-    if(file_exists($finishedPath)) include_once($this->wire('files')->compile($finishedPath));
+    // ready.php and finished.php are already executed by PW during normal bootstrap
+    // before this code runs (CodeProcessor is invoked from a ProcessWire::ready hook).
+    // Re-including them here would risk duplicate hook registrations and side effects.
+    // Any bd() calls in those files are already captured by Tracy during bootstrap.
 
     $cachePath = $this->wire('config')->paths->cache . 'TracyDebugger/';
 
