@@ -84,11 +84,11 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
     // the other approach to fix this is to call an external CodeProcessor.php file via ajax as per PM with @bernhard
     $readyPath = $this->wire('config')->paths->root . 'site/ready.php';
     $finishedPath = $this->wire('config')->paths->root . 'site/finished.php';
-    // use compileIncludeOnce so non-namespaced files get compiled by FileCompiler
-    // which adds the ProcessWire namespace - fixes errors like "Class WireCache not found"
-    // already-namespaced files are handled correctly (namespace rewriting is skipped)
-    if(file_exists($readyPath)) $this->wire('files')->compileIncludeOnce($readyPath);
-    if(file_exists($finishedPath)) $this->wire('files')->compileIncludeOnce($finishedPath);
+    // Compile via FileCompiler (adds PW namespace to non-namespaced files) then
+    // include_once in the current scope so API variables ($user, $wire, $pages, etc.)
+    // extracted above on lines 40-43 are visible inside the included files.
+    if(file_exists($readyPath)) include_once($this->wire('files')->compile($readyPath));
+    if(file_exists($finishedPath)) include_once($this->wire('files')->compile($finishedPath));
 
     $cachePath = $this->wire('config')->paths->cache . 'TracyDebugger/';
 
