@@ -53,15 +53,23 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
     }
 
     /* cache all session data we need, then release session lock immediately
-       so poll requests aren't blocked during long-running code execution */
-    if($tracyRunId) {
-        $tracySessionCache = array(
-            'includedFiles' => $this->wire('session')->tracyIncludedFiles,
-            'getData' => $this->wire('session')->tracyGetData,
-            'postData' => $this->wire('session')->tracyPostData,
-            'whitelistData' => $this->wire('session')->tracyWhitelistData,
-        );
-        session_write_close();
+       so the user isn't blocked from browsing while code executes */
+    $tracySessionCache = array(
+        'includedFiles' => $this->wire('session')->tracyIncludedFiles,
+        'getData' => $this->wire('session')->tracyGetData,
+        'postData' => $this->wire('session')->tracyPostData,
+        'whitelistData' => $this->wire('session')->tracyWhitelistData,
+    );
+    session_write_close();
+    /* release Tracy's own FileSession lock — it holds LOCK_EX for the
+       entire request and blocks other tabs that share the tracy-session cookie */
+    $tracySessionStorage = Debugger::getSessionStorage();
+    if($tracySessionStorage instanceof \Tracy\FileSession) {
+        $ref = new \ReflectionProperty($tracySessionStorage, 'file');
+        $fileHandle = $ref->getValue($tracySessionStorage);
+        if(is_resource($fileHandle)) {
+            flock($fileHandle, LOCK_UN);
+        }
     }
 
     $page = $pages->get((int)$_POST['pid']);
@@ -84,7 +92,7 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
 
     $cachePath = $this->wire('config')->paths->cache . 'TracyDebugger/';
 
-    $this->file = $cachePath.'consoleCode.php';
+    $this->file = $cachePath.'consoleCode' . ($tracyRunId ? '_' . $tracyRunId : '') . '.php';
     $tokens = token_get_all($code);
     $nextStringIsNamespace = false;
     $nameSpace = null;
@@ -133,6 +141,9 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
 
     if(!$this->wire('files')->filePutContents($this->file, $code, LOCK_EX)) {
         throw new WireException("Unable to write file: $this->file");
+    }
+    if($tracyRunId) {
+        $this->wire('files')->filePutContents($cachePath . 'consoleCode.php', $code, LOCK_EX);
     }
 
     if($this->wire('input')->cookie->tracyCodeReturn != "no") {
@@ -193,7 +204,7 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
             $currentVars = get_defined_vars();
             // get vars from the page's template file
             ob_start();
-            $includedFiles = isset($tracySessionCache) ? $tracySessionCache['includedFiles'] : $this->wire('session')->tracyIncludedFiles;
+            $includedFiles = $tracySessionCache['includedFiles'];
             foreach($includedFiles as $key => $path) {
                 if($path != $this->file && $path != $page->template->filename) {
                     include_once($path);
@@ -222,14 +233,14 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
         }
 
         // re-populate various $input properties from version stored in session
-        $getData = isset($tracySessionCache) ? $tracySessionCache['getData'] : $this->wire('session')->tracyGetData;
+        $getData = $tracySessionCache['getData'];
         if($getData) {
             foreach($getData as $k => $v) {
                 $this->wire('input')->get->$k = $v;
             }
         }
 
-        $postData = isset($tracySessionCache) ? $tracySessionCache['postData'] : $this->wire('session')->tracyPostData;
+        $postData = $tracySessionCache['postData'];
         if($postData) {
             foreach($this->wire('input')->post as $k => $v) {
                 unset($this->wire('input')->post->$k);
@@ -239,7 +250,7 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
             }
         }
 
-        $whitelistData = isset($tracySessionCache) ? $tracySessionCache['whitelistData'] : $this->wire('session')->tracyWhitelistData;
+        $whitelistData = $tracySessionCache['whitelistData'];
         if($whitelistData) {
             foreach($whitelistData as $k => $v) {
                 $this->wire('input')->whitelist->$k = $v;
@@ -293,6 +304,7 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
 
     }
 
+    if($tracyRunId) @unlink($this->file);
     exit;
 }
 

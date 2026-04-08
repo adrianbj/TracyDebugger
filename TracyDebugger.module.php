@@ -543,6 +543,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             // background execution: fetch result from cache and cleanup
             if($this->wire('input')->post->tracyConsoleCleanup == 1) {
+                Debugger::$showBar = false;
+                header_remove('X-Tracy-Ajax');
                 if(!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) {
                     http_response_code(403);
                     exit;
