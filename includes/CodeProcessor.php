@@ -21,9 +21,9 @@ if($tracyRunId) {
     ignore_user_abort(true);
     set_time_limit(0);
 }
-$GLOBALS['tracyRunId'] = $tracyRunId;
-$GLOBALS['tracyRunStatusDir'] = $tracyRunStatusDir;
-$GLOBALS['tracyRunCacheDir'] = $tracyRunCacheDir;
+TracyDebugger::$consoleRunId = $tracyRunId;
+TracyDebugger::$consoleRunStatusDir = $tracyRunStatusDir;
+TracyDebugger::$consoleRunCacheDir = $tracyRunCacheDir;
 if($this->wire('input')->post->allowBluescreen !== 'true') {
     set_error_handler(__NAMESPACE__.'\tracyConsoleErrorHandler');
     set_exception_handler(__NAMESPACE__.'\tracyConsoleExceptionHandler');
@@ -382,9 +382,9 @@ function writeError($error) {
     // but think that is ok in this case
     echo $error['type'].': '.$customErrStr;
     // write error to protected cache, update public status marker
-    $runId = isset($GLOBALS['tracyRunId']) ? $GLOBALS['tracyRunId'] : '';
-    $statusDir = isset($GLOBALS['tracyRunStatusDir']) ? $GLOBALS['tracyRunStatusDir'] : '';
-    $cacheDir = isset($GLOBALS['tracyRunCacheDir']) ? $GLOBALS['tracyRunCacheDir'] : '';
+    $runId = TracyDebugger::$consoleRunId;
+    $statusDir = TracyDebugger::$consoleRunStatusDir;
+    $cacheDir = TracyDebugger::$consoleRunCacheDir;
     if($runId && $statusDir && $cacheDir) {
         $result = array(
             'status' => 'error',

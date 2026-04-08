@@ -116,6 +116,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $hideInAdmin = array('validator', 'templateResources', 'templatePath');
     public static $superUserOnlyPanels = array('console', 'fileEditor', 'adminer', 'terminal', 'adminTools');
     public static $pageHtml;
+    public static $consoleRunId = '';
+    public static $consoleRunStatusDir = '';
+    public static $consoleRunCacheDir = '';
     public static $redirectInfo;
     public static $processWireInfoSections = array(
         'configData' => 'Config Data',
