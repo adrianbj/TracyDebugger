@@ -11,7 +11,7 @@ $tracyRunCacheDir = $this->wire('config')->paths->cache . 'TracyDebugger/console
 if($tracyRunId) {
     if(!is_dir($tracyRunStatusDir)) {
         wireMkdir($tracyRunStatusDir, true);
-        file_put_contents($tracyRunStatusDir . '.htaccess', "Options -Indexes\n");
+        file_put_contents($tracyRunStatusDir . '.htaccess', "Options -Indexes\n<IfModule mod_rewrite.c>\n    RewriteEngine On\n    RewriteRule ^(.+)\\.[0-9]+\\.json$ $1.json [L]\n</IfModule>\n<IfModule mod_headers.c>\n    Header set Cache-Control \"no-cache, no-store, must-revalidate\"\n</IfModule>\n");
     }
     if(!is_dir($tracyRunCacheDir)) wireMkdir($tracyRunCacheDir, true);
     /* write initial "running" status marker (no sensitive data — publicly accessible) */

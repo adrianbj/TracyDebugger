@@ -895,7 +895,7 @@ class ConsolePanel extends BasePanel {
                         setTimeout(function() { tracyConsole.pollForResults(runId); }, 3000);
                     }
                 };
-                xmlhttp.open("GET", pollUrl + encodeURIComponent(runId) + ".json?" + Date.now(), true);
+                xmlhttp.open("GET", pollUrl + encodeURIComponent(runId) + "." + Date.now() + ".json", true);
                 xmlhttp.send();
             },
 
@@ -927,16 +927,29 @@ class ConsolePanel extends BasePanel {
                 const xmlhttp = new XMLHttpRequest();
                 const onReadyStateChange = function() {
                     if (xmlhttp.readyState == XMLHttpRequest.DONE) {
+                        /* original XHR completed — cancel poll timer if it hasn't fired */
+                        if(typeof pollTimer !== 'undefined') clearTimeout(pollTimer);
                         if(xmlhttp.status === 0) {
                             if(!tracyConsole._pollingActive) {
-                                tracyConsole.setRunButtonEnabled(true);
-                                var sd = document.getElementById("tracyConsoleStatus");
-                                if(sd) sd.innerHTML = "✘ Connection lost";
+                                /* connection lost but PHP may still be running —
+                                   start polling immediately instead of waiting for poll timer */
+                                tracyConsole._inlineDelivered = false;
+                                tracyConsole._activeRunId = runId;
+                                tracyConsole.setRunButtonEnabled(false);
+                                tracyConsole._bgTimer = setInterval(function() {
+                                    var elapsed = Math.round((Date.now() - tracyConsole._bgStartTime) / 1000);
+                                    var mins = Math.floor(elapsed / 60);
+                                    var secs = elapsed % 60;
+                                    var timeStr = mins > 0 ? mins + 'm ' + secs + 's' : secs + 's';
+                                    var sd = document.getElementById("tracyConsoleStatus");
+                                    if(sd) sd.innerHTML = "<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> Running in background... " + timeStr;
+                                }, 1000);
+                                tracyConsole._stopPolling = false;
+                                tracyConsole.pollForResults(runId);
+                                listenerMap.delete(xmlhttp);
                             }
                             return;
                         }
-                        /* original XHR completed — cancel poll timer if it hasn't fired */
-                        if(typeof pollTimer !== 'undefined') clearTimeout(pollTimer);
                         /* if polling already delivered results, ignore this response */
                         if(tracyConsole._pollingActive && tracyConsole._pollDelivered) return;
                         /* mark inline as delivered immediately so any queued poll callbacks bail out */
