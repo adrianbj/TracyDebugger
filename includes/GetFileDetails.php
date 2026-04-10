@@ -11,7 +11,11 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
     }
 
     $rootPath = $this->wire('config')->paths->root;
-    $resolvedPath = str_replace('\\', '/', realpath($rootPath . $_POST['filePath']));
+    $filePath = $_POST['filePath'];
+    $resolvedPath = str_replace('\\', '/', realpath($rootPath . $filePath));
+    if($resolvedPath === false || $resolvedPath === '') {
+        $resolvedPath = str_replace('\\', '/', realpath($filePath));
+    }
 
     if($resolvedPath !== false && strpos($resolvedPath, $rootPath) === 0) {
 

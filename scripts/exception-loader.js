@@ -38,13 +38,38 @@ if(!tracyExceptionLoader) {
                             var isBlueScreen = fileData.contents.replace(/^\s+/, '').substring(0, 15).toLowerCase() === '<!doctype html>';
 
                             if(isBlueScreen) {
-                                // Real BlueScreen HTML — display inside the panel
                                 document.documentElement.classList.remove('tracy-bs-visible');
                                 if(document.getElementById('tracy-bs')) {
                                     document.getElementById('tracy-bs').remove();
                                 }
                                 viewerCode.innerHTML = fileData.contents;
                                 viewerCode.style.display = "";
+                                if(typeof tracyFileEditorLoader !== "undefined") {
+                                    viewerCode.querySelectorAll("a.tracy-editor").forEach(function(a) {
+                                        var href = a.getAttribute("href");
+                                        if(!href || href.indexOf("tracy://") === 0) return;
+                                        var file, line;
+                                        var qMatch = href.match(/[?&]f(?:ile)?=([^&]+)/);
+                                        if(qMatch) {
+                                            file = qMatch[1];
+                                            var lMatch = href.match(/[?&]l(?:ine)?=([^&]+)/);
+                                            line = lMatch ? lMatch[1] : 1;
+                                        } else {
+                                            var stripped = href.replace(/^[a-z]+:\/\/[^/]*\/?/, "");
+                                            var colonIdx = stripped.lastIndexOf(":");
+                                            if(colonIdx > 0 && /^\d+$/.test(stripped.substring(colonIdx + 1))) {
+                                                file = stripped.substring(0, colonIdx);
+                                                line = stripped.substring(colonIdx + 1);
+                                            } else {
+                                                file = stripped;
+                                                line = 1;
+                                            }
+                                        }
+                                        if(file) {
+                                            a.setAttribute("href", "tracy://?f=" + file + "&l=" + line);
+                                        }
+                                    });
+                                }
                             }
                             else {
                                 // Non-HTML content — display using Tracy's built-in

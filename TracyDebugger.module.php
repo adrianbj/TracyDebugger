@@ -1476,6 +1476,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if(property_exists(Debugger::class, 'maxItems')) {
                 Debugger::$maxItems = $this->data['maxItems'];
             }
+            if(static::$useOnlineEditor && static::$onlineEditor == 'tracy') {
+                Debugger::getBlueScreen()->addPanel(function (): ?string {
+                    return '<script' . TracyDebugger::getNonceAttr() . '>document.addEventListener("click", function(e) { var el = e.target; while(el && el.tagName !== "A") el = el.parentNode; if(el && el.href && el.href.indexOf("tracy://") !== -1) { e.preventDefault(); e.stopImmediatePropagation(); if(typeof tracyFileEditorLoader !== "undefined") { var q = el.href.split("?")[1]; var f = tracyFileEditorLoader.getFileLineVars(q, "f"); var l = tracyFileEditorLoader.getFileLineVars(q, "l"); tracyFileEditorLoader.loadFileEditor(f, l); tracyFileEditorLoader.addRecentlyOpenedFile(f); } } }, true);</script>';
+                });
+            }
+
             Debugger::getBlueScreen()->maxDepth = $this->data['maxDepth'];
             Debugger::getBlueScreen()->maxLength = $this->data['maxLength'];
             Debugger::getBlueScreen()->maxItems = $this->data['maxItems'];

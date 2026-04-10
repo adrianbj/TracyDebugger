@@ -101,7 +101,11 @@ if(!tracyFileEditorLoader) {
         populateFileEditor: function(filePath, line) {
             document.getElementById("fileEditorFilePath").value = filePath;
             document.cookie = "tracyFileEditorFilePath=" + filePath + "; path=/; SameSite=Strict";
-            document.getElementById("panelTitleFilePath").textContent = "/" + filePath;
+            var fePanel = document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel");
+            if(fePanel) {
+                var titleEl = fePanel.querySelector("#panelTitleFilePath");
+                if(titleEl) titleEl.textContent = "/" + filePath;
+            }
 
             if(typeof tracyFileEditor === "undefined" || !tracyFileEditor.tfe) {
                 window.requestAnimationFrame(function() { tracyFileEditorLoader.populateFileEditor(filePath, line); });
@@ -116,6 +120,11 @@ if(!tracyFileEditorLoader) {
                             tracyFileEditorLoader.generateButtons(fileData);
                             tracyFileEditor.tfe.setValue(fileData["contents"]);
                             tracyFileEditor.tfe.gotoLine(line, 0);
+                            var fePanel = document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel");
+                            if(fePanel) {
+                                var titleEl = fePanel.querySelector("#panelTitleFilePath");
+                                if(titleEl) titleEl.textContent = "/" + filePath;
+                            }
 
                             // set mode appropriately
                             var mode = tracyFileEditor.modelist.getModeForPath(filePath).mode;
@@ -134,12 +143,13 @@ if(!tracyFileEditorLoader) {
         },
 
         loadFileEditor: function(filePath, line) {
+            var panelElem = document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel");
 
-            if(document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel").classList.contains("tracy-mode-window")) {
+            if(panelElem && panelElem.classList.contains("tracy-mode-window")) {
                 this.populateFileEditor(filePath, line);
             }
             else {
-                if(!window.Tracy.Debug.panels || !document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel")) {
+                if(!window.Tracy.Debug.panels || !panelElem) {
                     window.requestAnimationFrame(function() { tracyFileEditorLoader.loadFileEditor(filePath, line); });
                 }
                 else {

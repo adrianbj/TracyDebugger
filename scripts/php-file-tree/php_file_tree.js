@@ -35,6 +35,11 @@
 function init_php_file_tree(linkedFilePath) {
 
 	if (!document.getElementsByTagName || !document.getElementById("tracyFoldersFiles")) return;
+	var treeEl = document.getElementById("tracyFoldersFiles");
+	var els = treeEl.querySelectorAll(".active");
+	[].forEach.call(els, function (el) {
+		el.classList.remove("active");
+	});
 	var path = '';
 	var aMenus = document.getElementById("tracyFoldersFiles").getElementsByTagName("LI");
 	for (var i = 0; i < aMenus.length; i++) {
@@ -95,9 +100,10 @@ function init_php_file_tree(linkedFilePath) {
 					var parser = document.createElement('a');
 					var queryStr = items[j].href.split('?')[1];
 					var currentFilePath = decodeURI(queryStr.replace('f=','').replace('&l=1',''));
-					if(document.getElementById('panelTitleFilePath').innerHTML == currentFilePath || linkedFilePath == currentFilePath) {
-						var els = document.getElementsByClassName("active");
-						[].forEach.call(els, function (el) {
+					var fePanelEl = document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel");
+					var titleContent = fePanelEl ? (fePanelEl.querySelector("#panelTitleFilePath") || {}).innerHTML : "";
+					if(titleContent == currentFilePath || linkedFilePath == currentFilePath) {
+						treeEl.querySelectorAll(".active").forEach(function (el) {
 							el.classList.remove("active");
 						});
 						items[j].classList.add("active");
