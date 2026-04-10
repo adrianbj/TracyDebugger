@@ -541,6 +541,25 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $this->wire()->addHookAfter('ProcessWire::ready', function($event) {
             if(!$this->wire('config')->ajax) return;
 
+            // live dumps polling: return new dump entries since lastIndex
+            if($this->wire('input')->post->tracyDumpsPoll == 1) {
+                Debugger::$showBar = false;
+                header_remove('X-Tracy-Ajax');
+                if(static::$allowedTracyUser !== 'development') {
+                    http_response_code(403);
+                    exit;
+                }
+                $dumpsFile = $this->wire('config')->paths->cache . 'TracyDebugger/dumps.json';
+                $allEntries = file_exists($dumpsFile) ? json_decode(file_get_contents($dumpsFile), true) : array();
+                if(!$allEntries) $allEntries = array();
+                header('Content-Type: application/json');
+                echo json_encode(array(
+                    'entries' => $allEntries,
+                    'totalCount' => count($allEntries)
+                ));
+                exit;
+            }
+
             // background execution: fetch result from cache and cleanup
             if($this->wire('input')->post->tracyConsoleCleanup == 1) {
                 Debugger::$showBar = false;
@@ -1050,6 +1069,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/main.js';
                 Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/tinycon.min.js';
                 Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/js-loader.js';
+                if(in_array('dumpsRecorder', static::$showPanels) || $this->data['recordGuestDumps']) {
+                    Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/dumps-polling.js';
+                }
 
                 // load File Editor panel if Tracy online editor is selected
                 if(static::$useOnlineEditor && static::$onlineEditor == 'tracy' && !in_array('fileEditor', static::$showPanels)) {
@@ -1110,7 +1132,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             $adminerModuleId = $this->wire('modules')->getModuleID("ProcessTracyAdminer");
                             $adminerUrl = $this->wire('pages')->get("process=$adminerModuleId")->url;
 
-                            $event->return = str_replace("</body>", "<script" . static::getNonceAttr() . ">window.HttpRootUrl = '".$this->wire('config')->urls->httpRoot."'; window.AdminerUrl = '".$adminerUrl."'; window.AdminerRendererUrl = '".$adminerRendererUrl."'; window.TracyMaxAjaxRows = ".$this->data['maxAjaxRows']."; window.TracyPanelZIndex = " . ($this->data['panelZindex'] + 1) . "; document.addEventListener('click', function(e) { var el = e.target; while(el && el.tagName !== 'A') el = el.parentNode; if(el && el.href && /^(adminer|tracy|tracyexception):\/\//.test(el.href)) e.preventDefault(); }, true);</script></body>", $event->return);
+                            $event->return = str_replace("</body>", "<script" . static::getNonceAttr() . ">window.HttpRootUrl = '".$this->wire('config')->urls->httpRoot."'; window.AdminerUrl = '".$adminerUrl."'; window.AdminerRendererUrl = '".$adminerRendererUrl."'; window.TracyMaxAjaxRows = ".$this->data['maxAjaxRows']."; window.TracyPanelZIndex = " . ($this->data['panelZindex'] + 1) . "; window.TracyColorWarn = '" . TracyDebugger::COLOR_WARN . "'; document.addEventListener('click', function(e) { var el = e.target; while(el && el.tagName !== 'A') el = el.parentNode; if(el && el.href && /^(adminer|tracy|tracyexception):\/\//.test(el.href)) e.preventDefault(); }, true);</script></body>", $event->return);
 
                             $tracyWarnings = Debugger::getBar()->getPanel('Tracy:warnings') ? Debugger::getBar()->getPanel('Tracy:warnings') : Debugger::getBar()->getPanel('Tracy:errors');
                             if(!is_array($tracyWarnings->data) || count($tracyWarnings->data) === 0) {
@@ -1327,8 +1349,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     }
                 ';
 
-                if(is_null($this->wire('session')->tracyDumpsRecorderItems)) {
-                    // remove localStorage items to prevent the panel from staying open
+                if(is_null($this->wire('session')->tracyDumpsRecorderItems) && !$this->data['recordGuestDumps'] && !in_array('dumpsRecorder', static::$showPanels)) {
                     Debugger::$customJsStr .= '
                         localStorage.removeItem("tracy-debug-panel-ProcessWire-DumpsRecorderPanel");
                     ';
@@ -1708,8 +1729,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
         Debugger::getBar()->addPanel(new $fullPanelClass);
 
-        // even if dumpsRecorder isn't enabled, but there are recorded dumps to show, enable it anyway
-        if(!in_array('dumpsRecorder', static::$showPanels) && file_exists($this->wire('config')->paths->cache . 'TracyDebugger/dumps.json')) {
+        // even if dumpsRecorder isn't enabled, but there are recorded dumps to show or guest dumps is active, enable it anyway
+        if(!in_array('dumpsRecorder', static::$showPanels) && ($this->data['recordGuestDumps'] || file_exists($this->wire('config')->paths->cache . 'TracyDebugger/dumps.json'))) {
             $panelName = 'DumpsRecorderPanel';
             $fullPanelClass = __NAMESPACE__ . '\\' . $panelName;
             static::$showPanels[] = 'dumpsRecorder';

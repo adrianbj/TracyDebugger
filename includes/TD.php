@@ -201,11 +201,13 @@ class TD extends TracyDebugger {
         $dumpItem['dump'] = $echo ? '<div class="tracy-echo">' . $var . '</div>' : static::generateDump($var, $options);
         array_push(TracyDebugger::$dumpItems, $dumpItem);
         if((self::tracyUnavailable() && TracyDebugger::getDataValue('recordGuestDumps')) || (isset(TracyDebugger::$showPanels) && in_array('dumpsRecorder', TracyDebugger::$showPanels))) {
+            $dumpItem['user'] = wire('user')->name;
+            $dumpItem['time'] = date('H:i:s');
             $dumpsFile = wire('config')->paths->cache . 'TracyDebugger/dumps.json';
             $dumpsRecorderItems = file_exists($dumpsFile) ? json_decode(file_get_contents($dumpsFile), true) : array();
             if(!$dumpsRecorderItems) $dumpsRecorderItems = array();
             array_push($dumpsRecorderItems, $dumpItem);
-            wire('files')->filePutContents($dumpsFile, json_encode($dumpsRecorderItems));
+            wire('files')->filePutContents($dumpsFile, json_encode($dumpsRecorderItems), LOCK_EX);
         }
     }
 

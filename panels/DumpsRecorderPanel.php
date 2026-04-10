@@ -16,14 +16,21 @@ class DumpsRecorderPanel extends BasePanel {
         $dumpsFile = $this->wire('config')->paths->cache . 'TracyDebugger/dumps.json';
         $items = file_exists($dumpsFile) ? json_decode(file_get_contents($dumpsFile), true) : array();
         $this->dumpCount = is_array($items) ? count($items) : 0;
-        $this->entries .= '<div>'.($this->dumpCount > 0 ? '<span id="clearDumpsRecorderButton" style="display:inline-block;float:right"><input type="submit" id="clearRecorderDumpsBtn" value="Clear Dumps" /></span>' : '') . '</div><div style="clear:both; margin-bottom:5px"></div>';
         if($this->dumpCount > 0) {
             $this->iconColor = TracyDebugger::COLOR_WARN;
             $this->entries .= '
             <div class="dumpsrecorder-items">';
             foreach($items as $item) {
-                if($item['title'] != '') {
-                    $this->entries .= '<h2>' . \Tracy\Helpers::escapeHtml($item['title']) . '</h2>';
+                $meta = '';
+                if(!empty($item['user']) || !empty($item['time'])) {
+                    $meta = '<span style="color:#888; font-size:11px; font-weight:normal; margin-left:auto">';
+                    if(!empty($item['user'])) $meta .= \Tracy\Helpers::escapeHtml($item['user']);
+                    if(!empty($item['time'])) $meta .= ' @ ' . \Tracy\Helpers::escapeHtml($item['time']);
+                    $meta .= '</span>';
+                }
+                $title = ($item['title'] != '') ? \Tracy\Helpers::escapeHtml($item['title']) : '&nbsp;';
+                if($meta || $title) {
+                    $this->entries .= '<h2 style="display:flex; align-items:center">' . '<span>' . $title . '</span>' . $meta . '</h2>';
                 }
                 $this->entries .= $item['dump'];
             }
@@ -46,7 +53,7 @@ class DumpsRecorderPanel extends BasePanel {
         </svg>
         ';
 
-        return $this->buildTab('Dumps Recorder', null, ' ' . ($this->dumpCount > 0 ? '<span class="dumpsRecorderCount">' . $this->dumpCount . '</span>' : ''));
+        return $this->buildTab('Dumps Recorder', null, ' <span class="dumpsRecorderCount">' . ($this->dumpCount > 0 ? $this->dumpCount : '') . '</span>');
     }
 
 
@@ -86,7 +93,8 @@ class DumpsRecorderPanel extends BasePanel {
 
         ' . $this->openPanel('tracy-DumpPanel') . '
 
-            <div id="tracyDumpEntries">' . $this->entries . '</div>';
+            <div id="tracyDumpsRecorderEntries">' . $this->entries . '</div>' .
+            ($this->dumpCount > 0 ? '<div style="margin:10px 0 5px 0; text-align:right"><input type="submit" id="clearRecorderDumpsBtn" value="Clear Dumps" /></div>' : '');
 
         return $this->closePanel($out, 'dumpsRecorder', 'dumpsPanel');
     }
