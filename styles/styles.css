@@ -282,11 +282,11 @@ body.tracyHidden:before {
 }
 
 #tfe_recently_opened {
-    height: 30px !important;
+    height: 27px !important;
     position: absolute !important;
-    margin: 0 !important;
+    margin: 1px 0 0 0 !important;
     padding: 0 !important;
-    left: 285px !important;
+    left: 282px !important;
     cursor: pointer;
     z-index: 2 !important;
 }
@@ -1375,12 +1375,11 @@ ul.pw-info-links {
 
 /*FileEditorPanel overrides*/
 #tracyFileEditorFilterBoxWrap {
-    width: 265px !important;
+    width: 275px !important;
     right: auto !important;
-    left: 11px !important;
+    left: 5px !important;
     top: 45px !important;
     bottom: auto !important;
-    border-bottom: 1px solid #B5C3D4 !important;
 }
 @-moz-document url-prefix() {
     #tracyFileEditorFilterBoxWrap {
