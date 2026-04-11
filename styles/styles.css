@@ -1493,10 +1493,6 @@ ul.pw-info-links {
     content: "\f07c" !important;
 }
 
-.tft-d > ul {
-    padding-left: 3px !important;
-}
-
 .tracy-panel-footer {
     position: absolute;
     height: 15px;
@@ -1972,6 +1968,15 @@ ul.pw-info-links {
     content: '\f0f6';
     padding-right: 6px;
     font-size: 14px;
+}
+
+#tracy-debug li.tft-d > ul {
+    padding-left: 3px !important;
+}
+
+#tracy-debug li.tft-d > ul {
+    margin-top: 0;
+    margin-bottom: 3px;
 }
 
 .tft-f>a {
