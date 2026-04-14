@@ -537,7 +537,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             return;
         }
 
-        // include the Console panel's codeProcessor after ready so it has access to any properties/methods added by other modules
         $this->wire()->addHookAfter('ProcessWire::ready', function($event) {
             if(!$this->wire('config')->ajax) return;
 
@@ -545,7 +544,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if($this->wire('input')->post->tracyDumpsPoll == 1) {
                 Debugger::$showBar = false;
                 header_remove('X-Tracy-Ajax');
-                if(static::$allowedTracyUser !== 'development' && !$this->data['recordGuestDumps']) {
+                if(static::$allowedTracyUser !== 'development') {
                     http_response_code(403);
                     exit;
                 }
@@ -607,6 +606,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                         }
                     }
                 }
+
+                // include the Console panel's codeProcessor after ready so it has access to any properties/methods added by other modules
                 require_once(__DIR__ . '/includes/CodeProcessor.php');
                 return;
             }
