@@ -545,7 +545,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if($this->wire('input')->post->tracyDumpsPoll == 1) {
                 Debugger::$showBar = false;
                 header_remove('X-Tracy-Ajax');
-                if(static::$allowedTracyUser !== 'development') {
+                if(static::$allowedTracyUser !== 'development' && !$this->data['recordGuestDumps']) {
                     http_response_code(403);
                     exit;
                 }
