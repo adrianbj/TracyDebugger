@@ -1,0 +1,4 @@
+.claude/
+docs/
+phpstan.neon
+phpstan-baseline.neon

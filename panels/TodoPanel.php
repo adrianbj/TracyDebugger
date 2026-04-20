@@ -1,4 +1,6 @@
-<?php
+<?php namespace ProcessWire;
+
+use Tracy\Debugger;
 
 class TodoPanel extends BasePanel {
 
@@ -9,8 +11,8 @@ class TodoPanel extends BasePanel {
 
     public function getTab() {
 
-        if(\TracyDebugger::isAdditionalBar()) return;
-        \Tracy\Debugger::timer('todo');
+        if(TracyDebugger::isAdditionalBar()) return;
+        Debugger::timer('todo');
 
         $numEntries = 0;
         $thisPageNumEntries = 0;
@@ -33,7 +35,7 @@ class TodoPanel extends BasePanel {
                     $this->entries .= "
                         \n<tr>";
                             if($currentFile !== $item['file']) {
-                                $this->entries .= "<td" . ($i==0 ? " rowspan='" . count($files[$file]) . "'" : "") . $thisPageFile . ">" . str_replace($this->wire('config')->paths->root, '', $item['file']) . "</td>";
+                                $this->entries .= "<td" . ($i==0 ? " rowspan='" . count($files[$file]) . "'" : "") . $thisPageFile . ">" . $this->stripRootPath($item['file'], '') . "</td>";
                             }
                             // if "todo" or other matched tag is at start of comment then remove it
                             // otherwise, underline it wherever it is in the comment
@@ -44,25 +46,23 @@ class TodoPanel extends BasePanel {
                             $this->entries .=
                             "<td>".$item['line']."</td>" .
                             "<td>".strtoupper($item['type'])."</td>" .
-                            "<td>".\TracyDebugger::createEditorLink($item['file'], $item['line'], preg_replace('/(?<!-)\b'.$item['type'].'\b(?!-)/i', $replacement, $item['comment']))."</td>" .
+                            "<td>".TracyDebugger::createEditorLink($item['file'], $item['line'], preg_replace('/(?<!-)\b'.$item['type'].'\b(?!-)/i', $replacement, $item['comment']))."</td>" .
                         "</tr>";
                 }
                 $currentFile = $item['file'];
                 $i++;
             }
         }
-        $this->entries .= '</tbody>
-                </table>
-            </div>';
+        $this->entries .= $this->sectionEnd();
 
         if($thisPageNumEntries > 0) {
-            $this->iconColor = \TracyDebugger::COLOR_ALERT;
+            $this->iconColor = TracyDebugger::COLOR_ALERT;
         }
         elseif($numEntries > 0) {
-            $this->iconColor = \TracyDebugger::COLOR_WARN;
+            $this->iconColor = TracyDebugger::COLOR_WARN;
         }
         else {
-            $this->iconColor = \TracyDebugger::COLOR_NORMAL;
+            $this->iconColor = TracyDebugger::COLOR_NORMAL;
         }
 
         $this->icon = '
@@ -73,28 +73,17 @@ class TodoPanel extends BasePanel {
                 </g>
             </svg>
         ';
-        return '
-        <span title="ToDo">
-            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Todo' : '') . ' ' . $thisPageNumEntries . '/' . $numEntries . '
-        </span>
-        ';
+        return $this->buildTab('ToDo', 'Todo', ' ' . $thisPageNumEntries . '/' . $numEntries);
     }
 
 
     public function getPanel() {
 
-        $out = '
-        <h1>' . $this->icon . ' ToDo</h1>
-
-        <div class="tracy-inner">';
+        $out = $this->buildPanelHeader('ToDo');
+        $out .= $this->openPanel();
             $out .= $this->entries;
 
-        $out .= \TracyDebugger::generatePanelFooter('todo', \Tracy\Debugger::timer('todo'), strlen($out), 'todoPanel');
-
-        $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'todo', 'todoPanel');
     }
 
 
@@ -127,48 +116,35 @@ class TodoPanel extends BasePanel {
     }
 
 
-    protected function sectionHeader($columnNames = array()) {
-        $out = '
-        <div>
-            <table>
-                <thead>
-                    <tr>';
-        foreach($columnNames as $columnName) {
-            $out .= '<th>'.$columnName.'</th>';
-        }
-
-        $out .= '
-                    </tr>
-                </thead>
-            <tbody>
-        ';
-        return $out;
-    }
-
-
     private function getTodos() {
-        $items = $this->scanDirectories($this->wire('config')->paths->templates);
-        if(\TracyDebugger::getDataValue('todoScanModules') == 1) $moduleItems = $this->scanDirectories($this->wire('config')->paths->siteModules);
+        $todoLinesData = $this->wire('cache')->get('TracyToDoData');
+        $changed = false;
+
+        $items = $this->scanDirectories($this->wire('config')->paths->templates, $todoLinesData, $changed);
+        if(TracyDebugger::getDataValue('todoScanModules') == 1) $moduleItems = $this->scanDirectories($this->wire('config')->paths->siteModules, $todoLinesData, $changed);
         if(isset($moduleItems)) $items = array_merge($items, $moduleItems);
-        if(\TracyDebugger::getDataValue('todoScanAssets') == 1) $assetsItems = $this->scanDirectories($this->wire('config')->paths->assets);
+        if(TracyDebugger::getDataValue('todoScanAssets') == 1) $assetsItems = $this->scanDirectories($this->wire('config')->paths->assets, $todoLinesData, $changed);
         if(isset($assetsItems)) $items = array_merge($items, $assetsItems);
 
-        if(\TracyDebugger::getDataValue('todoSpecifiedDirectories') != '') {
-            foreach(array_map('trim', explode("\n", \TracyDebugger::getDataValue('todoSpecifiedDirectories'))) as $customSpecifiedDir) {
-                $customSpecifiedItems = $this->scanDirectories($this->wire('config')->paths->root . $customSpecifiedDir);
+        if(TracyDebugger::getDataValue('todoSpecifiedDirectories') != '') {
+            foreach(array_map('trim', explode("\n", TracyDebugger::getDataValue('todoSpecifiedDirectories'))) as $customSpecifiedDir) {
+                $customSpecifiedItems = $this->scanDirectories($this->wire('config')->paths->root . $customSpecifiedDir, $todoLinesData, $changed);
                 $items = array_merge($items, $customSpecifiedItems);
             }
+        }
+
+        if($changed) {
+            $this->wire('cache')->save('TracyToDoData', $todoLinesData, WireCache::expireNever);
         }
 
         return $items;
     }
 
-    private function scanDirectories($dir) {
-        $todoLinesData = $this->wire('cache')->get('TracyToDoData');
+    private function scanDirectories($dir, &$todoLinesData, &$changed) {
         $items = array();
-        $ignoreDirs = array_map('trim', explode(',', \TracyDebugger::getDataValue('todoIgnoreDirs')));
+        $ignoreDirs = array_map('trim', explode(',', TracyDebugger::getDataValue('todoIgnoreDirs')));
         array_push($ignoreDirs, 'TracyDebugger');
-        $allowedExtensions = array_map('trim', explode(',', \TracyDebugger::getDataValue('todoAllowedExtensions')));
+        $allowedExtensions = array_map('trim', explode(',', TracyDebugger::getDataValue('todoAllowedExtensions')));
         foreach($iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST) as $fileinfo) {
             $filePath = $fileinfo->getPathname();
             $fileSize = filesize($filePath);
@@ -176,7 +152,7 @@ class TodoPanel extends BasePanel {
                 if(!$todoLinesData || !isset($todoLinesData[$filePath]) || filemtime($filePath) > $todoLinesData[$filePath]['time']) {
                     $todoLinesData[$filePath]['time'] = time();
                     $todoLinesData[$filePath]['items'] = $this->parseFile($filePath, $fileSize);
-                    $this->wire('cache')->save('TracyToDoData', $todoLinesData, WireCache::expireNever);
+                    $changed = true;
                 }
                 $items[] = $todoLinesData[$filePath]['items'];
             }

@@ -1,4 +1,4 @@
-<?php
+<?php namespace ProcessWire;
 /**
  * Tracy Debugger requestLogger Panel
  *
@@ -7,7 +7,9 @@
  * @link https://www.baumrock.com
  */
 
-use \Tracy\Dumper;
+use Tracy\Dumper;
+use Tracy\Debugger;
+
 class RequestLoggerPanel extends BasePanel {
 
     // settings
@@ -18,32 +20,24 @@ class RequestLoggerPanel extends BasePanel {
     private $requestLoggerPages = array();
 
     // the svg icon shown in the bar and in the panel header
-    private $icon = '';
+    protected $icon = '';
 
     /**
      * define the tab for the panel in the debug bar
      */
     public function getTab() {
-        if(\TracyDebugger::isAdditionalBar()) return;
-        \Tracy\Debugger::timer($this->name);
+        if(TracyDebugger::isAdditionalBar()) return;
+        Debugger::timer($this->name);
 
-        if(\TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') && $this->wire('process') == 'ProcessPageEdit') {
-            $this->p = $this->wire('process')->getPage();
-            if($this->p instanceof NullPage) {
-                $this->p = $this->wire('pages')->get((int) $this->wire('input')->get('id'));
-            }
-        }
-        else {
-            $this->p = $this->wire('page');
-        }
+        $this->p = $this->getReferencePage(array('ProcessPageEdit'));
 
         $this->requestData = $this->p->getRequestData('all', true); // true forces array
-        $this->requestLoggerPages = \TracyDebugger::getDataValue('requestLoggerPages') ?: array();
+        $this->requestLoggerPages = TracyDebugger::getDataValue('requestLoggerPages') ?: array();
         if(isset($this->requestLoggerPages) && in_array($this->p->id, $this->requestLoggerPages)) {
-            $this->iconColor = \TracyDebugger::COLOR_WARN;
+            $this->iconColor = TracyDebugger::COLOR_WARN;
         }
         else {
-            $this->iconColor = \TracyDebugger::COLOR_NORMAL;
+            $this->iconColor = TracyDebugger::COLOR_NORMAL;
         }
 
         $this->icon = '
@@ -54,7 +48,7 @@ class RequestLoggerPanel extends BasePanel {
         </svg>
         ';
 
-        return "<span title='{$this->label}'>{$this->icon}</span>" . (\TracyDebugger::getDataValue('showPanelLabels') ? $this->label : '') . (count($this->requestData) > 0 ? ' ' . count($this->requestData) : '');
+        return "<span title='{$this->label}'>{$this->icon}</span>" . (TracyDebugger::getDataValue('showPanelLabels') ? $this->label : '') . (count($this->requestData) > 0 ? ' ' . count($this->requestData) : '');
     }
 
     /**
@@ -62,16 +56,13 @@ class RequestLoggerPanel extends BasePanel {
      */
     public function getPanel() {
 
-        $out = "<h1>{$this->icon} {$this->label}</h1>";
-        $out .= '<span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'' . $this->className . '\')">⛶</a></span></span>';
+        $out = $this->buildPanelHeader($this->label, true);
 
         // panel body
-        $out .= '<div class="tracy-inner">';
+        $out .= $this->openPanel();
             $out .= $this->generateRequestDumps();
-            $out .= \TracyDebugger::generatePanelFooter($this->name, \Tracy\Debugger::timer($this->name), strlen($out), 'requestLoggerPanel');
-        $out .= '<br /></div>';
-
-        return parent::loadResources() . $out;
+        $out .= '<br />';
+        return $this->closePanel($out, $this->name, 'requestLoggerPanel');
     }
 
     /**
@@ -92,7 +83,7 @@ class RequestLoggerPanel extends BasePanel {
             foreach($this->requestData as $datum) {
                 $time = date("Y-m-d H:i:s", $datum['time']);
                 $out .= "<h2 style='white-space: nowrap;'>{$datum['requestMethod']} @ $time | " . ($datum['remoteHost'] ?: $datum['remoteAddress']) . " | #{$datum['id']}</h2>";
-                if(\TracyDebugger::getDataValue('requestLoggerReturnType') == 'object') $datum = json_decode(json_encode($datum), false);
+                if(TracyDebugger::getDataValue('requestLoggerReturnType') == 'object') $datum = json_decode(json_encode($datum), false);
                 $out .= Dumper::toHtml($datum, array(Dumper::LIVE => true, Dumper::DEPTH => 9, Dumper::TRUNCATE => 99999, Dumper::COLLAPSE => true));
             }
         }
@@ -108,7 +99,8 @@ class RequestLoggerPanel extends BasePanel {
             $out .= '<p>';
             if(!in_array($this->p->id, $this->requestLoggerPages)) {
                 $out .= '
-                <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'">
+                <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'">
+                    '.$this->csrfInput().'
                     <input type="hidden" name="requestLoggerLogPageId" value="'.$this->p->id.'" />
                     <input type="submit" name="tracyRequestLoggerEnableLogging" value="Enable logging on this page" />
                 </form>
@@ -116,7 +108,8 @@ class RequestLoggerPanel extends BasePanel {
             }
             else {
                 $out .= '
-                <form style="display:inline" method="post" action="'.\TracyDebugger::inputUrl(true).'" onsubmit="return confirm(\'Do you really want to disable logging on this page and clear logged data?\');">
+                <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" data-confirm="Do you really want to disable logging on this page and clear logged data?">
+                    '.$this->csrfInput().'
                     <input type="hidden" name="requestLoggerLogPageId" value="'.$this->p->id.'" />
                     <input type="submit" name="tracyRequestLoggerDisableLogging" value="Disable logging & clear data" />
                 </form>
@@ -132,7 +125,7 @@ class RequestLoggerPanel extends BasePanel {
                 <ul>';
                 foreach($this->requestLoggerPages as $pid) {
                     $p = $this->wire('pages')->get($pid);
-                    $out .= '<li><a href="'.$p->editUrl.'">'.$p->title.'</a></li>';
+                    $out .= '<li><a href="'.$p->editUrl.'">'.htmlspecialchars($p->title ?? '', ENT_QUOTES, 'UTF-8').'</a></li>';
                 }
             $out .= '
                 </ul>

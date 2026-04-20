@@ -1,4 +1,4 @@
-<?php
+<?php namespace ProcessWire;
 
 use Tracy\Debugger;
 use Tracy\Dumper;
@@ -9,23 +9,19 @@ class TD extends TracyDebugger {
     public static function sql($selector) {
         return wire('pages')->getPageFinder()->find(new Selectors($selector), array('returnVerbose' => true,'returnQuery' => true))->getDebugQuery();
     }
-
     public static function editLinks($pp) {
         return $pp->implode('<a href="{editUrl}">{title}</a><br />');
     }
-
     public static function viewLinks($pp) {
         return $pp->implode('<a href="{url}">{title}</a><br />');
     }
-
 
 	/**
 	 * These are here so that they are available even when user is not allowed or module not enabled so we
 	 * don't get a undefined function error when calling these from a template file.
 	 */
-
     protected static function tracyUnavailable() {
-        if(!\TracyDebugger::getDataValue('enabled') || \TracyDebugger::$allowedTracyUser != 'development' || !class_exists('\Tracy\Debugger')) {
+        if(!TracyDebugger::getDataValue('enabled') || TracyDebugger::$allowedTracyUser != 'development' || !class_exists('\Tracy\Debugger')) {
             return true;
         }
         else {
@@ -41,9 +37,6 @@ class TD extends TracyDebugger {
         if(self::tracyUnavailable()) return false;
         static::barDump($var, $title, $options);
         static::dump($var, $title, $options);
-        if(method_exists('Tracy\Debugger', 'getFireLogger')) {
-            static::fireLog($var);
-        }
         static::log($var);
     }
 
@@ -52,7 +45,7 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     public static function barEcho($str, $title = null) {
-        if(self::tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
+        if(self::tracyUnavailable() && !TracyDebugger::getDataValue('recordGuestDumps')) return false;
         static::dumpToBar($str, $title, null, true);
     }
 
@@ -61,7 +54,7 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     public static function barDump($var, $title = NULL, $options = []) {
-        if(self::tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
+        if(self::tracyUnavailable() && !TracyDebugger::getDataValue('recordGuestDumps')) return false;
         if(is_array($title)) {
             $options = $title;
             $title = NULL;
@@ -71,10 +64,9 @@ class TD extends TracyDebugger {
             if(isset($options[1])) $options['maxLength'] = $options[1];
             if(isset($options[2])) $options['maxItems'] = $options[2];
         }
-
-        $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
-        $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
-        if(defined('\Tracy\Dumper::ITEMS')) $options[Dumper::ITEMS] = isset($options['maxItems']) ? $options['maxItems'] : \TracyDebugger::getDataValue('maxItems');
+        $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : TracyDebugger::getDataValue('maxDepth');
+        $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : TracyDebugger::getDataValue('maxLength');
+        if(defined('\Tracy\Dumper::ITEMS')) $options[Dumper::ITEMS] = isset($options['maxItems']) ? $options['maxItems'] : TracyDebugger::getDataValue('maxItems');
         $options[Dumper::LOCATION] = Debugger::$showLocation;
         if(version_compare(PHP_VERSION, '7.2.0', '>=')) {
             $options[Dumper::KEYS_TO_HIDE] = Debugger::$keysToHide;
@@ -83,13 +75,12 @@ class TD extends TracyDebugger {
         static::dumpToBar($var, $title, $options);
     }
 
-
     /**
      * Tracy\Debugger::barDumpBig() shortcut dumping with maxDepth = 6, maxLength = 9999, and maxItems = 250.
      * @tracySkipLocation
      */
     public static function barDumpBig($var, $title = NULL, $options = []) {
-        if(self::tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
+        if(self::tracyUnavailable() && !TracyDebugger::getDataValue('recordGuestDumps')) return false;
         if(is_array($title)) {
             $options = $title;
             $title = NULL;
@@ -120,7 +111,6 @@ class TD extends TracyDebugger {
             $options = $title;
             $title = NULL;
         }
-
         if(PHP_SAPI === 'cli') {
             echo $title . PHP_EOL;
             if(is_array($var) || is_object($var)) {
@@ -132,18 +122,17 @@ class TD extends TracyDebugger {
             return false;
         }
         else {
-
             if(isset($options) && is_array($options) && !static::has_string_keys($options)) {
                 if(isset($options[0])) $options['maxDepth'] = $options[0];
                 if(isset($options[1])) $options['maxLength'] = $options[1];
                 if(isset($options[2])) $options['maxItems'] = $options[2];
             }
-            $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : \TracyDebugger::getDataValue('maxDepth');
-            $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : \TracyDebugger::getDataValue('maxLength');
+            $options[Dumper::DEPTH] = isset($options['maxDepth']) ? $options['maxDepth'] : TracyDebugger::getDataValue('maxDepth');
+            $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : TracyDebugger::getDataValue('maxLength');
             if(defined('\Tracy\Dumper::ITEMS')) {
-                $options[Dumper::ITEMS] = isset($options['maxItems']) ? $options['maxItems'] : \TracyDebugger::getDataValue('maxItems');
+                $options[Dumper::ITEMS] = isset($options['maxItems']) ? $options['maxItems'] : TracyDebugger::getDataValue('maxItems');
             }
-            $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
+            $options[Dumper::LOCATION] = TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
             if(version_compare(PHP_VERSION, '7.2.0', '>=')) {
                 $options[Dumper::KEYS_TO_HIDE] = Debugger::$keysToHide;
             }
@@ -168,7 +157,6 @@ class TD extends TracyDebugger {
             $options = $title;
             $title = NULL;
         }
-
         if(PHP_SAPI === 'cli') {
             echo $title . PHP_EOL;
             if(is_array($var) || is_object($var)) {
@@ -180,7 +168,6 @@ class TD extends TracyDebugger {
             return false;
         }
         else {
-
             if(isset($options) && is_array($options) && !static::has_string_keys($options)) {
                 if(isset($options[0])) $options['maxDepth'] = $options[0];
                 if(isset($options[1])) $options['maxLength'] = $options[1];
@@ -189,7 +176,7 @@ class TD extends TracyDebugger {
             $options[Dumper::DEPTH] = 6;
             $options[Dumper::TRUNCATE] = 9999;
             if(defined('\Tracy\Dumper::ITEMS')) $options[Dumper::ITEMS] = 250;
-            $options[Dumper::LOCATION] = \TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
+            $options[Dumper::LOCATION] = TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
             if(version_compare(PHP_VERSION, '7.2.0', '>=')) {
                 $options[Dumper::KEYS_TO_HIDE] = Debugger::$keysToHide;
             }
@@ -212,14 +199,15 @@ class TD extends TracyDebugger {
         $dumpItem = array();
         $dumpItem['title'] = $title;
         $dumpItem['dump'] = $echo ? '<div class="tracy-echo">' . $var . '</div>' : static::generateDump($var, $options);
-        array_push(\TracyDebugger::$dumpItems, $dumpItem);
-
-        if((self::tracyUnavailable() && \TracyDebugger::getDataValue('recordGuestDumps')) || (isset(\TracyDebugger::$showPanels) && in_array('dumpsRecorder', \TracyDebugger::$showPanels))) {
+        array_push(TracyDebugger::$dumpItems, $dumpItem);
+        if((self::tracyUnavailable() && TracyDebugger::getDataValue('recordGuestDumps')) || (isset(TracyDebugger::$showPanels) && in_array('dumpsRecorder', TracyDebugger::$showPanels))) {
+            $dumpItem['user'] = wire('user')->name;
+            $dumpItem['time'] = date('H:i:s');
             $dumpsFile = wire('config')->paths->cache . 'TracyDebugger/dumps.json';
             $dumpsRecorderItems = file_exists($dumpsFile) ? json_decode(file_get_contents($dumpsFile), true) : array();
             if(!$dumpsRecorderItems) $dumpsRecorderItems = array();
             array_push($dumpsRecorderItems, $dumpItem);
-            wire('files')->filePutContents($dumpsFile, json_encode($dumpsRecorderItems));
+            wire('files')->filePutContents($dumpsFile, json_encode($dumpsRecorderItems), LOCK_EX);
         }
     }
 
@@ -229,61 +217,58 @@ class TD extends TracyDebugger {
      */
     private static function generateDump($var, $options) {
         // standard options for all dump/barDump variations
-        $options[Dumper::COLLAPSE] = isset($options['collapse']) ? $options['collapse'] : \TracyDebugger::getDataValue('collapse');
-        $options[Dumper::COLLAPSE_COUNT] = isset($options['collapse_count']) ? $options['collapse_count'] : \TracyDebugger::getDataValue('collapse_count');
-        $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
+        $options[Dumper::COLLAPSE] = isset($options['collapse']) ? $options['collapse'] : TracyDebugger::getDataValue('collapse');
+        $options[Dumper::COLLAPSE_COUNT] = isset($options['collapse_count']) ? $options['collapse_count'] : TracyDebugger::getDataValue('collapse_count');
+        $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : TracyDebugger::getDataValue('debugInfo');
 
         $out = '<div style="margin: 0 0 10px 0">';
 
         $editCountLink = '';
-        if(count(\TracyDebugger::getDataValue('dumpPanelTabs')) > 0 && !is_string($var)) {
+        if(count(TracyDebugger::getDataValue('dumpPanelTabs')) > 0 && !is_string($var)) {
             $classExt = rand();
-            if(($var instanceof Wire || $var instanceof \ProcessWire\Wire)) {
-                if($var instanceof User || $var instanceof \ProcessWire\User) {
+            if($var instanceof Wire) {
+                if($var instanceof User) {
                     $type = 'users';
                     $section = 'access';
                 }
-                elseif($var instanceof Role || $var instanceof \ProcessWire\Role) {
+                elseif($var instanceof Role) {
                     $type = 'roles';
                     $section = 'access';
                 }
-                elseif($var instanceof Permission || $var instanceof \ProcessWire\Permission) {
+                elseif($var instanceof Permission) {
                     $type = 'permissions';
                     $section = 'access';
                 }
-                elseif($var instanceof Language || $var instanceof \ProcessWire\Language) {
+                elseif($var instanceof Language) {
                     $type = 'languages';
                     $section = 'setup';
                 }
-                elseif($var instanceof Page || $var instanceof \ProcessWire\Page) {
+                elseif($var instanceof Page) {
                     $type = 'page';
                     $section = '';
                 }
-                elseif($var instanceof Template || $var instanceof \ProcessWire\Template) {
+                elseif($var instanceof Template) {
                     $type = 'template';
                     $section = 'setup';
                 }
-                elseif($var instanceof Field || $var instanceof \ProcessWire\Field) {
+                elseif($var instanceof Field) {
                     $type = 'field';
                     $section = 'setup';
                 }
-                elseif($var instanceof Module || $var instanceof \ProcessWire\Module) {
+                elseif($var instanceof Module) {
                     $type = 'module';
                     $section = '';
                 }
-
                 if(isset($type)) $editCountLink .= self::generateEditViewLinks($var, $type, $section);
             }
-
-            if($var instanceof WireArray || $var instanceof \ProcessWire\WireArray) {
+            if($var instanceof WireArray) {
                 $editCountLink .= '<li class="tracyEditLinkCount">n = ' . $var->count() . '</li>';
             }
-
             $tabs = '<ul class="tracyDumpTabs">';
             $tabDivs = '<div style="clear:both; position:relative;">';
-            $expandCollapseAll = is_string($var) || is_null($var) ? '' : '<span class="tracyDumpsToggler tracyDumpsExpander" onclick="tracyDumpsToggler(this, true)" title="Expand Level">+</span> <span class="tracyDumpsToggler tracyDumpsCollapser" onclick="tracyDumpsToggler(this, false)" title="Collapse All">–</span>';
+            $expandCollapseAll = is_string($var) || is_null($var) ? '' : '<span class="tracyDumpsToggler tracyDumpsExpander" data-dumps-toggle="expand" title="Expand Level">+</span> <span class="tracyDumpsToggler tracyDumpsCollapser" data-dumps-toggle="collapse" title="Collapse All">–</span>';
             $numTabs = 0;
-            foreach(\TracyDebugger::getDataValue('dumpPanelTabs') as $i => $panel) {
+            foreach(TracyDebugger::getDataValue('dumpPanelTabs') as $i => $panel) {
                 if($panel == 'debugInfo') {
                     $options[Dumper::DEBUGINFO] = true;
                 }
@@ -291,27 +276,24 @@ class TD extends TracyDebugger {
                     $options[Dumper::DEBUGINFO] = false;
                 }
                 else {
-                    $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : \TracyDebugger::getDataValue('debugInfo');
+                    $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : TracyDebugger::getDataValue('debugInfo');
                 }
                 $currentDump = $expandCollapseAll . Dumper::toHtml($panel == 'iterator' && is_object($var) && method_exists($var, 'getIterator') ? self::humanize($var->getIterator()) : $var, $options);
                 if(!isset($lastDump) || (isset($lastDump) && $currentDump !== $lastDump)) {
                 	$numTabs++;
-                	$tabs .= '<li id="'.$panel.'Tab_'.$classExt.'"' . ($i == 0 ? 'class="active"' : '') . '><a href="javascript:void(0)" onclick="toggleDumpType(this, \''.$panel.'\', '.$classExt.')">'.\TracyDebugger::$dumpPanelTabs[$panel].'</a></li>';
+                	$tabs .= '<li id="'.$panel.'Tab_'.$classExt.'"' . ($i == 0 ? 'class="active"' : '') . '><a href="#" data-dump-type="'.$panel.'" data-dump-class-ext="'.$classExt.'">'.TracyDebugger::$dumpPanelTabs[$panel].'</a></li>';
                 	$tabDivs .= '<div id="'.$panel.'_'.$classExt.'" class="tracyDumpTabs_'.$classExt.'"' . ($i==0 ? '' : ' style="display:none"') . '>'.$currentDump.'</div>';
                 }
                 $lastDump = $currentDump;
-
             }
             $tabs .= $editCountLink . '</ul>';
             $tabDivs .= '</div>';
-
             if($numTabs > 1) {
 	            $out .= $tabs . $tabDivs;
 	        }
 	        else {
             	$out .= '<div style="clear:both; position:relative;">' . $lastDump . '</div>';
 	        }
-
         }
         else {
             $out .= '<div style="clear:both; position:relative;">' . Dumper::toHtml($var, $options) . '</div>';
@@ -336,7 +318,6 @@ class TD extends TracyDebugger {
         }
         return $arrayObject;
     }
-
     /**
      * Generate edit link for various PW objects.
      * @tracySkipLocation
@@ -375,16 +356,6 @@ class TD extends TracyDebugger {
     }
 
     /**
-     * Tracy\Debugger::fireLog() shortcut.
-     * @tracySkipLocation
-     */
-    public static function fireLog($message = NULL) {
-        if(!method_exists('Tracy\Debugger', 'getFireLogger') || self::tracyUnavailable()) return false;
-        return Debugger::fireLog($message);
-    }
-
-
-    /**
      * Zarganwar\PerformancePanel\Register::add() shortcut.
      * @tracySkipLocation
      */
@@ -399,7 +370,7 @@ class TD extends TracyDebugger {
      */
     public static function templateVars($vars) {
         if(self::tracyUnavailable()) return false;
-        return \TracyDebugger::templateVars((array) $vars);
+        return TracyDebugger::templateVars((array) $vars);
     }
 
     /**
@@ -411,5 +382,4 @@ class TD extends TracyDebugger {
     private static function has_string_keys(array $array) {
         return count(array_filter(array_keys($array), 'is_string')) > 0;
     }
-
 }

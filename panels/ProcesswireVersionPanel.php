@@ -1,4 +1,6 @@
-<?php
+<?php namespace ProcessWire;
+
+use Tracy\Debugger;
 
 class ProcesswireVersionPanel extends BasePanel {
 
@@ -7,30 +9,33 @@ class ProcesswireVersionPanel extends BasePanel {
 
     public function getTab() {
 
-        if(\TracyDebugger::isAdditionalBar()) return;
-        \Tracy\Debugger::timer('processwireVersion');
+        if(TracyDebugger::isAdditionalBar()) return;
+        Debugger::timer('processwireVersion');
 
         $this->versions = array();
-        foreach(new DirectoryIterator($this->wire('config')->paths->root) as $fileInfo) {
-            if($fileInfo->isDot()) continue;
-            $filePath = $fileInfo->getPathname();
-            $filePath = \TracyDebugger::forwardSlashPath($filePath);
-            $version = str_replace($this->wire('config')->paths->root, '', $filePath);
-            $version = str_replace('.wire-', '', $version);
-            if(strpos($filePath, 'wire') === false) continue;
-            if(strpos($version, '-') !== false) continue;
-            if(strpos($filePath, $this->wire('config')->version) !== false) continue;
-            if($version == 'wire') $version = $this->wire('config')->version;
-            $this->versions[] = $version;
-        }
+        $rootPath = $this->wire('config')->paths->root;
+        try {
+            foreach(new \DirectoryIterator($rootPath) as $fileInfo) {
+                if($fileInfo->isDot()) continue;
+                if(!$fileInfo->isDir()) continue;
+                $dirName = $fileInfo->getFilename();
+                if($dirName === 'wire') {
+                    $this->versions[] = $this->wire('config')->version;
+                }
+                elseif(preg_match('/^\.wire-(\d+(?:\.\d+)*)$/', $dirName, $matches)) {
+                    $this->versions[] = $matches[1];
+                }
+            }
+        } catch(\Exception $e) {}
+        $this->versions = array_unique($this->versions);
         usort($this->versions, 'version_compare');
-        $latestVersion = end($this->versions);
+        $latestVersion = !empty($this->versions) ? end($this->versions) : null;
 
-        if($latestVersion == $this->wire('config')->version) {
-            $iconColor = \TracyDebugger::COLOR_NORMAL;
+        if(!$latestVersion || version_compare($latestVersion, $this->wire('config')->version, '==')) {
+            $iconColor = TracyDebugger::COLOR_NORMAL;
         }
         else {
-            $iconColor = \TracyDebugger::COLOR_WARN;
+            $iconColor = TracyDebugger::COLOR_WARN;
         }
 
         $this->icon = '
@@ -45,39 +50,35 @@ class ProcesswireVersionPanel extends BasePanel {
             </svg>
         ';
 
-        return '
-        <span title="ProcessWire Version">
-            ' . $this->icon .   (\TracyDebugger::getDataValue('showPanelLabels') ? 'PW Version' : '') . ' ' . $this->wire('config')->version . '
-        </span>
-        ';
+        return $this->buildTab('ProcessWire Version', 'PW Version', ' ' . htmlentities($this->wire('config')->version));
     }
 
 
     public function getPanel() {
 
-        $out = '
-        <h1>' . $this->icon . ' ProcessWire Version</h1>
-
-        <div class="tracy-inner">
+        $out = $this->buildPanelHeader('ProcessWire Version');
+        $out .= $this->openPanel() . '
             <fieldset>
-                <legend>Choose from available versions</legend><br />';
-                $out .= '
-                <form method="post" action="'.\TracyDebugger::inputUrl(true).'">
-                    <select name="tracyPwVersion">';
-                    foreach($this->versions as $version) {
-                        $out .= '<option value="'.$version.'"'.($version == $this->wire('config')->version ? 'selected="selected"' : '').'>'.$version.'</option>';
-                    }
+                <legend>Choose from available versions.<br />If there are any errors, navigate to the page URL again (don\'t use browser reload) and the original version will be automatically restored.</legend><br />';
+                if(count($this->versions) <= 1) {
+                    $out .= '<p>No alternative versions found. Place versioned wire directories (e.g. <code>.wire-3.0.200</code>) in your site root to enable version switching.</p>';
+                }
+                else {
                     $out .= '
-                    </select>&nbsp;<input type="submit" value="Change" />
-                </form>
+                    <form method="post" action="'.TracyDebugger::inputUrl(true).'">
+                        <input type="hidden" name="'.htmlentities($this->wire('session')->CSRF->getTokenName()).'" value="'.htmlentities($this->wire('session')->CSRF->getTokenValue()).'" />
+                        <select name="tracyPwVersion">';
+                        foreach($this->versions as $version) {
+                            $out .= '<option value="'.htmlentities($version).'"'.($version == $this->wire('config')->version ? ' selected="selected"' : '').'>'.htmlentities($version).'</option>';
+                        }
+                        $out .= '
+                        </select>&nbsp;<input type="submit" value="Change" />
+                    </form>';
+                }
+            $out .= '
             </fieldset>';
 
-            $out .= \TracyDebugger::generatePanelFooter('processwireVersion', \Tracy\Debugger::timer('processwireVersion'), strlen($out));
-
-        $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'processwireVersion');
     }
 
 }

@@ -1,124 +1,122 @@
 (function() {
     'use strict';
-    jQuery(document).ready(function($) {
+
+    function getNextSiblings(el, untilId) {
+        var siblings = [];
+        var sibling = el.nextElementSibling;
+        while (sibling) {
+            if (sibling.id === untilId) break;
+            siblings.push(sibling);
+            sibling = sibling.nextElementSibling;
+        }
+        return siblings;
+    }
+
+    function makeId() {
+        var str = "";
+        var opt = "abcdefghijklmnopqrstuvwxyz";
+        for (var i = 1; i < 16; i++) {
+            str += opt.charAt(Math.floor(Math.random() * opt.length));
+        }
+        return 'editor-' + str;
+    }
+
+    function makeContainer(el) {
+        var id = makeId();
+        var container = document.createElement('div');
+        container.id = id;
+        el.after(container);
+        return container;
+    }
+
+    function matchEditor(textarea, editorEl, editor) {
+        var id = editorEl.id;
+        var height = editor.getSession().getScreenLength() * editor.renderer.lineHeight;
+        textarea.value = editor.getValue();
+        document.getElementById(id).style.height = height + 'px';
+        var sectionEl = document.getElementById(id + '-section');
+        if (sectionEl) sectionEl.style.height = height + 'px';
+        editor.resize();
+    }
+
+    function initAceEditor(options) {
+        var textarea = options.textarea;
+        textarea.style.display = 'none';
+        var container = makeContainer(textarea);
+        var id = container.id;
+        var editor = ace.edit(id);
+        var editorEl = document.getElementById(id);
+        editor.setTheme(options.theme);
+
+        ace.config.loadModule('ace/ext/language_tools', function () {
+            editor.setOptions({
+                enableBasicAutocompletion: true,
+                enableLiveAutocompletion: true,
+                minLines: 5,
+                maxLines: 20
+            });
+        });
+
+        editor.getSession().setUseWrapMode(true);
+        editor.getSession().setMode(options.mode);
+        editor.setFontSize(14);
+        editor.setShowPrintMargin(false);
+        editor.$blockScrolling = Infinity;
+        editor.setTheme("ace/theme/tomorrow_night_bright");
+        editor.session.setMode({path:"ace/mode/php", inline:options.inline});
+
+        editor.setValue(textarea.value, -1);
+        editor.on('change', function() {
+            return matchEditor(textarea, editorEl, editor);
+        });
+        matchEditor(textarea, editorEl, editor);
+        return editor;
+    }
+
+    function asAceEditor(selector, params) {
+        var textarea = document.querySelector(selector);
+        if (!textarea || textarea.tagName !== 'TEXTAREA') return false;
+        var options = Object.assign({ textarea: textarea }, params);
+        textarea.dataset.aceEditor = true;
+        initAceEditor(options);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
 
         // add quicklinks to top of config settings (thanks to @Robin S / @Toutouwai)
-        var $links_list = $('#tracy-quick-links .InputfieldContent > ul');
-        var $links = $('#ModuleEditForm > .Inputfields > .InputfieldFieldset');
-        $links.sort(function(a, b) {
-            return $(a).text().toUpperCase().localeCompare($(b).text().toUpperCase());
-        })
-        $links.each(function() {
-            $links_list.append('<li><a class="label" href="#' + $(this).attr('id') + '">' + $(this).children('label').text() + '</a></li>');
+        var linksList = document.querySelector('#tracy-quick-links .InputfieldContent > ul');
+        var links = Array.from(document.querySelectorAll('#ModuleEditForm > .Inputfields > .InputfieldFieldset'));
+        links.sort(function(a, b) {
+            return a.textContent.toUpperCase().localeCompare(b.textContent.toUpperCase());
         });
-        var $quick_links = $('#tracy-quick-links');
-        var $config_fields = $quick_links.nextUntil('#wrap_uninstall');
-        $quick_links.on('click', 'a', function(event) {
+        links.forEach(function(link) {
+            var label = link.querySelector('label');
+            var li = document.createElement('li');
+            li.innerHTML = '<a class="label" href="#' + link.id + '">' + (label ? label.textContent : '') + '</a>';
+            linksList.appendChild(li);
+        });
+        var quickLinks = document.getElementById('tracy-quick-links');
+        var configFields = getNextSiblings(quickLinks, 'wrap_uninstall');
+        quickLinks.addEventListener('click', function(event) {
+            var target = event.target.closest('a');
+            if (!target) return;
             event.preventDefault();
-            if($(this).hasClass('active')) {
-                $(this).removeClass('active');
-                $config_fields.show();
+            if (target.classList.contains('active')) {
+                target.classList.remove('active');
+                configFields.forEach(function(el) { el.style.display = ''; });
             } else {
-                $quick_links.find('a').removeClass('active');
-                $(this).addClass('active');
-                $config_fields.hide();
-                $($(this).attr('href')).show();
+                quickLinks.querySelectorAll('a').forEach(function(a) { a.classList.remove('active'); });
+                target.classList.add('active');
+                configFields.forEach(function(el) { el.style.display = 'none'; });
+                var targetEl = document.querySelector(target.getAttribute('href'));
+                if (targetEl) targetEl.style.display = '';
             }
         });
+    });
 
-
-
-        // loading ACE editor for various config fields
-        // modified from https://github.com/ryanburnette/textarea-as-ace-editor
-        var init, makeContainer, makeId, match;
-        makeId = function() {
-            var i, opt, str;
-            str = "";
-            opt = "abcdefghijklmnopqrstuvwxyz";
-            i = 1;
-            while (i < 16) {
-            str += opt.charAt(Math.floor(Math.random() * opt.length));
-            i++;
-            }
-            return 'editor-' + str;
-        };
-        makeContainer = function($el) {
-            var $nu, id;
-            id = makeId();
-            $nu = $('<div id="' + id + '"></div>');
-            $el.after($nu);
-            return $nu;
-        };
-        match = function($textarea, $editor, editor) {
-            var height, id;
-            id = $editor.attr('id');
-            height = editor.getSession().getScreenLength() * editor.renderer.lineHeight;
-            $textarea.val(editor.getValue());
-            $('#' + id).css({
-            height: height
-            });
-            $('#' + id + '-section').css({
-            height: height
-            });
-            editor.resize();
-        };
-        init = function(options) {
-            var $container, $editor, $textarea, editor, id;
-            $textarea = options.textarea;
-            $textarea.css({
-            display: 'none'
-            });
-            $container = makeContainer($textarea);
-            id = $container.attr('id');
-            editor = ace.edit(id);
-            $editor = $('#' + id);
-            editor.setTheme(options.theme);
-
-            ace.config.loadModule('ace/ext/language_tools', function () {
-                editor.setOptions({
-                    enableBasicAutocompletion: true,
-                    enableLiveAutocompletion: true,
-                    minLines: 5,
-                    maxLines: 20
-                });
-            });
-
-            editor.getSession().setUseWrapMode(true);
-            editor.getSession().setMode(options.mode);
-            editor.setFontSize(14);
-            editor.setShowPrintMargin(false);
-            editor.$blockScrolling = Infinity;
-            editor.setTheme("ace/theme/tomorrow_night_bright");
-            editor.session.setMode({path:"ace/mode/php", inline:options.inline});
-
-            editor.setValue($textarea.val(), -1);
-            editor.on('change', function() {
-            return match($textarea, $editor, editor);
-            });
-            match($textarea, $editor, editor);
-            $('body').click;
-            return editor;
-        };
-        return $.fn.asAceEditor = function(params) {
-            var $t, defaults, options;
-            $t = $(this).eq(0);
-            if ($t.prop("tagName") !== "TEXTAREA") {
-            return false;
-            }
-            defaults = {
-            textarea: $t,
-            };
-            options = $.extend(defaults, params);
-            $t.data("ace-editor", init(options));
-
-            return this;
-        };
+    window.addEventListener('load', function () {
+        asAceEditor('#Inputfield_customPhpCode', {inline: true});
+        asAceEditor('#Inputfield_consoleCodePrefix', {inline: false});
     });
 
 }).call(this);
-
-window.onload = function () {
-    // convert fields to ACE
-    $('#Inputfield_customPhpCode').asAceEditor({'inline': true});
-    $('#Inputfield_consoleCodePrefix').asAceEditor({'inline': false});
-};

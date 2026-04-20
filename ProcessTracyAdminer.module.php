@@ -1,4 +1,4 @@
-<?php
+<?php namespace ProcessWire;
 
 class ProcessTracyAdminer extends Process implements Module {
     public static function getModuleInfo() {
@@ -7,11 +7,11 @@ class ProcessTracyAdminer extends Process implements Module {
             'summary' => __('Adminer page for TracyDebugger.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '2.0.3',
+            'version' => '2.0.4',
             'autoload' => false,
             'singular' => true,
             'icon' => 'database',
-            'requires'  => 'ProcessWire>=2.7.2, PHP>=5.4.4, TracyDebugger, ProcessTracyAdminerRenderer',
+            'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0, TracyDebugger, ProcessTracyAdminerRenderer',
             'installs' => array('ProcessTracyAdminerRenderer'),
             'page' => array(
                 'name' => 'adminer',
@@ -30,8 +30,8 @@ class ProcessTracyAdminer extends Process implements Module {
         }
         else {
             return '
-            <iframe id="adminer-iframe" src="'.str_replace('/adminer/', '/adminer-renderer/', $_SERVER['REQUEST_URI']).'" style="width:100vw; border: none; padding:0; margin:0;"></iframe>
-            <script>
+            <iframe id="adminer-iframe" src="'.htmlspecialchars(str_replace('/adminer/', '/adminer-renderer/', $_SERVER['REQUEST_URI'] ?? ''), ENT_QUOTES, 'UTF-8').'" style="width:100vw; border: none; padding:0; margin:0;"></iframe>
+            <script' . TracyDebugger::getNonceAttr() . '>
                 const adminer_iframe = document.getElementById("adminer-iframe");
                 window.addEventListener("popstate", function (event) {
                     adminer_iframe.src = location.href.replace("/adminer/", "/adminer-renderer/");

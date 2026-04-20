@@ -1,5 +1,5 @@
 function tracyResizePanel(panel) {
-    panel = document.getElementById("tracy-debug-panel-" + panel);
+    panel = document.getElementById("tracy-debug-panel-ProcessWire-" + panel);
     var tracyPanel = window.Tracy.Debug.panels[panel.id];
     tracyPanel.elem.classList.add('tracy-panel-resized');
     tracyPanel.elem.dataset.tracyContent = true; // hack to satisy condition in Tracy's restorePosition() method
@@ -23,8 +23,56 @@ function tracyResizePanel(panel) {
 }
 
 function tracyClosePanel(panel) {
-    localStorage.setItem("remove-tracy-debug-panel-" + panel + "Panel", 1);
+    localStorage.setItem("remove-tracy-debug-panel-ProcessWire-" + panel + "Panel", 1);
 }
+
+// Delegated listeners for data-attribute-driven actions (replaces inline handlers)
+document.addEventListener('click', function(e) {
+    var el = e.target.closest('[data-tracy-resize]');
+    if(el) {
+        e.preventDefault();
+        tracyResizePanel(el.getAttribute('data-tracy-resize'));
+        return;
+    }
+    el = e.target.closest('[data-tracy-close]');
+    if(el) {
+        tracyClosePanel(el.getAttribute('data-tracy-close'));
+        return;
+    }
+    el = e.target.closest('[data-tracy-filterbox-clear]');
+    if(el) {
+        var input = el.parentElement.querySelector('input');
+        input.getFilterBox().clearFilterBox();
+        input.focus();
+        return;
+    }
+    el = e.target.closest('[data-dumps-toggle]');
+    if(el) {
+        tracyDumpsToggler(el, el.getAttribute('data-dumps-toggle') === 'expand');
+        return;
+    }
+    el = e.target.closest('[data-dump-type]');
+    if(el) {
+        e.preventDefault();
+        toggleDumpType(el, el.getAttribute('data-dump-type'), el.getAttribute('data-dump-class-ext'));
+        return;
+    }
+    el = e.target.closest('[data-raw-file-editor-code]');
+    if(el && typeof tracyFileEditor !== 'undefined') {
+        tracyFileEditor.getRawFileEditorCode();
+        return;
+    }
+}, true);
+
+document.addEventListener('submit', function(e) {
+    if(!e.target.closest || !e.target.closest('.tracy-panel')) return;
+    var confirm_msg = e.target.getAttribute('data-confirm');
+    if(confirm_msg) {
+        if(!confirm(confirm_msg)) {
+            e.preventDefault();
+        }
+    }
+});
 
 // panel rollup thanks to @tpr / @rolandtoth
 // jQuery .on() equivalent
@@ -152,7 +200,7 @@ function setupTracyPanelFilterBoxDisplays (fbx) {
 	        },
 	        attrs: {
 	            class: "tracy-filterbox-clear",
-	            onclick: "var input = this.parentElement.querySelector('input'); input.getFilterBox().clearFilterBox(); input.focus();"
+	            "data-tracy-filterbox-clear": "1"
 	        },
 	        text: function () {
 	            return fbx.getFilter() ? "&times;" : "";

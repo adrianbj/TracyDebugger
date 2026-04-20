@@ -1,4 +1,6 @@
-<?php
+<?php namespace ProcessWire;
+
+use Tracy\Debugger;
 
 class TracyLogsPanel extends BasePanel {
 
@@ -9,13 +11,7 @@ class TracyLogsPanel extends BasePanel {
 
     public function getTab() {
 
-        \Tracy\Debugger::timer('tracyLogs');
-
-        // end for each section
-        $sectionEnd = '
-                    </tbody>
-                </table>
-            </div>';
+        Debugger::timer('tracyLogs');
 
         /**
          * Tracy log panel sections
@@ -43,14 +39,14 @@ class TracyLogsPanel extends BasePanel {
             $errorLogs = array('error', 'exception', 'critical');
             foreach($logs as $log) {
 
-                if(in_array($log['name'], \TracyDebugger::getDataValue("excludedTracyLogFiles"))) {
+                if(in_array($log['name'], TracyDebugger::getDataValue("excludedTracyLogFiles"))) {
                     continue;
                 }
 
                 $x=99;
                 if(!isset($logLinesData[$log['name']]) || filemtime($this->getFilename($log['name'])) > $logLinesData[$log['name']]['time']) {
 
-                    $lines = \TracyDebugger::tailCustom($this->wire('config')->paths->logs.'tracy/'.$log['name'].'.log', \TracyDebugger::getDataValue("numLogEntries"));
+                    $lines = TracyDebugger::tailCustom($this->wire('config')->paths->logs.'tracy/'.$log['name'].'.log', TracyDebugger::getDataValue("numLogEntries"));
                     $lines = mb_convert_encoding($lines, 'UTF-8');
                     $lines = explode("\n", $lines);
 
@@ -60,7 +56,7 @@ class TracyLogsPanel extends BasePanel {
                     if(in_array($log['name'], $errorLogs)) {
                         $isNewErrors++;
                     }
-                    $this->wire('cache')->save('TracyLogData.Tracy', $logLinesData, WireCache::expireNever);
+                    $cacheChanged = true;
                 }
 
                 $logLines = $logLinesData[$log['name']]['lines'];
@@ -74,7 +70,7 @@ class TracyLogsPanel extends BasePanel {
                     $itemKey = $log['name'] . '_' . $x;
                     $entryUrlAndText = explode('@', substr($entry, 22)); // get the rest of the line after the date;
                     if(isset($entryUrlAndText[1])) {
-                        $entriesArr[$itemKey]['url'] = "<a href='".trim($entryUrlAndText[1])."'>".trim($entryUrlAndText[1])."</a>";
+                        $entriesArr[$itemKey]['url'] = "<a href='".htmlspecialchars(trim($entryUrlAndText[1] ?? ''), ENT_QUOTES, 'UTF-8')."'>".htmlspecialchars(trim($entryUrlAndText[1] ?? ''), ENT_QUOTES, 'UTF-8')."</a>";
                     }
                     else {
                         continue; //bit of a hack - some entries getting duplicated but with empty URL, so ignore
@@ -91,6 +87,10 @@ class TracyLogsPanel extends BasePanel {
                 }
             }
 
+            if(isset($cacheChanged)) {
+                $this->wire('cache')->save('TracyLogData.Tracy', $logLinesData, WireCache::expireNever);
+            }
+
             if(count($entriesArr)) {
                 $timestamp = array();
                 $order = array();
@@ -103,40 +103,40 @@ class TracyLogsPanel extends BasePanel {
                 array_multisort($timestamp, SORT_DESC, $order, SORT_ASC, SORT_NATURAL, $entriesArr);
 
                 //display most recent entries from all log files
-                foreach(array_slice($entriesArr, 0, \TracyDebugger::getDataValue("numLogEntries")) as $item) {
+                foreach(array_slice($entriesArr, 0, TracyDebugger::getDataValue("numLogEntries")) as $item) {
 
                     if(in_array($item['log'], $errorLogs)) {
                         $isError = true;
-                        $color = \TracyDebugger::COLOR_ALERT;
+                        $color = TracyDebugger::COLOR_ALERT;
                     }
                     else {
                         $isError = false;
-                        $color = \TracyDebugger::COLOR_WARN;
+                        $color = TracyDebugger::COLOR_WARN;
                     }
 
-                    $trimmedText = trim(htmlspecialchars($item['text'], ENT_QUOTES, 'UTF-8'));
+                    $trimmedText = trim(htmlspecialchars($item['text'] ?? '', ENT_QUOTES, 'UTF-8'));
                     $lineIsNew = !isset($cachedLogLinesData[$item['log']]) || (isset($cachedLogLinesData[$item['log']]) && strtotime($item['date']) > $cachedLogLinesData[$item['log']]['time']);
                     $this->logEntries .= "
                     \n<tr>" .
                         "<td ".($lineIsNew ? 'style="background: '.$color.' !important; color: #FFFFFF !important"' : '').">".$item['log']."</td>" .
                         "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;', $item['date']))."</td>" .
                         "<td>".(isset($item['url']) ? $item['url'] : '')."</td>" .
-                        "<td>".\TracyDebugger::createEditorLink($this->wire('config')->paths->logs . 'tracy/' . $item['log'] . '.log', 1, (strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText), 'View in your code editor').(\TracyDebugger::isJson($item['text']) ? "\n".\Tracy\Dumper::toHtml(json_decode($item['text'], true)) : '')."</td>" .
+                        "<td>".TracyDebugger::createEditorLink($this->wire('config')->paths->logs . 'tracy/' . $item['log'] . '.log', 1, (strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText), 'View in your code editor').(TracyDebugger::isJson($item['text']) ? "\n".\Tracy\Dumper::toHtml(json_decode($item['text'], true)) : '')."</td>" .
                     "</tr>";
                 }
-                $this->logEntries .= $sectionEnd;
+                $this->logEntries .= $this->sectionEnd();
             }
         }
 
         // color icon based on errors/other log entries
         if($isNewErrors > 0) {
-            $this->iconColor = \TracyDebugger::COLOR_ALERT;
+            $this->iconColor = TracyDebugger::COLOR_ALERT;
         }
         elseif($isNew > 0) {
-            $this->iconColor = \TracyDebugger::COLOR_WARN;
+            $this->iconColor = TracyDebugger::COLOR_WARN;
         }
         else {
-            $this->iconColor = \TracyDebugger::COLOR_NORMAL;
+            $this->iconColor = TracyDebugger::COLOR_NORMAL;
         }
 
         $this->icon = '
@@ -148,31 +148,8 @@ class TracyLogsPanel extends BasePanel {
             </g>
         </svg>';
 
-        return '
-        <span title="Tracy Logs">' .
-            $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Tracy Logs' : '') . '
-        </span>
-        ';
+        return $this->buildTab('Tracy Logs');
     }
-
-    protected function sectionHeader($columnNames = array()) {
-        $out = '
-        <div>
-            <table>
-                <thead>
-                    <tr>';
-        foreach($columnNames as $columnName) {
-            $out .= '<th>'.$columnName.'</th>';
-        }
-
-        $out .= '
-                    </tr>
-                </thead>
-            <tbody>
-        ';
-        return $out;
-    }
-
 
     /**
      * Returns instance of FileLog for given log name
@@ -222,7 +199,7 @@ class TracyLogsPanel extends BasePanel {
     public function getLogs() {
 
         $logs = array();
-        $dir = new DirectoryIterator($this->wire('config')->paths->logs.'tracy/');
+        $dir = new \DirectoryIterator($this->wire('config')->paths->logs.'tracy/');
         if(!@file_exists($this->wire('config')->paths->logs.'tracy/.')) {
             return null;
         }
@@ -246,26 +223,20 @@ class TracyLogsPanel extends BasePanel {
     public function getPanel() {
 
         // Load all the panel sections
-        $isAdditionalBar = \TracyDebugger::isAdditionalBar();
-        $out = '<h1>' . $this->icon . ' Tracy Logs' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>
-
-        <div class="tracy-inner">';
+        $out = $this->buildPanelHeader('Tracy Logs', false, true);
+        $out .= $this->openPanel();
             $out .= $this->logEntries;
             if($this->numLogEntries > 0) {
                 $out .= '
                 <p>
-                    <form method="post" action="'.\TracyDebugger::inputUrl(true).'">
+                    <form method="post" action="'.TracyDebugger::inputUrl(true).'">
+                        '.$this->csrfInput().'
                         <input type="submit" name="deleteTracyLogs" value="Delete All Logs" />
                     </form>
                 </p>';
             }
 
-            $out .= \TracyDebugger::generatePanelFooter('tracyLogs', \Tracy\Debugger::timer('tracyLogs'), strlen($out), 'processwireAndTracyLogsPanels');
-
-        $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'tracyLogs', 'processwireAndTracyLogsPanels');
     }
 
 }

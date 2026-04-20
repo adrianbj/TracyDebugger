@@ -1,4 +1,6 @@
-<?php
+<?php namespace ProcessWire;
+
+use Tracy\Debugger;
 
 class MailInterceptorPanel extends BasePanel {
 
@@ -9,16 +11,16 @@ class MailInterceptorPanel extends BasePanel {
 
     public function getTab() {
 
-        \Tracy\Debugger::timer('mailInterceptor');
+        Debugger::timer('mailInterceptor');
 
         $items = $this->wire('session')->tracyMailItems ? $this->wire('session')->tracyMailItems : array();
         $this->mailCount = count($items);
         if($this->mailCount > 0) {
-            $this->iconColor = \TracyDebugger::COLOR_WARN;
+            $this->iconColor = TracyDebugger::COLOR_WARN;
             $this->entries .= '
             <div class="mail-items">
                 <p>
-                    <input type="submit" onclick="clearEmails()" value="Clear Emails" />
+                    <input type="submit" id="tracyClearEmails" value="Clear Emails" />
                 </p><br />';
 
             foreach($items as $item) {
@@ -82,7 +84,7 @@ class MailInterceptorPanel extends BasePanel {
             $this->entries .= '</div>';
         }
         else {
-            $this->iconColor = \TracyDebugger::COLOR_NORMAL;
+            $this->iconColor = TracyDebugger::COLOR_NORMAL;
             $this->entries = 'No emails sent';
         }
 
@@ -96,20 +98,15 @@ class MailInterceptorPanel extends BasePanel {
             </g>
         </svg>
         ';
-        return '
-        <span title="Mail Interceptor">
-            ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? 'Mail Interceptor' : '') . ' ' . ($this->mailCount > 0 ? '<span class="mailCount">' . $this->mailCount . '</span>' : '') . '
-        </span>
-        ';
+        return $this->buildTab('Mail Interceptor', 'Mail Interceptor', ' ' . ($this->mailCount > 0 ? '<span class="mailCount">' . $this->mailCount . '</span>' : ''));
     }
 
 
     public function getPanel() {
-        $isAdditionalBar = \TracyDebugger::isAdditionalBar();
-        $out = '
-        <h1>' . $this->icon . ' Mail Interceptor' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '</h1>
+        $out = $this->buildPanelHeader('Mail Interceptor', false, true);
 
-        <script>
+        $out .= '
+        <script' . TracyDebugger::getNonceAttr() . '>
             function clearEmails() {
                 document.cookie = "tracyClearMailItems=true;expires=0;path=/";
 
@@ -121,7 +118,7 @@ class MailInterceptorPanel extends BasePanel {
                 var icons = document.getElementsByClassName("emailInterceptorIconPath");
                 i=0;
                 while(i < icons.length) {
-                    icons[i].style.fill="'.\TracyDebugger::COLOR_NORMAL.'";
+                    icons[i].style.fill="'.TracyDebugger::COLOR_NORMAL.'";
                     i++;
                 }
 
@@ -150,26 +147,29 @@ class MailInterceptorPanel extends BasePanel {
                     document.getElementById("tracyTestEmail").style.color = "#009900";
                 }
             }
+
+            var el;
+            el = document.getElementById("tracyClearEmails");
+            if(el) el.addEventListener("click", function() { clearEmails(); });
+            el = document.getElementById("setEmailButton");
+            if(el) el.addEventListener("click", function() { setTestEmail("set"); });
+            el = document.getElementById("removeEmailButton");
+            if(el) el.addEventListener("click", function() { setTestEmail("remove"); });
         </script>
 
-        <div class="tracy-inner">
+        ' . $this->openPanel() . '
             <fieldset id="mailInterceptor">';
                 $out .= '
                 <p>
                     <input type="text" style="width:250px !important; color:'.($this->wire('input')->cookie->tracyTestEmail ? '#009900' : '#000000').'" id="tracyTestEmail" name="tracyTestEmail" placeholder="Test Email Address" value="'.$this->wire('input')->cookie->tracyTestEmail.'">
                 </p>
-                <input id="setEmailButton" type="submit" onclick="setTestEmail(\'set\')" value="Set Email" />&nbsp;
-                <input id="removeEmailButton" type="submit" onclick="setTestEmail(\'remove\')" value="Remove Email" />&nbsp;
+                <input id="setEmailButton" type="submit" value="Set Email" />&nbsp;
+                <input id="removeEmailButton" type="submit" value="Remove Email" />&nbsp;
             </fieldset>
             <br /><br />
         ';
             $out .= $this->entries;
-            $out .= \TracyDebugger::generatePanelFooter('mailInterceptor', \Tracy\Debugger::timer('mailInterceptor'), strlen($out));
-
-        $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+            return $this->closePanel($out, 'mailInterceptor');
     }
 
     protected function formatEmailAddress($addresses, $names) {
@@ -191,7 +191,7 @@ class MailInterceptorPanel extends BasePanel {
         if(!is_array($attachments)) $attachments = array($attachments);
         foreach($attachments as $key => $val) {
             $attachment = is_numeric($key) ? $val : $key;
-            $styledAttachments .= '<a href="'.str_replace($this->wire('config')->paths->root, $this->wire('config')->urls->root, $attachment).'">'.str_replace($this->wire('config')->paths->root, '/', $attachment) . '</a><br />';
+            $styledAttachments .= '<a href="'.str_replace($this->wire('config')->paths->root, $this->wire('config')->urls->root, $attachment).'">'.$this->stripRootPath($attachment) . '</a><br />';
         }
         return $styledAttachments;
     }
