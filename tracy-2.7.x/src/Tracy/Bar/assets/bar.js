@@ -147,10 +147,17 @@
 			}
 
 			let doc = win.document;
-			doc.write('<!DOCTYPE html><meta charset="utf-8">'
-			+ '<script src="' + (baseUrl.replace(/&/g, '&amp;').replace(/"/g, '&quot;')) + '_tracy_bar=js&amp;XDEBUG_SESSION_STOP=1" onload="Tracy.Dumper.init()" async></script>'
-			+ '<body id="tracy-debug">'
-			);
+			doc.open();
+			doc.close();
+			let charset = doc.createElement('meta');
+			charset.setAttribute('charset', 'utf-8');
+			doc.head.appendChild(charset);
+			doc.body.id = 'tracy-debug';
+			let s = doc.createElement('script');
+			s.src = baseUrl + '_tracy_bar=js&XDEBUG_SESSION_STOP=1';
+			s.async = true;
+			s.addEventListener('load', function() { Tracy.Dumper.init(); });
+			doc.head.appendChild(s);
 			doc.body.innerHTML = '<div class="tracy-panel tracy-mode-window" id="' + this.elem.id + '">' + this.elem.innerHTML + '</div>';
 			evalScripts(doc.body);
 			if (this.elem.querySelector('h1')) {

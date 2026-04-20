@@ -1,10 +1,11 @@
-<?php
+<?php namespace ProcessWire;
 
 use Tracy\Dumper;
+use Tracy\Debugger;
 
 class ApiExplorerPanel extends BasePanel {
 
-    private $icon;
+    protected $icon;
     private $apiBaseUrl;
     private $tracyPwApiData;
 
@@ -18,45 +19,41 @@ class ApiExplorerPanel extends BasePanel {
             $this->apiModuleInstalled = false;
             $this->apiBaseUrl = 'https://processwire.com/api/ref/';
         }
-        $this->newTab = \TracyDebugger::getDataValue('linksNewTab') ? 'target="_blank"' : '';
+        $this->newTab = TracyDebugger::getDataValue('linksNewTab') ? 'target="_blank"' : '';
     }
 
 
     public function getTab() {
 
-        if(\TracyDebugger::isAdditionalBar()) return;
-        \Tracy\Debugger::timer('apiExplorer');
+        if(TracyDebugger::isAdditionalBar()) return;
+        Debugger::timer('apiExplorer');
 
         $this->icon = '
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="387.3 297.2 16.9 17.5">
-            <path stroke="'.\TracyDebugger::COLOR_NORMAL.'" stroke-width="1.0616" stroke-miterlimit="10" d="M390.9 303.1h-1.6c-.7 0-1.2.5-1.2 1.2v4c0 .2.2.4.4.4s.4-.2.4-.4v-1.2h2.4v1.2c0 .2.2.4.4.4s.4-.2.4-.4v-4c0-.7-.5-1.2-1.2-1.2zm.4 3.2h-2.4v-2c0-.2.2-.4.4-.4h1.6c.2 0 .4.2.4.4v2zM396.1 303.1h-1.6c-.2 0-.4.2-.4.4v4.9c0 .2.2.4.4.4s.4-.2.4-.4v-1.2h1.2c1.1 0 2-.9 2-2s-.8-2.1-2-2.1zm0 3.2h-1.2v-2.4h1.2c.7 0 1.2.5 1.2 1.2.1.7-.5 1.2-1.2 1.2zM403 308h-1.2v-4h1.2c.2 0 .4-.2.4-.4s-.2-.4-.4-.4h-3.2c-.2 0-.4.2-.4.4s.2.4.4.4h1.2v4h-1.2c-.2 0-.4.2-.4.4s.2.4.4.4h3.2c.2 0 .4-.2.4-.4s-.2-.4-.4-.4z"/>
-            <path stroke="'.\TracyDebugger::COLOR_NORMAL.'" stroke-width=".913" stroke-miterlimit="10" d="M402.7 299.1h-5.4l-1.3-1.3c-.1-.1-.4-.1-.5 0l-1.3 1.3h-5.4c-.6 0-1 .5-1 1v1c0 .2.2.3.3.3s.3-.2.3-.3v-1c0-.2.2-.3.3-.3h5.6c.1 0 .2 0 .2-.1l1.1-1.1 1.1 1.1c.1.1.2.1.2.1h5.6c.2 0 .3.2.3.3v1c0 .2.2.3.3.3s.3-.2.3-.3v-1c.3-.5-.1-1-.7-1z"/>
-            <path stroke="'.\TracyDebugger::COLOR_NORMAL.'" stroke-width=".913" stroke-miterlimit="10" d="M403.4 310.5c-.2 0-.3.2-.3.3v1c0 .2-.2.3-.3.3h-5.6c-.1 0-.2 0-.2.1l-1.1 1.1-1.1-1.1c-.1-.1-.2-.1-.2-.1H389c-.2 0-.3-.2-.3-.3v-1c0-.2-.2-.3-.3-.3s-.3.2-.3.3v1c0 .6.5 1 1 1h5.4l1.3 1.3c.1.1.2.1.2.1.1 0 .2 0 .2-.1l1.3-1.3h5.4c.6 0 1-.5 1-1v-1c-.2-.2-.3-.3-.5-.3z"/>
+            <path stroke="'.TracyDebugger::COLOR_NORMAL.'" stroke-width="1.0616" stroke-miterlimit="10" d="M390.9 303.1h-1.6c-.7 0-1.2.5-1.2 1.2v4c0 .2.2.4.4.4s.4-.2.4-.4v-1.2h2.4v1.2c0 .2.2.4.4.4s.4-.2.4-.4v-4c0-.7-.5-1.2-1.2-1.2zm.4 3.2h-2.4v-2c0-.2.2-.4.4-.4h1.6c.2 0 .4.2.4.4v2zM396.1 303.1h-1.6c-.2 0-.4.2-.4.4v4.9c0 .2.2.4.4.4s.4-.2.4-.4v-1.2h1.2c1.1 0 2-.9 2-2s-.8-2.1-2-2.1zm0 3.2h-1.2v-2.4h1.2c.7 0 1.2.5 1.2 1.2.1.7-.5 1.2-1.2 1.2zM403 308h-1.2v-4h1.2c.2 0 .4-.2.4-.4s-.2-.4-.4-.4h-3.2c-.2 0-.4.2-.4.4s.2.4.4.4h1.2v4h-1.2c-.2 0-.4.2-.4.4s.2.4.4.4h3.2c.2 0 .4-.2.4-.4s-.2-.4-.4-.4z"/>
+            <path stroke="'.TracyDebugger::COLOR_NORMAL.'" stroke-width=".913" stroke-miterlimit="10" d="M402.7 299.1h-5.4l-1.3-1.3c-.1-.1-.4-.1-.5 0l-1.3 1.3h-5.4c-.6 0-1 .5-1 1v1c0 .2.2.3.3.3s.3-.2.3-.3v-1c0-.2.2-.3.3-.3h5.6c.1 0 .2 0 .2-.1l1.1-1.1 1.1 1.1c.1.1.2.1.2.1h5.6c.2 0 .3.2.3.3v1c0 .2.2.3.3.3s.3-.2.3-.3v-1c.3-.5-.1-1-.7-1z"/>
+            <path stroke="'.TracyDebugger::COLOR_NORMAL.'" stroke-width=".913" stroke-miterlimit="10" d="M403.4 310.5c-.2 0-.3.2-.3.3v1c0 .2-.2.3-.3.3h-5.6c-.1 0-.2 0-.2.1l-1.1 1.1-1.1-1.1c-.1-.1-.2-.1-.2-.1H389c-.2 0-.3-.2-.3-.3v-1c0-.2-.2-.3-.3-.3s-.3.2-.3.3v1c0 .6.5 1 1 1h5.4l1.3 1.3c.1.1.2.1.2.1.1 0 .2 0 .2-.1l1.3-1.3h5.4c.6 0 1-.5 1-1v-1c-.2-.2-.3-.3-.5-.3z"/>
         </svg>';
 
-        return '
-        <span title="API Explorer">' .
-            $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;API Explorer' : '') . '
-        </span>';
+        return $this->buildTab('API Explorer');
     }
 
 
     public function getPanel() {
 
-        $out = '
-        <h1>' . $this->icon . ' API Explorer</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'ApiExplorerPanel\')">⛶</a></span></span>';
+        $out = $this->buildPanelHeader('API Explorer', true);
 
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
+        $nonceAttr = TracyDebugger::getNonceAttr();
         $out .= <<< HTML
-        <script>
+        <script{$nonceAttr}>
             tracyJSLoader.load("{$tracyModuleUrl}scripts/filterbox/filterbox.js", function() {
                 tracyJSLoader.load("{$tracyModuleUrl}scripts/api-explorer-search.js");
             });
         </script>
 HTML;
 
-        $out .= '
-        <div class="tracy-inner">';
+        $out .= $this->openPanel();
 
         // variables
         $currentApiOut = $this->buildTypes('variables');
@@ -68,12 +65,12 @@ HTML;
         $currentApiOut .= $this->buildTypes('proceduralFunctions');
 
         // core module classes
-        if(in_array('coreModules', \TracyDebugger::getDataValue('apiExplorerModuleClasses'))) {
+        if(in_array('coreModules', TracyDebugger::getDataValue('apiExplorerModuleClasses'))) {
             $currentApiOut .= $this->buildTypes('coreModules');
         }
 
         // site module classes
-        if(in_array('siteModules', \TracyDebugger::getDataValue('apiExplorerModuleClasses'))) {
+        if(in_array('siteModules', TracyDebugger::getDataValue('apiExplorerModuleClasses'))) {
             $currentApiOut .= $this->buildTypes('siteModules');
         }
 
@@ -83,44 +80,60 @@ HTML;
         $apiChanges = $this->wire('cache')->get('TracyApiChanges');
         if($apiChanges) {
             $apiChanges = json_decode(ltrim($apiChanges, '~'), true);
-            if(is_array($apiChanges) && count($apiChanges) > 1) {
+            if(is_array($apiChanges) && isset($apiChanges['cachedVersion'])) {
+                $cachedVersion = $apiChanges['cachedVersion'];
+                unset($apiChanges['cachedVersion']);
+
+                // check if there are actual changes (not just empty type arrays)
+                $hasChanges = false;
                 foreach($apiChanges as $type => $classes) {
-                    if($type == 'cachedVersion') {
-                        $apiChangesOut .= '
-                        <a href="#" rel="new-since" class="tracy-toggle tracy-collapsed new-since">
-                            <span style="font-size: 15px; font-weight: bold">NEW SINCE v'.$classes.'</span>
-                        </a>
-                        <div style="padding-left:10px" id="new-since" class="tracy-collapsed new-since">
-                        ';
-                        continue;
+                    if(!empty($classes)) {
+                        $hasChanges = true;
+                        break;
                     }
-                    if(!isset($currentType) || $currentType !== $type) {
-                        $apiChangesOut .= '<h3>' . ucfirst(strtolower(preg_replace('/([a-z0-9])([A-Z])/', "$1 $2", $type))) .($type == 'variables' || $type == 'proceduralFunctions' ? '' : ' classes').'</h3>';
-                    }
-                    foreach($classes as $class => $methods) {
-                        foreach($methods as $method) {
-                            $apiChangesOut .= ($type == 'variables' ? '$' : '').$class.'->'.$method .'<br />';
-                        }
-                    }
-                    $currentType = $type;
                 }
-                $apiChangesOut .= '</div><br /><br /><span style="font-size: 15px; font-weight: bold">CURRENT v'.$this->wire('config')->version.'</span>';
+
+                if($hasChanges) {
+                    $apiChangesOut .= '
+                    <a href="#" rel="new-since" class="tracy-toggle tracy-collapsed new-since">
+                        <span style="font-size: 15px; font-weight: bold">NEW SINCE v'.htmlentities($cachedVersion).'</span>
+                    </a>
+                    <div style="padding-left:10px" id="new-since" class="tracy-collapsed new-since">
+                    ';
+
+                    $currentType = null;
+                    foreach($apiChanges as $type => $classes) {
+                        if(empty($classes)) continue;
+                        if($currentType !== $type) {
+                            $apiChangesOut .= '<h3>' . htmlentities(ucfirst(strtolower(preg_replace('/([a-z0-9])([A-Z])/', "$1 $2", $type)))) .($type == 'variables' || $type == 'proceduralFunctions' ? '' : ' classes').'</h3>';
+                        }
+                        foreach($classes as $class => $methods) {
+                            foreach($methods as $method) {
+                                if($type == 'proceduralFunctions') {
+                                    $apiChangesOut .= htmlentities($method) .'<br />';
+                                }
+                                else {
+                                    $apiChangesOut .= ($type == 'variables' ? '$' : '').htmlentities($class).'->'.htmlentities($method) .'<br />';
+                                }
+                            }
+                        }
+                        $currentType = $type;
+                    }
+
+                    $apiChangesOut .= '</div><br /><br /><span style="font-size: 15px; font-weight: bold">CURRENT v'.htmlentities($this->wire('config')->version).'</span>';
+                }
             }
         }
 
         $out .= $apiChangesOut . $currentApiOut;
 
-        $out .= \TracyDebugger::generatePanelFooter('apiExplorer', \Tracy\Debugger::timer('apiExplorer'), strlen($out), 'apiExplorerPanel');
-        $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+        return $this->closePanel($out, 'apiExplorer', 'apiExplorerPanel');
     }
 
 
     private function buildTypes($type) {
         $out = '<h3>' . ucfirst(strtolower(preg_replace('/([a-z0-9])([A-Z])/', "$1 $2", $type))) .($type == 'variables' || $type == 'proceduralFunctions' ? '' : ' classes').'</h3>';
-        foreach(\TracyDebugger::getApiData($type) as $class => $methods) {
+        foreach(TracyDebugger::getApiData($type) as $class => $methods) {
             $out .= $this->buildTable($class, $methods, $type);
         }
         return $out;
@@ -157,12 +170,12 @@ HTML;
         <table class="apiExplorerTable">';
 
         $out .= '
-        <th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">'.$varTitle.' links</th>
+        <th colspan="'.(TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">'.$varTitle.' links</th>
         <tr>
-            <td colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '3' : '2').'"><a '.$this->newTab.' href="'.$this->apiBaseUrl.$this->convertNamesToUrls(str_replace('$', '', $className)).'/">' . $className . '</a></td>';
+            <td colspan="'.(TracyDebugger::getDataValue('apiExplorerShowDescription') ? '3' : '2').'"><a '.$this->newTab.' href="'.$this->apiBaseUrl.$this->convertNamesToUrls(str_replace('$', '', $className)).'/">' . $className . '</a></td>';
 
         $out .= '
-                <td>'.\TracyDebugger::createEditorLink(\TracyDebugger::removeCompilerFromPath($filename), 1, str_replace($this->wire('config')->paths->root, '', '/'.\TracyDebugger::removeCompilerFromPath($filename))).'</td>
+                <td>'.TracyDebugger::createEditorLink(TracyDebugger::removeCompilerFromPath($filename), 1, $this->stripRootPath('/'.TracyDebugger::removeCompilerFromPath($filename), '')).'</td>
             </tr>';
 
         if(empty($items)) {
@@ -174,10 +187,10 @@ HTML;
             foreach($items as $item => $info) {
                 if(strpos($item, '()') === false && !$propertiesSection) {
                     $propertiesSection = true;
-                    $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">'.$varTitle. ($class == 'Functions' ? '' : ' properties').'</th>';
+                    $out .= '<th colspan="'.(TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">'.$varTitle. ($class == 'Functions' ? '' : ' properties').'</th>';
                 }
                 elseif($i == 0) {
-                    $out .= '<th colspan="'.(\TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">'.$varTitle.' methods</th>';
+                    $out .= '<th colspan="'.(TracyDebugger::getDataValue('apiExplorerShowDescription') ? '4' : '3').'">'.$varTitle.' methods</th>';
                 }
 
                 $name = $info['name'];
@@ -189,9 +202,9 @@ HTML;
                 $out .= '
                     <tr>
                         <td>'.str_replace('()', '', $name).'</td>
-                        <td>'.\TracyDebugger::createEditorLink(\TracyDebugger::removeCompilerFromPath($filename), $info['lineNumber'], $info['lineNumber']).'</td>
+                        <td>'.TracyDebugger::createEditorLink(TracyDebugger::removeCompilerFromPath($filename), $info['lineNumber'], $info['lineNumber']).'</td>
                         <td class="tracy-force-no-wrap">' . (isset($info['comment']) ? $info['comment'] : '') . '</td>';
-                    if(\TracyDebugger::getDataValue('apiExplorerShowDescription') && isset($info['description'])) {
+                    if(TracyDebugger::getDataValue('apiExplorerShowDescription') && isset($info['description'])) {
                         $out .= '
                         <td class="tracy-force-no-wrap">' . $info['description'] . '</td>';
                     }
@@ -212,6 +225,7 @@ HTML;
 
 
     private static function convertNamesToUrls($str) {
+        if(!is_string($str) || $str === '') return '';
         return trim(strtolower(preg_replace('/([A-Z])/', '-$1', $str)), '-');
     }
 

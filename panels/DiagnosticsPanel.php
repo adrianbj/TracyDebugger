@@ -1,4 +1,6 @@
-<?php
+<?php namespace ProcessWire;
+
+use Tracy\Debugger;
 
 class DiagnosticsPanel extends BasePanel {
 
@@ -22,8 +24,8 @@ class DiagnosticsPanel extends BasePanel {
      *
      */
     public function getTab() {
-        if(\TracyDebugger::isAdditionalBar()) return;
-        \Tracy\Debugger::timer('diagnostics');
+        if(TracyDebugger::isAdditionalBar()) return;
+        Debugger::timer('diagnostics');
 
         $this->is_dedicated_host = $this->wire('input')->cookie->tracyDedicatedServerMode;
 
@@ -33,7 +35,7 @@ class DiagnosticsPanel extends BasePanel {
         $this->conf_assets     = $this->getConfigAssets();
         $this->conf_asset_cols = $this->getConfigAssetColumns();
         $this->status_counters = array('OK' => 0, 'NOTE' => 0, 'WARN' => 0, 'FAIL' => 0);
-        $this->status_bg_colors   = array('OK' => \TracyDebugger::COLOR_GREEN, 'NOTE' => '#fff2a8', 'WARN' => \TracyDebugger::COLOR_WARN, 'FAIL' => \TracyDebugger::COLOR_ALERT);
+        $this->status_bg_colors   = array('OK' => TracyDebugger::COLOR_GREEN, 'NOTE' => '#fff2a8', 'WARN' => TracyDebugger::COLOR_WARN, 'FAIL' => TracyDebugger::COLOR_ALERT);
         $this->status_fg_colors   = array('OK' => '#ffffff', 'NOTE' => '#333333', 'WARN' => '#ffffff', 'FAIL' => '#ffffff');
 
         // generate diagnotics now so we can determine the color of the icon in the Debugger Bar
@@ -55,7 +57,7 @@ class DiagnosticsPanel extends BasePanel {
                     <path d="M365.446,63.953c0-7.614-2.663-14.084-7.994-19.414c-5.325-5.33-11.8-7.993-19.411-7.993H173.589    c-7.612,0-14.083,2.663-19.414,7.993c-5.33,5.327-7.994,11.799-7.994,19.414v45.679H100.5V475.08h310.625V109.632h-45.679V63.953z     M182.725,73.089h146.179v36.543H182.725V73.089z M365.446,319.765c0,2.67-0.855,4.853-2.567,6.571    c-1.711,1.707-3.9,2.566-6.563,2.566h-63.953v63.953c0,2.662-0.862,4.853-2.573,6.563c-1.704,1.711-3.895,2.567-6.561,2.567    H228.41c-2.667,0-4.854-0.856-6.567-2.567c-1.711-1.711-2.568-3.901-2.568-6.563v-63.953h-63.953    c-2.668,0-4.854-0.859-6.567-2.566c-1.714-1.719-2.57-3.901-2.57-6.571v-54.815c0-2.67,0.856-4.859,2.57-6.571    c1.709-1.709,3.899-2.564,6.562-2.564h63.953V191.86c0-2.666,0.856-4.853,2.57-6.567c1.713-1.713,3.899-2.568,6.567-2.568h54.818    c2.665,0,4.855,0.855,6.563,2.568c1.711,1.714,2.573,3.901,2.573,6.567v63.954h63.953c2.663,0,4.853,0.855,6.563,2.564    c1.708,1.712,2.563,3.901,2.563,6.571v54.815H365.446z" fill="'.static::$iconColor.'"/>
                     <path d="M492.785,128.478c-12.563-12.562-27.601-18.846-45.111-18.846h-9.137V475.08h9.137c17.511,0,32.548-6.28,45.111-18.843    c12.559-12.562,18.842-27.6,18.842-45.111v-237.54C511.626,156.078,505.343,141.041,492.785,128.478z" fill="'.static::$iconColor.'"/>
                 </g>
-            </svg>' . (\TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Diagnostics' : '') . '
+            </svg>' . (TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Diagnostics' : '') . '
         </span>
         ';
     }
@@ -118,7 +120,7 @@ class DiagnosticsPanel extends BasePanel {
                     $class = '';
                     if ($asset['original_value']) {
                         $note  = '';
-                        if (!\TracyDebugger::$isLocal) {
+                        if (!TracyDebugger::$isLocal) {
                             $class = 'FAIL';
                             $asset['notes'][] = 'This should be set to <strong>false</strong> on production machines.';
                             $note = $this->formatSuggestion('Edit <em>site/config.php</em> to read...', '$config->debug = false;');
@@ -337,7 +339,7 @@ class DiagnosticsPanel extends BasePanel {
 
         // Where possible append link to more documentation...
         if (isset($asset['href']) && !empty($asset['href'])) {
-            $href = "<a href='{$asset['href']}' target='_href'>{$asset['name']} Information...</a>";
+            $href = "<a href='".htmlspecialchars($asset['href'] ?? '', ENT_QUOTES, 'UTF-8')."' target='_href'>".htmlspecialchars($asset['name'] ?? '', ENT_QUOTES, 'UTF-8')." Information...</a>";
             if (!empty($value) && empty($chmod)) {
                 $value .= "<br>$href";
             } else {
@@ -376,7 +378,7 @@ class DiagnosticsPanel extends BasePanel {
         $style = ' style="line-height:1.3 !important;"';
         $col   = '';
         $txt   = '';
-        $title = (isset($cell['title']) && !empty($cell['title'])) ? " title=\"{$cell['title']}\"" : '';
+        $title = (isset($cell['title']) && !empty($cell['title'])) ? " title=\"".htmlspecialchars($cell['title'] ?? '', ENT_QUOTES, 'UTF-8')."\"" : '';
         $class = isset($cell['class']) ? $cell['class'] : '';
         switch($class) {
         case 'WARN':
@@ -433,7 +435,7 @@ class DiagnosticsPanel extends BasePanel {
      * Essentially allows for a downgrade of severity warning if this is a development machine and/or a dedicated server.
      */
     protected function downgradeFailureIfAppropriate($value, $dedicated = false, $warn = 'WARN', $fail = 'FAIL', $note = 'NOTE') {
-        $local = \TracyDebugger::$isLocal;
+        $local = TracyDebugger::$isLocal;
 
         if ($local && $dedicated) {
             $value .= " $note";
@@ -449,7 +451,7 @@ class DiagnosticsPanel extends BasePanel {
 
 
     protected function downgradeWarningIfAppropriate($value, $dedicated = false, $warn = 'WARN', $note = 'NOTE') {
-        $local = \TracyDebugger::$isLocal;
+        $local = TracyDebugger::$isLocal;
 
         if ($local || $dedicated) {
             $value .= " $note";
@@ -614,10 +616,10 @@ class DiagnosticsPanel extends BasePanel {
             switch ($rule) {
             case 'fail':
                 $is_installer    = isset($asset['is_installer']) && $asset['is_installer'];
-                $dedicated_local = $this->is_dedicated_host && \TracyDebugger::$isLocal;
+                $dedicated_local = $this->is_dedicated_host && TracyDebugger::$isLocal;
                 if ($is_installer) {
                     $note  = "Remove to prevent accidental/malicious re-install";
-                    $note .= (\TracyDebugger::$isLocal) ? ' or upload of installer to production server.' : '.';
+                    $note .= (TracyDebugger::$isLocal) ? ' or upload of installer to production server.' : '.';
                     if ($dedicated_local) {
                         $class = 'WARN';
                     } else {
@@ -1048,7 +1050,7 @@ class DiagnosticsPanel extends BasePanel {
 
         // Where possible append link to more documentation...
         if (isset($asset['href']) && !empty($asset['href'])) {
-            $href = "<a href='{$asset['href']}' target='_href'>{$asset['name']} Information...</a>";
+            $href = "<a href='".htmlspecialchars($asset['href'] ?? '', ENT_QUOTES, 'UTF-8')."' target='_href'>".htmlspecialchars($asset['name'] ?? '', ENT_QUOTES, 'UTF-8')." Information...</a>";
             if (!empty($value) && empty($chmod)) {
                 $value .= "<br>$href";
             } else {
@@ -1213,7 +1215,7 @@ class DiagnosticsPanel extends BasePanel {
                 $needs_world_access = (!$puser_matches_owner && !$puser_matches_group);
             }
 
-            $asset['shortpath']   = str_replace($config->paths->root, '/', $asset['path']);
+            $asset['shortpath']   = TracyDebugger::stripRootPath($asset['path']);
             $asset['name']        = $name;
             $asset['exists']      = $exists;
             $asset['int_perms']   = $perms;
@@ -1245,25 +1247,6 @@ class DiagnosticsPanel extends BasePanel {
     /**
      *
      */
-    protected function sectionHeader($columnNames = array()) {
-        $out = '
-        <div>
-            <table>
-                <thead>
-                    <tr>';
-                        foreach($columnNames as $columnName) {
-                            $out .= '<th style="white-space:nowrap; padding:0.5em !important; line-height:1.3 !important">'.$columnName.'</th>';
-                        }
-                    $out .= '
-                    </tr>
-                </thead>
-            <tbody>
-        ';
-        return $out;
-    }
-
-
-
     /**
      *
      */
@@ -1358,7 +1341,7 @@ class DiagnosticsPanel extends BasePanel {
 
         $this->incorrectFiles = $this->sectionHeader(array('File', 'Permissions'));
 
-        foreach($iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($this->wire('config')->paths->root, RecursiveDirectoryIterator::SKIP_DOTS), RecursiveIteratorIterator::SELF_FIRST) as $fileinfo) {
+        foreach(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->wire('config')->paths->root, \RecursiveDirectoryIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST) as $fileinfo) {
             if((strpos($fileinfo->getPathname(), 'assets'.DIRECTORY_SEPARATOR.'sessions'.DIRECTORY_SEPARATOR) === false && !$fileinfo->isDir() && strpos($fileinfo->getPathname(), DIRECTORY_SEPARATOR.'.') === false) || $fileinfo->getFilename() == ".htaccess") {
                 $octal_perms = substr(sprintf('%o', $fileinfo->getPerms()), -4);
                 if($octal_perms != $this->wire('config')->chmodFile) $this->incorrectFiles .= '<tr><td>'.$fileinfo->getPathname() . "</td><td>" . $octal_perms . "</tr>\n";
@@ -1378,14 +1361,9 @@ class DiagnosticsPanel extends BasePanel {
      *
      */
     public function getPanel() {
-        $panelSections = \TracyDebugger::getDataValue('diagnosticsPanelSections');
-        $is_local  = \TracyDebugger::$isLocal;
+        $panelSections = TracyDebugger::getDataValue('diagnosticsPanelSections');
+        $is_local  = TracyDebugger::$isLocal;
 
-        // end for each section
-        $sectionEnd = '
-                    </tbody>
-                </table>
-            </div>';
 
 
         // Load all the panel sections
@@ -1399,8 +1377,8 @@ class DiagnosticsPanel extends BasePanel {
                 </g>
             </svg>
             Diagnostics
-        </h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" onclick="tracyResizePanel(\'DiagnosticsPanel\')">⛶</a></span></span>
-        <div class="tracy-inner">';
+        </h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" data-tracy-resize="DiagnosticsPanel">⛶</a></span></span>
+        ' . $this->openPanel();
 
         $i=0;
         if(in_array('filesystemFolders', $panelSections)) {
@@ -1414,7 +1392,7 @@ class DiagnosticsPanel extends BasePanel {
                 $context = ($is_local) ? 'Development (local)' : 'Production';
                 $type = ($this->is_dedicated_host) ? 'Dedicated' : 'Shared';
                 $out .= "<p>Running in a <strong>$context</strong> context on a <strong>$type</strong> server. &nbsp;";
-                $out .= '<input type="submit" onclick="toggleDedicatedServerMode()" value="' . ($this->wire('input')->cookie->tracyDedicatedServerMode ? 'Disable' : 'Enable') .' Dedicated Server Mode" /><br><br>';
+                $out .= '<input type="submit" id="tracyDedicatedServerMode" value="' . ($this->wire('input')->cookie->tracyDedicatedServerMode ? 'Disable' : 'Enable') .' Dedicated Server Mode" /><br><br>';
                 $out .= '</p>';
                 $out .= '<p>'.$this->file_asset_report.'</p>';
                 $out .= '<h3>Config File Settings</h3><p>'.$this->conf_asset_report.'</p>';
@@ -1466,7 +1444,7 @@ class DiagnosticsPanel extends BasePanel {
                     "</tr>";
             }
 
-            $dbInfo .= $sectionEnd;
+            $dbInfo .= $this->sectionEnd();
 
             $out .= '
             <a href="#" rel="#mysqlinfo" class="tracy-toggle '.($i>0 ? ' tracy-collapsed' : '').'">MySQL Info</a>
@@ -1476,11 +1454,12 @@ class DiagnosticsPanel extends BasePanel {
             $i++;
         }
 
-        $out .= \TracyDebugger::generatePanelFooter('diagnostics', \Tracy\Debugger::timer('diagnostics'), strlen($out), 'diagnosticsPanel');
+        $out .= TracyDebugger::generatePanelFooter('diagnostics', Debugger::timer('diagnostics'), strlen($out), 'diagnosticsPanel');
         $out .= '</div>';
 
+        $nonceAttr = TracyDebugger::getNonceAttr();
         $out .= <<< HTML
-        <script>
+        <script{$nonceAttr}>
             function getCookie(name) {
                 var value = "; " + document.cookie;
                 var parts = value.split("; " + name + "=");
@@ -1497,9 +1476,12 @@ class DiagnosticsPanel extends BasePanel {
                     location.reload();
                 }
             }
+
+            var dsmBtn = document.getElementById('tracyDedicatedServerMode');
+            if(dsmBtn) dsmBtn.addEventListener('click', function() { toggleDedicatedServerMode(); });
         </script>
 HTML;
 
-        return parent::loadResources() . $out;
+        return $out;
     }
 }

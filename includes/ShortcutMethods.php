@@ -1,13 +1,15 @@
 <?php
 
-use Tracy\Debugger;
-
 /**
  * short alias methods for lazy typists :)
+ *
+ * These are defined in the global namespace so they work from both
+ * ProcessWire-namespaced and non-namespaced template files and modules.
+ * PHP's function resolution falls back from any namespace to global.
  */
 
 function tracyUnavailable() {
-    if(!\TracyDebugger::getDataValue('enabled') || \TracyDebugger::$allowedTracyUser != 'development' || !class_exists('\TD')) {
+    if(!\ProcessWire\TracyDebugger::getDataValue('enabled') || \ProcessWire\TracyDebugger::$allowedTracyUser != 'development' || !class_exists('ProcessWire\TD')) {
         return true;
     }
     else {
@@ -22,7 +24,7 @@ function tracyUnavailable() {
 if(!function_exists('debugAll') && in_array('debugAll', $this->data['enabledShortcutMethods'])) {
     function debugAll($var, $title = NULL, $options = []) {
         if(tracyUnavailable()) return false;
-        return TD::debugAll($var, $title, $options);
+        return \ProcessWire\TD::debugAll($var, $title, $options);
     }
 }
 
@@ -32,8 +34,8 @@ if(!function_exists('debugAll') && in_array('debugAll', $this->data['enabledShor
  */
 if(!function_exists('barDump') && in_array('barDump', $this->data['enabledShortcutMethods'])) {
     function barDump($var, $title = NULL, $options = []) {
-        if(tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
-        return TD::barDump($var, $title, $options);
+        if(tracyUnavailable() && !\ProcessWire\TracyDebugger::getDataValue('recordGuestDumps')) return false;
+        return \ProcessWire\TD::barDump($var, $title, $options);
     }
 }
 
@@ -43,8 +45,8 @@ if(!function_exists('barDump') && in_array('barDump', $this->data['enabledShortc
  */
 if(!function_exists('barDumpBig') && in_array('barDumpBig', $this->data['enabledShortcutMethods'])) {
     function barDumpBig($var, $title = NULL) {
-        if(tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
-        return TD::barDumpBig($var, $title);
+        if(tracyUnavailable() && !\ProcessWire\TracyDebugger::getDataValue('recordGuestDumps')) return false;
+        return \ProcessWire\TD::barDumpBig($var, $title);
     }
 }
 
@@ -55,7 +57,7 @@ if(!function_exists('barDumpBig') && in_array('barDumpBig', $this->data['enabled
 if(!function_exists('dump') && in_array('dump', $this->data['enabledShortcutMethods'])) {
     function dump($var, $title = NULL, $options = []) {
         if(tracyUnavailable() && PHP_SAPI !== 'cli') return false;
-        return TD::dump($var, $title, $options);
+        return \ProcessWire\TD::dump($var, $title, $options);
     }
 }
 
@@ -66,7 +68,7 @@ if(!function_exists('dump') && in_array('dump', $this->data['enabledShortcutMeth
 if(!function_exists('dumpBig') && in_array('dumpBig', $this->data['enabledShortcutMethods'])) {
     function dumpBig($var, $title = NULL, $options = []) {
         if(tracyUnavailable() && PHP_SAPI !== 'cli') return false;
-        return TD::dumpBig($var, $title, $options);
+        return \ProcessWire\TD::dumpBig($var, $title, $options);
     }
 }
 
@@ -76,8 +78,8 @@ if(!function_exists('dumpBig') && in_array('dumpBig', $this->data['enabledShortc
  */
 if(!function_exists('barEcho') && in_array('barEcho', $this->data['enabledShortcutMethods'])) {
     function barEcho($str, $title = NULL) {
-        if(tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
-        return TD::barEcho($str, $title);
+        if(tracyUnavailable() && !\ProcessWire\TracyDebugger::getDataValue('recordGuestDumps')) return false;
+        return \ProcessWire\TD::barEcho($str, $title);
     }
 }
 
@@ -88,20 +90,7 @@ if(!function_exists('barEcho') && in_array('barEcho', $this->data['enabledShortc
 if(!function_exists('timer') && in_array('timer', $this->data['enabledShortcutMethods'])) {
     function timer($name = NULL) {
         if(tracyUnavailable()) return false;
-        return TD::timer($name);
-    }
-}
-
-/**
- * TD::fireLog() shortcut.
- * @tracySkipLocation
- */
-if(method_exists('Tracy\Debugger', 'getFireLogger')) {
-    if(!function_exists('fireLog') && in_array('fireLog', $this->data['enabledShortcutMethods'])) {
-        function fireLog($message = NULL) {
-            if(tracyUnavailable()) return false;
-            return TD::fireLog($message);
-        }
+        return \ProcessWire\TD::timer($name);
     }
 }
 
@@ -112,7 +101,7 @@ if(method_exists('Tracy\Debugger', 'getFireLogger')) {
 if(!function_exists('addBreakpoint') && in_array('addBreakpoint', $this->data['enabledShortcutMethods'])) {
     function addBreakpoint($name = null, $enforceParent = null) {
         if(tracyUnavailable() || !class_exists('\Zarganwar\PerformancePanel\Register')) return false;
-        return TD::addBreakpoint($name, $enforceParent);
+        return \ProcessWire\TD::addBreakpoint($name, $enforceParent);
     }
 }
 
@@ -123,7 +112,7 @@ if(!function_exists('addBreakpoint') && in_array('addBreakpoint', $this->data['e
 if(!function_exists('templateVars') && in_array('templateVars', $this->data['enabledShortcutMethods'])) {
     function templateVars($vars) {
         if(tracyUnavailable()) return false;
-        return TD::templateVars($vars);
+        return \ProcessWire\TD::templateVars($vars);
     }
 }
 
@@ -138,7 +127,7 @@ if(!function_exists('templateVars') && in_array('templateVars', $this->data['ena
 if(!function_exists('da') && in_array('da', $this->data['enabledShortcutMethods'])) {
     function da($var, $title = NULL, $options = []) {
         if(tracyUnavailable()) return false;
-        return TD::debugAll($var, $title, $options);
+        return \ProcessWire\TD::debugAll($var, $title, $options);
     }
 }
 
@@ -148,8 +137,8 @@ if(!function_exists('da') && in_array('da', $this->data['enabledShortcutMethods'
  */
 if(!function_exists('bd') && in_array('bd', $this->data['enabledShortcutMethods'])) {
     function bd($var, $title = NULL, $options = []) {
-        if(tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
-        return TD::barDump($var, $title, $options);
+        if(tracyUnavailable() && !\ProcessWire\TracyDebugger::getDataValue('recordGuestDumps')) return false;
+        return \ProcessWire\TD::barDump($var, $title, $options);
     }
 }
 
@@ -159,8 +148,8 @@ if(!function_exists('bd') && in_array('bd', $this->data['enabledShortcutMethods'
  */
 if(!function_exists('bdb') && in_array('bdb', $this->data['enabledShortcutMethods'])) {
     function bdb($var, $title = NULL) {
-        if(tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
-        return TD::barDumpBig($var, $title);
+        if(tracyUnavailable() && !\ProcessWire\TracyDebugger::getDataValue('recordGuestDumps')) return false;
+        return \ProcessWire\TD::barDumpBig($var, $title);
     }
 }
 
@@ -171,7 +160,7 @@ if(!function_exists('bdb') && in_array('bdb', $this->data['enabledShortcutMethod
 if(!function_exists('d') && in_array('d', $this->data['enabledShortcutMethods'])) {
     function d($var, $title = NULL, $options = []) {
         if(tracyUnavailable() && PHP_SAPI !== 'cli') return false;
-        return TD::dump($var, $title, $options);
+        return \ProcessWire\TD::dump($var, $title, $options);
     }
 }
 
@@ -182,7 +171,7 @@ if(!function_exists('d') && in_array('d', $this->data['enabledShortcutMethods'])
 if(!function_exists('db') && in_array('db', $this->data['enabledShortcutMethods'])) {
     function db($var, $title = NULL, $options = []) {
         if(tracyUnavailable() && PHP_SAPI !== 'cli') return false;
-        return TD::dumpBig($var, $title, $options);
+        return \ProcessWire\TD::dumpBig($var, $title, $options);
     }
 }
 
@@ -192,8 +181,8 @@ if(!function_exists('db') && in_array('db', $this->data['enabledShortcutMethods'
  */
 if(!function_exists('be') && in_array('be', $this->data['enabledShortcutMethods'])) {
     function be($str, $title = NULL) {
-        if(tracyUnavailable() && !\TracyDebugger::getDataValue('recordGuestDumps')) return false;
-        return TD::barEcho($str, $title);
+        if(tracyUnavailable() && !\ProcessWire\TracyDebugger::getDataValue('recordGuestDumps')) return false;
+        return \ProcessWire\TD::barEcho($str, $title);
     }
 }
 
@@ -204,7 +193,7 @@ if(!function_exists('be') && in_array('be', $this->data['enabledShortcutMethods'
 if(!function_exists('l') && in_array('l', $this->data['enabledShortcutMethods'])) {
     function l($message, $priority = 'info') {
         if(tracyUnavailable()) return false;
-        return TD::log($message, $priority);
+        return \ProcessWire\TD::log($message, $priority);
     }
 }
 
@@ -215,20 +204,7 @@ if(!function_exists('l') && in_array('l', $this->data['enabledShortcutMethods'])
 if(!function_exists('t') && in_array('t', $this->data['enabledShortcutMethods'])) {
     function t($name = NULL) {
         if(tracyUnavailable()) return false;
-        return TD::timer($name);
-    }
-}
-
-/**
- * TD::fireLog() shortcut.
- * @tracySkipLocation
- */
-if(method_exists('Tracy\Debugger', 'getFireLogger')) {
-    if(!function_exists('fl') && in_array('fl', $this->data['enabledShortcutMethods'])) {
-        function fl($message = NULL) {
-            if(tracyUnavailable()) return false;
-            return TD::fireLog($message);
-        }
+        return \ProcessWire\TD::timer($name);
     }
 }
 
@@ -239,7 +215,7 @@ if(method_exists('Tracy\Debugger', 'getFireLogger')) {
 if(!function_exists('bp') && in_array('bp', $this->data['enabledShortcutMethods'])) {
     function bp($name = null, $enforceParent = null) {
         if(tracyUnavailable() || !class_exists('\Zarganwar\PerformancePanel\Register')) return false;
-        return TD::addBreakpoint($name, $enforceParent);
+        return \ProcessWire\TD::addBreakpoint($name, $enforceParent);
     }
 }
 
@@ -250,6 +226,6 @@ if(!function_exists('bp') && in_array('bp', $this->data['enabledShortcutMethods'
 if(!function_exists('tv') && in_array('tv', $this->data['enabledShortcutMethods'])) {
     function tv($vars) {
         if(tracyUnavailable()) return false;
-        return TD::templateVars($vars);
+        return \ProcessWire\TD::templateVars($vars);
     }
 }

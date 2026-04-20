@@ -1,7 +1,7 @@
 addFilterBox({
     suffix: "-apiexplorer-panel",
     target: {
-        selector: "#tracy-debug-panel-ApiExplorerPanel .tracy-inner",
+        selector: "#tracy-debug-panel-ProcessWire-ApiExplorerPanel .tracy-inner",
         items: "tbody tr"
     },
     wrapper: {
@@ -16,7 +16,7 @@ addFilterBox({
         }
     },
     addTo: {
-        selector: "#tracy-debug-panel-ApiExplorerPanel .tracy-icons",
+        selector: "#tracy-debug-panel-ProcessWire-ApiExplorerPanel .tracy-icons",
         position: "before"
     },
     inputDelay: 500,
@@ -71,7 +71,7 @@ addFilterBox({
 
                 for(var j = 0; j < $foundItems.length; j++) {
                     $item = $foundItems[j];
-                    $parents = getParentsUntil($item, "#tracy-debug-panel-ApiExplorerPanel .tracy-inner");
+                    $parents = getParentsUntil($item, "#tracy-debug-panel-ProcessWire-ApiExplorerPanel .tracy-inner");
 
                     $item.setAttribute(displayAttr, visibleMode);
 
@@ -91,7 +91,7 @@ addFilterBox({
             }
 
             // reposition panel so that if it's wider after filtering (expanding results), it won't be off the screen
-            window.Tracy.Debug.panels['tracy-debug-panel-ApiExplorerPanel'].reposition();
+            window.Tracy.Debug.panels['tracy-debug-panel-ProcessWire-ApiExplorerPanel'].reposition();
         }
     }
 });

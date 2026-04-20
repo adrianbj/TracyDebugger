@@ -1,4 +1,6 @@
-<?php
+<?php namespace ProcessWire;
+
+use Tracy\Debugger;
 
 class ModuleDisablerPanel extends BasePanel {
 
@@ -7,16 +9,16 @@ class ModuleDisablerPanel extends BasePanel {
     protected $disabledModules;
 
     public function getTab() {
-        if(\TracyDebugger::isAdditionalBar()) return;
-        \Tracy\Debugger::timer('moduleDisabler');
+        if(TracyDebugger::isAdditionalBar()) return;
+        Debugger::timer('moduleDisabler');
 
-        $this->disabledModules = empty(\TracyDebugger::$disabledModules) ? array() : \TracyDebugger::$disabledModules;
+        $this->disabledModules = empty(TracyDebugger::$disabledModules) ? array() : TracyDebugger::$disabledModules;
 
         if(count($this->disabledModules) > 0) {
-            $this->iconColor = \TracyDebugger::COLOR_WARN;
+            $this->iconColor = TracyDebugger::COLOR_WARN;
         }
         else {
-            $this->iconColor = \TracyDebugger::COLOR_NORMAL;
+            $this->iconColor = TracyDebugger::COLOR_NORMAL;
         }
 
         $this->icon = '
@@ -29,18 +31,14 @@ class ModuleDisablerPanel extends BasePanel {
             </svg>';
 
 
-        return '
-            <span title="Module Disabler">
-                ' . $this->icon . (\TracyDebugger::getDataValue('showPanelLabels') ? '&nbsp;Module Disabler' : '') . '
-            </span>
-        ';
+        return $this->buildTab('Module Disabler');
     }
 
 
     public function getPanel() {
 
         $out = '
-        <script>
+        <script' . TracyDebugger::getNonceAttr() . '>
             function getSelectedTracyModuleCheckboxes() {
                 var selchbox = [];
                 var inpfields = document.getElementsByName("selectedModules[]");
@@ -96,16 +94,24 @@ class ModuleDisablerPanel extends BasePanel {
                 }
             }
 
+            var el;
+            el = document.getElementById("tracyDisableModules");
+            if(el) el.addEventListener("click", function() { disableTracyModules(); });
+            el = document.getElementById("tracyResetModules");
+            if(el) el.addEventListener("click", function() { resetTracyModules(); });
+            el = document.getElementById("tracyToggleAllModules");
+            if(el) el.addEventListener("change", function() { toggleAllModules(this); });
+
         </script>
         ';
 
-        $out .= '<h1>'.$this->icon.' Module Disabler</h1>
-        <div class="tracy-inner">
+        $out .= $this->buildPanelHeader('Module Disabler');
+        $out .= $this->openPanel() . '
             <fieldset>';
-                if(count(\TracyDebugger::$disabableModules) > 0 && $this->wire('config')->advanced && $this->wire('config')->debug) {
+                if(count(TracyDebugger::$disabableModules) > 0 && $this->wire('config')->advanced && $this->wire('config')->debug) {
                     $out .= '<legend><p>Temporarily disable autoload modules. Check to disable.</p><p><strong>Restore Instructions</strong><br />If your site is broken after disabling modules you can restore your modules by <strong>either one</strong> of the following methods:<ul><li>Copy "/site/assets/cache/TracyDebugger/restoremodules.php" to the root of your site and load it in your browser<br /><strong>OR</strong></li><li>Execute "/site/assets/cache/TracyDebugger/modulesBackup.sql" manually (via PHPMyAdmin, the command line, etc)</li></ul></p></legend><br />';
-                    $out .= '<label><input type="checkbox" onchange="toggleAllModules(this)" ' . (count($this->disabledModules) == count(\TracyDebugger::$disabableModules) ? 'checked="checked"' : '') . ' /> Toggle All</label><br />';
-                    foreach(\TracyDebugger::$disabableModules as $name) {
+                    $out .= '<label><input type="checkbox" id="tracyToggleAllModules" ' . (count($this->disabledModules) == count(TracyDebugger::$disabableModules) ? 'checked="checked"' : '') . ' /> Toggle All</label><br />';
+                    foreach(TracyDebugger::$disabableModules as $name) {
                         $flags = $this->wire('modules')->getFlags($name);
                         $out .= '
                             <label style="width: 280px !important; white-space: nowrap;">
@@ -116,8 +122,8 @@ class ModuleDisablerPanel extends BasePanel {
                     $out .= '
                     <br /><br />
                     <p>
-                        <input type="submit" onclick="disableTracyModules()" value="Disable Modules" />&nbsp;
-                        <input type="submit" onclick="resetTracyModules()" value="Reset" />
+                        <input type="submit" id="tracyDisableModules" value="Disable Modules" />&nbsp;
+                        <input type="submit" id="tracyResetModules" value="Reset" />
                     </p>';
                 }
                 else {
@@ -131,12 +137,7 @@ class ModuleDisablerPanel extends BasePanel {
 
             $out .= '</fieldset>';
 
-            $out .= \TracyDebugger::generatePanelFooter('moduleDisabler', \Tracy\Debugger::timer('moduleDisabler'), strlen($out));
-
-        $out .= '
-        </div>';
-
-        return parent::loadResources() . $out;
+            return $this->closePanel($out, 'moduleDisabler');
     }
 
 }

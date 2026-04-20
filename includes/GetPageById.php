@@ -1,14 +1,14 @@
-<?php
+<?php namespace ProcessWire;
 
 $p = $this->wire('pages')->get((int)$_POST['goToPage']);
 $pageInfo = array();
 if($p->id) {
     $pageInfo['id'] = $p->id;
-    $pageInfo['title'] = truncateText($p->title ?: $p->name, 50);
+    $pageInfo['title'] = truncateText(htmlspecialchars($p->title ?: $p->name ?: '', ENT_QUOTES, 'UTF-8'), 50);
     $pageInfo['url'] = $p->url;
     $pageInfo['template_id'] = $p->template->id;
     $pageInfo['template_name'] = $p->template->name;
-    $pageInfo['template_label'] = $p->template->label;
+    $pageInfo['template_label'] = htmlspecialchars($p->template->label ?? '', ENT_QUOTES, 'UTF-8');
     $pageInfo['path'] = $p->path;
     $pageInfo['unpublished'] = $p->isUnpublished();
     $pageInfo['hidden'] = $p->isHidden();

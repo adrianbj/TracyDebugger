@@ -1,4 +1,4 @@
-<?php
+<?php namespace ProcessWire;
 
 class TracyPwApiData extends WireData {
 
@@ -8,9 +8,16 @@ class TracyPwApiData extends WireData {
     public function getApiData($type) {
         $cacheName = 'TracyApiData.'.$type;
         $apiData = $this->wire('cache')->get($cacheName);
+        $storedVersion = TracyDebugger::getDataValue('apiDataVersion');
+        $currentVersion = $this->wire('config')->version;
+        $versionChanged = $storedVersion !== null && $currentVersion != $storedVersion;
 
-        if(!$apiData || \TracyDebugger::getDataValue('apiDataVersion') === null || $this->wire('config')->version != \TracyDebugger::getDataValue('apiDataVersion')) {
-            if($apiData) $cachedData = json_decode(ltrim($apiData, '~'), true);
+        if(!$apiData || $storedVersion === null || $versionChanged) {
+            // decode existing cache for change detection (only needed when version actually changed)
+            if($apiData && $versionChanged) {
+                $cachedData = json_decode(ltrim($apiData, '~'), true);
+            }
+
             if($type == 'variables') {
                 $apiData = $this->getVariables();
             }
@@ -31,29 +38,34 @@ class TracyPwApiData extends WireData {
             }
 
             // if PW core version has changed, populate the "TracyApiChanges" data cache
-            if(isset($cachedData) && \TracyDebugger::getDataValue('apiDataVersion') !== null && $this->wire('config')->version != \TracyDebugger::getDataValue('apiDataVersion')) {
-                \TracyDebugger::$apiChanges['cachedVersion'] = \TracyDebugger::getDataValue('apiDataVersion');
+            if(isset($cachedData)) {
+                TracyDebugger::$apiChanges['cachedVersion'] = $storedVersion;
                 foreach($apiData as $class => $methods) {
                     $i=0;
                     foreach($methods as $method => $params) {
                         if(!isset($cachedData[$class]) || !array_key_exists($method, $cachedData[$class])) {
-                            if($type != 'hooks') \TracyDebugger::$apiChanges[$type][$class][$i] = $method;
+                            if($type != 'hooks') TracyDebugger::$apiChanges[$type][$class][$i] = $method;
                             $i++;
                         }
                     }
                 }
-                $this->wire('cache')->save('TracyApiChanges', '~'.json_encode(\TracyDebugger::$apiChanges), WireCache::expireNever);
-
-                $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
-                $configData['apiDataVersion'] = $this->wire('config')->version;
-                $this->wire('modules')->saveModuleConfigData($this->wire('modules')->get("TracyDebugger"), $configData);
-
+                $this->wire('cache')->save('TracyApiChanges', '~'.json_encode(TracyDebugger::$apiChanges), WireCache::expireNever);
             }
 
             // tilde hack for this: https://github.com/processwire/processwire-issues/issues/775
             $apiData = '~'.json_encode($apiData);
             $this->wire('cache')->save($cacheName, $apiData, WireCache::expireNever);
 
+            // update stored version if needed (only save config once per request)
+            if($currentVersion != $storedVersion) {
+                static $versionSaved = false;
+                if(!$versionSaved) {
+                    $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
+                    $configData['apiDataVersion'] = $currentVersion;
+                    $this->wire('modules')->saveModuleConfigData($this->wire('modules')->get("TracyDebugger"), $configData);
+                    $versionSaved = true;
+                }
+            }
         }
 
         return json_decode(ltrim($apiData, '~'), true);
@@ -63,7 +75,7 @@ class TracyPwApiData extends WireData {
     private function getVariables() {
         $apiVars = array();
         $apiVariables = array();
-        $this->pwVars = $this->wire('config')->version >= 2.8 ? $this->wire('all') : $this->wire()->fuel;
+        $this->pwVars = $this->wire('all');
         if(is_object($this->pwVars)) {
             foreach($this->pwVars as $key => $value) {
                 if(!is_object($value)) continue;
@@ -86,10 +98,10 @@ class TracyPwApiData extends WireData {
         }
         $classesArr = array();
         foreach($classes as $class) {
-            if(!in_array($class, \TracyDebugger::$allApiClassesArr)) {
+            if(!in_array($class, TracyDebugger::$allApiClassesArr)) {
                 if($type == 'coreModules' && strpos($folder, 'modules') === false) continue;
                 // for classes with an API object variable, provide an empty methods/properties array
-                if(array_key_exists(lcfirst($class), \TracyDebugger::$allApiData['variables'])) {
+                if(array_key_exists(lcfirst($class), TracyDebugger::$allApiData['variables'])) {
                     $classesArr += array($class => array());
                 }
                 else {
@@ -106,7 +118,7 @@ class TracyPwApiData extends WireData {
                     }
                     $classesArr += $this->buildItemsArray($r, $class, $type);
                 }
-                array_push(\TracyDebugger::$allApiClassesArr, $class);
+                array_push(TracyDebugger::$allApiClassesArr, $class);
             }
         }
         ksort($classesArr);
@@ -168,7 +180,7 @@ class TracyPwApiData extends WireData {
             }
             $methodStr = "$" . ($type == 'coreModules' || $type == 'siteModules' ? 'modules->get(\''.$class.'\')' : lcfirst($class)) . '->' . str_replace('___', '', $name) . '(' . (isset($methodsList[$name.'()']['params']) ? implode(', ', $methodsList[$name.'()']['params']) : '') . ')';
 
-            if(\TracyDebugger::getDataValue('apiExplorerToggleDocComment')) {
+            if(TracyDebugger::getDataValue('apiExplorerToggleDocComment')) {
                 $commentStr = "
                 <div id='ch-comment'>
                     <label class='".($docComment != '' ? 'comment' : '') . "' for='".$class."_".$name."'>".$methodStr."</label>
@@ -182,7 +194,7 @@ class TracyPwApiData extends WireData {
                 $methodsList[$name.'()']['comment'] = $methodStr;
             }
 
-            if(\TracyDebugger::getDataValue('apiExplorerShowDescription') || \TracyDebugger::getDataValue('codeShowDescription')) {
+            if(TracyDebugger::getDataValue('apiExplorerShowDescription') || TracyDebugger::getDataValue('codeShowDescription')) {
                 // get the comment
                 preg_match('#^/\*\*(.*)\*/#s', $docComment, $comment);
                 if(isset($comment[0])) $comment = trim($comment[0]);
@@ -244,12 +256,12 @@ class TracyPwApiData extends WireData {
                 }
                 $items[$class][$name]['comment'] = $methodStr;
 
-                if(\TracyDebugger::getDataValue('apiExplorerShowDescription') || \TracyDebugger::getDataValue('codeShowDescription')) {
+                if(TracyDebugger::getDataValue('apiExplorerShowDescription') || TracyDebugger::getDataValue('codeShowDescription')) {
                     if(substr($info['description'], 0, 1) === '#') {
                         $items[$class][$name]['description'] = '';
                     }
                     else {
-                        $items[$class][$name]['description'] = $info['description'];
+                        $items[$class][$name]['description'] = htmlentities(trim($info['description']));
                     }
                 }
                 if($type == 'variables') $this->n++;
@@ -294,9 +306,9 @@ class TracyPwApiData extends WireData {
                 $items[$class][$name]['lineNumber'] = '';
                 $items[$class][$name]['filename'] = '';
                 $items[$class][$name]['comment'] = "$" . lcfirst($class) . '->' . str_replace('___', '', $name);
-                if(\TracyDebugger::getDataValue('apiExplorerShowDescription') || \TracyDebugger::getDataValue('codeShowDescription')) {
+                if(TracyDebugger::getDataValue('apiExplorerShowDescription') || TracyDebugger::getDataValue('codeShowDescription')) {
                     $desc = preg_replace('/#([^#\s]+)/', '', $info['description']);
-                    $items[$class][$name]['description'] = $desc;
+                    $items[$class][$name]['description'] = htmlentities(trim($desc));
                 }
                 if($type == 'variables') $this->n++;
             }
@@ -309,16 +321,16 @@ class TracyPwApiData extends WireData {
     private function getPHPFilenames($root, $excludeFilenames = array()) {
         $fileNamePattern = "/\.(php|module)$/";
 
-        $iter = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($root, RecursiveDirectoryIterator::SKIP_DOTS),
-            RecursiveIteratorIterator::SELF_FIRST,
-            RecursiveIteratorIterator::CATCH_GET_CHILD // Ignore "Permission denied"
+        $iter = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($root, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::SELF_FIRST,
+            \RecursiveIteratorIterator::CATCH_GET_CHILD // Ignore "Permission denied"
         );
 
         $paths = array();
         foreach($iter as $path => $dir) {
             // '/.' check is for site module backups - SKIP_DOTS above is not excluding these
-            if(!$dir->isDir() && strpos(str_replace(wire('config')->paths->root, '', $path), DIRECTORY_SEPARATOR.'.') === false && preg_match($fileNamePattern, $path) && !in_array(basename($path), $excludeFilenames) ) {
+            if(!$dir->isDir() && strpos(TracyDebugger::stripRootPath($path, ''), DIRECTORY_SEPARATOR.'.') === false && preg_match($fileNamePattern, $path) && !in_array(basename($path), $excludeFilenames) ) {
                 $paths[] = $path;
             }
         }
@@ -328,7 +340,7 @@ class TracyPwApiData extends WireData {
 
 
     private function getFunctionsInFile($file, $hooks = false) {
-        $newTab = \TracyDebugger::getDataValue('linksNewTab') ? 'target="_blank"' : '';
+        $newTab = TracyDebugger::getDataValue('linksNewTab') ? 'target="_blank"' : '';
 
         $lines = file($file);
         $source = implode('', $lines);
@@ -392,21 +404,17 @@ class TracyPwApiData extends WireData {
                             $files['pwFunctions'][$name]['lineNumber'] = $token[2];
 
                             if($className) {
-                                if(class_exists("\ProcessWire\\$className", false)) {
-                                    $r = new \ReflectionMethod("\ProcessWire\\$className", '___'.$methodName);
-                                }
-                                elseif(class_exists($className, false)) {
-                                    $r = new \ReflectionMethod($className, '___'.$methodName);
-                                }
-                                if(isset($r)) {
+                                $fqClass = class_exists("\ProcessWire\\$className", false) ? "\ProcessWire\\$className" : (class_exists($className, false) ? $className : null);
+                                if($fqClass && method_exists($fqClass, '___'.$methodName)) {
+                                    $r = new \ReflectionMethod($fqClass, '___'.$methodName);
                                     $files['pwFunctions'][$name]['params'] = $this->phpdoc_params($r);
                                 }
                             }
 
                             $methodStr = ltrim(self::getFunctionLine($lines[($token[2]-1)]), 'function');
                             if(
-                                ($hooks && \TracyDebugger::getDataValue('captainHookToggleDocComment')) ||
-                                (!$hooks && \TracyDebugger::getDataValue('apiExplorerToggleDocComment'))
+                                ($hooks && TracyDebugger::getDataValue('captainHookToggleDocComment')) ||
+                                (!$hooks && TracyDebugger::getDataValue('apiExplorerToggleDocComment'))
                             ) {
                                 $commentStr = "
                                 <div id='ch-comment'>
@@ -421,8 +429,8 @@ class TracyPwApiData extends WireData {
                             }
 
                             if(
-                                ($hooks && \TracyDebugger::getDataValue('captainHookShowDescription')) ||
-                                (!$hooks && (\TracyDebugger::getDataValue('apiExplorerShowDescription') || \TracyDebugger::getDataValue('codeShowDescription')))
+                                ($hooks && TracyDebugger::getDataValue('captainHookShowDescription')) ||
+                                (!$hooks && (TracyDebugger::getDataValue('apiExplorerShowDescription') || TracyDebugger::getDataValue('codeShowDescription')))
                             ) {
                                 // get the comment
                                 preg_match('#^/\*\*(.*)\*/#s', $docComment, $comment);
@@ -531,13 +539,13 @@ class TracyPwApiData extends WireData {
     }
 
 
-    private function phpdoc_params(ReflectionMethod $method) {
+    private function phpdoc_params(\ReflectionMethod $method) {
         // Retrieve the full PhpDoc comment block
         $doc = $method->getDocComment();
 
         // Trim each line from space and star chars
         $lines = array_map(function($line) {
-            return trim(preg_replace('/\t/', '', $line), " *");
+            return trim(preg_replace('/\t/', '', $line) ?? '', " *");
         }, explode("\n", $doc));
 
         // Retain lines that start with an @
@@ -561,6 +569,7 @@ class TracyPwApiData extends WireData {
 
 
     public static function convertNamesToUrls($str) {
+        if(!is_string($str) || $str === '') return '';
         return trim(strtolower(preg_replace('/([A-Z])/', '-$1', $str)), '-');
     }
 
