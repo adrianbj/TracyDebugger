@@ -385,9 +385,19 @@ class ConsolePanel extends BasePanel {
                 return false;
             },
 
+            removeOldLocalStorage: function() {
+                localStorage.removeItem('tracyConsoleTabs');
+                localStorage.removeItem('tracyConsoleSnippets');
+                localStorage.removeItem('tracyConsole');
+                localStorage.removeItem('tracyConsoleHistory');
+                localStorage.removeItem('tracyConsoleHistoryCount');
+                localStorage.removeItem('tracyConsoleHistoryItem');
+                localStorage.removeItem('tracyConsoleResults');
+                localStorage.removeItem('tracyConsoleSplitSizes');
+            },
+
             migrateLocalStorageToIndexedDB: async function() {
                 const tracyConsoleTabs = localStorage.getItem("tracyConsoleTabs");
-                // if no LocalStorage data, resolve immediately
                 if (!tracyConsoleTabs) {
                     return;
                 }
@@ -417,8 +427,8 @@ class ConsolePanel extends BasePanel {
                     countRequest.onerror = () => reject(new Error('Failed to check tab count'));
                 });
 
-                // migrateLocalStorageToIndexedDB: IndexedDB already contains tabs, skipping migration
                 if (count > 0) {
+                    this.removeOldLocalStorage();
                     database.close();
                     return;
                 }
@@ -470,15 +480,7 @@ class ConsolePanel extends BasePanel {
                     }
 
                     tx.oncomplete = () => {
-                        // clear old LocalStorage keys only after successful write
-                        localStorage.removeItem('tracyConsoleTabs');
-                        localStorage.removeItem('tracyConsoleSnippets');
-                        localStorage.removeItem('tracyConsole');
-                        localStorage.removeItem('tracyConsoleHistory');
-                        localStorage.removeItem('tracyConsoleHistoryCount');
-                        localStorage.removeItem('tracyConsoleHistoryItem');
-                        localStorage.removeItem('tracyConsoleResults');
-                        localStorage.removeItem('tracyConsoleSplitSizes');
+                        this.removeOldLocalStorage();
                         database.close();
                         resolve();
                     };
