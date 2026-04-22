@@ -38,14 +38,18 @@ if(!tracyExceptionLoader) {
                             var isBlueScreen = fileData.contents.replace(/^\s+/, '').substring(0, 15).toLowerCase() === '<!doctype html>';
 
                             if(isBlueScreen) {
-                                document.documentElement.classList.remove('tracy-bs-visible');
-                                if(document.getElementById('tracy-bs')) {
-                                    document.getElementById('tracy-bs').remove();
-                                }
-                                viewerCode.innerHTML = fileData.contents;
-                                viewerCode.style.display = "";
-                                if(typeof tracyFileEditorLoader !== "undefined") {
-                                    viewerCode.querySelectorAll("a.tracy-editor").forEach(function(a) {
+                                var parser = new DOMParser();
+                                var doc = parser.parseFromString(fileData.contents, "text/html");
+                                var styles = doc.querySelectorAll("style");
+                                var bsEl = doc.getElementById("tracy-bs");
+                                var bsContent = "";
+                                styles.forEach(function(s) { bsContent += s.outerHTML; });
+                                if(bsEl) bsContent += bsEl.outerHTML;
+
+                                if(typeof tracyFileEditorLoader !== "undefined" && bsEl) {
+                                    var tempDiv = document.createElement("div");
+                                    tempDiv.innerHTML = bsContent;
+                                    tempDiv.querySelectorAll("a.tracy-editor").forEach(function(a) {
                                         var href = a.getAttribute("href");
                                         if(!href || href.indexOf("tracy://") === 0) return;
                                         var file, line;
@@ -69,7 +73,10 @@ if(!tracyExceptionLoader) {
                                             a.setAttribute("href", "tracy://?f=" + file + "&l=" + line);
                                         }
                                     });
+                                    bsContent = tempDiv.innerHTML;
                                 }
+
+                                Tracy.BlueScreen.loadAjax(bsContent);
                             }
                             else {
                                 // Non-HTML content — display using Tracy's built-in
