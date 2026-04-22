@@ -1,11 +1,9 @@
-<?php
+<?php declare(strict_types=1);
 
 /**
  * This file is part of the Tracy (https://tracy.nette.org)
  * Copyright (c) 2004 David Grudl (https://davidgrudl.com)
  */
-
-declare(strict_types=1);
 
 namespace Tracy;
 
@@ -40,7 +38,7 @@ class Bar
 
 
 	/**
-	 * Returns panel with given id
+	 * Returns panel with given ID, or null if not found.
 	 */
 	public function getPanel(string $id): ?IBarPanel
 	{

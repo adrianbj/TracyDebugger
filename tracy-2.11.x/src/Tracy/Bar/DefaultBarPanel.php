@@ -1,17 +1,15 @@
-<?php
+<?php declare(strict_types=1);
 
 /**
  * This file is part of the Tracy (https://tracy.nette.org)
  * Copyright (c) 2004 David Grudl (https://davidgrudl.com)
  */
 
-declare(strict_types=1);
-
 namespace Tracy;
 
 
 /**
- * IBarPanel implementation helper.
+ * Built-in IBarPanel implementation backed by compiled .phtml templates.
  * @internal
  */
 #[\AllowDynamicProperties]
@@ -26,9 +24,6 @@ class DefaultBarPanel implements IBarPanel
 	}
 
 
-	/**
-	 * Renders HTML code for custom tab.
-	 */
 	public function getTab(): string
 	{
 		return Helpers::capture(function () {
@@ -38,9 +33,6 @@ class DefaultBarPanel implements IBarPanel
 	}
 
 
-	/**
-	 * Renders HTML code for custom panel.
-	 */
 	public function getPanel(): string
 	{
 		return Helpers::capture(function () {

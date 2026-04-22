@@ -1,11 +1,9 @@
-<?php
+<?php declare(strict_types=1);
 
 /**
  * This file is part of the Tracy (https://tracy.nette.org)
  * Copyright (c) 2004 David Grudl (https://davidgrudl.com)
  */
-
-declare(strict_types=1);
 
 namespace Tracy;
 
@@ -19,7 +17,7 @@ use const PHP_VERSION;
  */
 class Debugger
 {
-	public const Version = '2.11.2';
+	public const Version = '2.11.4';
 
 	/** server modes for Debugger::enable() */
 	public const
@@ -281,7 +279,7 @@ class Debugger
 
 
 	/**
-	 * Shutdown handler to catch fatal errors and execute of the planned activities.
+	 * Shutdown handler to catch fatal errors and render the Bar.
 	 * @internal
 	 */
 	public static function shutdownHandler(): void
@@ -317,7 +315,7 @@ class Debugger
 
 
 	/**
-	 * Handler to catch uncaught exception.
+	 * Handles an uncaught exception by rendering or logging it.
 	 * @internal
 	 */
 	public static function exceptionHandler(\Throwable $exception): void
@@ -343,7 +341,7 @@ class Debugger
 
 
 	/**
-	 * Handler to catch warnings and notices.
+	 * Handles PHP warnings and notices; converts recoverable errors to exceptions.
 	 * @throws ErrorException
 	 * @internal
 	 */

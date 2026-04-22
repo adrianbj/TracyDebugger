@@ -1,11 +1,9 @@
-<?php
+<?php declare(strict_types=1);
 
 /**
  * This file is part of the Tracy (https://tracy.nette.org)
  * Copyright (c) 2004 David Grudl (https://davidgrudl.com)
  */
-
-declare(strict_types=1);
 
 namespace Tracy;
 
@@ -14,7 +12,7 @@ use const DIRECTORY_SEPARATOR, FILE_APPEND, LOCK_EX, PHP_EOL;
 
 
 /**
- * Logger.
+ * Logs messages and exceptions to files and sends email notifications on critical errors.
  */
 class Logger implements ILogger
 {

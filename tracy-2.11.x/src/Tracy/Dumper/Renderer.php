@@ -1,17 +1,14 @@
-<?php
+<?php declare(strict_types=1);
 
 /**
  * This file is part of the Tracy (https://tracy.nette.org)
  * Copyright (c) 2004 David Grudl (https://davidgrudl.com)
  */
 
-declare(strict_types=1);
-
 namespace Tracy\Dumper;
 
 use Tracy\Helpers;
-use function count, htmlspecialchars, ini_set, is_array, is_bool, is_float, is_int, is_object, is_string, json_encode, str_repeat, str_replace, strlen, strrpos, substr, substr_count;
-use const JSON_HEX_AMP, JSON_HEX_APOS, JSON_UNESCAPED_SLASHES, JSON_UNESCAPED_UNICODE;
+use function count, htmlspecialchars, is_array, is_bool, is_float, is_int, is_object, is_string, str_repeat, str_replace, strlen, strrpos, substr, substr_count;
 
 
 /**
@@ -88,8 +85,8 @@ final class Renderer
 
 		return '<pre class="tracy-dump' . ($this->theme ? ' tracy-' . htmlspecialchars($this->theme) : '')
 				. ($json && $this->collapseTop === true ? ' tracy-collapsed' : '') . '"'
-				. ($snapshot !== null ? " data-tracy-snapshot='" . self::jsonEncode($snapshot) . "'" : '')
-				. ($json ? " data-tracy-dump='" . self::jsonEncode($json) . "'" : '')
+				. ($snapshot !== null ? " data-tracy-snapshot='" . Helpers::jsonEncode($snapshot) . "'" : '')
+				. ($json ? " data-tracy-dump='" . Helpers::jsonEncode($json) . "'" : '')
 				. ($location || strlen($html) > 100 ? "\n" : '')
 			. '>'
 			. $html
@@ -126,7 +123,7 @@ final class Renderer
 			$value === null => '<span class="tracy-dump-null">null</span>',
 			is_bool($value) => '<span class="tracy-dump-bool">' . ($value ? 'true' : 'false') . '</span>',
 			is_int($value) => '<span class="tracy-dump-number">' . $value . '</span>',
-			is_float($value) => '<span class="tracy-dump-number">' . self::jsonEncode($value) . '</span>',
+			is_float($value) => '<span class="tracy-dump-number">' . Helpers::jsonEncode($value) . '</span>',
 			is_string($value) => $this->renderString($value, $depth, $keyType),
 			is_array($value), $value->type === Value::TypeArray => $this->renderArray($value, $depth),
 			$value->type === Value::TypeRef => $this->renderVar($this->snapshot[$value->value], $depth, $keyType),
@@ -235,7 +232,7 @@ final class Renderer
 				if ($this->lazy !== false) {
 					$ref = new Value(Value::TypeRef, $array->id);
 					$this->copySnapshot($ref);
-					return '<span class="tracy-toggle tracy-collapsed" data-tracy-dump=\'' . json_encode($ref) . "'>" . $out . '</span>';
+					return '<span class="tracy-toggle tracy-collapsed" data-tracy-dump=\'' . Helpers::jsonEncode($ref) . "'>" . $out . '</span>';
 
 				} elseif ($this->hash) {
 					return $out . (isset($this->above[$array->id]) ? ' <i>see above</i>' : ' <i>see below</i>');
@@ -256,7 +253,7 @@ final class Renderer
 		if ($collapsed && $this->lazy !== false) {
 			$array = isset($array->id) ? new Value(Value::TypeRef, $array->id) : $array;
 			$this->copySnapshot($array);
-			return $span . " data-tracy-dump='" . self::jsonEncode($array) . "'>" . $out . '</span>';
+			return $span . " data-tracy-dump='" . Helpers::jsonEncode($array) . "'>" . $out . '</span>';
 		}
 
 		$out = $span . '>' . $out . "</span>\n" . '<div' . ($collapsed ? ' class="tracy-collapsed"' : '') . '>';
@@ -318,7 +315,7 @@ final class Renderer
 			if ($this->lazy !== false) {
 				$ref = new Value(Value::TypeRef, $object->id);
 				$this->copySnapshot($ref);
-				return '<span class="tracy-toggle tracy-collapsed" data-tracy-dump=\'' . json_encode($ref) . "'>" . $out . '</span>';
+				return '<span class="tracy-toggle tracy-collapsed" data-tracy-dump=\'' . Helpers::jsonEncode($ref) . "'>" . $out . '</span>';
 
 			} elseif ($this->hash) {
 				return $out . (isset($this->above[$object->id]) ? ' <i>see above</i>' : ' <i>see below</i>');
@@ -334,7 +331,7 @@ final class Renderer
 		if ($collapsed && $this->lazy !== false) {
 			$value = $object->id ? new Value(Value::TypeRef, $object->id) : $object;
 			$this->copySnapshot($value);
-			return $span . " data-tracy-dump='" . self::jsonEncode($value) . "'>" . $out . '</span>';
+			return $span . " data-tracy-dump='" . Helpers::jsonEncode($value) . "'>" . $out . '</span>';
 		}
 
 		$out = $span . '>' . $out . "</span>\n" . '<div' . ($collapsed ? ' class="tracy-collapsed"' : '') . '>';
@@ -372,7 +369,7 @@ final class Renderer
 			if ($this->lazy !== false) {
 				$ref = new Value(Value::TypeRef, $resource->id);
 				$this->copySnapshot($ref);
-				return '<span class="tracy-toggle tracy-collapsed" data-tracy-dump=\'' . json_encode($ref) . "'>" . $out . '</span>';
+				return '<span class="tracy-toggle tracy-collapsed" data-tracy-dump=\'' . Helpers::jsonEncode($ref) . "'>" . $out . '</span>';
 			}
 
 			return $out . ' <i>see above</i>';
@@ -415,19 +412,6 @@ final class Renderer
 		} elseif ($value instanceof Value && $value->items) {
 			foreach ($value->items as [, $v]) {
 				$this->copySnapshot($v);
-			}
-		}
-	}
-
-
-	public static function jsonEncode(mixed $value): string
-	{
-		$old = @ini_set('serialize_precision', '-1'); // @ may be disabled
-		try {
-			return json_encode($value, JSON_HEX_APOS | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-		} finally {
-			if ($old !== false) {
-				ini_set('serialize_precision', $old);
 			}
 		}
 	}
