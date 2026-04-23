@@ -250,6 +250,7 @@ class ConsolePanel extends BasePanel {
             minSize: null,
             scrollSaveTimer: null,
             scrollSaveDelay: 500,
+            _rawResultHtml: '',
 
             // Returns a resolved promise with the open db, retrying if needed.
             waitForDB: async function(maxRetries = 3, retryDelay = 1000) {
@@ -518,7 +519,7 @@ class ConsolePanel extends BasePanel {
                         historyData: existingTab ? existingTab.historyData : [],
                         historyItem: existingTab ? existingTab.historyItem : null,
                         historyCount: existingTab ? existingTab.historyCount : 0,
-                        result: document.getElementById("tracyConsoleResult")?.innerHTML || '',
+                        result: this._rawResultHtml || document.getElementById("tracyConsoleResult")?.innerHTML || '',
                         selections: selections,
                         scrollTop: this.tce.session.getScrollTop(),
                         scrollLeft: this.tce.session.getScrollLeft(),
@@ -638,6 +639,7 @@ class ConsolePanel extends BasePanel {
                 const statusDiv = document.getElementById("tracyConsoleStatus");
                 if (resultsDiv) resultsDiv.innerHTML = "";
                 if (statusDiv) statusDiv.innerHTML = "";
+                this._rawResultHtml = '';
 
                 // Update only the result field of the current tab.
                 try {
@@ -790,15 +792,20 @@ class ConsolePanel extends BasePanel {
                             try {
                                 var data = JSON.parse(xhr.responseText);
                                 var resultId = Date.now();
-                                resultsDiv.innerHTML += '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.tryParseJSON(data.output) + '</div>';
+                                var resultHtml = '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.tryParseJSON(data.output) + '</div>';
+                                tracyConsole._rawResultHtml += resultHtml;
+                                resultsDiv.insertAdjacentHTML('beforeend', resultHtml);
                                 tracyConsole.saveToIndexedDB().catch(function(err) { console.warn('Error updating tab result:', err); });
                                 var resultElement = document.getElementById("tracyConsoleResult_"+resultId);
+                                if(resultElement && window.Tracy && Tracy.Dumper) Tracy.Dumper.init(resultElement);
                                 if(resultElement) resultElement.scrollIntoView();
                                 if(!document.getElementById("tracy-debug-panel-ProcessWire-ConsolePanel").classList.contains("tracy-mode-float")) {
                                     window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-ConsolePanel"].toFloat();
                                 }
                             } catch(e) {
-                                resultsDiv.innerHTML += '<div style="padding:10px 0; color:#e22006;">Error fetching results: ' + escapeHtml(xhr.responseText) + '</div>';
+                                var errorHtml = '<div style="padding:10px 0; color:#e22006;">Error fetching results: ' + escapeHtml(xhr.responseText) + '</div>';
+                                tracyConsole._rawResultHtml += errorHtml;
+                                resultsDiv.insertAdjacentHTML('beforeend', errorHtml);
                             }
                         }
                         if(statusDiv) {
@@ -982,11 +989,14 @@ class ConsolePanel extends BasePanel {
                         const resultsDiv = document.getElementById("tracyConsoleResult");
                         if (xmlhttp.status == 200 && resultsDiv) {
                             const resultId = Date.now();
-                            resultsDiv.innerHTML += '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.tryParseJSON(xmlhttp.responseText) + '</div>';
+                            const resultHtml = '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.tryParseJSON(xmlhttp.responseText) + '</div>';
+                            tracyConsole._rawResultHtml += resultHtml;
+                            resultsDiv.insertAdjacentHTML('beforeend', resultHtml);
 
                             tracyConsole.saveToIndexedDB().catch(err => console.warn('Error updating tab result:', err));
 
                             const resultElement = document.getElementById("tracyConsoleResult_"+resultId);
+                            if (resultElement && window.Tracy && Tracy.Dumper) Tracy.Dumper.init(resultElement);
                             if (resultElement) resultElement.scrollIntoView();
                             if (!document.getElementById("tracy-debug-panel-ProcessWire-ConsolePanel").classList.contains("tracy-mode-float")) {
                                 window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-ConsolePanel"].toFloat();
@@ -994,7 +1004,9 @@ class ConsolePanel extends BasePanel {
                         }
                         else if (resultsDiv) {
                             const errorStr = escapeHtml(xmlhttp.status + ': ' + xmlhttp.statusText) + '<br />' + escapeHtml(xmlhttp.responseText);
-                            resultsDiv.innerHTML = '<div style="padding: 10px 0">' + errorStr + '</div><div style="position:relative; border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;"></div>';
+                            const errorHtml = '<div style="padding: 10px 0">' + errorStr + '</div><div style="position:relative; border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;"></div>';
+                            tracyConsole._rawResultHtml = errorHtml;
+                            resultsDiv.innerHTML = errorHtml;
 
                             const errorExpires = new Date();
                             errorExpires.setMinutes(errorExpires.getMinutes() + (10 * 365 * 24 * 60));
@@ -1640,7 +1652,9 @@ class ConsolePanel extends BasePanel {
                 }
                 const resultsDiv = document.getElementById("tracyConsoleResult");
                 if (resultsDiv) {
-                    resultsDiv.innerHTML = tab && tab.result ? tab.result : '';
+                    this._rawResultHtml = tab && tab.result ? tab.result : '';
+                    resultsDiv.innerHTML = this._rawResultHtml;
+                    if (window.Tracy && Tracy.Dumper) Tracy.Dumper.init(resultsDiv);
                 }
                 this.setSelectedTabId(this.currentTabId);
             },
@@ -1679,6 +1693,7 @@ class ConsolePanel extends BasePanel {
                     this.buildTab(tabId, name);
                     const resultsDiv = document.getElementById("tracyConsoleResult");
                     if (resultsDiv) resultsDiv.innerHTML = '';
+                    this._rawResultHtml = '';
 
                     // Persist the new tab skeleton to DB before switching to it.
                     const tabElements = Array.from(document.querySelectorAll('#tracyTabs button[data-tab-id]'));

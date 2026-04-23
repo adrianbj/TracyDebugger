@@ -136,7 +136,7 @@ class TD extends TracyDebugger {
             if(version_compare(PHP_VERSION, '7.2.0', '>=')) {
                 $options[Dumper::KEYS_TO_HIDE] = Debugger::$keysToHide;
             }
-            if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = false;
+            if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = true;
             echo '
             <div class="tracy-inner" style="height:auto !important">
                 <div class="tracy-DumpPanel">';
@@ -180,7 +180,7 @@ class TD extends TracyDebugger {
             if(version_compare(PHP_VERSION, '7.2.0', '>=')) {
                 $options[Dumper::KEYS_TO_HIDE] = Debugger::$keysToHide;
             }
-            if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = false;
+            if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = true;
             echo '
             <div class="tracy-inner" style="height:auto !important">
                 <div class="tracy-DumpPanel">';

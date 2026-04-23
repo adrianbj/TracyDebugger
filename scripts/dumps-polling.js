@@ -70,10 +70,12 @@
         var panel = document.getElementById(recorderPanelId);
         if(!panel) return;
 
-        var html = buildRecorderHtml(entries);
         var i;
+        var newEntries = entries.slice(lastTotalCount);
+        var wasCleared = totalCount < lastTotalCount;
 
         if(panel.dataset && panel.dataset.tracyContent) {
+            var html = buildRecorderHtml(entries);
             var temp = document.createElement("div");
             temp.innerHTML = panel.dataset.tracyContent;
             var tempContainer = temp.querySelector("#tracyDumpsRecorderEntries");
@@ -100,8 +102,15 @@
                 itemsDiv.className = "dumpsrecorder-items";
                 container.appendChild(itemsDiv);
             }
-            itemsDiv.innerHTML = html;
-            Tracy.Dumper.init(container);
+
+            if(wasCleared) {
+                itemsDiv.innerHTML = buildRecorderHtml(entries);
+                if(window.Tracy && Tracy.Dumper) Tracy.Dumper.init(container);
+            } else if(newEntries.length > 0) {
+                var newHtml = buildRecorderHtml(newEntries);
+                itemsDiv.insertAdjacentHTML('beforeend', newHtml);
+                if(window.Tracy && Tracy.Dumper) Tracy.Dumper.init(itemsDiv);
+            }
 
             if(!document.getElementById("clearRecorderDumpsBtn")) {
                 var btnDiv = document.createElement("div");
