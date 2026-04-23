@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.0.4',
+            'version' => '5.0.5',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -1533,26 +1533,24 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
 
-        // fixes for when SessionHandlerDB module is installed
-        if(($this->data['use_php_session'] === 1 && !$this->wire('modules')->isInstalled('SessionHandlerDB')) || self::$tracyVersion == '2.7.x') {
-            if($this->wire('modules')->isInstalled('SessionHandlerDB') && Debugger::$showBar) {
+        // Tracy 2.7.x + SessionHandlerDB: Bar::render() wrote to $_SESSION directly,
+        // so we had to force the render before PW closed the session. Tracy 2.9+
+        // uses FileSession by default (file-backed, session-independent) so the
+        // workaround is not needed.
+        if(self::$tracyVersion == '2.7.x' && $this->wire('modules')->isInstalled('SessionHandlerDB') && Debugger::$showBar) {
+            $this->wire()->addHookAfter('ProcessWire::finished', function() {
+                if(ob_get_level() == 0) ob_start();
+                Debugger::getBar()->render();
+                Debugger::$showBar = false;
+            }, array('priority' => 9999));
 
-                // ensure Tracy can show AJAX bars when SessionHandlerDB module is installed and debugbar is showing
-                $this->wire()->addHookAfter('ProcessWire::finished', function() {
-                    if(ob_get_level() == 0) ob_start();
-                    Debugger::getBar()->render();
-                    Debugger::$showBar = false;
-                }, array('priority' => 9999));
-
-                // ensure Tracy can show Redirect bars when SessionHandlerDB module is installed and debugbar is showing
-                if(!$this->wire('config')->disableTracySHDBRedirectFix) {
-                    $this->wire()->addHookBefore('Session::redirect', function($event) {
-                        $url = $event->arguments[0];
-                        $http301 = isset($event->arguments[1]) ? $event->arguments[1] : true;
-                        if($http301) header("HTTP/1.1 301 Moved Permanently");
-                        header("Location: $url");
-                    });
-                }
+            if(!$this->wire('config')->disableTracySHDBRedirectFix) {
+                $this->wire()->addHookBefore('Session::redirect', function($event) {
+                    $url = $event->arguments[0];
+                    $http301 = isset($event->arguments[1]) ? $event->arguments[1] : true;
+                    if($http301) header("HTTP/1.1 301 Moved Permanently");
+                    header("Location: $url");
+                });
             }
         }
 
