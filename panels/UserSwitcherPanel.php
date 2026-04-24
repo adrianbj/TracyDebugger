@@ -84,7 +84,7 @@ class UserSwitcherPanel extends BasePanel {
 
                         if(method_exists($this->wire('pages'), 'findRaw')) {
                             $findRawFields = ['id', 'name', 'email', 'roles'];
-                            $findRawSelector = 'templates_id=' . implode('|', $this->wire('config')->userTemplateIDs) . ', has_parent=' . implode('|', $this->wire('config')->usersPageIDs) . ', objects=1, nulls=1, sort=name, status<' . Page::statusUnpublished;
+                            $findRawSelector = 'templates_id=' . implode('|', $this->wire('config')->userTemplateIDs) . ', has_parent=' . implode('|', $this->wire('config')->usersPageIDs) . ', objects=1, nulls=1, sort=name, check_access=0, status<' . Page::statusUnpublished;
                             if(TracyDebugger::getDataValue('userSwitcherSelector')) {
                                 $selectableUsers = $this->wire('pages')->findRaw($findRawSelector . ', ' . TracyDebugger::getDataValue('userSwitcherSelector'), $findRawFields);
                             }
