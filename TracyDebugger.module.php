@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.0.5',
+            'version' => '5.0.6',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -732,17 +732,27 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             // sort panels based on order defined in config settings
             $showPanelsOrdered = array();
+            $showPanelsLookup = array_flip(static::$showPanels);
+            $orderedLookup = array();
+            $restrictedLookup = array_flip($this->data['restrictedUserDisabledPanels']);
             $i=0;
             // add default panels in the defined order
             foreach($configEnabledPanels as $panelName) {
-                if(in_array($panelName, static::$showPanels)) $showPanelsOrdered[$i] = $panelName;
+                if(isset($showPanelsLookup[$panelName])) {
+                    $showPanelsOrdered[$i] = $panelName;
+                    $orderedLookup[$panelName] = true;
+                }
                 $i++;
             }
+            $isRestrictedUser = (self::$validSwitchedUser || self::userHasPermission("tracy-restricted-panels") || $this->wire('user')->hasRole("tracy-restricted-panels"));
             // add once/sticky panels to the end because there is no specified order for these in config settings
             foreach(static::$allPanels as $panelName => $panelTitle) {
-                if(in_array($panelName, static::$showPanels) && !in_array($panelName, $showPanelsOrdered)) $showPanelsOrdered[$i] = $panelName;
+                if(isset($showPanelsLookup[$panelName]) && !isset($orderedLookup[$panelName])) {
+                    $showPanelsOrdered[$i] = $panelName;
+                    $orderedLookup[$panelName] = true;
+                }
                 // define disabled panels for restricted users
-                if((self::$validSwitchedUser || self::userHasPermission("tracy-restricted-panels") || $this->wire('user')->hasRole("tracy-restricted-panels")) && in_array($panelName, $this->data['restrictedUserDisabledPanels'])) {
+                if($isRestrictedUser && isset($restrictedLookup[$panelName])) {
                     static::$restrictedUserDisabledPanels[] = $panelName;
                 }
                 $i++;
@@ -1070,9 +1080,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/main.js';
                 Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/tinycon.min.js';
                 Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/js-loader.js';
-                if(in_array('dumpsRecorder', static::$showPanels) || $this->data['recordGuestDumps']) {
-                    Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/dumps-polling.js';
-                }
+                // always load polling so cross-window dumps (made by other authorized users/tabs) surface in realtime
+                Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/dumps-polling.js';
 
                 // load File Editor panel if Tracy online editor is selected
                 if(static::$useOnlineEditor && static::$onlineEditor == 'tracy' && !in_array('fileEditor', static::$showPanels)) {
@@ -1660,10 +1669,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // LOAD SPECIFIED PANELS
+        $hideInAdminLookup = array_flip(static::$hideInAdmin);
+        $superUserOnlyLookup = array_flip(self::$superUserOnlyPanels);
+        $restrictedDisabledLookup = !empty(static::$restrictedUserDisabledPanels)
+            ? array_flip(static::$restrictedUserDisabledPanels)
+            : array();
+        $deferredPanelSelectorClass = null;
         foreach(static::$showPanels as $panel) {
             if(!array_key_exists($panel, static::$allPanels)) continue;
-            if(static::$inAdmin && in_array($panel, static::$hideInAdmin)) continue;
-            if((in_array($panel, self::$superUserOnlyPanels)) && !static::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) continue;
+            if(static::$inAdmin && isset($hideInAdminLookup[$panel])) continue;
+            if(isset($superUserOnlyLookup[$panel]) && !static::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) continue;
             // special additional check for adminer
             if($panel == 'adminer' && (!static::$allowedSuperuser || $this->wire('page')->process == 'ProcessTracyAdminer')) continue;
             if($panel == 'userSwitcher') {
@@ -1671,7 +1686,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 if(!static::$allowedSuperuser && (!$this->wire('session')->tracyUserSwitcherId || (isset($userSwitchSession[$this->wire('session')->tracyUserSwitcherId]) && $userSwitchSession[$this->wire('session')->tracyUserSwitcherId] <= time()))) continue;
             }
             // ignore disabled panels for restricted users
-            if(!empty(static::$restrictedUserDisabledPanels) && in_array($panel, static::$restrictedUserDisabledPanels)) continue;
+            if(isset($restrictedDisabledLookup[$panel])) continue;
 
             $panelName = ucfirst($panel).'Panel';
             $fullPanelClass = __NAMESPACE__ . '\\' . $panelName;
@@ -1692,6 +1707,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
             switch($panel) {
                 case 'performance':
+                    break;
+                case 'panelSelector':
+                    // defer so panelSelector is always last on the bar, even after force-adds below
+                    $deferredPanelSelectorClass = $fullPanelClass;
                     break;
                 case 'templatePath':
                     static::$templatePathOnce = $this->findPageTemplateInCookie($this->wire('input')->cookie->tracyTemplatePathOnce);
@@ -1734,16 +1753,53 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
         Debugger::getBar()->addPanel(new $fullPanelClass);
 
-        // even if dumpsRecorder isn't enabled, but there are recorded dumps to show or guest dumps is active, enable it anyway
-        if(!in_array('dumpsRecorder', static::$showPanels) && ($this->data['recordGuestDumps'] || file_exists($this->wire('config')->paths->cache . 'TracyDebugger/dumps.json'))) {
-            $panelName = 'DumpsRecorderPanel';
-            $fullPanelClass = __NAMESPACE__ . '\\' . $panelName;
-            static::$showPanels[] = 'dumpsRecorder';
-            require_once __DIR__ . '/panels/'.$panelName.'.php';
-            if(!class_exists($fullPanelClass, false) && class_exists($panelName, false)) {
-                class_alias($panelName, $fullPanelClass);
+        // auto-enable dumpsRecorder when:
+        //  - guest dumps recording is active, OR
+        //  - dumps.json has entries that aren't already visible in the main Dumps panel
+        if(!in_array('dumpsRecorder', static::$showPanels)) {
+            $shouldForceAdd = (bool)$this->data['recordGuestDumps'];
+            if(!$shouldForceAdd) {
+                $dumpsFile = $this->wire('config')->paths->cache . 'TracyDebugger/dumps.json';
+                if(file_exists($dumpsFile) && filesize($dumpsFile) > 2) {
+                    $persistedDumps = json_decode(file_get_contents($dumpsFile), true);
+                    if(is_array($persistedDumps) && !empty($persistedDumps)) {
+                        $currentItems = is_array(TracyDebugger::$dumpItems) ? TracyDebugger::$dumpItems : array();
+                        if(count($persistedDumps) !== count($currentItems)) {
+                            $shouldForceAdd = true;
+                        } else {
+                            $currentSigs = array();
+                            foreach($currentItems as $item) {
+                                $title = isset($item['title']) ? $item['title'] : '';
+                                $dump = isset($item['dump']) ? $item['dump'] : '';
+                                $currentSigs[md5($title . '|' . $dump)] = true;
+                            }
+                            foreach($persistedDumps as $item) {
+                                $title = isset($item['title']) ? $item['title'] : '';
+                                $dump = isset($item['dump']) ? $item['dump'] : '';
+                                if(!isset($currentSigs[md5($title . '|' . $dump)])) {
+                                    $shouldForceAdd = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
             }
-            Debugger::getBar()->addPanel(new $fullPanelClass);
+            if($shouldForceAdd) {
+                $panelName = 'DumpsRecorderPanel';
+                $fullPanelClass = __NAMESPACE__ . '\\' . $panelName;
+                static::$showPanels[] = 'dumpsRecorder';
+                require_once __DIR__ . '/panels/'.$panelName.'.php';
+                if(!class_exists($fullPanelClass, false) && class_exists($panelName, false)) {
+                    class_alias($panelName, $fullPanelClass);
+                }
+                Debugger::getBar()->addPanel(new $fullPanelClass);
+            }
+        }
+
+        // add panelSelector last so it sees generation-time values for all other panels
+        if($deferredPanelSelectorClass !== null) {
+            Debugger::getBar()->addPanel(new $deferredPanelSelectorClass);
         }
 
 
@@ -2860,6 +2916,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $sanitizer = wire('sanitizer');
         $input = wire('input');
 
+        $info = isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI']) : null;
+
         if($page && $page->id) {
             // pull URL from page
             $url = $page->url();
@@ -2868,8 +2926,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if(strlen($segmentStr) || $pageNum > 1) {
                 if($segmentStr) $url = rtrim($url, '/') . '/' . $segmentStr;
                 if($pageNum > 1) $url = rtrim($url, '/') . '/' . $config->pageNumUrlPrefix . $pageNum;
-                if(isset($_SERVER['REQUEST_URI'])) {
-                    $info = parse_url($_SERVER['REQUEST_URI']);
+                if($info !== null) {
                     if(isset($info['path']) && !empty($info['path']) && substr($info['path'], -1) == '/') $url .= '/'; // trailing slash
                 }
                 if($pageNum > 1) {
@@ -2887,9 +2944,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 }
             }
 
-        } else if(isset($_SERVER['REQUEST_URI'])) {
+        } else if($info !== null) {
             // page not yet available, attempt to pull URL from request uri
-            $info = parse_url($_SERVER['REQUEST_URI']);
             if(isset($info['path'])) {
                 $parts = explode('/', $info['path']);
                 $charset = $config->pageNameCharset;
@@ -2904,8 +2960,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
 
-        if($withQueryString && isset($_SERVER['REQUEST_URI'])) {
-            $info = parse_url($_SERVER['REQUEST_URI']);
+        if($withQueryString && $info !== null) {
             $queryString = isset($info['query']) ? $info['query'] : '';
 
             if(strlen($queryString)) {
@@ -3506,13 +3561,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if($data['hideDebugBarModals']) $f->attr('value', $data['hideDebugBarModals']);
         $fieldset->add($f);
 
+        $templateOptions = array();
+        foreach($this->wire('templates') as $t) {
+            $templateOptions[$t->id] = $t->name;
+        }
+
         $f = $this->wire('modules')->get("InputfieldAsmSelect");
         $f->attr('name', 'hideDebugBarFrontendTemplates');
         $f->label = __('No debug bar in selected frontend templates', __FILE__);
         $f->description = __('Disable the debug bar on pages with the selected templates.', __FILE__);
         $f->columnWidth = 50;
-        foreach($this->wire('templates') as $t) {
-            $f->addOption($t->id, $t->name);
+        foreach($templateOptions as $id => $name) {
+            $f->addOption($id, $name);
         }
         if($data['hideDebugBarFrontendTemplates']) $f->attr('value', $data['hideDebugBarFrontendTemplates']);
         $fieldset->add($f);
@@ -3522,8 +3582,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('No debug bar in selected backend templates', __FILE__);
         $f->description = __('Disable the debug bar when editing pages with the selected templates.', __FILE__);
         $f->columnWidth = 50;
-        foreach($this->wire('templates') as $t) {
-            $f->addOption($t->id, $t->name);
+        foreach($templateOptions as $id => $name) {
+            $f->addOption($id, $name);
         }
         if($data['hideDebugBarBackendTemplates']) $f->attr('value', $data['hideDebugBarBackendTemplates']);
         $fieldset->add($f);

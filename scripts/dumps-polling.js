@@ -1,9 +1,21 @@
 (function() {
-    var pollInterval = 3000;
+    var minPollInterval = 3000;
+    var maxPollInterval = 30000;
+    var pollInterval = minPollInterval;
     var pollTimer = null;
     var currentUrl = window.location.href.split("#")[0];
     var recorderPanelId = "tracy-debug-panel-ProcessWire-DumpsRecorderPanel";
     var lastTotalCount = 0;
+    var reloadTriggered = false;
+
+    function scheduleNext(hadNewData) {
+        if(hadNewData) {
+            pollInterval = minPollInterval;
+        } else {
+            pollInterval = Math.min(pollInterval * 2, maxPollInterval);
+        }
+        pollTimer = setTimeout(poll, pollInterval);
+    }
 
     function poll() {
         if(document.hidden) {
@@ -19,19 +31,21 @@
         xhr.onreadystatechange = function() {
             if(xhr.readyState !== XMLHttpRequest.DONE) return;
             if(xhr.status !== 200) {
-                pollTimer = setTimeout(poll, pollInterval);
+                scheduleNext(false);
                 return;
             }
             try {
                 var data = JSON.parse(xhr.responseText);
             } catch(e) {
-                pollTimer = setTimeout(poll, pollInterval);
+                scheduleNext(false);
                 return;
             }
+            var hadNewData = false;
             if(data.totalCount > 0) {
+                hadNewData = data.totalCount !== lastTotalCount;
                 updateRecorderPanel(data.entries, data.totalCount);
             }
-            pollTimer = setTimeout(poll, pollInterval);
+            scheduleNext(hadNewData);
         };
 
         xhr.send("tracyDumpsPoll=1");
@@ -68,7 +82,14 @@
 
     function updateRecorderPanel(entries, totalCount) {
         var panel = document.getElementById(recorderPanelId);
-        if(!panel) return;
+        if(!panel) {
+            if(totalCount > 0 && !reloadTriggered) {
+                reloadTriggered = true;
+                if(pollTimer) clearTimeout(pollTimer);
+                window.location.reload();
+            }
+            return;
+        }
 
         var i;
         var newEntries = entries.slice(lastTotalCount);
@@ -159,6 +180,16 @@
     }
 
     init();
+
+    document.addEventListener("visibilitychange", function() {
+        if(!document.hidden) {
+            pollInterval = minPollInterval;
+            if(pollTimer) {
+                clearTimeout(pollTimer);
+                pollTimer = setTimeout(poll, pollInterval);
+            }
+        }
+    });
 
     window.addEventListener("beforeunload", function() {
         if(pollTimer) clearTimeout(pollTimer);
