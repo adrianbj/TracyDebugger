@@ -1042,35 +1042,43 @@ ul.pw-info-links {
 }
 
 #tracy-debug-panel-ProcessWire-AdminerPanel {
-    height: 75%;
     min-height: 300px !important;
+}
+#tracy-debug-panel-ProcessWire-AdminerPanel:not(.tracy-panel-resized) {
+    height: 75%;
     width: 1400px !important;
 }
 
 #tracy-debug-panel-ProcessWire-FileEditorPanel {
-    height: 75%;
     min-height: 300px !important;
+}
+#tracy-debug-panel-ProcessWire-FileEditorPanel:not(.tracy-panel-resized) {
+    height: 75%;
     width: 1400px !important;
 }
 
 #tracy-debug-panel-ProcessWire-ConsolePanel,
 #tracy-debug-panel-ProcessWire-ValidatorPanel,
 #tracy-debug-panel-ProcessWire-TerminalPanel {
-    height: 75%;
     min-height: 300px !important;
-    width: 1400px !important;
-    min-width: 825px !important;
     padding: 0px !important;
     margin: 0px !important;
 }
+#tracy-debug-panel-ProcessWire-ConsolePanel:not(.tracy-panel-resized),
+#tracy-debug-panel-ProcessWire-ValidatorPanel:not(.tracy-panel-resized),
+#tracy-debug-panel-ProcessWire-TerminalPanel:not(.tracy-panel-resized) {
+    height: 75%;
+    width: 1400px !important;
+    min-width: 825px !important;
+}
 
-#tracy-debug-panel-ProcessWire-ModuleDisablerPanel {
+#tracy-debug-panel-ProcessWire-ModuleDisablerPanel:not(.tracy-panel-resized) {
     width: 900px !important;
     min-width: 700px !important;
 }
 
-#tracy-debug-panel-ProcessWire-TemplateResourcesPanel,
-#tracy-debug-panel-ProcessWire-ToDoPanel {
+#tracy-debug-panel-ProcessWire-TemplateResourcesPanel:not(.tracy-panel-resized),
+#tracy-debug-panel-ProcessWire-ToDoPanel:not(.tracy-panel-resized) {
     width: 1400px !important;
     height: 75%;
 }
