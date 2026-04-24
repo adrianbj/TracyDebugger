@@ -780,6 +780,70 @@ class ConsolePanel extends BasePanel {
                 xhr.send("tracyConsoleCleanup=1&csrfToken=" + encodeURIComponent(tracyConsole.csrfToken) + "&runId=" + encodeURIComponent(runId));
             },
 
+            /* HTML for the "Running... <elapsed>" status line, including a cancel
+               icon that terminates the running PHP process when clicked. */
+            renderRunningStatus: function(runId, timeStr) {
+                return "<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> "
+                     + "Running... " + timeStr
+                     + " <a href='#' title='Cancel running script' "
+                     + "onclick='event.preventDefault(); tracyConsole.cancelRun(\"" + runId + "\");' "
+                     + "onmouseover='this.style.opacity=\"0.7\"' "
+                     + "onmouseout='this.style.opacity=\"1\"' "
+                     + "style='margin-left:6px; color:#e22006 !important; text-decoration:none !important; font-family: FontAwesome !important' "
+                     + "class='fa fa-times-circle'></a>";
+            },
+
+            /* Cancel a running/background console script. Confirms, aborts client-side
+               polling and any in-flight XHR, then asks the server to SIGKILL the PHP
+               process for this runId. */
+            cancelRun: function(runId) {
+                if(!runId) return;
+                if(!confirm("Kill the running script?\\n\\nThis will terminate the PHP process immediately. Any work the script was doing will stop where it is and partial side effects (DB writes, file changes) may remain.")) {
+                    return;
+                }
+                tracyConsole._cancelled = true;
+                tracyConsole._stopPolling = true;
+                if(tracyConsole._pollXhr) {
+                    try { tracyConsole._pollXhr.abort(); } catch(e) {}
+                    tracyConsole._pollXhr = null;
+                }
+                /* abort the original code-run XHR too so its response can't arrive
+                   after a new run has reset _cancelled back to false */
+                if(tracyConsole._mainXhr) {
+                    try { tracyConsole._mainXhr.abort(); } catch(e) {}
+                    tracyConsole._mainXhr = null;
+                }
+                if(tracyConsole._bgTimer) {
+                    clearInterval(tracyConsole._bgTimer);
+                    tracyConsole._bgTimer = null;
+                }
+                var statusDiv = document.getElementById("tracyConsoleStatus");
+                if(statusDiv) {
+                    statusDiv.innerHTML = "<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> Cancelling...";
+                }
+                var xhr = new XMLHttpRequest();
+                xhr.onreadystatechange = function() {
+                    if(xhr.readyState !== XMLHttpRequest.DONE) return;
+                    var killed = false;
+                    var data = null;
+                    try {
+                        data = JSON.parse(xhr.responseText);
+                        killed = !!data.killed;
+                    } catch(e) {}
+                    if(statusDiv) {
+                        statusDiv.innerHTML = killed ? "✘ Cancelled" : "✘ Cancelled (process may still be running)";
+                    }
+                    tracyConsole.setRunButtonEnabled(true);
+                    tracyConsole._activeRunId = null;
+                    tracyConsole._pollingActive = false;
+                    tracyConsole._inlineDelivered = true;
+                };
+                xhr.open("POST", "$currentUrl", true);
+                xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+                xhr.send("tracyConsoleCancel=1&csrfToken=" + encodeURIComponent(tracyConsole.csrfToken) + "&runId=" + encodeURIComponent(runId));
+            },
+
             fetchAndCleanup: function(runId, status) {
                 if(!runId || tracyConsole._inlineDelivered) return;
                 var xhr = new XMLHttpRequest();
@@ -927,6 +991,22 @@ class ConsolePanel extends BasePanel {
                 tracyConsole._stopPolling = false;
                 tracyConsole._inlineDelivered = false;
                 tracyConsole._bgStartTime = Date.now();
+                tracyConsole._activeRunId = runId;
+                tracyConsole._cancelled = false;
+
+                /* show the running status with cancel icon immediately so the user
+                   can abort without waiting for the background-fallback threshold */
+                var initialStatusDiv = document.getElementById("tracyConsoleStatus");
+                if(initialStatusDiv) initialStatusDiv.innerHTML = tracyConsole.renderRunningStatus(runId, "0s");
+                if(tracyConsole._bgTimer) { clearInterval(tracyConsole._bgTimer); }
+                tracyConsole._bgTimer = setInterval(function() {
+                    var elapsed = Math.round((Date.now() - tracyConsole._bgStartTime) / 1000);
+                    var mins = Math.floor(elapsed / 60);
+                    var secs = elapsed % 60;
+                    var timeStr = mins > 0 ? mins + 'm ' + secs + 's' : secs + 's';
+                    var sd = document.getElementById("tracyConsoleStatus");
+                    if(sd) sd.innerHTML = tracyConsole.renderRunningStatus(runId, timeStr);
+                }, 1000);
 
                 /* calculate XHR timeout from server max_execution_time */
                 const container = document.getElementById("tracyConsoleContainer");
@@ -934,10 +1014,27 @@ class ConsolePanel extends BasePanel {
                 const xhrTimeout = maxExecTime > 0 ? Math.floor(maxExecTime * 0.8) * 1000 : 0;
 
                 const xmlhttp = new XMLHttpRequest();
+                tracyConsole._mainXhr = xmlhttp;
+                /* capture runId so a stale response can be detected if a new run
+                   starts before this XHR finishes */
+                const xhrRunId = runId;
                 const onReadyStateChange = function() {
                     if (xmlhttp.readyState == XMLHttpRequest.DONE) {
                         /* original XHR completed — cancel poll timer if it hasn't fired */
                         if(typeof pollTimer !== 'undefined') clearTimeout(pollTimer);
+                        /* clear the immediate running-status timer; fallback paths below
+                           will start a fresh one if they need to keep ticking */
+                        if(tracyConsole._bgTimer) { clearInterval(tracyConsole._bgTimer); tracyConsole._bgTimer = null; }
+                        if(tracyConsole._mainXhr === xmlhttp) tracyConsole._mainXhr = null;
+                        /* cancelRun has already taken over — don't restart polling or
+                           overwrite the "Cancelled" status */
+                        if(tracyConsole._cancelled) { listenerMap.delete(xmlhttp); return; }
+                        /* stale response from a run that was cancelled or superseded
+                           — current activeRunId no longer matches this XHR's runId */
+                        if(tracyConsole._activeRunId && tracyConsole._activeRunId !== xhrRunId) {
+                            listenerMap.delete(xmlhttp);
+                            return;
+                        }
                         if(xmlhttp.status === 0) {
                             if(!tracyConsole._pollingActive) {
                                 /* connection lost but PHP may still be running —
@@ -951,7 +1048,7 @@ class ConsolePanel extends BasePanel {
                                     var secs = elapsed % 60;
                                     var timeStr = mins > 0 ? mins + 'm ' + secs + 's' : secs + 's';
                                     var sd = document.getElementById("tracyConsoleStatus");
-                                    if(sd) sd.innerHTML = "<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> Running in background... " + timeStr;
+                                    if(sd) sd.innerHTML = tracyConsole.renderRunningStatus(runId, timeStr);
                                 }, 1000);
                                 tracyConsole._stopPolling = false;
                                 tracyConsole.pollForResults(runId);
@@ -975,7 +1072,7 @@ class ConsolePanel extends BasePanel {
                                 var secs = elapsed % 60;
                                 var timeStr = mins > 0 ? mins + 'm ' + secs + 's' : secs + 's';
                                 var sd = document.getElementById("tracyConsoleStatus");
-                                if(sd) sd.innerHTML = "<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> Running in background... " + timeStr;
+                                if(sd) sd.innerHTML = tracyConsole.renderRunningStatus(runId, timeStr);
                             }, 1000);
                             tracyConsole._stopPolling = false;
                             tracyConsole.pollForResults(runId);
@@ -1029,14 +1126,7 @@ class ConsolePanel extends BasePanel {
                         tracyConsole._pollingActive = true;
                         tracyConsole._activeRunId = runId;
                         tracyConsole.setRunButtonEnabled(false);
-                        tracyConsole._bgTimer = setInterval(function() {
-                            var elapsed = Math.round((Date.now() - tracyConsole._bgStartTime) / 1000);
-                            var mins = Math.floor(elapsed / 60);
-                            var secs = elapsed % 60;
-                            var timeStr = mins > 0 ? mins + 'm ' + secs + 's' : secs + 's';
-                            var sd = document.getElementById("tracyConsoleStatus");
-                            if(sd) sd.innerHTML = "<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> Running in background... " + timeStr;
-                        }, 1000);
+                        /* _bgTimer is already ticking from callPhp start; no need to restart */
                         tracyConsole._stopPolling = false;
                         tracyConsole.pollForResults(runId);
                     }, xhrTimeout);

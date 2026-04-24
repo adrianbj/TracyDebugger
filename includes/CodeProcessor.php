@@ -18,6 +18,11 @@ if($tracyRunId) {
     file_put_contents($tracyRunStatusDir . $tracyRunId . '.json', json_encode(array(
         'status' => 'running'
     )));
+    /* PID lives in the non-public cache dir so the cancel endpoint can target
+       this process without exposing process ids over HTTP */
+    if(function_exists('getmypid')) {
+        file_put_contents($tracyRunCacheDir . $tracyRunId . '.pid', (string) getmypid());
+    }
     ignore_user_abort(true);
     set_time_limit(0);
 }

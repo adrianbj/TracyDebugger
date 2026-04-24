@@ -6,7 +6,6 @@
     var currentUrl = window.location.href.split("#")[0];
     var recorderPanelId = "tracy-debug-panel-ProcessWire-DumpsRecorderPanel";
     var lastTotalCount = 0;
-    var reloadTriggered = false;
 
     function scheduleNext(hadNewData) {
         if(hadNewData) {
@@ -83,11 +82,8 @@
     function updateRecorderPanel(entries, totalCount) {
         var panel = document.getElementById(recorderPanelId);
         if(!panel) {
-            if(totalCount > 0 && !reloadTriggered) {
-                reloadTriggered = true;
-                if(pollTimer) clearTimeout(pollTimer);
-                window.location.reload();
-            }
+            // panel isn't in the bar on this page — new dumps will appear on the
+            // next natural reload; don't force one, to avoid surprising the user
             return;
         }
 
@@ -109,6 +105,14 @@
                     tempContainer.appendChild(tempItems);
                 }
                 tempItems.innerHTML = html;
+                // ensure the Clear Dumps button is present in the cached HTML so it
+                // appears when the panel is opened (mirrors the DOM-side branch below)
+                if(entries.length > 0 && !temp.querySelector("#clearRecorderDumpsBtn")) {
+                    var tempBtn = document.createElement("div");
+                    tempBtn.style.cssText = "margin:10px 0 5px 0; text-align:right";
+                    tempBtn.innerHTML = '<input type="submit" id="clearRecorderDumpsBtn" value="Clear Dumps" />';
+                    tempContainer.parentNode.insertBefore(tempBtn, tempContainer.nextSibling);
+                }
             }
             panel.dataset.tracyContent = temp.innerHTML;
         } else {
@@ -176,20 +180,33 @@
             window.requestAnimationFrame(init);
             return;
         }
+        // seed lastTotalCount from the server-rendered badge so the first poll
+        // doesn't treat every existing entry as new and duplicate them in the panel
+        var badges = document.getElementsByClassName("dumpsRecorderCount");
+        if(badges.length > 0) {
+            var n = parseInt(badges[0].textContent, 10);
+            if(!isNaN(n) && n > 0) lastTotalCount = n;
+        }
         pollTimer = setTimeout(poll, pollInterval);
     }
 
     init();
 
-    document.addEventListener("visibilitychange", function() {
-        if(!document.hidden) {
-            pollInterval = minPollInterval;
-            if(pollTimer) {
-                clearTimeout(pollTimer);
-                pollTimer = setTimeout(poll, pollInterval);
-            }
+    function resetToMinAndPollSoon() {
+        pollInterval = minPollInterval;
+        if(pollTimer) {
+            clearTimeout(pollTimer);
+            pollTimer = setTimeout(poll, pollInterval);
         }
+    }
+
+    document.addEventListener("visibilitychange", function() {
+        if(!document.hidden) resetToMinAndPollSoon();
     });
+
+    // also reset on window focus so switching back from another app/window
+    // gives fresh data fast, even when the tab was already visible
+    window.addEventListener("focus", resetToMinAndPollSoon);
 
     window.addEventListener("beforeunload", function() {
         if(pollTimer) clearTimeout(pollTimer);

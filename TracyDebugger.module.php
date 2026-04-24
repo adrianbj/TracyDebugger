@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.0.6',
+            'version' => '5.0.7',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -352,7 +352,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "fileEditorExcludedDirs" => 'site/assets',
             "fileEditorBaseDirectory" => 'templates',
             "enableShortcutMethods" => 1,
-            "enabledShortcutMethods" => array('addBreakpoint', 'bp', 'barDump', 'bd', 'barDumpBig', 'bdb', 'barEcho', 'be', 'debugAll', 'da', 'dump', 'd', 'dumpBig', 'db', 'l', 'templateVars', 'tv', 'timer', 't')
+            "enabledShortcutMethods" => array('addBreakpoint', 'bp', 'barDump', 'bd', 'barDumpBig', 'bdb', 'barEcho', 'be', 'bdai', 'dai', 'debugAll', 'da', 'dump', 'd', 'dumpBig', 'db', 'l', 'templateVars', 'tv', 'timer', 't')
         );
     }
 
@@ -425,6 +425,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // load base panel class
         require_once __DIR__ . '/includes/BasePanel.php';
+
+        // load AI export helpers (used by TD::dumpAI, BasePanel::aiExportControls, panels)
+        require_once __DIR__ . '/includes/AIExport.php';
 
         $externalPanelPaths = glob($this->wire('config')->paths->root.'/site/modules/*/TracyPanels/*.php');
         foreach($externalPanelPaths as $panelPath) {
@@ -559,6 +562,68 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 exit;
             }
 
+            // background execution: cancel a running console script
+            if($this->wire('input')->post->tracyConsoleCancel == 1) {
+                Debugger::$showBar = false;
+                header_remove('X-Tracy-Ajax');
+                if(!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) {
+                    http_response_code(403);
+                    exit;
+                }
+                $csrfToken = isset($_POST['csrfToken']) ? $_POST['csrfToken'] : '';
+                if(!$csrfToken || !hash_equals((string)$this->wire('session')->tracyConsoleToken, $csrfToken)) {
+                    http_response_code(403);
+                    exit;
+                }
+                $runId = isset($_POST['runId']) ? preg_replace('/[^a-zA-Z0-9_.]/', '', $_POST['runId']) : '';
+                header('Content-Type: application/json');
+                if(!$runId) {
+                    echo json_encode(array('status' => 'error', 'message' => 'missing runId'));
+                    exit;
+                }
+                $statusDir = $this->wire('config')->paths->assets . 'TracyDebugger/console_runs/';
+                $cacheDir  = $this->wire('config')->paths->cache  . 'TracyDebugger/console_runs/';
+                $pidFile   = $cacheDir . $runId . '.pid';
+                $killed = false;
+                $pid = null;
+                if(file_exists($pidFile)) {
+                    $pid = (int) trim((string) file_get_contents($pidFile));
+                }
+                if($pid > 0 && $pid !== getmypid()) {
+                    if(stripos(PHP_OS, 'WIN') === 0) {
+                        @exec('taskkill /F /PID ' . (int) $pid . ' 2>&1', $out, $rc);
+                        @exec('tasklist /FI "PID eq ' . (int) $pid . '" 2>&1', $checkOut);
+                        $stillAlive = false;
+                        foreach((array) $checkOut as $line) {
+                            if(strpos($line, (string)(int)$pid) !== false) { $stillAlive = true; break; }
+                        }
+                        $killed = !$stillAlive;
+                    } else {
+                        // SIGKILL cannot be blocked or ignored, so a successful posix_kill
+                        // return (or ESRCH meaning the process was already gone) means the
+                        // process will terminate. We don't probe afterwards because a
+                        // just-killed process is briefly a zombie that signal 0 still sees
+                        // as "alive" until the parent (PHP-FPM master) reaps it.
+                        if(function_exists('posix_kill')) {
+                            $rc = @posix_kill($pid, 9);
+                            $err = function_exists('posix_get_last_error') ? posix_get_last_error() : 0;
+                            $killed = ($rc === true || $err === 3); // true or ESRCH
+                        } else {
+                            @exec('kill -9 ' . (int) $pid . ' 2>&1', $out2, $rc2);
+                            $killed = ($rc2 === 0);
+                        }
+                    }
+                }
+                @file_put_contents($statusDir . $runId . '.json', json_encode(array('status' => 'cancelled')));
+                @unlink($pidFile);
+                @unlink($cacheDir . $runId . '.json');
+                echo json_encode(array(
+                    'status' => 'cancelled',
+                    'killed' => $killed,
+                ));
+                exit;
+            }
+
             // background execution: fetch result from cache and cleanup
             if($this->wire('input')->post->tracyConsoleCleanup == 1) {
                 Debugger::$showBar = false;
@@ -587,6 +652,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     }
                     @unlink($cacheFile);
                     @unlink($statusDir . $runId . '.json');
+                    @unlink($cacheDir . $runId . '.pid');
                 }
                 exit;
             }
@@ -599,7 +665,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     $this->wire('config')->paths->cache . 'TracyDebugger/console_runs/'
                 ) as $runDir) {
                     if(is_dir($runDir)) {
-                        foreach(glob($runDir . '*.json') as $file) {
+                        foreach(glob($runDir . '*.{json,pid}', GLOB_BRACE) as $file) {
                             if(filemtime($file) < time() - 3600) {
                                 @unlink($file);
                             }
@@ -1753,48 +1819,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
         Debugger::getBar()->addPanel(new $fullPanelClass);
 
-        // auto-enable dumpsRecorder when:
-        //  - guest dumps recording is active, OR
-        //  - dumps.json has entries that aren't already visible in the main Dumps panel
-        if(!in_array('dumpsRecorder', static::$showPanels)) {
-            $shouldForceAdd = (bool)$this->data['recordGuestDumps'];
-            if(!$shouldForceAdd) {
-                $dumpsFile = $this->wire('config')->paths->cache . 'TracyDebugger/dumps.json';
-                if(file_exists($dumpsFile) && filesize($dumpsFile) > 2) {
-                    $persistedDumps = json_decode(file_get_contents($dumpsFile), true);
-                    if(is_array($persistedDumps) && !empty($persistedDumps)) {
-                        $currentItems = is_array(TracyDebugger::$dumpItems) ? TracyDebugger::$dumpItems : array();
-                        if(count($persistedDumps) !== count($currentItems)) {
-                            $shouldForceAdd = true;
-                        } else {
-                            $currentSigs = array();
-                            foreach($currentItems as $item) {
-                                $title = isset($item['title']) ? $item['title'] : '';
-                                $dump = isset($item['dump']) ? $item['dump'] : '';
-                                $currentSigs[md5($title . '|' . $dump)] = true;
-                            }
-                            foreach($persistedDumps as $item) {
-                                $title = isset($item['title']) ? $item['title'] : '';
-                                $dump = isset($item['dump']) ? $item['dump'] : '';
-                                if(!isset($currentSigs[md5($title . '|' . $dump)])) {
-                                    $shouldForceAdd = true;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
+        // auto-enable dumpsRecorder only when guest dumps recording is active.
+        // otherwise, respect the user's panel config — if they haven't enabled
+        // dumpsRecorder, the panel stays off even when dumps.json has entries.
+        // (users who want cross-tab visibility should enable the panel in config.)
+        if(!in_array('dumpsRecorder', static::$showPanels) && $this->data['recordGuestDumps']) {
+            $panelName = 'DumpsRecorderPanel';
+            $fullPanelClass = __NAMESPACE__ . '\\' . $panelName;
+            static::$showPanels[] = 'dumpsRecorder';
+            require_once __DIR__ . '/panels/'.$panelName.'.php';
+            if(!class_exists($fullPanelClass, false) && class_exists($panelName, false)) {
+                class_alias($panelName, $fullPanelClass);
             }
-            if($shouldForceAdd) {
-                $panelName = 'DumpsRecorderPanel';
-                $fullPanelClass = __NAMESPACE__ . '\\' . $panelName;
-                static::$showPanels[] = 'dumpsRecorder';
-                require_once __DIR__ . '/panels/'.$panelName.'.php';
-                if(!class_exists($fullPanelClass, false) && class_exists($panelName, false)) {
-                    class_alias($panelName, $fullPanelClass);
-                }
-                Debugger::getBar()->addPanel(new $fullPanelClass);
-            }
+            Debugger::getBar()->addPanel(new $fullPanelClass);
         }
 
         // add panelSelector last so it sees generation-time values for all other panels
@@ -4636,6 +4673,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->addOption('be', 'be() for TD::barEcho()');
         $f->addOption('barDumpBig', 'barDumpBig() for TD::barDumpBig()');
         $f->addOption('bdb', 'bdb() for TD::barDumpBig()');
+        $f->addOption('bdai', 'bdai() for TD::barDumpAI()');
+        $f->addOption('dai', 'dai() for TD::dumpAI()');
         $f->addOption('debugAll', 'debugAll() for TD::debugAll()');
         $f->addOption('da', 'da() for TD::debugAll()');
         $f->addOption('dump', 'dump() for TD::dump()');

@@ -187,6 +187,29 @@ if(!function_exists('be') && in_array('be', $this->data['enabledShortcutMethods'
 }
 
 /**
+ * TD::barDumpAI() shortcut - AI/LLM-friendly plaintext dump to the bar Dumps panel.
+ * @tracySkipLocation
+ */
+if(!function_exists('bdai') && in_array('bdai', $this->data['enabledShortcutMethods'])) {
+    function bdai($var, $title = NULL, $options = []) {
+        if(tracyUnavailable() && !\ProcessWire\TracyDebugger::getDataValue('recordGuestDumps')) return false;
+        return \ProcessWire\TD::barDumpAI($var, $title, $options);
+    }
+}
+
+/**
+ * TD::dumpAI() shortcut - AI/LLM-friendly plaintext dump rendered inline
+ * (for use in the Console panel, templates, or CLI).
+ * @tracySkipLocation
+ */
+if(!function_exists('dai') && in_array('dai', $this->data['enabledShortcutMethods'])) {
+    function dai($var, $title = NULL, $options = []) {
+        if(tracyUnavailable() && PHP_SAPI !== 'cli') return false;
+        return \ProcessWire\TD::dumpAI($var, $title, $options);
+    }
+}
+
+/**
  * TD::log() shortcut.
  * @tracySkipLocation
  */

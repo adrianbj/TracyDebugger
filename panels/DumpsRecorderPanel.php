@@ -13,6 +13,11 @@ class DumpsRecorderPanel extends BasePanel {
 
         Debugger::timer('dumpsRecorder');
 
+        // flush this request's pending dumps so the panel reflects them immediately
+        // rather than only after the next poll (they would otherwise be written by
+        // the shutdown handler, i.e. after this render)
+        TD::flushRecorderDumps();
+
         $dumpsFile = $this->wire('config')->paths->cache . 'TracyDebugger/dumps.json';
         $items = file_exists($dumpsFile) ? json_decode(file_get_contents($dumpsFile), true) : array();
         $this->dumpCount = is_array($items) ? count($items) : 0;

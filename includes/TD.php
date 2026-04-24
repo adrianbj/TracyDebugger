@@ -79,6 +79,67 @@ class TD extends TracyDebugger {
     }
 
     /**
+     * Render a scrubbed AI-friendly plaintext dump for $var as an HTML <pre>
+     * block. Shared by barDumpAI() (bar) and dumpAI() (inline output / Console panel).
+     * @tracySkipLocation
+     */
+    private static function buildAIDumpHtml($var, array $options = array()) {
+        if(!class_exists('\\ProcessWire\\AIExport')) {
+            require_once __DIR__ . '/AIExport.php';
+        }
+        $text = AIExport::scrub(AIExport::dumpToText($var, $options));
+        return array($text, '<pre class="tracy-ai-dump" style="white-space:pre-wrap; word-break:break-word; margin:4px 0; padding:6px 8px; background:#f6f6f6; border:1px solid #ddd; font-size:12px; line-height:1.35">'
+              . htmlspecialchars($text, ENT_QUOTES)
+              . '</pre>');
+    }
+
+    /**
+     * AI-friendly plaintext dump sent to the Dumps bar panel with a
+     * "Copy for AI" button. Parallels barDump(). Secrets honored via
+     * keysToHide + format patterns.
+     *
+     * @tracySkipLocation
+     */
+    public static function barDumpAI($var, $title = NULL, $options = array()) {
+        if(self::tracyUnavailable() && !TracyDebugger::getDataValue('recordGuestDumps')) return false;
+        if(is_array($title)) {
+            $options = $title;
+            $title = NULL;
+        }
+        list(, $html) = static::buildAIDumpHtml($var, is_array($options) ? $options : array());
+        static::dumpToBar($html, $title, null, true);
+    }
+
+    /**
+     * AI-friendly plaintext dump rendered inline on the page. Parallels dump().
+     * Used by the Console panel via the dumpAI() shortcut, and from CLI where
+     * it falls back to plain text output.
+     *
+     * @tracySkipLocation
+     */
+    public static function dumpAI($var, $title = NULL, $options = array()) {
+        if(self::tracyUnavailable() && PHP_SAPI !== 'cli') return false;
+        if(is_array($title)) {
+            $options = $title;
+            $title = NULL;
+        }
+        $opts = is_array($options) ? $options : array();
+        if(PHP_SAPI === 'cli') {
+            if(!class_exists('\\ProcessWire\\AIExport')) {
+                require_once __DIR__ . '/AIExport.php';
+            }
+            if($title) echo $title . PHP_EOL;
+            echo AIExport::scrub(AIExport::dumpToText($var, $opts)) . PHP_EOL;
+            return;
+        }
+        list(, $html) = static::buildAIDumpHtml($var, $opts);
+        echo '<div class="tracy-inner" style="height:auto !important"><div class="tracy-DumpPanel">';
+        if($title) echo '<h2>' . htmlspecialchars($title, ENT_QUOTES) . '</h2>';
+        echo $html;
+        echo '</div></div>';
+    }
+
+    /**
      * Tracy\Debugger::barDump() shortcut.
      * @tracySkipLocation
      */
