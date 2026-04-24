@@ -104,13 +104,22 @@ class TodoPanel extends BasePanel {
     }
 
 
+    protected $todoTypesRegex;
+
     protected function containsTodoType($str) {
-        foreach($this->todoTypes as $todoType) {
+        if($this->todoTypesRegex === null) {
+            $escaped = array();
+            foreach($this->todoTypes as $t) $escaped[] = preg_quote($t, '/');
             // match whole words, without hyphens only so that "debug" won't match the "bug" todoType
             // and "micro-clearfix-hack" won't match "hack"
             // this still allows "//TODO" to match even though no space before word
-            preg_match('/(?<!-)(?<![\'"])\b'.$todoType.'\b(?!-)(?![\'"])/i', $str, $match, PREG_OFFSET_CAPTURE);
-            if(isset($match[0][1])) return $todoType;
+            $this->todoTypesRegex = '/(?<!-)(?<![\'"])\b(' . implode('|', $escaped) . ')\b(?!-)(?![\'"])/i';
+        }
+        if(preg_match($this->todoTypesRegex, $str, $match)) {
+            foreach($this->todoTypes as $t) {
+                if(strcasecmp($t, $match[1]) === 0) return $t;
+            }
+            return $match[1];
         }
         return false;
     }

@@ -5,6 +5,35 @@ use Tracy\Dumper;
 
 class TD extends TracyDebugger {
 
+    private static $phpSupportsKeysToHide;
+    private static $tracySupportsLazy;
+    private static $recorderPendingItems = array();
+    private static $recorderShutdownRegistered = false;
+
+    private static function phpSupportsKeysToHide() {
+        if(self::$phpSupportsKeysToHide === null) {
+            self::$phpSupportsKeysToHide = version_compare(PHP_VERSION, '7.2.0', '>=');
+        }
+        return self::$phpSupportsKeysToHide;
+    }
+
+    private static function tracySupportsLazy() {
+        if(self::$tracySupportsLazy === null) {
+            self::$tracySupportsLazy = version_compare(Debugger::VERSION, '2.6.0', '>=');
+        }
+        return self::$tracySupportsLazy;
+    }
+
+    public static function flushRecorderDumps() {
+        if(empty(self::$recorderPendingItems)) return;
+        $dumpsFile = wire('config')->paths->cache . 'TracyDebugger/dumps.json';
+        $existing = file_exists($dumpsFile) ? json_decode(file_get_contents($dumpsFile), true) : array();
+        if(!$existing) $existing = array();
+        $merged = array_merge($existing, self::$recorderPendingItems);
+        self::$recorderPendingItems = array();
+        wire('files')->filePutContents($dumpsFile, json_encode($merged), LOCK_EX);
+    }
+
     // helper functions
     public static function sql($selector) {
         return wire('pages')->getPageFinder()->find(new Selectors($selector), array('returnVerbose' => true,'returnQuery' => true))->getDebugQuery();
@@ -68,10 +97,10 @@ class TD extends TracyDebugger {
         $options[Dumper::TRUNCATE] = isset($options['maxLength']) ? $options['maxLength'] : TracyDebugger::getDataValue('maxLength');
         if(defined('\Tracy\Dumper::ITEMS')) $options[Dumper::ITEMS] = isset($options['maxItems']) ? $options['maxItems'] : TracyDebugger::getDataValue('maxItems');
         $options[Dumper::LOCATION] = Debugger::$showLocation;
-        if(version_compare(PHP_VERSION, '7.2.0', '>=')) {
+        if(self::phpSupportsKeysToHide()) {
             $options[Dumper::KEYS_TO_HIDE] = Debugger::$keysToHide;
         }
-        if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = true;
+        if(self::tracySupportsLazy()) $options[Dumper::LAZY] = true;
         static::dumpToBar($var, $title, $options);
     }
 
@@ -94,10 +123,10 @@ class TD extends TracyDebugger {
         $options[Dumper::TRUNCATE] = 9999;
         if(defined('\Tracy\Dumper::ITEMS')) $options[Dumper::ITEMS] = 250;
         $options[Dumper::LOCATION] = Debugger::$showLocation;
-        if(version_compare(PHP_VERSION, '7.2.0', '>=')) {
+        if(self::phpSupportsKeysToHide()) {
             $options[Dumper::KEYS_TO_HIDE] = Debugger::$keysToHide;
         }
-        if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = true;
+        if(self::tracySupportsLazy()) $options[Dumper::LAZY] = true;
         static::dumpToBar($var, $title, $options);
     }
 
@@ -133,10 +162,10 @@ class TD extends TracyDebugger {
                 $options[Dumper::ITEMS] = isset($options['maxItems']) ? $options['maxItems'] : TracyDebugger::getDataValue('maxItems');
             }
             $options[Dumper::LOCATION] = TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
-            if(version_compare(PHP_VERSION, '7.2.0', '>=')) {
+            if(self::phpSupportsKeysToHide()) {
                 $options[Dumper::KEYS_TO_HIDE] = Debugger::$keysToHide;
             }
-            if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = true;
+            if(self::tracySupportsLazy()) $options[Dumper::LAZY] = true;
             echo '
             <div class="tracy-inner" style="height:auto !important">
                 <div class="tracy-DumpPanel">';
@@ -177,10 +206,10 @@ class TD extends TracyDebugger {
             $options[Dumper::TRUNCATE] = 9999;
             if(defined('\Tracy\Dumper::ITEMS')) $options[Dumper::ITEMS] = 250;
             $options[Dumper::LOCATION] = TracyDebugger::$fromConsole ? false : Debugger::$showLocation;
-            if(version_compare(PHP_VERSION, '7.2.0', '>=')) {
+            if(self::phpSupportsKeysToHide()) {
                 $options[Dumper::KEYS_TO_HIDE] = Debugger::$keysToHide;
             }
-            if(version_compare(Debugger::VERSION, '2.6.0', '>=')) $options[Dumper::LAZY] = true;
+            if(self::tracySupportsLazy()) $options[Dumper::LAZY] = true;
             echo '
             <div class="tracy-inner" style="height:auto !important">
                 <div class="tracy-DumpPanel">';
@@ -199,15 +228,17 @@ class TD extends TracyDebugger {
         $dumpItem = array();
         $dumpItem['title'] = $title;
         $dumpItem['dump'] = $echo ? '<div class="tracy-echo">' . $var . '</div>' : static::generateDump($var, $options);
-        array_push(TracyDebugger::$dumpItems, $dumpItem);
-        if((self::tracyUnavailable() && TracyDebugger::getDataValue('recordGuestDumps')) || (isset(TracyDebugger::$showPanels) && in_array('dumpsRecorder', TracyDebugger::$showPanels))) {
+        TracyDebugger::$dumpItems[] = $dumpItem;
+        // always persist dumps for authorized dev users so cross-window polling can surface them,
+        // and persist guest dumps when that feature is enabled
+        if(!self::tracyUnavailable() || TracyDebugger::getDataValue('recordGuestDumps')) {
             $dumpItem['user'] = wire('user')->name;
             $dumpItem['time'] = date('H:i:s');
-            $dumpsFile = wire('config')->paths->cache . 'TracyDebugger/dumps.json';
-            $dumpsRecorderItems = file_exists($dumpsFile) ? json_decode(file_get_contents($dumpsFile), true) : array();
-            if(!$dumpsRecorderItems) $dumpsRecorderItems = array();
-            array_push($dumpsRecorderItems, $dumpItem);
-            wire('files')->filePutContents($dumpsFile, json_encode($dumpsRecorderItems), LOCK_EX);
+            self::$recorderPendingItems[] = $dumpItem;
+            if(!self::$recorderShutdownRegistered) {
+                self::$recorderShutdownRegistered = true;
+                register_shutdown_function(array(__CLASS__, 'flushRecorderDumps'));
+            }
         }
     }
 
@@ -225,7 +256,7 @@ class TD extends TracyDebugger {
 
         $editCountLink = '';
         if(count(TracyDebugger::getDataValue('dumpPanelTabs')) > 0 && !is_string($var)) {
-            $classExt = rand();
+            $classExt = uniqid();
             if($var instanceof Wire) {
                 if($var instanceof User) {
                     $type = 'users';
@@ -380,6 +411,9 @@ class TD extends TracyDebugger {
      * @return bool
      */
     private static function has_string_keys(array $array) {
-        return count(array_filter(array_keys($array), 'is_string')) > 0;
+        foreach($array as $k => $_) {
+            if(is_string($k)) return true;
+        }
+        return false;
     }
 }

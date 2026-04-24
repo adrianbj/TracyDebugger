@@ -159,16 +159,17 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
             if(empty($filename)) {
                 $filename = 'tracy-console-' . date('Y-m-d-H-i-s');
                 $files = glob($backupDir . "tracy-console-*");
-                if($files) {
-                    if(count($files) >= TracyDebugger::getDataValue('consoleBackupLimit')) {
-                        array_multisort(
-                            array_map('filemtime', $files),
-                            SORT_NUMERIC,
-                            SORT_ASC,
-                            $files
-                        );
-                        unlink($files[0]);
+                if($files && count($files) >= TracyDebugger::getDataValue('consoleBackupLimit')) {
+                    $oldest = null;
+                    $oldestMtime = PHP_INT_MAX;
+                    foreach($files as $f) {
+                        $m = filemtime($f);
+                        if($m !== false && $m < $oldestMtime) {
+                            $oldestMtime = $m;
+                            $oldest = $f;
+                        }
                     }
+                    if($oldest !== null) unlink($oldest);
                 }
             }
             $_filename = $filename;

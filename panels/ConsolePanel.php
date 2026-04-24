@@ -1983,13 +1983,18 @@ class ConsolePanel extends BasePanel {
                     tracyConsole.tabsContainer = document.getElementById("tracyTabs");
 
                     if (tracyConsole.tabsWrapper && tracyConsole.tabsContainer) {
+                        let resizeRafId = null;
                         const resizeObserver = new ResizeObserver(function() {
-                            if (tracyConsole.tabsContainer.scrollWidth <= tracyConsole.tabsWrapper.clientWidth) {
-                                tracyConsole.tabsWrapper.style.overflowX = 'hidden';
-                            }
-                            else {
-                                tracyConsole.tabsWrapper.style.overflowX = 'auto';
-                            }
+                            if (resizeRafId !== null) return;
+                            resizeRafId = window.requestAnimationFrame(function() {
+                                resizeRafId = null;
+                                if (tracyConsole.tabsContainer.scrollWidth <= tracyConsole.tabsWrapper.clientWidth) {
+                                    tracyConsole.tabsWrapper.style.overflowX = 'hidden';
+                                }
+                                else {
+                                    tracyConsole.tabsWrapper.style.overflowX = 'auto';
+                                }
+                            });
                         });
                         resizeObserver.observe(tracyConsole.tabsWrapper);
                         resizeObserver.observe(tracyConsole.tabsContainer);

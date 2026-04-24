@@ -232,14 +232,12 @@ class TracyPwApiData extends WireData {
 
         if(isset($methodsList)) {
 
-            uksort($methodsList, function($a, $b) {
-                $aStripped = str_replace(array('___','__', '_'), '', $a);
-                $bStripped = str_replace(array('___','__', '_'), '', $b);
-                // this could be replaced by "return $aStripped <=> $bStripped;" for PHP 7+
-                if($aStripped == $bStripped) {
-                    return 0;
-                }
-                return($aStripped < $bStripped) ? -1 : 1;
+            $methodsSortKeys = array();
+            foreach($methodsList as $k => $_) {
+                $methodsSortKeys[$k] = str_replace(array('___','__', '_'), '', $k);
+            }
+            uksort($methodsList, function($a, $b) use ($methodsSortKeys) {
+                return strcmp($methodsSortKeys[$a], $methodsSortKeys[$b]);
             });
 
             foreach($methodsList as $name => $info) {
@@ -290,14 +288,12 @@ class TracyPwApiData extends WireData {
 
         if(isset($propertiesList)) {
 
-            uksort($propertiesList, function($a, $b) {
-                $aStripped = str_replace(array('___','__', '_'), '', strtolower($a));
-                $bStripped = str_replace(array('___','__', '_'), '', strtolower($b));
-                // this could be replaced by "return $aStripped <=> $bStripped;" for PHP 7+
-                if($aStripped == $bStripped) {
-                    return 0;
-                }
-                return($aStripped < $bStripped) ? -1 : 1;
+            $propsSortKeys = array();
+            foreach($propertiesList as $k => $_) {
+                $propsSortKeys[$k] = str_replace(array('___','__', '_'), '', strtolower($k));
+            }
+            uksort($propertiesList, function($a, $b) use ($propsSortKeys) {
+                return strcmp($propsSortKeys[$a], $propsSortKeys[$b]);
             });
 
             foreach($propertiesList as $name => $info) {
@@ -344,8 +340,8 @@ class TracyPwApiData extends WireData {
 
         $lines = file($file);
         $source = implode('', $lines);
-        $str = preg_replace('/\s+/', ' ', $source);
-        if($hooks && strpos($str, 'function ___') === false && strpos($str, 'addHook') === false) return;
+        // fast rejection for hooks-only scans: skip the expensive whitespace-collapse regex unless needed
+        if($hooks && strpos($source, 'function ___') === false && strpos($source, 'addHook') === false) return;
         $tokens = token_get_all($source);
         $nextStringIsFunc = false;
         $nextStringIsClass = false;

@@ -274,16 +274,40 @@ class TemplateResourcesPanel extends BasePanel {
 
     protected function countInTemplateFiles($resources) {
         $resourceCounts = array();
+        $cache = $this->wire('cache');
+        $cached = $cache->get('tracyTemplateResourceCounts');
+        if(!is_array($cached)) $cached = array();
+        $newCached = array();
+        $resourcesKey = md5(serialize($resources));
+
         $dir = new \RecursiveDirectoryIterator($this->wire('config')->paths->templates);
         foreach(new \RecursiveIteratorIterator($dir) as $file) {
             if($file->isFile() && ($file->getExtension() == 'php' || $file->getExtension() == 'inc') && $file->getFilename() != 'admin.php') {
-                $this->searchedFiles[] = $file->getPathname();
-                $content = file_get_contents($file->getPathname());
-                foreach($resources as $resource) {
-                    $fileCount = substr_count($content, $resource);
-                    if($fileCount !== 0) $resourceCounts[$resource] = isset($resourceCounts[$resource]) ? $resourceCounts[$resource] + $fileCount : $fileCount;
+                $path = $file->getPathname();
+                $this->searchedFiles[] = $path;
+                $mtime = $file->getMTime();
+                if(isset($cached[$path])
+                    && $cached[$path]['mtime'] === $mtime
+                    && $cached[$path]['resourcesKey'] === $resourcesKey
+                ) {
+                    $fileCounts = $cached[$path]['counts'];
+                }
+                else {
+                    $content = file_get_contents($path);
+                    $fileCounts = array();
+                    foreach($resources as $resource) {
+                        $c = substr_count($content, $resource);
+                        if($c !== 0) $fileCounts[$resource] = $c;
+                    }
+                }
+                $newCached[$path] = array('mtime' => $mtime, 'resourcesKey' => $resourcesKey, 'counts' => $fileCounts);
+                foreach($fileCounts as $resource => $c) {
+                    $resourceCounts[$resource] = isset($resourceCounts[$resource]) ? $resourceCounts[$resource] + $c : $c;
                 }
             }
+        }
+        if($newCached !== $cached) {
+            $cache->save('tracyTemplateResourceCounts', $newCached, WireCache::expireDaily);
         }
         return $resourceCounts;
     }

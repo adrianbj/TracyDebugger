@@ -42,20 +42,28 @@ class PageFilesPanel extends BasePanel {
             $this->filesListStr .= '<p>There are no files associated with this page.';
         }
         else {
+            // O(1) lookup map so subsequent "is this basename on disk?" checks don't re-scan arrays
+            $diskFilesFlipped = array();
             foreach($pageFiles as $pid => $files) {
                 $pageFilesBasenames[$pid] = array();
                 $fileFields[$pid] = array();
                 $this->missingFiles[$pid] = array();
+                if(!isset($diskFilesFlipped[$pid])) {
+                    $diskFilesFlipped[$pid] = isset($diskFiles[$pid]) ? array_flip($diskFiles[$pid]) : array();
+                }
                 foreach($files as $file) {
                     $basename = pathinfo($file['filename'], PATHINFO_BASENAME);
-                    array_push($pageFilesBasenames[$pid], $basename);
+                    $pageFilesBasenames[$pid][$basename] = true;
                     $fileFields[$pid][$basename] = $file['field'];
-                    if(!in_array($basename, $diskFiles[$pid])) {
+                    if(!isset($diskFilesFlipped[$pid][$basename])) {
                         $this->numMissingFiles++;
-                        array_push($this->missingFiles[$pid], $file);
+                        $this->missingFiles[$pid][] = $file;
                     }
                 }
             }
+
+            $tempFilesFlipped = !empty($this->tempFiles) ? array_flip($this->tempFiles) : array();
+            $hasTempFiles = !empty($tempFilesFlipped);
 
             foreach($diskFiles as $pid => $files) {
                 if(empty($files) && !isset($this->missingFiles[$pid])) continue;
@@ -67,26 +75,28 @@ class PageFilesPanel extends BasePanel {
                         <h2><strong>#'.$pid . '</strong> ' . $repeaterFieldName.'</h2>
                         <div class="tracyPageFilesPage">
                             <table>
-                                <th>Filename</th><th>Filesize</th><th>Modified</th><th>Field</th>'.(count($this->tempFiles) > 0 ? '<th>Temp</th>' : '');
+                                <th>Filename</th><th>Filesize</th><th>Modified</th><th>Field</th>'.($hasTempFiles ? '<th>Temp</th>' : '');
                 }
 
+                $filesPath = $p->filesManager()->path;
+                $filesUrl = $p->filesManager()->url;
                 foreach($files as $file) {
-                    if(isset($pageFilesBasenames[$pid]) && in_array($file, $pageFilesBasenames[$pid])) {
+                    if(isset($pageFilesBasenames[$pid][$file])) {
                         $style = '';
                         $fileField = $fileFields[$pid][$file];
                     }
                     else {
                         $style = 'color: ' . TracyDebugger::COLOR_WARN;
                         $fileField = '';
-                        $this->orphanFiles[] = $p->filesManager()->path . $file;
+                        $this->orphanFiles[] = $filesPath . $file;
                     }
                     $this->filesListStr .= '
                     <tr>
-                        <td><a style="'.$style.' !important" href="'.$p->filesManager()->url.$file.'">'.$file.'</a></td>
-                        <td>'.TracyDebugger::human_filesize(filesize($p->filesManager()->path . $file)).'</td>
-                        <td>'.date('Y-m-d H:i:s', filemtime($p->filesManager()->path . $file)).'</td>
+                        <td><a style="'.$style.' !important" href="'.$filesUrl.$file.'">'.$file.'</a></td>
+                        <td>'.TracyDebugger::human_filesize(filesize($filesPath . $file)).'</td>
+                        <td>'.date('Y-m-d H:i:s', filemtime($filesPath . $file)).'</td>
                         <td style="width: 1px">'.$fileField.'</td>' .
-                        (count($this->tempFiles) > 0 ? '<td style="text-align: center">'.(in_array($p->filesManager()->path.$file, $this->tempFiles) ? '	✔' : '').'</td>' : '') . '
+                        ($hasTempFiles ? '<td style="text-align: center">'.(isset($tempFilesFlipped[$filesPath.$file]) ? '	✔' : '').'</td>' : '') . '
                     </tr>';
                 }
 

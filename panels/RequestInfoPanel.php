@@ -47,6 +47,7 @@ class RequestInfoPanel extends BasePanel {
         $isPwPage = $_SERVER['SCRIPT_NAME'] == $this->wire('config')->urls->root . 'index.php' ? true : false;
 
         $panelSections = TracyDebugger::getDataValue('requestInfoPanelSections');
+        $panelSectionsMap = array_flip($panelSections);
 
         $userLang = $this->wire('user')->language;
 
