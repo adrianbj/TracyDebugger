@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.0.9',
+            'version' => '5.0.10',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -2832,6 +2832,62 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         else {
             return trim(self::$_data->$property ?? '');
         }
+    }
+
+
+    /**
+     * Get the list of usernames a UserSwitcher session is permitted to switch to,
+     * applying the configured userSwitcherSelector / userSwitcherRestricted / userSwitcherIncluded
+     * filters. Used by both the panel (to render the dropdown) and the post-processor
+     * (to validate the destination of a switch POST).
+     *
+     * @return array list of usernames (strings)
+     */
+    public static function getSwitcherSelectableUsers() {
+        $wire = wire();
+        $names = array();
+
+        if(method_exists($wire->pages, 'findRaw')) {
+            $findRawFields = ['name'];
+            $findRawSelector = 'templates_id=' . implode('|', $wire->config->userTemplateIDs)
+                . ', has_parent=' . implode('|', $wire->config->usersPageIDs)
+                . ', objects=0, nulls=0, sort=name, check_access=0, status<' . Page::statusUnpublished;
+
+            if(self::getDataValue('userSwitcherSelector')) {
+                $rows = $wire->pages->findRaw($findRawSelector . ', ' . self::getDataValue('userSwitcherSelector'), $findRawFields);
+            }
+            elseif(self::getDataValue('userSwitcherRestricted') && count(self::getDataValue('userSwitcherRestricted')) > 0) {
+                $rows = $wire->pages->findRaw($findRawSelector . ', roles!=' . implode(', roles!=', self::getDataValue('userSwitcherRestricted')), $findRawFields);
+            }
+            elseif(self::getDataValue('userSwitcherIncluded') && count(self::getDataValue('userSwitcherIncluded')) > 0) {
+                $rows = $wire->pages->findRaw($findRawSelector . ', roles=' . implode('|', self::getDataValue('userSwitcherIncluded')), $findRawFields);
+            }
+            else {
+                $rows = $wire->pages->findRaw($findRawSelector, $findRawFields);
+            }
+            foreach($rows as $row) {
+                if(is_array($row) && isset($row['name'])) $names[] = $row['name'];
+                elseif(is_string($row)) $names[] = $row;
+            }
+        }
+        else {
+            if(self::getDataValue('userSwitcherSelector')) {
+                $users = $wire->users->find(self::getDataValue('userSwitcherSelector'));
+            }
+            elseif(self::getDataValue('userSwitcherRestricted') && count(self::getDataValue('userSwitcherRestricted')) > 0) {
+                $users = $wire->users->find('roles!=' . implode(', roles!=', self::getDataValue('userSwitcherRestricted')));
+            }
+            elseif(self::getDataValue('userSwitcherIncluded') && count(self::getDataValue('userSwitcherIncluded')) > 0) {
+                $users = $wire->users->find('roles=' . implode('|', self::getDataValue('userSwitcherIncluded')));
+            }
+            else {
+                $users = $wire->users->find('');
+            }
+            $users = $users->sort('name');
+            foreach($users as $u) $names[] = $u->name;
+        }
+
+        return $names;
     }
 
 
