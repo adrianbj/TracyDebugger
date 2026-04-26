@@ -2848,7 +2848,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $names = array();
 
         if(method_exists($wire->pages, 'findRaw')) {
-            $findRawFields = ['name'];
+            // include 'roles' so we can filter out users who have only the auto-applied
+            // guest role (i.e. no real assigned role) — matches the panel's dropdown filter
+            $findRawFields = ['name', 'roles'];
             $findRawSelector = 'templates_id=' . implode('|', $wire->config->userTemplateIDs)
                 . ', has_parent=' . implode('|', $wire->config->usersPageIDs)
                 . ', objects=0, nulls=0, sort=name, check_access=0, status<' . Page::statusUnpublished;
@@ -2866,8 +2868,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $rows = $wire->pages->findRaw($findRawSelector, $findRawFields);
             }
             foreach($rows as $row) {
-                if(is_array($row) && isset($row['name'])) $names[] = $row['name'];
-                elseif(is_string($row)) $names[] = $row;
+                if(!is_array($row) || !isset($row['name'])) continue;
+                $roles = isset($row['roles']) && is_array($row['roles']) ? $row['roles'] : [];
+                if(count($roles) > 1) $names[] = $row['name'];
             }
         }
         else {
@@ -2884,7 +2887,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $users = $wire->users->find('');
             }
             $users = $users->sort('name');
-            foreach($users as $u) $names[] = $u->name;
+            foreach($users as $u) {
+                if($u->roles && count($u->roles) > 1) $names[] = $u->name;
+            }
         }
 
         return $names;
