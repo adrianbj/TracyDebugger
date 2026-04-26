@@ -84,7 +84,7 @@ body.tracyHidden:before {
 
 #tracy-debug .tracy-mode-peek,
 #tracy-debug .tracy-mode-float:not(.tracy-panel-resized) {
-    max-width: calc(100vw - 15px) !important;
+    max-width: 95vw !important;
     max-height: calc(100vh - 44px) !important;
 }
 
@@ -1069,12 +1069,12 @@ ul.pw-info-links {
 #tracy-debug-panel-ProcessWire-TerminalPanel:not(.tracy-panel-resized) {
     height: 75%;
     width: 1400px !important;
-    min-width: 825px !important;
+    min-width: min(825px, 95vw) !important;
 }
 
 #tracy-debug-panel-ProcessWire-ModuleDisablerPanel:not(.tracy-panel-resized) {
     width: 900px !important;
-    min-width: 700px !important;
+    min-width: min(700px, 95vw) !important;
 }
 
 #tracy-debug-panel-ProcessWire-TemplateResourcesPanel:not(.tracy-panel-resized),
@@ -1103,7 +1103,7 @@ ul.pw-info-links {
 }
 
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] {
-    min-width: 400px;
+    min-width: min(400px, 95vw);
     max-width: 100% !important;
     padding: 0 !important;
     border: 12px solid transparent;
@@ -1848,7 +1848,7 @@ ul.pw-info-links {
 }
 
 #tracy-debug-panel-ProcessWire-TracyExceptionsPanel[class*="tracy-mode-"] {
-    min-width: 575px;
+    min-width: min(575px, 95vw);
 }
 
 .tracy-file-tree ul ul {
