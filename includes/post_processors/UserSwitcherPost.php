@@ -47,7 +47,7 @@
                 $session->tracyUserSwitcherFp = $session->getFingerprint();
 
                 $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
-                $this->data['originalUserSwitcher'][$challenge] = $this->wire('user')->name;
+                $this->data['originalUserSwitcher'][$challenge] = (int) $this->wire('user')->id;
                 $this->data['userSwitchSession'][$challenge] = time() + $this->wire('config')->sessionExpireSeconds;
                 $configData['originalUserSwitcher'] = $this->data['originalUserSwitcher'];
                 $configData['userSwitchSession'] = $this->data['userSwitchSession'];
@@ -110,10 +110,15 @@
                     if(isset($this->data['originalUserSwitcher'][$switcherId])) {
                         $tracyUserSwitcherId = $switcherId;
                         $tracyUserSwitcherFp = $session->tracyUserSwitcherFp;
-                        if($this->wire('user')->isLoggedin()) $session->logout();
-                        $session->forceLogin($this->data['originalUserSwitcher'][$tracyUserSwitcherId]);
-                        $session->tracyUserSwitcherId = $tracyUserSwitcherId;
-                        $session->tracyUserSwitcherFp = $tracyUserSwitcherFp;
+                        // accept either an id (new) or a name (legacy stored value)
+                        $originalRef = $this->data['originalUserSwitcher'][$tracyUserSwitcherId];
+                        $originalUser = $this->wire('users')->get(is_numeric($originalRef) ? (int) $originalRef : (string) $originalRef);
+                        if($originalUser && $originalUser->id) {
+                            if($this->wire('user')->isLoggedin()) $session->logout();
+                            $session->forceLogin($originalUser);
+                            $session->tracyUserSwitcherId = $tracyUserSwitcherId;
+                            $session->tracyUserSwitcherFp = $tracyUserSwitcherFp;
+                        }
                     }
                     else {
                         // stale state — original-user record missing; tear down silently
@@ -127,20 +132,37 @@
                     }
                     $session->redirect($this->httpReferer);
                 }
-                // switch to a named user — destination must be in the allowed pool,
-                // OR equal to the original superuser (so name-based revert works).
+                // switch to a user by id — destination must be in the allowed pool,
+                // OR equal to the original superuser (so revert works).
                 elseif($this->wire('input')->post->userSwitcher) {
-                    $requestedName = (string) $this->wire('input')->post->userSwitcher;
-                    $allowedNames = TracyDebugger::getSwitcherSelectableUsers();
-                    $originalName = isset($this->data['originalUserSwitcher'][$switcherId])
+                    $rawRequested = (string) $this->wire('input')->post->userSwitcher;
+                    $requestedId = is_numeric($rawRequested) ? (int) $rawRequested : 0;
+                    $allowedIds = TracyDebugger::getSwitcherSelectableUsers();
+                    $originalRef = isset($this->data['originalUserSwitcher'][$switcherId])
                         ? $this->data['originalUserSwitcher'][$switcherId]
                         : null;
+                    // resolve legacy name-based originalUserSwitcher entries to an id for comparison
+                    $originalId = null;
+                    if($originalRef !== null) {
+                        if(is_numeric($originalRef)) {
+                            $originalId = (int) $originalRef;
+                        }
+                        else {
+                            $originalUser = $this->wire('users')->get((string) $originalRef);
+                            if($originalUser && $originalUser->id) $originalId = (int) $originalUser->id;
+                        }
+                    }
 
-                    if(in_array($requestedName, $allowedNames, true) || $requestedName === $originalName) {
+                    $isAllowed = $requestedId > 0
+                        && (in_array($requestedId, $allowedIds, true) || $requestedId === $originalId);
+
+                    $requestedUser = $isAllowed ? $this->wire('users')->get($requestedId) : null;
+
+                    if($isAllowed && $requestedUser && $requestedUser->id) {
                         $tracyUserSwitcherId = $switcherId;
                         $tracyUserSwitcherFp = $session->tracyUserSwitcherFp;
                         if($this->wire('user')->isLoggedin()) $session->logout();
-                        $session->forceLogin($requestedName);
+                        $session->forceLogin($requestedUser);
                         $session->tracyUserSwitcherId = $tracyUserSwitcherId;
                         $session->tracyUserSwitcherFp = $tracyUserSwitcherFp;
                     }

@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.0.11',
+            'version' => '5.0.12',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -2836,21 +2836,21 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     /**
-     * Get the list of usernames a UserSwitcher session is permitted to switch to,
+     * Get the list of user page ids a UserSwitcher session is permitted to switch to,
      * applying the configured userSwitcherSelector / userSwitcherRestricted / userSwitcherIncluded
      * filters. Used by both the panel (to render the dropdown) and the post-processor
      * (to validate the destination of a switch POST).
      *
-     * @return array list of usernames (strings)
+     * @return array list of user page ids (ints)
      */
     public static function getSwitcherSelectableUsers() {
         $wire = wire();
-        $names = array();
+        $ids = array();
 
         if(method_exists($wire->pages, 'findRaw')) {
             // include 'roles' so we can filter out users who have only the auto-applied
             // guest role (i.e. no real assigned role) — matches the panel's dropdown filter
-            $findRawFields = ['name', 'roles'];
+            $findRawFields = ['id', 'roles'];
             $findRawSelector = 'templates_id=' . implode('|', $wire->config->userTemplateIDs)
                 . ', has_parent=' . implode('|', $wire->config->usersPageIDs)
                 . ', objects=0, nulls=0, sort=name, check_access=0, status<' . Page::statusUnpublished;
@@ -2868,9 +2868,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $rows = $wire->pages->findRaw($findRawSelector, $findRawFields);
             }
             foreach($rows as $row) {
-                if(!is_array($row) || !isset($row['name'])) continue;
+                if(!is_array($row) || !isset($row['id'])) continue;
                 $roles = isset($row['roles']) && is_array($row['roles']) ? $row['roles'] : [];
-                if(count($roles) > 1) $names[] = $row['name'];
+                if(count($roles) > 1) $ids[] = (int) $row['id'];
             }
         }
         else {
@@ -2888,11 +2888,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
             $users = $users->sort('name');
             foreach($users as $u) {
-                if($u->roles && count($u->roles) > 1) $names[] = $u->name;
+                if($u->roles && count($u->roles) > 1) $ids[] = (int) $u->id;
             }
         }
 
-        return $names;
+        return $ids;
     }
 
 

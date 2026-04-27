@@ -82,9 +82,9 @@ class UserSwitcherPanel extends BasePanel {
                     <select id="userSwitcher" name="userSwitcher" size="5" style="width:100% !important; min-height:105px !important">';
                         if(!$this->wire('user')->isLoggedin()) $out .= '<option value="guest" style="padding: 2px; background:'.TracyDebugger::COLOR_WARN.'; color: #FFFFFF;" selected="selected">guest</option>';
 
-                        $selectableUserNames = TracyDebugger::getSwitcherSelectableUsers();
-                        if(count($selectableUserNames)) {
-                            $selectableUsers = $this->wire('users')->find('name=' . implode('|', $selectableUserNames) . ', sort=name');
+                        $selectableUserIds = TracyDebugger::getSwitcherSelectableUsers();
+                        if(count($selectableUserIds)) {
+                            $selectableUsers = $this->wire('users')->find('id=' . implode('|', $selectableUserIds) . ', sort=name');
                         }
                         else {
                             $selectableUsers = $this->wire('users')->find('id=0'); // empty PageArray
@@ -105,7 +105,7 @@ HTML;
                         foreach($selectableUsers as $u) {
                             $user_label = str_replace('()', '', wirePopulateStringTags(TracyDebugger::getDataValue('userSwitcherUserLabel'), $u));
                             $safe_label = htmlspecialchars($user_label ?? '', ENT_QUOTES, 'UTF-8');
-                            $out .= '<option id="user_'.$u->id.'" data-label="'.$safe_label.'" value="'.htmlspecialchars($u->name ?? '', ENT_QUOTES, 'UTF-8').'" style="padding: 2px; ' . ($this->wire('user')->name === $u->name ? 'background:'.TracyDebugger::COLOR_WARN.'; color: #FFFFFF;" selected="selected"' : '"') . '>'.$safe_label.'</option>';
+                            $out .= '<option id="user_'.$u->id.'" data-label="'.$safe_label.'" value="'.(int) $u->id.'" style="padding: 2px; ' . ($this->wire('user')->id === $u->id ? 'background:'.TracyDebugger::COLOR_WARN.'; color: #FFFFFF;" selected="selected"' : '"') . '>'.$safe_label.'</option>';
                         }
                 $out .= '
                     </select>
