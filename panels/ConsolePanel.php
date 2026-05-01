@@ -844,6 +844,100 @@ class ConsolePanel extends BasePanel {
                 xhr.send("tracyConsoleCancel=1&csrfToken=" + encodeURIComponent(tracyConsole.csrfToken) + "&runId=" + encodeURIComponent(runId));
             },
 
+            /* Break-glass: force-kill every running console script across all tabs / browsers
+               and wipe every file in the console_runs directories. Use when a normal cancel
+               can't reach the runaway process. */
+            cancelAllRuns: function() {
+                if(!confirm("Force-kill ALL running console scripts and clear all console_runs state?\\n\\nThis terminates any legitimately running scripts too. Use this only when the normal cancel button isn't working.")) {
+                    return;
+                }
+                tracyConsole._cancelled = true;
+                tracyConsole._stopPolling = true;
+                if(tracyConsole._pollXhr) { try { tracyConsole._pollXhr.abort(); } catch(e) {} tracyConsole._pollXhr = null; }
+                if(tracyConsole._mainXhr) { try { tracyConsole._mainXhr.abort(); } catch(e) {} tracyConsole._mainXhr = null; }
+                if(tracyConsole._bgTimer) { clearInterval(tracyConsole._bgTimer); tracyConsole._bgTimer = null; }
+                var statusDiv = document.getElementById("tracyConsoleStatus");
+                if(statusDiv) statusDiv.innerHTML = "<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> Force-killing all runs...";
+                var xhr = new XMLHttpRequest();
+                xhr.onreadystatechange = function() {
+                    if(xhr.readyState !== XMLHttpRequest.DONE) return;
+                    var data = null, live = 0, stale = 0;
+                    try {
+                        data = JSON.parse(xhr.responseText);
+                        if(data) {
+                            live  = typeof data.liveKilled === "number" ? data.liveKilled : 0;
+                            stale = typeof data.staleSwept === "number" ? data.staleSwept : 0;
+                        }
+                    } catch(e) {}
+                    if(statusDiv) {
+                        if(xhr.status === 200) {
+                            var parts = [];
+                            if(live > 0) parts.push("killed " + live + " live run" + (live === 1 ? "" : "s"));
+                            if(stale > 0) parts.push("swept " + stale + " stale leftover" + (stale === 1 ? "" : "s"));
+                            statusDiv.innerHTML = "✘ " + (parts.length ? parts.join(", ") : "nothing to clear");
+                        } else {
+                            statusDiv.innerHTML = "✘ Force-kill failed (HTTP " + xhr.status + ")";
+                        }
+                    }
+                    tracyConsole._activeRunId = null;
+                    tracyConsole._pollingActive = false;
+                    tracyConsole._inlineDelivered = true;
+                    tracyConsole.setRunButtonEnabled(true);
+                };
+                xhr.open("POST", "$currentUrl", true);
+                xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+                xhr.send("tracyConsoleCancelAll=1&csrfToken=" + encodeURIComponent(tracyConsole.csrfToken));
+            },
+
+            /* Reattach the panel to any script that's still running on the server
+               (e.g. user closed the tab while it was executing, then reopened the
+               admin). Restores the "Running... <elapsed>" status with cancel icon
+               and resumes polling for the result. */
+            reattachActiveRun: function() {
+                if(tracyConsole._activeRunId) return;
+                var xhr = new XMLHttpRequest();
+                xhr.onreadystatechange = function() {
+                    if(xhr.readyState !== XMLHttpRequest.DONE) return;
+                    if(xhr.status !== 200) return;
+                    if(tracyConsole._activeRunId) return;
+                    var data = null;
+                    try { data = JSON.parse(xhr.responseText); } catch(e) { return; }
+                    if(!data || !data.runs || !data.runs.length) return;
+                    var run = data.runs[0];
+                    if(!run || !run.runId || !run.startedAt) return;
+                    var startedMs = run.startedAt * 1000;
+                    tracyConsole._activeRunId = run.runId;
+                    tracyConsole._bgStartTime = startedMs;
+                    tracyConsole._stopPolling = false;
+                    tracyConsole._inlineDelivered = false;
+                    tracyConsole._pollDelivered = false;
+                    tracyConsole._pollingActive = true;
+                    tracyConsole._cancelled = false;
+                    tracyConsole.setRunButtonEnabled(false);
+                    var elapsed = Math.round((Date.now() - startedMs) / 1000);
+                    var mins = Math.floor(elapsed / 60);
+                    var secs = elapsed % 60;
+                    var timeStr = mins > 0 ? mins + 'm ' + secs + 's' : secs + 's';
+                    var statusDiv = document.getElementById("tracyConsoleStatus");
+                    if(statusDiv) statusDiv.innerHTML = tracyConsole.renderRunningStatus(run.runId, timeStr);
+                    if(tracyConsole._bgTimer) { clearInterval(tracyConsole._bgTimer); }
+                    tracyConsole._bgTimer = setInterval(function() {
+                        var e = Math.round((Date.now() - tracyConsole._bgStartTime) / 1000);
+                        var m = Math.floor(e / 60);
+                        var s = e % 60;
+                        var ts = m > 0 ? m + 'm ' + s + 's' : s + 's';
+                        var sd = document.getElementById("tracyConsoleStatus");
+                        if(sd) sd.innerHTML = tracyConsole.renderRunningStatus(run.runId, ts);
+                    }, 1000);
+                    tracyConsole.pollForResults(run.runId);
+                };
+                xhr.open("POST", "$currentUrl", true);
+                xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+                xhr.send("tracyConsoleActiveRuns=1&csrfToken=" + encodeURIComponent(tracyConsole.csrfToken));
+            },
+
             fetchAndCleanup: function(runId, status) {
                 if(!runId || tracyConsole._inlineDelivered) return;
                 var xhr = new XMLHttpRequest();
@@ -910,21 +1004,11 @@ class ConsolePanel extends BasePanel {
                     return;
                 }
 
-                /* safety net: if polling for over 1 hour, assume process is dead */
-                if(tracyConsole._bgStartTime && (Date.now() - tracyConsole._bgStartTime > 3600000)) {
-                    if(tracyConsole._bgTimer) { clearInterval(tracyConsole._bgTimer); tracyConsole._bgTimer = null; }
-                    var statusDiv = document.getElementById("tracyConsoleStatus");
-                    if(statusDiv) statusDiv.innerHTML = "✘ Process appears to have been terminated by the server";
-                    tracyConsole.setRunButtonEnabled(true);
-                    tracyConsole._activeRunId = null;
-                    tracyConsole.cleanupRunFiles(runId);
-                    return;
-                }
-
-                const container = document.getElementById("tracyConsoleContainer");
-                const pollUrl = container ? container.getAttribute("data-poll-url") : "";
-                if(!pollUrl) return;
-
+                /* POST to the dedicated PHP polling endpoint instead of GET-ing a
+                   static file via .htaccess rewrite — that approach broke when the
+                   rewrite wasn't honoured (request fell through to PW's index.php,
+                   returning HTML and adding a Tracy AJAX bar entry per poll). The
+                   PHP endpoint suppresses the Tracy bar and always returns JSON. */
                 const xmlhttp = new XMLHttpRequest();
                 tracyConsole._pollXhr = xmlhttp;
                 xmlhttp.timeout = 10000;
@@ -944,6 +1028,10 @@ class ConsolePanel extends BasePanel {
                                     setTimeout(function() { tracyConsole.pollForResults(runId); }, 3000);
                                     return;
                                 }
+                                if(data.status === 'missing') {
+                                    setTimeout(function() { tracyConsole.pollForResults(runId); }, 3000);
+                                    return;
+                                }
                                 tracyConsole._pollDelivered = true;
                                 if(tracyConsole._bgTimer) { clearInterval(tracyConsole._bgTimer); tracyConsole._bgTimer = null; }
                                 tracyConsole.fetchAndCleanup(runId, data.status);
@@ -952,9 +1040,6 @@ class ConsolePanel extends BasePanel {
                                     setTimeout(function() { tracyConsole.pollForResults(runId); }, 3000);
                                 }
                             }
-                        }
-                        else if(xmlhttp.status == 404) {
-                            setTimeout(function() { tracyConsole.pollForResults(runId); }, 3000);
                         }
                         else {
                             if(!tracyConsole._stopPolling) {
@@ -968,8 +1053,10 @@ class ConsolePanel extends BasePanel {
                         setTimeout(function() { tracyConsole.pollForResults(runId); }, 3000);
                     }
                 };
-                xmlhttp.open("GET", pollUrl + encodeURIComponent(runId) + "." + Date.now() + ".json", true);
-                xmlhttp.send();
+                xmlhttp.open("POST", "$currentUrl", true);
+                xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+                xmlhttp.send("tracyConsolePoll=1&csrfToken=" + encodeURIComponent(tracyConsole.csrfToken) + "&runId=" + encodeURIComponent(runId));
             },
 
             callPhp: function(code, codeReturn = true) {
@@ -2334,11 +2421,17 @@ class ConsolePanel extends BasePanel {
                                 if (((e.keyCode == 10 || e.charCode == 10) || (e.keyCode == 13 || e.charCode == 13)) && (e.metaKey || e.ctrlKey || e.altKey) && !e.shiftKey) {
                                     if(document.getElementById("runInjectButton")?.disabled) { e.preventDefault(); return; }
                                     e.preventDefault();
-                                    if (e.altKey) tracyConsole.clearResults();
-                                    if ((e.metaKey || e.ctrlKey) && e.altKey) {
-                                        tracyConsole.reloadAndRun();
+                                    const runAfterClear = function() {
+                                        if ((e.metaKey || e.ctrlKey) && e.altKey) {
+                                            tracyConsole.reloadAndRun();
+                                        } else {
+                                            tracyConsole.processTracyCode();
+                                        }
+                                    };
+                                    if (e.altKey) {
+                                        tracyConsole.clearResults().then(runAfterClear, runAfterClear);
                                     } else {
-                                        tracyConsole.processTracyCode();
+                                        runAfterClear();
                                     }
                                 }
 
@@ -2543,6 +2636,8 @@ class ConsolePanel extends BasePanel {
         if(el) el.addEventListener('click', function() { tracyConsole.tce.focus(); });
         el = document.getElementById('tracyConsoleClearResults');
         if(el) el.addEventListener('click', function() { tracyConsole.clearResults(); });
+        el = document.getElementById('tracyConsoleForceKillAll');
+        if(el) el.addEventListener('click', function() { tracyConsole.cancelAllRuns(); });
         el = document.getElementById('tracyIncludeCodeSelect');
         if(el) el.addEventListener('change', function() { tracyConsole.tracyIncludeCode(this); });
         el = document.getElementById('runInjectButton');
@@ -2555,6 +2650,7 @@ class ConsolePanel extends BasePanel {
         if(el) el.addEventListener('click', function(e) { e.preventDefault(); tracyConsole.sortList('chronological'); });
         el = document.getElementById('saveSnippet');
         if(el) el.addEventListener('click', function() { tracyConsole.saveSnippet(); });
+        tracyConsole.reattachActiveRun();
         </script>
 
 HTML;
@@ -2609,6 +2705,7 @@ HTML;
                         $out .= '
                         <span style="display:inline-block; padding-right: 5px;">
                             <input id="tracyConsoleClearResults" title="Clear results" type="submit" class="clearResults" style="padding: 3px 5px !important" value="&#10006; Clear results" />
+                            <input id="tracyConsoleForceKillAll" title="Force-kill ALL running console scripts and clear console_runs state. Use only when the normal cancel button isn\'t working." type="submit" class="clearResults" style="padding: 3px 5px !important; color: #e22006 !important" value="&#9888; Force-kill all" />
                             <select id="tracyIncludeCodeSelect" name="includeCode" style="height: 25px !important" title="When to execute code" />
                                 <option value="off"' . (!$this->tracyIncludeCode || $this->tracyIncludeCode['when'] === 'off' ? ' selected' : '') . '>@ Run</option>
                                 <option value="init"' . ($this->tracyIncludeCode && $this->tracyIncludeCode['when'] === 'init' ? ' selected' : '') . '>@ Init</option>

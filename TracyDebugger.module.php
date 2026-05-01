@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.0.12',
+            'version' => '5.0.13',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -119,6 +119,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $consoleRunId = '';
     public static $consoleRunStatusDir = '';
     public static $consoleRunCacheDir = '';
+    public static $consolePidHandle = null;
     public static $redirectInfo;
     public static $processWireInfoSections = array(
         'configData' => 'Config Data',
@@ -581,45 +582,70 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     echo json_encode(array('status' => 'error', 'message' => 'missing runId'));
                     exit;
                 }
-                $statusDir = $this->wire('config')->paths->assets . 'TracyDebugger/console_runs/';
-                $cacheDir  = $this->wire('config')->paths->cache  . 'TracyDebugger/console_runs/';
-                $pidFile   = $cacheDir . $runId . '.pid';
-                $killed = false;
-                $pid = null;
-                if(file_exists($pidFile)) {
-                    $pid = (int) trim((string) file_get_contents($pidFile));
-                }
-                if($pid > 0 && $pid !== getmypid()) {
-                    if(stripos(PHP_OS, 'WIN') === 0) {
-                        @exec('taskkill /F /PID ' . (int) $pid . ' 2>&1', $out, $rc);
-                        @exec('tasklist /FI "PID eq ' . (int) $pid . '" 2>&1', $checkOut);
-                        $stillAlive = false;
-                        foreach((array) $checkOut as $line) {
-                            if(strpos($line, (string)(int)$pid) !== false) { $stillAlive = true; break; }
-                        }
-                        $killed = !$stillAlive;
-                    } else {
-                        // SIGKILL cannot be blocked or ignored, so a successful posix_kill
-                        // return (or ESRCH meaning the process was already gone) means the
-                        // process will terminate. We don't probe afterwards because a
-                        // just-killed process is briefly a zombie that signal 0 still sees
-                        // as "alive" until the parent (PHP-FPM master) reaps it.
-                        if(function_exists('posix_kill')) {
-                            $rc = @posix_kill($pid, 9);
-                            $err = function_exists('posix_get_last_error') ? posix_get_last_error() : 0;
-                            $killed = ($rc === true || $err === 3); // true or ESRCH
-                        } else {
-                            @exec('kill -9 ' . (int) $pid . ' 2>&1', $out2, $rc2);
-                            $killed = ($rc2 === 0);
-                        }
-                    }
-                }
-                @file_put_contents($statusDir . $runId . '.json', json_encode(array('status' => 'cancelled')));
-                @unlink($pidFile);
-                @unlink($cacheDir . $runId . '.json');
+                $r = $this->cleanupConsoleRun($runId);
                 echo json_encode(array(
                     'status' => 'cancelled',
-                    'killed' => $killed,
+                    'wasLive' => $r['wasLive'],
+                    'killed' => $r['killed'],
+                    'connKilled' => $r['connKilled'],
+                ));
+                exit;
+            }
+
+            // background execution: force-kill every running console script and clear all state.
+            // The break-glass option for when a normal cancel can't get to the runaway script.
+            if($this->wire('input')->post->tracyConsoleCancelAll == 1) {
+                Debugger::$showBar = false;
+                header_remove('X-Tracy-Ajax');
+                if(!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) {
+                    http_response_code(403);
+                    exit;
+                }
+                $csrfToken = isset($_POST['csrfToken']) ? $_POST['csrfToken'] : '';
+                if(!$csrfToken || !hash_equals((string)$this->wire('session')->tracyConsoleToken, $csrfToken)) {
+                    http_response_code(403);
+                    exit;
+                }
+                header('Content-Type: application/json');
+                $statusDir = $this->wire('config')->paths->assets . 'TracyDebugger/console_runs/';
+                $cacheDir  = $this->wire('config')->paths->cache  . 'TracyDebugger/console_runs/';
+                $cachePath = $this->wire('config')->paths->cache  . 'TracyDebugger/';
+                $runIds = array();
+                foreach(array($cacheDir, $statusDir) as $dir) {
+                    if(!is_dir($dir)) continue;
+                    foreach(glob($dir . '*.{json,pid,connid}', GLOB_BRACE) as $file) {
+                        $base = pathinfo($file, PATHINFO_FILENAME);
+                        if($base !== '') $runIds[$base] = true;
+                    }
+                }
+                foreach(glob($cachePath . 'consoleCode_*.php') as $file) {
+                    $base = pathinfo($file, PATHINFO_FILENAME);
+                    if(strpos($base, 'consoleCode_') === 0) {
+                        $runIds[substr($base, strlen('consoleCode_'))] = true;
+                    }
+                }
+                $runs = array();
+                $liveKilled = 0;
+                $staleSwept = 0;
+                foreach(array_keys($runIds) as $rid) {
+                    $r = $this->cleanupConsoleRun($rid);
+                    $runs[] = array_merge(array('runId' => $rid), $r);
+                    if($r['wasLive']) $liveKilled++;
+                    else $staleSwept++;
+                }
+                /* sweep anything left over (orphan files where we couldn't recover a runId) */
+                foreach(array($cacheDir, $statusDir) as $dir) {
+                    if(!is_dir($dir)) continue;
+                    foreach(glob($dir . '*') as $file) {
+                        if(is_file($file)) @unlink($file);
+                    }
+                }
+                foreach(glob($cachePath . 'consoleCode_*.php') as $file) @unlink($file);
+                echo json_encode(array(
+                    'status' => 'ok',
+                    'liveKilled' => $liveKilled,
+                    'staleSwept' => $staleSwept,
+                    'runs' => $runs,
                 ));
                 exit;
             }
@@ -653,7 +679,87 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     @unlink($cacheFile);
                     @unlink($statusDir . $runId . '.json');
                     @unlink($cacheDir . $runId . '.pid');
+                    @unlink($cacheDir . $runId . '.connid');
                 }
+                exit;
+            }
+
+            // background execution: lightweight status poll for a runId. We can't rely
+            // on a static-file fetch with .htaccess rewriting because some servers don't
+            // honour AllowOverride for that directory and the request falls through to
+            // index.php — which boots PW + Tracy, breaks the JSON response, and adds a
+            // bar entry every poll. A dedicated PHP endpoint with bar suppression avoids
+            // both issues.
+            if($this->wire('input')->post->tracyConsolePoll == 1) {
+                Debugger::$showBar = false;
+                header_remove('X-Tracy-Ajax');
+                if(!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) {
+                    http_response_code(403);
+                    exit;
+                }
+                $csrfToken = isset($_POST['csrfToken']) ? $_POST['csrfToken'] : '';
+                if(!$csrfToken || !hash_equals((string)$this->wire('session')->tracyConsoleToken, $csrfToken)) {
+                    http_response_code(403);
+                    exit;
+                }
+                $runId = isset($_POST['runId']) ? preg_replace('/[^a-zA-Z0-9_.]/', '', $_POST['runId']) : '';
+                header('Content-Type: application/json');
+                header('Cache-Control: no-cache, no-store, must-revalidate');
+                if(!$runId) {
+                    echo json_encode(array('status' => 'error'));
+                    exit;
+                }
+                $statusFile = $this->wire('config')->paths->assets . 'TracyDebugger/console_runs/' . $runId . '.json';
+                if(file_exists($statusFile)) {
+                    echo (string) file_get_contents($statusFile);
+                } else {
+                    echo json_encode(array('status' => 'missing'));
+                }
+                exit;
+            }
+
+            // background execution: list runs that are still alive so the panel can re-attach
+            // its UI to a script started in a now-closed tab
+            if($this->wire('input')->post->tracyConsoleActiveRuns == 1) {
+                Debugger::$showBar = false;
+                header_remove('X-Tracy-Ajax');
+                if(!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) {
+                    http_response_code(403);
+                    exit;
+                }
+                $csrfToken = isset($_POST['csrfToken']) ? $_POST['csrfToken'] : '';
+                if(!$csrfToken || !hash_equals((string)$this->wire('session')->tracyConsoleToken, $csrfToken)) {
+                    http_response_code(403);
+                    exit;
+                }
+                header('Content-Type: application/json');
+                $statusDir = $this->wire('config')->paths->assets . 'TracyDebugger/console_runs/';
+                $cacheDir  = $this->wire('config')->paths->cache  . 'TracyDebugger/console_runs/';
+                $runs = array();
+                if(is_dir($statusDir)) {
+                    foreach(glob($statusDir . '*.json') as $file) {
+                        $runId = pathinfo($file, PATHINFO_FILENAME);
+                        if(!preg_match('/^[a-zA-Z0-9_.]+$/', $runId)) continue;
+                        $data = @json_decode((string) @file_get_contents($file), true);
+                        $status = is_array($data) && isset($data['status']) ? $data['status'] : null;
+                        if($status !== 'running') continue;
+                        $pidFile = $cacheDir . $runId . '.pid';
+                        $live = false;
+                        if(file_exists($pidFile)) {
+                            $fh = @fopen($pidFile, 'r');
+                            if($fh) {
+                                $live = !@flock($fh, LOCK_SH | LOCK_NB);
+                                if(!$live) @flock($fh, LOCK_UN);
+                                @fclose($fh);
+                            }
+                        }
+                        if(!$live) continue;
+                        $startedAt = (int) filemtime($pidFile);
+                        $runs[] = array('runId' => $runId, 'startedAt' => $startedAt);
+                    }
+                }
+                usort($runs, function($a, $b) { return $b['startedAt'] - $a['startedAt']; });
+                echo json_encode(array('runs' => $runs));
                 exit;
             }
 
@@ -665,7 +771,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     $this->wire('config')->paths->cache . 'TracyDebugger/console_runs/'
                 ) as $runDir) {
                     if(is_dir($runDir)) {
-                        foreach(glob($runDir . '*.{json,pid}', GLOB_BRACE) as $file) {
+                        foreach(glob($runDir . '*.{json,pid,connid}', GLOB_BRACE) as $file) {
                             if(filemtime($file) < time() - 3600) {
                                 @unlink($file);
                             }
@@ -2016,6 +2122,83 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     private function deleteCache($cache) {
         $this->wire('cache')->delete($cache);
+    }
+
+    /**
+     * Fully terminate a console run: SIGKILL the PHP worker, KILL its MySQL
+     * connection so any in-flight query is aborted and locks released, then
+     * remove every file associated with the run.
+     *
+     * `wasLive` distinguishes a real running process from a stale leftover
+     * (file marker still present after the process is long gone).
+     *
+     * Returns array('wasLive' => bool, 'killed' => bool, 'connKilled' => bool).
+     */
+    private function cleanupConsoleRun($runId) {
+        $result = array('wasLive' => false, 'killed' => false, 'connKilled' => false);
+        $runId = preg_replace('/[^a-zA-Z0-9_.]/', '', (string) $runId);
+        if(!$runId) return $result;
+
+        $statusDir = $this->wire('config')->paths->assets . 'TracyDebugger/console_runs/';
+        $cacheDir  = $this->wire('config')->paths->cache  . 'TracyDebugger/console_runs/';
+        $cachePath = $this->wire('config')->paths->cache  . 'TracyDebugger/';
+        $pidFile    = $cacheDir . $runId . '.pid';
+        $connIdFile = $cacheDir . $runId . '.connid';
+
+        if(file_exists($pidFile)) {
+            $fh = @fopen($pidFile, 'r');
+            if($fh) {
+                $result['wasLive'] = !@flock($fh, LOCK_SH | LOCK_NB);
+                if(!$result['wasLive']) @flock($fh, LOCK_UN);
+                @fclose($fh);
+            }
+            if($result['wasLive']) {
+                $pid = (int) trim((string) file_get_contents($pidFile));
+                if($pid > 0 && $pid !== getmypid()) {
+                    if(stripos(PHP_OS, 'WIN') === 0) {
+                        @exec('taskkill /F /PID ' . (int) $pid . ' 2>&1', $out, $rc);
+                        @exec('tasklist /FI "PID eq ' . (int) $pid . '" 2>&1', $checkOut);
+                        $stillAlive = false;
+                        foreach((array) $checkOut as $line) {
+                            if(strpos($line, (string)(int)$pid) !== false) { $stillAlive = true; break; }
+                        }
+                        $result['killed'] = !$stillAlive;
+                    } else {
+                        if(function_exists('posix_kill')) {
+                            $rc = @posix_kill($pid, 9);
+                            $err = function_exists('posix_get_last_error') ? posix_get_last_error() : 0;
+                            $result['killed'] = ($rc === true || $err === 3);
+                        } else {
+                            @exec('kill -9 ' . (int) $pid . ' 2>&1', $out2, $rc2);
+                            $result['killed'] = ($rc2 === 0);
+                        }
+                    }
+                }
+            }
+        }
+
+        if(file_exists($connIdFile)) {
+            $connId = (int) trim((string) file_get_contents($connIdFile));
+            if($connId > 0) {
+                try {
+                    $this->wire('database')->exec('KILL ' . $connId);
+                    $result['connKilled'] = true;
+                } catch(\Exception $e) {
+                    /* "Unknown thread id" means it's already gone — same outcome */
+                    if(strpos($e->getMessage(), 'Unknown thread id') !== false) {
+                        $result['connKilled'] = true;
+                    }
+                }
+            }
+        }
+
+        @unlink($pidFile);
+        @unlink($connIdFile);
+        @unlink($cacheDir . $runId . '.json');
+        @unlink($statusDir . $runId . '.json');
+        @unlink($cachePath . 'consoleCode_' . $runId . '.php');
+
+        return $result;
     }
 
     /**

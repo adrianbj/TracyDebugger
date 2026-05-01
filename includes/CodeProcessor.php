@@ -19,10 +19,31 @@ if($tracyRunId) {
         'status' => 'running'
     )));
     /* PID lives in the non-public cache dir so the cancel endpoint can target
-       this process without exposing process ids over HTTP */
+       this process without exposing process ids over HTTP. The file is held
+       under LOCK_EX for the lifetime of the request — the OS releases the lock
+       when the request ends for ANY reason (clean exit, fatal, SIGKILL, FPM
+       request_terminate_timeout). Other endpoints test the lock via LOCK_SH +
+       LOCK_NB to know whether this script is genuinely still running, since
+       checking the PID itself is unreliable: PHP-FPM workers persist across
+       requests, so the PID in the file stays alive long after the script ends. */
     if(function_exists('getmypid')) {
-        file_put_contents($tracyRunCacheDir . $tracyRunId . '.pid', (string) getmypid());
+        $tracyPidFh = fopen($tracyRunCacheDir . $tracyRunId . '.pid', 'w');
+        if($tracyPidFh) {
+            flock($tracyPidFh, LOCK_EX);
+            fwrite($tracyPidFh, (string) getmypid());
+            fflush($tracyPidFh);
+            TracyDebugger::$consolePidHandle = $tracyPidFh;
+        }
     }
+    /* MySQL connection id is recorded so the cancel endpoint can KILL the
+       in-flight query and release any locks the worker is holding — SIGKILL
+       on the PHP process closes the TCP socket but does not necessarily
+       abort an already-running query (e.g. one stuck in "waiting for handler
+       commit") */
+    try {
+        $tracyDbConnId = (int) $this->wire('database')->query('SELECT CONNECTION_ID()')->fetchColumn();
+        if($tracyDbConnId) file_put_contents($tracyRunCacheDir . $tracyRunId . '.connid', (string) $tracyDbConnId);
+    } catch(\Exception $e) {}
     ignore_user_abort(true);
     set_time_limit(0);
 }
@@ -291,6 +312,13 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
             );
             file_put_contents($tracyRunCacheDir . $tracyRunId . '.json', json_encode($result));
             file_put_contents($tracyRunStatusDir . $tracyRunId . '.json', json_encode(array('status' => 'complete')));
+            /* release the flock now so the panel stops seeing this run as live the
+               instant the work is done — anything that runs after this (echo to a
+               closed connection, AJAX-bar render, etc.) must not keep blocking the
+               liveness probe. The OS would release the lock at request end anyway,
+               but doing it here drops the window from "until shutdown finishes" to
+               "now". */
+            tracyConsoleReleasePidLock();
         }
 
         // also output inline for normal (non-timed-out) responses
@@ -305,7 +333,10 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
 
     }
 
-    if($tracyRunId) @unlink($this->file);
+    if($tracyRunId) {
+        @unlink($this->file);
+        @unlink($tracyRunCacheDir . $tracyRunId . '.connid');
+    }
     exit;
 }
 
@@ -333,8 +364,24 @@ function tracyConsoleExceptionHandler($err) {
     writeError(array('type' => 'Exception', 'line' => $err->getLine(), 'message' => $err->getMessage(), 'file' => $err->getFile()));
 }
 
+/* Release the flock held on the .pid file. Idempotent — safe to call from any
+   exit path (success, error, fatal, shutdown). Releasing early lets the active-runs
+   and cancel endpoints see the run as no longer live without waiting for the OS
+   to clean up at process termination. */
+function tracyConsoleReleasePidLock() {
+    $fh = TracyDebugger::$consolePidHandle;
+    if(is_resource($fh)) {
+        @flock($fh, LOCK_UN);
+        @fclose($fh);
+    }
+    TracyDebugger::$consolePidHandle = null;
+}
+
 // fatal error / shutdown handler function
 function tracyConsoleShutdownHandler() {
+    /* always release the lock first, regardless of error state, so the panel
+       stops reporting "Running..." the moment this request actually ends */
+    tracyConsoleReleasePidLock();
     // this prevents silenced(@) errors from being captured by this custom error handler
     if(error_reporting() === 0) {
         // continue script execution, skipping standard PHP error handler
@@ -407,5 +454,6 @@ function writeError($error) {
         );
         file_put_contents($cacheDir . $runId . '.json', json_encode($result));
         file_put_contents($statusDir . $runId . '.json', json_encode(array('status' => 'error')));
+        tracyConsoleReleasePidLock();
     }
 }
