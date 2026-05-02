@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.0.13',
+            'version' => '5.0.14',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -1252,8 +1252,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/main.js';
                 Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/tinycon.min.js';
                 Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/js-loader.js';
-                // always load polling so cross-window dumps (made by other authorized users/tabs) surface in realtime
-                Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/dumps-polling.js';
+                // only load dumps polling when something on this page would actually consume it:
+                // the Dumps Recorder panel is enabled, or guest-dumps recording is on (which
+                // auto-enables the panel later in ready()). without one of these there's no
+                // panel to update and no reason for the recorder to be writing dumps.json.
+                if(in_array('dumpsRecorder', static::$showPanels) || $this->data['recordGuestDumps']) {
+                    Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/dumps-polling.js';
+                }
 
                 // load File Editor panel if Tracy online editor is selected
                 if(static::$useOnlineEditor && static::$onlineEditor == 'tracy' && !in_array('fileEditor', static::$showPanels)) {
