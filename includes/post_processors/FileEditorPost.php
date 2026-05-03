@@ -30,12 +30,17 @@
                     // if changes to any other file are submitted
                     if($this->wire('input')->post->tracyTestFileCode || $this->wire('input')->post->tracySaveFileCode || $this->wire('input')->post->tracyChangeTemplateCode) {
                         $rootPath = $this->wire('config')->paths->root;
-                        $filePath = str_replace('\\', '/', realpath($rootPath . $this->wire('input')->post->fileEditorFilePath));
-                        if($this->wire('input')->post->fileEditorFilePath != '' && $filePath !== false && strpos($filePath, $rootPath) === 0) {
+                        $editorPath = $this->wire('input')->post->fileEditorFilePath;
+                        $filePath = str_replace('\\', '/', realpath($rootPath . $editorPath));
+                        if($filePath === false || $filePath === '') {
+                            $filePath = str_replace('\\', '/', realpath($editorPath));
+                        }
+                        if($editorPath != '' && $filePath !== false && strpos($filePath, $rootPath) === 0) {
                             $rawCode = base64_decode($this->wire('input')->post->tracyFileEditorRawCode);
+                            $relPath = str_replace($rootPath, '', $filePath);
 
                             // backup old version to Tracy cache directory
-                            $cachePath = $this->tracyCacheDir . $this->wire('input')->post->fileEditorFilePath;
+                            $cachePath = $this->tracyCacheDir . $relPath;
                             if(!is_dir($cachePath)) if(!wireMkdir(pathinfo($cachePath, PATHINFO_DIRNAME), true)) {
                                 throw new WireException("Unable to create cache path: $cachePath");
                             }
@@ -48,9 +53,9 @@
 
                             if($this->wire('input')->post->tracyTestFileCode) {
                                 if(PHP_VERSION_ID >= 70300) {
-                                    setcookie('tracyTestFileEditor', $this->wire('input')->post->fileEditorFilePath, ['expires' => time() + (10 * 365 * 24 * 60 * 60), 'path' => '/', 'samesite' => 'Strict']);
+                                    setcookie('tracyTestFileEditor', $relPath, ['expires' => time() + (10 * 365 * 24 * 60 * 60), 'path' => '/', 'samesite' => 'Strict']);
                                 } else {
-                                    setcookie('tracyTestFileEditor', $this->wire('input')->post->fileEditorFilePath, time() + (10 * 365 * 24 * 60 * 60), '/');
+                                    setcookie('tracyTestFileEditor', $relPath, time() + (10 * 365 * 24 * 60 * 60), '/');
                                 }
                             }
                         }
@@ -63,11 +68,16 @@
                     $rootPath = $this->wire('config')->paths->root;
                     $editorPath = $this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor;
                     $this->filePath = str_replace('\\', '/', realpath($rootPath . $editorPath));
-                    $this->cachePath = str_replace('\\', '/', realpath($this->tracyCacheDir . $editorPath));
-                    if($this->filePath !== false && strpos($this->filePath, $rootPath) === 0 &&
-                       $this->cachePath !== false && strpos($this->cachePath, $this->tracyCacheDir) === 0) {
-                        copy($this->cachePath, $this->filePath);
-                        unlink($this->cachePath);
+                    if($this->filePath === false || $this->filePath === '') {
+                        $this->filePath = str_replace('\\', '/', realpath($editorPath));
+                    }
+                    if($this->filePath !== false && strpos($this->filePath, $rootPath) === 0) {
+                        $relPath = str_replace($rootPath, '', $this->filePath);
+                        $this->cachePath = str_replace('\\', '/', realpath($this->tracyCacheDir . $relPath));
+                        if($this->cachePath !== false && strpos($this->cachePath, $this->tracyCacheDir) === 0) {
+                            copy($this->cachePath, $this->filePath);
+                            unlink($this->cachePath);
+                        }
                     }
                     $this->wire('session')->redirect($this->httpReferer);
                 }

@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.0.14',
+            'version' => '5.0.15',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -3375,12 +3375,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $rootPath = $this->wire('config')->paths->root;
             $editorPath = $this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor;
             $resolvedFilePath = str_replace('\\', '/', realpath($rootPath . $editorPath));
-            $resolvedCachePath = str_replace('\\', '/', realpath($this->tracyCacheDir . $editorPath));
-            if($resolvedFilePath !== false && strpos($resolvedFilePath, $rootPath) === 0 &&
-               $resolvedCachePath !== false && strpos($resolvedCachePath, $this->tracyCacheDir) === 0 &&
-               file_exists($resolvedCachePath)) {
-                copy($resolvedCachePath, $resolvedFilePath);
-                unlink($resolvedCachePath);
+            if($resolvedFilePath === false || $resolvedFilePath === '') {
+                $resolvedFilePath = str_replace('\\', '/', realpath($editorPath));
+            }
+            if($resolvedFilePath !== false && strpos($resolvedFilePath, $rootPath) === 0) {
+                $relPath = str_replace($rootPath, '', $resolvedFilePath);
+                $resolvedCachePath = str_replace('\\', '/', realpath($this->tracyCacheDir . $relPath));
+                if($resolvedCachePath !== false && strpos($resolvedCachePath, $this->tracyCacheDir) === 0 &&
+                   file_exists($resolvedCachePath)) {
+                    copy($resolvedCachePath, $resolvedFilePath);
+                    unlink($resolvedCachePath);
+                }
             }
         }
 
