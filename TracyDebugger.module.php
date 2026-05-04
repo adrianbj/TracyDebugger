@@ -70,7 +70,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     protected $data = array();
     protected $time;
-    protected $httpReferer;
+    public $httpReferer;
     protected $tracyEnabled = false;
     protected $earlyExit = false;
     protected $tracyCacheDir;
@@ -975,8 +975,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
 
 
-            // PW VERSION SWITCHER
+            // PW VERSION SWITCHER — auto-revert cleanup
+            // If PW booted successfully after a version switch, clean up the auto-revert files
+            // If an auto-revert occurred (previous request had fatal error), show warning and clean up
             PwVersionSwitcher::handleAutoRevertCleanup($this);
+
+            // PW VERSION SWITCHER
             PwVersionSwitcher::handleVersionSwitchPost($this);
 
 

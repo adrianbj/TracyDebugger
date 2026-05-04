@@ -8,7 +8,7 @@
 class PwVersionSwitcher {
 
     /**
-     * Handle auto-revert cleanup early in init().
+     * Handle auto-revert cleanup in init().
      * If an auto-revert occurred, clean up infrastructure and clear stale session vars.
      *
      * @param TracyDebugger $module
@@ -89,9 +89,10 @@ class PwVersionSwitcher {
 
             $rootPath = $module->wire('config')->paths->root;
 
-            // Don't re-swap if a revert just occurred or is in progress
+            // Don't re-swap if a revert just occurred or a switch is in progress
             // (e.g. browser reload resends the POST data after a failed switch)
-            if(file_exists($rootPath . '.tracy-pw-reverted') || file_exists($rootPath . '.tracy-pw-revert')) return;
+            if(file_exists($rootPath . '.tracy-pw-reverted')) return;
+            if(file_exists($rootPath . '.tracy-pw-revert')) return;
 
             $targetVersion = $module->wire('input')->post->tracyPwVersion;
 
