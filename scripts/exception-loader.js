@@ -130,6 +130,64 @@ if(!tracyExceptionLoader) {
             }
         },
 
+        copyMarkdown: function(btn) {
+            var mdPath = btn.getAttribute("data-md-path");
+            if(!mdPath) return;
+
+            var originalText = btn.textContent;
+            var originalBg = btn.style.background;
+            var resetButton = function(text, bg) {
+                btn.textContent = text;
+                btn.style.background = bg;
+                setTimeout(function() {
+                    btn.textContent = originalText;
+                    btn.style.background = originalBg;
+                }, 1200);
+            };
+
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if(xhr.readyState !== XMLHttpRequest.DONE) return;
+                if(xhr.status === 200 && xhr.responseText) {
+                    try {
+                        var data = JSON.parse(xhr.responseText);
+                        var contents = data && typeof data.contents === "string" ? data.contents : "";
+                        if(navigator.clipboard && navigator.clipboard.writeText) {
+                            navigator.clipboard.writeText(contents).then(function() {
+                                resetButton("✓", "#4CAF50");
+                            }).catch(function() {
+                                resetButton("✗", "#CD1818");
+                            });
+                        }
+                        else {
+                            var ta = document.createElement("textarea");
+                            ta.value = contents;
+                            ta.style.position = "fixed";
+                            ta.style.opacity = "0";
+                            document.body.appendChild(ta);
+                            ta.select();
+                            try {
+                                document.execCommand("copy");
+                                resetButton("✓", "#4CAF50");
+                            } catch(err) {
+                                resetButton("✗", "#CD1818");
+                            }
+                            document.body.removeChild(ta);
+                        }
+                    } catch(err) {
+                        resetButton("✗", "#CD1818");
+                    }
+                }
+                else {
+                    resetButton("✗", "#CD1818");
+                }
+            };
+            xhr.open("POST", tracyExceptionsViewer.currentURL, true);
+            xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+            xhr.send("filePath=" + encodeURIComponent(mdPath) + "&csrfToken=" + encodeURIComponent(tracyExceptionsViewer.csrfToken));
+        },
+
         loadExceptionFile: function(filePath) {
             if(document.getElementById("tracy-debug-panel-ProcessWire-TracyExceptionsPanel").classList.contains("tracy-mode-window")) {
                 this.populateExceptionViewer(filePath);
@@ -158,6 +216,13 @@ if(!tracyExceptionLoader) {
 
             doc.addEventListener("click", function(e) {
                 if (e.target) {
+                    if (e.target.classList && e.target.classList.contains("tracy-md-copy-btn")) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        tracyExceptionLoader.copyMarkdown(e.target);
+                        return;
+                    }
+
                     let curEl = e.target;
 
                     while (curEl && curEl.tagName !== "A") {

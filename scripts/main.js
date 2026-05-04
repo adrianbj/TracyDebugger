@@ -142,6 +142,36 @@ function tracyDumpsToggler(el, show) {
     });
 };
 
+(function() {
+    if(window.__tracyMdCopyHandlerInstalled) return;
+    window.__tracyMdCopyHandlerInstalled = true;
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest && e.target.closest('[data-tracy-md-copy]');
+        if(!btn) return;
+        e.preventDefault();
+        var src = btn.parentElement.querySelector('[data-tracy-md-source]');
+        if(!src) return;
+        var md;
+        try { md = JSON.parse(src.textContent); } catch(err) { return; }
+        var orig = btn.textContent;
+        var done = function(ok) {
+            btn.textContent = ok ? 'Copied!' : 'Copy failed';
+            setTimeout(function() { btn.textContent = orig; }, 1200);
+        };
+        if(navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(md).then(function() { done(true); }, function() { done(false); });
+        } else {
+            var ta = document.createElement('textarea');
+            ta.value = md;
+            ta.style.cssText = 'position:fixed;opacity:0';
+            document.body.appendChild(ta);
+            ta.select();
+            try { done(document.execCommand('copy')); } catch(err) { done(false); }
+            document.body.removeChild(ta);
+        }
+    }, true);
+})();
+
 // reposition panel if comment opened (for Captain Hook and API Explorer panels)
 document.addEventListener("click", filterEventHandler(".comment", function (e) {
     setTimeout(function() {

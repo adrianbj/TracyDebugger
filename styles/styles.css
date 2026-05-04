@@ -1863,11 +1863,39 @@ ul.pw-info-links {
     list-style: none;
     margin: 0 0 0 5px;
     padding: 0;
-    width: 300px;
+    width: 360px;
+}
+
+.tracy-exceptions-file-tree li {
+    display: flex;
+    align-items: center;
+}
+
+.tracy-exceptions-file-tree li > a {
+    flex: 1;
+    min-width: 0;
+    word-break: break-all;
+}
+
+.tracy-exceptions-file-tree .tracy-md-copy-btn {
+    flex-shrink: 0;
+    margin-left: 6px;
+    padding: 0 5px;
+    font: bold 9px/1.5 Verdana, sans-serif;
+    color: #fff;
+    background: #888;
+    border: 0;
+    border-radius: 2px;
+    cursor: pointer;
+    min-width: 22px;
+}
+
+.tracy-exceptions-file-tree .tracy-md-copy-btn:hover {
+    background: #555;
 }
 
 #tracy-debug-panel-ProcessWire-TracyExceptionsPanel[class*="tracy-mode-"] {
-    min-width: min(575px, 95vw);
+    min-width: min(635px, 95vw);
 }
 
 .tracy-file-tree ul ul {

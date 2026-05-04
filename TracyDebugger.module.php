@@ -1675,6 +1675,54 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 });
             }
 
+            if($outputMode != Debugger::PRODUCTION) {
+                Debugger::getBlueScreen()->addPanel(function (?\Throwable $ex): ?array {
+                    static $stashed = null;
+                    static $rendered = false;
+
+                    if($ex !== null) {
+                        if($stashed === null) $stashed = $ex;
+                        return null;
+                    }
+                    if($rendered || $stashed === null) return null;
+                    $rendered = true;
+
+                    $activeBs = Debugger::getBlueScreen();
+                    $tempBs = new \Tracy\BlueScreen();
+                    $tempBs->maxDepth = $activeBs->maxDepth;
+                    $tempBs->maxLength = $activeBs->maxLength;
+                    $tempBs->maxItems = $activeBs->maxItems;
+                    $tempBs->scrubber = $activeBs->scrubber;
+                    $tempBs->keysToHide = $activeBs->keysToHide;
+                    $tempBs->collapsePaths = $activeBs->collapsePaths;
+                    $tempBs->showEnvironment = $activeBs->showEnvironment;
+                    try {
+                        $md = $tempBs->renderAgent($stashed);
+                    } catch(\Throwable $e) {
+                        return null;
+                    }
+
+                    $nonceAttr = TracyDebugger::getNonceAttr();
+                    $jsonMd = str_replace('</', '<\\/', \Tracy\Helpers::jsonEncode($md, true));
+                    $escapedMd = htmlspecialchars($md, ENT_QUOTES, 'UTF-8');
+
+                    $script = '(function(){if(window.__tracyMdCopyHandlerInstalled)return;window.__tracyMdCopyHandlerInstalled=true;document.addEventListener("click",function(e){var btn=e.target.closest&&e.target.closest("[data-tracy-md-copy]");if(!btn)return;e.preventDefault();var src=btn.parentElement.querySelector("[data-tracy-md-source]");if(!src)return;var md;try{md=JSON.parse(src.textContent);}catch(err){return;}var orig=btn.textContent;var done=function(ok){btn.textContent=ok?"Copied!":"Copy failed";setTimeout(function(){btn.textContent=orig;},1200);};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(md).then(function(){done(true);},function(){done(false);});}else{var ta=document.createElement("textarea");ta.value=md;ta.style.cssText="position:fixed;opacity:0";document.body.appendChild(ta);ta.select();try{done(document.execCommand("copy"));}catch(err){done(false);}document.body.removeChild(ta);}},true);})();';
+
+                    $panelHtml = '<div class="tracy-md-copy-wrap" style="margin: 0 0 8px 0;">'
+                        . '<button type="button" data-tracy-md-copy class="tracy-md-copy-btn" style="padding:4px 10px;font-size:12px;cursor:pointer;background:#eee;border:1px solid #ccc;border-radius:3px;">Copy markdown to clipboard</button>'
+                        . '<script type="application/json" data-tracy-md-source>' . $jsonMd . '</script>'
+                        . '</div>'
+                        . '<pre style="white-space: pre-wrap; font-size: 11px; background: #fafafa; padding: 8px; border: 1px solid #eee; max-height: 600px; overflow: auto; margin: 0;">' . $escapedMd . '</pre>'
+                        . '<script' . $nonceAttr . '>' . $script . '</script>';
+
+                    return [
+                        'tab' => 'Agent Markdown',
+                        'panel' => $panelHtml,
+                        'collapsed' => true,
+                    ];
+                });
+            }
+
             Debugger::getBlueScreen()->maxDepth = $this->data['maxDepth'];
             Debugger::getBlueScreen()->maxLength = $this->data['maxLength'];
             Debugger::getBlueScreen()->maxItems = $this->data['maxItems'];

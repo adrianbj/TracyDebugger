@@ -170,7 +170,17 @@ HTML;
             $aStyle = $isNew ? ' style="color: #FFFFFF !important"' : '';
 
             $escapedFileName = htmlspecialchars($fileName ?? '', ENT_QUOTES, 'UTF-8');
-            $parts[] = "<li style='{$liStyle}'><a{$aStyle} href='tracyexception://?f={$link}&l=1'>{$escapedFileName}</a></li>";
+
+            $mdButton = '';
+            if(substr($file, -5) === '.html') {
+                $mdFile = substr($file, 0, -5) . '.md';
+                if(file_exists($directory . '/' . $mdFile)) {
+                    $mdRelPath = trim(str_replace('//', '/', str_replace($rootPath, '', $directory . '/') . $mdFile), '/');
+                    $mdButton = " <button type='button' class='tracy-md-copy-btn' data-md-path='" . htmlspecialchars($mdRelPath, ENT_QUOTES, 'UTF-8') . "' title='Copy markdown version to clipboard'>MD</button>";
+                }
+            }
+
+            $parts[] = "<li style='{$liStyle}'><a{$aStyle} href='tracyexception://?f={$link}&l=1'>{$escapedFileName}</a>{$mdButton}</li>";
         }
 
         $parts[] = '</ul>';
