@@ -291,6 +291,25 @@ body.tracyHidden:before {
     z-index: 2 !important;
 }
 
+#tracy-debug #tfe_recently_opened {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background-color: white !important;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2 4.5l4 4 4-4' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    background-size: 10px 10px !important;
+    color: transparent !important;
+    text-indent: -9999px !important;
+    border: 1px solid #D2D2D2 !important;
+}
+
+#tracy-debug #tfe_recently_opened option {
+    color: #333 !important;
+    text-indent: 0 !important;
+}
+
 /*#tracy-debug:not(ul.tracyDumpTabs) a {
     border: none !important;
 }*/
