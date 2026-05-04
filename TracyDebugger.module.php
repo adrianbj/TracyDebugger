@@ -1146,12 +1146,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // TRACY LOGS
         require_once(__DIR__ . '/includes/post_processors/TracyLogsPost.php');
 
+        // override default PW core behavior that converts exceptions to string for passing to trigger_error()
+        // runs in all outputModes so Tracy can intercept guest-facing exceptions in production and save bluescreen HTML
+        $this->wire()->addHookBefore('Wire::trackException', function($event) {
+            $event->wire()->config->allowExceptions = true;
+        });
+
         // TRACY MODE
         if($this->data['outputMode'] == 'development' || static::$allowedTracyUser === 'development') {
-            // override default PW core behavior that converts exceptions to string for passing to trigger_error()
-            $this->wire()->addHookBefore('Wire::trackException', function($event) {
-                $event->wire()->config->allowExceptions = true;
-            });
             $outputMode = Debugger::DEVELOPMENT;
         }
         elseif($this->data['outputMode'] == 'production' || static::$allowedTracyUser === 'production') {
