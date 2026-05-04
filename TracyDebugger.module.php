@@ -392,7 +392,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // load Tracy files and our helper files
         if(version_compare(PHP_VERSION, '8.2.0', '>=')) {
-            self::$tracyVersion = '2.11.x';
+            self::$tracyVersion = '2.12.x';
         }
         elseif(version_compare(PHP_VERSION, '8.0.0', '>=')) {
             self::$tracyVersion = '2.10.x';
