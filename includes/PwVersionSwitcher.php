@@ -32,7 +32,12 @@ class PwVersionSwitcher {
             if($module->wire('session')->tracyPwVersion != $module->wire('config')->version && $tracyPwVersionRetries < 5) {
                 $module->wire('session')->tracyPwVersionRetries = $tracyPwVersionRetries + 1;
                 sleep(1);
-                $module->wire('session')->redirect($module->httpReferer);
+                // Append a one-shot marker so the auto-revert handler can detect a
+                // transient post-swap fatal (e.g. Modules::___refresh class race) and
+                // do a single browser reload instead of triggering a full revert.
+                $redirectUrl = $module->httpReferer;
+                $redirectUrl .= (strpos($redirectUrl, '?') === false ? '?' : '&') . 'tracyPwSwitched=1';
+                $module->wire('session')->redirect($redirectUrl);
             }
             $module->wire('session')->remove('tracyPwVersion');
             $module->wire('session')->remove('tracyPwVersionRetries');
@@ -288,30 +293,62 @@ elseif(file_exists($tracyRevertMarker)) {
         }
         // REQUEST 1: first attempt — give PW a chance to boot
         else {
-            // touch() is far more reliable than file_put_contents() in degraded
-            // PHP environments — it writes zero bytes and has minimal failure modes
-            @touch($tracyAttemptedFlag);
+            // The tracyPwSwitched=1 marker is appended to the post-swap redirect.
+            // On this one request we treat fatals as potentially transient (e.g.
+            // Modules::___refresh class-loading races) and do a single auto-reload
+            // before falling back to the revert path. Skipping the attempted flag
+            // is intentional: the reloaded request must look like a fresh first
+            // attempt so the existing revert path can fire on the second failure.
+            $tracyPwSwitched = !empty($_GET['tracyPwSwitched']);
 
-            // FATAL/500 ERROR TRIGGER: catch immediate crashes on this first request
-            register_shutdown_function(function() use ($tracyRevertData, $tracyRevertMarker, $tracyAttemptedFlag, $tracySafeRename, $tracyDoRevert) {
-                // only fire if marker still exists (init() cleanup deletes it on success)
-                if(!file_exists($tracyRevertMarker)) return;
-                $error = error_get_last();
-                $httpCode = http_response_code();
-                $isFatal = $error && in_array($error['type'], array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR));
-                $isServerError = $httpCode !== false && $httpCode >= 500;
-                if($isFatal || $isServerError) {
-                    if($isFatal) {
-                        $reason = 'Fatal error: ' . (isset($error['message']) ? $error['message'] : 'unknown') .
-                            (isset($error['file']) ? ' in ' . $error['file'] : '') .
-                            (isset($error['line']) ? ' on line ' . $error['line'] : '');
-                    } else {
-                        $reason = 'HTTP ' . $httpCode . ' error' .
-                            ($error ? ': ' . $error['message'] : '');
+            if($tracyPwSwitched) {
+                // ob_start callback runs at the very end of the response — after
+                // Tracy's BlueScreen output has been buffered — so we can replace
+                // the BlueScreen with a tiny auto-reload page.
+                @ob_start(function($content) use ($tracyRevertMarker) {
+                    if(!file_exists($tracyRevertMarker)) return $content;
+                    $error = error_get_last();
+                    $code = http_response_code();
+                    $isFatal = $error && in_array($error['type'], array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR));
+                    $isServerError = $code !== false && $code >= 500;
+                    if(!($isFatal || $isServerError)) return $content;
+                    if(!headers_sent()) {
+                        http_response_code(200);
+                        header('Content-Type: text/html; charset=utf-8');
+                        header('Cache-Control: no-store, no-cache, must-revalidate');
                     }
-                    $tracyDoRevert($tracyRevertData, $tracyRevertMarker, $tracyAttemptedFlag, $tracySafeRename, $reason);
-                }
-            });
+                    return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Switching ProcessWire version&#8230;</title>'
+                        . '<style>body{font:14px/1.5 -apple-system,BlinkMacSystemFont,sans-serif;background:#f5f5f5;color:#333;text-align:center;padding-top:30vh;margin:0}p{margin:0 0 .5em}small{color:#888}</style>'
+                        . '</head><body><p>Switching ProcessWire version&#8230;</p><p><small>Reloading&#8230;</small></p>'
+                        . '<script>(function(){try{var u=new URL(window.location.href);u.searchParams.delete("tracyPwSwitched");setTimeout(function(){window.location.replace(u.toString())},600);}catch(e){setTimeout(function(){window.location.reload()},600);}})();</script>'
+                        . '</body></html>';
+                });
+            } else {
+                // touch() is far more reliable than file_put_contents() in degraded
+                // PHP environments — it writes zero bytes and has minimal failure modes
+                @touch($tracyAttemptedFlag);
+
+                // FATAL/500 ERROR TRIGGER: catch immediate crashes on this first request
+                register_shutdown_function(function() use ($tracyRevertData, $tracyRevertMarker, $tracyAttemptedFlag, $tracySafeRename, $tracyDoRevert) {
+                    // only fire if marker still exists (init() cleanup deletes it on success)
+                    if(!file_exists($tracyRevertMarker)) return;
+                    $error = error_get_last();
+                    $httpCode = http_response_code();
+                    $isFatal = $error && in_array($error['type'], array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR));
+                    $isServerError = $httpCode !== false && $httpCode >= 500;
+                    if($isFatal || $isServerError) {
+                        if($isFatal) {
+                            $reason = 'Fatal error: ' . (isset($error['message']) ? $error['message'] : 'unknown') .
+                                (isset($error['file']) ? ' in ' . $error['file'] : '') .
+                                (isset($error['line']) ? ' on line ' . $error['line'] : '');
+                        } else {
+                            $reason = 'HTTP ' . $httpCode . ' error' .
+                                ($error ? ': ' . $error['message'] : '');
+                        }
+                        $tracyDoRevert($tracyRevertData, $tracyRevertMarker, $tracyAttemptedFlag, $tracySafeRename, $reason);
+                    }
+                });
+            }
         }
     }
 }
