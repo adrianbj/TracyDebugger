@@ -1687,6 +1687,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     if($rendered || $stashed === null) return null;
                     $rendered = true;
 
+                    // Agent Markdown depends on Tracy 2.12+ APIs (BlueScreen::renderAgent, Helpers::jsonEncode).
+                    if(!method_exists('\Tracy\BlueScreen', 'renderAgent') || !method_exists('\Tracy\Helpers', 'jsonEncode')) {
+                        return null;
+                    }
+
                     $activeBs = Debugger::getBlueScreen();
                     $tempBs = new \Tracy\BlueScreen();
                     $tempBs->maxDepth = $activeBs->maxDepth;
