@@ -591,6 +591,46 @@ HTML;
     }
 
 
+    public function getAgentInfo(): ?string {
+        $config = $this->wire('config');
+        $page = $this->wire('page');
+        $user = $this->wire('user');
+        $input = $this->wire('input');
+
+        $tpl = $page && $page->template ? $page->template->name : '(none)';
+        $pageId = $page ? (int) $page->id : 0;
+        $pagePath = $page ? $page->path : '';
+        $userName = $user ? $user->name : '(none)';
+        $roles = ($user && $user->roles) ? implode(',', $user->roles->each('name')) : '';
+        $isSuperuser = $user && $user->isSuperuser() ? 'yes' : 'no';
+        $isLoggedIn = $user && $user->isLoggedin() ? 'yes' : 'no';
+        $lang = ($user && $user->language && $user->language->id) ? $user->language->name : '(default)';
+        $inAdmin = TracyDebugger::$inAdmin ? 'yes' : 'no';
+        $process = $this->wire('process') ? (string) $this->wire('process') : '';
+        $editId = (int) ($input ? $input->get('id') : 0);
+
+        $outputMode = TracyDebugger::getDataValue('outputMode');
+        $debug = $config->debug ? 'true' : 'false';
+        $pwVersion = $config->version;
+        $modInfo = TracyDebugger::getModuleInfo();
+        $tracyVersion = isset($modInfo['version']) ? $modInfo['version'] : '';
+
+        $lines = array();
+        $lines[] = '## ProcessWire';
+        $lines[] = '- PW version: ' . $pwVersion;
+        if($tracyVersion) $lines[] = '- TracyDebugger version: ' . $tracyVersion;
+        $lines[] = '- Output mode: ' . $outputMode;
+        $lines[] = '- Debug: ' . $debug;
+        $lines[] = '- In admin: ' . $inAdmin;
+        if($process) $lines[] = '- Process: ' . $process . ($editId ? ' (id=' . $editId . ')' : '');
+        $lines[] = '- Page: ' . $pagePath . ' (id=' . $pageId . ', template=' . $tpl . ')';
+        $lines[] = '- User: ' . $userName . ' (loggedIn=' . $isLoggedIn . ', superuser=' . $isSuperuser . ($roles ? ', roles=' . $roles : '') . ')';
+        $lines[] = '- Language: ' . $lang;
+
+        return implode("\n", $lines);
+    }
+
+
     private function addRoot($value) {
         return wire('config')->paths->root . $value;
     }

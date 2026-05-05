@@ -137,4 +137,14 @@ abstract class BasePanel extends WireData implements IBarPanel {
         return TracyDebugger::stripRootPath($path, $prefix);
     }
 
+    /**
+     * Markdown summary surfaced to AI agents via Tracy 2.12+ Bar::renderAgent().
+     * Panels override to opt in; returning null omits the panel from agent output.
+     *
+     * @return string|null
+     */
+    public function getAgentInfo(): ?string {
+        return null;
+    }
+
 }
