@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.0.17',
+            'version' => '5.0.18',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -2389,8 +2389,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static function getNonceAttr(): string {
         static $nonceAttr;
         if($nonceAttr === null) {
-            $nonce = \Tracy\Helpers::getNonce();
-            $nonceAttr = $nonce ? ' nonce="' . \Tracy\Helpers::escapeHtml($nonce) . '"' : '';
+            // Tracy 2.10 exposes getNonceAttr() only; 2.7/2.9/2.12 expose getNonce().
+            if(method_exists('\Tracy\Helpers', 'getNonceAttr')) {
+                $nonceAttr = \Tracy\Helpers::getNonceAttr();
+            } elseif(method_exists('\Tracy\Helpers', 'getNonce')) {
+                $nonce = \Tracy\Helpers::getNonce();
+                $nonceAttr = $nonce ? ' nonce="' . \Tracy\Helpers::escapeHtml($nonce) . '"' : '';
+            } else {
+                $nonceAttr = '';
+            }
         }
         return $nonceAttr;
     }
