@@ -24,6 +24,30 @@ class TD extends TracyDebugger {
         return self::$tracySupportsLazy;
     }
 
+    private static $tracySupportsAgent;
+    private static function tracySupportsAgent() {
+        if(self::$tracySupportsAgent === null) {
+            self::$tracySupportsAgent = method_exists('\Tracy\Helpers', 'isAgent')
+                && method_exists('\Tracy\Helpers', 'consoleLog');
+        }
+        return self::$tracySupportsAgent;
+    }
+
+    /**
+     * Mirror Tracy 2.12's d-to-console-when-agent-detected behavior for our custom dump path.
+     * @tracySkipLocation
+     */
+    private static function agentDumpToConsole($var, $title = null) {
+        if(!self::tracySupportsAgent()) return;
+        if(!\Tracy\Helpers::isAgent()) return;
+        $opts = array(Dumper::DEPTH => 3);
+        if(self::phpSupportsKeysToHide()) {
+            $opts[Dumper::KEYS_TO_HIDE] = Debugger::$keysToHide;
+        }
+        $text = ($title ? $title . ":\n" : '') . Dumper::toText($var, $opts);
+        \Tracy\Helpers::consoleLog($text);
+    }
+
     public static function flushRecorderDumps() {
         if(empty(self::$recorderPendingItems)) return;
         $dumpsFile = wire('config')->paths->cache . 'TracyDebugger/dumps.json';
@@ -234,6 +258,7 @@ class TD extends TracyDebugger {
             echo static::generateDump($var, $options) .
             '   </div>
             </div>';
+            static::agentDumpToConsole($var, $title);
         }
     }
 
@@ -278,6 +303,7 @@ class TD extends TracyDebugger {
             echo static::generateDump($var, $options) .
             '   </div>
             </div>';
+            static::agentDumpToConsole($var, $title);
         }
     }
 
@@ -289,6 +315,12 @@ class TD extends TracyDebugger {
         $dumpItem = array();
         $dumpItem['title'] = $title;
         $dumpItem['dump'] = $echo ? '<div class="tracy-echo">' . $var . '</div>' : static::generateDump($var, $options);
+        $dumpItem['text'] = null;
+        if(!$echo && self::tracySupportsAgent() && \Tracy\Helpers::isAgent()) {
+            $textOpts = array(Dumper::DEPTH => 3);
+            if(self::phpSupportsKeysToHide()) $textOpts[Dumper::KEYS_TO_HIDE] = Debugger::$keysToHide;
+            $dumpItem['text'] = Dumper::toText($var, $textOpts);
+        }
         TracyDebugger::$dumpItems[] = $dumpItem;
         // always persist dumps for authorized dev users so cross-window polling can surface them,
         // and persist guest dumps when that feature is enabled

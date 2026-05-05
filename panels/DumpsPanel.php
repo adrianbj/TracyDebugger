@@ -63,4 +63,27 @@ class DumpsPanel extends BasePanel {
         return $this->closePanel($out, 'dumps', 'dumpsPanel');
     }
 
+
+    public function getAgentInfo(): ?string {
+        $data = TracyDebugger::$dumpItems;
+        if(!$data) return null;
+        if(!method_exists('\Tracy\Helpers', 'escapeMd')) return null;
+
+        $hasText = false;
+        foreach($data as $item) {
+            if(!empty($item['text'])) { $hasText = true; break; }
+        }
+        if(!$hasText) return null;
+
+        $out = "## Dumps\n\n";
+        foreach($data as $item) {
+            if(empty($item['text'])) continue;
+            if(!empty($item['title'])) {
+                $out .= '### ' . \Tracy\Helpers::escapeMd($item['title']) . "\n\n";
+            }
+            $out .= \Tracy\Helpers::escapeMd($item['text']) . "\n";
+        }
+        return $out;
+    }
+
 }
