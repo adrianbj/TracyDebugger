@@ -92,6 +92,8 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
     $tracySessionStorage = Debugger::getSessionStorage();
     if($tracySessionStorage instanceof \Tracy\FileSession) {
         $ref = new \ReflectionProperty($tracySessionStorage, 'file');
+        // setAccessible required on PHP < 8.1; deprecated on PHP 8.5+; no-op in between.
+        if(PHP_VERSION_ID < 80100) $ref->setAccessible(true);
         $fileHandle = $ref->getValue($tracySessionStorage);
         if(is_resource($fileHandle)) {
             flock($fileHandle, LOCK_UN);
