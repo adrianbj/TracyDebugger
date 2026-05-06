@@ -1867,31 +1867,29 @@ ul.pw-info-links {
 }
 
 .tracy-exceptions-file-tree li {
-    display: flex;
-    align-items: center;
-}
-
-.tracy-exceptions-file-tree li > a {
-    flex: 1;
-    min-width: 0;
     word-break: break-all;
 }
 
 .tracy-exceptions-file-tree .tracy-md-copy-btn {
-    flex-shrink: 0;
-    margin-left: 6px;
-    padding: 0 5px;
-    font: bold 9px/1.5 Verdana, sans-serif;
-    color: #fff;
-    background: #888;
+    float: right;
+    margin: 1px 0 0 6px;
+    padding: 0;
+    line-height: 0;
+    color: #888;
+    background: transparent;
     border: 0;
-    border-radius: 2px;
     cursor: pointer;
-    min-width: 22px;
+    opacity: 0.6;
 }
 
 .tracy-exceptions-file-tree .tracy-md-copy-btn:hover {
-    background: #555;
+    opacity: 1;
+    color: #000;
+}
+
+.tracy-md-copy-btn:hover {
+    opacity: 1 !important;
+    color: #000 !important;
 }
 
 #tracy-debug-panel-ProcessWire-TracyExceptionsPanel[class*="tracy-mode-"] {

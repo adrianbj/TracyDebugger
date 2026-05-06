@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.0.19',
+            'version' => '5.0.20',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -353,7 +353,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "fileEditorExcludedDirs" => 'site/assets',
             "fileEditorBaseDirectory" => 'templates',
             "enableShortcutMethods" => 1,
-            "enabledShortcutMethods" => array('addBreakpoint', 'bp', 'barDump', 'bd', 'barDumpBig', 'bdb', 'barEcho', 'be', 'bdai', 'dai', 'debugAll', 'da', 'dump', 'd', 'dumpBig', 'db', 'l', 'templateVars', 'tv', 'timer', 't')
+            "enabledShortcutMethods" => array('addBreakpoint', 'bp', 'barDump', 'bd', 'barDumpBig', 'bdb', 'barEcho', 'be', 'debugAll', 'da', 'dump', 'd', 'dumpBig', 'db', 'l', 'templateVars', 'tv', 'timer', 't')
         );
     }
 
@@ -427,7 +427,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // load base panel class
         require_once __DIR__ . '/includes/BasePanel.php';
 
-        // load AI export helpers (used by TD::dumpAI, BasePanel::aiExportControls, panels)
+        // load AIExport scrub patterns (used by TD::agentText for the agent path)
         require_once __DIR__ . '/includes/AIExport.php';
 
         $externalPanelPaths = glob($this->wire('config')->paths->root.'/site/modules/*/TracyPanels/*.php');
@@ -1711,10 +1711,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     $jsonMd = str_replace('</', '<\\/', \Tracy\Helpers::jsonEncode($md, true));
                     $escapedMd = htmlspecialchars($md, ENT_QUOTES, 'UTF-8');
 
-                    $script = '(function(){if(window.__tracyMdCopyHandlerInstalled)return;window.__tracyMdCopyHandlerInstalled=true;document.addEventListener("click",function(e){var btn=e.target.closest&&e.target.closest("[data-tracy-md-copy]");if(!btn)return;e.preventDefault();var src=btn.parentElement.querySelector("[data-tracy-md-source]");if(!src)return;var md;try{md=JSON.parse(src.textContent);}catch(err){return;}var orig=btn.textContent;var done=function(ok){btn.textContent=ok?"Copied!":"Copy failed";setTimeout(function(){btn.textContent=orig;},1200);};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(md).then(function(){done(true);},function(){done(false);});}else{var ta=document.createElement("textarea");ta.value=md;ta.style.cssText="position:fixed;opacity:0";document.body.appendChild(ta);ta.select();try{done(document.execCommand("copy"));}catch(err){done(false);}document.body.removeChild(ta);}},true);})();';
+                    $script = '(function(){if(window.__tracyMdCopyHandlerInstalled)return;window.__tracyMdCopyHandlerInstalled=true;document.addEventListener("click",function(e){var btn=e.target.closest&&e.target.closest("[data-tracy-md-copy]");if(!btn)return;e.preventDefault();e.stopPropagation();var src=btn.parentElement&&btn.parentElement.querySelector("[data-tracy-md-source]");if(!src)return;var md;try{md=JSON.parse(src.textContent);}catch(err){console.error("tracy md-copy: JSON parse failed",err);return;}var origChildren=[];for(var i=0;i<btn.childNodes.length;i++)origChildren.push(btn.childNodes[i]);var done=function(ok){while(btn.firstChild)btn.removeChild(btn.firstChild);var svgNS="http://www.w3.org/2000/svg";var icon=document.createElementNS(svgNS,"svg");icon.setAttribute("width","14");icon.setAttribute("height","14");icon.setAttribute("viewBox","0 0 24 24");icon.setAttribute("fill","none");icon.setAttribute("stroke",ok?"#4CAF50":"#CD1818");icon.setAttribute("stroke-width","3");icon.setAttribute("stroke-linecap","round");icon.setAttribute("stroke-linejoin","round");var p=document.createElementNS(svgNS,"path");p.setAttribute("d",ok?"M5 13 L10 18 L19 6":"M6 6 L18 18 M6 18 L18 6");icon.appendChild(p);btn.appendChild(icon);setTimeout(function(){while(btn.firstChild)btn.removeChild(btn.firstChild);for(var j=0;j<origChildren.length;j++)btn.appendChild(origChildren[j]);},1200);};if(navigator.clipboard&&navigator.clipboard.writeText&&window.isSecureContext){navigator.clipboard.writeText(md).then(function(){done(true);},function(err){console.error("tracy md-copy: clipboard write rejected",err);done(false);});}else{var ta=document.createElement("textarea");ta.value=md;ta.style.cssText="position:fixed;opacity:0";document.body.appendChild(ta);ta.select();try{done(document.execCommand("copy"));}catch(err){console.error("tracy md-copy: execCommand failed",err);done(false);}document.body.removeChild(ta);}},true);})();';
 
+                    $copyIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
                     $panelHtml = '<div class="tracy-md-copy-wrap" style="margin: 0 0 8px 0;">'
-                        . '<button type="button" data-tracy-md-copy class="tracy-md-copy-btn" style="padding:4px 10px;font-size:12px;cursor:pointer;background:#eee;border:1px solid #ccc;border-radius:3px;">Copy markdown to clipboard</button>'
+                        . '<button type="button" data-tracy-md-copy class="tracy-md-copy-btn" style="padding:4px 6px;line-height:0;cursor:pointer;background:#eee;border:1px solid #ccc;border-radius:3px;color:#555;" title="Copy bluescreen as Markdown for an AI agent">' . $copyIcon . '</button>'
                         . '<script type="application/json" data-tracy-md-source>' . $jsonMd . '</script>'
                         . '</div>'
                         . '<pre style="white-space: pre-wrap; font-size: 11px; background: #fafafa; padding: 8px; border: 1px solid #eee; max-height: 600px; overflow: auto; margin: 0;">' . $escapedMd . '</pre>'
@@ -4993,8 +4994,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->addOption('be', 'be() for TD::barEcho()');
         $f->addOption('barDumpBig', 'barDumpBig() for TD::barDumpBig()');
         $f->addOption('bdb', 'bdb() for TD::barDumpBig()');
-        $f->addOption('bdai', 'bdai() for TD::barDumpAI()');
-        $f->addOption('dai', 'dai() for TD::dumpAI()');
         $f->addOption('debugAll', 'debugAll() for TD::debugAll()');
         $f->addOption('da', 'da() for TD::debugAll()');
         $f->addOption('dump', 'dump() for TD::dump()');

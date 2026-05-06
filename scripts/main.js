@@ -149,24 +149,43 @@ function tracyDumpsToggler(el, show) {
         var btn = e.target.closest && e.target.closest('[data-tracy-md-copy]');
         if(!btn) return;
         e.preventDefault();
-        var src = btn.parentElement.querySelector('[data-tracy-md-source]');
+        e.stopPropagation();
+        var src = btn.parentElement && btn.parentElement.querySelector('[data-tracy-md-source]');
         if(!src) return;
         var md;
-        try { md = JSON.parse(src.textContent); } catch(err) { return; }
-        var orig = btn.textContent;
+        try { md = JSON.parse(src.textContent); } catch(err) { console.error('tracy md-copy: JSON parse failed', err); return; }
+        var origChildren = [];
+        for(var i = 0; i < btn.childNodes.length; i++) origChildren.push(btn.childNodes[i]);
         var done = function(ok) {
-            btn.textContent = ok ? 'Copied!' : 'Copy failed';
-            setTimeout(function() { btn.textContent = orig; }, 1200);
+            while(btn.firstChild) btn.removeChild(btn.firstChild);
+            var svgNS = 'http://www.w3.org/2000/svg';
+            var icon = document.createElementNS(svgNS, 'svg');
+            icon.setAttribute('width', '14');
+            icon.setAttribute('height', '14');
+            icon.setAttribute('viewBox', '0 0 24 24');
+            icon.setAttribute('fill', 'none');
+            icon.setAttribute('stroke', ok ? '#4CAF50' : '#CD1818');
+            icon.setAttribute('stroke-width', '3');
+            icon.setAttribute('stroke-linecap', 'round');
+            icon.setAttribute('stroke-linejoin', 'round');
+            var p = document.createElementNS(svgNS, 'path');
+            p.setAttribute('d', ok ? 'M5 13 L10 18 L19 6' : 'M6 6 L18 18 M6 18 L18 6');
+            icon.appendChild(p);
+            btn.appendChild(icon);
+            setTimeout(function() {
+                while(btn.firstChild) btn.removeChild(btn.firstChild);
+                for(var j = 0; j < origChildren.length; j++) btn.appendChild(origChildren[j]);
+            }, 1200);
         };
-        if(navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(md).then(function() { done(true); }, function() { done(false); });
+        if(navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext) {
+            navigator.clipboard.writeText(md).then(function() { done(true); }, function(err) { console.error('tracy md-copy: clipboard write rejected', err); done(false); });
         } else {
             var ta = document.createElement('textarea');
             ta.value = md;
             ta.style.cssText = 'position:fixed;opacity:0';
             document.body.appendChild(ta);
             ta.select();
-            try { done(document.execCommand('copy')); } catch(err) { done(false); }
+            try { done(document.execCommand('copy')); } catch(err) { console.error('tracy md-copy: execCommand failed', err); done(false); }
             document.body.removeChild(ta);
         }
     }, true);

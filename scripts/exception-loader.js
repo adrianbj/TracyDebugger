@@ -134,14 +134,27 @@ if(!tracyExceptionLoader) {
             var mdPath = btn.getAttribute("data-md-path");
             if(!mdPath) return;
 
-            var originalText = btn.textContent;
-            var originalBg = btn.style.background;
-            var resetButton = function(text, bg) {
-                btn.textContent = text;
-                btn.style.background = bg;
+            var origChildren = [];
+            for(var i = 0; i < btn.childNodes.length; i++) origChildren.push(btn.childNodes[i]);
+            var resetButton = function(ok) {
+                while(btn.firstChild) btn.removeChild(btn.firstChild);
+                var svgNS = "http://www.w3.org/2000/svg";
+                var icon = document.createElementNS(svgNS, "svg");
+                icon.setAttribute("width", "14");
+                icon.setAttribute("height", "14");
+                icon.setAttribute("viewBox", "0 0 24 24");
+                icon.setAttribute("fill", "none");
+                icon.setAttribute("stroke", ok ? "#4CAF50" : "#CD1818");
+                icon.setAttribute("stroke-width", "3");
+                icon.setAttribute("stroke-linecap", "round");
+                icon.setAttribute("stroke-linejoin", "round");
+                var p = document.createElementNS(svgNS, "path");
+                p.setAttribute("d", ok ? "M5 13 L10 18 L19 6" : "M6 6 L18 18 M6 18 L18 6");
+                icon.appendChild(p);
+                btn.appendChild(icon);
                 setTimeout(function() {
-                    btn.textContent = originalText;
-                    btn.style.background = originalBg;
+                    while(btn.firstChild) btn.removeChild(btn.firstChild);
+                    for(var j = 0; j < origChildren.length; j++) btn.appendChild(origChildren[j]);
                 }, 1200);
             };
 
@@ -154,9 +167,9 @@ if(!tracyExceptionLoader) {
                         var contents = data && typeof data.contents === "string" ? data.contents : "";
                         if(navigator.clipboard && navigator.clipboard.writeText) {
                             navigator.clipboard.writeText(contents).then(function() {
-                                resetButton("✓", "#4CAF50");
+                                resetButton(true);
                             }).catch(function() {
-                                resetButton("✗", "#CD1818");
+                                resetButton(false);
                             });
                         }
                         else {
@@ -168,18 +181,18 @@ if(!tracyExceptionLoader) {
                             ta.select();
                             try {
                                 document.execCommand("copy");
-                                resetButton("✓", "#4CAF50");
+                                resetButton(true);
                             } catch(err) {
-                                resetButton("✗", "#CD1818");
+                                resetButton(false);
                             }
                             document.body.removeChild(ta);
                         }
                     } catch(err) {
-                        resetButton("✗", "#CD1818");
+                        resetButton(false);
                     }
                 }
                 else {
-                    resetButton("✗", "#CD1818");
+                    resetButton(false);
                 }
             };
             xhr.open("POST", tracyExceptionsViewer.currentURL, true);
@@ -216,10 +229,11 @@ if(!tracyExceptionLoader) {
 
             doc.addEventListener("click", function(e) {
                 if (e.target) {
-                    if (e.target.classList && e.target.classList.contains("tracy-md-copy-btn")) {
+                    var mdBtn = e.target.closest && e.target.closest(".tracy-md-copy-btn");
+                    if (mdBtn) {
                         e.preventDefault();
                         e.stopPropagation();
-                        tracyExceptionLoader.copyMarkdown(e.target);
+                        tracyExceptionLoader.copyMarkdown(mdBtn);
                         return;
                     }
 

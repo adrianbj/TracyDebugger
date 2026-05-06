@@ -34,18 +34,75 @@ class TD extends TracyDebugger {
     }
 
     /**
+     * Render the variable as plaintext for the agent path: same Tracy::toText
+     * pipeline the bar dump uses (including __debugInfo() / KEYS_TO_HIDE) so
+     * the agent sees the same hooks/data/Wire metadata as the visible dump,
+     * then run AIExport::scrub() to redact patterns Tracy's exact-key
+     * KEYS_TO_HIDE doesn't catch (emails, IPs, JWTs, AWS keys, etc.).
+     * @tracySkipLocation
+     */
+    private static function agentText($var) {
+        $opts = array();
+        $opts[Dumper::DEPTH] = TracyDebugger::getDataValue('maxDepth');
+        $opts[Dumper::TRUNCATE] = TracyDebugger::getDataValue('maxLength');
+        if(defined('\\Tracy\\Dumper::ITEMS')) {
+            $opts[Dumper::ITEMS] = TracyDebugger::getDataValue('maxItems');
+        }
+        $opts[Dumper::DEBUGINFO] = TracyDebugger::getDataValue('debugInfo');
+        if(self::phpSupportsKeysToHide()) {
+            $opts[Dumper::KEYS_TO_HIDE] = Debugger::$keysToHide;
+        }
+        try {
+            $text = Dumper::toText($var, $opts);
+        } catch(\Throwable $e) {
+            return null;
+        }
+        $header = self::agentCallHeader();
+        if($header !== '') $text = $header . $text;
+        return AIExport::scrub($text);
+    }
+
+    /**
+     * Build a "// bd($x) at site/templates/home.php:42" header using Tracy's
+     * own caller resolver so the location matches the dump panel's footer.
+     * @tracySkipLocation
+     */
+    private static function agentCallHeader() {
+        if(!class_exists('\\Tracy\\Helpers') || !method_exists('\\Tracy\\Helpers', 'findCallerLocation')) {
+            return '';
+        }
+        $location = \Tracy\Helpers::findCallerLocation();
+        if(!$location || empty($location['file']) || empty($location['line'])) return '';
+        $file = $location['file'];
+        $line = $location['line'];
+        $code = '';
+        $lines = @file($file);
+        if($lines && isset($lines[$line - 1])) {
+            $sourceLine = trim($lines[$line - 1]);
+            if(preg_match('#(?:[\\\\\w]+::)?(?:d|bd|dump|dumpBig|barDump|barDumpBig|debugAll)\s*\(.*\)\s*;?#i', $sourceLine, $m)) {
+                $code = $m[0];
+            } else {
+                $code = $sourceLine;
+            }
+        }
+        if($code === '') return '';
+        $rootPath = wire('config')->paths->root;
+        if($rootPath && strpos($file, $rootPath) === 0) {
+            $file = substr($file, strlen($rootPath));
+        }
+        return "Call: " . $code . "\nLocation: " . $file . ':' . $line . "\n\n";
+    }
+
+    /**
      * Mirror Tracy 2.12's d-to-console-when-agent-detected behavior for our custom dump path.
      * @tracySkipLocation
      */
     private static function agentDumpToConsole($var, $title = null) {
         if(!self::tracySupportsAgent()) return;
         if(!\Tracy\Helpers::isAgent()) return;
-        $opts = array(Dumper::DEPTH => 3);
-        if(self::phpSupportsKeysToHide()) {
-            $opts[Dumper::KEYS_TO_HIDE] = Debugger::$keysToHide;
-        }
-        $text = ($title ? $title . ":\n" : '') . Dumper::toText($var, $opts);
-        \Tracy\Helpers::consoleLog($text);
+        $text = self::agentText($var);
+        if($text === null || $text === '') return;
+        \Tracy\Helpers::consoleLog(($title ? $title . ":\n" : '') . $text);
     }
 
     public static function flushRecorderDumps() {
@@ -103,64 +160,22 @@ class TD extends TracyDebugger {
     }
 
     /**
-     * Render a scrubbed AI-friendly plaintext dump for $var as an HTML <pre>
-     * block. Shared by barDumpAI() (bar) and dumpAI() (inline output / Console panel).
+     * Build a "Copy MD" button + sibling JSON payload for the rendered dump,
+     * mirroring the Exceptions panel's Agent Markdown copy pattern. Click
+     * handler lives in scripts/main.js (matches [data-tracy-md-copy]).
      * @tracySkipLocation
      */
-    private static function buildAIDumpHtml($var, array $options = array()) {
-        if(!class_exists('\\ProcessWire\\AIExport')) {
-            require_once __DIR__ . '/AIExport.php';
-        }
-        $text = AIExport::scrub(AIExport::dumpToText($var, $options));
-        return array($text, '<pre class="tracy-ai-dump" style="white-space:pre-wrap; word-break:break-word; margin:4px 0; padding:6px 8px; background:#f6f6f6; border:1px solid #ddd; font-size:12px; line-height:1.35">'
-              . htmlspecialchars($text, ENT_QUOTES)
-              . '</pre>');
-    }
-
-    /**
-     * AI-friendly plaintext dump sent to the Dumps bar panel with a
-     * "Copy for AI" button. Parallels barDump(). Secrets honored via
-     * keysToHide + format patterns.
-     *
-     * @tracySkipLocation
-     */
-    public static function barDumpAI($var, $title = NULL, $options = array()) {
-        if(self::tracyUnavailable() && !TracyDebugger::getDataValue('recordGuestDumps')) return false;
-        if(is_array($title)) {
-            $options = $title;
-            $title = NULL;
-        }
-        list(, $html) = static::buildAIDumpHtml($var, is_array($options) ? $options : array());
-        static::dumpToBar($html, $title, null, true);
-    }
-
-    /**
-     * AI-friendly plaintext dump rendered inline on the page. Parallels dump().
-     * Used by the Console panel via the dumpAI() shortcut, and from CLI where
-     * it falls back to plain text output.
-     *
-     * @tracySkipLocation
-     */
-    public static function dumpAI($var, $title = NULL, $options = array()) {
-        if(self::tracyUnavailable() && PHP_SAPI !== 'cli') return false;
-        if(is_array($title)) {
-            $options = $title;
-            $title = NULL;
-        }
-        $opts = is_array($options) ? $options : array();
-        if(PHP_SAPI === 'cli') {
-            if(!class_exists('\\ProcessWire\\AIExport')) {
-                require_once __DIR__ . '/AIExport.php';
-            }
-            if($title) echo $title . PHP_EOL;
-            echo AIExport::scrub(AIExport::dumpToText($var, $opts)) . PHP_EOL;
-            return;
-        }
-        list(, $html) = static::buildAIDumpHtml($var, $opts);
-        echo '<div class="tracy-inner" style="height:auto !important"><div class="tracy-DumpPanel">';
-        if($title) echo '<h2>' . htmlspecialchars($title, ENT_QUOTES) . '</h2>';
-        echo $html;
-        echo '</div></div>';
+    private static function buildAgentCopyButton($var) {
+        if(is_string($var) || is_int($var) || is_float($var) || is_bool($var) || $var === null) return '';
+        $text = self::agentText($var);
+        if($text === null || $text === '') return '';
+        $jsonMd = str_replace('</', '<\\/', \Tracy\Helpers::jsonEncode($text, true));
+        $btnStyle = 'float:right;margin:4px 6px 0 6px;padding:0;line-height:0;cursor:pointer;background:transparent;border:0;color:#888;opacity:0.6;';
+        $icon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
+        return '<span class="tracy-dump-copy-wrap">'
+             . '<button type="button" data-tracy-md-copy class="tracy-md-copy-btn" style="' . $btnStyle . '" title="Copy this dump as plaintext for an AI agent">' . $icon . '</button>'
+             . '<script type="application/json" data-tracy-md-source>' . $jsonMd . '</script>'
+             . '</span>';
     }
 
     /**
@@ -317,9 +332,7 @@ class TD extends TracyDebugger {
         $dumpItem['dump'] = $echo ? '<div class="tracy-echo">' . $var . '</div>' : static::generateDump($var, $options);
         $dumpItem['text'] = null;
         if(!$echo && self::tracySupportsAgent() && \Tracy\Helpers::isAgent()) {
-            $textOpts = array(Dumper::DEPTH => 3);
-            if(self::phpSupportsKeysToHide()) $textOpts[Dumper::KEYS_TO_HIDE] = Debugger::$keysToHide;
-            $dumpItem['text'] = Dumper::toText($var, $textOpts);
+            $dumpItem['text'] = self::agentText($var);
         }
         TracyDebugger::$dumpItems[] = $dumpItem;
         // always persist dumps for authorized dev users so cross-window polling can surface them,
@@ -346,6 +359,7 @@ class TD extends TracyDebugger {
         $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : TracyDebugger::getDataValue('debugInfo');
 
         $out = '<div style="margin: 0 0 10px 0">';
+        $out .= self::buildAgentCopyButton($var);
 
         $editCountLink = '';
         if(count(TracyDebugger::getDataValue('dumpPanelTabs')) > 0 && !is_string($var)) {
