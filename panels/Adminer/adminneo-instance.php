@@ -24,6 +24,21 @@ function adminneo_instance() {
         new \AdminNeo\ZipOutputPlugin
     ];
 
+    if(!empty($tracyConfig['adminerGeminiApiKey'])) {
+        $plugins[] = new \AdminNeo\GeminiSqlPlugin(
+            $tracyConfig['adminerGeminiApiKey'],
+            !empty($tracyConfig['adminerGeminiModel']) ? $tracyConfig['adminerGeminiModel'] : 'gemini-2.5-flash'
+        );
+    }
+
+    if(!empty($tracyConfig['adminerOpenWebUiApiUrl'])) {
+        $plugins[] = new \AdminNeo\OpenWebUiPlugin(
+            $tracyConfig['adminerOpenWebUiApiUrl'],
+            !empty($tracyConfig['adminerOpenWebUiModel']) ? $tracyConfig['adminerOpenWebUiModel'] : 'gpt-oss:120b',
+            !empty($tracyConfig['adminerOpenWebUiApiKey']) ? $tracyConfig['adminerOpenWebUiApiKey'] : null
+        );
+    }
+
     $config = [
         "servers" => [
             [

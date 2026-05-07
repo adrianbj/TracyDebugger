@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.0.20',
+            'version' => '5.0.21',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -293,6 +293,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "adminerJsonInTable" => 1,
             "adminerJsonInEdit" => 1,
             "adminerJsonMaxTextLength" => 200,
+            "adminerGeminiApiKey" => '',
+            "adminerGeminiModel" => 'gemini-2.5-flash',
+            "adminerOpenWebUiApiUrl" => '',
+            "adminerOpenWebUiModel" => 'gpt-oss:120b',
+            "adminerOpenWebUiApiKey" => '',
             "captainHookShowDescription" => 1,
             "captainHookToggleDocComment" => null,
             "apiExplorerShowDescription" => 1,
@@ -4414,6 +4419,60 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $f->columnWidth = 25;
             if($this->data['adminerJsonMaxTextLength']) $f->attr('value', $this->data['adminerJsonMaxTextLength']);
             $fieldset->add($f);
+
+            $aiFieldset = $this->wire('modules')->get("InputfieldFieldset");
+            $aiFieldset->attr('name+id', 'adminerAiFieldset');
+            $aiFieldset->label = __('AI SQL assistants', __FILE__);
+            $aiFieldset->description = __('Optional AI-assisted SQL generation in Adminer\'s SQL command. Each provider activates only when its API key/URL is filled in.', __FILE__);
+            $aiFieldset->notes = __('Beware: the database structure (CREATE TABLE statements, no row data) is sent to the configured provider with each request.', __FILE__);
+            $aiFieldset->collapsed = Inputfield::collapsedYes;
+            $fieldset->add($aiFieldset);
+
+            $f = $this->wire('modules')->get("InputfieldText");
+            $f->attr('name', 'adminerGeminiApiKey');
+            $f->attr('type', 'password');
+            $f->label = __('Gemini API key', __FILE__);
+            $f->description = __('Google Gemini API key. Leave blank to disable.', __FILE__);
+            $f->notes = __('Get one at https://aistudio.google.com/apikey', __FILE__);
+            $f->columnWidth = 50;
+            if($this->data['adminerGeminiApiKey']) $f->attr('value', $this->data['adminerGeminiApiKey']);
+            $aiFieldset->add($f);
+
+            $f = $this->wire('modules')->get("InputfieldText");
+            $f->attr('name', 'adminerGeminiModel');
+            $f->label = __('Gemini model', __FILE__);
+            $f->description = __('Gemini model name.', __FILE__);
+            $f->notes = __('Default: gemini-2.5-flash. See https://ai.google.dev/gemini-api/docs/models', __FILE__);
+            $f->columnWidth = 50;
+            if($this->data['adminerGeminiModel']) $f->attr('value', $this->data['adminerGeminiModel']);
+            $aiFieldset->add($f);
+
+            $f = $this->wire('modules')->get("InputfieldText");
+            $f->attr('name', 'adminerOpenWebUiApiUrl');
+            $f->label = __('Open WebUI API URL', __FILE__);
+            $f->description = __('Base URL of an Open WebUI / OpenAI-compatible chat endpoint. Leave blank to disable.', __FILE__);
+            $f->notes = __('e.g. http://127.0.0.1:8080', __FILE__);
+            $f->columnWidth = 34;
+            if($this->data['adminerOpenWebUiApiUrl']) $f->attr('value', $this->data['adminerOpenWebUiApiUrl']);
+            $aiFieldset->add($f);
+
+            $f = $this->wire('modules')->get("InputfieldText");
+            $f->attr('name', 'adminerOpenWebUiModel');
+            $f->label = __('Open WebUI model', __FILE__);
+            $f->description = __('Model name as shown in Open WebUI.', __FILE__);
+            $f->notes = __('Default: gpt-oss:120b', __FILE__);
+            $f->columnWidth = 33;
+            if($this->data['adminerOpenWebUiModel']) $f->attr('value', $this->data['adminerOpenWebUiModel']);
+            $aiFieldset->add($f);
+
+            $f = $this->wire('modules')->get("InputfieldText");
+            $f->attr('name', 'adminerOpenWebUiApiKey');
+            $f->attr('type', 'password');
+            $f->label = __('Open WebUI bearer token', __FILE__);
+            $f->description = __('Optional bearer token. Leave blank if the endpoint is public.', __FILE__);
+            $f->columnWidth = 33;
+            if($this->data['adminerOpenWebUiApiKey']) $f->attr('value', $this->data['adminerOpenWebUiApiKey']);
+            $aiFieldset->add($f);
         }
 
         // API Explorer Panel
