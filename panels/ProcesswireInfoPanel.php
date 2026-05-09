@@ -77,13 +77,51 @@ class ProcesswireInfoPanel extends BasePanel {
                     document.getElementById("idGoToView").removeAttribute("href");
                     document.getElementById("idGoToEdit").removeAttribute("href");
                     document.getElementById("idGoToOpen").removeAttribute("href");
-                    document.getElementById("pageDetails").innerHTML = matchStatus;
+                    var pd = document.getElementById("pageDetails");
+                    while(pd.firstChild) pd.removeChild(pd.firstChild);
+                    if(matchStatus === "spinner") {
+                        var spinner = document.createElement("span");
+                        spinner.style.fontFamily = "FontAwesome";
+                        spinner.className = "fa fa-spinner fa-spin";
+                        pd.appendChild(spinner);
+                    } else if(matchStatus) {
+                        pd.appendChild(document.createTextNode(matchStatus));
+                    }
+                }
+
+                function tracyRenderPageDetails(pageDetails) {
+                    var pd = document.getElementById("pageDetails");
+                    while(pd.firstChild) pd.removeChild(pd.firstChild);
+
+                    var span = document.createElement("span");
+                    span.setAttribute("uk-tooltip", "");
+                    span.setAttribute("title", pageDetails.path);
+                    var styles = [];
+                    if(pageDetails.unpublished) styles.push("text-decoration: line-through");
+                    if(pageDetails.hidden) styles.push("opacity: 0.5");
+                    if(styles.length) span.setAttribute("style", styles.join("; "));
+                    span.textContent = (pageDetails.trash ? "🗑︎ " : "") + pageDetails.title;
+                    pd.appendChild(span);
+
+                    pd.appendChild(document.createTextNode("\u00a0("));
+
+                    var a = document.createElement("a");
+                    a.href = "{$this->wire('config')->urls->admin}setup/template/edit?id=" + pageDetails.template_id;
+                    a.style.color = "#888";
+                    if(pageDetails.template_label) {
+                        a.setAttribute("title", pageDetails.template_label);
+                        a.setAttribute("uk-tooltip", "");
+                    }
+                    a.textContent = pageDetails.template_name;
+                    pd.appendChild(a);
+
+                    pd.appendChild(document.createTextNode(")"));
                 }
 
                 document.getElementById('pageId').addEventListener('keyup', function() {
                     tracyClearGoToPageID("");
                     if(this.value) {
-                        tracyClearGoToPageID("<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span>");
+                        tracyClearGoToPageID("spinner");
                         var pid = this.value;
                         if(this.t) clearTimeout(this.t);
                         this.t = setTimeout(function() {
@@ -93,7 +131,7 @@ class ProcesswireInfoPanel extends BasePanel {
                                 if(xmlhttp.readyState == XMLHttpRequest.DONE) {
                                     if(xmlhttp.status == 200 && xmlhttp.responseText !== "[]") {
                                         var pageDetails = JSON.parse(xmlhttp.responseText);
-                                        document.getElementById("pageDetails").innerHTML = "<span uk-tooltip title='" + pageDetails.path + "' style='" + (pageDetails.unpublished ? 'text-decoration: line-through' : '') + (pageDetails.hidden ? '; opacity: 0.5' : '') + "'>" + (pageDetails.trash ? '🗑︎ ' : '') + pageDetails.title + "</span>&nbsp;(<a href='{$this->wire('config')->urls->admin}setup/template/edit?id="  + pageDetails.template_id + "' style='color:#888' title='" + (pageDetails.template_label ? pageDetails.template_label : '') + "' uk-tooltip>" + pageDetails.template_name + "</a>)";
+                                        tracyRenderPageDetails(pageDetails);
                                         document.getElementById("idGoToEdit").href = "{$this->wire('config')->urls->admin}page/edit/?id=" + pageDetails.id;
                                         document.getElementById("idGoToView").href = pageDetails.url;
                                         document.getElementById("idGoToOpen").href = "{$this->wire('config')->urls->admin}page/?open=" + pageDetails.id;
