@@ -3466,7 +3466,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if(isset($this->tempTemplateFilename) && file_exists($this->tempTemplateFilename)) unlink($this->tempTemplateFilename);
 
         // PW VERSION SWITCHER — perform file swap
-        PwVersionSwitcher::performFileSwap($this);
+        // Guard: PwVersionSwitcher is required inside init(); if __destruct runs
+        // before init (e.g. early boot failure), the class isn't loaded and there's
+        // no swap state to act on anyway.
+        if(class_exists(__NAMESPACE__ . '\\PwVersionSwitcher', false)) {
+            PwVersionSwitcher::performFileSwap($this);
+        }
     }
 
 
