@@ -2996,7 +2996,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * @return string
      */
     public static function stripRootPath($path, $prefix = '/') {
-        return str_replace(wire('config')->paths->root, $prefix, $path);
+        $root = wire('config')->paths->root;
+        $path = str_replace('\\', '/', (string) $path);
+        if(DIRECTORY_SEPARATOR === '\\') {
+            return preg_replace('#^' . preg_quote($root, '#') . '#i', $prefix, $path);
+        }
+        return str_replace($root, $prefix, $path);
     }
 
 
