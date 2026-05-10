@@ -17,7 +17,28 @@ class FileEditorPanel extends BasePanel {
 
         $this->p = $this->getReferencePage();
 
-        $this->tracyFileEditorFilePath = $this->wire('input')->cookie->tracyFileEditorFilePath ?: $this->stripRootPath($this->p->template->filename, '');
+        // Resolve to a relative forward-slash path that's safe to concatenate
+        // against paths->root.
+        //
+        // Windows hazard: $template->filename can return backslash paths and
+        // paths->root is forward-slashed, so a literal str_replace strip would
+        // miss and leak the absolute path into the hidden input/cookie. Once
+        // poisoned the cookie keeps the panel showing "<absolute path> does not
+        // exist" on every render. We normalize to '/' first, then strip the
+        // root case-insensitively on Windows (drive letter / directory case
+        // can disagree between paths->root and what realpath/PW returns).
+        $rootPath = $this->wire('config')->paths->root;
+        $isWindows = DIRECTORY_SEPARATOR === '\\';
+        $stripRoot = function($p) use ($rootPath, $isWindows) {
+            $p = str_replace('\\', '/', (string) $p);
+            if($p === '') return '';
+            if($isWindows) {
+                return preg_replace('#^' . preg_quote($rootPath, '#') . '#i', '', $p);
+            }
+            return strpos($p, $rootPath) === 0 ? substr($p, strlen($rootPath)) : $p;
+        };
+        $cookiePath = $stripRoot($this->wire('input')->cookie->tracyFileEditorFilePath);
+        $this->tracyFileEditorFilePath = $cookiePath ?: $stripRoot($this->p->template->filename);
 
         if(isset($_POST['tracyTestTemplateCode']) || $this->wire('input')->cookie->tracyTestFileEditor) {
             $iconColor = TracyDebugger::COLOR_ALERT;

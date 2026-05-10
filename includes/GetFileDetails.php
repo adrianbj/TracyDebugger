@@ -10,14 +10,19 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
         exit;
     }
 
-    $rootPath = $this->wire('config')->paths->root;
-    $filePath = $_POST['filePath'];
-    $resolvedPath = str_replace('\\', '/', realpath($rootPath . $filePath));
-    if($resolvedPath === false || $resolvedPath === '') {
-        $resolvedPath = str_replace('\\', '/', realpath($filePath));
+    $rootPath = str_replace('\\', '/', $this->wire('config')->paths->root);
+    $filePath = str_replace('\\', '/', (string) $_POST['filePath']);
+    $resolvedPath = str_replace('\\', '/', (string) realpath($rootPath . $filePath));
+    if($resolvedPath === '') {
+        $resolvedPath = str_replace('\\', '/', (string) realpath($filePath));
     }
 
-    if($resolvedPath !== false && strpos($resolvedPath, $rootPath) === 0) {
+    // Windows file paths are case-insensitive and realpath() returns the
+    // canonical case, which may differ from paths->root. Use stripos there.
+    $isWindows = DIRECTORY_SEPARATOR === '\\';
+    $prefixOk = $isWindows ? (stripos($resolvedPath, $rootPath) === 0) : (strpos($resolvedPath, $rootPath) === 0);
+
+    if($resolvedPath !== '' && $prefixOk) {
 
         if(TracyDebugger::getDataValue('referencePageEdited') && $this->wire('input')->get('id') &&
             ($this->wire('process') == 'ProcessPageEdit' ||
@@ -37,9 +42,12 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
 
         $fileData = array();
         $fileData['writeable'] = is_writable($resolvedPath);
-        $relPath = str_replace($rootPath, '', $resolvedPath);
+        $relPath = $isWindows
+            ? substr($resolvedPath, strlen($rootPath))
+            : str_replace($rootPath, '', $resolvedPath);
         $fileData['backupExists'] = file_exists($this->wire('config')->paths->cache . 'TracyDebugger/' . $relPath) ? true : false;
-        $fileData['isTemplateFile'] = $resolvedPath === $p->template->filename;
+        $templateFilename = str_replace('\\', '/', (string) $p->template->filename);
+        $fileData['isTemplateFile'] = $isWindows ? (strcasecmp($resolvedPath, $templateFilename) === 0) : ($resolvedPath === $templateFilename);
         $fileData['contents'] = file_get_contents($resolvedPath);
         echo json_encode($fileData);
     }

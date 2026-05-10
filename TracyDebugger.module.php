@@ -3444,17 +3444,20 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // if using Test mode in File Editor on regular files, then immediately replace loaded file with backed up version
         // this is here instead of ProcessWire::finished because this works if test version has fatal error
         if(isset($_COOKIE['tracyTestFileEditor']) && (static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser)) {
-            $rootPath = $this->wire('config')->paths->root;
-            $editorPath = $this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor;
-            $resolvedFilePath = str_replace('\\', '/', realpath($rootPath . $editorPath));
-            if($resolvedFilePath === false || $resolvedFilePath === '') {
-                $resolvedFilePath = str_replace('\\', '/', realpath($editorPath));
+            $rootPath = str_replace('\\', '/', $this->wire('config')->paths->root);
+            $editorPath = str_replace('\\', '/', (string) ($this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor));
+            $resolvedFilePath = str_replace('\\', '/', (string) realpath($rootPath . $editorPath));
+            if($resolvedFilePath === '') {
+                $resolvedFilePath = str_replace('\\', '/', (string) realpath($editorPath));
             }
-            if($resolvedFilePath !== false && strpos($resolvedFilePath, $rootPath) === 0) {
-                $relPath = str_replace($rootPath, '', $resolvedFilePath);
-                $resolvedCachePath = str_replace('\\', '/', realpath($this->tracyCacheDir . $relPath));
-                if($resolvedCachePath !== false && strpos($resolvedCachePath, $this->tracyCacheDir) === 0 &&
-                   file_exists($resolvedCachePath)) {
+            $isWindows = DIRECTORY_SEPARATOR === '\\';
+            $prefixOk = $isWindows ? (stripos($resolvedFilePath, $rootPath) === 0) : (strpos($resolvedFilePath, $rootPath) === 0);
+            $tracyCacheDirNorm = str_replace('\\', '/', $this->tracyCacheDir);
+            if($resolvedFilePath !== '' && $prefixOk) {
+                $relPath = $isWindows ? substr($resolvedFilePath, strlen($rootPath)) : str_replace($rootPath, '', $resolvedFilePath);
+                $resolvedCachePath = str_replace('\\', '/', (string) realpath($tracyCacheDirNorm . $relPath));
+                $cachePrefixOk = $isWindows ? (stripos($resolvedCachePath, $tracyCacheDirNorm) === 0) : (strpos($resolvedCachePath, $tracyCacheDirNorm) === 0);
+                if($resolvedCachePath !== '' && $cachePrefixOk && file_exists($resolvedCachePath)) {
                     copy($resolvedCachePath, $resolvedFilePath);
                     unlink($resolvedCachePath);
                 }

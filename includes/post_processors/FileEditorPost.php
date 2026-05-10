@@ -29,15 +29,17 @@
 
                     // if changes to any other file are submitted
                     if($this->wire('input')->post->tracyTestFileCode || $this->wire('input')->post->tracySaveFileCode || $this->wire('input')->post->tracyChangeTemplateCode) {
-                        $rootPath = $this->wire('config')->paths->root;
-                        $editorPath = $this->wire('input')->post->fileEditorFilePath;
-                        $filePath = str_replace('\\', '/', realpath($rootPath . $editorPath));
-                        if($filePath === false || $filePath === '') {
-                            $filePath = str_replace('\\', '/', realpath($editorPath));
+                        $rootPath = str_replace('\\', '/', $this->wire('config')->paths->root);
+                        $editorPath = str_replace('\\', '/', (string) $this->wire('input')->post->fileEditorFilePath);
+                        $filePath = str_replace('\\', '/', (string) realpath($rootPath . $editorPath));
+                        if($filePath === '') {
+                            $filePath = str_replace('\\', '/', (string) realpath($editorPath));
                         }
-                        if($editorPath != '' && $filePath !== false && strpos($filePath, $rootPath) === 0) {
+                        $isWindows = DIRECTORY_SEPARATOR === '\\';
+                        $prefixOk = $isWindows ? (stripos($filePath, $rootPath) === 0) : (strpos($filePath, $rootPath) === 0);
+                        if($editorPath != '' && $filePath !== '' && $prefixOk) {
                             $rawCode = base64_decode($this->wire('input')->post->tracyFileEditorRawCode);
-                            $relPath = str_replace($rootPath, '', $filePath);
+                            $relPath = $isWindows ? substr($filePath, strlen($rootPath)) : str_replace($rootPath, '', $filePath);
 
                             // backup old version to Tracy cache directory
                             $cachePath = $this->tracyCacheDir . $relPath;
@@ -65,16 +67,20 @@
 
                 // if file editor restore
                 if($this->wire('input')->post->tracyRestoreFileEditorBackup && $this->wire('session')->CSRF->validate()) {
-                    $rootPath = $this->wire('config')->paths->root;
-                    $editorPath = $this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor;
-                    $this->filePath = str_replace('\\', '/', realpath($rootPath . $editorPath));
-                    if($this->filePath === false || $this->filePath === '') {
-                        $this->filePath = str_replace('\\', '/', realpath($editorPath));
+                    $rootPath = str_replace('\\', '/', $this->wire('config')->paths->root);
+                    $editorPath = str_replace('\\', '/', (string) ($this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor));
+                    $this->filePath = str_replace('\\', '/', (string) realpath($rootPath . $editorPath));
+                    if($this->filePath === '') {
+                        $this->filePath = str_replace('\\', '/', (string) realpath($editorPath));
                     }
-                    if($this->filePath !== false && strpos($this->filePath, $rootPath) === 0) {
-                        $relPath = str_replace($rootPath, '', $this->filePath);
-                        $this->cachePath = str_replace('\\', '/', realpath($this->tracyCacheDir . $relPath));
-                        if($this->cachePath !== false && strpos($this->cachePath, $this->tracyCacheDir) === 0) {
+                    $isWindows = DIRECTORY_SEPARATOR === '\\';
+                    $prefixOk = $isWindows ? (stripos($this->filePath, $rootPath) === 0) : (strpos($this->filePath, $rootPath) === 0);
+                    $tracyCacheDirNorm = str_replace('\\', '/', $this->tracyCacheDir);
+                    if($this->filePath !== '' && $prefixOk) {
+                        $relPath = $isWindows ? substr($this->filePath, strlen($rootPath)) : str_replace($rootPath, '', $this->filePath);
+                        $this->cachePath = str_replace('\\', '/', (string) realpath($tracyCacheDirNorm . $relPath));
+                        $cachePrefixOk = $isWindows ? (stripos($this->cachePath, $tracyCacheDirNorm) === 0) : (strpos($this->cachePath, $tracyCacheDirNorm) === 0);
+                        if($this->cachePath !== '' && $cachePrefixOk) {
                             copy($this->cachePath, $this->filePath);
                             unlink($this->cachePath);
                         }
