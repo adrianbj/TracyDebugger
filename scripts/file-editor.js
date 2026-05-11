@@ -99,12 +99,14 @@ if(!tracyFileEditorLoader) {
         },
 
         populateFileEditor: function(filePath, line) {
+            filePath = filePath.replace(/\\/g, "/");
+            if(filePath && filePath.charAt(0) !== "/") filePath = "/" + filePath;
             document.getElementById("fileEditorFilePath").value = filePath;
             document.cookie = "tracyFileEditorFilePath=" + filePath + "; path=/; SameSite=Strict";
             var fePanel = document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel");
             if(fePanel) {
                 var titleEl = fePanel.querySelector("#panelTitleFilePath");
-                if(titleEl) titleEl.textContent = "/" + filePath;
+                if(titleEl) titleEl.textContent = filePath;
             }
 
             if(typeof tracyFileEditor === "undefined" || !tracyFileEditor.tfe) {
@@ -123,7 +125,7 @@ if(!tracyFileEditorLoader) {
                             var fePanel = document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel");
                             if(fePanel) {
                                 var titleEl = fePanel.querySelector("#panelTitleFilePath");
-                                if(titleEl) titleEl.textContent = "/" + filePath;
+                                if(titleEl) titleEl.textContent = filePath;
                             }
 
                             // set mode appropriately
@@ -184,7 +186,7 @@ if(!tracyFileEditorLoader) {
                         e.preventDefault();
 
                         const queryStr = curEl.href.split('?')[1];
-                        const fullFilePath = tracyFileEditorLoader.getFileLineVars(queryStr, "f");
+                        const fullFilePath = tracyFileEditorLoader.getFileLineVars(queryStr, "f").replace(/\\/g, "/");
                         const line = tracyFileEditorLoader.getFileLineVars(queryStr, "l");
 
                         tracyFileEditorLoader.loadFileEditor(fullFilePath, line);

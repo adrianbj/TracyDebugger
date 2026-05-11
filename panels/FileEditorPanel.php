@@ -17,8 +17,10 @@ class FileEditorPanel extends BasePanel {
 
         $this->p = $this->getReferencePage();
 
-        $cookiePath = TracyDebugger::stripRootPath((string) $this->wire('input')->cookie->tracyFileEditorFilePath, '');
-        $this->tracyFileEditorFilePath = $cookiePath ?: TracyDebugger::stripRootPath((string) $this->p->template->filename, '');
+        $cookiePath = TracyDebugger::stripRootPath((string) $this->wire('input')->cookie->tracyFileEditorFilePath, '/');
+        $tplPath = TracyDebugger::stripRootPath((string) $this->p->template->filename, '/');
+        $path = str_replace('\\', '/', $cookiePath !== '' ? $cookiePath : $tplPath);
+        $this->tracyFileEditorFilePath = ($path !== '' && $path[0] !== '/') ? '/' . $path : $path;
 
         if(isset($_POST['tracyTestTemplateCode']) || $this->wire('input')->cookie->tracyTestFileEditor) {
             $iconColor = TracyDebugger::COLOR_ALERT;

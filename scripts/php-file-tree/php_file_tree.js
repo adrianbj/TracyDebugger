@@ -102,7 +102,7 @@ function init_php_file_tree(linkedFilePath) {
 					var currentFilePath = decodeURI(queryStr.replace('f=','').replace('&l=1',''));
 					var fePanelEl = document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel");
 					var titleContent = fePanelEl ? (fePanelEl.querySelector("#panelTitleFilePath") || {}).innerHTML : "";
-					if(titleContent == currentFilePath || linkedFilePath == currentFilePath) {
+					if(titleContent.replace(/^\//, '') == currentFilePath || (linkedFilePath || '').replace(/^\//, '') == currentFilePath) {
 						treeEl.querySelectorAll(".active").forEach(function (el) {
 							el.classList.remove("active");
 						});

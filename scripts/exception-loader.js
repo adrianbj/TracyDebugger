@@ -246,7 +246,7 @@ if(!tracyExceptionLoader) {
                     if (curEl && curEl.href && curEl.href.indexOf("tracyexception://") !== -1) {
                         e.preventDefault();
                         const queryStr = curEl.href.split('?')[1];
-                        const fullFilePath = tracyExceptionLoader.getFileLineVars(queryStr, "f");
+                        const fullFilePath = tracyExceptionLoader.getFileLineVars(queryStr, "f").replace(/\\/g, "/");
                         tracyExceptionLoader.loadExceptionFile(fullFilePath);
                         if (typeof showUnloadButton === 'function') showUnloadButton();
                     }

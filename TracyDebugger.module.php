@@ -1233,6 +1233,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
 
+        if(DIRECTORY_SEPARATOR === '\\') {
+            foreach($mappingReplacements as $from => $to) {
+                $backslashed = str_replace('/', '\\', $from);
+                if($backslashed !== $from && !isset($mappingReplacements[$backslashed])) {
+                    $mappingReplacements[$backslashed] = $to;
+                }
+            }
+        }
+
         Debugger::$editorMapping = $mappingReplacements;
 
         if(static::$allowedTracyUser === 'development') {
