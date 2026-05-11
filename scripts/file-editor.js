@@ -116,24 +116,51 @@ if(!tracyFileEditorLoader) {
                 var xmlhttp;
                 xmlhttp = new XMLHttpRequest();
                 xmlhttp.onreadystatechange = function() {
-                    if(xmlhttp.readyState == XMLHttpRequest.DONE) {
-                        if(xmlhttp.status == 200 && xmlhttp.responseText !== "" && xmlhttp.responseText !== "[]") {
-                            var fileData = JSON.parse(xmlhttp.responseText);
-                            tracyFileEditorLoader.generateButtons(fileData);
-                            tracyFileEditor.tfe.setValue(fileData["contents"]);
-                            tracyFileEditor.tfe.gotoLine(line, 0);
-                            var fePanel = document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel");
-                            if(fePanel) {
-                                var titleEl = fePanel.querySelector("#panelTitleFilePath");
-                                if(titleEl) titleEl.textContent = filePath;
-                            }
+                    if(xmlhttp.readyState !== XMLHttpRequest.DONE) return;
 
-                            // set mode appropriately
+                    var fileData = null;
+                    var parseError = null;
+                    if(xmlhttp.status == 200 && xmlhttp.responseText !== "" && xmlhttp.responseText !== "[]") {
+                        try { fileData = JSON.parse(xmlhttp.responseText); }
+                        catch(e) { parseError = e; }
+                    }
+
+                    if(fileData) {
+                        tracyFileEditorLoader.generateButtons(fileData);
+                        tracyFileEditor.tfe.setValue(fileData["contents"]);
+                        tracyFileEditor.tfe.gotoLine(line, 0);
+                        var fePanel = document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel");
+                        if(fePanel) {
+                            var titleEl = fePanel.querySelector("#panelTitleFilePath");
+                            if(titleEl) titleEl.textContent = filePath;
+                        }
+
+                        // modelist is loaded asynchronously, so it may not be ready yet — fall back to text mode
+                        if(tracyFileEditor.modelist) {
                             var mode = tracyFileEditor.modelist.getModeForPath(filePath).mode;
                             if(mode == 'ace/mode/log') mode = 'ace/mode/text';
                             tracyFileEditor.tfe.session.setMode(mode);
                         }
-                        xmlhttp.getAllResponseHeaders();
+                        else {
+                            tracyFileEditor.tfe.session.setMode('ace/mode/text');
+                        }
+                    }
+                    else {
+                        // surface the failure so the title (set immediately on click) doesn't appear in sync
+                        // with whatever stale content was baked into the panel by the server-side initial render.
+                        // a parse error here typically means the AJAX returned bluescreen HTML — Tracy renders
+                        // a bluescreen for the AJAX request because the originating URL still errors during boot.
+                        var msg = "// Failed to load file: " + filePath
+                            + "\n// HTTP " + xmlhttp.status + " from " + tracyFileEditor.currentUrl;
+                        if(parseError) {
+                            msg += "\n// Response was not valid JSON (likely a Tracy bluescreen rendered for the AJAX request)."
+                                + "\n// The originating URL above still errors during PW boot, so the file editor AJAX hits the same failure.";
+                        }
+                        else {
+                            msg += "\n// (the URL above is the page that errored — file editor AJAX rides the same boot path)";
+                        }
+                        tracyFileEditor.tfe.setValue(msg);
+                        tracyFileEditor.tfe.session.setMode('ace/mode/text');
                     }
                 };
                 xmlhttp.open("POST", tracyFileEditor.currentUrl, true);

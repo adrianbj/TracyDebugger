@@ -391,6 +391,27 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
 
+        // legacy installs may have null values stored in JSON for fields whose defaults were null
+        // before commit 061d081. PHP's isset(null) is false, so ProcessModule's !isset($data[$name])
+        // check flags them as "updated" on every save. backfill nulls with current defaults — runs once.
+        $nullKeys = array();
+        foreach($this->data as $key => $value) {
+            if($value === null) $nullKeys[] = $key;
+        }
+        if($nullKeys) {
+            $stored = $this->wire('modules')->getModuleConfigData($this);
+            $defaults = self::getDefaultData();
+            $changed = false;
+            foreach($nullKeys as $key) {
+                if(array_key_exists($key, $stored) && $stored[$key] === null && array_key_exists($key, $defaults)) {
+                    $stored[$key] = $defaults[$key];
+                    $this->$key = $defaults[$key];
+                    $changed = true;
+                }
+            }
+            if($changed) $this->wire('modules')->saveModuleConfigData($this, $stored);
+        }
+
         $this->time = $_SERVER['REQUEST_TIME_FLOAT'] ?? microtime(true);
 
         if(class_exists('\Tracy\Debugger', false) && Debugger::isEnabled()) return;
@@ -1303,7 +1324,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     if(in_array('favicon', $this->data['styleAdminType'])) Debugger::$customJsStr .= $this->setFaviconBadge();
                 }
 
-                if(!static::$inAdmin && (in_array('fileEditor', static::$showPanels) || (in_array('processwireInfo', static::$showPanels) && count($this->data['customPWInfoPanelLinks'])))) {
+                // load font-awesome for our panels. inAdmin normally has it via the admin template, but on a
+                // bluescreen the admin template never renders, so we'd lose our icons. duplicate loads are harmless.
+                if(in_array('fileEditor', static::$showPanels) || (in_array('processwireInfo', static::$showPanels) && count($this->data['customPWInfoPanelLinks']))) {
                     Debugger::$customCssStr .= '<link id="fontAwesomeStyles" type="text/css" href="'.$this->wire('config')->urls->root . 'wire/templates-admin/styles/font-awesome/css/font-awesome.min.css" rel="stylesheet" />';
                 }
 
@@ -3552,39 +3575,20 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $this->wire('config')->scripts->append($this->wire('config')->urls->TracyDebugger . "scripts/config.js");
 
         // convert PW Info panel custom links from path back to ID for the InputfieldPageListSelectMultiple field.
-        // JSON values may be IDs (fresh-install state, when PW writes getDefaultData() before our save hook runs)
-        // or paths (after the save hook has converted them for export portability). Lazy-migrate IDs → paths in JSON
-        // so the export-portable form is reached without requiring a manual save.
+        // values may be IDs (legacy state, never re-saved after install) or paths (post-save, export-portable).
         if(isset($data['customPWInfoPanelLinks'])) {
             $customPWInfoPanelLinkIds = array();
-            $customPWInfoPanelLinkPaths = array();
-            $hasIds = false;
             foreach($data['customPWInfoPanelLinks'] as $val) {
                 if(is_int($val) || ctype_digit((string) $val)) {
-                    $id = (int) $val;
-                    $customPWInfoPanelLinkIds[] = $id;
-                    if(method_exists($this->wire('pages'), 'getPath') && version_compare($this->wire('config')->version, '3.0.73', '>=')) {
-                        $customPWInfoPanelLinkPaths[] = $this->wire('pages')->getPath($id);
-                    }
-                    else {
-                        $customPWInfoPanelLinkPaths[] = $this->wire('pages')->get($id)->path;
-                    }
-                    $hasIds = true;
+                    $customPWInfoPanelLinkIds[] = (int) $val;
                 }
                 elseif(method_exists($this->wire('pages'), 'getByPath')) {
                     $customPWInfoPanelLinkIds[] = $this->wire('pages')->getByPath($val, array('getID' => true, 'useHistory' => true));
-                    $customPWInfoPanelLinkPaths[] = $val;
                 }
                 // fallback for PW < 3.0.6 when getByPath method did not exist
                 else {
                     $customPWInfoPanelLinkIds[] = $this->wire('pages')->get($val)->id;
-                    $customPWInfoPanelLinkPaths[] = $val;
                 }
-            }
-            if($hasIds) {
-                $existingConfig = $this->wire('modules')->getModuleConfigData($this);
-                $existingConfig['customPWInfoPanelLinks'] = $customPWInfoPanelLinkPaths;
-                $this->wire('modules')->saveModuleConfigData($this, $existingConfig);
             }
             $data['customPWInfoPanelLinks'] = $customPWInfoPanelLinkIds;
         }
@@ -4370,6 +4374,28 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->notes = __('To provide links to items under the Setup menu, navigate to Admin > Setup >', __FILE__);
         $f->columnWidth = 50;
         if($data['customPWInfoPanelLinks']) $f->attr('value', $data['customPWInfoPanelLinks']);
+        // stored JSON holds paths (for export portability) but the field POSTs page IDs.
+        // convert IDs back to paths right after processInput so ProcessModule's stored-vs-submitted
+        // comparison reads paths==paths and stops flagging customPWInfoPanelLinks as updated on no-op saves.
+        $f->addHookAfter('processInput', function($event) {
+            $field = $event->object;
+            $ids = $field->attr('value');
+            if(!is_array($ids) || empty($ids)) return;
+            $paths = array();
+            foreach($ids as $id) {
+                if(!is_int($id) && !ctype_digit((string) $id)) {
+                    $paths[] = $id;
+                    continue;
+                }
+                if(method_exists($this->wire('pages'), 'getPath') && version_compare($this->wire('config')->version, '3.0.73', '>=')) {
+                    $paths[] = $this->wire('pages')->getPath((int) $id);
+                }
+                else {
+                    $paths[] = $this->wire('pages')->get((int) $id)->path;
+                }
+            }
+            $field->attr('value', $paths);
+        });
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldCheckbox");
@@ -5229,7 +5255,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if(!isset($data['adminerThemeColor'])) {
             $this->wire('modules')->saveModuleConfigData($this, $this->data);
         }
-
     }
 
 
@@ -5237,7 +5262,25 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // initial save of default data so it's available to Adminer in case settings aren't manually saved
         $data = wire('modules')->getModuleConfigData('TracyDebugger');
         if(!isset($data['adminerThemeColor'])) {
-            $this->wire('modules')->saveModuleConfigData($this, $this->data);
+            $installData = $this->data;
+            // convert customPWInfoPanelLinks default IDs to paths so JSON stores the export-portable form from the outset
+            if(!empty($installData['customPWInfoPanelLinks']) && is_array($installData['customPWInfoPanelLinks'])) {
+                $paths = array();
+                foreach($installData['customPWInfoPanelLinks'] as $id) {
+                    if(!is_int($id) && !ctype_digit((string) $id)) {
+                        $paths[] = $id;
+                        continue;
+                    }
+                    if(method_exists($this->wire('pages'), 'getPath') && version_compare($this->wire('config')->version, '3.0.73', '>=')) {
+                        $paths[] = $this->wire('pages')->getPath((int) $id);
+                    }
+                    else {
+                        $paths[] = $this->wire('pages')->get((int) $id)->path;
+                    }
+                }
+                $installData['customPWInfoPanelLinks'] = $paths;
+            }
+            $this->wire('modules')->saveModuleConfigData($this, $installData);
         }
     }
 
