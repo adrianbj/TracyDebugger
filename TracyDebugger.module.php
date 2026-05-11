@@ -3551,20 +3551,40 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $this->wire('config')->scripts->append($this->wire('config')->urls->TracyDebugger . "scripts/ace-editor/ace.js");
         $this->wire('config')->scripts->append($this->wire('config')->urls->TracyDebugger . "scripts/config.js");
 
-        // convert PW Info panel custom links from path back to ID
+        // convert PW Info panel custom links from path back to ID for the InputfieldPageListSelectMultiple field.
+        // JSON values may be IDs (fresh-install state, when PW writes getDefaultData() before our save hook runs)
+        // or paths (after the save hook has converted them for export portability). Lazy-migrate IDs → paths in JSON
+        // so the export-portable form is reached without requiring a manual save.
         if(isset($data['customPWInfoPanelLinks'])) {
             $customPWInfoPanelLinkIds = array();
-            $customPWInfoPanelLinks = $data['customPWInfoPanelLinks'];
-            if(method_exists($this->wire('pages'), 'getByPath')) {
-                foreach($customPWInfoPanelLinks as $pagePath) {
-                    array_push($customPWInfoPanelLinkIds, $this->wire('pages')->getByPath($pagePath, array('getID' => true, 'useHistory' => true)));
+            $customPWInfoPanelLinkPaths = array();
+            $hasIds = false;
+            foreach($data['customPWInfoPanelLinks'] as $val) {
+                if(is_int($val) || ctype_digit((string) $val)) {
+                    $id = (int) $val;
+                    $customPWInfoPanelLinkIds[] = $id;
+                    if(method_exists($this->wire('pages'), 'getPath') && version_compare($this->wire('config')->version, '3.0.73', '>=')) {
+                        $customPWInfoPanelLinkPaths[] = $this->wire('pages')->getPath($id);
+                    }
+                    else {
+                        $customPWInfoPanelLinkPaths[] = $this->wire('pages')->get($id)->path;
+                    }
+                    $hasIds = true;
+                }
+                elseif(method_exists($this->wire('pages'), 'getByPath')) {
+                    $customPWInfoPanelLinkIds[] = $this->wire('pages')->getByPath($val, array('getID' => true, 'useHistory' => true));
+                    $customPWInfoPanelLinkPaths[] = $val;
+                }
+                // fallback for PW < 3.0.6 when getByPath method did not exist
+                else {
+                    $customPWInfoPanelLinkIds[] = $this->wire('pages')->get($val)->id;
+                    $customPWInfoPanelLinkPaths[] = $val;
                 }
             }
-            // fallback for PW < 3.0.6 when getByPath method did not exist
-            else {
-                foreach($customPWInfoPanelLinks as $pagePath) {
-                    array_push($customPWInfoPanelLinkIds, $this->wire('pages')->get($pagePath)->id);
-                }
+            if($hasIds) {
+                $existingConfig = $this->wire('modules')->getModuleConfigData($this);
+                $existingConfig['customPWInfoPanelLinks'] = $customPWInfoPanelLinkPaths;
+                $this->wire('modules')->saveModuleConfigData($this, $existingConfig);
             }
             $data['customPWInfoPanelLinks'] = $customPWInfoPanelLinkIds;
         }
