@@ -37,6 +37,9 @@
                         }
                         $isWindows = DIRECTORY_SEPARATOR === '\\';
                         $prefixOk = $isWindows ? (stripos($filePath, $rootPath) === 0) : (strpos($filePath, $rootPath) === 0);
+                        $isAjaxSave = $this->wire('config')->ajax && ($this->wire('input')->post->tracySaveFileCode || $this->wire('input')->post->tracyChangeTemplateCode);
+                        $writeSucceeded = false;
+                        $errorMsg = '';
                         if($editorPath != '' && $filePath !== '' && $prefixOk) {
                             $rawCode = base64_decode($this->wire('input')->post->tracyFileEditorRawCode);
                             $relPath = $isWindows ? substr($filePath, strlen($rootPath)) : str_replace($rootPath, '', $filePath);
@@ -44,22 +47,49 @@
                             // backup old version to Tracy cache directory
                             $cachePath = $this->tracyCacheDir . $relPath;
                             if(!is_dir($cachePath)) if(!wireMkdir(pathinfo($cachePath, PATHINFO_DIRNAME), true)) {
-                                throw new WireException("Unable to create cache path: $cachePath");
-                            }
-                            copy($filePath, $cachePath);
-
-                            if(!$this->wire('files')->filePutContents($filePath, $rawCode, LOCK_EX)) {
-                                throw new WireException("Unable to write file: " . $filePath);
-                            }
-                            if($this->wire('config')->chmodFile && PHP_OS_FAMILY !== 'Windows') chmod($filePath, octdec($this->wire('config')->chmodFile));
-
-                            if($this->wire('input')->post->tracyTestFileCode) {
-                                if(PHP_VERSION_ID >= 70300) {
-                                    setcookie('tracyTestFileEditor', $relPath, ['expires' => time() + (10 * 365 * 24 * 60 * 60), 'path' => '/', 'samesite' => 'Strict']);
-                                } else {
-                                    setcookie('tracyTestFileEditor', $relPath, time() + (10 * 365 * 24 * 60 * 60), '/');
+                                if($isAjaxSave) {
+                                    $errorMsg = "Unable to create cache path: $cachePath";
+                                }
+                                else {
+                                    throw new WireException("Unable to create cache path: $cachePath");
                                 }
                             }
+                            if(!$errorMsg) {
+                                copy($filePath, $cachePath);
+
+                                if(!$this->wire('files')->filePutContents($filePath, $rawCode, LOCK_EX)) {
+                                    if($isAjaxSave) {
+                                        $errorMsg = "Unable to write file: " . $filePath;
+                                    }
+                                    else {
+                                        throw new WireException("Unable to write file: " . $filePath);
+                                    }
+                                }
+                                else {
+                                    if($this->wire('config')->chmodFile && PHP_OS_FAMILY !== 'Windows') chmod($filePath, octdec($this->wire('config')->chmodFile));
+
+                                    if($this->wire('input')->post->tracyTestFileCode) {
+                                        if(PHP_VERSION_ID >= 70300) {
+                                            setcookie('tracyTestFileEditor', $relPath, ['expires' => time() + (10 * 365 * 24 * 60 * 60), 'path' => '/', 'samesite' => 'Strict']);
+                                        } else {
+                                            setcookie('tracyTestFileEditor', $relPath, time() + (10 * 365 * 24 * 60 * 60), '/');
+                                        }
+                                    }
+                                    $writeSucceeded = true;
+                                }
+                            }
+                        }
+                        else if($isAjaxSave) {
+                            $errorMsg = 'Invalid file path';
+                        }
+                        if($isAjaxSave) {
+                            header('Content-Type: application/json');
+                            echo json_encode(array(
+                                'status' => $writeSucceeded ? 'ok' : 'error',
+                                'message' => $errorMsg,
+                                'filePath' => $editorPath,
+                            ));
+                            exit;
                         }
                         $this->wire('session')->redirect($this->httpReferer);
                     }

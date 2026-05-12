@@ -147,6 +147,7 @@ class FileEditorPanel extends BasePanel {
                 aceTheme: "$aceTheme",
                 codeFontSize: $codeFontSize,
                 codeLineHeight: $codeLineHeight,
+                savedContent: null,
 
                 isSafari: function() {
                     if (navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
@@ -166,6 +167,62 @@ class FileEditorPanel extends BasePanel {
 
                     // doing btoa because if code contains <script>, browsers are failing with ERR_BLOCKED_BY_XSS_AUDITOR
                     document.getElementById("tracyFileEditorRawCode").innerHTML = btoa(unescape(encodeURIComponent(tracyFileEditor.tfe.getValue())));
+                },
+
+                isDirty: function() {
+                    if(!tracyFileEditor.tfe || typeof tracyFileEditor.tfe.getValue !== 'function') return false;
+                    return tracyFileEditor.savedContent !== null && tracyFileEditor.tfe.getValue() !== tracyFileEditor.savedContent;
+                },
+
+                updateDirtyIndicator: function() {
+                    var el = document.getElementById('panelTitleDirty');
+                    if(!el) return;
+                    el.style.display = tracyFileEditor.isDirty() ? 'inline-block' : 'none';
+                },
+
+                markClean: function() {
+                    if(!tracyFileEditor.tfe || typeof tracyFileEditor.tfe.getValue !== 'function') return;
+                    tracyFileEditor.savedContent = tracyFileEditor.tfe.getValue();
+                    tracyFileEditor.updateDirtyIndicator();
+                },
+
+                saveViaAjax: function(submitName) {
+                    if(!tracyFileEditor.tfe || typeof tracyFileEditor.tfe.getValue !== 'function') return;
+                    var form = document.getElementById('tracyFileEditorSubmission');
+                    if(!form) return;
+                    tracyFileEditor.getRawFileEditorCode();
+                    var formData = new FormData(form);
+                    formData.append(submitName, '1');
+                    var btn = document.getElementById(submitName);
+                    var origValue = btn ? btn.value : null;
+                    if(btn) {
+                        btn.value = 'Saving...';
+                        btn.disabled = true;
+                    }
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', form.action, true);
+                    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                    xhr.onreadystatechange = function() {
+                        if(xhr.readyState !== XMLHttpRequest.DONE) return;
+                        var ok = false;
+                        var message = '';
+                        if(xhr.status === 200) {
+                            try {
+                                var resp = JSON.parse(xhr.responseText);
+                                ok = resp.status === 'ok';
+                                message = resp.message || '';
+                            } catch(e) {}
+                        }
+                        if(ok) tracyFileEditor.markClean();
+                        if(btn) {
+                            btn.value = ok ? 'Saved!' : (message ? 'Failed: ' + message : 'Save failed');
+                            setTimeout(function() {
+                                btn.value = origValue;
+                                btn.disabled = false;
+                            }, ok ? 1200 : 2500);
+                        }
+                    };
+                    xhr.send(formData);
                 },
 
                 saveToLocalStorage: function(name) {
@@ -221,9 +278,17 @@ class FileEditorPanel extends BasePanel {
                         name: 'tracyFileEditorSave',
                         bindKey: { win: 'Ctrl-S', mac: 'Cmd-S' },
                         exec: function() {
-                            var saveBtn = document.getElementById('tracySaveFileCode') || document.getElementById('tracyChangeTemplateCode');
-                            if(saveBtn) saveBtn.click();
+                            if(document.getElementById('tracySaveFileCode')) {
+                                tracyFileEditor.saveViaAjax('tracySaveFileCode');
+                            }
+                            else if(document.getElementById('tracyChangeTemplateCode')) {
+                                tracyFileEditor.saveViaAjax('tracyChangeTemplateCode');
+                            }
                         }
+                    });
+
+                    tracyFileEditor.tfe.on('change', function() {
+                        tracyFileEditor.updateDirtyIndicator();
                     });
 
                     tracyFileEditor.tfe.on("beforeEndOperation", function() {
@@ -257,6 +322,7 @@ class FileEditorPanel extends BasePanel {
                             document.getElementById("tracyFileEditorCode").style.visibility = "visible";
                             if(tracyFileEditor.tracyFileEditorFilePath) {
                                 tracyFileEditor.tfe.setValue($tracyFileEditorFileCode);
+                                tracyFileEditor.markClean();
                                 var tracyFileEditorState = JSON.parse(localStorage.getItem("tracyFileEditor"));
                                 if(!!tracyFileEditorState) {
                                     tracyFileEditor.tfe.selection.fromJSON(tracyFileEditorState.selections);
@@ -405,6 +471,26 @@ class FileEditorPanel extends BasePanel {
             document.getElementById('tracyFileEditorKeyboardShortcuts').addEventListener('click', function() { tracyFileEditor.toggleKeyboardShortcuts(); });
             document.getElementById('tfe_recently_opened').addEventListener('change', function() { tracyFileEditorLoader.loadFileEditor(this.value); });
 
+            (function() {
+                var feForm = document.getElementById('tracyFileEditorSubmission');
+                if(!feForm) return;
+                feForm.addEventListener('submit', function(e) {
+                    var submitter = e.submitter;
+                    if(submitter && (submitter.id === 'tracySaveFileCode' || submitter.id === 'tracyChangeTemplateCode')) {
+                        e.preventDefault();
+                        tracyFileEditor.saveViaAjax(submitter.id);
+                    }
+                });
+            })();
+
+            window.addEventListener('beforeunload', function(e) {
+                if(tracyFileEditor.isDirty()) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                    return '';
+                }
+            });
+
         </script>
 
 HTML;
@@ -422,7 +508,7 @@ HTML;
         </svg>
         ';
 
-        $out .= '<h1>'.$this->icon.' File Editor <span id="tracyFileEditorKeyboardShortcuts" title="Keyboard Shortcuts" style="display: inline-block; margin-left: 5px; cursor: pointer">' . $keyboardShortcutIcon . '</span> <span id="panelTitleFilePath" style="font-size:14px">'.($this->tracyFileEditorFilePath ?: 'no selected file').'</span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" data-tracy-resize="FileEditorPanel">⛶</a></span></span>
+        $out .= '<h1>'.$this->icon.' File Editor <span id="tracyFileEditorKeyboardShortcuts" title="Keyboard Shortcuts" style="display: inline-block; margin-left: 5px; cursor: pointer">' . $keyboardShortcutIcon . '</span> <span id="panelTitleFilePath" style="font-size:14px">'.($this->tracyFileEditorFilePath ?: 'no selected file').'</span><span id="panelTitleDirty" style="display:none; font-size:28px; line-height:1; margin-left:4px; vertical-align:middle; position:relative; top:-3px">•</span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" data-tracy-resize="FileEditorPanel">⛶</a></span></span>
         <div class="tracy-inner">
             <div id="tracyFileEditorContainer" style="height: 100%;">
 

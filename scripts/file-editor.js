@@ -134,6 +134,7 @@ if(!tracyFileEditorLoader) {
                             var titleEl = fePanel.querySelector("#panelTitleFilePath");
                             if(titleEl) titleEl.textContent = filePath;
                         }
+                        if(typeof tracyFileEditor.markClean === 'function') tracyFileEditor.markClean();
 
                         // modelist is loaded asynchronously, so it may not be ready yet — fall back to text mode
                         if(tracyFileEditor.modelist) {
@@ -172,6 +173,9 @@ if(!tracyFileEditorLoader) {
         },
 
         loadFileEditor: function(filePath, line) {
+            if(typeof tracyFileEditor !== 'undefined' && typeof tracyFileEditor.isDirty === 'function' && tracyFileEditor.isDirty()) {
+                if(!confirm('You have unsaved changes in the current file. Discard them and load the new file?')) return;
+            }
             var panelElem = document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel");
 
             if(panelElem && panelElem.classList.contains("tracy-mode-window")) {
