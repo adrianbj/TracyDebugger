@@ -41,6 +41,18 @@ if($panel == 'console') {
     <br />';
 }
 
+if($panel == 'fileEditor') {
+    $aceKeyboardShortcuts .= '
+    <table>
+        <th colspan="2">File</th>
+        <tr>
+            <td>CTRL/CMD + S</td>
+            <td>Save</td>
+        </tr>
+    </table>
+    <br />';
+}
+
 $aceKeyboardShortcuts .= '
 <table>
     <th colspan="2">Screen / Pane Manipulation</th>

@@ -217,6 +217,15 @@ class FileEditorPanel extends BasePanel {
                     tracyFileEditor.tfe.setShowInvisibles($codeShowInvisibles);
                     tracyFileEditor.tfe.\$blockScrolling = Infinity; //fix deprecation warning
 
+                    tracyFileEditor.tfe.commands.addCommand({
+                        name: 'tracyFileEditorSave',
+                        bindKey: { win: 'Ctrl-S', mac: 'Cmd-S' },
+                        exec: function() {
+                            var saveBtn = document.getElementById('tracySaveFileCode') || document.getElementById('tracyChangeTemplateCode');
+                            if(saveBtn) saveBtn.click();
+                        }
+                    });
+
                     tracyFileEditor.tfe.on("beforeEndOperation", function() {
                         tracyFileEditor.saveToLocalStorage('tracyFileEditor');
                         // focus set to false to prevent breaking the Ace search box
