@@ -163,6 +163,8 @@ class TD extends TracyDebugger {
      * Build a "Copy MD" button + sibling JSON payload for the rendered dump,
      * mirroring the Exceptions panel's Agent Markdown copy pattern. Click
      * handler lives in scripts/main.js (matches [data-tracy-md-copy]).
+     * Absolutely positioned at top-right of a position:relative parent, to the
+     * right of the +/- togglers (which are shifted left in styles.css to make room).
      * @tracySkipLocation
      */
     private static function buildAgentCopyButton($var) {
@@ -170,7 +172,7 @@ class TD extends TracyDebugger {
         $text = self::agentText($var);
         if($text === null || $text === '') return '';
         $jsonMd = str_replace('</', '<\\/', \Tracy\Helpers::jsonEncode($text, true));
-        $btnStyle = 'float:right;margin:4px 6px 0 6px;padding:0;line-height:0;cursor:pointer;background:transparent;border:0;color:#888;opacity:0.6;';
+        $btnStyle = 'position:absolute;top:6px;right:8px;padding:0;line-height:0;cursor:pointer;background:transparent;border:0;color:#888;opacity:0.6;z-index:1;';
         $icon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
         return '<span class="tracy-dump-copy-wrap">'
              . '<button type="button" data-tracy-md-copy class="tracy-md-copy-btn" style="' . $btnStyle . '" title="Copy this dump as plaintext for an AI agent">' . $icon . '</button>'
@@ -359,7 +361,6 @@ class TD extends TracyDebugger {
         $options[Dumper::DEBUGINFO] = isset($options['debugInfo']) ? $options['debugInfo'] : TracyDebugger::getDataValue('debugInfo');
 
         $out = '<div style="margin: 0 0 10px 0">';
-        $out .= self::buildAgentCopyButton($var);
 
         $editCountLink = '';
         if(count(TracyDebugger::getDataValue('dumpPanelTabs')) > 0 && !is_string($var)) {
@@ -427,14 +428,16 @@ class TD extends TracyDebugger {
             $tabs .= $editCountLink . '</ul>';
             $tabDivs .= '</div>';
             if($numTabs > 1) {
+	            $wrapperOpen = '<div style="clear:both; position:relative;">';
+	            $tabDivs = $wrapperOpen . self::buildAgentCopyButton($var) . substr($tabDivs, strlen($wrapperOpen));
 	            $out .= $tabs . $tabDivs;
 	        }
 	        else {
-            	$out .= '<div style="clear:both; position:relative;">' . $lastDump . '</div>';
+            	$out .= '<div style="clear:both; position:relative;">' . self::buildAgentCopyButton($var) . $lastDump . '</div>';
 	        }
         }
         else {
-            $out .= '<div style="clear:both; position:relative;">' . Dumper::toHtml($var, $options) . '</div>';
+            $out .= '<div style="clear:both; position:relative;">' . self::buildAgentCopyButton($var) . Dumper::toHtml($var, $options) . '</div>';
         }
 
         $out .= '</div>';
