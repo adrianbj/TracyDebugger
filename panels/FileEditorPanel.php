@@ -508,7 +508,7 @@ HTML;
         </svg>
         ';
 
-        $out .= '<h1>'.$this->icon.' File Editor <span id="tracyFileEditorKeyboardShortcuts" title="Keyboard Shortcuts" style="display: inline-block; margin-left: 5px; cursor: pointer">' . $keyboardShortcutIcon . '</span> <span id="panelTitleFilePath" style="font-size:14px">'.($this->tracyFileEditorFilePath ?: 'no selected file').'</span><span id="panelTitleDirty" style="display:none; font-size:28px; line-height:1; margin-left:4px; vertical-align:middle; position:relative; top:-3px">•</span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" data-tracy-resize="FileEditorPanel">⛶</a></span></span>
+        $out .= '<h1>'.$this->icon.' File Editor <span id="tracyFileEditorKeyboardShortcuts" title="Keyboard Shortcuts" style="display: inline-block; margin-left: 5px; cursor: pointer">' . $keyboardShortcutIcon . '</span> <span id="panelTitleFilePath" style="font-size:14px">'.($this->tracyFileEditorFilePath ?: 'no selected file').'</span><span id="panelTitleDirty" style="display:none; line-height:0; margin-left:8px; vertical-align:middle; position:relative; top:-2px; color:'.TracyDebugger::COLOR_ALERT.'">•</span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" data-tracy-resize="FileEditorPanel">⛶</a></span></span>
         <div class="tracy-inner">
             <div id="tracyFileEditorContainer" style="height: 100%;">
 
