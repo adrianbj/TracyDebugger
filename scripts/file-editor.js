@@ -127,7 +127,9 @@ if(!tracyFileEditorLoader) {
 
                     if(fileData) {
                         tracyFileEditorLoader.generateButtons(fileData);
+                        if(typeof tracyFileEditor !== 'undefined') tracyFileEditor.ignoreChange = true;
                         tracyFileEditor.tfe.setValue(fileData["contents"]);
+                        if(typeof tracyFileEditor !== 'undefined') tracyFileEditor.ignoreChange = false;
                         tracyFileEditor.tfe.gotoLine(line, 0);
                         var fePanel = document.getElementById("tracy-debug-panel-ProcessWire-FileEditorPanel");
                         if(fePanel) {

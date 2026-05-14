@@ -148,6 +148,7 @@ class FileEditorPanel extends BasePanel {
                 codeFontSize: $codeFontSize,
                 codeLineHeight: $codeLineHeight,
                 savedContent: null,
+                ignoreChange: false,
 
                 isSafari: function() {
                     if (navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
@@ -288,6 +289,7 @@ class FileEditorPanel extends BasePanel {
                     });
 
                     tracyFileEditor.tfe.on('change', function() {
+                        if(tracyFileEditor.ignoreChange) return;
                         tracyFileEditor.updateDirtyIndicator();
                     });
 
@@ -321,7 +323,9 @@ class FileEditorPanel extends BasePanel {
                         ace.config.loadModule('ace/ext/language_tools', function () {
                             document.getElementById("tracyFileEditorCode").style.visibility = "visible";
                             if(tracyFileEditor.tracyFileEditorFilePath) {
+                                tracyFileEditor.ignoreChange = true;
                                 tracyFileEditor.tfe.setValue($tracyFileEditorFileCode);
+                                tracyFileEditor.ignoreChange = false;
                                 tracyFileEditor.markClean();
                                 var tracyFileEditorState = JSON.parse(localStorage.getItem("tracyFileEditor"));
                                 if(!!tracyFileEditorState) {
