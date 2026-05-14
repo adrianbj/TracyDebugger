@@ -128,7 +128,7 @@ if(!tracyFileEditorLoader) {
                 if(titleEl) titleEl.textContent = filePath;
             }
 
-            if(typeof tracyFileEditor === "undefined" || !tracyFileEditor.tfe) {
+            if(typeof tracyFileEditor === "undefined" || !tracyFileEditor.tfe || typeof tracyFileEditor.tfe.setValue !== 'function') {
                 window.requestAnimationFrame(function() { tracyFileEditorLoader.populateFileEditor(filePath, line); });
             }
             else {
