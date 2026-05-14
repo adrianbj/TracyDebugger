@@ -12,17 +12,35 @@ if(!tracyFileEditorLoader) {
             }
         },
 
+        normalizePath: function(p) {
+            if(!p) return p;
+            p = p.replace(/\\/g, "/");
+            if(p.charAt(0) !== "/") p = "/" + p;
+            return p;
+        },
+
         initializeEditor: function() {
             if(!document.getElementById("tfe_recently_opened")) {
                 window.requestAnimationFrame(tracyFileEditorLoader.initializeEditor);
             }
             else {
-                // populate recently opened files select
+                // populate recently opened files select, normalizing legacy entries with inconsistent
+                // leading slash / backslashes and de-duplicating across the normalized form
                 var recentlyOpenSelect = document.getElementById("tfe_recently_opened");
                 var storedFiles = JSON.parse(localStorage.getItem("tracyFileEditorRecentlyOpen"));
                 if(storedFiles) {
+                    var seen = {};
+                    var deduped = [];
                     for(var i = 0; i < storedFiles.length; ++i) {
-                        recentlyOpenSelect.options[recentlyOpenSelect.options.length] = new Option(storedFiles[i], storedFiles[i]);
+                        var p = tracyFileEditorLoader.normalizePath(storedFiles[i]);
+                        if(!seen[p]) {
+                            seen[p] = true;
+                            deduped.push(p);
+                            recentlyOpenSelect.options[recentlyOpenSelect.options.length] = new Option(p, p);
+                        }
+                    }
+                    if(deduped.length !== storedFiles.length) {
+                        localStorage.setItem("tracyFileEditorRecentlyOpen", JSON.stringify(deduped));
                     }
                 }
                 var initialFile = document.getElementById('panelTitleFilePath').textContent;
@@ -31,13 +49,14 @@ if(!tracyFileEditorLoader) {
         },
 
         addRecentlyOpenedFile: function(fullFilePath) {
+            fullFilePath = tracyFileEditorLoader.normalizePath(fullFilePath);
             var storedFilesArr = [];
             var storedFiles = JSON.parse(localStorage.getItem("tracyFileEditorRecentlyOpen"));
             if(storedFiles) storedFilesArr = storedFiles;
             var recentlyOpenSelect = document.getElementById("tfe_recently_opened");
             var alreadyExists = false;
             for(var i = 0; i < recentlyOpenSelect.length; ++i) {
-                if(recentlyOpenSelect.options[i].value == fullFilePath) {
+                if(tracyFileEditorLoader.normalizePath(recentlyOpenSelect.options[i].value) === fullFilePath) {
                     alreadyExists = true;
                 }
             }
@@ -113,10 +132,17 @@ if(!tracyFileEditorLoader) {
                 window.requestAnimationFrame(function() { tracyFileEditorLoader.populateFileEditor(filePath, line); });
             }
             else {
+                if(tracyFileEditor.populateXhr && typeof tracyFileEditor.populateXhr.abort === 'function') {
+                    tracyFileEditor.populateXhr.abort();
+                }
                 var xmlhttp;
                 xmlhttp = new XMLHttpRequest();
+                tracyFileEditor.populateXhr = xmlhttp;
                 xmlhttp.onreadystatechange = function() {
                     if(xmlhttp.readyState !== XMLHttpRequest.DONE) return;
+                    if(xmlhttp.status === 0) return;
+                    var fpInput = document.getElementById('fileEditorFilePath');
+                    if(fpInput && fpInput.value !== filePath) return;
 
                     var fileData = null;
                     var parseError = null;
