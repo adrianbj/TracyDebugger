@@ -1306,10 +1306,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     array_push(static::$showPanels, 'fileEditor');
                 }
 
-                if(in_array('fileEditor', static::$showPanels)) {
-                    // this needs to be loaded here (not just in File Editor panel) so that links
-                    // will work even if File Editor panel hasn't been opened yet
+                // load for any user who could open the FE / Adminer panels rather than gating on $showPanels —
+                // Tracy caches the JS bundle by URL aggressively (Cache-Control: max-age=864000), and gating on
+                // per-request state (showPanels varies with the sticky cookie) means a cached bundle from a
+                // request without the panel stays cached for later requests where it IS enabled.
+                if(static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser) {
                     Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/php-file-tree/php_file_tree.js';
+                    Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/file-editor.js';
+                    if($this->wire('modules')->isInstalled('ProcessTracyAdminer')) {
+                        Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/adminer.js';
+                    }
                 }
 
                 if(in_array('tracyExceptions', static::$showPanels)) {
@@ -1473,12 +1479,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     <div id="tracy-show-button" title="Show Tracy">&#8689;</div>
                 ';
 
-                if(in_array('fileEditor', static::$showPanels)) {
-                    Debugger::$customJsStr .= file_get_contents($this->wire('config')->paths->TracyDebugger.'scripts/file-editor.js');
-                }
-                if(in_array('adminer', static::$showPanels)) {
-                    Debugger::$customJsStr .= file_get_contents($this->wire('config')->paths->TracyDebugger.'scripts/adminer.js');
-                }
 
                 Debugger::$customJsStr .= '
                     function addHideLink() {

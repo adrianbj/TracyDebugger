@@ -230,10 +230,7 @@ if(!tracyFileEditorLoader) {
 
     (function initTracyFileEditorHandler() {
         function setupTracyFileEditorClickHandler() {
-            const htmlElement = document.documentElement;
-            const doc = htmlElement.classList.contains('tracy-bs-visible') ? document.body : document;
-
-            doc.addEventListener("click", function(e) {
+            document.body.addEventListener("click", function(e) {
                 if (e.target) {
                     let curEl = e.target;
 

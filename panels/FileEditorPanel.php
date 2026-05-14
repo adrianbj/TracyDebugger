@@ -461,11 +461,7 @@ class FileEditorPanel extends BasePanel {
                 }
             });
 
-            tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/php-file-tree/php_file_tree.js", function() {
-                tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/file-editor.js", function() {
-                    tracyFileEditorLoader.generateButtons($tracyFileEditorFileData);
-                });
-            });
+            tracyFileEditorLoader.generateButtons($tracyFileEditorFileData);
             tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/filterbox/filterbox.js", function() {
                 tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/file-editor-search.js");
             });
