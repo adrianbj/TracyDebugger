@@ -147,4 +147,58 @@ abstract class BasePanel extends WireData implements IBarPanel {
         return null;
     }
 
+    /**
+     * Run a callable inside try/catch; on Throwable, log to Tracy and return $fallback.
+     * Use when you're rendering a single fragment (cell, list item, link) and want to keep
+     * rendering the rest of the panel even if one fragment's source code misbehaves.
+     *
+     * If $fallback is a string containing '%s', the throwable's HTML-escaped message is
+     * interpolated into it.
+     *
+     * @param callable $cb
+     * @param mixed    $fallback
+     * @return mixed
+     */
+    protected function safeRender(callable $cb, $fallback = '') {
+        try {
+            return $cb();
+        }
+        catch(\Throwable $e) {
+            TD::log($e);
+            if(is_string($fallback) && strpos($fallback, '%s') !== false) {
+                return sprintf($fallback, htmlspecialchars($e->getMessage(), ENT_QUOTES));
+            }
+            return $fallback;
+        }
+    }
+
+    /**
+     * Iterate $items, calling $renderItem($item, $key) for each and concatenating the
+     * returned HTML. If $renderItem throws on any item, that item is replaced with
+     * $errorTemplate (sprintf'd with the throwable's HTML-escaped message), the error
+     * is logged to Tracy, and iteration continues.
+     *
+     * Use for the common pattern of "render a row per page/field/template/hook" where
+     * a single broken item shouldn't take down the whole table.
+     *
+     * @param iterable $items
+     * @param callable $renderItem function($item, $key): string
+     * @param string   $errorTemplate sprintf template; '%s' is replaced with error message.
+     *                                Default targets a generic table-cell context.
+     * @return string
+     */
+    protected function safeIterate(iterable $items, callable $renderItem, $errorTemplate = '<tr><td colspan="99"><em style="color:#c00">error: %s</em></td></tr>') {
+        $out = '';
+        foreach($items as $key => $item) {
+            try {
+                $out .= $renderItem($item, $key);
+            }
+            catch(\Throwable $e) {
+                TD::log($e);
+                $out .= sprintf($errorTemplate, htmlspecialchars($e->getMessage(), ENT_QUOTES));
+            }
+        }
+        return $out;
+    }
+
 }

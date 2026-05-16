@@ -736,30 +736,29 @@ class RequestInfoPanel extends BasePanel {
 
             $fieldsListValues = $this->sectionHeader($fieldsListValuesColumns);
 
-            $value = array();
-            foreach($p->fields as $f) {
+            $fieldsListValues .= $this->safeIterate($p->fields, function($f) use ($p, $adminerAvailable, $adminerIcon) {
                 $fieldArray['settings'] = $p->template->fieldgroup->getField($f, true)->getArray();
                 $options = array(Dumper::LIVE => true, Dumper::DEPTH => TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => true);
                 if(defined('\Tracy\Dumper::ITEMS')) array_push($options, array(Dumper::ITEMS => TracyDebugger::getDataValue('maxItems')));
                 $settings = Dumper::toHtml($fieldArray['settings'], $options);
-                $fieldsListValues .= "\n<tr>" .
+                $row = "\n<tr>" .
                     "<td>$f->id</td>" .
                     '<td><a title="Edit Field" href="'.$this->wire('config')->urls->admin.'setup/field/edit?id='.$f->id.'">'.$f->name.'</a></td>' .
                     "<td>$f->label</td>" .
                     "<td>".str_replace('Fieldtype', '', $f->type)."</td>";
-                    if($f->inputfield || $f->inputfieldClass) {
-                        $fieldsListValues .= "<td>".str_replace('Inputfield', '', ($f->inputfield ? $f->inputfield : $f->inputfieldClass))."</td>";
-                    }
-                    else {
-                        $fieldsListValues .= "<td></td>";
-                    }
-                    if($adminerAvailable) $fieldsListValues .= '<td><a title="Edit in Adminer" href="adminer://?edit=field_'.$f->name.'&where%5Bpages_id%5D='.$p->id.'">'.$adminerIcon.'</a></td>';
-                    $fieldsListValues .= "<td>".$this->generateOutput($p, $f, false)."</td>" .
+                if($f->inputfield || $f->inputfieldClass) {
+                    $row .= "<td>".str_replace('Inputfield', '', ($f->inputfield ? $f->inputfield : $f->inputfieldClass))."</td>";
+                }
+                else {
+                    $row .= "<td></td>";
+                }
+                if($adminerAvailable) $row .= '<td><a title="Edit in Adminer" href="adminer://?edit=field_'.$f->name.'&where%5Bpages_id%5D='.$p->id.'">'.$adminerIcon.'</a></td>';
+                $row .= "<td>".$this->generateOutput($p, $f, false)."</td>" .
                     "<td>".$this->generateOutput($p, $f, true)."</td>";
-                    if(TracyDebugger::getDataValue('imagesInFieldListValues')) $fieldsListValues .= "<td>".$this->imageDetails($p, $f)."</td>";
-                    $fieldsListValues .= "<td>".$settings."</td>" .
-                    "</tr>";
-            }
+                if(TracyDebugger::getDataValue('imagesInFieldListValues')) $row .= "<td>".$this->imageDetails($p, $f)."</td>";
+                $row .= "<td>".$settings."</td></tr>";
+                return $row;
+            });
             $fieldsListValues .= $this->sectionEnd();
         }
 
@@ -904,7 +903,16 @@ HTML;
 
     private function generateOutput($p, $f, $outputFormatting) {
         $out = '';
-        $value = $outputFormatting ? $this->wire('sanitizer')->entities1($p->getFormatted($f->name)) : $p->getUnformatted($f->name);
+        // a fieldtype's formatValue/wakeupValue can throw (or trigger errors Tracy converts to ErrorException,
+        // e.g. FieldtypeTable -> WireData null array offset deprecation). don't let one misbehaving field
+        // kill the whole panel — surface the error inline and keep rendering.
+        try {
+            $value = $outputFormatting ? $this->wire('sanitizer')->entities1($p->getFormatted($f->name)) : $p->getUnformatted($f->name);
+        }
+        catch(\Throwable $e) {
+            TD::log($e);
+            return '<em style="color:#c00">error reading field — see Tracy log</em>';
+        }
         if(is_string($value) && $outputFormatting) {
             $out .= substr($value, 0, TracyDebugger::getDataValue('maxLength')) . (strlen($value) > 99 ? '... ('.strlen($value).')' : '');
         }

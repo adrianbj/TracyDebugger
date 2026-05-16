@@ -85,20 +85,21 @@ class DebugModePanel extends BasePanel {
             if(in_array('pagesLoaded', $panelSections)) {
                 $pagesLoaded_oc = 0;
                 $pagesLoaded = $this->sectionHeader(array('ID', 'Path', 'Type', 'Loader'));
-                foreach($this->wire('pages')->getCache() as $p) {
-                    $pagesLoaded_oc++;
+                $pagesLoaded .= $this->safeIterate($this->wire('pages')->getCache(), function($p) use (&$pagesLoaded_oc) {
                     $parts = explode('/', trim($p->path, '/'));
                     $name = array_pop($parts);
                     $path = implode('/', $parts) . "/$name/";
                     $path = '/' . ltrim($path, '/');
                     $path = str_replace("/$name/", "/<b>$name</b>/", $path);
-                    $pagesLoaded .= "\n<tr>" .
+                    $row = "\n<tr>" .
                         "<td>$p->id</td>" .
                         "<td>$path</td>" .
                         "<td>" . wireClassName($p) . "</td>" .
                         "<td>$p->_debug_loader</td>" .
                         "</tr>";
-                }
+                    $pagesLoaded_oc++;
+                    return $row;
+                });
                 $pagesLoaded .= $this->sectionEnd();
             }
 
@@ -108,19 +109,20 @@ class DebugModePanel extends BasePanel {
                 $modulesNumLoaded = 0;
                 $modulesNumSkipped = 0;
                 $modulesLoaded = $this->sectionHeader(array('Class', 'Version', 'Title'));
-                foreach($this->wire('modules') as $module) {
+                $modulesLoaded .= $this->safeIterate($this->wire('modules'), function($module) use (&$modulesNumLoaded, &$modulesNumSkipped) {
                     if($module instanceof ModulePlaceholder) {
                         $modulesNumSkipped++;
-                        continue;
+                        return '';
                     }
-                    $modulesNumLoaded++;
                     $info = $this->wire('modules')->getModuleInfo($module, array('verbose' => false));
-                    $modulesLoaded .= "<tr>";
-                    $modulesLoaded .= "<td><a href='".$this->wire('config')->urls->admin."module/edit?name=".$info['name']."'>".$info['name']."</a></td>";
-                    $modulesLoaded .= "<td>".$info['version']."</td>";
-                    $modulesLoaded .= "<td>".$info['title']."</td>";
-                    $modulesLoaded .= "</tr>";
-                }
+                    $row = "<tr>";
+                    $row .= "<td><a href='".$this->wire('config')->urls->admin."module/edit?name=".$info['name']."'>".$info['name']."</a></td>";
+                    $row .= "<td>".$info['version']."</td>";
+                    $row .= "<td>".$info['title']."</td>";
+                    $row .= "</tr>";
+                    $modulesNumLoaded++;
+                    return $row;
+                });
                 $modulesLoaded .= $this->sectionEnd();
             }
 
@@ -137,10 +139,12 @@ class DebugModePanel extends BasePanel {
                     $hooksCalled_oc++;
                 }
                 ksort($hooksSorted);
-                foreach($hooksSorted as $key => $hook) {
+                $hooksCalled .= $this->safeIterate($hooksSorted, function($hook) {
                     $suffix = $hook['options']['type'] == 'method' ? '()' : '';
                     $toObject = !empty($hook['toObject']) ? $hook['toObject'] : '';
                     $toMethod = $hook['toMethod'];
+                    $toObjectName = '';
+                    $rc = null;
 
                     if($toMethod instanceof \Closure) {
                         $rc = new \ReflectionFunction($toMethod);
@@ -155,7 +159,7 @@ class DebugModePanel extends BasePanel {
                         $ro = new \ReflectionObject($toObject);
                         $toObjectName = str_replace('ProcessWire\\', '', $ro->getName());
                     }
-                    if(isset($rc)) {
+                    if($rc) {
                         $file = $rc->getFileName();
                         $line = $rc->getStartLine();
                         $toMethodName = str_replace('ProcessWire\\', '', $rc->getName());
@@ -166,14 +170,15 @@ class DebugModePanel extends BasePanel {
                     }
 
                     if(is_callable($toMethod)) $toMethod = 'anonymous function';
-                    $hooksCalled .= "<tr>";
-                    $hooksCalled .= "<td>" . ($hook['options']['before'] ? 'before ' : '') . ($hook['options']['after'] ? 'after' : '') . "</td>";
-                    $hooksCalled .= "<td>" . ($hook['options']['fromClass'] ? $hook['options']['fromClass'] . '::' : '') . "$hook[method]$suffix</td>";
-                    $hooksCalled .= "<td>" . $visitedByStr . "()</td>";
-                    $hooksCalled .= "<td>" . ($hook['options']['allInstances'] || $hook['options']['fromClass'] ? "class " : "instance ") . $hook['options']['type'] . "</td>";
-                    $hooksCalled .= "<td>" . $hook['options']['priority'] . "</td>";
-                    $hooksCalled .= "</tr>";
-                }
+                    $row = "<tr>";
+                    $row .= "<td>" . ($hook['options']['before'] ? 'before ' : '') . ($hook['options']['after'] ? 'after' : '') . "</td>";
+                    $row .= "<td>" . ($hook['options']['fromClass'] ? $hook['options']['fromClass'] . '::' : '') . "$hook[method]$suffix</td>";
+                    $row .= "<td>" . $visitedByStr . "()</td>";
+                    $row .= "<td>" . ($hook['options']['allInstances'] || $hook['options']['fromClass'] ? "class " : "instance ") . $hook['options']['type'] . "</td>";
+                    $row .= "<td>" . $hook['options']['priority'] . "</td>";
+                    $row .= "</tr>";
+                    return $row;
+                });
                 $hooksCalled .= $this->sectionEnd();
             }
 
@@ -194,8 +199,7 @@ class DebugModePanel extends BasePanel {
                 // Selectors Queries
                 $selectorQueries_oc = 0;
                 $selectorQueries = $this->sectionHeader(array('Order', 'Selector', 'Caller', 'SQL Query', 'Settings', 'Time (ms)'));
-                foreach(TracyDebugger::$pageFinderQueries as $n => $query) {
-
+                $selectorQueries .= $this->safeIterate(TracyDebugger::$pageFinderQueries, function($query, $n) use (&$selectorQueries_oc) {
                     if(method_exists('\ProcessWire\Debug', 'backtrace')) {
                         $backtrace = $query->backtrace ?? '';
                         $backtrace = nl2br($this->wire('sanitizer')->entities1($backtrace));
@@ -205,20 +209,21 @@ class DebugModePanel extends BasePanel {
                     }
                     $caller = $query->arguments[1]['caller'] ?? '';
 
-                    $selectorQueries_oc++;
                     $selector = $this->wire('sanitizer')->entities1((string)$query->arguments[0]);
                     if(method_exists($query->return, 'getDebugQuery')) {
                         // 3.0.158 and newer - needed to get bound values
                         $sqlStr = $query->return->getDebugQuery();
                     }
                     else {
-                    // 3.0.157 and earlier
-                    $sqlStr = $query->return->getQuery();
+                        // 3.0.157 and earlier
+                        $sqlStr = $query->return->getQuery();
                     }
                     $options = array(Dumper::LIVE => true, Dumper::DEPTH => TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false);
                     if(defined('\Tracy\Dumper::ITEMS')) array_push($options, array(Dumper::ITEMS => TracyDebugger::getDataValue('maxItems')));
-                    $selectorQueries .= "\n<tr><td>$n</td><td style='max-width: 400px' class='tracy-force-break'>".$selector."</td><td>".$caller."<br />".$backtrace."</td><td style='max-width: 400px' class='tracy-force-break'>".$sqlStr."</td><td>".(isset($query->arguments[1]) ? Dumper::toHtml($query->arguments[1], $options) : '')."</td><td>".($query->arguments[2]*1000)."</td></tr>";
-                }
+                    $row = "\n<tr><td>$n</td><td style='max-width: 400px' class='tracy-force-break'>".$selector."</td><td>".$caller."<br />".$backtrace."</td><td style='max-width: 400px' class='tracy-force-break'>".$sqlStr."</td><td>".(isset($query->arguments[1]) ? Dumper::toHtml($query->arguments[1], $options) : '')."</td><td>".($query->arguments[2]*1000)."</td></tr>";
+                    $selectorQueries_oc++;
+                    return $row;
+                });
                 $selectorQueries .= $this->sectionEnd();
             }
 

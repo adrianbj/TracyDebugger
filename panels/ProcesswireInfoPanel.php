@@ -306,10 +306,15 @@ HTML;
             $versionsDetails['Module Details']['headings'] = array('Module ClassName', 'Version');
             $versionsDetails['Module Details']['items'] = array();
             foreach($this->wire('modules')->sort("className") as $name => $label) {
-                $flags = $this->wire('modules')->getFlags($name);
-                $info = $this->wire('modules')->getModuleInfoVerbose($name);
-                if($info['core']) continue;
-                $versionsDetails['Module Details']['items'][$name] = $this->wire('modules')->formatVersion($info['version']);
+                try {
+                    $info = $this->wire('modules')->getModuleInfoVerbose($name);
+                    if($info['core']) continue;
+                    $versionsDetails['Module Details']['items'][$name] = $this->wire('modules')->formatVersion($info['version']);
+                }
+                catch(\Throwable $e) {
+                    TD::log($e);
+                    $versionsDetails['Module Details']['items'][$name] = '<em style="color:#c00">error</em>';
+                }
             }
 
             $githubVersionsList = '';
