@@ -96,7 +96,7 @@ class AdminerPanel extends BasePanel {
         }
         elseif($this->wire('page')->process == 'ProcessHannaCode') {
             if($this->wire('input')->get('id')) {
-                $contextLink = '&edit=hanna_code&where%5Bid%5D='.$this->wire('sanitizer')->name($this->wire('input')->get('id'));
+                $contextLink = '&edit=hanna_code&where%5Bid%5D='.(int)$this->wire('input')->get('id');
             }
             else {
                 $contextLink = '&select=hanna_code';
@@ -117,7 +117,7 @@ class AdminerPanel extends BasePanel {
             }
             else {
                 if($this->wire('input')->get('id')) {
-                    $contextLink = '&edit=forms&where%5Bid%5D='.$this->wire('sanitizer')->name($this->wire('input')->get('id'));
+                    $contextLink = '&edit=forms&where%5Bid%5D='.(int)$this->wire('input')->get('id');
                 }
                 else {
                     $contextLink = '&select=forms';
@@ -140,7 +140,7 @@ class AdminerPanel extends BasePanel {
         if($this->wire('modules')->isInstalled("ProcessTracyAdminer")) {
             $out .= '
             <div class="tracy-inner" style="padding: 0 !important">
-                <iframe id="adminer-iframe" src="'.$adminerRendererUrl.'?iframe=1'.$contextLink.'" style="width:100%; height:calc(100% - 5px); border: none; padding:0; margin:0;"></iframe>';
+                <iframe id="adminer-iframe" src="'.htmlspecialchars($adminerRendererUrl.'?iframe=1'.$contextLink, ENT_QUOTES, 'UTF-8').'" style="width:100%; height:calc(100% - 5px); border: none; padding:0; margin:0;"></iframe>';
         }
         else {
             $out .= '

@@ -8,7 +8,7 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
             'summary' => __('Adminer renderer for TracyDebugger.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '2.0.4',
+            'version' => '2.0.5',
             'autoload' => false,
             'singular' => true,
             'icon' => 'database',
@@ -23,6 +23,7 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
     }
 
     public function ___execute() {
+        if(!$this->wire('user')->isSuperuser()) throw new Wire404Exception();
         require_once __DIR__ . '/panels/Adminer/adminneo-instance.php';
         require_once __DIR__ . '/panels/Adminer/adminneo.php';
         exit;

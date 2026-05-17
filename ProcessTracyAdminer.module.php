@@ -7,7 +7,7 @@ class ProcessTracyAdminer extends Process implements Module {
             'summary' => __('Adminer page for TracyDebugger.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '2.0.4',
+            'version' => '2.0.5',
             'autoload' => false,
             'singular' => true,
             'icon' => 'database',
@@ -23,18 +23,26 @@ class ProcessTracyAdminer extends Process implements Module {
 
     public function ___execute() {
 
+        if(!$this->wire('user')->isSuperuser()) throw new Wire404Exception();
+
         $data = $this->wire('modules')->getModuleConfigData('TracyDebugger');
 
         if(isset($data['adminerStandAlone']) && $data['adminerStandAlone'] === 1) {
             return $this->wire('modules')->get('ProcessTracyAdminerRenderer')->execute();
         }
         else {
+            $adminerRendererModuleId = $this->wire('modules')->getModuleID("ProcessTracyAdminerRenderer");
+            $adminerRendererUrl = $this->wire('pages')->get("process=$adminerRendererModuleId")->url;
+            $queryString = $_SERVER['QUERY_STRING'] ?? '';
+            $iframeSrc = $adminerRendererUrl . ($queryString !== '' ? '?' . $queryString : '');
+
             return '
-            <iframe id="adminer-iframe" src="'.htmlspecialchars(str_replace('/adminer/', '/adminer-renderer/', $_SERVER['REQUEST_URI'] ?? ''), ENT_QUOTES, 'UTF-8').'" style="width:100vw; border: none; padding:0; margin:0;"></iframe>
+            <iframe id="adminer-iframe" src="'.htmlspecialchars($iframeSrc, ENT_QUOTES, 'UTF-8').'" style="width:100vw; border: none; padding:0; margin:0;"></iframe>
             <script' . TracyDebugger::getNonceAttr() . '>
                 const adminer_iframe = document.getElementById("adminer-iframe");
+                const adminerRendererUrl = ' . json_encode($adminerRendererUrl) . ';
                 window.addEventListener("popstate", function (event) {
-                    adminer_iframe.src = location.href.replace("/adminer/", "/adminer-renderer/");
+                    adminer_iframe.src = adminerRendererUrl + location.search;
                 });
 
                 const baseUrl = window.location.href.split("?")[0];
