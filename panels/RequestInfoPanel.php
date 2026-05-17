@@ -32,6 +32,7 @@ class RequestInfoPanel extends BasePanel {
     public function getPanel() {
 
         $adminerAvailable = false;
+        $adminerIcon = '';
         if($this->wire('modules')->isInstalled('ProcessTracyAdminer') && in_array('adminer', TracyDebugger::$showPanels)) {
             $adminerAvailable = true;
             $adminerIcon = '
