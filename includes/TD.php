@@ -272,10 +272,10 @@ class TD extends TracyDebugger {
             <div class="tracy-inner" style="height:auto !important">
                 <div class="tracy-DumpPanel">';
             if($title) echo '<h2>'.$title.'</h2>';
-            echo static::generateDump($var, $options) .
+            echo static::safeGenerateDump($var, $options) .
             '   </div>
             </div>';
-            static::agentDumpToConsole($var, $title);
+            try { static::agentDumpToConsole($var, $title); } catch(\Throwable $e) { try { self::log($e); } catch(\Throwable $logErr) {} }
         }
     }
 
@@ -317,10 +317,112 @@ class TD extends TracyDebugger {
             <div class="tracy-inner" style="height:auto !important">
                 <div class="tracy-DumpPanel">';
             if($title) echo '<h2>'.$title.'</h2>';
-            echo static::generateDump($var, $options) .
+            echo static::safeGenerateDump($var, $options) .
             '   </div>
             </div>';
-            static::agentDumpToConsole($var, $title);
+            try { static::agentDumpToConsole($var, $title); } catch(\Throwable $e) { try { self::log($e); } catch(\Throwable $logErr) {} }
+        }
+    }
+
+    /**
+     * Wrap generateDump() so a throwable during dump rendering doesn't break
+     * the surrounding HTML structure (or abort the request) for d()/db().
+     * The error is logged and rendered inline ABOVE a best-effort fallback
+     * dump so the user sees both the failure and at least a shallow view of
+     * the value.
+     * @tracySkipLocation
+     */
+    private static function safeGenerateDump($var, $options) {
+        // capture non-fatal PHP errors fired during the dump pipeline (e.g. a
+        // getimagesize warning inside __debugInfo) so they can be deduped and
+        // rendered as styled blocks above the dump instead of echoing raw text
+        // at random positions in the active output buffer. Fatal-equivalent
+        // severities are delegated back to the previously installed handler.
+        $capturedWarnings = [];
+        $prevHandler = null;
+        $prevHandler = set_error_handler(function($errno, $errstr, $errfile, $errline) use (&$capturedWarnings, &$prevHandler) {
+            if(!(error_reporting() & $errno)) return false;
+            if(in_array($errno, [E_USER_ERROR, E_RECOVERABLE_ERROR], true)) {
+                return is_callable($prevHandler) ? call_user_func($prevHandler, $errno, $errstr, $errfile, $errline) : false;
+            }
+            $key = $errstr . '|' . $errfile . '|' . $errline;
+            if(!isset($capturedWarnings[$key])) {
+                $capturedWarnings[$key] = ['message' => $errstr, 'file' => $errfile, 'line' => $errline];
+            }
+            return true;
+        });
+
+        try {
+            $dumpHtml = static::generateDump($var, $options);
+        }
+        catch(\Throwable $e) {
+            try { self::log($e); } catch(\Throwable $logErr) {}
+            $dumpHtml = static::renderDumpError($e) . static::fallbackDump($var);
+        }
+        finally {
+            restore_error_handler();
+        }
+
+        // log each unique warning so Tracy's error log still records them
+        foreach($capturedWarnings as $w) {
+            try { self::log('Warning: ' . $w['message'] . ' on line: ' . $w['line'] . ' in ' . $w['file'], 'error'); } catch(\Throwable $e) {}
+        }
+
+        $warningHtml = '';
+        foreach($capturedWarnings as $w) {
+            $warningHtml .= static::renderInlineError('Warning', $w['message'], $w['file'], $w['line']);
+        }
+        return $warningHtml . $dumpHtml;
+    }
+
+    /**
+     * Render a Throwable as a styled red block (in its own grey container,
+     * matching the visual treatment Tracy gives the dump that follows).
+     * @tracySkipLocation
+     */
+    private static function renderDumpError(\Throwable $e) {
+        return static::renderInlineError(get_class($e), $e->getMessage(), $e->getFile(), $e->getLine());
+    }
+
+    /**
+     * Shared styled-block renderer for inline error/warning messages shown
+     * above a dump. Matches the grey-bordered + red-left-accent treatment.
+     * @tracySkipLocation
+     */
+    private static function renderInlineError($type, $message, $file = null, $line = null) {
+        $location = ($file !== null && $line !== null)
+            ? ' <em style="color:#666">in ' . htmlspecialchars($file, ENT_QUOTES, 'UTF-8') . ':' . (int)$line . '</em>'
+            : '';
+        return '<div style="border: 1px solid #d9d9d9; border-left: 3px solid #c00; padding: 6px 10px; background: #fff3f3; color: #c00; font-family: monospace; white-space: normal; margin-bottom: 5px;">'
+            . '<strong>' . htmlspecialchars($type, ENT_QUOTES, 'UTF-8') . ':</strong> '
+            . htmlspecialchars($message, ENT_QUOTES, 'UTF-8')
+            . $location
+            . '</div>';
+    }
+
+    /**
+     * Best-effort dump used when the full generateDump() pipeline throws. Disables
+     * __debugInfo (the most common source of the original throw) and falls back to
+     * reflection-based traversal at the user's configured depth.
+     * @tracySkipLocation
+     */
+    private static function fallbackDump($var) {
+        try {
+            $opts = [
+                Dumper::DEPTH => TracyDebugger::getDataValue('maxDepth'),
+                Dumper::TRUNCATE => TracyDebugger::getDataValue('maxLength'),
+                Dumper::COLLAPSE => TracyDebugger::getDataValue('collapse'),
+                Dumper::LOCATION => false,
+                Dumper::DEBUGINFO => false,
+            ];
+            if(defined('\Tracy\Dumper::ITEMS')) $opts[Dumper::ITEMS] = TracyDebugger::getDataValue('maxItems');
+            if(self::tracySupportsLazy()) $opts[Dumper::LAZY] = true;
+            return Dumper::toHtml($var, $opts);
+        }
+        catch(\Throwable $e) {
+            try { self::log($e); } catch(\Throwable $logErr) {}
+            return '<div style="color:#666; font-style:italic;">(unable to render fallback dump: '
+                . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . ')</div>';
         }
     }
 
@@ -331,10 +433,10 @@ class TD extends TracyDebugger {
     private static function dumpToBar($var, $title = NULL, $options = [], $echo = false) {
         $dumpItem = array();
         $dumpItem['title'] = $title;
-        $dumpItem['dump'] = $echo ? '<div class="tracy-echo">' . $var . '</div>' : static::generateDump($var, $options);
+        $dumpItem['dump'] = $echo ? '<div class="tracy-echo">' . $var . '</div>' : static::safeGenerateDump($var, $options);
         $dumpItem['text'] = null;
         if(!$echo && self::tracySupportsAgent() && \Tracy\Helpers::isAgent()) {
-            $dumpItem['text'] = self::agentText($var);
+            try { $dumpItem['text'] = self::agentText($var); } catch(\Throwable $e) { try { self::log($e); } catch(\Throwable $logErr) {} }
         }
         TracyDebugger::$dumpItems[] = $dumpItem;
         // always persist dumps for authorized dev users so cross-window polling can surface them,

@@ -357,13 +357,19 @@ function tracyConsoleErrorHandler($errno, $errstr, $errfile, $errline) {
         return;
     }
     else {
-        writeError(array('type' => 'Error', 'line' => $errline, 'message' => $errstr, 'file' => $errfile));
+        // Only fatal-equivalent severities terminate the script. For non-fatal
+        // notices/warnings the script keeps running (e.g. a getimagesize() warning
+        // fired mid-dump), so we must NOT mark the console run as 'error' and
+        // release the pid lock — doing so causes the poller to stop and the dump
+        // output that follows never reaches the result pane.
+        $terminal = in_array($errno, array(E_USER_ERROR, E_RECOVERABLE_ERROR), true);
+        writeError(array('type' => 'Error', 'line' => $errline, 'message' => $errstr, 'file' => $errfile), $terminal);
     }
 }
 
 // exception handler function
 function tracyConsoleExceptionHandler($err) {
-    writeError(array('type' => 'Exception', 'line' => $err->getLine(), 'message' => $err->getMessage(), 'file' => $err->getFile()));
+    writeError(array('type' => 'Exception', 'line' => $err->getLine(), 'message' => $err->getMessage(), 'file' => $err->getFile()), true);
 }
 
 /* Release the flock held on the .pid file. Idempotent — safe to call from any
@@ -428,10 +434,21 @@ function tracyConsoleShutdownHandler() {
     }
 }
 
-function writeError($error) {
+function writeError($error, $terminal = true) {
     $customErrStr = $error['message'] . ' on line: ' . (strpos($error['file'], 'cache'.DIRECTORY_SEPARATOR.'TracyDebugger') !== false ? $error['line'] - 1 : $error['line']) . (strpos($error['file'], 'cache'.DIRECTORY_SEPARATOR.'TracyDebugger') !== false ? '' : ' in ' . str_replace(wire('config')->paths->cache . 'FileCompiler'.DIRECTORY_SEPARATOR, '../', $error['file']));
     $customErrStrLog = $customErrStr . (strpos($error['file'], 'cache'.DIRECTORY_SEPARATOR.'TracyDebugger') !== false ? ' in Tracy Console Panel' : '');
     TD::log($customErrStrLog, 'error');
+
+    // echo always — goes into the active ob_start buffer so the inline error is
+    // captured alongside any dump output produced before/after the error fires.
+    // Styled to match TD::renderDumpError's block so a warning fired during d()/db()
+    // looks consistent with the throwable-during-dump fallback path.
+    echo '<div style="border: 1px solid #d9d9d9; border-left: 3px solid #c00; padding: 6px 10px; background: #fff3f3; color: #c00; font-family: monospace; white-space: normal; margin-bottom: 5px;">'
+        . '<strong>' . htmlspecialchars($error['type'], ENT_QUOTES, 'UTF-8') . ':</strong> '
+        . htmlspecialchars($customErrStr, ENT_QUOTES, 'UTF-8')
+        . '</div>';
+
+    if(!$terminal) return;
 
     if(PHP_VERSION_ID >= 70300) {
         setcookie('tracyCodeError', $error['type'].': '.$customErrStr, ['expires' => time() + (10 * 365 * 24 * 60 * 60), 'path' => '/', 'samesite' => 'Strict']);
@@ -439,11 +456,9 @@ function writeError($error) {
         setcookie('tracyCodeError', $error['type'].': '.$customErrStr, time() + (10 * 365 * 24 * 60 * 60), '/');
     }
 
-    // echo and exit approach allows us to send error to Tracy console dump area
-    // this means that the browser will receive a 200 when it may have been a 500,
-    // but think that is ok in this case
-    echo $error['type'].': '.$customErrStr;
     // write error to protected cache, update public status marker
+    // this means the browser will receive a 200 when it may have been a 500,
+    // but that's ok — the error text is what the console pane wants to show
     $runId = TracyDebugger::$consoleRunId;
     $statusDir = TracyDebugger::$consoleRunStatusDir;
     $cacheDir = TracyDebugger::$consoleRunCacheDir;
