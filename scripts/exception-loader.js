@@ -1,6 +1,8 @@
 if(!tracyExceptionLoader) {
     var tracyExceptionLoader = {
 
+        PANEL_ID_PREFIX: "tracy-debug-panel-ProcessWire-TracyExceptionsPanel",
+
         getFileLineVars: function (query,variable) {
             var vars = query.split("&");
             for (var i = 0; i < vars.length; i++) {
@@ -17,16 +19,73 @@ if(!tracyExceptionLoader) {
             if (parts.length == 2) return parts.pop().split(";").shift();
         },
 
-        populateExceptionViewer: function(filePath) {
+        findOriginatingPanel: function(el) {
+            while (el && el.nodeType === 1) {
+                if (el.id && el.id.indexOf(tracyExceptionLoader.PANEL_ID_PREFIX) === 0) {
+                    return el;
+                }
+                el = el.parentNode;
+            }
+            return null;
+        },
+
+        getMainPanel: function() {
+            return document.getElementById(tracyExceptionLoader.PANEL_ID_PREFIX);
+        },
+
+        updateFileTreeHighlight: function(panelEl) {
+            var fileTree = panelEl.querySelector("#tracyExceptionFiles");
+            if(!fileTree) return;
+            var title = panelEl.querySelector("#panelTitleFilePath");
+            var currentFile = title ? title.textContent : "";
+            var lis = fileTree.getElementsByTagName("li");
+            for(var i = 0; i < lis.length; i++) {
+                var anchor = lis[i].getElementsByTagName("a")[0];
+                if(!anchor || !anchor.href) continue;
+                var queryStr = anchor.href.split('?')[1];
+                if(!queryStr) continue;
+                var thisFile = decodeURI(queryStr.replace('f=', '').replace('&l=1', '')).replace('site/assets/logs/tracy/', '');
+                anchor.className = currentFile === thisFile ? "active" : "";
+            }
+        },
+
+        clearViewer: function(panelEl) {
+            if(!panelEl) return;
+            var btn = panelEl.querySelector("#clearException");
+            if(btn) btn.style = 'display: none !important';
+            var title = panelEl.querySelector("#panelTitleFilePath");
+            if(title) title.innerHTML = '';
+            var bs = document.getElementById('tracy-bs');
+            if(bs) {
+                while(bs.firstChild) bs.removeChild(bs.firstChild);
+                bs.appendChild(document.createElement("footer"));
+            }
+            tracyExceptionLoader.updateFileTreeHighlight(panelEl);
+        },
+
+        showUnloadButton: function(panelEl) {
+            if(!panelEl) return;
+            var btn = panelEl.querySelector("#clearException");
+            if(btn) btn.style.display = "inline-block";
+        },
+
+        populateExceptionViewer: function(filePath, panelEl) {
+
+            if(!panelEl) panelEl = tracyExceptionLoader.getMainPanel();
+            if(!panelEl) return;
 
             if(typeof tracyExceptionsViewer === "undefined") {
-                window.requestAnimationFrame(function() { tracyExceptionLoader.populateExceptionViewer(filePath); });
+                window.requestAnimationFrame(function() { tracyExceptionLoader.populateExceptionViewer(filePath, panelEl); });
             }
             else {
 
-                document.getElementById("tracyExceptionFilePath").value = filePath;
+                var filePathInput = panelEl.querySelector("#tracyExceptionFilePath");
+                if(filePathInput) filePathInput.value = filePath;
                 document.cookie = "tracyExceptionFile=" + filePath + "; path=/; SameSite=Strict";
-                document.getElementById("panelTitleFilePath").textContent = filePath.replace('site/assets/logs/tracy/', '');
+                var titleEl = panelEl.querySelector("#panelTitleFilePath");
+                if(titleEl) titleEl.textContent = filePath.replace('site/assets/logs/tracy/', '');
+
+                tracyExceptionLoader.updateFileTreeHighlight(panelEl);
 
                 var xmlhttp;
                 xmlhttp = new XMLHttpRequest();
@@ -201,20 +260,25 @@ if(!tracyExceptionLoader) {
             xhr.send("filePath=" + encodeURIComponent(mdPath) + "&csrfToken=" + encodeURIComponent(tracyExceptionsViewer.csrfToken));
         },
 
-        loadExceptionFile: function(filePath) {
-            if(document.getElementById("tracy-debug-panel-ProcessWire-TracyExceptionsPanel").classList.contains("tracy-mode-window")) {
-                this.populateExceptionViewer(filePath);
+        loadExceptionFile: function(filePath, panelEl) {
+            if(!panelEl) panelEl = tracyExceptionLoader.getMainPanel();
+            if(!panelEl) {
+                window.requestAnimationFrame(function() { tracyExceptionLoader.loadExceptionFile(filePath); });
+                return;
+            }
+            if(panelEl.classList.contains("tracy-mode-window")) {
+                this.populateExceptionViewer(filePath, panelEl);
             }
             else {
-                if(!window.Tracy.Debug.panels || !document.getElementById("tracy-debug-panel-ProcessWire-TracyExceptionsPanel")) {
-                    window.requestAnimationFrame(function() { tracyExceptionLoader.loadExceptionFile(filePath); });
+                if(!window.Tracy.Debug.panels || !window.Tracy.Debug.panels[panelEl.id]) {
+                    window.requestAnimationFrame(function() { tracyExceptionLoader.loadExceptionFile(filePath, panelEl); });
                 }
                 else {
-                    var panel = window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-TracyExceptionsPanel"];
+                    var panel = window.Tracy.Debug.panels[panelEl.id];
                     if(panel.elem.dataset.tracyContent) {
                         panel.init();
                     }
-                    this.populateExceptionViewer(filePath);
+                    this.populateExceptionViewer(filePath, panelEl);
                     panel.toFloat();
                     panel.focus();
                 }
@@ -228,40 +292,34 @@ if(!tracyExceptionLoader) {
             const doc = htmlElement.classList.contains('tracy-bs-visible') ? document.body : document;
 
             doc.addEventListener("click", function(e) {
-                if (e.target) {
-                    var mdBtn = e.target.closest && e.target.closest(".tracy-md-copy-btn");
-                    if (mdBtn) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        tracyExceptionLoader.copyMarkdown(mdBtn);
-                        return;
-                    }
+                if (!e.target) return;
 
-                    let curEl = e.target;
+                var mdBtn = e.target.closest && e.target.closest(".tracy-md-copy-btn");
+                if (mdBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    tracyExceptionLoader.copyMarkdown(mdBtn);
+                    return;
+                }
 
-                    while (curEl && curEl.tagName !== "A") {
-                        curEl = curEl.parentNode;
-                    }
+                if (e.target.id === 'clearException') {
+                    var clearPanel = tracyExceptionLoader.findOriginatingPanel(e.target);
+                    if (clearPanel) tracyExceptionLoader.clearViewer(clearPanel);
+                    return;
+                }
 
-                    if (curEl && curEl.href && curEl.href.indexOf("tracyexception://") !== -1) {
-                        e.preventDefault();
-                        const queryStr = curEl.href.split('?')[1];
-                        const fullFilePath = tracyExceptionLoader.getFileLineVars(queryStr, "f").replace(/\\/g, "/");
-                        tracyExceptionLoader.loadExceptionFile(fullFilePath);
-                        if (typeof showUnloadButton === 'function') showUnloadButton();
-                    }
+                let curEl = e.target;
+                while (curEl && curEl.tagName !== "A") {
+                    curEl = curEl.parentNode;
+                }
 
-                    const tracyExceptionFiles = document.getElementById("tracyExceptionFiles");
-                    if (tracyExceptionFiles) {
-                        const tracyExceptions = tracyExceptionFiles.getElementsByTagName("li");
-                        const length = tracyExceptions.length;
-                        for (let i = 0; i < length; i++) {
-                            const queryStr = tracyExceptions[i].getElementsByTagName("a")[0].href.split('?')[1];
-                            const currentFilePath = decodeURI(queryStr.replace('f=', '').replace('&l=1', '')).replace('site/assets/logs/tracy/', '');
-                            tracyExceptions[i].getElementsByTagName("a")[0].className =
-                                document.getElementById('panelTitleFilePath').textContent === currentFilePath ? "active" : "";
-                        }
-                    }
+                if (curEl && curEl.href && curEl.href.indexOf("tracyexception://") !== -1) {
+                    e.preventDefault();
+                    const panelEl = tracyExceptionLoader.findOriginatingPanel(curEl) || tracyExceptionLoader.getMainPanel();
+                    const queryStr = curEl.href.split('?')[1];
+                    const fullFilePath = tracyExceptionLoader.getFileLineVars(queryStr, "f").replace(/\\/g, "/");
+                    tracyExceptionLoader.loadExceptionFile(fullFilePath, panelEl);
+                    tracyExceptionLoader.showUnloadButton(panelEl);
                 }
             });
         }

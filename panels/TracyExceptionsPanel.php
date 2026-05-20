@@ -62,36 +62,12 @@ class TracyExceptionsPanel extends BasePanel {
         $nonceAttr = TracyDebugger::getNonceAttr();
         $out = <<< HTML
         <script{$nonceAttr}>
-
             var tracyExceptionsViewer = {
                 tracyModuleUrl: "$tracyModuleUrl",
                 currentURL: "$currentUrl",
                 csrfToken: "$csrfToken",
             };
-
-            function clearTracyExceptionsViewer() {
-                document.getElementById("clearException").style = 'display: none !important';
-                document.getElementById("panelTitleFilePath").innerHTML = '';
-                if(document.getElementById('tracy-bs')) {
-                    var bs = document.getElementById('tracy-bs');
-                    while (bs.firstChild) {
-                        bs.removeChild(bs.firstChild);
-                    }
-                    const footer = document.createElement("footer");
-                    bs.appendChild(footer);
-                }
-            }
-
-            function showUnloadButton() {
-                document.getElementById("clearException").style.display = "inline-block";
-            }
-
             tracyJSLoader.load(tracyExceptionsViewer.tracyModuleUrl + "scripts/exception-loader.js");
-
-            document.addEventListener('click', function(e) {
-                if(e.target && e.target.id === 'clearException') clearTracyExceptionsViewer();
-            }, true);
-
         </script>
 
 HTML;
