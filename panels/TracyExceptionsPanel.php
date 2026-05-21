@@ -173,7 +173,11 @@ HTML;
     private function getFilesArray($directory) {
         $files = glob($directory . '*.html');
         if(!$files) return array();
-        rsort($files);
+        usort($files, function($a, $b) {
+            $aKey = preg_replace('/^[^-]+--/', '', basename($a));
+            $bKey = preg_replace('/^[^-]+--/', '', basename($b));
+            return strcmp($bKey, $aKey);
+        });
         return array_map('basename', array_slice($files, 0, TracyDebugger::getDataValue("numExceptions")));
     }
 
