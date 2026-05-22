@@ -1418,7 +1418,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                                             if(!document.getElementById("tracy-debug-bar")) {
                                                 window.requestAnimationFrame(recolorErrors);
                                             } else {
-                                                var els = document.getElementsByClassName("tracy-ErrorTab");
+                                                var els = document.querySelectorAll(".tracy-ErrorTab, .tracy-WarningsTab");
                                                 Array.from(els).forEach((el) => {
                                                     el.style.backgroundColor = "'.(!$nonWire ? self::COLOR_LIGHTGREY : self::COLOR_WARN).'";
                                                 });
