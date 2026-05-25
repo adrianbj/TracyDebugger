@@ -92,13 +92,15 @@ Results are cached for speed, but will be updated whenever you update your Proce
 * Autocomplete for all PW methods and properties.
 * Access to $field, $template, $module when viewing the settings for a field, template, or module in the ProcessWire admin
 * Access to all template defined variables and functions
-* Works with `bd()`, `d()`, `fl()`, and `l()` calls, and `echo`. `d()` is recommended in most scenarios because output will appear in the results panel below the code
-* Also works with `bdb()`, `bdl()`, and `db()` big/live variants
+* Works with `bd()`, `d()`, and `l()` calls, and `echo`. `d()` is recommended in most scenarios because output will appear in the results panel below the code
+* Also works with `bdb()` and `db()` big-dump variants
 * Supports PHP, HTML, or mixed HTML/PHP syntax
 * All output is generated via ajax, and so no page load required
 * Only available to superusers
+* Tabbed snippets (Dark / Light / Kiwi themes) — each tab persists its own code, results, and history
 * Caches code so it stored between page reloads, navigation to other pages, and even browser restarts
 * In-code search & replace with CMD/CTRL + F
+* Cancel button lets you kill a long-running script mid-execution. A "Cancel all runs" option is also available if the normal cancel button doesn't respond
 * Code Execution
 	* CTRL/CMD + Enter	Run
 	* ALT/OPT + Enter	Clear & Run
@@ -186,6 +188,8 @@ bd(array('a' => array(1,2,3), 'b' => array(4,5,6)), 'Test Array');
 ## ![Dumps Recorder](icons/dumps-recorder.svg ':no-zoom')Dumps Recorder
 If this panel is enabled, any calls to bd() will be sent to this panel instead of the main dumps panel. This is useful in several situations where you want to compare dumps from various page requests. Dumps will be preserved until the session is closed, or until you click the "Clear Dumps" button. It can also be useful in some situations where dumps are not being captured with the regular dumps panel which can sometimes happen with modules, complex redirects, or other scenarios that are hard to pin down.
 
+The panel polls for new dumps in the background (adaptive 3–30s interval) so you'll see dumps produced by other requests — for example, a webhook firing on the same page — appear without needing to reload.
+
 ***
 
 ## ![Errors](icons/errors.svg ':no-zoom')Errors
@@ -239,14 +243,16 @@ For example, setting the hook to `Pages::save` and then deleting a page can resu
 
 **Action buttons (some only available when relevant):**
 * **Test**: reloads the page using the code in the editor - no changes are made to the template file or the code served to all other users of the site.
-* **Save**: saves the editor code to the template file, making this a live and permanent change.
+* **Save**: saves the editor code to the template file, making this a live and permanent change. Pressing CMD/CTRL + S saves via AJAX without a page reload.
 * **Reset**: re-loads the page (and the code in the editor) with the code from the saved file. This is no different from loading the page again, but different from clicking the "reload" button in your browser which will actually send the test code again.
 * **Restore**: returns the code for the file to the last saved version (restored from automatic backup of the file)
+
+An "unsaved changes" indicator appears next to the file name whenever the buffer differs from the file on disk.
 
 **Possible use scenarios**
 * Use this panel similarly to your dev console for tweaking CSS/HTML - it still requires a page reload, but there are likely less clicks than your normal workflow.
 * Tweak a live site if you're away from your computer and need a quick way to fix something, but want the ability to test first without breaking something temporarily due to a simple syntax error mistake or more serious code mistakes.
-* Add debug statements: `bd()`, `d()`, `fl()` etc to your file code without editing touching the actual files.
+* Add debug statements: `bd()`, `d()`, `l()` etc to your file code without touching the actual files.
 
 ![File Editor panel](img/file-editor.png)
 
@@ -257,6 +263,25 @@ For example, setting the hook to `Pages::save` and then deleting a page can resu
 Displays the Git branch, latest commit message, etc for your site (assuming you have it under Git version control).
 
 ![Git Info panel](img/git-info.png)
+
+***
+
+## ![Language Switcher](icons/language-switcher.svg ':no-zoom')Language Switcher
+
+Available when ProcessWire's Language Support module is installed. Shows a list of every language in the system and lets you switch the *current user's* language with a click. The selection sticks for the rest of the session, so you can browse the site as if you were a user with that language and see translated content (or untranslated fallbacks) exactly as they would.
+
+The current real language is highlighted green. If you've overridden it via this panel, the active language is highlighted orange and the panel icon also turns orange — a reminder that you're not seeing the site as your account normally would. The "Reset" button clears the override.
+
+***
+
+## ![Links](icons/links.svg ':no-zoom')Links
+
+A scratch panel of custom links. Useful for keeping per-project shortcuts (staging URLs, design docs, third-party dashboards) one click away from the debug bar.
+
+Two ways to populate it:
+
+* Module config — "Links code" field. One link per line, optional pipe + label, eg. `https://www.google.com | Google Search`.
+* Inline — click the "+" icon in the panel itself, paste a URL, and it gets appended to the same setting. URLs that point at your own site are stored root-relative for portability.
 
 ***
 
@@ -386,7 +411,9 @@ Provides a wide variety of links, information and search features for all things
 ***
 
 ## ![ProcessWire Logs](icons/processwire-logs.svg ':no-zoom')ProcessWire Logs
-Displays the most recent entries across all ProcessWire log files with links to view the log in the PW logs viewer, as well as direct links to view each entry in your code editor. By default it shows the last 10, but this can be changed in the config settings. A red icon indicates the last page load contained an errors or exceptions log entry. An orange icon is for all other log types.
+Displays the most recent entries across all ProcessWire log files with links to view the log in the PW logs viewer, as well as direct links to view each entry in your code editor. By default it shows the last 100, but this can be changed in the config settings. A red icon indicates the last page load contained an errors or exceptions log entry. An orange icon is for all other log types.
+
+Logs that you don't want surfaced here (eg. high-volume application logs) can be hidden via the "Excluded PW log files" config setting.
 
 ![ProcessWire Logs panel](img/processwire-logs.png)
 
@@ -398,6 +425,8 @@ Lets you instantly switch your PW version. This is probably most useful for modu
 The available versions come from Ryan's ProcessWire Upgrades module - so any version that you installed via it will be available.
 
 When you click "Change", it swaps the names of: wire/, .htaccess, and index.php - much easier than manually renaming.
+
+If the target version fails to boot after switching, Tracy will automatically revert to the previous version. Transient post-swap errors (which can happen on the first request after a swap while module classes are reloaded) trigger a single reload rather than a revert. This means a botched version switch generally won't leave your site in an unreachable state.
 
 The icon is green when you are using the latest version that is available on your system, and orange for any other version.
 
@@ -413,6 +442,15 @@ Provides very detailed infomation and links related to the current page. It cont
 Links to view (from page name) and edit the page (from page ID), template, parent and sibling pages, etc. Also includes page status, creation, modified, and published username and datetime.
 
 ![Request Info panel - Page Info](img/request-info-page-info.png)
+
+### Redirect Info
+Lists any redirects that fired for the current page, where they came from, and where they went. Useful for tracking down unexpected redirect chains.
+
+### Page Permissions
+Effective view/edit/delete/add permissions for the current page, broken down by role. Helpful when a user sees something they shouldn't (or doesn't see something they should).
+
+### Page Meta
+Contents of `$page->meta()` for the current page.
 
 ### Language Info
 Details about the languages of the current page (title, name, and status). Also includes a link to edit each language.
@@ -461,11 +499,19 @@ This section is only available when viewing the settings page for a field in the
 
 ![Request Info panel - Field Settings](img/request-info-field-settings.png)
 
+### Field Export Code
+
+This section is only available when viewing the settings page for a field in the admin. Shows the `setImportData()` JSON snippet that you can paste into another site's Setup > Fields > Import to recreate this field exactly. Saves the round-trip through the admin export/import screens.
+
 ### Module Settings
 
 This section is only available when viewing the settings page for a module in the admin
 
 ![Request Info panel - Module Settings](img/request-info-module-settings.png)
+
+### Page Object / Template Object / Fields Object
+
+These sections expose the full `$page`, `$template`, and `$fields` objects respectively. Disabled by default because they significantly increase the size of the panel — enable in the module config when you need to inspect the raw object tree.
 
 
 ***
@@ -511,10 +557,11 @@ In the config settings you can define which types of request methods are logged:
 
 ***
 
-## ![System Info](icons/system-info.svg ':no-zoom')System Info
-Provides a table of basic stats about the current page and your system.
+## ![Terminal](icons/terminal.svg ':no-zoom')Terminal
 
-![System Info panel](img/system-info.png)
+Embeds a web-based shell terminal in a Tracy panel, backed by the [ProcessTerminal](https://modules.processwire.com/modules/process-terminal/) module (which must be installed separately). Handy for running `composer`, `git`, `wireshell`, or other CLI tasks without leaving the browser when you're working on a remote site.
+
+If ProcessTerminal isn't installed, the panel shows a message explaining what's needed.
 
 ***
 
@@ -586,8 +633,22 @@ The icon reports the number of items in the template file for the current file /
 
 ***
 
+## ![Tracy Exceptions](icons/tracy-exceptions.svg ':no-zoom')Tracy Exceptions
+
+Browses the bluescreen HTML files Tracy writes to `/site/assets/logs/tracy/` whenever a fatal exception fires in PRODUCTION mode. Each file is the full interactive bluescreen — same stack trace, same variable dumps, same source view you would have seen on screen if you were in DEVELOPMENT mode.
+
+The panel has a file tree on the left and the rendered bluescreen on the right. The icon turns red when new exception files have appeared since you last loaded the panel, so it doubles as an "unread" indicator for new production errors.
+
+Each exception has a "Copy as Markdown" button that converts the bluescreen into a markdown-formatted error report suitable for pasting into a Claude / AI agent prompt. Useful when you want to hand the trace and the relevant source snippets to an agent for diagnosis without manually piecing it together.
+
+The number of exceptions retained is controlled by the "Number of exceptions" config setting (default 25). Older files beyond the limit are still on disk in the logs folder but won't appear in the panel tree.
+
+***
+
 ## ![Tracy Logs](icons/tracy-logs.svg ':no-zoom')Tracy Logs
-Displays the most recent entries from the Tracy log files. These log files can be written to automatically when Tracy is in Production mode, or manually using `TD::log()` or `l()` calls. Includes direct links to view each entry in your code editor. By default it shows the last 10, but this can be changed in the config settings. A red icon indicates the last page load contained an error, exception, or critical log entry. An orange icon is for all other log types.
+Displays the most recent entries from the Tracy log files. These log files can be written to automatically when Tracy is in Production mode, or manually using `TD::log()` or `l()` calls. Includes direct links to view each entry in your code editor. By default it shows the last 100, but this can be changed in the config settings. A red icon indicates the last page load contained an error, exception, or critical log entry. An orange icon is for all other log types.
+
+Specific Tracy log files can be hidden from this panel via the "Excluded Tracy log files" config setting.
 
 ![Tracy Logs panel](img/tracy-logs.png)
 

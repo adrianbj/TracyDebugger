@@ -37,3 +37,36 @@ To make it more friendly for your clients/editors, the labels in the list are fo
 Users must also have the "tracy-page-versions" permission assigned to their role.
 
 ***
+
+## Adminer
+
+When the companion [ProcessTracyAdminer](https://modules.processwire.com/modules/process-tracy-adminer/) module is installed, you also get a **Setup > Adminer** admin page (in addition to the [Adminer debug-bar panel](debug-bar.md#adminer)). The Setup-menu version is convenient when you want a larger working area than a Tracy panel provides — by default it runs inside the PW admin iframe, but you can switch to standalone mode in the config.
+
+Adminer is auto-connected to the current PW database using credentials from `/site/config.php`, so no separate login is required. From within Tracy panels, several "open in Adminer" links jump you straight to the relevant table row (page, template, field, module).
+
+Optional AI SQL assistants (Google Gemini and Open WebUI) can be enabled in the Adminer config to generate queries from natural-language prompts — see the [Adminer config section](configuration.md#adminer-panel) for details.
+
+***
+
+## Error notifications
+
+When Tracy is in PRODUCTION mode, errors are written to `/site/assets/logs/tracy/` as full bluescreen HTML files. You can have Tracy push the same errors to:
+
+* **Email** — set the "From" / "To" addresses under the Error logging section of the config. To avoid flooding your inbox after a single recurring error, Tracy writes an `email-sent` flag file after the first email; clear it by ticking the "Clear email sent flag" checkbox and saving.
+* **Slack** — set a channel name and a Slack app OAuth token (`xoxb-…` with `chat:write` scope) and Tracy will post errors to that channel.
+
+Both deliveries can be configured side-by-side.
+
+***
+
+## Permissions
+
+Tracy uses a small set of PW permissions to control who sees what:
+
+* **tracy-debugger** — grants non-superusers access to the Tracy debug bar (subject to the IP restriction setting, if any).
+* **tracy-restricted-panels** — assign this as a role or permission to a user, then check the panels they should NOT see in the "Disabled panels for restricted users" config.
+* **tracy-page-versions** — required to use the User Bar's Page Versions feature.
+
+For the [User Dev Template feature](configuration.md#user-dev-template), Tracy looks for dynamic permissions named `tracy-{template}-{suffix}` (or `tracy-all-{suffix}` to enable across all templates). For example, with suffix `dev`, a permission named `tracy-basic-page-dev` would cause that user to render any `basic-page` using `basic-page-dev.php` instead.
+
+***

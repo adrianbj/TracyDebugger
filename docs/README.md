@@ -1,7 +1,9 @@
 # Introduction
 
 ## About
-Tracy Debugger for ProcessWire is a highly configurable debugging and development tool. Built on top of Tracy by Nette, it adds [35+ custom panels/tools](debug-bar.md) that will dramatically reduce your ProcessWire learning curve and speed up your development time.
+Tracy Debugger for ProcessWire is a highly configurable debugging and development tool. Built on top of [Nette Tracy](https://tracy.nette.org/), it adds [40+ custom panels/tools](debug-bar.md) that will dramatically reduce your ProcessWire learning curve and speed up your development time.
+
+Tracy Debugger bundles the Tracy core itself (the appropriate version is selected automatically for your PHP version — currently Tracy 2.7–2.12 depending on whether you are on PHP 5.6 through 8.x), so there is no separate dependency to install.
 
 [ProcessWire](https://processwire.com)
 

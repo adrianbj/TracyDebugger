@@ -9,6 +9,12 @@ These show an example of each for the barDump method:
 
 In most cases using the shortcut is the easiest option, although if you have a conflict with another method you may want to disable the shortcuts via the config settings and use the TD namespaced version.
 
+### Copy dump output as Markdown
+
+Every `bd()` / `d()` (and the big-variant) call renders a small "Copy as Markdown" button at the top-right of the dump. It copies a plaintext/markdown representation of the dumped value to the clipboard, formatted for pasting into a Claude or other AI agent prompt. Useful when you want an agent to reason about a `$page`, repeater, selector result, etc. without having to manually serialize it.
+
+The same button appears on stack frames in the Tracy Exceptions panel.
+
 ## addBreakpoint
 
 Method for use with the [Performance Panel](debug-bar.md#performance)
@@ -167,7 +173,7 @@ d($var, $title, $options);
 
 The default `maxDepth`, `maxLength`, and `maxItems` settings are set to 3, 150, and 100, respectively. This ensure faster rendering performance and is often all you need. You can of course use the `$options` parameter in `d()` calls to adjust to your exact needs, but this method provides a quick shortcut to a "deeper and longer" version that should be enough in most circumstances.
 
-Shortcut to `d($var, $title, array('maxDepth' => 6, 'maxLength' => 9999, 'maxItems => 250))`
+Shortcut to `d($var, $title, array('maxDepth' => 6, 'maxLength' => 9999, 'maxItems' => 250))`
 
 #### Parameters
 ```php
@@ -179,42 +185,6 @@ db($var, $title, $options);
 * @param array $options | maxDepth (default:3), maxLength (default:150), maxItems (default:100)
 */
 ```
-
-***
-
-## fireLog
-
-Dumps to the developer console in Chrome or Firefox
-
-#### Parameters
-```php
-fl($var);
-
-/**
-* @param mixed $var string|array|object to be dumped
-*/
-```
-
-#### Output Examples
-
-```php
-fl($page->getIterator());
-```
-![FireLog Example](img/firelog.png)
-
-This is very useful when using PHP to generate a file for output where the other dump methods won't work. It can also be useful dumping variables during AJAX requests.
-
-To make this work you must first install these browser extensions:
-
-**Chrome:**
-
-[https://github.com/MattSkala/chrome-firelogger](https://github.com/MattSkala/chrome-firelogger)
-
-**Firefox:**
-
-[http://www.getfirebug.com/](http://www.getfirebug.com/)
-
-[http://firelogger.binaryage.com/](http://firelogger.binaryage.com/)
 
 ***
 
@@ -268,5 +238,52 @@ sleep(2);
 bd(t());
 ```
 You can also add an optional name parameter to each timer() call and then dump several at once in a single page load.
+
+***
+
+## sql
+
+Returns the raw SQL query that ProcessWire would execute for a given selector. Useful for debugging why a `$pages->find()` isn't returning what you expect, or for getting a query you can paste straight into Adminer.
+
+This method is only available on the `TD::` namespace — there is no shortcut alias.
+
+#### Parameters
+```php
+TD::sql($selector);
+
+/**
+* @param string|array $selector PW selector string or array
+* @return string SQL query
+*/
+```
+
+#### Output Example
+```php
+bd(TD::sql('template=basic-page, title%=hello, sort=-created'));
+```
+
+***
+
+## editLinks / viewLinks
+
+Quick helpers for rendering a PageArray as a list of edit links (admin) or view links (frontend). Each link uses the page's title as the label.
+
+These methods are only available on the `TD::` namespace.
+
+#### Parameters
+```php
+TD::editLinks($pageArray);
+TD::viewLinks($pageArray);
+
+/**
+* @param PageArray $pp
+* @return string HTML — one link per line, separated by <br />
+*/
+```
+
+#### Example
+```php
+bd(TD::editLinks($pages->find('template=basic-page, limit=10')), 'Recent pages');
+```
 
 ***

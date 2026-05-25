@@ -1,5 +1,5 @@
 .claude/
-docs/
+docs/superpowers/
 phpstan.neon
 phpstan-baseline.neon
 tests/
