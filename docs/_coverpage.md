@@ -18,5 +18,3 @@ Integrates and extends Nette's Tracy debugging tool
 [ProcessWire Modules Directory](https://modules.processwire.com/modules/tracy-debugger/)
 [Support](https://processwire.com/talk/forum/58-tracy-debugger/)
 [Sponsor](https://github.com/sponsors/adrianbj?o=esb)
-
-![color](#B3F1FF)
