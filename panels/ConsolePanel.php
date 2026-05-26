@@ -1224,8 +1224,8 @@ class ConsolePanel extends BasePanel {
                 xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
                 xmlhttp.send("tracyConsole=1&runId=" + encodeURIComponent(runId) + "&csrfToken=" + encodeURIComponent(this.csrfToken) + "&codeReturn=" + encodeURIComponent(codeReturn) + "&allowBluescreen=" + encodeURIComponent(allowBluescreen) +
                     "&dbBackup=" + encodeURIComponent(dbBackup) + "&backupFilename=" + encodeURIComponent(backupFilename) +
-                    "&accessTemplateVars=" + encodeURIComponent(accessTemplateVars) + "&pid=" + encodeURIComponent($pid) +
-                    "&fid=" + encodeURIComponent($fid) + "&tid=" + encodeURIComponent($tid) + "&mid=" + encodeURIComponent($mid) +
+                    "&accessTemplateVars=" + encodeURIComponent(accessTemplateVars) + "&pid=" + encodeURIComponent("$pid") +
+                    "&fid=" + encodeURIComponent($fid) + "&tid=" + encodeURIComponent($tid) + "&mid=" + encodeURIComponent("$mid") +
                     "&code=" + encodeURIComponent(code));
             },
 
