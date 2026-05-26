@@ -53,10 +53,10 @@ class TracyExceptionsPanel extends BasePanel {
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
         $currentUrl = htmlspecialchars($_SERVER['REQUEST_URI'] ?? '', ENT_QUOTES, 'UTF-8');
 
-        // generate CSRF token for AJAX calls (shared with File Editor)
-        if(!$this->wire('session')->tracyFileEditorToken) {
-            $this->wire('session')->tracyFileEditorToken = bin2hex(random_bytes(32));
-        }
+        // CSRF token (shared with File Editor) is generated in a
+        // ProcessWire::finished hook (see TracyDebugger::init) so it persists
+        // with SessionHandlerDB, whose register_shutdown_function closes the
+        // session before Tracy renders the panel.
         $csrfToken = $this->wire('session')->tracyFileEditorToken;
 
         $nonceAttr = TracyDebugger::getNonceAttr();

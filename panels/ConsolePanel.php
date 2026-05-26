@@ -42,15 +42,10 @@ class ConsolePanel extends BasePanel {
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
         $inAdmin = TracyDebugger::$inAdmin;
 
-        // store various $input properties so they are available to the console
-        $this->wire('session')->tracyPostData = $this->wire('input')->post->getArray();
-        $this->wire('session')->tracyGetData = $this->wire('input')->get->getArray();
-        $this->wire('session')->tracyWhitelistData = $this->wire('input')->whitelist->getArray();
-
-        // generate CSRF token
-        if(!$this->wire('session')->tracyConsoleToken) {
-            $this->wire('session')->tracyConsoleToken = bin2hex(random_bytes(32));
-        }
+        // CSRF token + $input snapshots are written to session in a
+        // ProcessWire::finished hook (see TracyDebugger::init) so they
+        // persist with SessionHandlerDB, whose register_shutdown_function
+        // closes the session before Tracy renders the panel.
         $csrfToken = $this->wire('session')->tracyConsoleToken;
 
         $p = $this->getReferencePage();

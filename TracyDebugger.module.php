@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.0.30',
+            'version' => '5.0.31',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -1814,6 +1814,26 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
                 };
             }
+
+            // Persist Tracy's per-panel CSRF tokens + $input snapshots before
+            // the session closes. SessionHandlerDB registers session_write_close()
+            // as a shutdown function during boot, which runs BEFORE Tracy's own
+            // shutdown handler renders the panels — so writes from inside
+            // getPanel() (Console, File Editor, Tracy Exceptions) are silently
+            // dropped. ProcessWire::finished fires before either shutdown
+            // function for all session backends.
+            $this->wire()->addHookAfter('ProcessWire::finished', function() {
+                $session = $this->wire('session');
+                if(!$session->tracyConsoleToken) {
+                    $session->tracyConsoleToken = bin2hex(random_bytes(32));
+                }
+                if(!$session->tracyFileEditorToken) {
+                    $session->tracyFileEditorToken = bin2hex(random_bytes(32));
+                }
+                $session->tracyPostData = $this->wire('input')->post->getArray();
+                $session->tracyGetData = $this->wire('input')->get->getArray();
+                $session->tracyWhitelistData = $this->wire('input')->whitelist->getArray();
+            });
         }
 
         // Tracy 2.7.x + SessionHandlerDB: Bar::render() wrote to $_SESSION directly,
