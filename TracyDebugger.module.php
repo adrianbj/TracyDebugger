@@ -120,6 +120,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $consoleRunStatusDir = '';
     public static $consoleRunCacheDir = '';
     public static $consolePidHandle = null;
+    public static $downloadStaged = false;
+    public static $pendingDownloadEnvelope = null;
+    public static $preDownloadOutput = '';
+    public static $downloadDelivered = false;
     public static $redirectInfo;
     public static $processWireInfoSections = array(
         'configData' => 'Config Data',
@@ -568,6 +572,62 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         $this->wire()->addHookAfter('ProcessWire::ready', function($event) {
+
+            // console download endpoint: stream a file staged by CodeProcessor's WireHttp::sendFile
+            // hook. Triggered by the panel JS via a hidden <a download> click — a regular GET
+            // navigation, NOT an AJAX request, so this branch must live outside the ajax guard
+            // below.
+            if($this->wire('input')->get->tracyConsoleDownload == 1) {
+                Debugger::$showBar = false;
+                header_remove('X-Tracy-Ajax');
+                if(!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) {
+                    http_response_code(403);
+                    exit;
+                }
+                $runId = preg_replace('/[^a-zA-Z0-9_.]/', '', (string) $this->wire('input')->get->runId);
+                $rawFilename = (string) $this->wire('input')->get->filename;
+                $filename = basename($rawFilename);
+                // Reject empty / dot-traversal runIds and filenames. preg_replace above
+                // strips slashes but lets dots through, so ".." or "." would slip past
+                // without this explicit check.
+                if(!$runId || !$filename
+                    || $runId === '.' || $runId === '..' || strpos($runId, '..') !== false
+                    || $filename === '.' || $filename === '..') {
+                    http_response_code(404);
+                    exit;
+                }
+                $base = realpath($this->wire('config')->paths->cache . 'TracyDebugger/console_downloads');
+                $dir = $this->wire('config')->paths->cache . 'TracyDebugger/console_downloads/' . $runId . '/';
+                $path = $dir . $filename;
+                $realPath = $path ? realpath($path) : false;
+                // Confine to the console_downloads directory regardless of sanitization
+                // bugs above — realpath returns false for non-existent files (covering
+                // the "not found" case) and a normalized absolute path otherwise.
+                if(!$base || !$realPath || strncmp($realPath, $base . DIRECTORY_SEPARATOR, strlen($base) + 1) !== 0) {
+                    http_response_code(404);
+                    exit;
+                }
+                $contentType = 'application/octet-stream';
+                $metaPath = $path . '.meta.json';
+                if(file_exists($metaPath)) {
+                    $meta = json_decode(file_get_contents($metaPath), true);
+                    if(is_array($meta) && isset($meta['contentType']) && is_string($meta['contentType'])) {
+                        $contentType = $meta['contentType'];
+                    }
+                }
+                while(ob_get_level()) ob_end_clean();
+                header('Content-Type: ' . $contentType);
+                header('Content-Disposition: attachment; filename="' . str_replace('"', '', $filename) . '"');
+                header('Content-Length: ' . filesize($path));
+                header('Cache-Control: no-store, no-cache, must-revalidate');
+                header('Pragma: no-cache');
+                @readfile($path);
+                @unlink($path);
+                @unlink($metaPath);
+                @rmdir($dir);
+                exit;
+            }
+
             if(!$this->wire('config')->ajax) return;
 
             // live dumps polling: return new dump entries since lastIndex
@@ -801,6 +861,21 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             if(filemtime($file) < time() - 3600) {
                                 @unlink($file);
                             }
+                        }
+                    }
+                }
+                // garbage collect old console download files (older than 1 hour) — one subdir per runId
+                $downloadsDir = $this->wire('config')->paths->cache . 'TracyDebugger/console_downloads/';
+                if(is_dir($downloadsDir)) {
+                    foreach(new \DirectoryIterator($downloadsDir) as $subdir) {
+                        if($subdir->isDot() || !$subdir->isDir()) continue;
+                        if(time() - $subdir->getMTime() > 3600) {
+                            $subdirPath = $subdir->getPathname();
+                            foreach(new \DirectoryIterator($subdirPath) as $f) {
+                                if($f->isDot()) continue;
+                                @unlink($f->getPathname());
+                            }
+                            @rmdir($subdirPath);
                         }
                     }
                 }

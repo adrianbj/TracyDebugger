@@ -62,6 +62,85 @@ register_shutdown_function(__NAMESPACE__.'\tracyConsoleShutdownHandler');
 // remove location links from dumps - not really meaningful for console
 TracyDebugger::$fromConsole = true;
 
+/* Capture $files->send() / WireHttp::sendFile() calls upstream of PW's @ob_end_clean(),
+   which would otherwise silently discard the ob_start() buffer above without firing
+   its callback. Stages the file to the console_downloads cache and emits the JSON
+   download envelope as the inline AJAX response body. */
+$this->wire()->addHookBefore('WireHttp::sendFile', function($event) use ($tracyRunId, $tracyRunStatusDir, $tracyRunCacheDir) {
+    if(!TracyDebugger::$fromConsole || !$tracyRunId) return;
+    if(TracyDebugger::$downloadStaged) return;
+
+    $filename = $event->arguments(0);
+    $options  = $event->arguments(1);
+    if(!is_array($options)) $options = array();
+
+    if($filename === false) {
+        $downloadName = isset($options['downloadFilename']) ? basename($options['downloadFilename']) : '';
+        if(!$downloadName) return; // let original sendFile() throw its own WireException
+        $payload = isset($options['data']) ? $options['data'] : '';
+    } else {
+        $base = (isset($options['downloadFilename']) && $options['downloadFilename'] !== '')
+            ? $options['downloadFilename']
+            : pathinfo($filename, PATHINFO_BASENAME);
+        $downloadName = basename($base);
+        $payload = null; // sentinel: copy from $filename
+    }
+    if(!$downloadName) return;
+
+    $ext = strtolower(pathinfo($downloadName, PATHINFO_EXTENSION));
+    $cts = wire('config')->fileContentTypes;
+    $contentType = isset($cts[$ext]) ? $cts[$ext] : (isset($cts['?']) ? $cts['?'] : 'application/octet-stream');
+    $contentType = ltrim($contentType, '+');
+
+    $dir = wire('config')->paths->cache . 'TracyDebugger/console_downloads/' . $tracyRunId . '/';
+    if(!is_dir($dir) && !wireMkdir($dir, true)) return; // fall through to original sendFile()
+    $dest = $dir . $downloadName;
+    $ok = $payload === null ? @copy($filename, $dest) : (file_put_contents($dest, $payload) !== false);
+    if(!$ok) return;
+
+    if(file_put_contents($dest . '.meta.json', json_encode(array('contentType' => $contentType))) === false) {
+        TD::log('TracyDebugger: failed to write download sidecar at ' . $dest . '.meta.json', 'error');
+    }
+
+    /* Stash the envelope and mark $downloadStaged. We deliberately do NOT drain
+       buffers, echo the envelope, or exit. Reasoning:
+       - $t->render() in CodeProcessor.php has its own nested ob_start; draining
+         it mid-execution breaks render()'s internal accounting and loses output.
+       - In a debug console, anything the user typed after $files->send() (more
+         d() dumps, echoes, etc) should also reach the panel. Honoring PW's
+         default exit=>true would silently drop it.
+       The natural output continues to accumulate in the existing buffer stack
+       and is wrapped into the final JSON envelope by tracyConsoleDownloadBufferHandler
+       at the script's final flush. */
+    $envelope = array(
+        'status'      => 'download',
+        'url'         => wire('config')->urls->httpRoot . '?tracyConsoleDownload=1&runId=' . urlencode($tracyRunId) . '&filename=' . urlencode($downloadName),
+        'filename'    => $downloadName,
+        'contentType' => $contentType,
+        'preOutput'   => '',
+        'postOutput'  => '',
+    );
+    TracyDebugger::$downloadStaged = true;
+    TracyDebugger::$pendingDownloadEnvelope = $envelope;
+
+    /* Snapshot the innermost buffer contents at the moment $files->send() fires.
+       The callback at script end has the full output stream as its $buffer; the
+       portion that was already there at hook time is the "pre-download" output,
+       and the rest is "post-download". The JS uses this to render the download
+       banner chronologically between the two. */
+    $cur = ob_get_contents();
+    TracyDebugger::$preDownloadOutput = ($cur === false) ? '' : $cur;
+
+    /* Strip any download-style headers the user (or PW) already set, so the final
+       JSON envelope reaches the panel as application/json rather than as an
+       attachment. */
+    header_remove('Content-Disposition');
+    header_remove('Content-Length');
+
+    $event->replace = true;
+    $event->return  = $payload === null ? @filesize($filename) : strlen($payload);
+});
+
 // populate API variables, eg so $page equals $this->wire('page')
 $pwVars = $this->wire('all');
 foreach($pwVars->getArray() as $key => $value) {
@@ -287,8 +366,10 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
         Debugger::timer('consoleCode');
         $initialMemory = memory_get_usage();
 
-        // capture output so we can write it to cache file for background polling
-        ob_start();
+        // capture output so we can write it to cache file for background polling.
+        // The callback detects download responses (Content-Disposition: attachment) and
+        // rewrites the buffer to a JSON download envelope at request-end flush.
+        ob_start(__NAMESPACE__.'\tracyConsoleDownloadBufferHandler');
         try {
             echo $t->render();
         }
@@ -304,8 +385,38 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
             $timeStr . ', ' . $memStr . '
         </div>';
 
-        // write result to protected cache file, update public status marker
-        if($tracyRunId) {
+        /* When $files->send() staged a download: $renderedOutput now contains the
+           full script output (all d() dumps from before and after $files->send(),
+           plus any error HTML echoed by writeError if an exception fired). Build
+           the envelope from $renderedOutput directly — splitting at the snapshot
+           taken at the moment of $files->send() so the panel JS can render the
+           banner chronologically. This works for both the normal path and the
+           catch path (where writeError already overwrote the cache file with an
+           'error' envelope — we overwrite it back to 'download' here). Set
+           $downloadDelivered so the outer-buffer callback at script-end shutdown
+           doesn't double-wrap. */
+        if(TracyDebugger::$downloadStaged && is_array(TracyDebugger::$pendingDownloadEnvelope)) {
+            $env = TracyDebugger::$pendingDownloadEnvelope;
+            list($pre, $post) = tracyConsoleSplitAtSnapshot($renderedOutput, TracyDebugger::$preDownloadOutput);
+            $env['preOutput']  = $pre;
+            $env['postOutput'] = $post;
+            if($tracyRunId) {
+                file_put_contents($tracyRunCacheDir . $tracyRunId . '.json', json_encode($env));
+                file_put_contents($tracyRunStatusDir . $tracyRunId . '.json', json_encode(array('status' => 'complete')));
+            }
+            TracyDebugger::$pendingDownloadEnvelope = $env;
+            TracyDebugger::$downloadDelivered = true;
+            tracyConsoleReleasePidLock();
+            header_remove('Content-Disposition');
+            header_remove('Content-Type');
+            header_remove('Content-Length');
+            header('Content-Type: application/json');
+            $renderedOutput = json_encode($env);
+        }
+
+        // write result to protected cache file, update public status marker.
+        // Skip on the download path: the wrap-up above already wrote the envelope to cache.
+        if($tracyRunId && !TracyDebugger::$downloadStaged) {
             $result = array(
                 'status' => 'complete',
                 'output' => $renderedOutput . $metricsHtml,
@@ -323,9 +434,13 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
             tracyConsoleReleasePidLock();
         }
 
-        // also output inline for normal (non-timed-out) responses
+        // also output inline for normal (non-timed-out) responses.
+        // On the download path, $renderedOutput is the JSON envelope and the metrics
+        // div must NOT be appended (would corrupt the JSON).
         echo $renderedOutput;
-        echo $metricsHtml;
+        if(!TracyDebugger::$downloadStaged) {
+            echo $metricsHtml;
+        }
 
         // fix for updating AJAX bar
         if(TracyDebugger::$tracyVersion == '2.7.x') {
@@ -473,4 +588,146 @@ function writeError($error, $terminal = true) {
         file_put_contents($statusDir . $runId . '.json', json_encode(array('status' => 'error')));
         tracyConsoleReleasePidLock();
     }
+}
+
+/* ob_start callback that detects file-download responses (Content-Disposition: attachment),
+   stages the binary under cache/TracyDebugger/console_downloads/<runId>/<filename>, and
+   rewrites the buffer to a JSON {status:'download',...} envelope. Pass-through otherwise. */
+function tracyConsoleDownloadBufferHandler($buffer, $phase) {
+    if(!($phase & PHP_OUTPUT_HANDLER_FINAL)) return $buffer;
+
+    $runId     = TracyDebugger::$consoleRunId;
+    $statusDir = TracyDebugger::$consoleRunStatusDir;
+    $cacheDir  = TracyDebugger::$consoleRunCacheDir;
+    if(!$runId || !$statusDir || !$cacheDir) return $buffer;
+
+    /* CodeProcessor's wrap-up already built the envelope, wrote the cache file,
+       and assigned $renderedOutput. This callback fires at outer-buffer shutdown
+       after that; the buffer here is the JSON envelope text — pass through. */
+    if(TracyDebugger::$downloadDelivered) return $buffer;
+
+    /* If the WireHttp::sendFile hook already staged a download, this buffer is the
+       natural script output (d() dumps before AND after $files->send()). Wrap it
+       into the envelope, write the cache file, flip status to complete, and emit
+       the final JSON. (Reached only when the script exited before CodeProcessor's
+       wrap-up could run — e.g. user called exit() during $t->render().) */
+    if(TracyDebugger::$downloadStaged) {
+        $env = TracyDebugger::$pendingDownloadEnvelope;
+        if(!is_array($env)) return $buffer;
+        list($pre, $post) = tracyConsoleSplitAtSnapshot($buffer, TracyDebugger::$preDownloadOutput);
+        $env['preOutput']  = $pre;
+        $env['postOutput'] = $post;
+        file_put_contents($cacheDir . $runId . '.json', json_encode($env));
+        file_put_contents($statusDir . $runId . '.json', json_encode(array('status' => 'complete')));
+        TracyDebugger::$pendingDownloadEnvelope = $env;
+        tracyConsoleReleasePidLock();
+        header_remove('Content-Disposition');
+        header_remove('Content-Type');
+        header_remove('Content-Length');
+        header('Content-Type: application/json');
+        return json_encode($env);
+    }
+
+    $disposition = tracyConsoleFindHeader('Content-Disposition');
+    if(!$disposition || stripos($disposition, 'attachment') === false) return $buffer;
+
+    /* On fatal, drop the partial buffer and let the existing shutdown error envelope reach the panel. */
+    $lastError = error_get_last();
+    if($lastError && in_array($lastError['type'], array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR), true)) {
+        return $buffer;
+    }
+
+    $filename = null;
+    if(preg_match('/filename="([^"]+)"/i', $disposition, $m)) {
+        $filename = basename($m[1]);
+    }
+    elseif(preg_match('/filename=([^;\s]+)/i', $disposition, $m)) {
+        $filename = basename($m[1]);
+    }
+    if(!$filename) $filename = 'download_' . $runId . '.bin';
+
+    $contentType = tracyConsoleFindHeader('Content-Type');
+    if(!$contentType) $contentType = 'application/octet-stream';
+
+    $dir = wire('config')->paths->cache . 'TracyDebugger/console_downloads/' . $runId . '/';
+    if(!is_dir($dir) && !wireMkdir($dir, true)) {
+        return tracyConsoleDownloadErrorEnvelope('Failed to create download directory');
+    }
+    $path = $dir . $filename;
+    if(file_put_contents($path, $buffer) === false) {
+        return tracyConsoleDownloadErrorEnvelope('Failed to write download file');
+    }
+    if(file_put_contents($path . '.meta.json', json_encode(array('contentType' => $contentType))) === false) {
+        TD::log('TracyDebugger: failed to write download sidecar at ' . $path . '.meta.json', 'error');
+    }
+
+    $envelope = array(
+        'status'      => 'download',
+        'url'         => wire('config')->urls->httpRoot . '?tracyConsoleDownload=1&runId=' . urlencode($runId) . '&filename=' . urlencode($filename),
+        'filename'    => $filename,
+        'contentType' => $contentType,
+    );
+
+    /* Write cache first, then flip status — polling clients gate on status. */
+    file_put_contents($cacheDir . $runId . '.json', json_encode($envelope));
+    file_put_contents($statusDir . $runId . '.json', json_encode(array('status' => 'complete')));
+    TracyDebugger::$downloadStaged = true;
+    tracyConsoleReleasePidLock();
+
+    header_remove('Content-Disposition');
+    header_remove('Content-Type');
+    header_remove('Content-Length');
+    header('Content-Type: application/json');
+    return json_encode($envelope);
+}
+
+/* Find the snapshot taken when $files->send() fired inside the final output
+   stream, and split the stream at the end of the snapshot. Tries:
+     1. raw snapshot (matches the exception path, where TemplateFile::render()
+        skips its trim() and the buffer still has leading whitespace)
+     2. ltrim'd snapshot (matches the normal path, where render() trimmed)
+   Returns [pre, post]. If neither match, returns [buffer, ''] so the banner
+   falls back to appending at the end. */
+function tracyConsoleSplitAtSnapshot($buffer, $snapshot) {
+    if($snapshot !== '') {
+        $pos = strpos($buffer, $snapshot);
+        if($pos !== false) {
+            $splitAt = $pos + strlen($snapshot);
+            return array(substr($buffer, 0, $splitAt), substr($buffer, $splitAt));
+        }
+        $snapLtrim = ltrim($snapshot);
+        if($snapLtrim !== '') {
+            $pos = strpos($buffer, $snapLtrim);
+            if($pos !== false) {
+                $splitAt = $pos + strlen($snapLtrim);
+                return array(substr($buffer, 0, $splitAt), substr($buffer, $splitAt));
+            }
+        }
+    }
+    return array($buffer, '');
+}
+
+/* Look up a header from headers_list() by prefix (case-insensitive). */
+function tracyConsoleFindHeader($name) {
+    $prefix = $name . ':';
+    $prefixLen = strlen($prefix);
+    foreach(headers_list() as $h) {
+        if(strncasecmp($h, $prefix, $prefixLen) === 0) {
+            return trim(substr($h, $prefixLen));
+        }
+    }
+    return null;
+}
+
+/* Build a JSON error envelope and strip download-style headers. */
+function tracyConsoleDownloadErrorEnvelope($message) {
+    header_remove('Content-Disposition');
+    header_remove('Content-Type');
+    header_remove('Content-Length');
+    header('Content-Type: application/json');
+    TracyDebugger::$downloadStaged = true;
+    return json_encode(array(
+        'status' => 'error',
+        'output' => '<div style="padding:8px; color:#c00;">' . htmlspecialchars($message, ENT_QUOTES, 'UTF-8') . '</div>',
+    ));
 }

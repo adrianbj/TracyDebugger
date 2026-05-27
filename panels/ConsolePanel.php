@@ -381,6 +381,21 @@ class ConsolePanel extends BasePanel {
                 return false;
             },
 
+            triggerDownload: function(data) {
+                var a = document.createElement("a");
+                a.href = data.url;
+                a.download = data.filename;
+                a.style.display = "none";
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(function() { document.body.removeChild(a); }, 100);
+                var safeName = escapeHtml(data.filename);
+                var banner = '<div style="padding:8px; background:#e8f4e8; border:1px solid #c0e0c0; color:#2a6;">Download started: <strong>' + safeName + '</strong></div>';
+                var pre  = (typeof data.preOutput  === "string") ? data.preOutput  : "";
+                var post = (typeof data.postOutput === "string") ? data.postOutput : "";
+                return pre + banner + post;
+            },
+
             removeOldLocalStorage: function() {
                 localStorage.removeItem('tracyConsoleTabs');
                 localStorage.removeItem('tracyConsoleSnippets');
@@ -945,7 +960,12 @@ class ConsolePanel extends BasePanel {
                             try {
                                 var data = JSON.parse(xhr.responseText);
                                 var resultId = Date.now();
-                                var resultHtml = '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.tryParseJSON(data.output) + '</div>';
+                                var resultHtml;
+                                if(data && data.status === 'download') {
+                                    resultHtml = '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.triggerDownload(data) + '</div>';
+                                } else {
+                                    resultHtml = '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.tryParseJSON(data.output) + '</div>';
+                                }
                                 tracyConsole._rawResultHtml += resultHtml;
                                 resultsDiv.insertAdjacentHTML('beforeend', resultHtml);
                                 tracyConsole.saveToIndexedDB().catch(function(err) { console.warn('Error updating tab result:', err); });
@@ -1168,7 +1188,14 @@ class ConsolePanel extends BasePanel {
                         const resultsDiv = document.getElementById("tracyConsoleResult");
                         if (xmlhttp.status == 200 && resultsDiv) {
                             const resultId = Date.now();
-                            const resultHtml = '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.tryParseJSON(xmlhttp.responseText) + '</div>';
+                            let downloadEnvelope = null;
+                            try {
+                                const parsed = JSON.parse(xmlhttp.responseText);
+                                if(parsed && parsed.status === 'download') downloadEnvelope = parsed;
+                            } catch(e) {}
+                            const resultHtml = downloadEnvelope
+                                ? '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.triggerDownload(downloadEnvelope) + '</div>'
+                                : '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.tryParseJSON(xmlhttp.responseText) + '</div>';
                             tracyConsole._rawResultHtml += resultHtml;
                             resultsDiv.insertAdjacentHTML('beforeend', resultHtml);
 
