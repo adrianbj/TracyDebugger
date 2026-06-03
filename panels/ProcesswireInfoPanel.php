@@ -214,12 +214,37 @@ HTML;
         if(in_array('versionsList', $panelSections)) {
             $versionsList = <<< HTML
             <script{$nonceAttr}>
-                tracyJSLoader.load("{$this->wire('config')->urls->TracyDebugger}scripts/clipboardjs/clipboard.min.js", function() {
-                    tracyJSLoader.load("{$this->wire('config')->urls->TracyDebugger}scripts/clipboardjs/tooltips.js", function() {
-                        var versionsClipboard=new ClipboardJS(".tracyCopyBtn");
-                        versionsClipboard.on("success",function(e){e.clearSelection();showTooltip(e.trigger,"Copied!");});versionsClipboard.on("error",function(e){showTooltip(e.trigger,fallbackMessage(e.action));});
+                (function(){
+                    if(window.__tracyVersionsCopyInstalled) return;
+                    window.__tracyVersionsCopyInstalled=true;
+                    function showTooltip(elem,msg){
+                        elem.setAttribute("class","tracyCopyBtn tooltipped tooltipped-s");
+                        elem.setAttribute("aria-label",msg);
+                        elem.addEventListener("mouseleave",function reset(){elem.setAttribute("class","tracyCopyBtn");elem.removeAttribute("aria-label");elem.removeEventListener("mouseleave",reset);});
+                    }
+                    function fallbackMessage(action){
+                        var actionKey=(action==="cut"?"X":"C");
+                        if(/iPhone|iPad/i.test(navigator.userAgent)) return "No support :(";
+                        if(/Mac/i.test(navigator.userAgent)) return "Press ⌘-"+actionKey+" to "+action;
+                        return "Press Ctrl-"+actionKey+" to "+action;
+                    }
+                    document.addEventListener("click",function(e){
+                        var btn=e.target.closest&&e.target.closest(".tracyCopyBtn");
+                        if(!btn) return;
+                        var text;
+                        var target=btn.getAttribute("data-clipboard-target");
+                        if(target){var el=document.querySelector(target);text=el?(el.value!==undefined?el.value:el.textContent):"";}
+                        else{text=btn.getAttribute("data-clipboard-text")||"";}
+                        if(navigator.clipboard&&navigator.clipboard.writeText&&window.isSecureContext){
+                            navigator.clipboard.writeText(text).then(function(){showTooltip(btn,"Copied!");},function(){showTooltip(btn,fallbackMessage("copy"));});
+                        }
+                        else{
+                            var ta=document.createElement("textarea");ta.value=text;ta.style.cssText="position:fixed;opacity:0";document.body.appendChild(ta);ta.focus();ta.select();
+                            try{showTooltip(btn,document.execCommand("copy")?"Copied!":fallbackMessage("copy"));}catch(err){showTooltip(btn,fallbackMessage("copy"));}
+                            document.body.removeChild(ta);
+                        }
                     });
-                });
+                })();
             </script>
 HTML;
 
