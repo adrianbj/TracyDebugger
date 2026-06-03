@@ -29,8 +29,8 @@ class TracyPwApiData extends WireData {
                 );
             }
             elseif($type == 'proceduralFunctions') {
-                $apiData = array('Functions' => $this->getProceduralFunctions('Functions')['pwFunctions']);
-                if(file_exists($this->wire('config')->paths->core . 'FunctionsAPI.php')) $apiData += array('FunctionsAPI' => $this->getProceduralFunctions('FunctionsAPI')['pwFunctions']);
+                $apiData = array('Functions' => $this->getProceduralFunctions('Functions')['pwFunctions'] ?? array());
+                if(file_exists($this->wire('config')->paths->core . 'FunctionsAPI.php')) $apiData += array('FunctionsAPI' => $this->getProceduralFunctions('FunctionsAPI')['pwFunctions'] ?? array());
             }
             else {
                 $typeDir = $type == 'coreModules' ? 'modules' : $type;
@@ -339,6 +339,7 @@ class TracyPwApiData extends WireData {
         $newTab = TracyDebugger::getDataValue('linksNewTab') ? 'target="_blank"' : '';
 
         $lines = file($file);
+        if($lines === false) return array();
         $source = implode('', $lines);
         // fast rejection for hooks-only scans: skip the expensive whitespace-collapse regex unless needed
         if($hooks && strpos($source, 'function ___') === false && strpos($source, 'addHook') === false) return;
