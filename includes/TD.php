@@ -168,7 +168,6 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     private static function buildAgentCopyButton($var) {
-        if(is_string($var) || is_int($var) || is_float($var) || is_bool($var) || $var === null) return '';
         $text = self::agentText($var);
         if($text === null || $text === '') return '';
         $jsonMd = str_replace('</', '<\\/', \Tracy\Helpers::jsonEncode($text, true));
@@ -178,6 +177,18 @@ class TD extends TracyDebugger {
              . '<button type="button" data-tracy-md-copy class="tracy-md-copy-btn" style="' . $btnStyle . '" title="Copy this dump as plaintext for an AI agent">' . $icon . '</button>'
              . '<script type="application/json" data-tracy-md-source>' . $jsonMd . '</script>'
              . '</span>';
+    }
+
+    /**
+     * Build a "Copy all" button that copies every dump in its scope as agent
+     * markdown. Click handler lives in scripts/main.js (matches
+     * [data-tracy-md-copy-all]); it determines scope from the button's DOM
+     * position (the enclosing .tracy-panel, or the page for inline d() dumps).
+     * @tracySkipLocation
+     */
+    public static function buildAgentCopyAllButton() {
+        $icon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
+        return '<button type="button" data-tracy-md-copy-all class="tracy-md-copy-all-btn" title="Copy all dumps as plaintext for an AI agent">' . $icon . '<span>Copy all</span></button>';
     }
 
     /**

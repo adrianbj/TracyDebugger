@@ -60,6 +60,11 @@ class DumpsPanel extends BasePanel {
         $out .= '
             <div id="tracyDumpEntries">' . $this->entries . '</div>';
 
+        $dumpCount = is_array(TracyDebugger::$dumpItems) ? count(TracyDebugger::$dumpItems) : 0;
+        if($dumpCount > 1) {
+            $out .= '<div class="tracy-md-copy-all-bar">' . TD::buildAgentCopyAllButton() . '</div>';
+        }
+
         return $this->closePanel($out, 'dumps', 'dumpsPanel');
     }
 

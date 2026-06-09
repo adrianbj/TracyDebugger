@@ -145,15 +145,8 @@ function tracyDumpsToggler(el, show) {
 (function() {
     if(window.__tracyMdCopyHandlerInstalled) return;
     window.__tracyMdCopyHandlerInstalled = true;
-    document.addEventListener('click', function(e) {
-        var btn = e.target.closest && e.target.closest('[data-tracy-md-copy]');
-        if(!btn) return;
-        e.preventDefault();
-        e.stopPropagation();
-        var src = btn.parentElement && btn.parentElement.querySelector('[data-tracy-md-source]');
-        if(!src) return;
-        var md;
-        try { md = JSON.parse(src.textContent); } catch(err) { console.error('tracy md-copy: JSON parse failed', err); return; }
+
+    function tracyMdDoCopy(btn, md) {
         var origChildren = [];
         for(var i = 0; i < btn.childNodes.length; i++) origChildren.push(btn.childNodes[i]);
         var done = function(ok) {
@@ -188,7 +181,129 @@ function tracyDumpsToggler(el, show) {
             try { done(document.execCommand('copy')); } catch(err) { console.error('tracy md-copy: execCommand failed', err); done(false); }
             document.body.removeChild(ta);
         }
+    }
+
+    function tracyIsInlineSource(s) {
+        return !s.closest('#tracy-debug') && !s.closest('.tracy-panel');
+    }
+
+    function tracyInlineSources() {
+        var all = document.querySelectorAll('[data-tracy-md-source]');
+        var out = [];
+        for(var i = 0; i < all.length; i++) {
+            if(tracyIsInlineSource(all[i])) out.push(all[i]);
+        }
+        return out;
+    }
+
+    function tracyScopeSources(btn) {
+        if(btn.hasAttribute('data-tracy-page-dumps')) return tracyInlineSources();
+        var panel = btn.closest('.tracy-panel');
+        var root = panel || document;
+        return Array.prototype.slice.call(root.querySelectorAll('[data-tracy-md-source]'));
+    }
+
+    function tracyDumpTitle(source) {
+        var panel = source.closest('.tracy-DumpPanel');
+        if(panel) {
+            var h2 = panel.querySelector(':scope > h2');
+            if(h2) return h2.textContent.trim();
+        }
+        var entries = source.closest('#tracyDumpEntries');
+        if(entries) {
+            var node = source;
+            while(node && node.parentElement !== entries) node = node.parentElement;
+            if(node) {
+                var prev = node.previousElementSibling;
+                if(prev && prev.tagName === 'H2') return prev.textContent.trim();
+            }
+        }
+        return '';
+    }
+
+    function tracyBuildMarkdown(sources) {
+        var parts = [];
+        for(var i = 0; i < sources.length; i++) {
+            var text;
+            try { text = JSON.parse(sources[i].textContent); } catch(err) { continue; }
+            if(text == null || text === '') continue;
+            var title = tracyDumpTitle(sources[i]);
+            parts.push(title ? '## ' + title + '\n\n' + text : text);
+        }
+        return parts.join('\n\n');
+    }
+
+    document.addEventListener('click', function(e) {
+        var allBtn = e.target.closest && e.target.closest('[data-tracy-md-copy-all]');
+        if(allBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            var md = tracyBuildMarkdown(tracyScopeSources(allBtn));
+            if(md === '') return;
+            tracyMdDoCopy(allBtn, md);
+            return;
+        }
+        var btn = e.target.closest && e.target.closest('[data-tracy-md-copy]');
+        if(!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        var src = btn.parentElement && btn.parentElement.querySelector('[data-tracy-md-source]');
+        if(!src) return;
+        var md2;
+        try { md2 = JSON.parse(src.textContent); } catch(err) { console.error('tracy md-copy: JSON parse failed', err); return; }
+        tracyMdDoCopy(btn, md2);
     }, true);
+
+    function tracyCopyAllBar(extraClass, pageScoped) {
+        var icon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
+        var bar = document.createElement('div');
+        bar.className = 'tracy-md-copy-all-bar' + (extraClass ? ' ' + extraClass : '');
+        bar.innerHTML = '<button type="button" data-tracy-md-copy-all' + (pageScoped ? ' data-tracy-page-dumps' : '') + ' class="tracy-md-copy-all-btn" title="Copy all dumps as plaintext for an AI agent">' + icon + '<span>Copy all</span></button>';
+        return bar;
+    }
+
+    function tracyInstallPageCopyAll() {
+        var inline = tracyInlineSources();
+        if(inline.length < 2) return;
+        if(document.querySelector('[data-tracy-md-copy-all][data-tracy-page-dumps]')) return;
+        var last = inline[inline.length - 1];
+        var block = last.closest('.tracy-inner') || last.closest('.tracy-DumpPanel') || last;
+        if(!block || !block.parentNode) return;
+        block.parentNode.insertBefore(tracyCopyAllBar('tracy-md-copy-all-page', true), block.nextSibling);
+    }
+
+    function tracyInstallConsoleCopyAll() {
+        var rd = document.getElementById('tracyConsoleResult');
+        if(!rd) return;
+        function ensure() {
+            var existing = rd.querySelector('.tracy-md-copy-all-console');
+            var count = rd.querySelectorAll('[data-tracy-md-source]').length;
+            if(count >= 2) {
+                if(existing) rd.appendChild(existing);
+                else rd.appendChild(tracyCopyAllBar('tracy-md-copy-all-console', false));
+            } else if(existing) {
+                existing.parentNode.removeChild(existing);
+            }
+        }
+        var obs = new MutationObserver(function() {
+            obs.disconnect();
+            ensure();
+            obs.observe(rd, { childList: true });
+        });
+        obs.observe(rd, { childList: true });
+        ensure();
+    }
+
+    function tracyInstallCopyAll() {
+        tracyInstallPageCopyAll();
+        tracyInstallConsoleCopyAll();
+    }
+
+    if(document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', tracyInstallCopyAll);
+    } else {
+        tracyInstallCopyAll();
+    }
 })();
 
 // reposition panel if comment opened (for Captain Hook and API Explorer panels)
