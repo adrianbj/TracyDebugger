@@ -10,6 +10,13 @@ class TD extends TracyDebugger {
     private static $recorderPendingItems = array();
     private static $recorderShutdownRegistered = false;
 
+    // bound dumps.json so a long-lived recorder session (or a high-traffic AJAX
+    // endpoint) can't grow it without limit and exhaust memory on the next flush
+    const RECORDER_MAX_ITEMS = 200;
+    // if an existing file is already pathologically large (e.g. from before this
+    // cap existed), discard it rather than decoding it into memory and OOMing
+    const RECORDER_MAX_BYTES = 5242880;
+
     private static function phpSupportsKeysToHide() {
         if(self::$phpSupportsKeysToHide === null) {
             self::$phpSupportsKeysToHide = version_compare(PHP_VERSION, '7.2.0', '>=');
@@ -108,10 +115,23 @@ class TD extends TracyDebugger {
     public static function flushRecorderDumps() {
         if(empty(self::$recorderPendingItems)) return;
         $dumpsFile = wire('config')->paths->cache . 'TracyDebugger/dumps.json';
-        $existing = file_exists($dumpsFile) ? json_decode(file_get_contents($dumpsFile), true) : array();
-        if(!$existing) $existing = array();
+        $existing = (file_exists($dumpsFile) && filesize($dumpsFile) <= self::RECORDER_MAX_BYTES)
+            ? json_decode(file_get_contents($dumpsFile), true)
+            : array();
+        if(!is_array($existing)) $existing = array();
+        $nextId = 0;
+        foreach($existing as $item) {
+            if(isset($item['id']) && $item['id'] > $nextId) $nextId = $item['id'];
+        }
+        foreach(self::$recorderPendingItems as &$item) {
+            $item['id'] = ++$nextId;
+        }
+        unset($item);
         $merged = array_merge($existing, self::$recorderPendingItems);
         self::$recorderPendingItems = array();
+        if(count($merged) > self::RECORDER_MAX_ITEMS) {
+            $merged = array_slice($merged, -self::RECORDER_MAX_ITEMS);
+        }
         wire('files')->filePutContents($dumpsFile, json_encode($merged), LOCK_EX);
     }
 
@@ -450,11 +470,17 @@ class TD extends TracyDebugger {
             try { $dumpItem['text'] = self::agentText($var); } catch(\Throwable $e) { try { self::log($e); } catch(\Throwable $logErr) {} }
         }
         TracyDebugger::$dumpItems[] = $dumpItem;
-        // always persist dumps for authorized dev users so cross-window polling can surface them,
-        // and persist guest dumps when that feature is enabled
-        if(!self::tracyUnavailable() || TracyDebugger::getDataValue('recordGuestDumps')) {
+        // only persist to dumps.json when something will actually consume it:
+        //  - dev users: the Dumps Recorder panel is active for this request. cross-window
+        //    polling shares the sticky panel cookie, so the dev user's AJAX requests see it too.
+        //  - guests: recordGuestDumps is a global config flag, so it doesn't depend on a panel
+        //    or cookie (guests have neither). enabling it auto-opens the recorder panel for the
+        //    dev user who later views the dumps, so there is still a consumer.
+        // without one of these there's no panel to update and no reason to write the file.
+        if((!self::tracyUnavailable() && is_array(TracyDebugger::$showPanels) && in_array('dumpsRecorder', TracyDebugger::$showPanels))
+            || TracyDebugger::getDataValue('recordGuestDumps')) {
             $dumpItem['user'] = wire('user')->name;
-            $dumpItem['time'] = date('H:i:s');
+            $dumpItem['time'] = date('Y-m-d H:i:s');
             self::$recorderPendingItems[] = $dumpItem;
             if(!self::$recorderShutdownRegistered) {
                 self::$recorderShutdownRegistered = true;

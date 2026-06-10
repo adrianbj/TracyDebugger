@@ -5,7 +5,15 @@
     var pollTimer = null;
     var currentUrl = window.location.href.split("#")[0];
     var recorderPanelId = "tracy-debug-panel-ProcessWire-DumpsRecorderPanel";
-    var lastTotalCount = 0;
+    var lastSeenId = -1;
+
+    function maxId(entries) {
+        var m = 0;
+        for(var i = 0; i < entries.length; i++) {
+            if(entries[i].id > m) m = entries[i].id;
+        }
+        return m;
+    }
 
     function scheduleNext(hadNewData) {
         if(hadNewData) {
@@ -39,11 +47,10 @@
                 scheduleNext(false);
                 return;
             }
-            var hadNewData = false;
-            if(data.totalCount > 0) {
-                hadNewData = data.totalCount !== lastTotalCount;
-                updateRecorderPanel(data.entries, data.totalCount);
-            }
+            var entries = data.entries || [];
+            var topId = maxId(entries);
+            var hadNewData = (lastSeenId === -1) ? entries.length > 0 : topId !== lastSeenId;
+            updateRecorderPanel(entries);
             scheduleNext(hadNewData);
         };
 
@@ -79,7 +86,7 @@
         }
     }
 
-    function updateRecorderPanel(entries, totalCount) {
+    function updateRecorderPanel(entries) {
         var panel = document.getElementById(recorderPanelId);
         if(!panel) {
             // panel isn't in the bar on this page — new dumps will appear on the
@@ -88,8 +95,11 @@
         }
 
         var i;
-        var newEntries = entries.slice(lastTotalCount);
-        var wasCleared = totalCount < lastTotalCount;
+        var topId = maxId(entries);
+        var firstSync = (lastSeenId === -1);
+        // ids are monotonic, so a drop means the file was cleared and ids restarted
+        var wasCleared = !firstSync && topId < lastSeenId;
+        var newEntries = (firstSync || wasCleared) ? entries : entries.filter(function(e) { return e.id > lastSeenId; });
 
         if(panel.dataset && panel.dataset.tracyContent) {
             var html = buildRecorderHtml(entries);
@@ -128,10 +138,10 @@
                 container.appendChild(itemsDiv);
             }
 
-            if(wasCleared) {
+            if(wasCleared || (firstSync && entries.length > 0)) {
                 itemsDiv.innerHTML = buildRecorderHtml(entries);
                 if(window.Tracy && Tracy.Dumper) Tracy.Dumper.init(container);
-            } else if(newEntries.length > 0) {
+            } else if(!firstSync && newEntries.length > 0) {
                 var newHtml = buildRecorderHtml(newEntries);
                 itemsDiv.insertAdjacentHTML('beforeend', newHtml);
                 if(window.Tracy && Tracy.Dumper) Tracy.Dumper.init(itemsDiv);
@@ -152,7 +162,7 @@
             if(panel.offsetTop + panel.offsetHeight > window.innerHeight - barHeight) {
                 panel.style.top = Math.max(0, window.innerHeight - barHeight - panel.offsetHeight - 5) + "px";
             }
-            if(totalCount > lastTotalCount) {
+            if(firstSync || newEntries.length > 0) {
                 var inner = container.closest(".tracy-inner");
                 if(inner) inner.scrollTop = inner.scrollHeight;
             }
@@ -160,13 +170,15 @@
 
         var badges = document.getElementsByClassName("dumpsRecorderCount");
         for(i = 0; i < badges.length; i++) {
-            badges[i].textContent = totalCount;
+            badges[i].textContent = entries.length > 0 ? entries.length : "";
         }
-        var iconPaths = document.getElementsByClassName("dumpsRecorderIconPath");
-        for(i = 0; i < iconPaths.length; i++) {
-            iconPaths[i].style.fill = window.TracyColorWarn || "#ff8309";
+        if(entries.length > 0) {
+            var iconPaths = document.getElementsByClassName("dumpsRecorderIconPath");
+            for(i = 0; i < iconPaths.length; i++) {
+                iconPaths[i].style.fill = window.TracyColorWarn || "#ff8309";
+            }
         }
-        lastTotalCount = totalCount;
+        lastSeenId = topId;
     }
 
     function escapeHtml(text) {
@@ -180,13 +192,8 @@
             window.requestAnimationFrame(init);
             return;
         }
-        // seed lastTotalCount from the server-rendered badge so the first poll
-        // doesn't treat every existing entry as new and duplicate them in the panel
-        var badges = document.getElementsByClassName("dumpsRecorderCount");
-        if(badges.length > 0) {
-            var n = parseInt(badges[0].textContent, 10);
-            if(!isNaN(n) && n > 0) lastTotalCount = n;
-        }
+        // lastSeenId stays -1 until the first poll, which fully syncs the panel from
+        // the polled entries (replacing the server-rendered set) so nothing is duplicated
         pollTimer = setTimeout(poll, pollInterval);
     }
 
