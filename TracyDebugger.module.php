@@ -851,32 +851,52 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             // code execution
             if($this->wire('input')->post->tracyConsole == 1) {
-                // garbage collect old console run files (older than 1 hour)
-                foreach(array(
-                    $this->wire('config')->paths->assets . 'TracyDebugger/console_runs/',
-                    $this->wire('config')->paths->cache . 'TracyDebugger/console_runs/'
-                ) as $runDir) {
-                    if(is_dir($runDir)) {
-                        foreach(glob($runDir . '*.{json,pid,connid}', GLOB_BRACE) as $file) {
-                            if(filemtime($file) < time() - 3600) {
-                                @unlink($file);
-                            }
-                        }
+                // garbage collect files left behind by finished background runs (older than
+                // 1 hour). A run can legitimately outlive that window (set_time_limit(0)), so
+                // skip any run whose worker is still alive — its .pid lock is the cancel
+                // endpoint's liveness signal and removing a live run's files would break it.
+                $cachePath    = $this->wire('config')->paths->cache  . 'TracyDebugger/';
+                $statusDir    = $this->wire('config')->paths->assets . 'TracyDebugger/console_runs/';
+                $cacheRunDir  = $cachePath . 'console_runs/';
+                $downloadsDir = $cachePath . 'console_downloads/';
+                $gcCutoff     = time() - 3600;
+
+                // collect every runId that has files on disk
+                $gcRunIds = array();
+                foreach(array($statusDir, $cacheRunDir) as $runDir) {
+                    if(!is_dir($runDir)) continue;
+                    foreach(glob($runDir . '*.{json,pid,connid}', GLOB_BRACE) as $file) {
+                        $gcRunIds[pathinfo($file, PATHINFO_FILENAME)] = true;
                     }
                 }
-                // garbage collect old console download files (older than 1 hour) — one subdir per runId
-                $downloadsDir = $this->wire('config')->paths->cache . 'TracyDebugger/console_downloads/';
+                foreach(glob($cachePath . 'consoleCode_*.php') as $file) {
+                    $base = pathinfo($file, PATHINFO_FILENAME);
+                    $gcRunIds[substr($base, strlen('consoleCode_'))] = true;
+                }
                 if(is_dir($downloadsDir)) {
                     foreach(new \DirectoryIterator($downloadsDir) as $subdir) {
                         if($subdir->isDot() || !$subdir->isDir()) continue;
-                        if(time() - $subdir->getMTime() > 3600) {
-                            $subdirPath = $subdir->getPathname();
-                            foreach(new \DirectoryIterator($subdirPath) as $f) {
-                                if($f->isDot()) continue;
-                                @unlink($f->getPathname());
-                            }
-                            @rmdir($subdirPath);
+                        $gcRunIds[$subdir->getFilename()] = true;
+                    }
+                }
+
+                foreach(array_keys($gcRunIds) as $gcRunId) {
+                    if($gcRunId === '' || $this->consoleRunIsLive($gcRunId)) continue;
+                    foreach(array($statusDir, $cacheRunDir) as $runDir) {
+                        foreach(array('.json', '.pid', '.connid') as $ext) {
+                            $f = $runDir . $gcRunId . $ext;
+                            if(is_file($f) && filemtime($f) < $gcCutoff) @unlink($f);
                         }
+                    }
+                    $codeFile = $cachePath . 'consoleCode_' . $gcRunId . '.php';
+                    if(is_file($codeFile) && filemtime($codeFile) < $gcCutoff) @unlink($codeFile);
+                    $dlDir = $downloadsDir . $gcRunId . '/';
+                    if(is_dir($dlDir) && filemtime($dlDir) < $gcCutoff) {
+                        foreach(new \DirectoryIterator($dlDir) as $f) {
+                            if($f->isDot()) continue;
+                            @unlink($f->getPathname());
+                        }
+                        @rmdir($dlDir);
                     }
                 }
 
@@ -2396,6 +2416,25 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         @unlink($cachePath . 'consoleCode_' . $runId . '.php');
 
         return $result;
+    }
+
+    /**
+     * Is the background console run with this id still executing?
+     * The worker holds LOCK_EX on its .pid file for the life of the request, so if
+     * we can take a shared lock the process is gone and the run is dead. PHP-FPM
+     * workers persist across requests, so checking the PID itself is unreliable.
+     */
+    private function consoleRunIsLive($runId) {
+        $runId = preg_replace('/[^a-zA-Z0-9_.]/', '', (string) $runId);
+        if($runId === '') return false;
+        $pidFile = $this->wire('config')->paths->cache . 'TracyDebugger/console_runs/' . $runId . '.pid';
+        if(!file_exists($pidFile)) return false;
+        $fh = @fopen($pidFile, 'r');
+        if(!$fh) return false;
+        $live = !@flock($fh, LOCK_SH | LOCK_NB);
+        if(!$live) @flock($fh, LOCK_UN);
+        @fclose($fh);
+        return $live;
     }
 
     /**
