@@ -831,6 +831,32 @@ ul.pw-info-links {
     white-space: nowrap;
 }
 
+button[data-tab-id].tracyTabHasNewResult .button-label::before {
+    content: "\2714";
+    display: inline-block;
+    margin-right: 6px;
+    color: #27ae60;
+    font-weight: bold;
+    vertical-align: middle;
+}
+
+button[data-tab-id].tracyTabRunning .button-label::before {
+    content: "";
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    margin-right: 6px;
+    border: 2px solid rgba(41, 128, 185, 0.3);
+    border-top-color: #2980b9;
+    border-radius: 50%;
+    vertical-align: middle;
+    animation: tracyTabSpin 0.7s linear infinite;
+}
+
+@keyframes tracyTabSpin {
+    to { transform: rotate(360deg); }
+}
+
 #tracyTabs button.dragging {
     opacity: 0.25;
 }

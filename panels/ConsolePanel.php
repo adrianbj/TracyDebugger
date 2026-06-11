@@ -226,6 +226,7 @@ class ConsolePanel extends BasePanel {
             tabsContainer: null,
             addTabButton: null,
             currentTabId: null,
+            runs: {},
             maxHistoryItems: 25,
             desc: false,
             loadingSnippet: false,
@@ -534,7 +535,9 @@ class ConsolePanel extends BasePanel {
                         scrollTop: this.tce.session.getScrollTop(),
                         scrollLeft: this.tce.session.getScrollLeft(),
                         splitSizes: existingTab ? existingTab.splitSizes : [40, 60],
-                        order: currentIndex >= 0 ? currentIndex : (existingTab?.order || 0)
+                        order: currentIndex >= 0 ? currentIndex : (existingTab?.order || 0),
+                        runId: this.runs[this.currentTabId] ? this.runs[this.currentTabId].runId : (existingTab ? existingTab.runId : undefined),
+                        startTime: this.runs[this.currentTabId] ? this.runs[this.currentTabId].startTime : (existingTab ? existingTab.startTime : undefined)
                     };
 
                     await this.dbPut('tabs', tab);
@@ -779,8 +782,6 @@ class ConsolePanel extends BasePanel {
                 }
             },
 
-            _pollXhr: null,
-
             cleanupRunFiles: function(runId) {
                 if(!runId) return;
                 var xhr = new XMLHttpRequest();
@@ -806,30 +807,34 @@ class ConsolePanel extends BasePanel {
             /* Cancel a running/background console script. Confirms, aborts client-side
                polling and any in-flight XHR, then asks the server to SIGKILL the PHP
                process for this runId. */
-            cancelRun: function(runId) {
+            /* Cancel one run by runId. Resolves the owning tab from the registry,
+               aborts that run's XHRs, clears its entry/timer/badge, and tells the
+               server to kill the process. tabClosing skips the confirm and the
+               record/status updates because removeTab is deleting the tab anyway. */
+            cancelRun: function(runId, tabClosing) {
                 if(!runId) return;
-                if(!confirm("Kill the running script?\\n\\nThis will terminate the PHP process immediately. Any work the script was doing will stop where it is and partial side effects (DB writes, file changes) may remain.")) {
+                if(!tabClosing && !confirm("Kill the running script?\\n\\nThis will terminate the PHP process immediately. Any work the script was doing will stop where it is and partial side effects (DB writes, file changes) may remain.")) {
                     return;
                 }
-                tracyConsole._cancelled = true;
-                tracyConsole._stopPolling = true;
-                if(tracyConsole._pollXhr) {
-                    try { tracyConsole._pollXhr.abort(); } catch(e) {}
-                    tracyConsole._pollXhr = null;
+                var tabId = null;
+                for(var k in tracyConsole.runs) {
+                    if(tracyConsole.runs.hasOwnProperty(k) && tracyConsole.runs[k].runId === runId) { tabId = Number(k); break; }
                 }
-                /* abort the original code-run XHR too so its response can't arrive
-                   after a new run has reset _cancelled back to false */
-                if(tracyConsole._mainXhr) {
-                    try { tracyConsole._mainXhr.abort(); } catch(e) {}
-                    tracyConsole._mainXhr = null;
+                if(tabId !== null) {
+                    var run = tracyConsole.runs[tabId];
+                    run.cancelled = true;
+                    if(run.pollXhr) { try { run.pollXhr.abort(); } catch(e) {} run.pollXhr = null; }
+                    if(run.mainXhr) { try { run.mainXhr.abort(); } catch(e) {} run.mainXhr = null; }
+                    if(tabId === tracyConsole.currentTabId) tracyConsole.stopStatusTimer();
+                    delete tracyConsole.runs[tabId];
+                    if(!tabClosing) tracyConsole.clearRunIdOnTab(tabId).catch(function(){});
+                    tracyConsole.setTabBadge(tabId, false);
+                    tracyConsole.setTabRunning(tabId, false);
+                    tracyConsole.setRunButtonEnabled(true);
                 }
-                if(tracyConsole._bgTimer) {
-                    clearInterval(tracyConsole._bgTimer);
-                    tracyConsole._bgTimer = null;
-                }
-                var statusDiv = document.getElementById("tracyConsoleStatus");
-                if(statusDiv) {
-                    statusDiv.innerHTML = "<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> Cancelling...";
+                if(!tabClosing && tabId !== null && tabId === tracyConsole.currentTabId) {
+                    var initialStatusDiv = document.getElementById("tracyConsoleStatus");
+                    if(initialStatusDiv) initialStatusDiv.innerHTML = "<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> Cancelling...";
                 }
                 var xhr = new XMLHttpRequest();
                 xhr.onreadystatechange = function() {
@@ -840,13 +845,10 @@ class ConsolePanel extends BasePanel {
                         data = JSON.parse(xhr.responseText);
                         killed = !!data.killed;
                     } catch(e) {}
-                    if(statusDiv) {
-                        statusDiv.innerHTML = killed ? "✘ Cancelled" : "✘ Cancelled (process may still be running)";
+                    if(!tabClosing && tabId !== null && tabId === tracyConsole.currentTabId) {
+                        var statusDiv = document.getElementById("tracyConsoleStatus");
+                        if(statusDiv) statusDiv.innerHTML = killed ? "✘ Cancelled" : "✘ Cancelled (process may still be running)";
                     }
-                    tracyConsole.setRunButtonEnabled(true);
-                    tracyConsole._activeRunId = null;
-                    tracyConsole._pollingActive = false;
-                    tracyConsole._inlineDelivered = true;
                 };
                 xhr.open("POST", "$currentUrl", true);
                 xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
@@ -861,11 +863,14 @@ class ConsolePanel extends BasePanel {
                 if(!confirm("Force-kill ALL running console scripts and clear all console_runs state?\\n\\nThis terminates any legitimately running scripts too. Use this only when the normal cancel button isn't working.")) {
                     return;
                 }
-                tracyConsole._cancelled = true;
-                tracyConsole._stopPolling = true;
-                if(tracyConsole._pollXhr) { try { tracyConsole._pollXhr.abort(); } catch(e) {} tracyConsole._pollXhr = null; }
-                if(tracyConsole._mainXhr) { try { tracyConsole._mainXhr.abort(); } catch(e) {} tracyConsole._mainXhr = null; }
-                if(tracyConsole._bgTimer) { clearInterval(tracyConsole._bgTimer); tracyConsole._bgTimer = null; }
+                for(var ck in tracyConsole.runs) {
+                    if(!tracyConsole.runs.hasOwnProperty(ck)) continue;
+                    var cr = tracyConsole.runs[ck];
+                    cr.cancelled = true;
+                    if(cr.pollXhr) { try { cr.pollXhr.abort(); } catch(e) {} cr.pollXhr = null; }
+                    if(cr.mainXhr) { try { cr.mainXhr.abort(); } catch(e) {} cr.mainXhr = null; }
+                }
+                tracyConsole.stopStatusTimer();
                 var statusDiv = document.getElementById("tracyConsoleStatus");
                 if(statusDiv) statusDiv.innerHTML = "<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> Force-killing all runs...";
                 var xhr = new XMLHttpRequest();
@@ -889,9 +894,16 @@ class ConsolePanel extends BasePanel {
                             statusDiv.innerHTML = "✘ Force-kill failed (HTTP " + xhr.status + ")";
                         }
                     }
-                    tracyConsole._activeRunId = null;
-                    tracyConsole._pollingActive = false;
-                    tracyConsole._inlineDelivered = true;
+                    for(var k in tracyConsole.runs) {
+                        if(!tracyConsole.runs.hasOwnProperty(k)) continue;
+                        var r = tracyConsole.runs[k];
+                        if(r.pollXhr) { try { r.pollXhr.abort(); } catch(e) {} }
+                        tracyConsole.setTabBadge(Number(k), false);
+                        tracyConsole.setTabRunning(Number(k), false);
+                        tracyConsole.clearRunIdOnTab(Number(k)).catch(function(){});
+                    }
+                    tracyConsole.runs = {};
+                    tracyConsole.stopStatusTimer();
                     tracyConsole.setRunButtonEnabled(true);
                 };
                 xhr.open("POST", "$currentUrl", true);
@@ -900,93 +912,85 @@ class ConsolePanel extends BasePanel {
                 xhr.send("tracyConsoleCancelAll=1&csrfToken=" + encodeURIComponent(tracyConsole.csrfToken));
             },
 
-            /* Reattach the panel to any script that's still running on the server
-               (e.g. user closed the tab while it was executing, then reopened the
-               admin). Restores the "Running... <elapsed>" status with cancel icon
-               and resumes polling for the result. */
-            reattachActiveRun: function() {
-                if(tracyConsole._activeRunId) return;
+            /* On (re)load, reconnect the panel to every script still running on the
+               server and resume tracking each in its originating tab. */
+            reattachActiveRuns: async function() {
+                var liveRuns = await new Promise(function(resolve) {
+                    var xhr = new XMLHttpRequest();
+                    xhr.onreadystatechange = function() {
+                        if(xhr.readyState !== XMLHttpRequest.DONE) return;
+                        if(xhr.status !== 200) { resolve([]); return; }
+                        try { var d = JSON.parse(xhr.responseText); resolve(d && d.runs ? d.runs : []); }
+                        catch(e) { resolve([]); }
+                    };
+                    xhr.open("POST", "$currentUrl", true);
+                    xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                    xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+                    xhr.send("tracyConsoleActiveRuns=1&csrfToken=" + encodeURIComponent(tracyConsole.csrfToken));
+                });
+
+                var liveById = {};
+                liveRuns.forEach(function(r) { if(r && r.runId) liveById[r.runId] = r; });
+
+                var tabs = [];
+                try { tabs = await tracyConsole.getAllTabs(); } catch(e) { tabs = []; }
+
+                for(var i = 0; i < tabs.length; i++) {
+                    var t = tabs[i];
+                    if(!t || !t.runId) continue;
+                    if(liveById[t.runId]) {
+                        var started = liveById[t.runId].startedAt ? liveById[t.runId].startedAt * 1000 : (t.startTime || Date.now());
+                        tracyConsole.runs[t.id] = {
+                            runId: t.runId, startTime: started, pollXhr: null, mainXhr: null, cancelled: false, delivered: false
+                        };
+                        tracyConsole.setTabRunning(t.id, true);
+                        if(t.id === tracyConsole.currentTabId) { tracyConsole.startStatusTimer(t.id); tracyConsole.setRunButtonEnabled(false); }
+                        tracyConsole.pollForResults(t.runId, t.id);
+                    } else {
+                        /* finished while we were away — pull its result, then clear the pointer */
+                        tracyConsole.runs[t.id] = { runId: t.runId, startTime: t.startTime || Date.now(), pollXhr: null, mainXhr: null, cancelled: false, delivered: false };
+                        tracyConsole.fetchAndCleanup(t.runId, 'complete', t.id);
+                    }
+                }
+            },
+
+            fetchAndCleanup: function(runId, status, tabId) {
+                if(!runId) return;
                 var xhr = new XMLHttpRequest();
                 xhr.onreadystatechange = function() {
                     if(xhr.readyState !== XMLHttpRequest.DONE) return;
-                    if(xhr.status !== 200) return;
-                    if(tracyConsole._activeRunId) return;
-                    var data = null;
-                    try { data = JSON.parse(xhr.responseText); } catch(e) { return; }
-                    if(!data || !data.runs || !data.runs.length) return;
-                    var run = data.runs[0];
-                    if(!run || !run.runId || !run.startedAt) return;
-                    var startedMs = run.startedAt * 1000;
-                    tracyConsole._activeRunId = run.runId;
-                    tracyConsole._bgStartTime = startedMs;
-                    tracyConsole._stopPolling = false;
-                    tracyConsole._inlineDelivered = false;
-                    tracyConsole._pollDelivered = false;
-                    tracyConsole._pollingActive = true;
-                    tracyConsole._cancelled = false;
-                    tracyConsole.setRunButtonEnabled(false);
-                    var elapsed = Math.round((Date.now() - startedMs) / 1000);
-                    var mins = Math.floor(elapsed / 60);
-                    var secs = elapsed % 60;
-                    var timeStr = mins > 0 ? mins + 'm ' + secs + 's' : secs + 's';
-                    var statusDiv = document.getElementById("tracyConsoleStatus");
-                    if(statusDiv) statusDiv.innerHTML = tracyConsole.renderRunningStatus(run.runId, timeStr);
-                    if(tracyConsole._bgTimer) { clearInterval(tracyConsole._bgTimer); }
-                    tracyConsole._bgTimer = setInterval(function() {
-                        var e = Math.round((Date.now() - tracyConsole._bgStartTime) / 1000);
-                        var m = Math.floor(e / 60);
-                        var s = e % 60;
-                        var ts = m > 0 ? m + 'm ' + s + 's' : s + 's';
-                        var sd = document.getElementById("tracyConsoleStatus");
-                        if(sd) sd.innerHTML = tracyConsole.renderRunningStatus(run.runId, ts);
-                    }, 1000);
-                    tracyConsole.pollForResults(run.runId);
-                };
-                xhr.open("POST", "$currentUrl", true);
-                xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-                xhr.send("tracyConsoleActiveRuns=1&csrfToken=" + encodeURIComponent(tracyConsole.csrfToken));
-            },
-
-            fetchAndCleanup: function(runId, status) {
-                if(!runId || tracyConsole._inlineDelivered) return;
-                var xhr = new XMLHttpRequest();
-                xhr.onreadystatechange = function() {
-                    if(xhr.readyState == XMLHttpRequest.DONE) {
-                        if(tracyConsole._inlineDelivered) return;
-                        var resultsDiv = document.getElementById("tracyConsoleResult");
-                        var statusDiv = document.getElementById("tracyConsoleStatus");
-                        if(xhr.status == 200 && resultsDiv) {
-                            try {
-                                var data = JSON.parse(xhr.responseText);
-                                var resultId = Date.now();
-                                var resultHtml;
-                                if(data && data.status === 'download') {
-                                    resultHtml = '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.triggerDownload(data) + '</div>';
-                                } else {
-                                    resultHtml = '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.tryParseJSON(data.output) + '</div>';
-                                }
-                                tracyConsole._rawResultHtml += resultHtml;
-                                resultsDiv.insertAdjacentHTML('beforeend', resultHtml);
-                                tracyConsole.saveToIndexedDB().catch(function(err) { console.warn('Error updating tab result:', err); });
+                    var appendPromise = Promise.resolve();
+                    if(xhr.status == 200) {
+                        try {
+                            var data = JSON.parse(xhr.responseText);
+                            var resultId = Date.now();
+                            var resultHtml;
+                            if(data && data.status === 'download') {
+                                resultHtml = '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.triggerDownload(data) + '</div>';
+                            } else {
+                                resultHtml = '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.tryParseJSON(data.output) + '</div>';
+                            }
+                            appendPromise = tracyConsole.appendResultToTab(tabId, resultHtml);
+                            if(tabId === tracyConsole.currentTabId) {
                                 var resultElement = document.getElementById("tracyConsoleResult_"+resultId);
-                                if(resultElement && window.Tracy && Tracy.Dumper) Tracy.Dumper.init(resultElement);
                                 if(resultElement) resultElement.scrollIntoView();
                                 if(!document.getElementById("tracy-debug-panel-ProcessWire-ConsolePanel").classList.contains("tracy-mode-float")) {
                                     window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-ConsolePanel"].toFloat();
                                 }
-                            } catch(e) {
-                                var errorHtml = '<div style="padding:10px 0; color:#e22006;">Error fetching results: ' + escapeHtml(xhr.responseText) + '</div>';
-                                tracyConsole._rawResultHtml += errorHtml;
-                                resultsDiv.insertAdjacentHTML('beforeend', errorHtml);
                             }
+                        } catch(e) {
+                            var errorHtml = '<div style="padding:10px 0; color:#e22006;">Error fetching results: ' + escapeHtml(xhr.responseText) + '</div>';
+                            appendPromise = tracyConsole.appendResultToTab(tabId, errorHtml);
                         }
-                        if(statusDiv) {
-                            statusDiv.innerHTML = status === 'error' ? "✘ Error" : "✔ Executed";
-                        }
-                        tracyConsole.setRunButtonEnabled(true);
-                        tracyConsole._activeRunId = null;
                     }
+                    if(tabId === tracyConsole.currentTabId) {
+                        var statusDiv = document.getElementById("tracyConsoleStatus");
+                        if(statusDiv) statusDiv.innerHTML = status === 'error' ? "✘ Error" : "✔ Executed";
+                    }
+                    delete tracyConsole.runs[tabId];
+                    tracyConsole.setTabRunning(tabId, false);
+                    appendPromise.then(function(){ return tracyConsole.clearRunIdOnTab(tabId); }).catch(function(e){ console.warn('fetchAndCleanup persist failed:', e); });
+                    tracyConsole.setRunButtonEnabled(true);
                 };
                 xhr.open("POST", "$currentUrl", true);
                 xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
@@ -994,28 +998,81 @@ class ConsolePanel extends BasePanel {
                 xhr.send("tracyConsoleCleanup=1&returnResult=1&csrfToken=" + encodeURIComponent(tracyConsole.csrfToken) + "&runId=" + encodeURIComponent(runId));
             },
 
+            setTabBadge: function(tabId, on) {
+                var btn = document.querySelector('button[data-tab-id="' + tabId + '"]');
+                if(!btn) return;
+                btn.classList.toggle("tracyTabHasNewResult", !!on);
+            },
+
+            setTabRunning: function(tabId, on) {
+                var btn = document.querySelector('button[data-tab-id="' + tabId + '"]');
+                if(!btn) return;
+                btn.classList.toggle("tracyTabRunning", !!on);
+            },
+
+            appendResultToTab: async function(tabId, html) {
+                tabId = Number(tabId);
+                if(tabId === this.currentTabId) {
+                    var resultsDiv = document.getElementById("tracyConsoleResult");
+                    if(resultsDiv) {
+                        this._rawResultHtml = (this._rawResultHtml || "") + html;
+                        resultsDiv.insertAdjacentHTML("beforeend", html);
+                        if(window.Tracy && Tracy.Dumper) Tracy.Dumper.init(resultsDiv);
+                    }
+                    try {
+                        var existing = await this.dbGet("tabs", tabId);
+                        if(existing) { existing.result = this._rawResultHtml; await this.dbPut("tabs", existing); }
+                    } catch(e) { console.warn("appendResultToTab (current) save failed:", e); }
+                } else {
+                    try {
+                        var rec = await this.dbGet("tabs", tabId);
+                        if(rec) { rec.result = (rec.result || "") + html; await this.dbPut("tabs", rec); }
+                    } catch(e) { console.warn("appendResultToTab (background) save failed:", e); }
+                    this.setTabBadge(tabId, true);
+                }
+            },
+
+            clearRunIdOnTab: async function(tabId) {
+                try {
+                    var rec = await this.dbGet("tabs", Number(tabId));
+                    if(rec && (rec.runId || rec.startTime)) {
+                        delete rec.runId; delete rec.startTime;
+                        await this.dbPut("tabs", rec);
+                    }
+                } catch(e) { console.warn("clearRunIdOnTab failed:", e); }
+            },
+
             setRunButtonEnabled: function(enabled) {
                 const btn = document.getElementById("runInjectButton");
-                if(btn) {
-                    btn.disabled = !enabled;
-                    btn.style.opacity = enabled ? '' : '0.5';
-                }
+                if(!btn) return;
+                var hasLiveRun = !!(tracyConsole.runs[tracyConsole.currentTabId]);
+                var on = enabled && !hasLiveRun;
+                btn.disabled = !on;
+                btn.style.opacity = on ? '' : '0.5';
             },
 
-            stopPolling: function() {
-                tracyConsole._stopPolling = true;
-                if(tracyConsole._pollXhr) {
-                    tracyConsole._pollXhr.abort();
-                    tracyConsole._pollXhr = null;
-                }
-                if(tracyConsole._bgTimer) {
-                    clearInterval(tracyConsole._bgTimer);
-                    tracyConsole._bgTimer = null;
-                }
+            startStatusTimer: function(tabId) {
+                tracyConsole.stopStatusTimer();
+                var run = tracyConsole.runs[tabId];
+                if(!run) return;
+                var paint = function() {
+                    var elapsed = Math.round((Date.now() - run.startTime) / 1000);
+                    var mins = Math.floor(elapsed / 60);
+                    var secs = elapsed % 60;
+                    var timeStr = mins > 0 ? mins + 'm ' + secs + 's' : secs + 's';
+                    var sd = document.getElementById("tracyConsoleStatus");
+                    if(sd) sd.innerHTML = tracyConsole.renderRunningStatus(run.runId, timeStr);
+                };
+                paint();
+                tracyConsole._bgTimer = setInterval(paint, 1000);
+            },
+            stopStatusTimer: function() {
+                if(tracyConsole._bgTimer) { clearInterval(tracyConsole._bgTimer); tracyConsole._bgTimer = null; }
             },
 
-            pollForResults: function(runId) {
-                if(tracyConsole._stopPolling) {
+            pollForResults: function(runId, tabId) {
+                var run = tracyConsole.runs[tabId];
+                if(!run || run.cancelled) {
                     return;
                 }
 
@@ -1025,47 +1082,47 @@ class ConsolePanel extends BasePanel {
                    returning HTML and adding a Tracy AJAX bar entry per poll). The
                    PHP endpoint suppresses the Tracy bar and always returns JSON. */
                 const xmlhttp = new XMLHttpRequest();
-                tracyConsole._pollXhr = xmlhttp;
+                run.pollXhr = xmlhttp;
                 xmlhttp.timeout = 10000;
                 xmlhttp.ontimeout = function() {
-                    if(!tracyConsole._stopPolling) {
-                        setTimeout(function() { tracyConsole.pollForResults(runId); }, 3000);
+                    if(!run.cancelled) {
+                        setTimeout(function() { tracyConsole.pollForResults(runId, tabId); }, 3000);
                     }
                 };
                 xmlhttp.onreadystatechange = function() {
                     if(xmlhttp.readyState == XMLHttpRequest.DONE) {
                         if(xmlhttp.status === 0) return;
-                        if(tracyConsole._inlineDelivered) return;
+                        if(run.delivered || run.cancelled) return;
                         if(xmlhttp.status == 200) {
                             try {
                                 const data = JSON.parse(xmlhttp.responseText);
                                 if(data.status === 'running') {
-                                    setTimeout(function() { tracyConsole.pollForResults(runId); }, 3000);
+                                    setTimeout(function() { tracyConsole.pollForResults(runId, tabId); }, 3000);
                                     return;
                                 }
                                 if(data.status === 'missing') {
-                                    setTimeout(function() { tracyConsole.pollForResults(runId); }, 3000);
+                                    setTimeout(function() { tracyConsole.pollForResults(runId, tabId); }, 3000);
                                     return;
                                 }
-                                tracyConsole._pollDelivered = true;
-                                if(tracyConsole._bgTimer) { clearInterval(tracyConsole._bgTimer); tracyConsole._bgTimer = null; }
-                                tracyConsole.fetchAndCleanup(runId, data.status);
+                                run.delivered = true;
+                                if(tabId === tracyConsole.currentTabId) { tracyConsole.stopStatusTimer(); }
+                                tracyConsole.fetchAndCleanup(runId, data.status, tabId);
                             } catch(e) {
-                                if(!tracyConsole._stopPolling) {
-                                    setTimeout(function() { tracyConsole.pollForResults(runId); }, 3000);
+                                if(!run.cancelled) {
+                                    setTimeout(function() { tracyConsole.pollForResults(runId, tabId); }, 3000);
                                 }
                             }
                         }
                         else {
-                            if(!tracyConsole._stopPolling) {
-                                setTimeout(function() { tracyConsole.pollForResults(runId); }, 3000);
+                            if(!run.cancelled) {
+                                setTimeout(function() { tracyConsole.pollForResults(runId, tabId); }, 3000);
                             }
                         }
                     }
                 };
                 xmlhttp.onerror = function() {
-                    if(!tracyConsole._stopPolling) {
-                        setTimeout(function() { tracyConsole.pollForResults(runId); }, 3000);
+                    if(!run.cancelled) {
+                        setTimeout(function() { tracyConsole.pollForResults(runId, tabId); }, 3000);
                     }
                 };
                 xmlhttp.open("POST", "$currentUrl", true);
@@ -1084,31 +1141,25 @@ class ConsolePanel extends BasePanel {
                     document.cookie = "tracyCodeReturn=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
                 }
 
-                tracyConsole.setRunButtonEnabled(false);
-
                 /* generate unique run ID for background execution support */
                 const runId = Date.now() + '_' + Math.random().toString(36).substr(2);
-                tracyConsole._pollingActive = false;
-                tracyConsole._pollDelivered = false;
-                tracyConsole._stopPolling = false;
-                tracyConsole._inlineDelivered = false;
-                tracyConsole._bgStartTime = Date.now();
-                tracyConsole._activeRunId = runId;
-                tracyConsole._cancelled = false;
+                const originTabId = tracyConsole.currentTabId;
+                tracyConsole.runs[originTabId] = {
+                    runId: runId,
+                    startTime: Date.now(),
+                    pollXhr: null,
+                    mainXhr: null,
+                    cancelled: false,
+                    delivered: false,
+                    pollingActive: false
+                };
+                tracyConsole.setTabRunning(originTabId, true);
+                tracyConsole.setRunButtonEnabled(false);
 
                 /* show the running status with cancel icon immediately so the user
                    can abort without waiting for the background-fallback threshold */
-                var initialStatusDiv = document.getElementById("tracyConsoleStatus");
-                if(initialStatusDiv) initialStatusDiv.innerHTML = tracyConsole.renderRunningStatus(runId, "0s");
-                if(tracyConsole._bgTimer) { clearInterval(tracyConsole._bgTimer); }
-                tracyConsole._bgTimer = setInterval(function() {
-                    var elapsed = Math.round((Date.now() - tracyConsole._bgStartTime) / 1000);
-                    var mins = Math.floor(elapsed / 60);
-                    var secs = elapsed % 60;
-                    var timeStr = mins > 0 ? mins + 'm ' + secs + 's' : secs + 's';
-                    var sd = document.getElementById("tracyConsoleStatus");
-                    if(sd) sd.innerHTML = tracyConsole.renderRunningStatus(runId, timeStr);
-                }, 1000);
+                tracyConsole.startStatusTimer(originTabId);
+                tracyConsole.saveToIndexedDB().catch(function(e){ console.warn('save at launch failed:', e); });
 
                 /* calculate XHR timeout from server max_execution_time */
                 const container = document.getElementById("tracyConsoleContainer");
@@ -1116,7 +1167,7 @@ class ConsolePanel extends BasePanel {
                 const xhrTimeout = maxExecTime > 0 ? Math.floor(maxExecTime * 0.8) * 1000 : 0;
 
                 const xmlhttp = new XMLHttpRequest();
-                tracyConsole._mainXhr = xmlhttp;
+                if(tracyConsole.runs[originTabId]) tracyConsole.runs[originTabId].mainXhr = xmlhttp;
                 /* capture runId so a stale response can be detected if a new run
                    starts before this XHR finishes */
                 const xhrRunId = runId;
@@ -1124,66 +1175,46 @@ class ConsolePanel extends BasePanel {
                     if (xmlhttp.readyState == XMLHttpRequest.DONE) {
                         /* original XHR completed — cancel poll timer if it hasn't fired */
                         if(typeof pollTimer !== 'undefined') clearTimeout(pollTimer);
-                        /* clear the immediate running-status timer; fallback paths below
-                           will start a fresh one if they need to keep ticking */
-                        if(tracyConsole._bgTimer) { clearInterval(tracyConsole._bgTimer); tracyConsole._bgTimer = null; }
-                        if(tracyConsole._mainXhr === xmlhttp) tracyConsole._mainXhr = null;
-                        /* cancelRun has already taken over — don't restart polling or
-                           overwrite the "Cancelled" status */
-                        if(tracyConsole._cancelled) { listenerMap.delete(xmlhttp); return; }
-                        /* stale response from a run that was cancelled or superseded
-                           — current activeRunId no longer matches this XHR's runId */
-                        if(tracyConsole._activeRunId && tracyConsole._activeRunId !== xhrRunId) {
+                        /* cancelRun removes the entry, and a new run in the same tab
+                           replaces its runId — either way this is a stale response to
+                           ignore so we don't restart polling or clobber the status */
+                        var thisRun = tracyConsole.runs[originTabId];
+                        if(!thisRun || thisRun.cancelled || thisRun.delivered || thisRun.runId !== xhrRunId) {
                             listenerMap.delete(xmlhttp);
                             return;
                         }
+                        /* clear the immediate running-status timer; fallback paths below
+                           will start a fresh one if they need to keep ticking */
+                        if(tracyConsole._bgTimer) { clearInterval(tracyConsole._bgTimer); tracyConsole._bgTimer = null; }
                         if(xmlhttp.status === 0) {
-                            if(!tracyConsole._pollingActive) {
+                            if(!thisRun.pollingActive) {
                                 /* connection lost but PHP may still be running —
                                    start polling immediately instead of waiting for poll timer */
-                                tracyConsole._inlineDelivered = false;
-                                tracyConsole._activeRunId = runId;
+                                thisRun.pollingActive = true;
                                 tracyConsole.setRunButtonEnabled(false);
-                                tracyConsole._bgTimer = setInterval(function() {
-                                    var elapsed = Math.round((Date.now() - tracyConsole._bgStartTime) / 1000);
-                                    var mins = Math.floor(elapsed / 60);
-                                    var secs = elapsed % 60;
-                                    var timeStr = mins > 0 ? mins + 'm ' + secs + 's' : secs + 's';
-                                    var sd = document.getElementById("tracyConsoleStatus");
-                                    if(sd) sd.innerHTML = tracyConsole.renderRunningStatus(runId, timeStr);
-                                }, 1000);
-                                tracyConsole._stopPolling = false;
-                                tracyConsole.pollForResults(runId);
+                                if(originTabId === tracyConsole.currentTabId) tracyConsole.startStatusTimer(originTabId);
+                                tracyConsole.pollForResults(runId, originTabId);
                                 listenerMap.delete(xmlhttp);
                             }
                             return;
                         }
-                        /* if polling already delivered results, ignore this response */
-                        if(tracyConsole._pollingActive && tracyConsole._pollDelivered) return;
-                        /* mark inline as delivered immediately so any queued poll callbacks bail out */
-                        tracyConsole._inlineDelivered = true;
-                        if(tracyConsole._pollingActive) { tracyConsole.stopPolling(); }
+                        /* inline response arrived — stop this run's poll so it can't
+                           also deliver the same result */
+                        if(thisRun.pollXhr) { try { thisRun.pollXhr.abort(); } catch(e) {} }
                         /* gateway timeout or error — switch to background polling */
                         if(xmlhttp.status === 502 || xmlhttp.status === 504) {
-                            tracyConsole._inlineDelivered = false;
-                            tracyConsole._activeRunId = runId;
+                            thisRun.pollingActive = true;
                             tracyConsole.setRunButtonEnabled(false);
-                            tracyConsole._bgTimer = setInterval(function() {
-                                var elapsed = Math.round((Date.now() - tracyConsole._bgStartTime) / 1000);
-                                var mins = Math.floor(elapsed / 60);
-                                var secs = elapsed % 60;
-                                var timeStr = mins > 0 ? mins + 'm ' + secs + 's' : secs + 's';
-                                var sd = document.getElementById("tracyConsoleStatus");
-                                if(sd) sd.innerHTML = tracyConsole.renderRunningStatus(runId, timeStr);
-                            }, 1000);
-                            tracyConsole._stopPolling = false;
-                            tracyConsole.pollForResults(runId);
+                            if(originTabId === tracyConsole.currentTabId) tracyConsole.startStatusTimer(originTabId);
+                            tracyConsole.pollForResults(runId, originTabId);
                             listenerMap.delete(xmlhttp);
                             return;
                         }
-                        const statusDiv = document.getElementById("tracyConsoleStatus");
-                        if (statusDiv) {
-                            statusDiv.innerHTML = "✔ " + (codeReturn ? "Executed" : "Injected @ " + escapeHtml(JSON.parse(tracyConsole.getCookie('tracyIncludeCode')).when));
+                        if(originTabId === tracyConsole.currentTabId) {
+                            const statusDiv = document.getElementById("tracyConsoleStatus");
+                            if (statusDiv) {
+                                statusDiv.innerHTML = "✔ " + (codeReturn ? "Executed" : "Injected @ " + escapeHtml(JSON.parse(tracyConsole.getCookie('tracyIncludeCode')).when));
+                            }
                         }
                         const resultsDiv = document.getElementById("tracyConsoleResult");
                         if (xmlhttp.status == 200 && resultsDiv) {
@@ -1196,23 +1227,31 @@ class ConsolePanel extends BasePanel {
                             const resultHtml = downloadEnvelope
                                 ? '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.triggerDownload(downloadEnvelope) + '</div>'
                                 : '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.tryParseJSON(xmlhttp.responseText) + '</div>';
-                            tracyConsole._rawResultHtml += resultHtml;
-                            resultsDiv.insertAdjacentHTML('beforeend', resultHtml);
+                            thisRun.delivered = true;
+                            delete tracyConsole.runs[originTabId];
+                            tracyConsole.setTabRunning(originTabId, false);
+                            tracyConsole.appendResultToTab(originTabId, resultHtml)
+                                .then(function(){ return tracyConsole.clearRunIdOnTab(originTabId); })
+                                .catch(err => console.warn('Error updating tab result:', err));
 
-                            tracyConsole.saveToIndexedDB().catch(err => console.warn('Error updating tab result:', err));
-
-                            const resultElement = document.getElementById("tracyConsoleResult_"+resultId);
-                            if (resultElement && window.Tracy && Tracy.Dumper) Tracy.Dumper.init(resultElement);
-                            if (resultElement) resultElement.scrollIntoView();
-                            if (!document.getElementById("tracy-debug-panel-ProcessWire-ConsolePanel").classList.contains("tracy-mode-float")) {
-                                window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-ConsolePanel"].toFloat();
+                            if(originTabId === tracyConsole.currentTabId) {
+                                const resultElement = document.getElementById("tracyConsoleResult_"+resultId);
+                                if (resultElement) resultElement.scrollIntoView();
+                                if (!document.getElementById("tracy-debug-panel-ProcessWire-ConsolePanel").classList.contains("tracy-mode-float")) {
+                                    window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-ConsolePanel"].toFloat();
+                                }
                             }
+                            tracyConsole.setRunButtonEnabled(true);
                         }
                         else if (resultsDiv) {
                             const errorStr = escapeHtml(xmlhttp.status + ': ' + xmlhttp.statusText) + '<br />' + escapeHtml(xmlhttp.responseText);
                             const errorHtml = '<div style="padding: 10px 0">' + errorStr + '</div><div style="position:relative; border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;"></div>';
-                            tracyConsole._rawResultHtml = errorHtml;
-                            resultsDiv.innerHTML = errorHtml;
+                            thisRun.delivered = true;
+                            delete tracyConsole.runs[originTabId];
+                            tracyConsole.setTabRunning(originTabId, false);
+                            tracyConsole.appendResultToTab(originTabId, errorHtml)
+                                .then(function(){ return tracyConsole.clearRunIdOnTab(originTabId); })
+                                .catch(function(){});
 
                             const errorExpires = new Date();
                             errorExpires.setMinutes(errorExpires.getMinutes() + (10 * 365 * 24 * 60));
@@ -1231,13 +1270,11 @@ class ConsolePanel extends BasePanel {
                    so the server connection stays alive and PHP keeps running */
                 if(xhrTimeout > 0) {
                     var pollTimer = setTimeout(function() {
-                        if(tracyConsole._pollingActive) return;
-                        tracyConsole._pollingActive = true;
-                        tracyConsole._activeRunId = runId;
+                        var ptRun = tracyConsole.runs[originTabId];
+                        if(!ptRun || ptRun.runId !== runId || ptRun.pollingActive || ptRun.cancelled) return;
+                        ptRun.pollingActive = true;
                         tracyConsole.setRunButtonEnabled(false);
-                        /* _bgTimer is already ticking from callPhp start; no need to restart */
-                        tracyConsole._stopPolling = false;
-                        tracyConsole.pollForResults(runId);
+                        tracyConsole.pollForResults(runId, originTabId);
                     }, xhrTimeout);
                 }
 
@@ -1855,6 +1892,15 @@ class ConsolePanel extends BasePanel {
                     resultsDiv.innerHTML = this._rawResultHtml;
                     if (window.Tracy && Tracy.Dumper) Tracy.Dumper.init(resultsDiv);
                 }
+                this.setTabBadge(tabId, false);
+                var statusDiv = document.getElementById("tracyConsoleStatus");
+                if(this.runs[tabId]) {
+                    this.startStatusTimer(tabId);
+                } else {
+                    this.stopStatusTimer();
+                    if(statusDiv) statusDiv.innerHTML = '';
+                }
+                this.setRunButtonEnabled(true);
                 this.setSelectedTabId(this.currentTabId);
             },
 
@@ -1864,6 +1910,9 @@ class ConsolePanel extends BasePanel {
                         .find(function(button) { return button.dataset.tabId == tabId; });
                     if (tabButton) {
                         this.tabsContainer.removeChild(tabButton);
+                    }
+                    if(this.runs[tabId]) {
+                        this.cancelRun(this.runs[tabId].runId, true);
                     }
                     await this.dbDelete('tabs', tabId);
 
@@ -1934,6 +1983,7 @@ class ConsolePanel extends BasePanel {
                 buttonLabel.textContent = name;
                 tabButton.appendChild(buttonLabel);
                 tabButton.dataset.tabId = tabId;
+                if(tracyConsole.runs[Number(tabId)]) tabButton.classList.add("tracyTabRunning");
                 tabButton.setAttribute("draggable", "true");
                 const clickHandler = () => tracyConsole.switchTab(tabId);
                 tabButton.addEventListener("click", clickHandler);
@@ -2672,7 +2722,7 @@ class ConsolePanel extends BasePanel {
         if(el) el.addEventListener('click', function(e) { e.preventDefault(); tracyConsole.sortList('chronological'); });
         el = document.getElementById('saveSnippet');
         if(el) el.addEventListener('click', function() { tracyConsole.saveSnippet(); });
-        tracyConsole.reattachActiveRun();
+        tracyConsole.reattachActiveRuns();
         </script>
 
 HTML;
