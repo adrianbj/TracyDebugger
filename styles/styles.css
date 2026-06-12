@@ -1918,6 +1918,10 @@ button[data-tab-id].tracyTabRunning .button-label::before {
     color: #000 !important;
 }
 
+.tracy-dump-copy-wrap + pre.tracy-dump {
+    padding-right: 28px;
+}
+
 .tracy-md-copy-all-bar {
     text-align: right;
     margin: 6px 0 0 0;

@@ -274,7 +274,20 @@ function tracyDumpsToggler(el, show) {
 
     function tracyInstallConsoleCopyAll() {
         var rd = document.getElementById('tracyConsoleResult');
-        if(!rd) return;
+        if(rd) {
+            tracyAttachConsoleCopyAll(rd);
+            return;
+        }
+        var watcher = new MutationObserver(function() {
+            var found = document.getElementById('tracyConsoleResult');
+            if(!found) return;
+            watcher.disconnect();
+            tracyAttachConsoleCopyAll(found);
+        });
+        watcher.observe(document.documentElement, { childList: true, subtree: true });
+    }
+
+    function tracyAttachConsoleCopyAll(rd) {
         function ensure() {
             var existing = rd.querySelector('.tracy-md-copy-all-console');
             var count = rd.querySelectorAll('[data-tracy-md-source]').length;
