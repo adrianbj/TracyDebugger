@@ -310,12 +310,28 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
             $includedFiles = $tracySessionCache['includedFiles'];
             foreach($includedFiles as $key => $path) {
                 if($path != $this->file && $path != $page->template->filename) {
-                    include_once($path);
+                    // These files are replayed only for their function/class definitions, which
+                    // escape any scope; running them in a closure keeps their stray variables out
+                    // of the harvested template vars, and the catch stops one context-dependent
+                    // file (e.g. a partial expecting TemplateFile-injected variables, which can
+                    // fatal under PHP 8) from aborting the replay and the console run with it.
+                    try {
+                        (static function($p) { include_once($p); })($path);
+                    }
+                    catch(\Throwable $e) {
+                        // skip - this file's variables were never template-scoped anyway
+                    }
                 }
             }
             // template file is excluded above and included now, after all others, to prevent include errors to
             // relative file paths preventing access to all variables/functions - happens especially when filecompiler is off
-            include_once($page->template->filename);
+            // (kept in this scope deliberately: its variables are what we harvest below)
+            try {
+                include_once($page->template->filename);
+            }
+            catch(\Throwable $e) {
+                // degrade to no/partial template vars rather than killing the console run
+            }
 
             $templateVars = get_defined_vars();
             ob_end_clean();
