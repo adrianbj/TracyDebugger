@@ -1018,6 +1018,7 @@ class ConsolePanel extends BasePanel {
                         this._rawResultHtml = (this._rawResultHtml || "") + html;
                         resultsDiv.insertAdjacentHTML("beforeend", html);
                         if(window.Tracy && Tracy.Dumper) Tracy.Dumper.init(resultsDiv);
+                        if(window.tracyEnsureConsoleCopyAll) window.tracyEnsureConsoleCopyAll();
                     }
                     try {
                         var existing = await this.dbGet("tabs", tabId);
@@ -1891,6 +1892,7 @@ class ConsolePanel extends BasePanel {
                     this._rawResultHtml = tab && tab.result ? tab.result : '';
                     resultsDiv.innerHTML = this._rawResultHtml;
                     if (window.Tracy && Tracy.Dumper) Tracy.Dumper.init(resultsDiv);
+                    if (window.tracyEnsureConsoleCopyAll) window.tracyEnsureConsoleCopyAll();
                 }
                 this.setTabBadge(tabId, false);
                 var statusDiv = document.getElementById("tracyConsoleStatus");

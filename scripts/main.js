@@ -287,24 +287,28 @@ function tracyDumpsToggler(el, show) {
         watcher.observe(document.documentElement, { childList: true, subtree: true });
     }
 
-    function tracyAttachConsoleCopyAll(rd) {
-        function ensure() {
-            var existing = rd.querySelector('.tracy-md-copy-all-console');
-            var count = rd.querySelectorAll('[data-tracy-md-source]').length;
-            if(count >= 2) {
-                if(existing) rd.appendChild(existing);
-                else rd.appendChild(tracyCopyAllBar('tracy-md-copy-all-console', false));
-            } else if(existing) {
-                existing.parentNode.removeChild(existing);
-            }
+    function tracyEnsureConsoleCopyAll() {
+        var rd = document.getElementById('tracyConsoleResult');
+        if(!rd) return;
+        var existing = rd.querySelector('.tracy-md-copy-all-console');
+        var count = rd.querySelectorAll('[data-tracy-md-source]').length;
+        if(count >= 2) {
+            if(existing) rd.appendChild(existing);
+            else rd.appendChild(tracyCopyAllBar('tracy-md-copy-all-console', false));
+        } else if(existing) {
+            existing.parentNode.removeChild(existing);
         }
+    }
+    window.tracyEnsureConsoleCopyAll = tracyEnsureConsoleCopyAll;
+
+    function tracyAttachConsoleCopyAll(rd) {
         var obs = new MutationObserver(function() {
             obs.disconnect();
-            ensure();
+            tracyEnsureConsoleCopyAll();
             obs.observe(rd, { childList: true });
         });
         obs.observe(rd, { childList: true });
-        ensure();
+        tracyEnsureConsoleCopyAll();
     }
 
     function tracyInstallCopyAll() {
