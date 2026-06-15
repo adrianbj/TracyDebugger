@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.0.43',
+            'version' => '5.0.44',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -1491,38 +1491,60 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                                     $event->return = str_replace("</body>", "\n<!-- Tracy Hide Bar -->\n" . static::minify($hideBar)."\n</body>", $event->return);
                                 }
                             }
-                            else {
-                                $nonWire = false;
-                                $nonDeprecations = false;
-                                foreach($tracyWarnings->data as $tracyWarning => $count) {
-                                    if(strpos($tracyWarning, 'Deprecated:') === false) {
-                                        $nonDeprecations = true;
-                                        break;
+                            // Recolor Warnings/Error tabs whose panel contains only deprecation notices.
+                            // Done client-side so it also covers redirect and AJAX bars, whose warnings
+                            // live on a separate request and are absent from the current warnings panel.
+                            $recolorErrors = '
+                            <script' . static::getNonceAttr() . '>
+                                var tracyRecolorTries = 0;
+                                function tracyRecolorDeprecationTabs() {
+                                    var debugEl = document.getElementById("tracy-debug");
+                                    if(!debugEl) {
+                                        if(tracyRecolorTries++ < 600) window.requestAnimationFrame(tracyRecolorDeprecationTabs);
+                                        return;
                                     }
-                                    if(strpos($tracyWarning, '/wire/') === false) {
-                                        $nonWire = true;
-                                        break;
+                                    var warnColor = "'.self::COLOR_WARN.'";
+                                    var wireColor = "'.self::COLOR_LIGHTGREY.'";
+                                    function panelContent(tab) {
+                                        var link = tab.closest("a");
+                                        if(!link) return null;
+                                        var rel = link.getAttribute("rel");
+                                        if(!rel) return null;
+                                        var panel = document.getElementById(rel);
+                                        if(!panel) return null;
+                                        return (panel.dataset && panel.dataset.tracyContent) || panel.tracyContent || panel.innerHTML || "";
                                     }
-                                }
-                                // if only deprecation errors, recolor error tab based on whether they are from ProcessWire or not
-                                if(!$nonDeprecations) {
-                                    $recolorErrors = '
-                                    <script' . static::getNonceAttr() . '>
-                                        function recolorErrors() {
-                                            if(!document.getElementById("tracy-debug-bar")) {
-                                                window.requestAnimationFrame(recolorErrors);
-                                            } else {
-                                                var els = document.querySelectorAll(".tracy-ErrorTab, .tracy-WarningsTab");
-                                                Array.from(els).forEach((el) => {
-                                                    el.style.backgroundColor = "'.(!$nonWire ? self::COLOR_LIGHTGREY : self::COLOR_WARN).'";
-                                                });
+                                    function process() {
+                                        var tabs = document.querySelectorAll(".tracy-WarningsTab, .tracy-ErrorTab");
+                                        Array.prototype.forEach.call(tabs, function(tab) {
+                                            if(tab.getAttribute("data-td-recolored")) return;
+                                            var content = panelContent(tab);
+                                            if(content === null) return;
+                                            var holder = document.createElement("div");
+                                            holder.innerHTML = content;
+                                            var rows = holder.querySelectorAll("pre");
+                                            if(!rows.length) return;
+                                            var allDeprecations = true;
+                                            var allWire = true;
+                                            Array.prototype.forEach.call(rows, function(row) {
+                                                var text = row.textContent || "";
+                                                if(text.indexOf("Deprecated:") === -1) allDeprecations = false;
+                                                var editor = row.querySelector("a.tracy-editor");
+                                                var path = editor ? (editor.getAttribute("title") || editor.textContent) : text;
+                                                if(path.indexOf("/wire/") === -1) allWire = false;
+                                            });
+                                            if(allDeprecations) {
+                                                tab.style.backgroundColor = allWire ? wireColor : warnColor;
+                                                tab.setAttribute("data-td-recolored", "1");
                                             }
-                                        }
-                                        recolorErrors();
-                                    </script>';
-                                    $event->return = str_replace("</body>", "\n<!-- Tracy Recolor Errors -->\n" . static::minify($recolorErrors)."\n</body>", $event->return);
+                                        });
+                                    }
+                                    process();
+                                    new MutationObserver(process).observe(debugEl, { childList: true, subtree: true });
                                 }
-                            }
+                                tracyRecolorDeprecationTabs();
+                            </script>';
+                            $event->return = str_replace("</body>", "\n<!-- Tracy Recolor Errors -->\n" . static::minify($recolorErrors)."\n</body>", $event->return);
 
                             if(in_array('titlePrefix', $this->data['styleAdminType'])) {
                                 $serverTypeMatch = $this->serverStyleInfo['serverTypeMatch'];
