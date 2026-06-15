@@ -90,7 +90,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $autocompleteArr = array();
     public static $allApiData = array();
     public static $allApiClassesArr = array();
-    public static $apiChanges = array();
     public static $pageFinderQueries = array();
     public static $templateVars = array();
     public static $templateConsts = array();

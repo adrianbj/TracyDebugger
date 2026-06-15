@@ -2,18 +2,37 @@
 
 class TracyPwApiData extends WireData {
 
+    // bump whenever the API data building logic changes shape, to force a rebuild of stale caches on upgrade
+    const API_DATA_SCHEMA = 1;
+
     private $n = 0;
     private $pwVars = array();
 
     public function getApiData($type) {
         $cacheName = 'TracyApiData.'.$type;
         $apiData = $this->wire('cache')->get($cacheName);
-        $storedVersion = TracyDebugger::getDataValue('apiDataVersion');
         $currentVersion = $this->wire('config')->version;
-        $versionChanged = $storedVersion !== null && $currentVersion != $storedVersion;
 
-        if(!$apiData || $storedVersion === null || $versionChanged) {
-            // decode existing cache for change detection (only needed when version actually changed)
+        // each type records the PW core version its cache was built against, so every type rebuilds (and diffs
+        // for "New Since") on a core upgrade regardless of which request first touches it, rather than a single
+        // early rebuild marking the whole module up to date and leaving the other types stale and undiffed
+        $buildVersions = json_decode(ltrim($this->wire('cache')->get('TracyApiData.buildVersions') ?? '', '~'), true);
+        if(!is_array($buildVersions)) $buildVersions = array();
+        $builtVersion = $buildVersions[$type] ?? null;
+        if($builtVersion === null) {
+            // bridge installs upgraded from before per-type tracking existed: seed the baseline from the legacy
+            // global version marker so the first rebuild after a core upgrade still has something to diff against
+            $legacyVersion = TracyDebugger::getDataValue('apiDataVersion');
+            if($legacyVersion !== null && $legacyVersion !== '') $builtVersion = $legacyVersion;
+        }
+        $versionChanged = $builtVersion !== null && $currentVersion != $builtVersion;
+
+        // a TD upgrade that changes how API data is built bumps the schema, forcing a rebuild even when the PW
+        // core version is unchanged; the cache name stays stable so the "New Since" baseline survives
+        $schemaChanged = (int) TracyDebugger::getDataValue('apiDataSchema') !== self::API_DATA_SCHEMA;
+
+        if(!$apiData || $builtVersion === null || $versionChanged || $schemaChanged) {
+            // decode existing cache for change detection (only needed when the core version actually changed)
             if($apiData && $versionChanged) {
                 $cachedData = json_decode(ltrim($apiData, '~'), true);
             }
@@ -29,46 +48,74 @@ class TracyPwApiData extends WireData {
                 );
             }
             elseif($type == 'proceduralFunctions') {
-                $apiData = array('Functions' => $this->getProceduralFunctions('Functions')['pwFunctions'] ?? array());
-                if(file_exists($this->wire('config')->paths->core . 'FunctionsAPI.php')) $apiData += array('FunctionsAPI' => $this->getProceduralFunctions('FunctionsAPI')['pwFunctions'] ?? array());
+                $apiData = array();
+                $coreDir = $this->wire('config')->paths->core;
+                // PW 3.0.265+ moved the procedural function definitions into a core/Functions/ subdirectory;
+                // glob it so future file reshuffles are picked up automatically (empty groups are dropped below)
+                if(is_dir($coreDir . 'Functions/')) {
+                    $functionsFiles = glob($coreDir . 'Functions/*.php') ?: array();
+                }
+                else {
+                    $functionsFiles = array($coreDir . 'Functions.php');
+                    if(file_exists($coreDir . 'FunctionsAPI.php')) $functionsFiles[] = $coreDir . 'FunctionsAPI.php';
+                }
+                foreach($functionsFiles as $path) {
+                    if(!file_exists($path)) continue;
+                    $functions = $this->getFunctionsInFile($path)['pwFunctions'] ?? array();
+                    if($functions) $apiData[pathinfo($path, PATHINFO_FILENAME)] = $functions;
+                }
             }
             else {
                 $typeDir = $type == 'coreModules' ? 'modules' : $type;
                 $apiData = $this->getClasses($type, $this->wire('config')->paths->$typeDir);
             }
 
-            // if PW core version has changed, populate the "TracyApiChanges" data cache
-            if(isset($cachedData)) {
-                TracyDebugger::$apiChanges['cachedVersion'] = $storedVersion;
+            // on a core version change, record this type's newly added methods for the "New Since" panel,
+            // merging into changes already recorded by other types this upgrade rather than overwriting them
+            if(isset($cachedData) && $type != 'hooks') {
+                $changes = json_decode(ltrim($this->wire('cache')->get('TracyApiChanges') ?? '', '~'), true);
+                if(!is_array($changes)) $changes = array();
+                $changes['cachedVersion'] = $builtVersion;
+                $changes[$type] = array();
                 foreach($apiData as $class => $methods) {
                     $i=0;
                     foreach($methods as $method => $params) {
                         if(!isset($cachedData[$class]) || !array_key_exists($method, $cachedData[$class])) {
-                            if($type != 'hooks') TracyDebugger::$apiChanges[$type][$class][$i] = $method;
+                            $changes[$type][$class][$i] = $method;
                             $i++;
                         }
                     }
                 }
-                $this->wire('cache')->save('TracyApiChanges', '~'.json_encode(TracyDebugger::$apiChanges), WireCache::expireNever);
+                $this->wire('cache')->save('TracyApiChanges', '~'.json_encode($changes), WireCache::expireNever);
             }
 
             // tilde hack for this: https://github.com/processwire/processwire-issues/issues/775
             $apiData = '~'.json_encode($apiData);
             $this->wire('cache')->save($cacheName, $apiData, WireCache::expireNever);
 
-            // update stored version if needed (only save config once per request)
-            if($currentVersion != $storedVersion) {
-                static $versionSaved = false;
-                if(!$versionSaved) {
+            // record the core version this type was just built against
+            $buildVersions[$type] = $currentVersion;
+            $this->wire('cache')->save('TracyApiData.buildVersions', '~'.json_encode($buildVersions), WireCache::expireNever);
+
+            // persist the schema marker in config (survives cache clears) once per request
+            if($schemaChanged) {
+                static $schemaSaved = false;
+                if(!$schemaSaved) {
                     $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
-                    $configData['apiDataVersion'] = $currentVersion;
+                    $configData['apiDataSchema'] = self::API_DATA_SCHEMA;
                     $this->wire('modules')->saveModuleConfigData($this->wire('modules')->get("TracyDebugger"), $configData);
-                    $versionSaved = true;
+                    $schemaSaved = true;
                 }
             }
         }
 
-        return json_decode(ltrim($apiData, '~'), true);
+        $decoded = json_decode(ltrim($apiData, '~'), true);
+        if(!is_array($decoded)) return array();
+        // guard consumers against a null group value (e.g. legacy cache from before the ?? array() builder fix)
+        foreach($decoded as $key => $value) {
+            if($value === null) $decoded[$key] = array();
+        }
+        return $decoded;
     }
 
 
@@ -123,12 +170,6 @@ class TracyPwApiData extends WireData {
         }
         ksort($classesArr);
         return $classesArr;
-    }
-
-    private function getProceduralFunctions($file) {
-        $proceduralFunctionsArr = array();
-        $proceduralFunctionsArr += $this->getFunctionsInFile($this->wire('config')->paths->core . $file . '.php');
-        return $proceduralFunctionsArr;
     }
 
     private function getApiHooks($root) {

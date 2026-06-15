@@ -146,7 +146,7 @@ HTML;
             $class = get_class($this->wire($var));
             $className =  '$'.lcfirst($var);
         }
-        elseif($var == 'FunctionsAPI') {
+        elseif($type == 'proceduralFunctions') {
             $class = 'Functions';
             $className = 'Functions';
         }
@@ -164,7 +164,14 @@ HTML;
             $r = new \ReflectionClass($class);
         }
 
-        $filename = isset($r) ? $r->getfilename() : $this->wire('config')->paths->core . $var . '.php';
+        if(isset($r)) {
+            $filename = $r->getfilename();
+        }
+        else {
+            $coreDir = $this->wire('config')->paths->core;
+            $subPath = $coreDir . 'Functions/' . $var . '.php';
+            $filename = file_exists($subPath) ? $subPath : $coreDir . $var . '.php';
+        }
 
         $out = '
         <table class="apiExplorerTable">';
