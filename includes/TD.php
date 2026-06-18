@@ -187,9 +187,10 @@ class TD extends TracyDebugger {
      * right of the +/- togglers (which are shifted left in styles.css to make room).
      * @tracySkipLocation
      */
-    private static function buildAgentCopyButton($var) {
+    private static function buildAgentCopyButton($var, $title = null) {
         $text = self::agentText($var);
         if($text === null || $text === '') return '';
+        if($title !== null && $title !== '') $text = strip_tags($title) . ":\n" . $text;
         $jsonMd = str_replace('</', '<\\/', \Tracy\Helpers::jsonEncode($text, true));
         $btnStyle = 'position:absolute;top:6px;right:8px;padding:0;line-height:0;cursor:pointer;background:transparent;border:0;color:#888;opacity:0.6;z-index:1;';
         $icon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
@@ -303,7 +304,7 @@ class TD extends TracyDebugger {
             <div class="tracy-inner" style="height:auto !important">
                 <div class="tracy-DumpPanel">';
             if($title) echo '<h2>'.$title.'</h2>';
-            echo static::safeGenerateDump($var, $options) .
+            echo static::safeGenerateDump($var, $options, $title) .
             '   </div>
             </div>';
             try { static::agentDumpToConsole($var, $title); } catch(\Throwable $e) { try { self::log($e); } catch(\Throwable $logErr) {} }
@@ -348,7 +349,7 @@ class TD extends TracyDebugger {
             <div class="tracy-inner" style="height:auto !important">
                 <div class="tracy-DumpPanel">';
             if($title) echo '<h2>'.$title.'</h2>';
-            echo static::safeGenerateDump($var, $options) .
+            echo static::safeGenerateDump($var, $options, $title) .
             '   </div>
             </div>';
             try { static::agentDumpToConsole($var, $title); } catch(\Throwable $e) { try { self::log($e); } catch(\Throwable $logErr) {} }
@@ -363,7 +364,7 @@ class TD extends TracyDebugger {
      * the value.
      * @tracySkipLocation
      */
-    private static function safeGenerateDump($var, $options) {
+    private static function safeGenerateDump($var, $options, $title = null) {
         // capture non-fatal PHP errors fired during the dump pipeline (e.g. a
         // getimagesize warning inside __debugInfo) so they can be deduped and
         // rendered as styled blocks above the dump instead of echoing raw text
@@ -384,7 +385,7 @@ class TD extends TracyDebugger {
         });
 
         try {
-            $dumpHtml = static::generateDump($var, $options);
+            $dumpHtml = static::generateDump($var, $options, $title);
         }
         catch(\Throwable $e) {
             try { self::log($e); } catch(\Throwable $logErr) {}
@@ -464,10 +465,14 @@ class TD extends TracyDebugger {
     private static function dumpToBar($var, $title = NULL, $options = [], $echo = false) {
         $dumpItem = array();
         $dumpItem['title'] = $title;
-        $dumpItem['dump'] = $echo ? '<div class="tracy-echo">' . $var . '</div>' : static::safeGenerateDump($var, $options);
+        $dumpItem['dump'] = $echo ? '<div class="tracy-echo">' . $var . '</div>' : static::safeGenerateDump($var, $options, $title);
         $dumpItem['text'] = null;
         if(!$echo && self::tracySupportsAgent() && \Tracy\Helpers::isAgent()) {
-            try { $dumpItem['text'] = self::agentText($var); } catch(\Throwable $e) { try { self::log($e); } catch(\Throwable $logErr) {} }
+            try {
+                $text = self::agentText($var);
+                if($text !== null && $text !== '' && $title !== null && $title !== '') $text = strip_tags($title) . ":\n" . $text;
+                $dumpItem['text'] = $text;
+            } catch(\Throwable $e) { try { self::log($e); } catch(\Throwable $logErr) {} }
         }
         TracyDebugger::$dumpItems[] = $dumpItem;
         // only persist to dumps.json when something will actually consume it:
@@ -493,7 +498,7 @@ class TD extends TracyDebugger {
      * Generate debugInfo and Full Object tabbed output
      * @tracySkipLocation
      */
-    private static function generateDump($var, $options) {
+    private static function generateDump($var, $options, $title = null) {
         // standard options for all dump/barDump variations
         $options[Dumper::COLLAPSE] = isset($options['collapse']) ? $options['collapse'] : TracyDebugger::getDataValue('collapse');
         $options[Dumper::COLLAPSE_COUNT] = isset($options['collapse_count']) ? $options['collapse_count'] : TracyDebugger::getDataValue('collapse_count');
@@ -568,15 +573,15 @@ class TD extends TracyDebugger {
             $tabDivs .= '</div>';
             if($numTabs > 1) {
 	            $wrapperOpen = '<div style="clear:both; position:relative;">';
-	            $tabDivs = $wrapperOpen . self::buildAgentCopyButton($var) . substr($tabDivs, strlen($wrapperOpen));
+	            $tabDivs = $wrapperOpen . self::buildAgentCopyButton($var, $title) . substr($tabDivs, strlen($wrapperOpen));
 	            $out .= $tabs . $tabDivs;
 	        }
 	        else {
-            	$out .= '<div style="clear:both; position:relative;">' . self::buildAgentCopyButton($var) . $lastDump . '</div>';
+            	$out .= '<div style="clear:both; position:relative;">' . self::buildAgentCopyButton($var, $title) . $lastDump . '</div>';
 	        }
         }
         else {
-            $out .= '<div style="clear:both; position:relative;">' . self::buildAgentCopyButton($var) . Dumper::toHtml($var, $options) . '</div>';
+            $out .= '<div style="clear:both; position:relative;">' . self::buildAgentCopyButton($var, $title) . Dumper::toHtml($var, $options) . '</div>';
         }
 
         $out .= '</div>';
