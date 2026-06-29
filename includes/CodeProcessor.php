@@ -149,9 +149,10 @@ foreach($pwVars->getArray() as $key => $value) {
 
 if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser) {
 
-    // validate CSRF token
+    // validate CSRF token, falling back to a same-origin check so a stale
+    // baked-in token (session changed under an open console tab) doesn't fail
     $csrfToken = isset($_POST['csrfToken']) ? $_POST['csrfToken'] : '';
-    if(!$csrfToken || !hash_equals((string)$this->wire('session')->tracyConsoleToken, $csrfToken)) {
+    if(!TracyDebugger::validTracyRequest($this->wire('session')->tracyConsoleToken, $csrfToken)) {
         http_response_code(403);
         echo 'CSRF token validation failed';
         exit;

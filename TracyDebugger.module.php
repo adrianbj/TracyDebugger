@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.0.45',
+            'version' => '5.0.46',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -657,7 +657,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     exit;
                 }
                 $csrfToken = isset($_POST['csrfToken']) ? $_POST['csrfToken'] : '';
-                if(!$csrfToken || !hash_equals((string)$this->wire('session')->tracyConsoleToken, $csrfToken)) {
+                if(!self::validTracyRequest($this->wire('session')->tracyConsoleToken, $csrfToken)) {
                     http_response_code(403);
                     exit;
                 }
@@ -687,7 +687,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     exit;
                 }
                 $csrfToken = isset($_POST['csrfToken']) ? $_POST['csrfToken'] : '';
-                if(!$csrfToken || !hash_equals((string)$this->wire('session')->tracyConsoleToken, $csrfToken)) {
+                if(!self::validTracyRequest($this->wire('session')->tracyConsoleToken, $csrfToken)) {
                     http_response_code(403);
                     exit;
                 }
@@ -744,7 +744,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     exit;
                 }
                 $csrfToken = isset($_POST['csrfToken']) ? $_POST['csrfToken'] : '';
-                if(!$csrfToken || !hash_equals((string)$this->wire('session')->tracyConsoleToken, $csrfToken)) {
+                if(!self::validTracyRequest($this->wire('session')->tracyConsoleToken, $csrfToken)) {
                     http_response_code(403);
                     exit;
                 }
@@ -783,7 +783,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     exit;
                 }
                 $csrfToken = isset($_POST['csrfToken']) ? $_POST['csrfToken'] : '';
-                if(!$csrfToken || !hash_equals((string)$this->wire('session')->tracyConsoleToken, $csrfToken)) {
+                if(!self::validTracyRequest($this->wire('session')->tracyConsoleToken, $csrfToken)) {
                     http_response_code(403);
                     exit;
                 }
@@ -813,7 +813,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     exit;
                 }
                 $csrfToken = isset($_POST['csrfToken']) ? $_POST['csrfToken'] : '';
-                if(!$csrfToken || !hash_equals((string)$this->wire('session')->tracyConsoleToken, $csrfToken)) {
+                if(!self::validTracyRequest($this->wire('session')->tracyConsoleToken, $csrfToken)) {
                     http_response_code(403);
                     exit;
                 }
@@ -3051,6 +3051,54 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     public static function isAjax() {
         return isset($_SERVER['HTTP_X_TRACY_AJAX']) && preg_match('#^\w{10,15}$#D', $_SERVER['HTTP_X_TRACY_AJAX']);
+    }
+
+
+    /**
+     * Validate a Tracy AJAX request's CSRF defense (Console, File Editor).
+     *
+     * Accepts the request if the submitted token still matches the session
+     * token OR the request is verifiably same-origin. These tokens are baked
+     * into the panel HTML at render time, so they go stale whenever the
+     * session changes under an already-open tab (expiry, logout/login, user
+     * switch) — the same-origin fallback keeps the panel working in those
+     * cases without weakening CSRF protection on any request that carries an
+     * Origin or Referer header.
+     *
+     * @param string $sessionToken Token stored in the session
+     * @param string $csrfToken Token submitted with the request
+     * @return boolean
+     */
+    public static function validTracyRequest($sessionToken, $csrfToken) {
+        if($csrfToken !== '' && hash_equals((string)$sessionToken, (string)$csrfToken)) {
+            return true;
+        }
+        return self::sameOriginRequest();
+    }
+
+
+    /**
+     * Is the current request verifiably same-origin?
+     *
+     * Returns true only when an Origin or Referer header is present and its
+     * host (including any non-standard port) matches $config->httpHost.
+     * Returns false when neither header is present — so the caller falls back
+     * to token validation — and when the host does not match.
+     *
+     * @return boolean
+     */
+    public static function sameOriginRequest() {
+        $expectedHost = strtolower((string)wire('config')->httpHost);
+        if($expectedHost === '') return false;
+
+        foreach(array('HTTP_ORIGIN', 'HTTP_REFERER') as $header) {
+            if(empty($_SERVER[$header])) continue;
+            $host = parse_url($_SERVER[$header], PHP_URL_HOST);
+            if(!$host) return false;
+            $port = parse_url($_SERVER[$header], PHP_URL_PORT);
+            return strtolower($host . ($port ? ':' . $port : '')) === $expectedHost;
+        }
+        return false;
     }
 
     /**

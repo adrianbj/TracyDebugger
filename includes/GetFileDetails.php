@@ -2,9 +2,10 @@
 
 if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser) {
 
-    // validate CSRF token
+    // validate CSRF token, falling back to a same-origin check so a stale
+    // baked-in token (session changed under an open File Editor tab) doesn't fail
     $csrfToken = isset($_POST['csrfToken']) ? $_POST['csrfToken'] : '';
-    if(!$csrfToken || !hash_equals((string)$this->wire('session')->tracyFileEditorToken, $csrfToken)) {
+    if(!TracyDebugger::validTracyRequest($this->wire('session')->tracyFileEditorToken, $csrfToken)) {
         http_response_code(403);
         echo json_encode(array('error' => 'CSRF token validation failed'));
         exit;
