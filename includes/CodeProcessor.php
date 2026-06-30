@@ -575,7 +575,12 @@ function writeError($error, $terminal = true) {
     // captured alongside any dump output produced before/after the error fires.
     // Styled to match TD::renderDumpError's block so a warning fired during d()/db()
     // looks consistent with the throwable-during-dump fallback path.
-    echo '<div style="border: 1px solid #d9d9d9; border-left: 3px solid #c00; padding: 6px 10px; background: #fff3f3; color: #c00; font-family: monospace; white-space: normal; margin-bottom: 5px;">'
+    // attach an agent-copy button + [data-tracy-md-source] payload so a single
+    // error block is copyable on its own and "Copy all" picks it up in DOM order
+    // alongside any dumps (matches the dump copy-button layout in TD).
+    $agentErrButton = TD::buildAgentTextCopyButton($error['type'] . ': ' . $customErrStr, 'Copy this error as plaintext for an AI agent');
+    echo '<div style="position:relative; border: 1px solid #d9d9d9; border-left: 3px solid #c00; padding: 6px 28px 6px 10px; background: #fff3f3; color: #c00; font-family: monospace; white-space: normal; margin-bottom: 5px;">'
+        . $agentErrButton
         . '<strong>' . htmlspecialchars($error['type'], ENT_QUOTES, 'UTF-8') . ':</strong> '
         . htmlspecialchars($customErrStr, ENT_QUOTES, 'UTF-8')
         . '</div>';

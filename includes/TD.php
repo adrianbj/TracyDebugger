@@ -188,13 +188,26 @@ class TD extends TracyDebugger {
      * @tracySkipLocation
      */
     private static function buildAgentCopyButton($var) {
-        $text = self::agentText($var);
+        return self::buildAgentTextCopyButton(self::agentText($var), 'Copy this dump as plaintext for an AI agent');
+    }
+
+    /**
+     * Build a "Copy MD" button + sibling JSON payload for an already-rendered
+     * plaintext string (errors/warnings), so a single error block is copyable
+     * on its own and participates in "Copy all". The click handler reads the
+     * [data-tracy-md-source] sibling within the wrap span. jsonEncode only
+     * exists on the same Tracy (2.12) that has the agent-copy feature, so this
+     * yields nothing on older versions (where there's no copy UI anyway).
+     * @tracySkipLocation
+     */
+    public static function buildAgentTextCopyButton($text, $title = 'Copy this dump as plaintext for an AI agent') {
         if($text === null || $text === '') return '';
+        if(!method_exists('\\Tracy\\Helpers', 'jsonEncode')) return '';
         $jsonMd = str_replace('</', '<\\/', \Tracy\Helpers::jsonEncode($text, true));
         $btnStyle = 'position:absolute;top:6px;right:8px;padding:0;line-height:0;cursor:pointer;background:transparent;border:0;color:#888;opacity:0.6;z-index:1;';
         $icon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
         return '<span class="tracy-dump-copy-wrap">'
-             . '<button type="button" data-tracy-md-copy class="tracy-md-copy-btn" style="' . $btnStyle . '" title="Copy this dump as plaintext for an AI agent">' . $icon . '</button>'
+             . '<button type="button" data-tracy-md-copy class="tracy-md-copy-btn" style="' . $btnStyle . '" title="' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '">' . $icon . '</button>'
              . '<script type="application/json" data-tracy-md-source>' . $jsonMd . '</script>'
              . '</span>';
     }
@@ -424,7 +437,14 @@ class TD extends TracyDebugger {
         $location = ($file !== null && $line !== null)
             ? ' <em style="color:#666">in ' . htmlspecialchars($file, ENT_QUOTES, 'UTF-8') . ':' . (int)$line . '</em>'
             : '';
-        return '<div style="border: 1px solid #d9d9d9; border-left: 3px solid #c00; padding: 6px 10px; background: #fff3f3; color: #c00; font-family: monospace; white-space: normal; margin-bottom: 5px;">'
+        // attach an agent-copy button + [data-tracy-md-source] payload so a single
+        // error block is copyable on its own and "Copy all" picks it up in DOM
+        // order alongside the dumps. position:relative + right padding give the
+        // absolutely-positioned button room (matches the dump copy-button layout).
+        $agentText = $type . ': ' . $message . (($file !== null && $line !== null) ? ' in ' . $file . ':' . (int)$line : '');
+        $copyButton = self::buildAgentTextCopyButton($agentText, 'Copy this error as plaintext for an AI agent');
+        return '<div style="position:relative; border: 1px solid #d9d9d9; border-left: 3px solid #c00; padding: 6px 28px 6px 10px; background: #fff3f3; color: #c00; font-family: monospace; white-space: normal; margin-bottom: 5px;">'
+            . $copyButton
             . '<strong>' . htmlspecialchars($type, ENT_QUOTES, 'UTF-8') . ':</strong> '
             . htmlspecialchars($message, ENT_QUOTES, 'UTF-8')
             . $location
