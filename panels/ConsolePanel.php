@@ -391,7 +391,7 @@ class ConsolePanel extends BasePanel {
                 a.click();
                 setTimeout(function() { document.body.removeChild(a); }, 100);
                 var safeName = escapeHtml(data.filename);
-                var banner = '<div style="padding:8px; background:#e8f4e8; border:1px solid #c0e0c0; color:#2a6;">Download started: <strong>' + safeName + '</strong></div>';
+                var banner = '<div class="tracy-console-download-banner" style="padding:8px; background:#e8f4e8; border:1px solid #c0e0c0; color:#2a6;">Download started: <strong>' + safeName + '</strong></div>';
                 var pre  = (typeof data.preOutput  === "string") ? data.preOutput  : "";
                 var post = (typeof data.postOutput === "string") ? data.postOutput : "";
                 return pre + banner + post;

@@ -398,7 +398,7 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
         $timeStr = TracyDebugger::formatTime(Debugger::timer('consoleCode'), false);
         $memStr = TracyDebugger::human_filesize((max((memory_get_usage() - $initialMemory), 0)), false);
         $metricsHtml = '
-        <div style="border-top: 1px dotted #cccccc; color:#A9ABAB; border-bottom: 1px solid #cccccc; color:#A9ABAB; font-size: 10px; padding: 3px; margin: 10px 0 0 0;">' .
+        <div class="tracyConsoleMetrics" style="border-top: 1px dotted #cccccc; color:#A9ABAB; border-bottom: 1px solid #cccccc; color:#A9ABAB; font-size: 10px; padding: 3px; margin: 10px 0 0 0;">' .
             $timeStr . ', ' . $memStr . '
         </div>';
 
