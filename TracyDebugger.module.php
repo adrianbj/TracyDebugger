@@ -4109,7 +4109,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldEmail");
         $f->attr('name', 'fromEmail');
-        $f->attr('autocomplete', 'off');
+        // Chrome ignores autocomplete="off", so use a random value on every load so it can never match a saved entry
+        $f->attr('autocomplete', 'tracy-' . bin2hex(random_bytes(8)));
         $f->label = __('Email errors "From"', __FILE__);
         $f->description = __('Receive emails from this address when an error occurs.', __FILE__);
         $f->columnWidth = 33;
