@@ -1957,6 +1957,10 @@ button[data-tab-id].tracyTabRunning .button-label::before {
     border-color: #888;
 }
 
+.tracy-console-echo {
+    padding-right: 28px;
+}
+
 #tracy-debug-panel-ProcessWire-TracyExceptionsPanel[class*="tracy-mode-"] {
     min-width: min(635px, 95vw);
 }

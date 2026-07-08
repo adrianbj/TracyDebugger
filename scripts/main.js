@@ -289,9 +289,80 @@ function tracyDumpsToggler(el, show) {
         watcher.observe(document.documentElement, { childList: true, subtree: true });
     }
 
+    // A node is console "chrome" (not user-echoed output): a dump/error block
+    // (carries a [data-tracy-md-source]), the metrics footer, or the download banner.
+    function tracyIsConsoleChrome(node) {
+        if(node.nodeType !== 1) return false;
+        if(node.classList && (node.classList.contains('tracyConsoleMetrics') || node.classList.contains('tracy-console-download-banner'))) return true;
+        if(node.hasAttribute && node.hasAttribute('data-tracy-md-source')) return true;
+        if(node.querySelector && node.querySelector('[data-tracy-md-source]')) return true;
+        return false;
+    }
+
+    // Wrap a contiguous run of echoed nodes in a copy-enabled container: a
+    // [data-tracy-md-copy] button plus a synthesized [data-tracy-md-source]
+    // payload, so the existing per-item handler and "Copy all" pick it up.
+    function tracyWrapEchoGroup(run, group) {
+        var wrap = document.createElement('div');
+        wrap.className = 'tracy-console-echo';
+        wrap.style.position = 'relative';
+        run.insertBefore(wrap, group[0]);
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.setAttribute('data-tracy-md-copy', '');
+        btn.className = 'tracy-md-copy-btn';
+        btn.style.cssText = 'position:absolute;top:6px;right:8px;padding:0;line-height:0;cursor:pointer;background:transparent;border:0;color:#888;opacity:0.6;z-index:1;';
+        btn.title = 'Copy this output as plaintext for an AI agent';
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
+        wrap.appendChild(btn);
+        var text = '';
+        for(var i = 0; i < group.length; i++) {
+            text += (group[i].textContent || '');
+            wrap.appendChild(group[i]);
+        }
+        var src = document.createElement('script');
+        src.type = 'application/json';
+        src.setAttribute('data-tracy-md-source', '');
+        src.textContent = JSON.stringify(text.trim());
+        wrap.appendChild(src);
+    }
+
+    // For each un-processed console result-run, group contiguous echoed nodes
+    // (everything that isn't chrome) and wrap each non-empty group. Idempotent
+    // via the per-run data-tracy-echo-wrapped flag.
+    function tracyWrapConsoleEchoes(rd) {
+        var runs = rd.querySelectorAll('[id^="tracyConsoleResult_"]');
+        for(var r = 0; r < runs.length; r++) {
+            var run = runs[r];
+            if(run.getAttribute('data-tracy-echo-wrapped')) continue;
+            run.setAttribute('data-tracy-echo-wrapped', '1');
+            var nodes = Array.prototype.slice.call(run.childNodes);
+            var group = [];
+            for(var n = 0; n < nodes.length; n++) {
+                var node = nodes[n];
+                if(node.nodeType === 8) continue;
+                if(tracyIsConsoleChrome(node)) {
+                    tracyFlushEchoGroup(run, group);
+                    group = [];
+                    continue;
+                }
+                group.push(node);
+            }
+            tracyFlushEchoGroup(run, group);
+        }
+    }
+
+    function tracyFlushEchoGroup(run, group) {
+        if(!group.length) return;
+        var text = '';
+        for(var i = 0; i < group.length; i++) text += (group[i].textContent || '');
+        if(text.trim() !== '') tracyWrapEchoGroup(run, group);
+    }
+
     function tracyEnsureConsoleCopyAll() {
         var rd = document.getElementById('tracyConsoleResult');
         if(!rd) return;
+        tracyWrapConsoleEchoes(rd);
         var existing = rd.querySelector('.tracy-md-copy-all-console');
         var count = rd.querySelectorAll('[data-tracy-md-source]').length;
         if(count >= 2) {
