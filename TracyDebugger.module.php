@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.0.48',
+            'version' => '5.0.49',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -4109,8 +4109,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         $f = $this->wire('modules')->get("InputfieldEmail");
         $f->attr('name', 'fromEmail');
-        // Chrome ignores autocomplete="off", so use a random value on every load so it can never match a saved entry
+        // Chrome ignores autocomplete="off" and its heuristics autofill any email field regardless of name/value,
+        // so render the field readonly (Chrome won't autofill a readonly field) and drop readonly on focus so it stays editable
         $f->attr('autocomplete', 'tracy-' . bin2hex(random_bytes(8)));
+        $f->attr('readonly', 'readonly');
+        $f->attr('onfocus', "this.removeAttribute('readonly');");
         $f->label = __('Email errors "From"', __FILE__);
         $f->description = __('Receive emails from this address when an error occurs.', __FILE__);
         $f->columnWidth = 33;
