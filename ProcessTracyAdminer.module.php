@@ -7,7 +7,7 @@ class ProcessTracyAdminer extends Process implements Module {
             'summary' => __('Adminer page for TracyDebugger.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '2.0.5',
+            'version' => '2.0.6',
             'autoload' => false,
             'singular' => true,
             'icon' => 'database',
@@ -37,7 +37,7 @@ class ProcessTracyAdminer extends Process implements Module {
             $iframeSrc = $adminerRendererUrl . ($queryString !== '' ? '?' . $queryString : '');
 
             return '
-            <iframe id="adminer-iframe" src="'.htmlspecialchars($iframeSrc, ENT_QUOTES, 'UTF-8').'" style="width:100vw; border: none; padding:0; margin:0;"></iframe>
+            <iframe id="adminer-iframe" src="'.htmlspecialchars($iframeSrc, ENT_QUOTES, 'UTF-8').'" style="display:block; width:100%; border: none; padding:0; margin:0;"></iframe>
             <script' . TracyDebugger::getNonceAttr() . '>
                 const adminer_iframe = document.getElementById("adminer-iframe");
                 const adminerRendererUrl = ' . json_encode($adminerRendererUrl) . ';
@@ -65,13 +65,12 @@ class ProcessTracyAdminer extends Process implements Module {
                     }
                 });
 
-                window.addEventListener("load", function(event) {
-                    var masthead = document.getElementById("pw-masthead");
-                    if (masthead && adminer_iframe) {
-                        var mastheadHeight = masthead.offsetHeight;
-                        adminer_iframe.style.height = `calc(100vh - ${mastheadHeight}px)`;
-                    }
-                });
+                function setIframeHeight() {
+                    if (!adminer_iframe) return;
+                    var iframeTop = adminer_iframe.getBoundingClientRect().top + window.scrollY;
+                    adminer_iframe.style.height = `calc(100vh - ${iframeTop}px)`;
+                }
+                window.addEventListener("load", setIframeHeight);
 
                 // determine scrollbarWidth
                 var div = document.createElement("div");
@@ -137,17 +136,25 @@ class ProcessTracyAdminer extends Process implements Module {
                         adjustTracyDebugBar(adminer_iframe);
                         observeIframeChanges(adminer_iframe);
                     };
-                    window.addEventListener("resize", () => adjustTracyDebugBar(adminer_iframe));
+                    window.addEventListener("resize", () => {
+                        setIframeHeight();
+                        adjustTracyDebugBar(adminer_iframe);
+                    });
                 }
             </script>
 
             <style>
+                html, body {
+                    overflow: hidden;
+                }
                 #pw-content-head, #pw-content-title, #pw-footer, #notices {
                     display: none;
                 }
-                #main {
+                /* extra specificity needed to beat theme rules like "#main.uk-container { padding !important }" */
+                #main, #main.pw-container.uk-container, #content, #pw-content-body {
                     padding: 0 !important;
                     margin: 0 !important;
+                    max-width: none !important;
                 }
                 /* Fallback in case automatic JS adjustment fails - 73px is the height of the standard UiKit masthead */
                 #adminer-iframe {
