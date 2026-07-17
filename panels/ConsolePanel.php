@@ -963,19 +963,26 @@ class ConsolePanel extends BasePanel {
                     if(xhr.status == 200) {
                         try {
                             var data = JSON.parse(xhr.responseText);
-                            var resultId = Date.now();
-                            var resultHtml;
-                            if(data && data.status === 'download') {
-                                resultHtml = '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.triggerDownload(data) + '</div>';
+                            if(data && data.status === 'gone') {
+                                /* result was already delivered and cleaned up (or swept) —
+                                   nothing to render; just fall through to the state reset
+                                   below so the stale runId pointer and running flags clear */
                             } else {
-                                resultHtml = '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.tryParseJSON(data.output) + '</div>';
-                            }
-                            appendPromise = tracyConsole.appendResultToTab(tabId, resultHtml);
-                            if(tabId === tracyConsole.currentTabId) {
-                                var resultElement = document.getElementById("tracyConsoleResult_"+resultId);
-                                if(resultElement) resultElement.scrollIntoView();
-                                if(!document.getElementById("tracy-debug-panel-ProcessWire-ConsolePanel").classList.contains("tracy-mode-float")) {
-                                    window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-ConsolePanel"].toFloat();
+                                var resultId = Date.now();
+                                var resultHtml;
+                                if(data && data.status === 'download') {
+                                    resultHtml = '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.triggerDownload(data) + '</div>';
+                                } else {
+                                    resultHtml = '<div id="tracyConsoleResult_'+resultId+'" style="padding:10px 0">' + tracyConsole.tryParseJSON(data.output) + '</div>';
+                                }
+                                appendPromise = tracyConsole.appendResultToTab(tabId, resultHtml);
+                                if(tabId === tracyConsole.currentTabId) {
+                                    var resultElement = document.getElementById("tracyConsoleResult_"+resultId);
+                                    if(resultElement) resultElement.scrollIntoView();
+                                    var consolePanelEl = document.getElementById("tracy-debug-panel-ProcessWire-ConsolePanel");
+                                    if(consolePanelEl && !consolePanelEl.classList.contains("tracy-mode-float")) {
+                                        window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-ConsolePanel"].toFloat();
+                                    }
                                 }
                             }
                         } catch(e) {
@@ -1012,18 +1019,26 @@ class ConsolePanel extends BasePanel {
 
             appendResultToTab: async function(tabId, html) {
                 tabId = Number(tabId);
-                if(tabId === this.currentTabId) {
-                    var resultsDiv = document.getElementById("tracyConsoleResult");
-                    if(resultsDiv) {
-                        this._rawResultHtml = (this._rawResultHtml || "") + html;
-                        resultsDiv.insertAdjacentHTML("beforeend", html);
-                        if(window.Tracy && Tracy.Dumper) Tracy.Dumper.init(resultsDiv);
-                        if(window.tracyEnsureConsoleCopyAll) window.tracyEnsureConsoleCopyAll();
-                    }
+                var resultsDiv = tabId === this.currentTabId ? document.getElementById("tracyConsoleResult") : null;
+                if(resultsDiv) {
+                    this._rawResultHtml = (this._rawResultHtml || "") + html;
+                    resultsDiv.insertAdjacentHTML("beforeend", html);
+                    if(window.Tracy && Tracy.Dumper) Tracy.Dumper.init(resultsDiv);
+                    if(window.tracyEnsureConsoleCopyAll) window.tracyEnsureConsoleCopyAll();
                     try {
                         var existing = await this.dbGet("tabs", tabId);
                         if(existing) { existing.result = this._rawResultHtml; await this.dbPut("tabs", existing); }
                     } catch(e) { console.warn("appendResultToTab (current) save failed:", e); }
+                } else if(tabId === this.currentTabId) {
+                    /* current tab but the panel DOM is not present (closed/detached):
+                       append to the STORED result rather than saving _rawResultHtml,
+                       which is a stale in-memory copy here and would clobber the
+                       stored result while dropping this html entirely */
+                    this._rawResultHtml = (this._rawResultHtml || "") + html;
+                    try {
+                        var cur = await this.dbGet("tabs", tabId);
+                        if(cur) { cur.result = (cur.result || "") + html; await this.dbPut("tabs", cur); }
+                    } catch(e) { console.warn("appendResultToTab (current, detached) save failed:", e); }
                 } else {
                     try {
                         var rec = await this.dbGet("tabs", tabId);
@@ -1217,8 +1232,14 @@ class ConsolePanel extends BasePanel {
                                 statusDiv.innerHTML = "✔ " + (codeReturn ? "Executed" : "Injected @ " + escapeHtml(JSON.parse(tracyConsole.getCookie('tracyIncludeCode')).when));
                             }
                         }
-                        const resultsDiv = document.getElementById("tracyConsoleResult");
-                        if (xmlhttp.status == 200 && resultsDiv) {
+                        /* deliver the result even when the panel DOM is not present (panel
+                           closed/detached while the script ran) — appendResultToTab persists
+                           to tab storage either way. Gating this on the results div being in
+                           the DOM used to silently discard successful results, leave the tab's
+                           runId pointer behind, and still delete the server-side run files —
+                           orphaning the run as forever-"running" and making the next panel
+                           load report "Result file not found". */
+                        if (xmlhttp.status == 200) {
                             const resultId = Date.now();
                             let downloadEnvelope = null;
                             try {
@@ -1238,13 +1259,14 @@ class ConsolePanel extends BasePanel {
                             if(originTabId === tracyConsole.currentTabId) {
                                 const resultElement = document.getElementById("tracyConsoleResult_"+resultId);
                                 if (resultElement) resultElement.scrollIntoView();
-                                if (!document.getElementById("tracy-debug-panel-ProcessWire-ConsolePanel").classList.contains("tracy-mode-float")) {
+                                const consolePanelEl = document.getElementById("tracy-debug-panel-ProcessWire-ConsolePanel");
+                                if (consolePanelEl && !consolePanelEl.classList.contains("tracy-mode-float")) {
                                     window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-ConsolePanel"].toFloat();
                                 }
                             }
                             tracyConsole.setRunButtonEnabled(true);
                         }
-                        else if (resultsDiv) {
+                        else {
                             const errorStr = escapeHtml(xmlhttp.status + ': ' + xmlhttp.statusText) + '<br />' + escapeHtml(xmlhttp.responseText);
                             const errorHtml = '<div style="padding: 10px 0">' + errorStr + '</div><div style="position:relative; border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;"></div>';
                             thisRun.delivered = true;
