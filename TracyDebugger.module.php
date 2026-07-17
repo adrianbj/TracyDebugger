@@ -759,7 +759,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                         echo file_get_contents($cacheFile);
                     }
                     else if($returnResult) {
-                        echo json_encode(array('status' => 'error', 'output' => 'Result file not found'));
+                        /* distinct status (not 'error') — the result was already delivered
+                           and cleaned up, or swept; the panel should quietly clear its
+                           stored runId pointer rather than render an error block */
+                        echo json_encode(array('status' => 'gone'));
                     }
                     @unlink($cacheFile);
                     @unlink($statusDir . $runId . '.json');
