@@ -836,6 +836,16 @@ class ConsolePanel extends BasePanel {
                     var initialStatusDiv = document.getElementById("tracyConsoleStatus");
                     if(initialStatusDiv) initialStatusDiv.innerHTML = "<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> Cancelling...";
                 }
+                if(tabId === null && !tracyConsole.runs[tracyConsole.currentTabId]) {
+                    /* stale cancel: the run already delivered and its registry entry is
+                       gone, but a zombie "Running..." line was still painted with this
+                       cancel icon. Recover the UI instead of doing nothing, and still
+                       send the server kill below in case the process is genuinely alive. */
+                    tracyConsole.stopStatusTimer();
+                    var staleStatusDiv = document.getElementById("tracyConsoleStatus");
+                    if(staleStatusDiv) staleStatusDiv.innerHTML = "✘ Cancelled";
+                    tracyConsole.setRunButtonEnabled(true);
+                }
                 var xhr = new XMLHttpRequest();
                 xhr.onreadystatechange = function() {
                     if(xhr.readyState !== XMLHttpRequest.DONE) return;
@@ -990,14 +1000,24 @@ class ConsolePanel extends BasePanel {
                             appendPromise = tracyConsole.appendResultToTab(tabId, errorHtml);
                         }
                     }
-                    if(tabId === tracyConsole.currentTabId) {
-                        var statusDiv = document.getElementById("tracyConsoleStatus");
-                        if(statusDiv) statusDiv.innerHTML = status === 'error' ? "✘ Error" : "✔ Executed";
+                    /* finalize registry/status/button state only if this run still owns
+                       the tab's registry slot — a stale cleanup response must not wipe
+                       the state of a newer run in the same tab */
+                    var owningRun = tracyConsole.runs[tabId];
+                    if(owningRun && owningRun.runId === runId) {
+                        if(tabId === tracyConsole.currentTabId) {
+                            /* stop the "Running..." repaint interval — switchTab restarts
+                               it for any registered run, so it can be ticking here even
+                               though pollForResults stopped it at delivery time */
+                            tracyConsole.stopStatusTimer();
+                            var statusDiv = document.getElementById("tracyConsoleStatus");
+                            if(statusDiv) statusDiv.innerHTML = status === 'error' ? "✘ Error" : "✔ Executed";
+                        }
+                        delete tracyConsole.runs[tabId];
+                        tracyConsole.setTabRunning(tabId, false);
+                        appendPromise.then(function(){ return tracyConsole.clearRunIdOnTab(tabId); }).catch(function(e){ console.warn('fetchAndCleanup persist failed:', e); });
+                        tracyConsole.setRunButtonEnabled(true);
                     }
-                    delete tracyConsole.runs[tabId];
-                    tracyConsole.setTabRunning(tabId, false);
-                    appendPromise.then(function(){ return tracyConsole.clearRunIdOnTab(tabId); }).catch(function(e){ console.warn('fetchAndCleanup persist failed:', e); });
-                    tracyConsole.setRunButtonEnabled(true);
                 };
                 xhr.open("POST", "$currentUrl", true);
                 xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
@@ -1072,6 +1092,15 @@ class ConsolePanel extends BasePanel {
                 var run = tracyConsole.runs[tabId];
                 if(!run) return;
                 var paint = function() {
+                    /* self-stop if this run no longer owns the tab's registry slot
+                       (delivered or cancelled since the interval started) so a zombie
+                       interval can never keep painting "Running..." over the final
+                       status. Only one interval exists at a time — startStatusTimer
+                       always clears the previous one — so stopping here is safe. */
+                    if(tracyConsole.runs[tabId] !== run) {
+                        tracyConsole.stopStatusTimer();
+                        return;
+                    }
                     var elapsed = Math.round((Date.now() - run.startTime) / 1000);
                     var mins = Math.floor(elapsed / 60);
                     var secs = elapsed % 60;
