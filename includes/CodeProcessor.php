@@ -188,10 +188,17 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
         $code = '';
     }
 
-    // ready.php and finished.php are already executed by PW during normal bootstrap
-    // before this code runs (CodeProcessor is invoked from a ProcessWire::ready hook).
-    // Re-including them here would risk duplicate hook registrations and side effects.
-    // Any bd() calls in those files are already captured by Tracy during bootstrap.
+    // site/ready.php and finished.php have NOT run in this request: ProcessWire::setStatus()
+    // fires the ProcessWire::ready hooks (which invoke CodeProcessor) BEFORE it includes
+    // site/ready.php, and we exit() below before that include is ever reached. So hooks
+    // registered in ready.php (e.g. Pages::saveReady) would never fire for console code
+    // without including it here (#116). include_once is safe — this is the file's first
+    // inclusion in this request — and must stay in this scope so the API variables
+    // extracted above ($pages, $config, etc.) are visible inside the included files.
+    $readyPath = $this->wire('config')->paths->root . 'site/ready.php';
+    $finishedPath = $this->wire('config')->paths->root . 'site/finished.php';
+    if(file_exists($readyPath)) include_once($this->wire('files')->compile($readyPath));
+    if(file_exists($finishedPath)) include_once($this->wire('files')->compile($finishedPath));
 
     $cachePath = $this->wire('config')->paths->cache . 'TracyDebugger/';
 
