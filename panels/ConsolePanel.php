@@ -830,6 +830,7 @@ class ConsolePanel extends BasePanel {
                     var run = tracyConsole.runs[tabId];
                     run.cancelled = true;
                     if(run.streamTimer) { clearTimeout(run.streamTimer); run.streamTimer = null; }
+                    if(run.streamRestartTimer) { clearTimeout(run.streamRestartTimer); run.streamRestartTimer = null; }
                     if(run.streamXhr) { try { run.streamXhr.abort(); } catch(e) {} run.streamXhr = null; }
                     if(run.pollXhr) { try { run.pollXhr.abort(); } catch(e) {} run.pollXhr = null; }
                     if(run.mainXhr) { try { run.mainXhr.abort(); } catch(e) {} run.mainXhr = null; }
@@ -898,8 +899,8 @@ class ConsolePanel extends BasePanel {
                     var cr = tracyConsole.runs[ck];
                     cr.cancelled = true;
                     if(cr.streamTimer) { clearTimeout(cr.streamTimer); cr.streamTimer = null; }
+                    if(cr.streamRestartTimer) { clearTimeout(cr.streamRestartTimer); cr.streamRestartTimer = null; }
                     if(cr.streamXhr) { try { cr.streamXhr.abort(); } catch(e) {} cr.streamXhr = null; }
-                    cr.streamActive = false;
                     tracyConsole.removeStreamPreview(cr.runId);
                     if(cr.pollXhr) { try { cr.pollXhr.abort(); } catch(e) {} cr.pollXhr = null; }
                     if(cr.mainXhr) { try { cr.mainXhr.abort(); } catch(e) {} cr.mainXhr = null; }
@@ -976,7 +977,7 @@ class ConsolePanel extends BasePanel {
                         var started = liveById[t.runId].startedAt ? liveById[t.runId].startedAt * 1000 : (t.startTime || Date.now());
                         tracyConsole.runs[t.id] = {
                             runId: t.runId, startTime: started, pollXhr: null, mainXhr: null, cancelled: false, delivered: false,
-                            streamXhr: null, streamTimer: null, streamActive: false, streamGen: 0
+                            streamXhr: null, streamTimer: null, streamGen: 0, streamRestartTimer: null, streamRestartedAt: 0
                         };
                         tracyConsole.setTabRunning(t.id, true);
                         if(t.id === tracyConsole.currentTabId) { tracyConsole.startStatusTimer(t.id); tracyConsole.setRunButtonEnabled(false); }
@@ -986,7 +987,8 @@ class ConsolePanel extends BasePanel {
                            everything it has dumped so far, not just what arrives from
                            now on.
 
-                           This call usually no-ops: currentTabId stays null until the
+                           This call may no-op, depending on which async chain finishes
+                           first: currentTabId stays null until the
                            IndexedDB open transaction completes, which sits behind the
                            ace/split script loads, whereas this function runs at parse
                            time. In that ordering resumption actually comes from init's
@@ -999,7 +1001,7 @@ class ConsolePanel extends BasePanel {
                         /* finished while we were away — pull its result, then clear the pointer */
                         tracyConsole.runs[t.id] = {
                             runId: t.runId, startTime: t.startTime || Date.now(), pollXhr: null, mainXhr: null, cancelled: false, delivered: false,
-                            streamXhr: null, streamTimer: null, streamActive: false, streamGen: 0
+                            streamXhr: null, streamTimer: null, streamGen: 0, streamRestartTimer: null, streamRestartedAt: 0
                         };
                         tracyConsole.fetchAndCleanup(t.runId, 'complete', t.id);
                     }
@@ -1134,8 +1136,8 @@ class ConsolePanel extends BasePanel {
                    unconditional. */
                 if(run && run.runId === runId) {
                     if(run.streamTimer) { clearTimeout(run.streamTimer); run.streamTimer = null; }
+                    if(run.streamRestartTimer) { clearTimeout(run.streamRestartTimer); run.streamRestartTimer = null; }
                     if(run.streamXhr) { try { run.streamXhr.abort(); } catch(e) {} run.streamXhr = null; }
-                    run.streamActive = false;
                 }
                 tracyConsole.removeStreamPreview(runId);
             },
@@ -1162,34 +1164,38 @@ class ConsolePanel extends BasePanel {
                 if(!run || run.runId !== runId || run.cancelled || run.delivered) return;
                 if(tabId !== tracyConsole.currentTabId) return;
 
+                /* Retire any chain still running BEFORE deciding whether to defer.
+                   Bumping the generation here is what stops a superseded chain from
+                   rendering a tail-only preview during the debounce window: the
+                   caller has already wiped the pane, so a late response from the old
+                   chain would otherwise recreate the div and append at its stale
+                   offset — a brief flash of truncated output. */
+                var gen = (run.streamGen || 0) + 1;
+                run.streamGen = gen;
+                if(run.streamTimer) { clearTimeout(run.streamTimer); run.streamTimer = null; }
+                if(run.streamXhr) { try { run.streamXhr.abort(); } catch(e) {} run.streamXhr = null; }
+
                 /* Collapse a burst of rapid tab clicks into a single restart. Each
                    restart re-reads the whole .partial and re-renders it, so several
-                   queued back-to-back could mean several multi-megabyte renders. */
+                   queued back-to-back could mean several multi-megabyte renders.
+                   The pending restart gets its own timer field so the teardown paths
+                   can cancel it deterministically — sharing streamTimer with the poll
+                   chain let a reschedule overwrite the handle and leave it untracked. */
                 var now = Date.now();
                 var since = now - (run.streamRestartedAt || 0);
+                if(run.streamRestartTimer) { clearTimeout(run.streamRestartTimer); run.streamRestartTimer = null; }
                 if(since < 400) {
-                    if(run.streamTimer) { clearTimeout(run.streamTimer); run.streamTimer = null; }
-                    run.streamTimer = setTimeout(function() {
+                    run.streamRestartTimer = setTimeout(function() {
+                        var r = tracyConsole.runs[tabId];
+                        if(r) r.streamRestartTimer = null;
                         tracyConsole.startStream(runId, tabId);
                     }, 400 - since);
                     return;
                 }
                 run.streamRestartedAt = now;
 
-                /* Every restart claims a new generation. A superseded chain's pending
-                   timer or in-flight response then recognises itself as stale and
-                   exits without rendering or rescheduling. This deliberately does NOT
-                   decline when a chain is already running: every caller has just wiped
-                   the preview div, so refusing to restart would leave the old chain
-                   appending at a stale offset into an empty pane — losing everything
-                   the script dumped before the switch. */
-                var gen = (run.streamGen || 0) + 1;
-                run.streamGen = gen;
-                if(run.streamTimer) { clearTimeout(run.streamTimer); run.streamTimer = null; }
-                if(run.streamXhr) { try { run.streamXhr.abort(); } catch(e) {} run.streamXhr = null; }
                 /* drop any surviving preview so the re-read from 0 cannot duplicate it */
                 tracyConsole.removeStreamPreview(runId);
-                run.streamActive = true;
                 tracyConsole.pollForStream(runId, tabId, 0, 0, gen);
             },
 
@@ -1292,22 +1298,16 @@ class ConsolePanel extends BasePanel {
             pollForStream: function(runId, tabId, offset, quietCount, gen) {
                 /* A chain is current only while it owns the run's generation. Anything
                    older has been superseded by a restart and must exit silently —
-                   without rendering, without rescheduling, and without touching
-                   streamActive, which now belongs to the newer chain. */
+                   without rendering and without rescheduling. startStream bumps the
+                   generation, so a stale chain cannot revive itself. */
                 var isCurrent = function() {
                     var r = tracyConsole.runs[tabId];
                     return !!r && r.runId === runId && (r.streamGen || 0) === gen;
                 };
-                /* Mark the chain as no longer running. Every terminal exit goes through
-                   this, so a later restart can tell a finished chain from a live one. */
-                var markIdle = function() {
-                    var r = tracyConsole.runs[tabId];
-                    if(r && r.runId === runId && (r.streamGen || 0) === gen) r.streamActive = false;
-                };
                 if(!isCurrent()) return;
                 var run = tracyConsole.runs[tabId];
-                if(run.cancelled || run.delivered) { markIdle(); return; }
-                if(tabId !== tracyConsole.currentTabId) { markIdle(); return; }
+                if(run.cancelled || run.delivered) return;
+                if(tabId !== tracyConsole.currentTabId) return;
 
                 var xmlhttp = new XMLHttpRequest();
                 run.streamXhr = xmlhttp;
@@ -1316,7 +1316,7 @@ class ConsolePanel extends BasePanel {
                 var reschedule = function(nextOffset, quiet) {
                     if(!isCurrent()) return;
                     var r = tracyConsole.runs[tabId];
-                    if(r.cancelled || r.delivered) { markIdle(); return; }
+                    if(r.cancelled || r.delivered) return;
                     var delay = quiet >= 2 ? 3000 : 1000;
                     r.streamTimer = setTimeout(function() {
                         tracyConsole.pollForStream(runId, tabId, nextOffset, quiet, gen);
@@ -1330,14 +1330,14 @@ class ConsolePanel extends BasePanel {
                     if(xmlhttp.status === 0) return;
                     if(!isCurrent()) return;
                     var r = tracyConsole.runs[tabId];
-                    if(r.cancelled || r.delivered) { markIdle(); return; }
+                    if(r.cancelled || r.delivered) return;
                     if(xmlhttp.status !== 200) { reschedule(offset, quietCount + 1); return; }
                     var data = null;
                     try { data = JSON.parse(xmlhttp.responseText); } catch(e) {}
                     if(!data) { reschedule(offset, quietCount + 1); return; }
                     var chunk = typeof data.chunk === "string" ? data.chunk : "";
                     var nextOffset = typeof data.offset === "number" ? data.offset : offset;
-                    if(tabId !== tracyConsole.currentTabId) { markIdle(); return; }
+                    if(tabId !== tracyConsole.currentTabId) return;
                     if(chunk !== "") {
                         var el = tracyConsole.streamPreviewEl(runId);
                         if(el) {
@@ -1353,7 +1353,7 @@ class ConsolePanel extends BasePanel {
                             if(atBottom && pane) pane.scrollTop = pane.scrollHeight;
                         }
                     }
-                    if(data.status !== "running" && data.status !== "missing") { markIdle(); return; }
+                    if(data.status !== "running" && data.status !== "missing") return;
                     reschedule(nextOffset, chunk === "" ? quietCount + 1 : 0);
                 };
                 xmlhttp.open("POST", "$currentUrl", true);
@@ -1448,8 +1448,9 @@ class ConsolePanel extends BasePanel {
                     pollingActive: false,
                     streamXhr: null,
                     streamTimer: null,
-                    streamActive: false,
-                    streamGen: 0
+                    streamGen: 0,
+                    streamRestartTimer: null,
+                    streamRestartedAt: 0
                 };
                 tracyConsole.setTabRunning(originTabId, true);
                 tracyConsole.setRunButtonEnabled(false);
