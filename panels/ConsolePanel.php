@@ -530,7 +530,7 @@ class ConsolePanel extends BasePanel {
                         historyData: existingTab ? existingTab.historyData : [],
                         historyItem: existingTab ? existingTab.historyItem : null,
                         historyCount: existingTab ? existingTab.historyCount : 0,
-                        result: this._rawResultHtml || document.getElementById("tracyConsoleResult")?.innerHTML || '',
+                        result: this._rawResultHtml || this.currentResultHtml(),
                         selections: selections,
                         scrollTop: this.tce.session.getScrollTop(),
                         scrollLeft: this.tce.session.getScrollLeft(),
@@ -1035,9 +1035,15 @@ class ConsolePanel extends BasePanel {
                existing delivery paths stay untouched: at delivery we simply
                remove this div and let them append the canonical result block as
                they always have. Deliberately NOT routed through
-               appendResultToTab, so preview bytes never reach _rawResultHtml or
-               IndexedDB and a mid-run reload can't restore a half-finished
-               preview as if it were a completed result. */
+               appendResultToTab, so preview bytes never reach _rawResultHtml.
+               Staying out of IndexedDB isn't automatic, though: saveToIndexedDB
+               falls back to reading the live results DOM whenever
+               _rawResultHtml is empty (a fresh tab, or right after
+               clearResults()), and that DOM can contain this div while a run
+               is streaming. currentResultHtml() below is the one place that
+               enforcement is applied, by stripping preview divs out of that
+               DOM read before it can be persisted as if it were a completed
+               result. */
             streamPreviewEl: function(runId) {
                 var resultsDiv = document.getElementById("tracyConsoleResult");
                 if(!resultsDiv) return null;
@@ -1056,6 +1062,25 @@ class ConsolePanel extends BasePanel {
                 if(!runId) return;
                 var el = document.getElementById("tracyConsoleStream_" + runId);
                 if(el && el.parentNode) el.parentNode.removeChild(el);
+            },
+
+            /* The result HTML, minus any live preview. Reads the results div
+               off a clone so the live DOM is never mutated, strips every
+               [id^="tracyConsoleStream_"] node from that clone, then returns
+               the clone's innerHTML. This is the single place responsible for
+               making sure a preview div can never be captured by anything that
+               persists "the result" (see saveToIndexedDB's DOM fallback at
+               the call site), regardless of how many preview divs happen to
+               be present. */
+            currentResultHtml: function() {
+                var resultsDiv = document.getElementById("tracyConsoleResult");
+                if(!resultsDiv) return "";
+                var clone = resultsDiv.cloneNode(true);
+                var previews = clone.querySelectorAll('[id^="tracyConsoleStream_"]');
+                for(var i = 0; i < previews.length; i++) {
+                    if(previews[i].parentNode) previews[i].parentNode.removeChild(previews[i]);
+                }
+                return clone.innerHTML;
             },
 
             /* Tear down streaming for a run: cancel the pending poll, abort any
