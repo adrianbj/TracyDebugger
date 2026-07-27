@@ -314,18 +314,37 @@ class TD extends TracyDebugger {
         }
         $buf = ob_get_contents();
         if($buf === false) return;
+        /* the buffer shrank below our origin — user code called ob_clean(), which
+           empties the buffer without changing the level, so the offset no longer
+           refers to anything. Publishing from here would emit garbled bytes once
+           the buffer regrows; disarm instead. */
+        if(strlen($buf) < self::$consoleStreamOffset) {
+            self::$consoleStreamPath = null;
+            return;
+        }
         $new = substr($buf, self::$consoleStreamOffset);
         if($new === '' || $new === false) return;
+        /* The run installs tracyConsoleErrorHandler for its whole life, and that
+           handler's suppression guard is the pre-PHP-8 `error_reporting() === 0`
+           idiom — under PHP 8 `@` sets a non-zero mask instead, so a failed write
+           here would reach it and echo a red E_WARNING block into the buffer,
+           i.e. into the delivered result. This side-channel must never be able to
+           alter canonical output, so silence it with a real handler swap. */
         if(self::$consoleStreamOffset + strlen($new) > self::CONSOLE_STREAM_MAX_BYTES) {
-            @file_put_contents(
+            set_error_handler(function() { return true; });
+            file_put_contents(
                 self::$consoleStreamPath,
                 '<div style="padding:4px 0; color:#A9ABAB; font-size:11px;">Live preview truncated — full output will appear on completion.</div>',
                 FILE_APPEND | LOCK_EX
             );
+            restore_error_handler();
             self::$consoleStreamPath = null;
             return;
         }
-        if(@file_put_contents(self::$consoleStreamPath, $new, FILE_APPEND | LOCK_EX) === false) {
+        set_error_handler(function() { return true; });
+        $ok = file_put_contents(self::$consoleStreamPath, $new, FILE_APPEND | LOCK_EX);
+        restore_error_handler();
+        if($ok === false) {
             /* disk full / permissions — give up on the preview rather than
                retrying on every dump for the rest of the run */
             self::$consoleStreamPath = null;

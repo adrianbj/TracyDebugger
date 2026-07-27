@@ -1093,6 +1093,9 @@ class ConsolePanel extends BasePanel {
             currentResultHtml: function() {
                 var resultsDiv = document.getElementById("tracyConsoleResult");
                 if(!resultsDiv) return "";
+                /* nothing to strip — skip the deep clone. This runs on every
+                   debounced save, including throughout a streaming run. */
+                if(!resultsDiv.querySelector('[id^="tracyConsoleStream_"]')) return resultsDiv.innerHTML;
                 var clone = resultsDiv.cloneNode(true);
                 var previews = clone.querySelectorAll('[id^="tracyConsoleStream_"]');
                 for(var i = 0; i < previews.length; i++) {
@@ -1106,7 +1109,11 @@ class ConsolePanel extends BasePanel {
                result can be appended in its place. */
             stopStream: function(runId, tabId) {
                 var run = tracyConsole.runs[tabId];
-                if(run) {
+                /* identity check: a late fetchAndCleanup for run A must not tear
+                   down streaming for run B that has since taken the tab's slot.
+                   The preview removal below is keyed by runId, so it stays
+                   unconditional. */
+                if(run && run.runId === runId) {
                     if(run.streamTimer) { clearTimeout(run.streamTimer); run.streamTimer = null; }
                     if(run.streamXhr) { try { run.streamXhr.abort(); } catch(e) {} run.streamXhr = null; }
                 }
@@ -1244,9 +1251,16 @@ class ConsolePanel extends BasePanel {
                     if(chunk !== "") {
                         var el = tracyConsole.streamPreviewEl(runId);
                         if(el) {
+                            /* only follow the output if the pane is already pinned to
+                               the bottom. scrollIntoView() scrolls every scrollable
+                               ancestor, so firing it once per chunk for a whole run
+                               yanks the page around while the user is reading or
+                               typing. The rest of the panel scrolls once, at delivery. */
+                            var pane = el.parentNode;
+                            var atBottom = pane && (pane.scrollHeight - pane.scrollTop - pane.clientHeight) < 40;
                             el.insertAdjacentHTML("beforeend", chunk);
                             if(window.Tracy && Tracy.Dumper) Tracy.Dumper.init(el);
-                            el.scrollIntoView({ block: "end" });
+                            if(atBottom && pane) pane.scrollTop = pane.scrollHeight;
                         }
                     }
                     r.streamOffset = nextOffset;
