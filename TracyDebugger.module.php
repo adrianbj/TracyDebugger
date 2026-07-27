@@ -698,7 +698,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $runIds = array();
                 foreach(array($cacheDir, $statusDir) as $dir) {
                     if(!is_dir($dir)) continue;
-                    foreach(glob($dir . '*.{json,pid,connid}', GLOB_BRACE) as $file) {
+                    foreach(glob($dir . '*.{json,pid,connid,partial}', GLOB_BRACE) as $file) {
                         $base = pathinfo($file, PATHINFO_FILENAME);
                         if($base !== '') $runIds[$base] = true;
                     }
@@ -768,6 +768,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     @unlink($statusDir . $runId . '.json');
                     @unlink($cacheDir . $runId . '.pid');
                     @unlink($cacheDir . $runId . '.connid');
+                    @unlink($cacheDir . $runId . '.partial');
                 }
                 exit;
             }
@@ -798,11 +799,37 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     exit;
                 }
                 $statusFile = $this->wire('config')->paths->assets . 'TracyDebugger/console_runs/' . $runId . '.json';
+                $status = 'missing';
                 if(file_exists($statusFile)) {
-                    echo (string) file_get_contents($statusFile);
-                } else {
-                    echo json_encode(array('status' => 'missing'));
+                    $data = @json_decode((string) @file_get_contents($statusFile), true);
+                    if(is_array($data) && isset($data['status'])) $status = $data['status'];
                 }
+                /* realtime streaming: hand back whatever d()/db() has published to
+                   the .partial file since the caller's offset, so the panel can
+                   render dumps while the script is still running. Read-only — the
+                   file is deleted by the cleanup/cancel endpoints, never here. */
+                $offset = isset($_POST['offset']) ? max(0, (int) $_POST['offset']) : 0;
+                $chunk = '';
+                $partialFile = $this->wire('config')->paths->cache . 'TracyDebugger/console_runs/' . $runId . '.partial';
+                if(is_file($partialFile)) {
+                    $size = (int) @filesize($partialFile);
+                    if($size > $offset) {
+                        $fh = @fopen($partialFile, 'rb');
+                        if($fh) {
+                            if(@fseek($fh, $offset) === 0) {
+                                $read = @stream_get_contents($fh);
+                                if($read !== false) $chunk = $read;
+                            }
+                            @fclose($fh);
+                        }
+                    }
+                }
+                echo json_encode(array(
+                    'status' => $status,
+                    'chunk' => $chunk,
+                    'offset' => $offset + strlen($chunk),
+                    'truncated' => (strpos($chunk, 'Live preview truncated') !== false)
+                ));
                 exit;
             }
 
@@ -867,7 +894,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $gcRunIds = array();
                 foreach(array($statusDir, $cacheRunDir) as $runDir) {
                     if(!is_dir($runDir)) continue;
-                    foreach(glob($runDir . '*.{json,pid,connid}', GLOB_BRACE) as $file) {
+                    foreach(glob($runDir . '*.{json,pid,connid,partial}', GLOB_BRACE) as $file) {
                         $gcRunIds[pathinfo($file, PATHINFO_FILENAME)] = true;
                     }
                 }
@@ -885,7 +912,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 foreach(array_keys($gcRunIds) as $gcRunId) {
                     if($gcRunId === '' || $this->consoleRunIsLive($gcRunId)) continue;
                     foreach(array($statusDir, $cacheRunDir) as $runDir) {
-                        foreach(array('.json', '.pid', '.connid') as $ext) {
+                        foreach(array('.json', '.pid', '.connid', '.partial') as $ext) {
                             $f = $runDir . $gcRunId . $ext;
                             if(is_file($f) && filemtime($f) < $gcCutoff) @unlink($f);
                         }
@@ -2436,6 +2463,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         @unlink($pidFile);
         @unlink($connIdFile);
         @unlink($cacheDir . $runId . '.json');
+        @unlink($cacheDir . $runId . '.partial');
         @unlink($statusDir . $runId . '.json');
         @unlink($cachePath . 'consoleCode_' . $runId . '.php');
 
