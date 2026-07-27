@@ -396,8 +396,14 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
         /* Arm the realtime streaming tap. TD::publishConsoleChunk() appends the
            buffer's new tail here after each d()/db() so the panel can render
            dumps while the script is still running. Level is latched on first
-           publish, not computed, so we only set the path and offset. */
-        TD::$consoleStreamPath = $tracyRunId ? $tracyRunCacheDir . $tracyRunId . '.partial' : null;
+           publish, not computed, so we only set the path and offset.
+
+           Gated on the panel's "Stream results" checkbox. When it is off we do not
+           arm at all, so there is no .partial file, no per-dump write, and nothing
+           for the panel to poll — the run behaves exactly as it did before the
+           feature existed. */
+        $tracyStreamResults = ($this->wire('input')->post->streamResults === 'true');
+        TD::$consoleStreamPath = ($tracyRunId && $tracyStreamResults) ? $tracyRunCacheDir . $tracyRunId . '.partial' : null;
         TD::$consoleStreamOffset = 0;
         TD::$consoleStreamLevel = null;
         ob_start(__NAMESPACE__.'\tracyConsoleDownloadBufferHandler');

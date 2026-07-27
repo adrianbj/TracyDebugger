@@ -979,6 +979,15 @@ class ConsolePanel extends BasePanel {
                             runId: t.runId, startTime: started, pollXhr: null, mainXhr: null, cancelled: false, delivered: false,
                             streamXhr: null, streamTimer: null, streamGen: 0, streamRestartTimer: null, streamRestartedAt: 0
                         };
+                        /* `streaming` is deliberately left undefined for a reattached
+                           run. We cannot know whether it was launched with Stream
+                           results on, and we cannot read the checkbox here: this runs
+                           at parse time, before the markup containing it is emitted, so
+                           streamResultsEnabled() would answer false and silently kill
+                           resume for a run that IS streaming. Leaving it undefined lets
+                           startStream proceed; if the run was not streaming there is no
+                           .partial, so polls return empty chunks, back off to 3s and
+                           stop at completion. Bounded waste beats broken resume. */
                         tracyConsole.setTabRunning(t.id, true);
                         if(t.id === tracyConsole.currentTabId) { tracyConsole.startStatusTimer(t.id); tracyConsole.setRunButtonEnabled(false); }
                         tracyConsole.pollForResults(t.runId, t.id);
@@ -1163,6 +1172,11 @@ class ConsolePanel extends BasePanel {
                 var run = tracyConsole.runs[tabId];
                 if(!run || run.runId !== runId || run.cancelled || run.delivered) return;
                 if(tabId !== tracyConsole.currentTabId) return;
+                /* Gate every entry point in one place. run.streaming records the state
+                   of the Stream results checkbox when the run was launched, so toggling
+                   it mid-run cannot start polling for a run whose server side never
+                   armed the tap (there would be no .partial to read). */
+                if(run.streaming === false) return;
 
                 /* Retire any chain still running BEFORE deciding whether to defer.
                    Bumping the generation here is what stops a superseded chain from
@@ -1464,6 +1478,7 @@ class ConsolePanel extends BasePanel {
                     streamXhr: null,
                     streamTimer: null,
                     streamGen: 0,
+                    streaming: tracyConsole.streamResultsEnabled(),
                     streamRestartTimer: null,
                     streamRestartedAt: 0
                 };
@@ -1616,6 +1631,7 @@ class ConsolePanel extends BasePanel {
                 xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
                 xmlhttp.send("tracyConsole=1&runId=" + encodeURIComponent(runId) + "&csrfToken=" + encodeURIComponent(this.csrfToken) + "&codeReturn=" + encodeURIComponent(codeReturn) + "&allowBluescreen=" + encodeURIComponent(allowBluescreen) +
+                    "&streamResults=" + encodeURIComponent(tracyConsole.streamResultsEnabled()) +
                     "&dbBackup=" + encodeURIComponent(dbBackup) + "&backupFilename=" + encodeURIComponent(backupFilename) +
                     "&accessTemplateVars=" + encodeURIComponent(accessTemplateVars) + "&pid=" + encodeURIComponent("$pid") +
                     "&fid=" + encodeURIComponent($fid) + "&tid=" + encodeURIComponent($tid) + "&mid=" + encodeURIComponent("$mid") +
@@ -2148,6 +2164,28 @@ class ConsolePanel extends BasePanel {
                     console.warn('Error loading history:', err);
                     return false;
                 }
+            },
+
+            /* Persist the Stream results choice across page loads, the way Backup DB
+               does. It is off for a new user, but someone who turns it on before a long
+               script should not have to turn it on again after every reload. */
+            updateStreamResultsState: function() {
+                var cb = document.getElementById("streamResults");
+                if(!cb) return;
+                if(cb.checked) {
+                    var expires = new Date();
+                    expires.setFullYear(expires.getFullYear() + 1);
+                    document.cookie = "tracyConsoleStreamResults=1;expires=" + expires.toGMTString() + ";path=/;SameSite=Strict";
+                }
+                else {
+                    document.cookie = "tracyConsoleStreamResults=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/; SameSite=Strict";
+                }
+                if(this.tce) this.tce.focus();
+            },
+
+            streamResultsEnabled: function() {
+                var cb = document.getElementById("streamResults");
+                return !!(cb && cb.checked);
             },
 
             updateBackupState: function() {
@@ -3041,6 +3079,8 @@ class ConsolePanel extends BasePanel {
         if(el) el.addEventListener('click', function() { tracyConsole.updateBackupState(); });
         el = document.getElementById('accessTemplateVars');
         if(el) el.addEventListener('click', function() { tracyConsole.tce.focus(); });
+        el = document.getElementById('streamResults');
+        if(el) el.addEventListener('click', function() { tracyConsole.updateStreamResultsState(); });
         el = document.getElementById('tracyConsoleClearResults');
         if(el) el.addEventListener('click', function() { tracyConsole.clearResults(); });
         el = document.getElementById('tracyConsoleForceKillAll');
@@ -3098,6 +3138,11 @@ HTML;
                         <span style="display: inline-block; padding: 0 20px 5px 0">
                             <label title="Send full stack trace of errors to Tracy bluescreen">
                                 <input type="checkbox" id="allowBluescreen" /> Allow bluescreen
+                            </label>
+                        </span>
+                        <span style="display: inline-block; padding: 0 20px 5px 0">
+                            <label title="Show d() and db() output live while the script is still running, instead of only when it finishes. Adds a background request roughly once a second for the duration of the run.">
+                                <input type="checkbox" id="streamResults" '.($this->wire('input')->cookie->tracyConsoleStreamResults ? 'checked="checked"' : '').' /> Stream results
                             </label>
                         </span>
                         ';
