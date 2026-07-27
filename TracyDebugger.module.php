@@ -2467,7 +2467,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
            cancel throws away everything the run produced, which is usually the
            only output the user is going to get from it. */
         $partialFile = $cacheDir . $runId . '.partial';
-        if(is_file($partialFile) && filesize($partialFile) <= 2097152) {
+        if(is_file($partialFile) && @filesize($partialFile) <= 2097152) {
             $result['capturedOutput'] = (string) @file_get_contents($partialFile);
         }
 

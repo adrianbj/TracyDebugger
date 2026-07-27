@@ -816,6 +816,12 @@ class ConsolePanel extends BasePanel {
                 if(!tabClosing && !confirm("Kill the running script?\\n\\nThis will terminate the PHP process immediately. Any work the script was doing will stop where it is and partial side effects (DB writes, file changes) may remain.")) {
                     return;
                 }
+                /* Removed unconditionally and up front, independent of whether a
+                   tracked run is found below: covers the tracked case, the stale
+                   case, and any case where a preview div outlives its run entry
+                   (e.g. an entry overwritten rather than deleted). No-ops if the
+                   div is already gone. */
+                tracyConsole.removeStreamPreview(runId);
                 var tabId = null;
                 for(var k in tracyConsole.runs) {
                     if(tracyConsole.runs.hasOwnProperty(k) && tracyConsole.runs[k].runId === runId) { tabId = Number(k); break; }
@@ -823,7 +829,6 @@ class ConsolePanel extends BasePanel {
                 if(tabId !== null) {
                     var run = tracyConsole.runs[tabId];
                     run.cancelled = true;
-                    tracyConsole.removeStreamPreview(runId);
                     if(run.streamTimer) { clearTimeout(run.streamTimer); run.streamTimer = null; }
                     if(run.streamXhr) { try { run.streamXhr.abort(); } catch(e) {} run.streamXhr = null; }
                     if(run.pollXhr) { try { run.pollXhr.abort(); } catch(e) {} run.pollXhr = null; }
