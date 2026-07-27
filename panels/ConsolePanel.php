@@ -823,6 +823,7 @@ class ConsolePanel extends BasePanel {
                 if(tabId !== null) {
                     var run = tracyConsole.runs[tabId];
                     run.cancelled = true;
+                    tracyConsole.removeStreamPreview(runId);
                     if(run.streamTimer) { clearTimeout(run.streamTimer); run.streamTimer = null; }
                     if(run.streamXhr) { try { run.streamXhr.abort(); } catch(e) {} run.streamXhr = null; }
                     if(run.pollXhr) { try { run.pollXhr.abort(); } catch(e) {} run.pollXhr = null; }
@@ -857,6 +858,18 @@ class ConsolePanel extends BasePanel {
                         data = JSON.parse(xhr.responseText);
                         killed = !!data.killed;
                     } catch(e) {}
+                    /* Promote whatever the run streamed before the kill into a real
+                       result block, so cancelling doesn't discard it. Uses the
+                       server's .partial rather than the preview div's DOM, which
+                       is missing anything published since the last chunk poll. */
+                    if(!tabClosing && data && typeof data.output === "string" && data.output !== "") {
+                        var cancelledHtml = '<div id="tracyConsoleResult_' + Date.now() + '" style="padding:10px 0">'
+                            + data.output
+                            + '<div class="tracyConsoleMetrics" style="border-top: 1px dotted #cccccc; color:#A9ABAB; border-bottom: 1px solid #cccccc; font-size: 10px; padding: 3px; margin: 10px 0 0 0;">cancelled — output captured up to this point</div>'
+                            + '</div>';
+                        tracyConsole.appendResultToTab(tabId === null ? tracyConsole.currentTabId : tabId, cancelledHtml)
+                            .catch(function(e) { console.warn('cancel output append failed:', e); });
+                    }
                     if(!tabClosing && tabId !== null && tabId === tracyConsole.currentTabId) {
                         var statusDiv = document.getElementById("tracyConsoleStatus");
                         if(statusDiv) statusDiv.innerHTML = killed ? "✘ Cancelled" : "✘ Cancelled (process may still be running)";

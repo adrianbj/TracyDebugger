@@ -673,6 +673,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     'wasLive' => $r['wasLive'],
                     'killed' => $r['killed'],
                     'connKilled' => $r['connKilled'],
+                    'output' => $r['capturedOutput'],
                 ));
                 exit;
             }
@@ -2400,10 +2401,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * `wasLive` distinguishes a real running process from a stale leftover
      * (file marker still present after the process is long gone).
      *
-     * Returns array('wasLive' => bool, 'killed' => bool, 'connKilled' => bool).
+     * Returns array('wasLive' => bool, 'killed' => bool, 'connKilled' => bool,
+     * 'capturedOutput' => string) — the last being whatever d()/db() streamed
+     * to the run's .partial file before it was killed.
      */
     private function cleanupConsoleRun($runId) {
-        $result = array('wasLive' => false, 'killed' => false, 'connKilled' => false);
+        $result = array('wasLive' => false, 'killed' => false, 'connKilled' => false, 'capturedOutput' => '');
         $runId = preg_replace('/[^a-zA-Z0-9_.]/', '', (string) $runId);
         if(!$runId) return $result;
 
@@ -2458,6 +2461,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     }
                 }
             }
+        }
+
+        /* Hand back whatever d()/db() published before the kill — otherwise a
+           cancel throws away everything the run produced, which is usually the
+           only output the user is going to get from it. */
+        $partialFile = $cacheDir . $runId . '.partial';
+        if(is_file($partialFile) && filesize($partialFile) <= 2097152) {
+            $result['capturedOutput'] = (string) @file_get_contents($partialFile);
         }
 
         @unlink($pidFile);
