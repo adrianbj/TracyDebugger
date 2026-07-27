@@ -823,6 +823,8 @@ class ConsolePanel extends BasePanel {
                 if(tabId !== null) {
                     var run = tracyConsole.runs[tabId];
                     run.cancelled = true;
+                    if(run.streamTimer) { clearTimeout(run.streamTimer); run.streamTimer = null; }
+                    if(run.streamXhr) { try { run.streamXhr.abort(); } catch(e) {} run.streamXhr = null; }
                     if(run.pollXhr) { try { run.pollXhr.abort(); } catch(e) {} run.pollXhr = null; }
                     if(run.mainXhr) { try { run.mainXhr.abort(); } catch(e) {} run.mainXhr = null; }
                     if(tabId === tracyConsole.currentTabId) tracyConsole.stopStatusTimer();
@@ -877,6 +879,9 @@ class ConsolePanel extends BasePanel {
                     if(!tracyConsole.runs.hasOwnProperty(ck)) continue;
                     var cr = tracyConsole.runs[ck];
                     cr.cancelled = true;
+                    if(cr.streamTimer) { clearTimeout(cr.streamTimer); cr.streamTimer = null; }
+                    if(cr.streamXhr) { try { cr.streamXhr.abort(); } catch(e) {} cr.streamXhr = null; }
+                    tracyConsole.removeStreamPreview(cr.runId);
                     if(cr.pollXhr) { try { cr.pollXhr.abort(); } catch(e) {} cr.pollXhr = null; }
                     if(cr.mainXhr) { try { cr.mainXhr.abort(); } catch(e) {} cr.mainXhr = null; }
                 }
@@ -969,6 +974,7 @@ class ConsolePanel extends BasePanel {
                 var xhr = new XMLHttpRequest();
                 xhr.onreadystatechange = function() {
                     if(xhr.readyState !== XMLHttpRequest.DONE) return;
+                    tracyConsole.stopStream(runId, tabId);
                     var appendPromise = Promise.resolve();
                     if(xhr.status == 200) {
                         try {
@@ -1023,6 +1029,45 @@ class ConsolePanel extends BasePanel {
                 xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
                 xhr.send("tracyConsoleCleanup=1&returnResult=1&csrfToken=" + encodeURIComponent(tracyConsole.csrfToken) + "&runId=" + encodeURIComponent(runId));
+            },
+
+            /* Realtime streaming preview. Lives in its own throwaway div so the
+               existing delivery paths stay untouched: at delivery we simply
+               remove this div and let them append the canonical result block as
+               they always have. Deliberately NOT routed through
+               appendResultToTab, so preview bytes never reach _rawResultHtml or
+               IndexedDB and a mid-run reload can't restore a half-finished
+               preview as if it were a completed result. */
+            streamPreviewEl: function(runId) {
+                var resultsDiv = document.getElementById("tracyConsoleResult");
+                if(!resultsDiv) return null;
+                var id = "tracyConsoleStream_" + runId;
+                var el = document.getElementById(id);
+                if(!el) {
+                    el = document.createElement("div");
+                    el.id = id;
+                    el.style.padding = "10px 0";
+                    resultsDiv.appendChild(el);
+                }
+                return el;
+            },
+
+            removeStreamPreview: function(runId) {
+                if(!runId) return;
+                var el = document.getElementById("tracyConsoleStream_" + runId);
+                if(el && el.parentNode) el.parentNode.removeChild(el);
+            },
+
+            /* Tear down streaming for a run: cancel the pending poll, abort any
+               in-flight chunk request, and drop the preview div so the canonical
+               result can be appended in its place. */
+            stopStream: function(runId, tabId) {
+                var run = tracyConsole.runs[tabId];
+                if(run) {
+                    if(run.streamTimer) { clearTimeout(run.streamTimer); run.streamTimer = null; }
+                    if(run.streamXhr) { try { run.streamXhr.abort(); } catch(e) {} run.streamXhr = null; }
+                }
+                tracyConsole.removeStreamPreview(runId);
             },
 
             setTabBadge: function(tabId, on) {
@@ -1115,6 +1160,63 @@ class ConsolePanel extends BasePanel {
                 if(tracyConsole._bgTimer) { clearInterval(tracyConsole._bgTimer); tracyConsole._bgTimer = null; }
             },
 
+            /* Append-only chunk poller for the live preview. It never delivers a
+               final result and never cleans up server files — the inline XHR and
+               pollForResults keep sole ownership of delivery, so the download
+               envelope and cleanup ordering are unaffected. Cadence is 1s while
+               chunks are arriving, backing off toward 3s after consecutive empty
+               polls so a long silent computation costs no more than today. */
+            pollForStream: function(runId, tabId, offset, quietCount) {
+                var run = tracyConsole.runs[tabId];
+                if(!run || run.runId !== runId || run.cancelled || run.delivered) return;
+                if(tabId !== tracyConsole.currentTabId) return;
+
+                var xmlhttp = new XMLHttpRequest();
+                run.streamXhr = xmlhttp;
+                xmlhttp.timeout = 10000;
+
+                var reschedule = function(nextOffset, quiet) {
+                    var r = tracyConsole.runs[tabId];
+                    if(!r || r.runId !== runId || r.cancelled || r.delivered) return;
+                    var delay = quiet >= 2 ? 3000 : 1000;
+                    r.streamTimer = setTimeout(function() {
+                        tracyConsole.pollForStream(runId, tabId, nextOffset, quiet);
+                    }, delay);
+                };
+
+                xmlhttp.ontimeout = function() { reschedule(offset, quietCount + 1); };
+                xmlhttp.onerror = function() { reschedule(offset, quietCount + 1); };
+                xmlhttp.onreadystatechange = function() {
+                    if(xmlhttp.readyState !== XMLHttpRequest.DONE) return;
+                    if(xmlhttp.status === 0) return;
+                    var r = tracyConsole.runs[tabId];
+                    if(!r || r.runId !== runId || r.cancelled || r.delivered) return;
+                    if(xmlhttp.status !== 200) { reschedule(offset, quietCount + 1); return; }
+                    var data = null;
+                    try { data = JSON.parse(xmlhttp.responseText); } catch(e) {}
+                    if(!data) { reschedule(offset, quietCount + 1); return; }
+                    var chunk = typeof data.chunk === "string" ? data.chunk : "";
+                    var nextOffset = typeof data.offset === "number" ? data.offset : offset;
+                    if(chunk !== "") {
+                        var el = tracyConsole.streamPreviewEl(runId);
+                        if(el) {
+                            el.insertAdjacentHTML("beforeend", chunk);
+                            if(window.Tracy && Tracy.Dumper) Tracy.Dumper.init(el);
+                            el.scrollIntoView({ block: "end" });
+                        }
+                    }
+                    r.streamOffset = nextOffset;
+                    if(data.status !== "running" && data.status !== "missing") return;
+                    reschedule(nextOffset, chunk === "" ? quietCount + 1 : 0);
+                };
+                xmlhttp.open("POST", "$currentUrl", true);
+                xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+                xmlhttp.send("tracyConsolePoll=1&csrfToken=" + encodeURIComponent(tracyConsole.csrfToken)
+                    + "&runId=" + encodeURIComponent(runId)
+                    + "&offset=" + encodeURIComponent(offset));
+            },
+
             pollForResults: function(runId, tabId) {
                 var run = tracyConsole.runs[tabId];
                 if(!run || run.cancelled) {
@@ -1196,7 +1298,10 @@ class ConsolePanel extends BasePanel {
                     mainXhr: null,
                     cancelled: false,
                     delivered: false,
-                    pollingActive: false
+                    pollingActive: false,
+                    streamXhr: null,
+                    streamOffset: 0,
+                    streamTimer: null
                 };
                 tracyConsole.setTabRunning(originTabId, true);
                 tracyConsole.setRunButtonEnabled(false);
@@ -1269,6 +1374,7 @@ class ConsolePanel extends BasePanel {
                            orphaning the run as forever-"running" and making the next panel
                            load report "Result file not found". */
                         if (xmlhttp.status == 200) {
+                            tracyConsole.stopStream(xhrRunId, originTabId);
                             const resultId = Date.now();
                             let downloadEnvelope = null;
                             try {
@@ -1296,6 +1402,7 @@ class ConsolePanel extends BasePanel {
                             tracyConsole.setRunButtonEnabled(true);
                         }
                         else {
+                            tracyConsole.stopStream(xhrRunId, originTabId);
                             const errorStr = escapeHtml(xmlhttp.status + ': ' + xmlhttp.statusText) + '<br />' + escapeHtml(xmlhttp.responseText);
                             const errorHtml = '<div style="padding: 10px 0">' + errorStr + '</div><div style="position:relative; border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;"></div>';
                             thisRun.delivered = true;
@@ -1317,6 +1424,14 @@ class ConsolePanel extends BasePanel {
                 };
                 xmlhttp.onreadystatechange = onReadyStateChange;
                 listenerMap.set(xmlhttp, { onreadystatechange: onReadyStateChange });
+
+                /* start the realtime preview 1s in, so runs that finish inside a
+                   second cost no extra requests at all */
+                tracyConsole.runs[originTabId].streamTimer = setTimeout(function() {
+                    var stRun = tracyConsole.runs[originTabId];
+                    if(!stRun || stRun.runId !== runId || stRun.cancelled || stRun.delivered) return;
+                    tracyConsole.pollForStream(runId, originTabId, 0, 0);
+                }, 1000);
 
                 /* start background polling after timeout WITHOUT aborting the original XHR,
                    so the server connection stays alive and PHP keeps running */
