@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.0.54',
+            'version' => '5.0.55',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -667,13 +667,26 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     echo json_encode(array('status' => 'error', 'message' => 'missing runId'));
                     exit;
                 }
-                $r = $this->cleanupConsoleRun($runId);
-                echo json_encode(array(
+                $r = $this->cleanupConsoleRun($runId, true);
+                $payload = array(
                     'status' => 'cancelled',
                     'wasLive' => $r['wasLive'],
                     'killed' => $r['killed'],
                     'connKilled' => $r['connKilled'],
-                ));
+                    'output' => $r['capturedOutput'],
+                );
+                /* json_encode() returns false if the captured bytes aren't valid
+                   UTF-8 (a binary echo, a non-UTF-8 d() title), and `echo false`
+                   is an empty 200 the client can't parse — losing the killed /
+                   status fields the cancel UI depends on. Drop the output rather
+                   than the whole response. */
+                $out = json_encode($payload);
+                if($out === false) {
+                    $payload['output'] = '';
+                    $payload['encodeError'] = true;
+                    $out = json_encode($payload);
+                }
+                echo $out === false ? '{"status":"cancelled"}' : $out;
                 exit;
             }
 
@@ -698,7 +711,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $runIds = array();
                 foreach(array($cacheDir, $statusDir) as $dir) {
                     if(!is_dir($dir)) continue;
-                    foreach(glob($dir . '*.{json,pid,connid}', GLOB_BRACE) as $file) {
+                    foreach(glob($dir . '*.{json,pid,connid,partial}', GLOB_BRACE) as $file) {
                         $base = pathinfo($file, PATHINFO_FILENAME);
                         if($base !== '') $runIds[$base] = true;
                     }
@@ -713,6 +726,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $liveKilled = 0;
                 $staleSwept = 0;
                 foreach(array_keys($runIds) as $rid) {
+                    /* no captured output here: cancelAllRuns() reads only the
+                       liveKilled/staleSwept counts, and shipping up to 2MB per run
+                       would bloat (and risk failing to encode) the one response
+                       whose whole purpose is recovery when nothing else works */
                     $r = $this->cleanupConsoleRun($rid);
                     $runs[] = array_merge(array('runId' => $rid), $r);
                     if($r['wasLive']) $liveKilled++;
@@ -768,6 +785,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     @unlink($statusDir . $runId . '.json');
                     @unlink($cacheDir . $runId . '.pid');
                     @unlink($cacheDir . $runId . '.connid');
+                    @unlink($cacheDir . $runId . '.partial');
                 }
                 exit;
             }
@@ -798,11 +816,57 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     exit;
                 }
                 $statusFile = $this->wire('config')->paths->assets . 'TracyDebugger/console_runs/' . $runId . '.json';
+                $status = 'missing';
                 if(file_exists($statusFile)) {
-                    echo (string) file_get_contents($statusFile);
-                } else {
-                    echo json_encode(array('status' => 'missing'));
+                    $data = @json_decode((string) @file_get_contents($statusFile), true);
+                    if(is_array($data) && isset($data['status'])) $status = $data['status'];
                 }
+                /* realtime streaming: hand back whatever d()/db() has published to
+                   the .partial file since the caller's offset, so the panel can
+                   render dumps while the script is still running. Read-only — the
+                   file is deleted by the cleanup/cancel endpoints, never here.
+                   Only the preview poller (pollForStream) sends an offset. The
+                   delivery poller sends none and gets exactly the response it got
+                   before this feature existed — just the status — so it never pays
+                   to read/encode/parse the whole accumulated .partial every 3s. */
+                $wantsChunk = isset($_POST['offset']);
+                $offset = $wantsChunk ? max(0, (int) $_POST['offset']) : 0;
+                $payload = array('status' => $status);
+                if($wantsChunk) {
+                    $chunk = '';
+                    $partialFile = $this->wire('config')->paths->cache . 'TracyDebugger/console_runs/' . $runId . '.partial';
+                    if(is_file($partialFile)) {
+                        $size = (int) @filesize($partialFile);
+                        if($size > $offset) {
+                            $fh = @fopen($partialFile, 'rb');
+                            if($fh) {
+                                if(@fseek($fh, $offset) === 0) {
+                                    $read = @stream_get_contents($fh);
+                                    if($read !== false) $chunk = $read;
+                                }
+                                @fclose($fh);
+                            }
+                        }
+                    }
+                    $payload['chunk'] = $chunk;
+                    $payload['offset'] = $offset + strlen($chunk);
+                }
+                /* json_encode() returns false on invalid UTF-8 (raw bytes in the
+                   buffer tail), and `echo false` is an empty 200 body. The delivery
+                   poller shares this endpoint and treats an unparseable response as
+                   "retry in 3s" forever, so such a run would never deliver. Always
+                   get the status through, dropping the chunk if that's what it takes. */
+                $out = json_encode($payload);
+                if($out === false) {
+                    if($wantsChunk) {
+                        $payload['chunk'] = '';
+                        $payload['offset'] = $offset;
+                    }
+                    $payload['encodeError'] = true;
+                    $out = json_encode($payload);
+                }
+                if($out === false) $out = json_encode(array('status' => $status));
+                echo $out === false ? '{"status":"error"}' : $out;
                 exit;
             }
 
@@ -867,7 +931,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $gcRunIds = array();
                 foreach(array($statusDir, $cacheRunDir) as $runDir) {
                     if(!is_dir($runDir)) continue;
-                    foreach(glob($runDir . '*.{json,pid,connid}', GLOB_BRACE) as $file) {
+                    foreach(glob($runDir . '*.{json,pid,connid,partial}', GLOB_BRACE) as $file) {
                         $gcRunIds[pathinfo($file, PATHINFO_FILENAME)] = true;
                     }
                 }
@@ -885,7 +949,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 foreach(array_keys($gcRunIds) as $gcRunId) {
                     if($gcRunId === '' || $this->consoleRunIsLive($gcRunId)) continue;
                     foreach(array($statusDir, $cacheRunDir) as $runDir) {
-                        foreach(array('.json', '.pid', '.connid') as $ext) {
+                        foreach(array('.json', '.pid', '.connid', '.partial') as $ext) {
                             $f = $runDir . $gcRunId . $ext;
                             if(is_file($f) && filemtime($f) < $gcCutoff) @unlink($f);
                         }
@@ -2373,10 +2437,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * `wasLive` distinguishes a real running process from a stale leftover
      * (file marker still present after the process is long gone).
      *
-     * Returns array('wasLive' => bool, 'killed' => bool, 'connKilled' => bool).
+     * Returns array('wasLive' => bool, 'killed' => bool, 'connKilled' => bool,
+     * 'capturedOutput' => string) — the last being whatever d()/db() streamed
+     * to the run's .partial file before it was killed, and only when
+     * $returnOutput is true (callers that don't use it skip the read entirely).
      */
-    private function cleanupConsoleRun($runId) {
-        $result = array('wasLive' => false, 'killed' => false, 'connKilled' => false);
+    private function cleanupConsoleRun($runId, $returnOutput = false) {
+        $result = array('wasLive' => false, 'killed' => false, 'connKilled' => false, 'capturedOutput' => '');
         $runId = preg_replace('/[^a-zA-Z0-9_.]/', '', (string) $runId);
         if(!$runId) return $result;
 
@@ -2433,9 +2500,21 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
 
+        /* Hand back whatever d()/db() published before the kill — otherwise a
+           cancel throws away everything the run produced, which is usually the
+           only output the user is going to get from it. The guard allows some
+           headroom over the stream cap because TD appends its truncation notice
+           after the offset has already reached the cap: gating on the bare cap
+           would reject exactly the truncated runs whose 2MB we most want back. */
+        $partialFile = $cacheDir . $runId . '.partial';
+        if($returnOutput && is_file($partialFile) && @filesize($partialFile) <= TD::CONSOLE_STREAM_MAX_BYTES + 65536) {
+            $result['capturedOutput'] = (string) @file_get_contents($partialFile);
+        }
+
         @unlink($pidFile);
         @unlink($connIdFile);
         @unlink($cacheDir . $runId . '.json');
+        @unlink($cacheDir . $runId . '.partial');
         @unlink($statusDir . $runId . '.json');
         @unlink($cachePath . 'consoleCode_' . $runId . '.php');
 

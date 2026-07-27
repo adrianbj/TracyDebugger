@@ -393,14 +393,30 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
         // capture output so we can write it to cache file for background polling.
         // The callback detects download responses (Content-Disposition: attachment) and
         // rewrites the buffer to a JSON download envelope at request-end flush.
+        /* Arm the realtime streaming tap. TD::publishConsoleChunk() appends the
+           buffer's new tail here after each d()/db() so the panel can render
+           dumps while the script is still running. Level is latched on first
+           publish, not computed, so we only set the path and offset. */
+        TD::$consoleStreamPath = $tracyRunId ? $tracyRunCacheDir . $tracyRunId . '.partial' : null;
+        TD::$consoleStreamOffset = 0;
+        TD::$consoleStreamLevel = null;
         ob_start(__NAMESPACE__.'\tracyConsoleDownloadBufferHandler');
         try {
-            echo $t->render();
+            try {
+                echo $t->render();
+            }
+            catch (\Exception $e) {
+                tracyConsoleExceptionHandler($e);
+            }
+            $renderedOutput = ob_get_clean();
         }
-        catch (\Exception $e) {
-            tracyConsoleExceptionHandler($e);
+        finally {
+            /* the run's output is captured — no further publishing is meaningful.
+               In `finally` so an uncaught \Error (\TypeError etc., not covered by
+               the \Exception catch above) can't unwind past the disarm and leave
+               the tap armed. */
+            TD::$consoleStreamPath = null;
         }
-        $renderedOutput = ob_get_clean();
 
         $timeStr = TracyDebugger::formatTime(Debugger::timer('consoleCode'), false);
         $memStr = TracyDebugger::human_filesize((max((memory_get_usage() - $initialMemory), 0)), false);

@@ -530,7 +530,7 @@ class ConsolePanel extends BasePanel {
                         historyData: existingTab ? existingTab.historyData : [],
                         historyItem: existingTab ? existingTab.historyItem : null,
                         historyCount: existingTab ? existingTab.historyCount : 0,
-                        result: this._rawResultHtml || document.getElementById("tracyConsoleResult")?.innerHTML || '',
+                        result: this._rawResultHtml || this.currentResultHtml(),
                         selections: selections,
                         scrollTop: this.tce.session.getScrollTop(),
                         scrollLeft: this.tce.session.getScrollLeft(),
@@ -816,6 +816,12 @@ class ConsolePanel extends BasePanel {
                 if(!tabClosing && !confirm("Kill the running script?\\n\\nThis will terminate the PHP process immediately. Any work the script was doing will stop where it is and partial side effects (DB writes, file changes) may remain.")) {
                     return;
                 }
+                /* Removed unconditionally and up front, independent of whether a
+                   tracked run is found below: covers the tracked case, the stale
+                   case, and any case where a preview div outlives its run entry
+                   (e.g. an entry overwritten rather than deleted). No-ops if the
+                   div is already gone. */
+                tracyConsole.removeStreamPreview(runId);
                 var tabId = null;
                 for(var k in tracyConsole.runs) {
                     if(tracyConsole.runs.hasOwnProperty(k) && tracyConsole.runs[k].runId === runId) { tabId = Number(k); break; }
@@ -823,6 +829,9 @@ class ConsolePanel extends BasePanel {
                 if(tabId !== null) {
                     var run = tracyConsole.runs[tabId];
                     run.cancelled = true;
+                    if(run.streamTimer) { clearTimeout(run.streamTimer); run.streamTimer = null; }
+                    if(run.streamRestartTimer) { clearTimeout(run.streamRestartTimer); run.streamRestartTimer = null; }
+                    if(run.streamXhr) { try { run.streamXhr.abort(); } catch(e) {} run.streamXhr = null; }
                     if(run.pollXhr) { try { run.pollXhr.abort(); } catch(e) {} run.pollXhr = null; }
                     if(run.mainXhr) { try { run.mainXhr.abort(); } catch(e) {} run.mainXhr = null; }
                     if(tabId === tracyConsole.currentTabId) tracyConsole.stopStatusTimer();
@@ -855,6 +864,18 @@ class ConsolePanel extends BasePanel {
                         data = JSON.parse(xhr.responseText);
                         killed = !!data.killed;
                     } catch(e) {}
+                    /* Promote whatever the run streamed before the kill into a real
+                       result block, so cancelling doesn't discard it. Uses the
+                       server's .partial rather than the preview div's DOM, which
+                       is missing anything published since the last chunk poll. */
+                    if(!tabClosing && data && typeof data.output === "string" && data.output !== "") {
+                        var cancelledHtml = '<div id="tracyConsoleResult_' + Date.now() + '" style="padding:10px 0">'
+                            + data.output
+                            + '<div class="tracyConsoleMetrics" style="border-top: 1px dotted #cccccc; color:#A9ABAB; border-bottom: 1px solid #cccccc; font-size: 10px; padding: 3px; margin: 10px 0 0 0;">cancelled — output captured up to this point</div>'
+                            + '</div>';
+                        tracyConsole.appendResultToTab(tabId === null ? tracyConsole.currentTabId : tabId, cancelledHtml)
+                            .catch(function(e) { console.warn('cancel output append failed:', e); });
+                    }
                     if(!tabClosing && tabId !== null && tabId === tracyConsole.currentTabId) {
                         var statusDiv = document.getElementById("tracyConsoleStatus");
                         if(statusDiv) statusDiv.innerHTML = killed ? "✘ Cancelled" : "✘ Cancelled (process may still be running)";
@@ -877,6 +898,10 @@ class ConsolePanel extends BasePanel {
                     if(!tracyConsole.runs.hasOwnProperty(ck)) continue;
                     var cr = tracyConsole.runs[ck];
                     cr.cancelled = true;
+                    if(cr.streamTimer) { clearTimeout(cr.streamTimer); cr.streamTimer = null; }
+                    if(cr.streamRestartTimer) { clearTimeout(cr.streamRestartTimer); cr.streamRestartTimer = null; }
+                    if(cr.streamXhr) { try { cr.streamXhr.abort(); } catch(e) {} cr.streamXhr = null; }
+                    tracyConsole.removeStreamPreview(cr.runId);
                     if(cr.pollXhr) { try { cr.pollXhr.abort(); } catch(e) {} cr.pollXhr = null; }
                     if(cr.mainXhr) { try { cr.mainXhr.abort(); } catch(e) {} cr.mainXhr = null; }
                 }
@@ -951,14 +976,33 @@ class ConsolePanel extends BasePanel {
                     if(liveById[t.runId]) {
                         var started = liveById[t.runId].startedAt ? liveById[t.runId].startedAt * 1000 : (t.startTime || Date.now());
                         tracyConsole.runs[t.id] = {
-                            runId: t.runId, startTime: started, pollXhr: null, mainXhr: null, cancelled: false, delivered: false
+                            runId: t.runId, startTime: started, pollXhr: null, mainXhr: null, cancelled: false, delivered: false,
+                            streamXhr: null, streamTimer: null, streamGen: 0, streamRestartTimer: null, streamRestartedAt: 0
                         };
                         tracyConsole.setTabRunning(t.id, true);
                         if(t.id === tracyConsole.currentTabId) { tracyConsole.startStatusTimer(t.id); tracyConsole.setRunButtonEnabled(false); }
                         tracyConsole.pollForResults(t.runId, t.id);
+                        /* Try to resume the live preview for a script still running
+                           after a page reload. Reading .partial from 0 rebuilds
+                           everything it has dumped so far, not just what arrives from
+                           now on.
+
+                           This call may no-op, depending on which async chain finishes
+                           first: currentTabId stays null until the
+                           IndexedDB open transaction completes, which sits behind the
+                           ace/split script loads, whereas this function runs at parse
+                           time. In that ordering resumption actually comes from init's
+                           switchTab(currentTabId), which reaches startStream once
+                           runs[] is populated. Both orderings are covered — keep this
+                           call for the case where reattach finishes last, and do not
+                           assume switchTab is the only path. */
+                        tracyConsole.startStream(t.runId, t.id);
                     } else {
                         /* finished while we were away — pull its result, then clear the pointer */
-                        tracyConsole.runs[t.id] = { runId: t.runId, startTime: t.startTime || Date.now(), pollXhr: null, mainXhr: null, cancelled: false, delivered: false };
+                        tracyConsole.runs[t.id] = {
+                            runId: t.runId, startTime: t.startTime || Date.now(), pollXhr: null, mainXhr: null, cancelled: false, delivered: false,
+                            streamXhr: null, streamTimer: null, streamGen: 0, streamRestartTimer: null, streamRestartedAt: 0
+                        };
                         tracyConsole.fetchAndCleanup(t.runId, 'complete', t.id);
                     }
                 }
@@ -969,6 +1013,7 @@ class ConsolePanel extends BasePanel {
                 var xhr = new XMLHttpRequest();
                 xhr.onreadystatechange = function() {
                     if(xhr.readyState !== XMLHttpRequest.DONE) return;
+                    tracyConsole.stopStream(runId, tabId);
                     var appendPromise = Promise.resolve();
                     if(xhr.status == 200) {
                         try {
@@ -1023,6 +1068,135 @@ class ConsolePanel extends BasePanel {
                 xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
                 xhr.send("tracyConsoleCleanup=1&returnResult=1&csrfToken=" + encodeURIComponent(tracyConsole.csrfToken) + "&runId=" + encodeURIComponent(runId));
+            },
+
+            /* Realtime streaming preview. Lives in its own throwaway div so the
+               existing delivery paths stay untouched: at delivery we simply
+               remove this div and let them append the canonical result block as
+               they always have. Deliberately NOT routed through
+               appendResultToTab, so preview bytes never reach _rawResultHtml.
+               Staying out of IndexedDB isn't automatic, though: saveToIndexedDB
+               falls back to reading the live results DOM whenever
+               _rawResultHtml is empty (a fresh tab, or right after
+               clearResults()), and that DOM can contain this div while a run
+               is streaming. currentResultHtml() below is the one place that
+               enforcement is applied, by stripping preview divs out of that
+               DOM read before it can be persisted as if it were a completed
+               result. */
+            streamPreviewEl: function(runId) {
+                var resultsDiv = document.getElementById("tracyConsoleResult");
+                if(!resultsDiv) return null;
+                var id = "tracyConsoleStream_" + runId;
+                var el = document.getElementById(id);
+                if(!el) {
+                    el = document.createElement("div");
+                    el.id = id;
+                    el.style.padding = "10px 0";
+                    resultsDiv.appendChild(el);
+                }
+                return el;
+            },
+
+            removeStreamPreview: function(runId) {
+                if(!runId) return;
+                var el = document.getElementById("tracyConsoleStream_" + runId);
+                if(el && el.parentNode) el.parentNode.removeChild(el);
+            },
+
+            /* The result HTML, minus any live preview. Reads the results div
+               off a clone so the live DOM is never mutated, strips every
+               [id^="tracyConsoleStream_"] node from that clone, then returns
+               the clone's innerHTML. This is the single place responsible for
+               making sure a preview div can never be captured by anything that
+               persists "the result" (see saveToIndexedDB's DOM fallback at
+               the call site), regardless of how many preview divs happen to
+               be present. */
+            currentResultHtml: function() {
+                var resultsDiv = document.getElementById("tracyConsoleResult");
+                if(!resultsDiv) return "";
+                /* nothing to strip — skip the deep clone. This runs on every
+                   debounced save, including throughout a streaming run. */
+                if(!resultsDiv.querySelector('[id^="tracyConsoleStream_"]')) return resultsDiv.innerHTML;
+                var clone = resultsDiv.cloneNode(true);
+                var previews = clone.querySelectorAll('[id^="tracyConsoleStream_"]');
+                for(var i = 0; i < previews.length; i++) {
+                    if(previews[i].parentNode) previews[i].parentNode.removeChild(previews[i]);
+                }
+                return clone.innerHTML;
+            },
+
+            /* Tear down streaming for a run: cancel the pending poll, abort any
+               in-flight chunk request, and drop the preview div so the canonical
+               result can be appended in its place. */
+            stopStream: function(runId, tabId) {
+                var run = tracyConsole.runs[tabId];
+                /* identity check: a late fetchAndCleanup for run A must not tear
+                   down streaming for run B that has since taken the tab's slot.
+                   The preview removal below is keyed by runId, so it stays
+                   unconditional. */
+                if(run && run.runId === runId) {
+                    if(run.streamTimer) { clearTimeout(run.streamTimer); run.streamTimer = null; }
+                    if(run.streamRestartTimer) { clearTimeout(run.streamRestartTimer); run.streamRestartTimer = null; }
+                    if(run.streamXhr) { try { run.streamXhr.abort(); } catch(e) {} run.streamXhr = null; }
+                }
+                tracyConsole.removeStreamPreview(runId);
+            },
+
+            /* Single entry point for (re)starting the live preview. Called 1s into a
+               new run, when a tab carrying a live run becomes active again, and after
+               a page reload reattaches to a still-running script.
+
+               Always restarts from offset 0 rather than the run's last offset. The
+               .partial file holds everything the run has published since it started,
+               so re-reading from the beginning rebuilds the COMPLETE preview. That
+               matters because switchTab repaints the results pane wholesale and a
+               reload rebuilds it from storage — in both cases the previously streamed
+               markup is gone from the DOM, so resuming at the old offset would
+               render only the tail and silently drop everything before it.
+
+               (Do not start a line in this heredoc with the closing identifier —
+               since PHP 7.3 an indented identifier followed by any non-word
+               character closes the heredoc, which turns a comment into a parse
+               error hundreds of lines earlier.) */
+            startStream: function(runId, tabId) {
+                tabId = Number(tabId);
+                var run = tracyConsole.runs[tabId];
+                if(!run || run.runId !== runId || run.cancelled || run.delivered) return;
+                if(tabId !== tracyConsole.currentTabId) return;
+
+                /* Retire any chain still running BEFORE deciding whether to defer.
+                   Bumping the generation here is what stops a superseded chain from
+                   rendering a tail-only preview during the debounce window: the
+                   caller has already wiped the pane, so a late response from the old
+                   chain would otherwise recreate the div and append at its stale
+                   offset — a brief flash of truncated output. */
+                var gen = (run.streamGen || 0) + 1;
+                run.streamGen = gen;
+                if(run.streamTimer) { clearTimeout(run.streamTimer); run.streamTimer = null; }
+                if(run.streamXhr) { try { run.streamXhr.abort(); } catch(e) {} run.streamXhr = null; }
+
+                /* Collapse a burst of rapid tab clicks into a single restart. Each
+                   restart re-reads the whole .partial and re-renders it, so several
+                   queued back-to-back could mean several multi-megabyte renders.
+                   The pending restart gets its own timer field so the teardown paths
+                   can cancel it deterministically — sharing streamTimer with the poll
+                   chain let a reschedule overwrite the handle and leave it untracked. */
+                var now = Date.now();
+                var since = now - (run.streamRestartedAt || 0);
+                if(run.streamRestartTimer) { clearTimeout(run.streamRestartTimer); run.streamRestartTimer = null; }
+                if(since < 400) {
+                    run.streamRestartTimer = setTimeout(function() {
+                        var r = tracyConsole.runs[tabId];
+                        if(r) r.streamRestartTimer = null;
+                        tracyConsole.startStream(runId, tabId);
+                    }, 400 - since);
+                    return;
+                }
+                run.streamRestartedAt = now;
+
+                /* drop any surviving preview so the re-read from 0 cannot duplicate it */
+                tracyConsole.removeStreamPreview(runId);
+                tracyConsole.pollForStream(runId, tabId, 0, 0, gen);
             },
 
             setTabBadge: function(tabId, on) {
@@ -1115,6 +1289,81 @@ class ConsolePanel extends BasePanel {
                 if(tracyConsole._bgTimer) { clearInterval(tracyConsole._bgTimer); tracyConsole._bgTimer = null; }
             },
 
+            /* Append-only chunk poller for the live preview. It never delivers a
+               final result and never cleans up server files — the inline XHR and
+               pollForResults keep sole ownership of delivery, so the download
+               envelope and cleanup ordering are unaffected. Cadence is 1s while
+               chunks are arriving, backing off toward 3s after consecutive empty
+               polls so a long silent computation costs no more than today. */
+            pollForStream: function(runId, tabId, offset, quietCount, gen) {
+                /* A chain is current only while it owns the run's generation. Anything
+                   older has been superseded by a restart and must exit silently —
+                   without rendering and without rescheduling. startStream bumps the
+                   generation, so a stale chain cannot revive itself. */
+                var isCurrent = function() {
+                    var r = tracyConsole.runs[tabId];
+                    return !!r && r.runId === runId && (r.streamGen || 0) === gen;
+                };
+                if(!isCurrent()) return;
+                var run = tracyConsole.runs[tabId];
+                if(run.cancelled || run.delivered) return;
+                if(tabId !== tracyConsole.currentTabId) return;
+
+                var xmlhttp = new XMLHttpRequest();
+                run.streamXhr = xmlhttp;
+                xmlhttp.timeout = 10000;
+
+                var reschedule = function(nextOffset, quiet) {
+                    if(!isCurrent()) return;
+                    var r = tracyConsole.runs[tabId];
+                    if(r.cancelled || r.delivered) return;
+                    var delay = quiet >= 2 ? 3000 : 1000;
+                    r.streamTimer = setTimeout(function() {
+                        tracyConsole.pollForStream(runId, tabId, nextOffset, quiet, gen);
+                    }, delay);
+                };
+
+                xmlhttp.ontimeout = function() { reschedule(offset, quietCount + 1); };
+                xmlhttp.onerror = function() { reschedule(offset, quietCount + 1); };
+                xmlhttp.onreadystatechange = function() {
+                    if(xmlhttp.readyState !== XMLHttpRequest.DONE) return;
+                    if(xmlhttp.status === 0) return;
+                    if(!isCurrent()) return;
+                    var r = tracyConsole.runs[tabId];
+                    if(r.cancelled || r.delivered) return;
+                    if(xmlhttp.status !== 200) { reschedule(offset, quietCount + 1); return; }
+                    var data = null;
+                    try { data = JSON.parse(xmlhttp.responseText); } catch(e) {}
+                    if(!data) { reschedule(offset, quietCount + 1); return; }
+                    var chunk = typeof data.chunk === "string" ? data.chunk : "";
+                    var nextOffset = typeof data.offset === "number" ? data.offset : offset;
+                    if(tabId !== tracyConsole.currentTabId) return;
+                    if(chunk !== "") {
+                        var el = tracyConsole.streamPreviewEl(runId);
+                        if(el) {
+                            /* only follow the output if the pane is already pinned to
+                               the bottom. scrollIntoView() scrolls every scrollable
+                               ancestor, so firing it once per chunk for a whole run
+                               yanks the page around while the user is reading or
+                               typing. The rest of the panel scrolls once, at delivery. */
+                            var pane = el.parentNode;
+                            var atBottom = pane && (pane.scrollHeight - pane.scrollTop - pane.clientHeight) < 40;
+                            el.insertAdjacentHTML("beforeend", chunk);
+                            if(window.Tracy && Tracy.Dumper) Tracy.Dumper.init(el);
+                            if(atBottom && pane) pane.scrollTop = pane.scrollHeight;
+                        }
+                    }
+                    if(data.status !== "running" && data.status !== "missing") return;
+                    reschedule(nextOffset, chunk === "" ? quietCount + 1 : 0);
+                };
+                xmlhttp.open("POST", "$currentUrl", true);
+                xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+                xmlhttp.send("tracyConsolePoll=1&csrfToken=" + encodeURIComponent(tracyConsole.csrfToken)
+                    + "&runId=" + encodeURIComponent(runId)
+                    + "&offset=" + encodeURIComponent(offset));
+            },
+
             pollForResults: function(runId, tabId) {
                 var run = tracyConsole.runs[tabId];
                 if(!run || run.cancelled) {
@@ -1196,7 +1445,12 @@ class ConsolePanel extends BasePanel {
                     mainXhr: null,
                     cancelled: false,
                     delivered: false,
-                    pollingActive: false
+                    pollingActive: false,
+                    streamXhr: null,
+                    streamTimer: null,
+                    streamGen: 0,
+                    streamRestartTimer: null,
+                    streamRestartedAt: 0
                 };
                 tracyConsole.setTabRunning(originTabId, true);
                 tracyConsole.setRunButtonEnabled(false);
@@ -1269,6 +1523,7 @@ class ConsolePanel extends BasePanel {
                            orphaning the run as forever-"running" and making the next panel
                            load report "Result file not found". */
                         if (xmlhttp.status == 200) {
+                            tracyConsole.stopStream(xhrRunId, originTabId);
                             const resultId = Date.now();
                             let downloadEnvelope = null;
                             try {
@@ -1296,6 +1551,7 @@ class ConsolePanel extends BasePanel {
                             tracyConsole.setRunButtonEnabled(true);
                         }
                         else {
+                            tracyConsole.stopStream(xhrRunId, originTabId);
                             const errorStr = escapeHtml(xmlhttp.status + ': ' + xmlhttp.statusText) + '<br />' + escapeHtml(xmlhttp.responseText);
                             const errorHtml = '<div style="padding: 10px 0">' + errorStr + '</div><div style="position:relative; border-bottom: 1px dotted #cccccc; padding: 3px; margin:5px 0;"></div>';
                             thisRun.delivered = true;
@@ -1317,6 +1573,12 @@ class ConsolePanel extends BasePanel {
                 };
                 xmlhttp.onreadystatechange = onReadyStateChange;
                 listenerMap.set(xmlhttp, { onreadystatechange: onReadyStateChange });
+
+                /* start the realtime preview 1s in, so runs that finish inside a
+                   second cost no extra requests at all */
+                tracyConsole.runs[originTabId].streamTimer = setTimeout(function() {
+                    tracyConsole.startStream(runId, originTabId);
+                }, 1000);
 
                 /* start background polling after timeout WITHOUT aborting the original XHR,
                    so the server connection stays alive and PHP keeps running */
@@ -1949,6 +2211,11 @@ class ConsolePanel extends BasePanel {
                 var statusDiv = document.getElementById("tracyConsoleStatus");
                 if(this.runs[tabId]) {
                     this.startStatusTimer(tabId);
+                    /* the innerHTML repaint above discarded any preview div, and the
+                       outgoing tab's poll chain has stopped rescheduling — so revive
+                       streaming for the incoming tab's run, from offset 0 so the
+                       preview is rebuilt in full rather than resuming mid-output */
+                    this.startStream(this.runs[tabId].runId, tabId);
                 } else {
                     this.stopStatusTimer();
                     if(statusDiv) statusDiv.innerHTML = '';
