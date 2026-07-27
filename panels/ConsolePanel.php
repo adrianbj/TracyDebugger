@@ -1197,6 +1197,7 @@ class ConsolePanel extends BasePanel {
                     if(!data) { reschedule(offset, quietCount + 1); return; }
                     var chunk = typeof data.chunk === "string" ? data.chunk : "";
                     var nextOffset = typeof data.offset === "number" ? data.offset : offset;
+                    if(tabId !== tracyConsole.currentTabId) return;
                     if(chunk !== "") {
                         var el = tracyConsole.streamPreviewEl(runId);
                         if(el) {
