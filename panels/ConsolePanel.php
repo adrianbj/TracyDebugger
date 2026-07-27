@@ -1604,11 +1604,22 @@ class ConsolePanel extends BasePanel {
                 xmlhttp.onreadystatechange = onReadyStateChange;
                 listenerMap.set(xmlhttp, { onreadystatechange: onReadyStateChange });
 
-                /* start the realtime preview 1s in, so runs that finish inside a
-                   second cost no extra requests at all */
-                tracyConsole.runs[originTabId].streamTimer = setTimeout(function() {
-                    tracyConsole.startStream(runId, originTabId);
-                }, 1000);
+                /* Start the preview immediately when Stream results is ticked, and not
+                   at all when it is not.
+
+                   This used to wait 1s, from when streaming was always on and the delay
+                   kept short runs from costing extra requests. That is the wrong trade
+                   for an opt-in: a run finishing inside a second is DELIVERED before the
+                   timer fires, so stopStream tears the chain down and not one poll ever
+                   happens — the user ticks the box, runs something quick, and sees
+                   nothing, while the server has already written the whole .partial. It
+                   reads as "the checkbox does nothing". Someone who ticked the box has
+                   accepted the cost of a request; honour that on every run. */
+                if(tracyConsole.runs[originTabId].streaming) {
+                    tracyConsole.runs[originTabId].streamTimer = setTimeout(function() {
+                        tracyConsole.startStream(runId, originTabId);
+                    }, 0);
+                }
 
                 /* start background polling after timeout WITHOUT aborting the original XHR,
                    so the server connection stays alive and PHP keeps running */
