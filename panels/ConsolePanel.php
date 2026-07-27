@@ -1448,6 +1448,11 @@ class ConsolePanel extends BasePanel {
                    invariant. */
                 var displacedRun = tracyConsole.runs[originTabId];
                 if(displacedRun) tracyConsole.stopStream(displacedRun.runId, originTabId);
+                /* Only the displaced run's STREAM is torn down here. Its mainXhr and
+                   pollXhr are deliberately left running: they are neutralised by the
+                   stale-response guard below (thisRun.runId !== xhrRunId), which
+                   no-ops them once this slot holds the new run. If that guard is ever
+                   changed, this is the other half of the arrangement. */
                 tracyConsole.runs[originTabId] = {
                     runId: runId,
                     startTime: Date.now(),
