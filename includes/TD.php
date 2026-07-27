@@ -10,6 +10,18 @@ class TD extends TracyDebugger {
     private static $recorderPendingItems = array();
     private static $recorderShutdownRegistered = false;
 
+    /* Realtime console streaming: when a Console run is in flight,
+       publishConsoleChunk() appends the output buffer's new tail here after each
+       d()/db() so the panel can poll it and render dumps as they happen. Null
+       path = tap disabled (not a console run, or the size cap was hit). */
+    public static $consoleStreamPath = null;
+    public static $consoleStreamOffset = 0;
+    public static $consoleStreamLevel = null;
+
+    /* Cap published bytes so a runaway loop (for(1..100000) d($x)) can't fill
+       the disk. The final output is unaffected by this cap. */
+    const CONSOLE_STREAM_MAX_BYTES = 2097152;
+
     // bound dumps.json so a long-lived recorder session (or a high-traffic AJAX
     // endpoint) can't grow it without limit and exhaust memory on the next flush
     const RECORDER_MAX_ITEMS = 200;
@@ -277,6 +289,52 @@ class TD extends TracyDebugger {
     }
 
     /**
+     * Append everything the output buffer has gained since the last call to the
+     * run's .partial file, so the Console panel can render d()/db() output while
+     * the script is still running.
+     *
+     * ob_get_contents() only ever returns the INNERMOST buffer. At the point user
+     * console code runs there are two buffers below it (the one CodeProcessor
+     * opens, plus TemplateFile::render()'s own) and that depth is a PW/Tracy
+     * implementation detail, so the expected level is latched from the first call
+     * rather than computed. Any later call at a different level means user code
+     * opened its own buffer (or we're inside the discarded template-resources
+     * replay) — a different buffer than $consoleStreamOffset is measured against,
+     * so we no-op instead of publishing garbled bytes.
+     * @tracySkipLocation
+     */
+    public static function publishConsoleChunk() {
+        if(self::$consoleStreamPath === null) return;
+        $level = ob_get_level();
+        if(self::$consoleStreamLevel === null) {
+            self::$consoleStreamLevel = $level;
+        }
+        elseif($level !== self::$consoleStreamLevel) {
+            return;
+        }
+        $buf = ob_get_contents();
+        if($buf === false) return;
+        $new = substr($buf, self::$consoleStreamOffset);
+        if($new === '' || $new === false) return;
+        if(self::$consoleStreamOffset + strlen($new) > self::CONSOLE_STREAM_MAX_BYTES) {
+            @file_put_contents(
+                self::$consoleStreamPath,
+                '<div style="padding:4px 0; color:#A9ABAB; font-size:11px;">Live preview truncated — full output will appear on completion.</div>',
+                FILE_APPEND | LOCK_EX
+            );
+            self::$consoleStreamPath = null;
+            return;
+        }
+        if(@file_put_contents(self::$consoleStreamPath, $new, FILE_APPEND | LOCK_EX) === false) {
+            /* disk full / permissions — give up on the preview rather than
+               retrying on every dump for the rest of the run */
+            self::$consoleStreamPath = null;
+            return;
+        }
+        self::$consoleStreamOffset += strlen($new);
+    }
+
+    /**
      * Tracy\Debugger::dump() shortcut.
      * @tracySkipLocation
      */
@@ -320,6 +378,7 @@ class TD extends TracyDebugger {
             '   </div>
             </div>';
             try { static::agentDumpToConsole($var, $title); } catch(\Throwable $e) { try { self::log($e); } catch(\Throwable $logErr) {} }
+            static::publishConsoleChunk();
         }
     }
 
@@ -365,6 +424,7 @@ class TD extends TracyDebugger {
             '   </div>
             </div>';
             try { static::agentDumpToConsole($var, $title); } catch(\Throwable $e) { try { self::log($e); } catch(\Throwable $logErr) {} }
+            static::publishConsoleChunk();
         }
     }
 
