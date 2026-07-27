@@ -1438,6 +1438,21 @@ class ConsolePanel extends BasePanel {
                 /* generate unique run ID for background execution support */
                 const runId = Date.now() + '_' + Math.random().toString(36).substr(2);
                 const originTabId = tracyConsole.currentTabId;
+                /* Assigning below REPLACES any entry already in this tab's slot, which
+                   would strand the previous run's preview div in the pane — later
+                   results then append below a stale preview, since appendResultToTab
+                   uses insertAdjacentHTML("beforeend"). Every other path that drops a
+                   run entry pairs the drop with a teardown; this one is an overwrite,
+                   so it has to do the same. Unreachable while setRunButtonEnabled gates
+                   the Run button on runs[currentTabId], but that is a UI guard, not an
+                   invariant. */
+                var displacedRun = tracyConsole.runs[originTabId];
+                if(displacedRun) tracyConsole.stopStream(displacedRun.runId, originTabId);
+                /* Only the displaced run's STREAM is torn down here. Its mainXhr and
+                   pollXhr are deliberately left running: they are neutralised by the
+                   stale-response guard below (thisRun.runId !== xhrRunId), which
+                   no-ops them once this slot holds the new run. If that guard is ever
+                   changed, this is the other half of the arrangement. */
                 tracyConsole.runs[originTabId] = {
                     runId: runId,
                     startTime: Date.now(),
