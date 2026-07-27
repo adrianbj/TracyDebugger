@@ -2178,7 +2178,7 @@ class ConsolePanel extends BasePanel {
                     document.cookie = "tracyConsoleStreamResults=1;expires=" + expires.toGMTString() + ";path=/;SameSite=Strict";
                 }
                 else {
-                    document.cookie = "tracyConsoleStreamResults=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/; SameSite=Strict";
+                    document.cookie = "tracyConsoleStreamResults=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/;SameSite=Strict";
                 }
                 if(this.tce) this.tce.focus();
             },
@@ -3141,7 +3141,7 @@ HTML;
                             </label>
                         </span>
                         <span style="display: inline-block; padding: 0 20px 5px 0">
-                            <label title="Show d() and db() output live while the script is still running, instead of only when it finishes. Adds a background request roughly once a second for the duration of the run.">
+                            <label title="Show d() and db() output live while the script is still running, instead of only when it finishes. Adds a background request about once a second while output is arriving, easing to every three seconds when it is not.">
                                 <input type="checkbox" id="streamResults" '.($this->wire('input')->cookie->tracyConsoleStreamResults ? 'checked="checked"' : '').' /> Stream results
                             </label>
                         </span>
