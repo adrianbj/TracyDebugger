@@ -837,13 +837,24 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     $partialFile = $this->wire('config')->paths->cache . 'TracyDebugger/console_runs/' . $runId . '.partial';
                     if(is_file($partialFile)) {
                         $size = (int) @filesize($partialFile);
+                        /* Clamp an offset beyond EOF rather than echoing it back. No
+                           client sends one today, but returning a bogus offset would
+                           park that client past the end permanently — it would never
+                           see another byte of a still-growing file. */
+                        if($offset > $size) $offset = $size;
                         if($size > $offset) {
                             $fh = @fopen($partialFile, 'rb');
                             if($fh) {
+                                /* Shared lock against the writer's LOCK_EX. Appends are
+                                   very unlikely to tear on POSIX, but the writer already
+                                   takes an exclusive lock, so honouring it costs nothing
+                                   and removes the question. */
+                                @flock($fh, LOCK_SH);
                                 if(@fseek($fh, $offset) === 0) {
                                     $read = @stream_get_contents($fh);
                                     if($read !== false) $chunk = $read;
                                 }
+                                @flock($fh, LOCK_UN);
                                 @fclose($fh);
                             }
                         }
