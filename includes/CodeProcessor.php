@@ -6,6 +6,14 @@ unset($this->wire('input')->cookie->tracyCodeError);
 setcookie("tracyCodeError", "", time()-3600);
 // Background execution support: accept run ID and make PHP resilient to connection abort
 $tracyRunId = isset($_POST['runId']) ? preg_replace('/[^a-zA-Z0-9_.]/', '', $_POST['runId']) : '';
+/* Whether the panel's "Stream results" checkbox was ticked for this run.
+   Read from $_POST here, at the top, for the same reason $tracyRunId is: further
+   down, when the session holds cached page POST data, $input->post is emptied and
+   repopulated from that cache — which silently discards anything the console
+   request itself sent. Reading $input->post->streamResults after that point makes
+   streaming fail on every run whose session has post data, while working on ones
+   whose session does not, which is exactly as confusing as it sounds. */
+$tracyStreamResults = (isset($_POST['streamResults']) && $_POST['streamResults'] === 'true');
 $tracyRunStatusDir = $this->wire('config')->paths->assets . 'TracyDebugger/console_runs/';
 $tracyRunCacheDir = $this->wire('config')->paths->cache . 'TracyDebugger/console_runs/';
 if($tracyRunId) {
@@ -401,8 +409,8 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
            Gated on the panel's "Stream results" checkbox. When it is off we do not
            arm at all, so there is no .partial file, no per-dump write, and nothing
            for the panel to poll — the run behaves exactly as it did before the
-           feature existed. */
-        $tracyStreamResults = ($this->wire('input')->post->streamResults === 'true');
+           feature existed. $tracyStreamResults is captured at the top of this file,
+           before $input->post can be swapped out from under it. */
         TD::$consoleStreamPath = ($tracyRunId && $tracyStreamResults) ? $tracyRunCacheDir . $tracyRunId . '.partial' : null;
         TD::$consoleStreamOffset = 0;
         TD::$consoleStreamLevel = null;
