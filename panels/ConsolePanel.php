@@ -668,7 +668,7 @@ class ConsolePanel extends BasePanel {
                 this.tce.focus();
             },
 
-            processTracyCode: function() {
+            processTracyCode: async function() {
                 if(document.getElementById("runInjectButton")?.disabled) return;
                 const code = this.tce.getSelectedText() || this.tce.getValue();
                 const statusDiv = document.getElementById("tracyConsoleStatus");
@@ -676,8 +676,16 @@ class ConsolePanel extends BasePanel {
                     statusDiv.innerHTML = "<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> Processing";
                 }
                 const codeReturn = this.getCookie('tracyIncludeCode') ? false : true;
+                /* disable Run synchronously — callPhp normally does this, but it now
+                   runs after the await below, leaving a gap where a double-click
+                   could launch the same code twice */
+                this.setRunButtonEnabled(false);
+                /* history must be committed BEFORE callPhp: callPhp fires a launch
+                   saveToIndexedDB whose read-modify-write cycle otherwise interleaves
+                   with saveHistory's and clobbers the new history entry with the
+                   stale historyData it read */
+                await this.saveHistory();
                 this.callPhp(code, codeReturn);
-                this.saveHistory();
                 this.tce.focus();
             },
 
