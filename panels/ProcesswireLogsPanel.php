@@ -114,7 +114,10 @@ class ProcesswireLogsPanel extends BasePanel {
 
             }
 
-            if(isset($cacheChanged)) {
+            // Marking entries as seen is what drives the orange/red highlighting of new rows, so
+            // it must not happen on a render that only produces a deferred loading shell - the
+            // endpoint request that builds the body the user reads consumes it instead.
+            if(isset($cacheChanged) && !$this->deferredRenderPending('processwireLogs')) {
                 $this->wire('cache')->save('TracyLogData.ProcessWire', $logLinesData, WireCache::expireNever);
             }
 

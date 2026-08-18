@@ -108,8 +108,15 @@ class PanelSelectorPanel extends BasePanel {
 
         // Right side: timing and size info (only if exists)
         if ($seconds) {
-            $out .= '<span style="color: #999; font-size: 11px; white-space: nowrap; margin: 0 15px; flex-shrink: 0;">' . TracyDebugger::formatTime($seconds);
+            // a deferred panel's figures cover its tab plus the loading shell - all this page
+            // render spent on it. The body is built by the tracyPanelContent endpoint when the
+            // panel is first opened, and its own footer reports that cost.
+            $isDeferred = isset(TracyDebugger::$deferrablePanels[$name]);
+            $out .= '<span style="color: #999; font-size: 11px; white-space: nowrap; margin: 0 15px; flex-shrink: 0;"'
+                . ($isDeferred ? ' title="Tab and loading shell only - this panel\'s body is fetched when you first open it"' : '')
+                . '>' . TracyDebugger::formatTime($seconds);
             if ($size) $out .= ', ' . $size;
+            if ($isDeferred) $out .= '&nbsp;<span style="color: ' . TracyDebugger::COLOR_NORMAL . '">&#8623;</span>';
             $out .= '</span>';
         }
 

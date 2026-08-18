@@ -71,6 +71,22 @@ abstract class BasePanel extends WireData implements IBarPanel {
     }
 
     /**
+     * Is this render only going to produce a loading shell?
+     *
+     * True in the page request for a panel that defers its body, i.e. whatever this render
+     * computes will be thrown away and rebuilt by the tracyPanelContent endpoint. Panels that
+     * consume one-shot state - the log panels mark their entries as seen - must hold off until
+     * the render the user actually looks at, or the highlighting is spent on the discarded one.
+     *
+     * @param string $panelKey Key from TracyDebugger::$deferrablePanels
+     * @return bool
+     */
+    protected function deferredRenderPending($panelKey) {
+        return isset(TracyDebugger::$deferrablePanels[$panelKey]) && !TracyDebugger::$renderingDeferredPanel;
+    }
+
+
+    /**
      * REQUEST_URI to use for links and XHR targets built by this panel.
      *
      * Same reasoning as TracyDebugger::inputUrl(): while a deferred body renders, the endpoint's
@@ -122,7 +138,7 @@ abstract class BasePanel extends WireData implements IBarPanel {
         // the placeholder carries a minimum size so the panel does not open as a small box and
         // then jump; Tracy positions a panel from its size at open time, and the swap below
         // re-anchors it afterwards
-        return $header . '
+        $shell = $header . '
         <div class="tracy-inner" id="' . $id . '" style="min-width: 320px; min-height: 100px">
             <div style="padding: 10px; color: ' . TracyDebugger::COLOR_LIGHTGREY . '">Loading&hellip;</div>
         </div>
@@ -189,6 +205,16 @@ abstract class BasePanel extends WireData implements IBarPanel {
                 });
         })();
         </script>';
+
+        // Panel Selector reads these, and closePanel() - which normally records them - is never
+        // reached on this path. What the page render actually spent on this panel is getTab() plus
+        // this shell, which is the honest figure for a column measuring page cost; the body's own
+        // cost is recorded by closePanel() in the endpoint request and shows in the panel footer
+        // once opened.
+        TracyDebugger::$panelGenerationTime[$panelKey]['time'] = Debugger::timer($panelKey);
+        TracyDebugger::$panelGenerationTime[$panelKey]['size'] = strlen($shell);
+
+        return $shell;
     }
 
     /**
