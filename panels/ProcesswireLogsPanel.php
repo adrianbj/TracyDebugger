@@ -114,10 +114,7 @@ class ProcesswireLogsPanel extends BasePanel {
 
             }
 
-            // Marking entries as seen is what drives the orange/red highlighting of new rows, so
-            // it must not happen on a render that only produces a deferred loading shell - the
-            // endpoint request that builds the body the user reads consumes it instead.
-            if(isset($cacheChanged) && !$this->deferredRenderPending('processwireLogs')) {
+            if(isset($cacheChanged)) {
                 $this->wire('cache')->save('TracyLogData.ProcessWire', $logLinesData, WireCache::expireNever);
             }
 
@@ -178,32 +175,16 @@ class ProcesswireLogsPanel extends BasePanel {
         return $this->buildTab('ProcessWire Logs', 'PW Logs');
     }
 
-    /**
-     * Panel header, shared by the loading shell and the real body so the two can't drift.
-     *
-     * @return string
-     */
-    private function buildLogsHeader() {
+    public function getPanel() {
+
+        // Load all the panel sections
         $isAdditionalBar = TracyDebugger::isAdditionalBar();
-        return '
+        $out = '
         <h1>
             <a title="ProcessWire Logs" href="'.$this->wire('config')->urls->admin.'setup/logs/">
                 ' . $this->icon . ' ProcessWire Logs
             </a>' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '
-        </h1>';
-    }
-
-
-    public function getPanel() {
-
-        // body is fetched on first open (see BasePanel::deferredPanelShell). Note the log
-        // entries themselves are gathered in getTab() for the tab count, so this keeps ~66KB
-        // of markup out of every page but does not save that gathering work.
-        $shell = $this->deferredPanelShell($this->buildLogsHeader(), 'processwireLogs');
-        if($shell !== '') return $shell;
-
-        // Load all the panel sections
-        $out = $this->buildLogsHeader() . '
+        </h1>
 
         ' . $this->openPanel();
             $out .= $this->logEntries;

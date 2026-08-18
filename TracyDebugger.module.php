@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.0.60',
+            'version' => '5.0.61',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -101,37 +101,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $oncePanels;
     public static $stickyPanels;
     public static $showPanels;
-
-    /**
-     * True while the tracyPanelContent endpoint is rendering a deferred panel body, so panels
-     * that defer know to build their real content instead of the loading shell.
-     */
-    public static $renderingDeferredPanel = false;
-
-    /**
-     * REQUEST_URI of the page whose bar rendered the deferred panel's loading shell.
-     *
-     * The endpoint request's own URI is no use to a panel building links: it would produce
-     * hrefs like /?tracyPanelContent=processwireInfo&tracyClearSession=1 instead of appending
-     * to the page the user is actually on. inputUrl() returns this instead while a deferred
-     * panel renders. Set only from the allowlisted endpoint, and sanitized there.
-     */
-    public static $deferredPanelUrl = '';
-
-    /**
-     * Panels whose body is fetched on first open instead of being built into every page.
-     *
-     * Only panels whose content does not depend on the state of the request that rendered the
-     * bar can go here - the body is built by a *separate* request, so anything reflecting this
-     * request (DebugMode's queries/timers, Dumps, Performance, Request Info as a whole) must
-     * not be listed. Key is the panel key used in the endpoint URL and Debugger::timer() name.
-     */
-    public static $deferrablePanels = array(
-        'processwireInfo' => 'ProcesswireInfoPanel',
-        'processwireLogs' => 'ProcesswireLogsPanel',
-        'tracyLogs' => 'TracyLogsPanel',
-        'methodsInfo' => 'MethodsInfoPanel',
-    );
 
     public static $disabableModules = array();
     public static $restrictedUserDisabledPanels = array();
@@ -633,57 +602,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     exit;
                 }
                 echo json_encode(self::getConsoleApiAutocomplete());
-                exit;
-            }
-
-            // deferred panel body endpoint: panels listed in self::$deferrablePanels render only a
-            // loading shell into the page and fetch their real body from here when the user first
-            // opens (or hovers) the tab, so their markup and the work behind it stay off every page
-            // load. Not cacheable - the body is live data - and only panels on the allowlist can be
-            // rendered, since this instantiates the class and calls getPanel() on it.
-            if($this->wire('input')->get('tracyPanelContent') !== null) {
-                Debugger::$showBar = false;
-                header_remove('X-Tracy-Ajax');
-                if(!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) {
-                    http_response_code(403);
-                    exit;
-                }
-                // parameter is "<panelKey>.<base64url of the originating REQUEST_URI>" - one
-                // parameter rather than two because panel HTML is escaped into an attribute,
-                // which turns a literal "&" into "&amp;" by the time the JS reads it
-                $param = (string) $this->wire('input')->get('tracyPanelContent');
-                $dotPos = strpos($param, '.');
-                $panelKey = $dotPos === false ? $param : substr($param, 0, $dotPos);
-                if(!isset(self::$deferrablePanels[$panelKey])) {
-                    http_response_code(404);
-                    exit;
-                }
-                if($dotPos !== false) {
-                    $originUrl = base64_decode(strtr(substr($param, $dotPos + 1), '-_', '+/'), true);
-                    // the value round-trips through the client, and panels drop it straight into
-                    // hrefs, so only accept a same-site absolute path with nothing that could
-                    // break out of an attribute
-                    if(is_string($originUrl) && $originUrl !== '' && strlen($originUrl) <= 2000
-                        && strpos($originUrl, '/') === 0 && strpos($originUrl, '//') !== 0
-                        && !preg_match('/[\s<>"\'\\\\]/', $originUrl)
-                    ) {
-                        self::$deferredPanelUrl = $originUrl;
-                    }
-                }
-                while(ob_get_level()) ob_end_clean();
-                header('Content-Type: text/html; charset=UTF-8');
-                header('Cache-Control: no-store, no-cache, must-revalidate');
-                $panelName = self::$deferrablePanels[$panelKey];
-                $fullPanelClass = __NAMESPACE__ . '\\' . $panelName;
-                require_once __DIR__ . '/panels/'.$panelName.'.php';
-                if(!class_exists($fullPanelClass, false) && class_exists($panelName, false)) {
-                    class_alias($panelName, $fullPanelClass);
-                }
-                self::$renderingDeferredPanel = true;
-                $panel = new $fullPanelClass;
-                // getTab() first: panels build their icon (and other state the header needs) there
-                $panel->getTab();
-                echo $panel->getPanel();
                 exit;
             }
 
@@ -3614,13 +3532,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     public static function isAdditionalBar() {
-        // A deferred panel body is fetched with fetch(), and Tracy's bar.js adds X-Tracy-Ajax to
-        // every request the page makes, so isAjax() would report true here. That body belongs to
-        // the main bar of the page that requested it, not to an AJAX bar: panels guard on this
-        // (ProcesswireInfoPanel::getTab() returns early, which left the icons it assigns unset)
-        // and buildPanelHeader() would tag the title with "(ajax)".
-        if(self::$renderingDeferredPanel) return false;
-
         $isRedirect = preg_match('#^Location:#im', implode("\n", headers_list()));
         if(static::isAjax() || $isRedirect) {
             return static::isAjax() ? 'ajax' : 'redirect';
@@ -3721,17 +3632,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     *
     */
     public static function inputUrl($withQueryString = false) {
-
-        // A deferred panel body is built by a separate request to the tracyPanelContent
-        // endpoint, where wire('page') is whatever the site root resolves to and REQUEST_URI is
-        // the endpoint itself. Panels use this to build links back to the page the user is on,
-        // so hand back the originating URL instead.
-        if(self::$renderingDeferredPanel && self::$deferredPanelUrl !== '') {
-            $parts = explode('?', self::$deferredPanelUrl, 2);
-            return ($withQueryString && isset($parts[1]) && $parts[1] !== '')
-                ? $parts[0] . '?' . $parts[1]
-                : $parts[0];
-        }
 
         $url = '';
         /** @var Page $page */
