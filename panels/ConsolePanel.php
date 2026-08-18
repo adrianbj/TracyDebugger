@@ -71,17 +71,6 @@ class ConsolePanel extends BasePanel {
             $mid = null;
         }
 
-        $file = $this->wire('config')->paths->cache . 'TracyDebugger/consoleCode.php';
-        if(file_exists($file)) {
-            $code = file_get_contents($file);
-            $code = implode("\n", array_slice(explode("\n", $code), 1));
-            // json_encode to convert line breaks to \n - needed by setValue()
-            $code = json_encode($code);
-        }
-        else {
-            $code = '""';
-        }
-
         // get snippets from filesystem
         $snippets = array();
         $snippetsPath = TracyDebugger::getDataValue('snippetsPath').'/TracyDebugger/snippets/';
