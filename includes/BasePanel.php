@@ -132,7 +132,11 @@ abstract class BasePanel extends WireData implements IBarPanel {
         $originUrl = isset($_SERVER['REQUEST_URI']) ? (string) $_SERVER['REQUEST_URI'] : '';
         if($originUrl !== '') $token .= '.' . rtrim(strtr(base64_encode($originUrl), '+/', '-_'), '=');
         $url = $this->wire('config')->urls->httpRoot . '?tracyPanelContent=' . urlencode($token);
-        $id = 'tracyDeferred-' . $panelKey;
+        // Unique per render, not per panel: Tracy renders a separate copy of every panel for each
+        // bar on the page (the main bar plus one per AJAX request), so a fixed id meant every
+        // shell's script found the first bar's placeholder. The later copies then hit the
+        // already-loaded guard and sat on "Loading..." forever.
+        $id = 'tracyDeferred-' . $panelKey . '-' . bin2hex(random_bytes(4));
         $nonceAttr = TracyDebugger::getNonceAttr();
 
         // the placeholder carries a minimum size so the panel does not open as a small box and
