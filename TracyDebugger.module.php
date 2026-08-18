@@ -109,6 +109,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $renderingDeferredPanel = false;
 
     /**
+     * REQUEST_URI of the page whose bar rendered the deferred panel's loading shell.
+     *
+     * The endpoint request's own URI is no use to a panel building links: it would produce
+     * hrefs like /?tracyPanelContent=processwireInfo&tracyClearSession=1 instead of appending
+     * to the page the user is actually on. inputUrl() returns this instead while a deferred
+     * panel renders. Set only from the allowlisted endpoint, and sanitized there.
+     */
+    public static $deferredPanelUrl = '';
+
+    /**
      * Panels whose body is fetched on first open instead of being built into every page.
      *
      * Only panels whose content does not depend on the state of the request that rendered the
@@ -638,10 +648,27 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     http_response_code(403);
                     exit;
                 }
-                $panelKey = (string) $this->wire('input')->get('tracyPanelContent');
+                // parameter is "<panelKey>.<base64url of the originating REQUEST_URI>" - one
+                // parameter rather than two because panel HTML is escaped into an attribute,
+                // which turns a literal "&" into "&amp;" by the time the JS reads it
+                $param = (string) $this->wire('input')->get('tracyPanelContent');
+                $dotPos = strpos($param, '.');
+                $panelKey = $dotPos === false ? $param : substr($param, 0, $dotPos);
                 if(!isset(self::$deferrablePanels[$panelKey])) {
                     http_response_code(404);
                     exit;
+                }
+                if($dotPos !== false) {
+                    $originUrl = base64_decode(strtr(substr($param, $dotPos + 1), '-_', '+/'), true);
+                    // the value round-trips through the client, and panels drop it straight into
+                    // hrefs, so only accept a same-site absolute path with nothing that could
+                    // break out of an attribute
+                    if(is_string($originUrl) && $originUrl !== '' && strlen($originUrl) <= 2000
+                        && strpos($originUrl, '/') === 0 && strpos($originUrl, '//') !== 0
+                        && !preg_match('/[\s<>"\'\\\\]/', $originUrl)
+                    ) {
+                        self::$deferredPanelUrl = $originUrl;
+                    }
                 }
                 while(ob_get_level()) ob_end_clean();
                 header('Content-Type: text/html; charset=UTF-8');
@@ -3687,6 +3714,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     *
     */
     public static function inputUrl($withQueryString = false) {
+
+        // A deferred panel body is built by a separate request to the tracyPanelContent
+        // endpoint, where wire('page') is whatever the site root resolves to and REQUEST_URI is
+        // the endpoint itself. Panels use this to build links back to the page the user is on,
+        // so hand back the originating URL instead.
+        if(self::$renderingDeferredPanel && self::$deferredPanelUrl !== '') {
+            $parts = explode('?', self::$deferredPanelUrl, 2);
+            return ($withQueryString && isset($parts[1]) && $parts[1] !== '')
+                ? $parts[0] . '?' . $parts[1]
+                : $parts[0];
+        }
 
         $url = '';
         /** @var Page $page */

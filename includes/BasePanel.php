@@ -71,6 +71,22 @@ abstract class BasePanel extends WireData implements IBarPanel {
     }
 
     /**
+     * REQUEST_URI to use for links and XHR targets built by this panel.
+     *
+     * Same reasoning as TracyDebugger::inputUrl(): while a deferred body renders, the endpoint's
+     * own URI would send the panel's requests to the endpoint instead of the page the user is on.
+     *
+     * @return string
+     */
+    protected function panelRequestUri() {
+        if(TracyDebugger::$renderingDeferredPanel && TracyDebugger::$deferredPanelUrl !== '') {
+            return TracyDebugger::$deferredPanelUrl;
+        }
+        return isset($_SERVER['REQUEST_URI']) ? (string) $_SERVER['REQUEST_URI'] : '';
+    }
+
+
+    /**
      * Loading shell for a panel whose body is fetched on first open.
      *
      * Returns '' while the tracyPanelContent endpoint is rendering, so the calling panel falls
@@ -89,7 +105,13 @@ abstract class BasePanel extends WireData implements IBarPanel {
     protected function deferredPanelShell($header, $panelKey) {
         if(TracyDebugger::$renderingDeferredPanel) return '';
 
-        $url = $this->wire('config')->urls->httpRoot . '?tracyPanelContent=' . urlencode($panelKey);
+        // carry the current page's URI along so the fetched body can build links back to it -
+        // base64url'd into the same parameter, since a second "&" parameter would reach the JS
+        // as "&amp;" after the panel HTML is escaped into its attribute
+        $token = $panelKey;
+        $originUrl = isset($_SERVER['REQUEST_URI']) ? (string) $_SERVER['REQUEST_URI'] : '';
+        if($originUrl !== '') $token .= '.' . rtrim(strtr(base64_encode($originUrl), '+/', '-_'), '=');
+        $url = $this->wire('config')->urls->httpRoot . '?tracyPanelContent=' . urlencode($token);
         $id = 'tracyDeferred-' . $panelKey;
         $nonceAttr = TracyDebugger::getNonceAttr();
 
