@@ -203,10 +203,25 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
     // without including it here (#116). include_once is safe — this is the file's first
     // inclusion in this request — and must stay in this scope so the API variables
     // extracted above ($pages, $config, etc.) are visible inside the included files.
-    $readyPath = $this->wire('config')->paths->root . 'site/ready.php';
-    $finishedPath = $this->wire('config')->paths->root . 'site/finished.php';
-    if(file_exists($readyPath)) include_once($this->wire('files')->compile($readyPath));
-    if(file_exists($finishedPath)) include_once($this->wire('files')->compile($finishedPath));
+    //
+    // The compile decision has to match ProcessWire::includeFile() exactly ($config->
+    // templateCompile gate, plus the skipIfNamespace option), because $files->compile()
+    // on its own compiles regardless of $config->templateCompile and regardless of whether
+    // the file already declares a namespace. Including the FileCompiler copy of a file that
+    // PW itself would have included raw loads a *second* copy of everything that file
+    // include()s — the compiled copy has its nested include/require statements rewritten to
+    // compiled paths — so anything else in this request that pulls in those same files the
+    // normal way (the accessTemplateVars replay below, console code, a rendered template)
+    // declares their functions a second time: "Cannot redeclare function ProcessWire\ents()".
+    $compileStatusFiles = (bool) $this->wire('config')->templateCompile;
+    $readyPath = $this->wire('config')->paths->site . 'ready.php';
+    $finishedPath = $this->wire('config')->paths->site . 'finished.php';
+    if(file_exists($readyPath)) {
+        include_once($compileStatusFiles ? $this->wire('files')->compile($readyPath, array('skipIfNamespace' => true)) : $readyPath);
+    }
+    if(file_exists($finishedPath)) {
+        include_once($compileStatusFiles ? $this->wire('files')->compile($finishedPath, array('skipIfNamespace' => true)) : $finishedPath);
+    }
 
     $cachePath = $this->wire('config')->paths->cache . 'TracyDebugger/';
 
@@ -319,13 +334,43 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
 
         if($page->template != 'admin' && $this->wire('input')->post->accessTemplateVars === "true") {
             // make vars from the page template available to the console code
-            // get all current vars
+
+            /* Resolve the page's template file to the same identity PageRender gives it when
+               it actually renders this page ($config->templateCompile + the per-template
+               compile setting, mapped exactly as PageRender::___renderPage does). The replayed
+               includedFiles list was captured from a real render, so it holds FileCompiler
+               copies whenever compilation is on; including the raw template alongside them
+               would declare every function they share a second time ("Cannot redeclare
+               function ...") and, because the raw path never matches the compiled entry in the
+               list, the template would also get replayed inside the closure below and its
+               variables — the whole point of this block — silently discarded. */
+            $tracyTemplateFilenameRaw = $page->template->filename;
+            $tracyTemplateFilename = $tracyTemplateFilenameRaw;
+            if($this->wire('config')->templateCompile && $page->template->compile) {
+                $tracyTemplateFilename = $this->wire('files')->compile($tracyTemplateFilenameRaw, array(
+                    'namespace' => strlen(__NAMESPACE__) > 0,
+                    'includes' => $page->template->compile >= 2 ? true : false,
+                    'modules' => true,
+                    'skipIfNamespace' => $page->template->compile == 3 ? true : false,
+                ));
+            }
+            /* PageRender renders the compiled file with the working directory set to the
+               *raw* template dir (TemplateFile::setChdir), which is what makes relative
+               includes inside these files resolve. Match that for the replay too, and
+               restore the previous cwd afterwards. */
+            $tracyReplayCwd = getcwd();
+            @chdir(dirname($tracyTemplateFilenameRaw));
+
+            // get all current vars (after the locals above, so they aren't harvested as template vars)
             $currentVars = get_defined_vars();
+
             // get vars from the page's template file
             ob_start();
             $includedFiles = $tracySessionCache['includedFiles'];
             foreach($includedFiles as $key => $path) {
-                if($path != $this->file && $path != $page->template->filename) {
+                if($path != $this->file
+                    && TracyDebugger::forwardSlashPath($path) !== TracyDebugger::forwardSlashPath($tracyTemplateFilename)
+                    && TracyDebugger::forwardSlashPath($path) !== TracyDebugger::forwardSlashPath($tracyTemplateFilenameRaw)) {
                     // These files are replayed only for their function/class definitions, which
                     // escape any scope; running them in a closure keeps their stray variables out
                     // of the harvested template vars, and the catch stops one context-dependent
@@ -343,7 +388,7 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
             // relative file paths preventing access to all variables/functions - happens especially when filecompiler is off
             // (kept in this scope deliberately: its variables are what we harvest below)
             try {
-                include_once($page->template->filename);
+                include_once($tracyTemplateFilename);
             }
             catch(\Throwable $e) {
                 // degrade to no/partial template vars rather than killing the console run
@@ -351,6 +396,7 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
 
             $templateVars = get_defined_vars();
             ob_end_clean();
+            @chdir($tracyReplayCwd);
             // remove the current vars from the list
             foreach($currentVars as $key => $value) {
                 unset($templateVars[$key]);
