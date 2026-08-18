@@ -103,7 +103,11 @@ abstract class BasePanel extends WireData implements IBarPanel {
      * @return string
      */
     protected function deferredPanelShell($header, $panelKey) {
+        // TracyDebugger::$deferrablePanels is the single switch: a panel whose key isn't listed
+        // there renders inline, because the endpoint would 404 for it and the shell would sit on
+        // "Could not load panel content" forever
         if(TracyDebugger::$renderingDeferredPanel) return '';
+        if(!isset(TracyDebugger::$deferrablePanels[$panelKey])) return '';
 
         // carry the current page's URI along so the fetched body can build links back to it -
         // base64url'd into the same parameter, since a second "&" parameter would reach the JS

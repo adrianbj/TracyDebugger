@@ -3614,6 +3614,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     public static function isAdditionalBar() {
+        // A deferred panel body is fetched with fetch(), and Tracy's bar.js adds X-Tracy-Ajax to
+        // every request the page makes, so isAjax() would report true here. That body belongs to
+        // the main bar of the page that requested it, not to an AJAX bar: panels guard on this
+        // (ProcesswireInfoPanel::getTab() returns early, which left the icons it assigns unset)
+        // and buildPanelHeader() would tag the title with "(ajax)".
+        if(self::$renderingDeferredPanel) return false;
+
         $isRedirect = preg_match('#^Location:#im', implode("\n", headers_list()));
         if(static::isAjax() || $isRedirect) {
             return static::isAjax() ? 'ajax' : 'redirect';
