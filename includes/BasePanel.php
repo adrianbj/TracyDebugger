@@ -93,8 +93,11 @@ abstract class BasePanel extends WireData implements IBarPanel {
         $id = 'tracyDeferred-' . $panelKey;
         $nonceAttr = TracyDebugger::getNonceAttr();
 
+        // the placeholder carries a minimum size so the panel does not open as a small box and
+        // then jump; Tracy positions a panel from its size at open time, and the swap below
+        // re-anchors it afterwards
         return $header . '
-        <div class="tracy-inner" id="' . $id . '">
+        <div class="tracy-inner" id="' . $id . '" style="min-width: 320px; min-height: 100px">
             <div style="padding: 10px; color: ' . TracyDebugger::COLOR_LIGHTGREY . '">Loading&hellip;</div>
         </div>
         <script' . $nonceAttr . '>
@@ -112,6 +115,13 @@ abstract class BasePanel extends WireData implements IBarPanel {
                     var parsed = document.createElement("div");
                     parsed.innerHTML = html;
                     var container = placeholder.parentNode;
+                    var panelElem = placeholder.closest ? placeholder.closest(".tracy-panel") : null;
+                    if(!panelElem) panelElem = container;
+                    var anchorRight = null, anchorBottom = null;
+                    if(panelElem && panelElem.classList && (panelElem.classList.contains("tracy-mode-float") || panelElem.classList.contains("tracy-mode-peek"))) {
+                        anchorRight = window.innerWidth - panelElem.offsetWidth - panelElem.offsetLeft;
+                        anchorBottom = window.innerHeight - panelElem.offsetHeight - panelElem.offsetTop;
+                    }
                     var scripts = Array.prototype.slice.call(parsed.querySelectorAll("script"));
                     scripts.forEach(function(script) { script.parentNode.removeChild(script); });
                     var fetchedInner = parsed.querySelector(".tracy-inner");
@@ -133,6 +143,19 @@ abstract class BasePanel extends WireData implements IBarPanel {
                         if(window.Tracy.Dumper) window.Tracy.Dumper.init(container);
                         if(window.Tracy.TableSort) window.Tracy.TableSort.init();
                         if(window.Tracy.Tabs) window.Tracy.Tabs.init();
+                        var panels = window.Tracy.Debug ? window.Tracy.Debug.panels : null;
+                        var panelObj = (panels && panelElem && panelElem.id) ? panels[panelElem.id] : null;
+                        if(anchorRight !== null) {
+                            var winWidth = window.innerWidth, winHeight = window.innerHeight;
+                            var left = winWidth - panelElem.offsetWidth - anchorRight;
+                            var top = winHeight - panelElem.offsetHeight - anchorBottom;
+                            panelElem.style.left = Math.max(0, Math.min(left, winWidth - panelElem.offsetWidth)) + "px";
+                            panelElem.style.top = Math.max(0, Math.min(top, winHeight - panelElem.offsetHeight)) + "px";
+                            if(panelObj && panelObj.savePosition) panelObj.savePosition();
+                        }
+                        else if(panelObj && panelObj.reposition) {
+                            panelObj.reposition();
+                        }
                     }
                 })
                 .catch(function() {
