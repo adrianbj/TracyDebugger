@@ -29,6 +29,19 @@ https://modules.processwire.com/modules/tracy-debugger/
 
 It is recommended to install via the ProcessWire admin Modules > Site > Add New > Add Module from Directory using the `TracyDebugger` class name.
 
+### Enable HTTP compression
+
+The debug bar adds a lot of markup to each response and it compresses extremely well — measured
+at 645KB → 76KB (11.8%) on a test page. ProcessWire's stock `.htaccess` sets up no compression, so
+if your server doesn't already handle it, adding something like this to `.htaccess` is the single
+cheapest way to speed the bar up:
+
+```apache
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json
+</IfModule>
+```
+
 ### License
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License

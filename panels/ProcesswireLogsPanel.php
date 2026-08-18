@@ -175,16 +175,32 @@ class ProcesswireLogsPanel extends BasePanel {
         return $this->buildTab('ProcessWire Logs', 'PW Logs');
     }
 
-    public function getPanel() {
-
-        // Load all the panel sections
+    /**
+     * Panel header, shared by the loading shell and the real body so the two can't drift.
+     *
+     * @return string
+     */
+    private function buildLogsHeader() {
         $isAdditionalBar = TracyDebugger::isAdditionalBar();
-        $out = '
+        return '
         <h1>
             <a title="ProcessWire Logs" href="'.$this->wire('config')->urls->admin.'setup/logs/">
                 ' . $this->icon . ' ProcessWire Logs
             </a>' . ($isAdditionalBar ? ' ('.$isAdditionalBar.')' : '') . '
-        </h1>
+        </h1>';
+    }
+
+
+    public function getPanel() {
+
+        // body is fetched on first open (see BasePanel::deferredPanelShell). Note the log
+        // entries themselves are gathered in getTab() for the tab count, so this keeps ~66KB
+        // of markup out of every page but does not save that gathering work.
+        $shell = $this->deferredPanelShell($this->buildLogsHeader(), 'processwireLogs');
+        if($shell !== '') return $shell;
+
+        // Load all the panel sections
+        $out = $this->buildLogsHeader() . '
 
         ' . $this->openPanel();
             $out .= $this->logEntries;

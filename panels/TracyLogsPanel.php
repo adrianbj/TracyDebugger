@@ -222,6 +222,11 @@ class TracyLogsPanel extends BasePanel {
 
     public function getPanel() {
 
+        // body is fetched on first open (see BasePanel::deferredPanelShell). The entries are
+        // gathered in getTab() for the tab count, so this saves the markup, not that work.
+        $shell = $this->deferredPanelShell($this->buildPanelHeader('Tracy Logs', false, true), 'tracyLogs');
+        if($shell !== '') return $shell;
+
         // Load all the panel sections
         $out = $this->buildPanelHeader('Tracy Logs', false, true);
         $out .= $this->openPanel();

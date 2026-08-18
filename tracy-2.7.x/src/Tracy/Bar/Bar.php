@@ -177,6 +177,10 @@ class Bar
 			header('Content-Type: application/javascript; charset=UTF-8');
 			header('Cache-Control: max-age=864000');
 			header_remove('Pragma');
+			// TracyDebugger patch: PHP's session cache limiter has already queued
+			// "Expires: Thu, 19 Nov 1981" by this point, so the response contradicted its own
+			// Cache-Control. Browsers prefer Cache-Control, but an intermediary need not.
+			header_remove('Expires');
 			header_remove('Set-Cookie');
 			$this->renderAssets();
 			return true;
@@ -192,6 +196,8 @@ class Bar
 			$session = &$_SESSION['_tracy']['bar'][$m[2]];
 			header('Content-Type: application/javascript; charset=UTF-8');
 			header('Cache-Control: max-age=60');
+			header_remove('Expires'); // TracyDebugger patch: see above
+			header_remove('Pragma'); // TracyDebugger patch: as the branch above already does
 			header_remove('Set-Cookie');
 			if (!$m[1]) {
 				$this->renderAssets();

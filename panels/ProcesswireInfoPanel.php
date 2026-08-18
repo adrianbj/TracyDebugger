@@ -64,6 +64,12 @@ class ProcesswireInfoPanel extends BasePanel {
 
     public function getPanel() {
 
+        // body is fetched on first open (see BasePanel::deferredPanelShell) - nothing in this
+        // panel reflects the request that rendered the bar, so a separate request builds the
+        // same content
+        $shell = $this->deferredPanelShell($this->buildPanelHeader('ProcessWire Info'), 'processwireInfo');
+        if($shell !== '') return $shell;
+
         $out = '';
         $panelSections = TracyDebugger::getDataValue('processwireInfoPanelSections');
         $currentUrl = htmlspecialchars($_SERVER['REQUEST_URI'] ?? '', ENT_QUOTES, 'UTF-8');

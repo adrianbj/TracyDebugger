@@ -101,6 +101,28 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $oncePanels;
     public static $stickyPanels;
     public static $showPanels;
+
+    /**
+     * True while the tracyPanelContent endpoint is rendering a deferred panel body, so panels
+     * that defer know to build their real content instead of the loading shell.
+     */
+    public static $renderingDeferredPanel = false;
+
+    /**
+     * Panels whose body is fetched on first open instead of being built into every page.
+     *
+     * Only panels whose content does not depend on the state of the request that rendered the
+     * bar can go here - the body is built by a *separate* request, so anything reflecting this
+     * request (DebugMode's queries/timers, Dumps, Performance, Request Info as a whole) must
+     * not be listed. Key is the panel key used in the endpoint URL and Debugger::timer() name.
+     */
+    public static $deferrablePanels = array(
+        'processwireInfo' => 'ProcesswireInfoPanel',
+        'processwireLogs' => 'ProcesswireLogsPanel',
+        'tracyLogs' => 'TracyLogsPanel',
+        'methodsInfo' => 'MethodsInfoPanel',
+    );
+
     public static $disabableModules = array();
     public static $restrictedUserDisabledPanels = array();
     public static $disabledModules = array();
@@ -571,6 +593,72 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         $this->wire()->addHookAfter('ProcessWire::ready', function($event) {
+
+            // console autocomplete endpoint: the PW API autocomplete list is ~200KB of JSON with
+            // descriptions enabled, and used to be inlined into the Console panel on every page
+            // load whether or not the console was ever opened. The panel JS fetches it from here
+            // when the editor initialises instead, and the URL's cache key + the ETag let the
+            // browser reuse it from then on. Plain fetch(), not an AJAX-flagged request, so this
+            // branch must live outside the ajax guard below.
+            //
+            // The parameter's value is the cache key from getConsoleApiAutocompleteKey() and is
+            // not otherwise used: it only has to change when the data could have, so a stale
+            // browser copy is never reused. It is carried in this single parameter rather than a
+            // second one because panel HTML is escaped into an attribute, which turns a literal
+            // "&" in the URL into "&amp;" by the time the JS reads it.
+            if($this->wire('input')->get('tracyAutocomplete') !== null) {
+                Debugger::$showBar = false;
+                header_remove('X-Tracy-Ajax');
+                if(!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) {
+                    http_response_code(403);
+                    exit;
+                }
+                while(ob_get_level()) ob_end_clean();
+                $etag = '"' . self::getConsoleApiAutocompleteKey() . '"';
+                header('Content-Type: application/json');
+                header('Cache-Control: private, max-age=604800');
+                header('ETag: ' . $etag);
+                if(isset($_SERVER['HTTP_IF_NONE_MATCH']) && trim($_SERVER['HTTP_IF_NONE_MATCH']) === $etag) {
+                    http_response_code(304);
+                    exit;
+                }
+                echo json_encode(self::getConsoleApiAutocomplete());
+                exit;
+            }
+
+            // deferred panel body endpoint: panels listed in self::$deferrablePanels render only a
+            // loading shell into the page and fetch their real body from here when the user first
+            // opens (or hovers) the tab, so their markup and the work behind it stay off every page
+            // load. Not cacheable - the body is live data - and only panels on the allowlist can be
+            // rendered, since this instantiates the class and calls getPanel() on it.
+            if($this->wire('input')->get('tracyPanelContent') !== null) {
+                Debugger::$showBar = false;
+                header_remove('X-Tracy-Ajax');
+                if(!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) {
+                    http_response_code(403);
+                    exit;
+                }
+                $panelKey = (string) $this->wire('input')->get('tracyPanelContent');
+                if(!isset(self::$deferrablePanels[$panelKey])) {
+                    http_response_code(404);
+                    exit;
+                }
+                while(ob_get_level()) ob_end_clean();
+                header('Content-Type: text/html; charset=UTF-8');
+                header('Cache-Control: no-store, no-cache, must-revalidate');
+                $panelName = self::$deferrablePanels[$panelKey];
+                $fullPanelClass = __NAMESPACE__ . '\\' . $panelName;
+                require_once __DIR__ . '/panels/'.$panelName.'.php';
+                if(!class_exists($fullPanelClass, false) && class_exists($panelName, false)) {
+                    class_alias($panelName, $fullPanelClass);
+                }
+                self::$renderingDeferredPanel = true;
+                $panel = new $fullPanelClass;
+                // getTab() first: panels build their icon (and other state the header needs) there
+                $panel->getTab();
+                echo $panel->getPanel();
+                exit;
+            }
 
             // console download endpoint: stream a file staged by CodeProcessor's WireHttp::sendFile
             // hook. Triggered by the panel JS via a hidden <a download> click — a regular GET
@@ -3742,6 +3830,80 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             self::$allApiData[$type] = $tracyPwApiData->getApiData($type);
         }
         return self::$allApiData[$type];
+    }
+
+
+    /**
+     * Build the site-wide part of the Console panel's autocomplete list: API variables with
+     * their methods/properties, plus procedural functions.
+     *
+     * Served by the tracyAutocomplete endpoint rather than inlined into the Console panel,
+     * because with descriptions enabled this is ~200KB of JSON that was previously added to
+     * every page load whether or not the console was ever opened. Only the page-specific
+     * entries (the current page's fields) stay inline in the panel.
+     *
+     * @return array
+     */
+    public static function getConsoleApiAutocomplete() {
+        $showDescription = self::getDataValue('codeShowDescription');
+        $items = array();
+
+        foreach(self::getApiData('variables') as $key => $vars) {
+            $apiVar = wire($key);
+            foreach($vars as $name => $params) {
+                $item = array();
+                if(strpos($name, '()') !== false) {
+                    $item['name'] = '$' . $key . '->' . str_replace('___', '', $name)
+                        . ($apiVar && method_exists($apiVar, $name) ? '()' : '');
+                    $item['meta'] = 'PW method';
+                }
+                else {
+                    $item['name'] = '$' . $key . '->' . str_replace('___', '', $name);
+                    $item['meta'] = 'PW property';
+                }
+                if($showDescription) $item['docHTML'] = self::consoleAutocompleteDoc($params);
+                $items[] = $item;
+            }
+        }
+
+        foreach(self::getApiData('proceduralFunctions') as $vars) {
+            foreach($vars as $name => $params) {
+                $item = array('name' => $name . '()', 'meta' => 'PW function');
+                if($showDescription) $item['docHTML'] = self::consoleAutocompleteDoc($params);
+                $items[] = $item;
+            }
+        }
+
+        return $items;
+    }
+
+
+    /**
+     * Description + signature shown alongside a Console autocomplete entry
+     *
+     * @param array $params
+     * @return string
+     */
+    protected static function consoleAutocompleteDoc($params) {
+        $description = isset($params['description']) ? $params['description'] : '';
+        $signature = isset($params['params']) && !empty($params['params'])
+            ? '(' . implode(', ', $params['params']) . ')' : '';
+        return $description . "\n" . $signature;
+    }
+
+
+    /**
+     * Cache key for the autocomplete data above — changes whenever the data could have,
+     * so it can be used both as the endpoint's ETag and as a cache-busting URL parameter.
+     *
+     * @return string
+     */
+    public static function getConsoleApiAutocompleteKey() {
+        return substr(md5(implode('|', array(
+            self::getModuleInfo()['version'],
+            (string) wire('config')->version,
+            (string) self::getDataValue('codeShowDescription'),
+        ))), 0, 12);
     }
 
 

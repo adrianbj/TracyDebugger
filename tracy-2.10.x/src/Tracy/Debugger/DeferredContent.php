@@ -70,6 +70,10 @@ final class DeferredContent
 			header('Content-Type: application/javascript; charset=UTF-8');
 			header('Cache-Control: max-age=864000');
 			header_remove('Pragma');
+			// TracyDebugger patch: PHP's session cache limiter has already queued
+			// "Expires: Thu, 19 Nov 1981" by this point, so the response contradicted its own
+			// Cache-Control. Browsers prefer Cache-Control, but an intermediary need not.
+			header_remove('Expires');
 			header_remove('Set-Cookie');
 			$str = $this->buildJsCss();
 			header('Content-Length: ' . strlen($str));
@@ -89,6 +93,8 @@ final class DeferredContent
 			[, $ajax, $requestId] = $m;
 			header('Content-Type: application/javascript; charset=UTF-8');
 			header('Cache-Control: max-age=60');
+			header_remove('Expires'); // TracyDebugger patch: see above
+			header_remove('Pragma'); // TracyDebugger patch: as the branch above already does
 			header_remove('Set-Cookie');
 			$str = $ajax ? '' : $this->buildJsCss();
 			$data = &$this->getItems('setup');

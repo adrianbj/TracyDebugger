@@ -27,6 +27,10 @@ class MethodsInfoPanel extends BasePanel {
         $docsUrl = 'https://adrianbj.github.io/TracyDebugger';
         $debugMethodsRootUrl = $docsUrl . '/#/debug-methods?id=';
 
+        // body is fetched on first open (see BasePanel::deferredPanelShell)
+        $shell = $this->deferredPanelShell($this->buildPanelHeader('Methods Info'), 'methodsInfo');
+        if($shell !== '') return $shell;
+
         $out = $this->buildPanelHeader('Methods Info');
 
         $out .= $this->openPanel() . '

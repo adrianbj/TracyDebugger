@@ -32,8 +32,16 @@ $ipFormatter = static function (?string $ip): ?string {
 	return $ip;
 };
 
-$opcache = function_exists('opcache_get_status') ? @opcache_get_status() : null; // @ can be restricted
-$cachedFiles = isset($opcache['scripts']) ? array_intersect(array_keys($opcache['scripts']), get_included_files()) : [];
+// TracyDebugger patch: opcache_get_status() defaults to $include_scripts=true, which materialises
+// per-script stats for every entry in the opcode cache - cache-wide, so every vhost sharing the PHP
+// pool inflates it. Measured ~157ms of a ~250ms request with 1365 cached scripts, over half the
+// debug bar. All this row needs is "was each of *this* request's files cached", which
+// opcache_is_script_cached() answers with one hash lookup per file (~0.06ms total, same figure).
+// The 'OPcache' row below is unchanged. Upstream PR: https://github.com/nette/tracy/pull/623
+$opcache = function_exists('opcache_get_status') ? @opcache_get_status(false) : null; // @ can be restricted
+$cachedFiles = $opcache && function_exists('opcache_is_script_cached')
+	? array_filter(get_included_files(), function ($file) { return @opcache_is_script_cached($file); })
+	: [];
 $jit = $opcache['jit'] ?? null;
 
 $info = [

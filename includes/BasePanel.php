@@ -71,6 +71,78 @@ abstract class BasePanel extends WireData implements IBarPanel {
     }
 
     /**
+     * Loading shell for a panel whose body is fetched on first open.
+     *
+     * Returns '' while the tracyPanelContent endpoint is rendering, so the calling panel falls
+     * through to building its real body. Otherwise returns the panel's own header plus a
+     * tracy-inner placeholder and the script that replaces it.
+     *
+     * The header is kept in the shell deliberately: Tracy's Panel.init() captures the panel's
+     * h1 elements as drag handles when the panel is first opened, so an h1 that only arrives
+     * with the fetched body would leave the panel undraggable. Only the tracy-inner element is
+     * swapped, and the fetched one brings its own classes and inline styles with it.
+     *
+     * @param string $header Panel header markup, as built by buildPanelHeader()
+     * @param string $panelKey Key from TracyDebugger::$deferrablePanels
+     * @return string
+     */
+    protected function deferredPanelShell($header, $panelKey) {
+        if(TracyDebugger::$renderingDeferredPanel) return '';
+
+        $url = $this->wire('config')->urls->httpRoot . '?tracyPanelContent=' . urlencode($panelKey);
+        $id = 'tracyDeferred-' . $panelKey;
+        $nonceAttr = TracyDebugger::getNonceAttr();
+
+        return $header . '
+        <div class="tracy-inner" id="' . $id . '">
+            <div style="padding: 10px; color: ' . TracyDebugger::COLOR_LIGHTGREY . '">Loading&hellip;</div>
+        </div>
+        <script' . $nonceAttr . '>
+        (function() {
+            var placeholder = document.getElementById("' . $id . '");
+            if(!placeholder || placeholder.dataset.tracyDeferredLoaded) return;
+            placeholder.dataset.tracyDeferredLoaded = "1";
+            fetch("' . $url . '", { credentials: "same-origin" })
+                .then(function(response) { return response.ok ? response.text() : ""; })
+                .then(function(html) {
+                    if(!html) {
+                        placeholder.innerHTML = "<div style=\'padding: 10px\'>Could not load panel content.</div>";
+                        return;
+                    }
+                    var parsed = document.createElement("div");
+                    parsed.innerHTML = html;
+                    var container = placeholder.parentNode;
+                    var scripts = Array.prototype.slice.call(parsed.querySelectorAll("script"));
+                    scripts.forEach(function(script) { script.parentNode.removeChild(script); });
+                    var fetchedInner = parsed.querySelector(".tracy-inner");
+                    if(fetchedInner) {
+                        container.replaceChild(fetchedInner, placeholder);
+                    }
+                    else {
+                        placeholder.innerHTML = parsed.innerHTML;
+                    }
+                    scripts.forEach(function(oldScript) {
+                        var newScript = document.createElement("script");
+                        for(var i = 0; i < oldScript.attributes.length; i++) {
+                            newScript.setAttribute(oldScript.attributes[i].name, oldScript.attributes[i].value);
+                        }
+                        newScript.appendChild(document.createTextNode(oldScript.textContent));
+                        container.appendChild(newScript);
+                    });
+                    if(window.Tracy) {
+                        if(window.Tracy.Dumper) window.Tracy.Dumper.init(container);
+                        if(window.Tracy.TableSort) window.Tracy.TableSort.init();
+                        if(window.Tracy.Tabs) window.Tracy.Tabs.init();
+                    }
+                })
+                .catch(function() {
+                    placeholder.innerHTML = "<div style=\'padding: 10px\'>Could not load panel content.</div>";
+                });
+        })();
+        </script>';
+    }
+
+    /**
      * Generate a CSRF hidden input field.
      *
      * @return string
