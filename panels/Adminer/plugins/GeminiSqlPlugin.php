@@ -7,7 +7,7 @@ namespace AdminNeo;
  *
  * Beware that this sends your whole database structure (not data) to Google Gemini.
  *
- * Last changed in release: v5.6.0
+ * Last changed in release: v5.7.0
  *
  * @link https://gemini.google.com/
  * @link https://www.adminneo.org/plugins/#usage
@@ -125,7 +125,7 @@ class GeminiSqlPlugin extends Plugin
 
 	textarea.onkeydown = event => {
 		// Handle Ctrl+Enter.
-		if (isCtrl(event) && (event.keyCode === 13 || event.keyCode === 10)) {
+		if (isCtrl(event) && event.key === 'Enter') {
 			button.onclick(null);
 			event.stopPropagation();
 		}
