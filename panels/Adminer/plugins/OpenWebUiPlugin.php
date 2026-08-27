@@ -8,6 +8,8 @@ namespace AdminNeo;
  * This version mirrors the original Gemini plugin but talks to an OpenWebUI instance
  * (any OpenAI‑compatible chat endpoint).
  *
+ * Last changed in release: v5.7.1
+ *
  * @link https://github.com/open-webui/open-webui
  * @link https://docs.openwebui.com/
  *
