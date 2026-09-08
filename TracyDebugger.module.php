@@ -1567,6 +1567,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     if(!method_exists($event->page, 'render')) {
                         $event->page->addHookAfter('render', function($event) {
                             if(!$event->return) return;
+                            if(static::isFieldRenderEvent($event)) return;
 
                             $adminerRendererModuleId = $this->wire('modules')->getModuleID("ProcessTracyAdminerRenderer");
                             $adminerRendererUrl = $this->wire('pages')->get("process=$adminerRendererModuleId")->url;
@@ -2318,6 +2319,22 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
     /**
+     * Whether this Page::render() hook event is a $page->render('field_name') call
+     * rather than a full page render. Mirrors the field name test in Page::___render().
+     * PW cores before 3.0.253 cancel Page::render hooks for field renders, so this
+     * only ever matches on 3.0.253+ where those hooks now fire for field renders too.
+     *
+     * @param HookEvent $event
+     * @return bool
+     *
+     */
+    protected static function isFieldRenderEvent($event) {
+        $arg = $event->arguments(0);
+        return is_string($arg) && strlen($arg) && ctype_alnum(str_replace('_', '', $arg));
+    }
+
+
+    /**
      * Hook after Page::render()
      *
      * Add the User bar
@@ -2326,8 +2343,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     protected function addUserBar($event) {
-        $userBar = '';
-        require_once __DIR__ . '/includes/user-bar/UserBar.php';
+        if(static::isFieldRenderEvent($event)) return;
+        // statics because if this hook fires again for a nested render of the same page,
+        // the require_once is a no-op and both variables would otherwise be empty
+        static $userBarStyles = null;
+        static $userBar = null;
+        if($userBarStyles === null) {
+            $userBar = '';
+            require_once __DIR__ . '/includes/user-bar/UserBar.php';
+        }
         $return = $event->return;
         $return = str_replace("</head>", "\n<!-- Tracy User Bar -->\n" . static::minify($userBarStyles)."\n</head>", $return);
         $return = str_replace("</body>", "\n<!-- Tracy User Bar -->\n" . static::minify($userBar)."\n</body>", $return);
@@ -2344,6 +2368,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     protected function addEnableButton($event) {
+
+        if(static::isFieldRenderEvent($event)) return;
 
         // DON'T add comments to injected code below because it breaks my simple minify() function
         // if Tracy temporarily toggled disabled, add enable icon link
@@ -2414,6 +2440,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      *
      */
     protected function getPageHtml($event) {
+        if(static::isFieldRenderEvent($event)) return;
         static::$pageHtml = $event->return;
     }
 
@@ -2977,6 +3004,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * @return void
      */
     public function logRequests(HookEvent $event) {
+
+        if(static::isFieldRenderEvent($event)) return;
 
         $page = $event->object;
 
