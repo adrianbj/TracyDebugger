@@ -7,7 +7,7 @@ namespace AdminNeo;
  *
  * Beware that this sends your whole database structure (not data) to Google Gemini.
  *
- * Last changed in release: v5.7.0
+ * Last changed in release: v5.8.0
  *
  * @link https://gemini.google.com/
  * @link https://www.adminneo.org/plugins/#usage
@@ -108,7 +108,7 @@ class GeminiSqlPlugin extends Plugin
 
 	public function printAfterSqlCommand()
 	{
-		$waitingText = lang('Loading') . "…";
+		$waitingText = lang('Loading…');
 
 		$script = <<<JS
 (function() {

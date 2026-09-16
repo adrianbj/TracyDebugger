@@ -8,7 +8,7 @@ namespace AdminNeo;
  * This version mirrors the original Gemini plugin but talks to an OpenWebUI instance
  * (any OpenAI‑compatible chat endpoint).
  *
- * Last changed in release: v5.7.1
+ * Last changed in release: v5.8.0
  *
  * @link https://github.com/open-webui/open-webui
  * @link https://docs.openwebui.com/
@@ -134,7 +134,7 @@ class OpenWebUiPlugin extends Plugin
 	 */
 	public function printAfterSqlCommand()
 	{
-		$waitingText = lang('Loading') . "…";
+		$waitingText = lang('Loading…');
 
 		$script = <<<JS
 (function() {
