@@ -7,7 +7,7 @@ class ProcessTracyAdminer extends Process implements Module {
             'summary' => __('Adminer page for TracyDebugger.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '2.0.7',
+            'version' => '2.0.8',
             'autoload' => false,
             'singular' => true,
             'icon' => 'database',
@@ -33,16 +33,27 @@ class ProcessTracyAdminer extends Process implements Module {
         else {
             $adminerRendererModuleId = $this->wire('modules')->getModuleID("ProcessTracyAdminerRenderer");
             $adminerRendererUrl = $this->wire('pages')->get("process=$adminerRendererModuleId")->url;
+            // AdminNeo's own URLs already carry the login parameters; only a bare visit needs
+            // them added, otherwise AdminNeo answers with a 302 to its auth URL first.
+            $authQuery = TracyDebugger::getAdminerAuthQuery();
             $queryString = $_SERVER['QUERY_STRING'] ?? '';
-            $iframeSrc = $adminerRendererUrl . ($queryString !== '' ? '?' . $queryString : '');
+            if(strpos($queryString, 'username=') === false) {
+                $queryString = $authQuery . ($queryString !== '' ? '&' . $queryString : '');
+            }
+            $iframeSrc = $adminerRendererUrl . '?' . $queryString;
 
             return '
             <iframe id="adminer-iframe" src="'.htmlspecialchars($iframeSrc, ENT_QUOTES, 'UTF-8').'" style="display:block; width:100%; border: none; padding:0; margin:0;"></iframe>
             <script' . TracyDebugger::getNonceAttr() . '>
                 const adminer_iframe = document.getElementById("adminer-iframe");
                 const adminerRendererUrl = ' . json_encode($adminerRendererUrl) . ';
+                const adminerAuthQuery = ' . json_encode($authQuery) . ';
                 window.addEventListener("popstate", function (event) {
-                    adminer_iframe.src = adminerRendererUrl + location.search;
+                    let search = location.search;
+                    if (search.indexOf("username=") === -1) {
+                        search = "?" + adminerAuthQuery + (search ? "&" + search.substring(1) : "");
+                    }
+                    adminer_iframe.src = adminerRendererUrl + search;
                 });
 
                 const baseUrl = window.location.href.split("?")[0];

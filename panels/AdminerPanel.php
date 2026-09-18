@@ -140,7 +140,7 @@ class AdminerPanel extends BasePanel {
         if($this->wire('modules')->isInstalled("ProcessTracyAdminer")) {
             $out .= '
             <div class="tracy-inner" style="padding: 0 !important">
-                <iframe id="adminer-iframe" src="'.htmlspecialchars($adminerRendererUrl.'?iframe=1'.$contextLink, ENT_QUOTES, 'UTF-8').'" style="width:100%; height:calc(100% - 5px); border: none; padding:0; margin:0;"></iframe>';
+                <iframe id="adminer-iframe" src="'.htmlspecialchars($adminerRendererUrl.'?'.TracyDebugger::getAdminerAuthQuery().'&iframe=1'.$contextLink, ENT_QUOTES, 'UTF-8').'" style="width:100%; height:calc(100% - 5px); border: none; padding:0; margin:0;"></iframe>';
         }
         else {
             $out .= '

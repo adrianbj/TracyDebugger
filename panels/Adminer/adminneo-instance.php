@@ -43,8 +43,9 @@ function adminneo_instance() {
         "servers" => [
             [
                 "driver" => "mysql",
-                "server" => \ProcessWire\wire('config')->dbHost .
-                    (\ProcessWire\wire('config')->dbPort ? ':' . \ProcessWire\wire('config')->dbPort : ''),
+                // shared with TracyDebugger::getAdminerAuthQuery(), which derives the
+                // server key AdminNeo uses in its URLs from this same string
+                "server" => \ProcessWire\TracyDebugger::getAdminerServer(),
                 "database" => \ProcessWire\wire('config')->dbName,
                 "username" => \ProcessWire\wire('config')->dbUser,
                 "password" => \ProcessWire\wire('config')->dbPass

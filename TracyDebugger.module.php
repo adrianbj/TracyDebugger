@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.0.66',
+            'version' => '5.0.67',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -1574,7 +1574,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                             $adminerModuleId = $this->wire('modules')->getModuleID("ProcessTracyAdminer");
                             $adminerUrl = $this->wire('pages')->get("process=$adminerModuleId")->url;
 
-                            $event->return = str_replace("</body>", "<script" . static::getNonceAttr() . ">window.HttpRootUrl = '".$this->wire('config')->urls->httpRoot."'; window.AdminerUrl = '".$adminerUrl."'; window.AdminerRendererUrl = '".$adminerRendererUrl."'; window.TracyMaxAjaxRows = ".$this->data['maxAjaxRows']."; window.TracyPanelZIndex = " . ($this->data['panelZindex'] + 1) . "; window.TracyColorWarn = '" . TracyDebugger::COLOR_WARN . "'; document.addEventListener('click', function(e) { var el = e.target; while(el && el.tagName !== 'A') el = el.parentNode; if(el && el.href && /^(adminer|tracy|tracyexception):\/\//.test(el.href)) e.preventDefault(); }, true);</script></body>", $event->return);
+                            $event->return = str_replace("</body>", "<script" . static::getNonceAttr() . ">window.HttpRootUrl = '".$this->wire('config')->urls->httpRoot."'; window.AdminerUrl = '".$adminerUrl."'; window.AdminerRendererUrl = '".$adminerRendererUrl."'; window.AdminerAuthQuery = '".static::getAdminerAuthQuery()."'; window.TracyMaxAjaxRows = ".$this->data['maxAjaxRows']."; window.TracyPanelZIndex = " . ($this->data['panelZindex'] + 1) . "; window.TracyColorWarn = '" . TracyDebugger::COLOR_WARN . "'; document.addEventListener('click', function(e) { var el = e.target; while(el && el.tagName !== 'A') el = el.parentNode; if(el && el.href && /^(adminer|tracy|tracyexception):\/\//.test(el.href)) e.preventDefault(); }, true);</script></body>", $event->return);
 
                             $tracyWarnings = Debugger::getBar()->getPanel('Tracy:warnings') ? Debugger::getBar()->getPanel('Tracy:warnings') : Debugger::getBar()->getPanel('Tracy:errors');
                             if(!is_array($tracyWarnings->data) || count($tracyWarnings->data) === 0) {
@@ -2735,6 +2735,36 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public static function minify($str) {
         return preg_replace(array('#^\s*//.+$#m', '/\/\*.*?\*\//s', '/ {2,}/','/<!--.*?-->|\t|(?:\r?\n[ \t]*)+/s'),array('', '', ' ', ''), $str);
+    }
+
+    /**
+     * Server string for the single MySQL server passed to AdminNeo in
+     * panels/Adminer/adminneo-instance.php. Shared with getAdminerAuthQuery() so the
+     * server key derived from it can never drift from the configured server.
+     */
+    public static function getAdminerServer(): string {
+        $config = wire('config');
+        return $config->dbHost . ($config->dbPort ? ':' . $config->dbPort : '');
+    }
+
+    /**
+     * Query string that logs AdminNeo straight into the configured PW database.
+     *
+     * Without these parameters AdminNeo's ExternalLoginPlugin answers with a 302 to its own
+     * auth URL, so every panel open or Setup > Adminer visit costs two full PW admin requests
+     * instead of one. Prepend this to any renderer URL that does not already carry them.
+     *
+     * The server key mirrors AdminNeo's default (Server::getKey() in the bundled adminneo.php:
+     * first 8 hex chars of md5(driver . server)) so the URLs are identical to the ones AdminNeo
+     * itself generates and anything stored in history or bookmarks keeps working. If a future
+     * AdminNeo update changes that formula, the symptom is an "Invalid server or credentials"
+     * login page on the first panel open.
+     */
+    public static function getAdminerAuthQuery(): string {
+        $config = wire('config');
+        return 'mysql=' . substr(md5('mysql' . self::getAdminerServer()), 0, 8) .
+            '&username=' . urlencode($config->dbUser) .
+            '&db=' . urlencode($config->dbName);
     }
 
     public static function getNonceAttr(): string {

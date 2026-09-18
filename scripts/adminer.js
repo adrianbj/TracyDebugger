@@ -1,5 +1,6 @@
 function openAdminer(queryStr) {
-    var url = window.AdminerRendererUrl + "?" + queryStr;
+    var authQuery = window.AdminerAuthQuery && queryStr.indexOf("username=") === -1 ? window.AdminerAuthQuery + "&" : "";
+    var url = window.AdminerRendererUrl + "?" + authQuery + queryStr;
     if(document.getElementById("tracy-debug-panel-ProcessWire-AdminerPanel").classList.contains("tracy-mode-window")) {
         document.getElementById('adminer-iframe').src = url;
     }

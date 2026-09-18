@@ -6,7 +6,27 @@ class ProcessWirePlugin extends Plugin {
 
     private $gridSize2x;
 
+    // Fields fetched for every page referenced in a Select table.
+    private $pageLabelFields;
+
+    // Raw page data keyed by page id, filled in bulk by fillForeignDescriptions() so that
+    // formatSelectionValue() never has to query per cell. See getPageRaw().
+    private $pageCache = array();
+
+    // Columns whose values are page ids in every table.
+    const USER_ID_COLUMNS = array('uid', 'user_id', 'created_users_id', 'modified_users_id', 'user_created', 'user_updated');
+    const PAGE_ID_COLUMNS = array('pid', 'pages_id', 'parent_id', 'parents_id', 'source_id', 'language_id', 'data');
+
+    // Per-request memo for the field behind a field_* table and per-column page checks.
+    private $selectField = false;
+    private $pageIdColumnMemo = array();
+
     public function __construct() {
+
+        $this->pageLabelFields = array('title', 'name', 'status', 'template');
+        if(wire('modules')->isInstalled('PagePaths')) {
+            $this->pageLabelFields[] = 'url';
+        }
 
         $defaultGridSize = 130;
         $options = wire('config')->adminThumbOptions;
@@ -286,17 +306,126 @@ class ProcessWirePlugin extends Plugin {
         return [wire('config')->dbName];
     }
 
+    /**
+     * AdminNeo calls this once with every row of a Select table before rendering any cell.
+     *
+     * formatSelectionValue() links page ids to their title/status, which used to mean two
+     * queries per cell (a 50-row pages table made ~400 queries). Collect every page id from
+     * the columns formatSelectionValue() treats as page references and fetch them all with
+     * one findRaw() call; the cells then read from $this->pageCache.
+     */
+    public function fillForeignDescriptions(array $rows, array $foreignKeys) {
+        if(!$rows || !isset($_GET['select']) || !method_exists(wire('pages'), 'findRaw')) {
+            return $rows;
+        }
+
+        $ids = array();
+        foreach($rows as $row) {
+            foreach($row as $column => $value) {
+                if($value === null || $value === '' || !$this->isPageIdColumn($column)) continue;
+                foreach(explode(',', $value) as $v) {
+                    $v = str_replace('pid', '', $v);
+                    if(ctype_digit($v)) $ids[(int) $v] = true;
+                }
+            }
+        }
+        unset($ids[0]);
+
+        if($ids) {
+            $found = wire('pages')->findRaw('id=' . implode('|', array_keys($ids)) . ', include=all', $this->pageLabelFields);
+            foreach($ids as $id => $unused) {
+                // remember misses as well so a deleted id doesn't trigger a per-cell fallback query
+                $this->pageCache[$id] = isset($found[$id]) ? $found[$id] : null;
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Raw title/name/status/template(/url) for one page, from the cache filled by
+     * fillForeignDescriptions() or, on a miss, from a single getRaw() call.
+     */
+    private function getPageRaw($id) {
+        $id = (int) str_replace('pid', '', $id);
+        if(!$id) return null;
+        if(!array_key_exists($id, $this->pageCache)) {
+            $this->pageCache[$id] = wire('pages')->getRaw('id=' . $id, $this->pageLabelFields);
+        }
+        return $this->pageCache[$id];
+    }
+
+    /**
+     * The PW field behind the current field_* table, or null. Memoized per request.
+     */
+    private function getSelectField() {
+        if($this->selectField === false) {
+            $this->selectField = null;
+            if(isset($_GET['select']) && strpos($_GET['select'], 'field_') === 0) {
+                $f = wire('fields')->get(substr($_GET['select'], strlen('field_')));
+                if($f) $this->selectField = $f;
+            }
+        }
+        return $this->selectField;
+    }
+
+    /**
+     * Whether a column of the current Select table holds page ids, using the same rules as
+     * formatSelectionValue(). Memoized per column name.
+     */
+    private function isPageIdColumn($column) {
+        if(isset($this->pageIdColumnMemo[$column])) return $this->pageIdColumnMemo[$column];
+
+        $select = $_GET['select'];
+        $isPage = false;
+
+        if(in_array($select, array('fieldgroups', 'caches'))) {
+            $isPage = false;
+        }
+        elseif($select == 'pages' && $column == 'id') {
+            $isPage = true;
+        }
+        elseif(in_array($column, self::USER_ID_COLUMNS)) {
+            $isPage = true;
+        }
+        elseif($column == 'data') {
+            $f = $this->getSelectField();
+            $isPage = $f && ($f->type instanceof \ProcessWire\FieldtypePage || $f->type instanceof \ProcessWire\FieldtypePageIDs || $f->type instanceof \ProcessWire\FieldtypeRepeater);
+        }
+        elseif(in_array($column, self::PAGE_ID_COLUMNS)) {
+            // parent_id etc. link to pages everywhere except in the templates table
+            $isPage = !($select == 'templates' && $column == 'id');
+        }
+        elseif(strpos($select, 'field_') !== false) {
+            $isPage = $this->isPageSubfield($column);
+        }
+
+        $this->pageIdColumnMemo[$column] = $isPage;
+        return $isPage;
+    }
+
+    /**
+     * Whether a Table or Combo subfield column of the current field_* table is a page reference.
+     */
+    private function isPageSubfield($column) {
+        $f = $this->getSelectField();
+        if(!$f) return false;
+        if($f->type instanceof \ProcessWire\FieldtypeTable) {
+            $col = $f->type->getColumn($f, $column);
+            return isset($col['type']) && strpos($col['type'], 'page') !== false;
+        }
+        if($f->type instanceof \ProcessWire\FieldtypeCombo) {
+            return $f->getComboSettings()->getSubfieldType($column) === 'Page';
+        }
+        return false;
+    }
+
     public function formatSelectionValue($val, $link, $field, $original) {
 
         // check if the current field is the pages_id column and store for use in other columns on the same row (ie to get image paths)
         static $pages_id = null;
         if ($field['field'] == 'pages_id') {
             $pages_id = $val;
-        }
-
-        $label = array('title', 'name', 'status', 'template');
-        if(wire('modules')->isInstalled('PagePaths')) {
-            $label[] = 'url';
         }
 
         if(!$field || !isset($_GET['select']) || in_array($_GET['select'], array('fieldgroups', 'caches'))) {
@@ -319,7 +448,8 @@ class ProcessWirePlugin extends Plugin {
                 $val = '<a href="'.wire('config')->urls->admin.'setup/template/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
             }
             elseif($_GET['select'] != 'templates' && $field['field'] == 'templates_id') {
-                $name = wire('templates')->get('id='.$val)->get('label|name');
+                $template = wire('templates')->get((int) $val);
+                $name = $template ? $template->get('label|name') : '';
                 if($name) {
                     $val = '<a href="'.wire('config')->urls->admin.'setup/template/edit/?id='.$val.'" target="_parent" title="'.$name.'">'.$val.'</a>';
                 }
@@ -328,7 +458,7 @@ class ProcessWirePlugin extends Plugin {
                 $val = '<a href="'.wire('config')->urls->admin.'setup/field/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
             }
             elseif(in_array($field['field'], array('field_id', 'fields_id'))) {
-                $f = wire('fields')->get('id='.$val);
+                $f = wire('fields')->get((int) $val);
                 if($f) {
                     $name = $f->get('label|name');
                     $val = '<a href="'.wire('config')->urls->admin.'setup/field/edit/?id='.$val.'" target="_parent" title="'.$name.'">'.$val.'</a>';
@@ -336,7 +466,7 @@ class ProcessWirePlugin extends Plugin {
             }
             elseif($_GET['select'] == 'pages' && $field['field'] == 'id') {
                 if(method_exists(wire('pages'), 'getRaw')) {
-                    $name = wire('pages')->getRaw('id='.$val, $label);
+                    $name = $this->getPageRaw($val);
                     if($name) {
                         $val_with_status = $this->formatPageStatus($val, $name['status']);
                         $name = (isset($name['title']) ? $name['title'] : $name['name']) . (isset($name['url']) ? ' ('.$name['url'].')' : '');
@@ -347,9 +477,9 @@ class ProcessWirePlugin extends Plugin {
                     $val = '<a href="'.wire('config')->urls->admin.'page/edit/?id='.$val.'" target="_parent">'.$val.'</a>';
                 }
             }
-            elseif(in_array($field['field'], array('uid', 'user_id', 'created_users_id', 'modified_users_id', 'user_created', 'user_updated'))) {
+            elseif(in_array($field['field'], self::USER_ID_COLUMNS)) {
                 if(method_exists(wire('pages'), 'getRaw')) {
-                    $name = wire('pages')->getRaw('id='.$val, $label);
+                    $name = $this->getPageRaw($val);
                     if($name) {
                         $val_with_status = $this->formatPageStatus($val, $name['status']);
                         $name = (isset($name['title']) ? $name['title'] : $name['name']) . (isset($name['url']) ? ' ('.$name['url'].')' : '');
@@ -362,11 +492,8 @@ class ProcessWirePlugin extends Plugin {
             }
             elseif(strpos($_GET['select'], 'field_') !== false || in_array($field['field'], $valid_page_fields)) {
 
-                $f = wire('fields')->get(str_replace('field_', '', $_GET['select']));
-                if($f && $f->type instanceof \ProcessWire\FieldtypeTable && strpos($f->type->getColumn($f, $field['field'])['type'], 'page') !== false) {
-                    $valid_page_fields[] = $field['field'];
-                }
-                elseif($f && $f->type instanceof \ProcessWire\FieldtypeCombo && $f->getComboSettings()->getSubfieldType($field['field']) === 'Page') {
+                $f = $this->getSelectField();
+                if($this->isPageSubfield($field['field'])) {
                     $valid_page_fields[] = $field['field'];
                 }
 
@@ -387,7 +514,7 @@ class ProcessWirePlugin extends Plugin {
                         $allids = [];
                         foreach(explode(',', $val) as $v) {
                             if(method_exists(wire('pages'), 'getRaw')) {
-                                $name = wire('pages')->getRaw('id='.str_replace('pid', '', $v), $label);
+                                $name = $this->getPageRaw($v);
                                 if($name) {
                                     $v_with_status = $this->formatPageStatus($v, $name['status']);
                                     $name = (isset($name['title']) ? $name['title'] : $name['name']) . (isset($name['url']) ? ' ('.$name['url'].')' : '') . (isset($name['template']) ? ' ('.$name['template']['name'].')' : '');
