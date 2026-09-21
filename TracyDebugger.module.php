@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.0.67',
+            'version' => '5.0.68',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -4019,8 +4019,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $tracyConfig = $this->wire('modules')->getModuleConfigData($this);
             if(!isset($tracyConfig['linksCode'])) $tracyConfig['linksCode'] = '';
             $tracyConfig['linksCode'] .= "\n" . $link;
-            // calling saveModuleConfigData with underscores because we don't need hooks to run again
-            $this->wire('modules')->___saveModuleConfigData($this, $tracyConfig);
+            // calling with underscores because we don't need hooks to run again
+            // note that ___saveModuleConfigData() calls the hookable saveConfig(), so it only
+            // bypasses hooks on PW < 3.0.16 where saveConfig() doesn't exist
+            if(method_exists($this->wire('modules'), '___saveConfig')) {
+                $this->wire('modules')->___saveConfig($this, $tracyConfig);
+            }
+            else {
+                $this->wire('modules')->___saveModuleConfigData($this, $tracyConfig);
+            }
             // redirect back to where the user submitted the link from
             $this->wire('session')->redirect($this->httpReferer);
         }
@@ -5605,9 +5612,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $fieldset->add($f);
 
 
-        $this->wire('modules')->addHookBefore('saveModuleConfigData', null, function($event) {
+        // core calls Modules::saveConfig() and no longer calls the deprecated saveModuleConfigData()
+        // alias, so hook saveConfig() which is reached regardless of which method the caller used
+        // fallback to saveModuleConfigData() for PW < 3.0.16 when saveConfig() did not exist
+        $saveConfigMethod = method_exists($this->wire('modules'), '___saveConfig') ? 'saveConfig' : 'saveModuleConfigData';
+
+        $this->wire('modules')->addHookBefore($saveConfigMethod, null, function($event) {
 
             if($event->arguments[0] !== 'TracyDebugger') return;
+            // saveConfig() also supports saving a single property: saveConfig($class, $property, $value)
+            if(!is_array($event->arguments[1])) return;
             if(!$this->wire('input')->post->customPWInfoPanelLinks[0] && $this->wire('input')->post->linksCode == '') return;
 
             $data = $event->arguments[1];
@@ -5645,8 +5659,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $event->arguments(1, $data);
         });
 
-        $this->wire('modules')->addHookAfter('saveModuleConfigData', null, function($event) {
+        $this->wire('modules')->addHookAfter($saveConfigMethod, null, function($event) {
             if($event->arguments[0] !== 'TracyDebugger') return;
+            if(!is_array($event->arguments[1])) return;
             $data = $event->arguments[1];
 
             // if custom php panel code was changed, then scroll down to that setting field after saving
