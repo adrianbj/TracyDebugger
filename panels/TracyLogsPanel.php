@@ -61,23 +61,30 @@ class TracyLogsPanel extends BasePanel {
 
                 $logLines = $logLinesData[$log['name']]['lines'];
 
+                $lastTimestamp = 0;
                 foreach($logLines as $entry) {
-                    $logDateTime = str_replace(array('[',']'), '', substr($entry, 0 , 21)); // get the date - first 21 chars
-                    $logDateParts = explode(" ", $logDateTime);
-                    $logDate = $logDateParts[0];
-                    $logTime = str_replace('-',':', $logDateParts[1]);
-                    $logDateTime = $logDate . ' ' . $logTime;
+                    if(trim($entry) === '') continue;
                     $itemKey = $log['name'] . '_' . $x;
-                    $entryUrlAndText = explode('@', substr($entry, 22)); // get the rest of the line after the date;
-                    if(isset($entryUrlAndText[1])) {
-                        $entriesArr[$itemKey]['url'] = "<a href='".htmlspecialchars(trim($entryUrlAndText[1] ?? ''), ENT_QUOTES, 'UTF-8')."'>".htmlspecialchars(trim($entryUrlAndText[1] ?? ''), ENT_QUOTES, 'UTF-8')."</a>";
+                    // lines not written by Tracy (no [date time] prefix) are shown with the timestamp of the last dated line so they stay next to it
+                    if(preg_match('/^\[(\d{4}-\d{2}-\d{2}) (\d{2})-(\d{2})-(\d{2})\] ?(.*)$/s', $entry, $m)) {
+                        $logDateTime = "$m[1] $m[2]:$m[3]:$m[4]";
+                        $lastTimestamp = (int) @strtotime($logDateTime); // silenced in case timezone is not set
+                        $entryText = $m[5];
+                        // Tracy line format: "message  @  url" optionally followed by "  @@  exception-file"
+                        if(($pos = strrpos($entryText, ' @@ ')) !== false) $entryText = substr($entryText, 0, $pos);
+                        if(($pos = strrpos($entryText, ' @ ')) !== false) {
+                            $entryUrl = htmlspecialchars(trim(substr($entryText, $pos + 3)), ENT_QUOTES, 'UTF-8');
+                            $entriesArr[$itemKey]['url'] = preg_match('#^https?://#i', $entryUrl) ? "<a href='".$entryUrl."'>".$entryUrl."</a>" : $entryUrl;
+                            $entryText = substr($entryText, 0, $pos);
+                        }
                     }
                     else {
-                        continue; //bit of a hack - some entries getting duplicated but with empty URL, so ignore
+                        $logDateTime = '';
+                        $entryText = $entry;
                     }
-                    $trimmedText = trim($entryUrlAndText[0]);
+                    $trimmedText = trim($entryText);
                     $entriesArr[$itemKey]['text'] = strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText;
-                    $entriesArr[$itemKey]['timestamp'] = @strtotime($logDateTime); // silenced in case timezone is not set
+                    $entriesArr[$itemKey]['timestamp'] = $lastTimestamp;
                     $entriesArr[$itemKey]['linenumber'] = 99-$x;
                     $entriesArr[$itemKey]['order'] = $itemKey;
                     $entriesArr[$itemKey]['date'] = $logDateTime;
@@ -115,7 +122,7 @@ class TracyLogsPanel extends BasePanel {
                     }
 
                     $trimmedText = trim(htmlspecialchars($item['text'] ?? '', ENT_QUOTES, 'UTF-8'));
-                    $lineIsNew = !isset($cachedLogLinesData[$item['log']]) || (isset($cachedLogLinesData[$item['log']]) && strtotime($item['date']) > $cachedLogLinesData[$item['log']]['time']);
+                    $lineIsNew = !isset($cachedLogLinesData[$item['log']]) || (isset($cachedLogLinesData[$item['log']]) && $item['timestamp'] > $cachedLogLinesData[$item['log']]['time']);
                     $this->logEntries .= "
                     \n<tr>" .
                         "<td ".($lineIsNew ? 'style="background: '.$color.' !important; color: #FFFFFF !important"' : '').">".$item['log']."</td>" .

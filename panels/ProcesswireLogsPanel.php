@@ -64,11 +64,18 @@ class ProcesswireLogsPanel extends BasePanel {
                     else {
                         $lines = TracyDebugger::tailCustom($this->wire('config')->paths->logs.$log['name'].'.txt', TracyDebugger::getDataValue("numLogEntries"));
                         $lines = mb_convert_encoding($lines, 'UTF-8');
-                        $lines = explode("\n", $lines);
-                        foreach($lines as $key => $line) {
-                            $entry = $this->wire('log')->lineToEntry($line);
-                            $lines[$key] = $entry;
+                        $entries = array();
+                        foreach(explode("\n", $lines) as $line) {
+                            if(trim($line) === '') continue;
+                            // lines not written by WireLog (no date prefix) are kept as text only - lineToEntry() would discard their content
+                            if(preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\t/', $line)) {
+                                $entries[] = $this->wire('log')->lineToEntry($line);
+                            }
+                            else {
+                                $entries[] = array('date' => '', 'user' => '', 'url' => '', 'text' => trim($line));
+                            }
                         }
+                        $lines = $entries;
                     }
 
                     $logLinesData[$log['name']]['time'] = time();
@@ -82,14 +89,19 @@ class ProcesswireLogsPanel extends BasePanel {
 
                 $logLines = $logLinesData[$log['name']]['lines'];
 
+                $lastTimestamp = 0;
                 foreach($logLines as $entry) {
 
                     if(($isCustom && !isset($entry[0])) || (!$isCustom && !isset($entry['date']))) {
                         continue;
                     }
 
+                    // undated lines take the timestamp of the last dated line so they stay next to it
+                    $entryDate = $isCustom ? $entry[0] : $entry['date'];
+                    if($entryDate !== '') $lastTimestamp = (int) @strtotime($entryDate); // silenced in case timezone is not set
+
                     $itemKey = $log['name'] . '_' . $x;
-                    $entriesArr[$itemKey]['timestamp'] = @strtotime($isCustom ? $entry[0] : $entry['date']); // silenced in case timezone is not set
+                    $entriesArr[$itemKey]['timestamp'] = $lastTimestamp;
                     $entriesArr[$itemKey]['linenumber'] = 99-$x;
                     $entriesArr[$itemKey]['order'] = $itemKey;
                     $entriesArr[$itemKey]['date'] = $isCustom ? $entry[0] : $entry['date'];
@@ -142,7 +154,7 @@ class ProcesswireLogsPanel extends BasePanel {
                     }
 
                     $trimmedText = trim(htmlspecialchars($item['text'] ?? '', ENT_QUOTES, 'UTF-8'));
-                    $lineIsNew = !isset($cachedLogLinesData[$item['log']]) || (isset($cachedLogLinesData[$item['log']]) && strtotime($item['date']) > $cachedLogLinesData[$item['log']]['time']);
+                    $lineIsNew = !isset($cachedLogLinesData[$item['log']]) || (isset($cachedLogLinesData[$item['log']]) && $item['timestamp'] > $cachedLogLinesData[$item['log']]['time']);
                     $this->logEntries .= "
                     \n<tr>
                         <td ".($lineIsNew ? 'style="background: '.$color.' !important; color: #FFFFFF !important"' : '')."><a ".($lineIsNew ? 'style="color: #FFFFFF !important"' : '')." title='View \"".$item['log']."\" log file in PW admin' href='".$this->wire('config')->urls->admin."setup/logs/view/".$item['log']."/'>".str_replace('-', '&#8209;', $item['log'])."</a></td>" .
