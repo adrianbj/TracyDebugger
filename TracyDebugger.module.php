@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.0.69',
+            'version' => '5.0.70',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -2738,13 +2738,46 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     }
 
     /**
-     * Server string for the single MySQL server passed to AdminNeo in
+     * AdminNeo driver for the PW database: 'mysql', 'pgsql' or 'sqlite'.
+     * PW versions without database dialects are always MySQL.
+     */
+    public static function getAdminerDriver(): string {
+        $database = wire('database');
+        return method_exists($database, 'dialect') ? $database->dialect()->name() : 'mysql';
+    }
+
+    /**
+     * Server string for the single server passed to AdminNeo in
      * panels/Adminer/adminneo-instance.php. Shared with getAdminerAuthQuery() so the
      * server key derived from it can never drift from the configured server.
+     *
+     * SQLite has no server. For PostgreSQL, $config->dbSocket is the socket directory,
+     * which AdminNeo's host_port() passes on to libpq as host=<dir> port=<port>.
      */
     public static function getAdminerServer(): string {
         $config = wire('config');
+        $driver = self::getAdminerDriver();
+        if($driver === 'sqlite') return '';
+        if($driver === 'pgsql' && $config->dbSocket) {
+            return $config->dbSocket . ($config->dbPort ? ':' . $config->dbPort : '');
+        }
         return $config->dbHost . ($config->dbPort ? ':' . $config->dbPort : '');
+    }
+
+    /**
+     * Database AdminNeo opens: the database name, or for SQLite the absolute path of the database file.
+     */
+    public static function getAdminerDatabase(): string {
+        $config = wire('config');
+        if(self::getAdminerDriver() === 'sqlite') return WireDatabaseDialectSQLite::databaseFile($config);
+        return (string) $config->dbName;
+    }
+
+    /**
+     * Username AdminNeo logs in with (SQLite has none).
+     */
+    public static function getAdminerUsername(): string {
+        return self::getAdminerDriver() === 'sqlite' ? '' : (string) wire('config')->dbUser;
     }
 
     /**
@@ -2761,10 +2794,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * login page on the first panel open.
      */
     public static function getAdminerAuthQuery(): string {
-        $config = wire('config');
-        return 'mysql=' . substr(md5('mysql' . self::getAdminerServer()), 0, 8) .
-            '&username=' . urlencode($config->dbUser) .
-            '&db=' . urlencode($config->dbName);
+        $driver = self::getAdminerDriver();
+        return $driver . '=' . substr(md5($driver . self::getAdminerServer()), 0, 8) .
+            '&username=' . urlencode(self::getAdminerUsername()) .
+            '&db=' . urlencode(self::getAdminerDatabase());
     }
 
     public static function getNonceAttr(): string {

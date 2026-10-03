@@ -42,12 +42,14 @@ function adminneo_instance() {
     $config = [
         "servers" => [
             [
-                "driver" => "mysql",
+                "driver" => \ProcessWire\TracyDebugger::getAdminerDriver(),
                 // shared with TracyDebugger::getAdminerAuthQuery(), which derives the
                 // server key AdminNeo uses in its URLs from this same string
                 "server" => \ProcessWire\TracyDebugger::getAdminerServer(),
-                "database" => \ProcessWire\wire('config')->dbName,
-                "username" => \ProcessWire\wire('config')->dbUser,
+                // breadcrumb label; AdminNeo falls back to the server string, which SQLite leaves empty
+                "name" => \ProcessWire\TracyDebugger::getAdminerDriver() === 'sqlite' ? 'SQLite' : \ProcessWire\TracyDebugger::getAdminerServer(),
+                "database" => \ProcessWire\TracyDebugger::getAdminerDatabase(),
+                "username" => \ProcessWire\TracyDebugger::getAdminerUsername(),
                 "password" => \ProcessWire\wire('config')->dbPass
             ]
         ],
