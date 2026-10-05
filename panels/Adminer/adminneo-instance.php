@@ -39,7 +39,7 @@ function adminneo_instance() {
         );
     }
 
-    $config = [
+    $config = \ProcessWire\TracyDebugger::getAdminerSslConfig() + [
         "servers" => [
             [
                 "driver" => \ProcessWire\TracyDebugger::getAdminerDriver(),

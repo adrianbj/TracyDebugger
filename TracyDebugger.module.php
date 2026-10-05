@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.0.70',
+            'version' => '5.0.71',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -2778,6 +2778,41 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public static function getAdminerUsername(): string {
         return self::getAdminerDriver() === 'sqlite' ? '' : (string) wire('config')->dbUser;
+    }
+
+    /**
+     * AdminNeo SSL settings taken from the MySQL SSL options in $config->dbOptions, so
+     * AdminNeo can reach servers that require secure transport (e.g. AWS RDS with
+     * require_secure_transport=ON) the same way PW does.
+     */
+    public static function getAdminerSslConfig(): array {
+        $options = wire('config')->dbOptions;
+        if(self::getAdminerDriver() !== 'mysql' || !is_array($options)) return [];
+        $map = [
+            'SSL_KEY' => 'sslKey',
+            'SSL_CERT' => 'sslCertificate',
+            'SSL_CA' => 'sslCaCertificate',
+        ];
+        $sslConfig = [];
+        foreach($map as $attr => $key) {
+            $attr = self::getPdoMysqlAttr($attr);
+            if($attr !== null && !empty($options[$attr])) $sslConfig[$key] = $options[$attr];
+        }
+        $verifyAttr = self::getPdoMysqlAttr('SSL_VERIFY_SERVER_CERT');
+        if($verifyAttr !== null && isset($options[$verifyAttr])) {
+            $sslConfig['sslTrustServerCertificate'] = !$options[$verifyAttr];
+        }
+        return $sslConfig;
+    }
+
+    /**
+     * Value of a PDO MySQL attribute constant, e.g. 'SSL_CA'. PHP 8.4 added Pdo\Mysql::ATTR_*
+     * (same values) and 8.5 deprecates PDO::MYSQL_ATTR_*, so prefer the former.
+     */
+    private static function getPdoMysqlAttr(string $name): ?int {
+        if(defined('\Pdo\Mysql::ATTR_' . $name)) return constant('\Pdo\Mysql::ATTR_' . $name);
+        if(defined('\PDO::MYSQL_ATTR_' . $name)) return constant('\PDO::MYSQL_ATTR_' . $name);
+        return null;
     }
 
     /**
