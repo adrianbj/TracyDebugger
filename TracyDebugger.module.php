@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.0.71',
+            'version' => '5.0.72',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -1268,7 +1268,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                         $restoreModulesCode =
                         "<?php\n" .
                         "if(file_exists('".$this->tracyCacheDir.$this->modulesDbBackupFilename."')) {\n" .
-                            "\t\$db = new PDO('mysql:host={$this->wire('config')->dbHost};dbname={$this->wire('config')->dbName}', '{$this->wire('config')->dbUser}', '{$this->wire('config')->dbPass}');\n" .
+                            "\t\$db = " . $this->getRestorePdoCode() . ";\n" .
                             "\t\$sql = file_get_contents('" . $this->tracyCacheDir . $this->modulesDbBackupFilename . "');\n" .
                             "\t\$qr = \$db->query(\$sql);\n" .
                         "}\n" .
@@ -2722,6 +2722,39 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     private function deleteFile($path) {
         if(file_exists($path)) unlink($path);
+    }
+
+
+    /**
+     * PHP code for a PDO connection to the PW database, for the standalone restore script.
+     * Uses PW's DSN (port/socket) and the PDO driver options in $config->dbOptions, so it
+     * connects the way PW does, including over SSL on servers that require secure transport.
+     *
+     * @return string
+     *
+     */
+    private function getRestorePdoCode() {
+        $config = $this->wire('config');
+        if(method_exists('\ProcessWire\WireDatabasePDO', 'dsn')) {
+            $dsn = WireDatabasePDO::dsn(array(
+                'name' => $config->dbName,
+                'host' => $config->dbHost,
+                'port' => $config->dbPort,
+                'socket' => $config->dbSocket,
+            ));
+        }
+        else {
+            $dsn = "mysql:host={$config->dbHost};dbname={$config->dbName}";
+        }
+        // driver options have integer keys; string keys are PW settings or (PW 3.0.273+) per-type sub-arrays
+        $options = array();
+        $dbOptions = is_array($config->dbOptions) ? $config->dbOptions : array();
+        if(isset($dbOptions['mysql']) && is_array($dbOptions['mysql'])) $dbOptions = $dbOptions['mysql'] + $dbOptions;
+        foreach($dbOptions as $key => $value) {
+            if(is_int($key) && is_scalar($value)) $options[] = $key . ' => ' . var_export($value, true);
+        }
+        return 'new PDO(' . var_export($dsn, true) . ', ' . var_export((string) $config->dbUser, true) . ', ' .
+            var_export((string) $config->dbPass, true) . ', array(' . implode(', ', $options) . '))';
     }
 
 
