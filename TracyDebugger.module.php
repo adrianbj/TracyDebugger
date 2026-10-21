@@ -2035,6 +2035,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     Debugger::setSessionStorage(new \Tracy\NativeSession);
                 }
             }
+            // Tracy's asset responses (?_tracy_bar=...) send their own Cache-Control, but PHP's session
+            // cache limiter has already queued "Expires: 1981" and "Pragma: no-cache", which contradict it
+            if(isset($_GET['_tracy_bar']) && !headers_sent()) {
+                header_remove('Expires');
+                header_remove('Pragma');
+            }
             Debugger::enable($outputMode, $logFolder, $this->data['fromEmail'] != '' && $this->data['email'] != '' ? $this->data['email'] : null);
 
             // Tracy's production error page, with the CSP nonce on its <style> (unless the site has its own)
