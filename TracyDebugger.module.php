@@ -120,6 +120,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $consoleRunStatusDir = '';
     public static $consoleRunCacheDir = '';
     public static $consolePidHandle = null;
+    public static $skipTracyShutdownHandler = false;
+    public static $consoleLastError = null;
     public static $downloadStaged = false;
     public static $pendingDownloadEnvelope = null;
     public static $preDownloadOutput = '';
@@ -2066,6 +2068,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 header_remove('Expires');
                 header_remove('Pragma');
             }
+            // registered before Debugger::enable() registers Tracy's own shutdown handler, so it runs first.
+            // When the Console asks (CodeProcessor.php), it takes the request's last error for the Console's
+            // shutdown handler and clears it, and turns the bar off, so Tracy's handler has nothing to log
+            // or render into the Console's AJAX response
+            register_shutdown_function(function() {
+                if(!static::$skipTracyShutdownHandler) return;
+                static::$consoleLastError = error_get_last();
+                error_clear_last();
+                Debugger::$showBar = false;
+            });
             Debugger::enable($outputMode, $logFolder, $this->data['fromEmail'] != '' && $this->data['email'] != '' ? $this->data['email'] : null);
 
             // Tracy's production error page, with the CSP nonce on its <style> (unless the site has its own)

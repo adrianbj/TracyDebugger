@@ -63,7 +63,7 @@ if($this->wire('input')->post->allowBluescreen !== 'true') {
     set_exception_handler(__NAMESPACE__.'\tracyConsoleExceptionHandler');
 }
 if(TracyDebugger::getDataValue('use_php_session') === 1 || TracyDebugger::$tracyVersion == '2.7.x') {
-    Debugger::$disableShutdownHandler = true;
+    TracyDebugger::$skipTracyShutdownHandler = true;
 }
 register_shutdown_function(__NAMESPACE__.'\tracyConsoleShutdownHandler');
 
@@ -611,7 +611,8 @@ function tracyConsoleShutdownHandler() {
         return true;
     }
 
-    $lasterror = error_get_last();
+    // when Tracy's shutdown handler is skipped, TracyDebugger's earlier shutdown function has taken the error
+    $lasterror = TracyDebugger::$skipTracyShutdownHandler ? TracyDebugger::$consoleLastError : error_get_last();
 
     // convert error constants to strings,
     // otherwise the error's numerical value (http://php.net/manual/en/errorfunc.constants.php) is returned

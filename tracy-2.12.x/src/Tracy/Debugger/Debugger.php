@@ -48,9 +48,6 @@ class Debugger
 	/** whether to display debug bar in development mode */
 	public static bool $showBar = true;
 
-	/** @var bool whether to disable the shutdown handler in development mode */
-	public static $disableShutdownHandler = false;
-
 	/** size of reserved memory */
 	public static int $reservedMemorySize = 500_000;
 
@@ -282,11 +279,6 @@ class Debugger
 	 */
 	public static function shutdownHandler(): void
 	{
-
-		if (self::$disableShutdownHandler) {
-			return;
-		}
-
 		$error = error_get_last();
 		if (in_array($error['type'] ?? null, [E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_PARSE, E_RECOVERABLE_ERROR, E_USER_ERROR], true)) {
 			$e = new ErrorException($error['message'], 0, $error['type'], $error['file'], $error['line']);
