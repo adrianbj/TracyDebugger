@@ -72,15 +72,13 @@ final class Renderer
 		if ($model->location && $this->sourceLocation) {
 			[$file, $line, $code] = $model->location;
 			$uri = Helpers::editorUri($file, $line);
-			$location = '<div class="tracy-dump-location-container">';
-			$location .= Helpers::formatHtml(
+			$location = Helpers::formatHtml(
 				'<a href="%" class="tracy-dump-location" title="in file % on line %%">',
 				$uri ?? '#',
 				$file,
 				$line,
-				$uri ? "\nClick to open in editor" : ''
-			) . Helpers::encodeString($code, 50) . "</a\n>";
-			$location .= "  " . '<span class="tracy-dump-location tracy-dump-location-path">' . Helpers::editorLink($file, $line) . '</span></div>';
+				$uri ? "\nClick to open in editor" : '',
+			) . Helpers::encodeString($code, 50) . " 📍</a\n>";
 		}
 
 		return '<pre class="tracy-dump' . ($this->theme ? ' tracy-' . htmlspecialchars($this->theme) : '')
@@ -89,8 +87,9 @@ final class Renderer
 			. ($json ? " data-tracy-dump='" . Helpers::jsonEncode($json) . "'" : '')
 			. ($location || strlen($html) > 100 ? "\n" : '')
 			. '>'
+			. $location
 			. $html
-			. "</pre>\n" . $location;
+			. "</pre>\n";
 	}
 
 

@@ -97,6 +97,91 @@
     }
 })();
 
+// Tracy puts a dump's "file and line" link at the top of the dump, ending in a pin emoji. Move it
+// below the dump, without the emoji, followed by the file's path as Tracy's Helpers::editorLink()
+// shows it. Runs wherever Tracy initializes dumps: the page, panels, popups, AJAX BlueScreens,
+// and our Console and Dumps Recorder.
+(function() {
+    if(!window.Tracy || !Tracy.Dumper || !Tracy.Dumper.init) return;
+
+    // the file in the link's editor URL has the editor mapping applied (Debugger::$editorMapping),
+    // which is what editorLink() shows; find it by matching the URL against the editor URL
+    // templates TracyDebugger can set Debugger::$editor to
+    function mappedFile(href, file) {
+        var templates = window.TracyDebuggerEditorTemplates || [];
+        for(var i = 0; i < templates.length; i++) {
+            if(!templates[i] || templates[i].indexOf('%file') === -1) continue;
+            var pattern = templates[i].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+                .replace('%file', '([\\w.~%-]+)')
+                .replace(/%line/g, '\\d+')
+                .replace(/%action/g, '\\w*')
+                .replace(/%(search|replace)/g, '[^&]*');
+            var match = new RegExp('^' + pattern + '$').exec(href);
+            if(match) {
+                try {
+                    return decodeURIComponent(match[1]);
+                }
+                catch(e) {}
+            }
+        }
+        return file;
+    }
+
+    function editorLink(href, file, line) {
+        var shown = mappedFile(href, file);
+        if(!href || href === '#') {
+            var span = document.createElement('span');
+            span.textContent = shown + ':' + line;
+            return span;
+        }
+        var separator = shown.indexOf('\\') !== -1 && shown.indexOf('/') === -1 ? '\\' : '/';
+        var parts = shown.replace(/\\/g, '/').split('/');
+        var name = parts.pop();
+        while(parts.length && name.length < 50) {
+            name = parts.pop() + '/' + name;
+        }
+        name = (parts.length ? '.../' : '') + name;
+        var slash = name.lastIndexOf('/');
+        var link = document.createElement('a');
+        link.setAttribute('href', href);
+        link.title = file + ':' + line;
+        link.className = 'tracy-editor';
+        link.appendChild(document.createTextNode((slash === -1 ? '.' + separator : name.slice(0, slash + 1).replace(/\//g, separator))));
+        var b = document.createElement('b');
+        b.textContent = name.slice(slash + 1);
+        link.appendChild(b);
+        link.appendChild(document.createTextNode(':' + line));
+        return link;
+    }
+
+    function moveDumpLocations(context) {
+        (context || document).querySelectorAll('pre.tracy-dump > a.tracy-dump-location').forEach(function(location) {
+            var match = /^in file ([\s\S]*) on line (\d+)/.exec(location.title);
+            if(!match) return;
+            var pre = location.parentNode;
+            var last = location.lastChild;
+            if(last && last.nodeType === 3) last.nodeValue = last.nodeValue.replace(/\s*📍\s*$/, '');
+
+            var container = document.createElement('div');
+            container.className = 'tracy-dump-location-container';
+            container.appendChild(location);
+            container.appendChild(document.createTextNode('  '));
+            var path = document.createElement('span');
+            path.className = 'tracy-dump-location tracy-dump-location-path';
+            path.appendChild(editorLink(location.getAttribute('href'), match[1], match[2]));
+            container.appendChild(path);
+            pre.parentNode.insertBefore(container, pre.nextSibling);
+        });
+    }
+
+    var dumperInit = Tracy.Dumper.init;
+    Tracy.Dumper.init = function(context) {
+        var result = dumperInit.apply(this, arguments);
+        moveDumpLocations(context);
+        return result;
+    };
+})();
+
 function tracyResizePanel(panel) {
     panel = document.getElementById("tracy-debug-panel-ProcessWire-" + panel);
     var tracyPanel = window.Tracy.Debug.panels[panel.id];

@@ -1819,6 +1819,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     }
                 ';
 
+                // every URL template Debugger::$editor can be set to (see EDITOR PROTOCOL HANDLER), for main.js
+                // to read the mapped file of a dump's location link
+                $barJs .= 'window.TracyDebuggerEditorTemplates = ' . json_encode(array(
+                    (string) $this->data['editor'],
+                    'tracy://?f=%file&l=%line',
+                    $this->wire('config')->urls->admin . 'setup/file-editor/?f=%file&l=%line'
+                )) . ';' . "\n";
+
                 $barJs .= '
                     function removeDumpsRecorderPanelState() {
                         if(!document.getElementById("tracy-debug-bar")) {
