@@ -80,7 +80,7 @@ if(wire('user')->hasPermission('tracy-page-versions')) {
                 if(e.target && e.target.id === "tracyUserBarTemplatePath") changeTemplatePath();
             }, true);
         </script>
-        <style>
+        <style' . TracyDebugger::getNonceAttr() . '>
             select#tracyUserBarTemplatePath {
                 height: 20px !important;
                 font-size: 11px !important;

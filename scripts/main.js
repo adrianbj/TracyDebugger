@@ -1,3 +1,75 @@
+// Panel markup can contain <style> elements without a nonce, and Tracy inserts it with innerHTML,
+// so a CSP without 'unsafe-inline' blocks them. Add the bar script's nonce to them before Tracy
+// inserts the markup: the initial panels, AJAX and redirect bars, and lazily loaded panels.
+(function() {
+    var nonce = document.currentScript && (document.currentScript.nonce || document.currentScript.getAttribute('nonce'));
+    if(!nonce || !window.Tracy || !Tracy.Debug || !Tracy.DebugPanel) return;
+
+    function addNonces(html) {
+        if(typeof html !== 'string' || html.indexOf('<style') === -1) return html;
+        var el = document.createElement('div');
+        el.innerHTML = html;
+        el.querySelectorAll('style').forEach(function(style) {
+            style.setAttribute('nonce', nonce);
+        });
+        return el.innerHTML;
+    }
+
+    var init = Tracy.Debug.init;
+    Tracy.Debug.init = function(content) {
+        return init.call(this, addNonces(content));
+    };
+
+    var loadAjax = Tracy.Debug.loadAjax;
+    Tracy.Debug.loadAjax = function(content) {
+        if(content) {
+            content.panels = addNonces(content.panels);
+            content.bar = addNonces(content.bar);
+        }
+        return loadAjax.call(this, content);
+    };
+
+    var panelInit = Tracy.DebugPanel.prototype.init;
+    Tracy.DebugPanel.prototype.init = function() {
+        if(this.elem && this.elem.dataset.tracyContent) {
+            this.elem.dataset.tracyContent = addNonces(this.elem.dataset.tracyContent);
+        }
+        return panelInit.apply(this, arguments);
+    };
+
+    // a panel opened in its own window loads the bar script there, which reads the nonce for
+    // Tracy's CSS from its own script element; give that element the nonce before it runs
+    var toWindow = Tracy.DebugPanel.prototype.toWindow;
+    if(toWindow) {
+        Tracy.DebugPanel.prototype.toWindow = function() {
+            var open = window.open, popup = null;
+            window.open = function() {
+                popup = open.apply(window, arguments);
+                return popup;
+            };
+            try {
+                return toWindow.apply(this, arguments);
+            }
+            finally {
+                window.open = open;
+                if(popup && popup.document) {
+                    popup.document.querySelectorAll('script[src*="_tracy_bar=js"]').forEach(function(script) {
+                        script.setAttribute('nonce', nonce);
+                    });
+                }
+            }
+        };
+    }
+
+    // the BlueScreen for an AJAX request, a redirect, or the Tracy Exceptions panel
+    if(Tracy.BlueScreen && Tracy.BlueScreen.loadAjax) {
+        var bsLoadAjax = Tracy.BlueScreen.loadAjax;
+        Tracy.BlueScreen.loadAjax = function(content) {
+            return bsLoadAjax.call(this, addNonces(content));
+        };
+    }
+})();
+
 function tracyResizePanel(panel) {
     panel = document.getElementById("tracy-debug-panel-ProcessWire-" + panel);
     var tracyPanel = window.Tracy.Debug.panels[panel.id];

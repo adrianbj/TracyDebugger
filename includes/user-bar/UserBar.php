@@ -1,7 +1,7 @@
 <?php namespace ProcessWire;
 
 $userBarStyles = '
-<style>
+<style' . TracyDebugger::getNonceAttr() . '>
     div#tracyUserBar {
         '.TracyDebugger::getDataValue("userBarTopBottom").': 0px;
         '.TracyDebugger::getDataValue("userBarLeftRight").': 0px;

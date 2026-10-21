@@ -30,7 +30,7 @@ class LinksPanel extends BasePanel {
 
         $nonceAttr = TracyDebugger::getNonceAttr();
         $out = <<<EOT
-<style>
+<style{$nonceAttr}>
     #tracy-add-link { height:30px; padding-right:75px; position:relative; margin-bottom:10px; }
     #tracy-add-link#tracy-add-link input { width:calc(100% - 10px) !important; outline:none; }
     #tracy-add-link#tracy-add-link input:focus { border-color:#8a9cb1 !important; }

@@ -1531,7 +1531,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
                 if($this->showServerTypeIndicator()) {
                     $this->serverStyleInfo = $this->getServerAdminStyles();
-                    Debugger::$customCssStr .= $this->setServerAdminStyleColor();
+                    Debugger::$customJsStr .= static::barStylesJs($this->setServerAdminStyleColor());
                     if(in_array('favicon', $this->data['styleAdminType'])) Debugger::$customJsStr .= $this->setFaviconBadge();
                 }
 
@@ -1541,7 +1541,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     Debugger::$customCssStr .= '<link id="fontAwesomeStyles" type="text/css" href="'.$this->wire('config')->urls->root . 'wire/templates-admin/styles/font-awesome/css/font-awesome.min.css" rel="stylesheet" />';
                 }
 
-                Debugger::$customCssStr .= '
+                Debugger::$customJsStr .= static::barStylesJs('
                 <style>
                     #tracy-debug-bar {
                         left:'.($this->data['barPosition'] == 'bottom-left' ? '0' : 'auto').' !important;
@@ -1551,7 +1551,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                         '.($this->data['barPosition'] == 'bottom-left' ? 'left:0' : 'right:0').' !important;
                     }
                 </style>
-                ';
+                ');
 
                 // add Adminer links to fields in Page Edit
                 if($this->data['adminerEditFieldLink'] && $this->wire('modules')->isInstalled('ProcessTracyAdminer') && in_array('adminer', static::$showPanels)) {
@@ -1940,6 +1940,27 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 });
             }
 
+            // The BlueScreen page's <style class="tracy-debug"> elements have no nonce, and a CSP without
+            // 'unsafe-inline' blocks them. BlueScreen actions are rendered just before the page is output,
+            // so start a buffer there that adds the nonce to them. Not when the BlueScreen is captured
+            // for an AJAX request (renderToAjax): an extra buffer would break the capture, and main.js
+            // adds the nonce to that markup instead.
+            if($outputMode != Debugger::PRODUCTION && method_exists(Debugger::getBlueScreen(), 'addAction')) {
+                Debugger::getBlueScreen()->addAction(function (): ?array {
+                    static $buffering = false;
+                    $nonceAttr = TracyDebugger::getNonceAttr();
+                    if($buffering || $nonceAttr === '') return null;
+                    foreach(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 8) as $frame) {
+                        if(($frame['function'] ?? '') === 'renderToAjax') return null;
+                    }
+                    $buffering = true;
+                    ob_start(function (string $html) use ($nonceAttr): string {
+                        return str_replace('<style class="tracy-debug">', '<style class="tracy-debug"' . $nonceAttr . '>', $html);
+                    });
+                    return null;
+                });
+            }
+
             if($outputMode != Debugger::PRODUCTION) {
                 Debugger::getBlueScreen()->addPanel(function (?\Throwable $ex): ?array {
                     static $stashed = null;
@@ -2015,6 +2036,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 }
             }
             Debugger::enable($outputMode, $logFolder, $this->data['fromEmail'] != '' && $this->data['email'] != '' ? $this->data['email'] : null);
+
+            // Tracy's production error page, with the CSP nonce on its <style> (unless the site has its own)
+            if(!Debugger::$errorTemplate) Debugger::$errorTemplate = __DIR__ . '/includes/error.500.php';
 
             // don't email custom (writeError()) logged errors for Console panel via CodeProcessor.php
             if($this->wire('config')->ajax && $this->wire('input')->post->tracyConsole == 1) {
@@ -2374,7 +2398,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // DON'T add comments to injected code below because it breaks my simple minify() function
         // if Tracy temporarily toggled disabled, add enable icon link
         $enableButton = '
-        <style>
+        <style' . static::getNonceAttr() . '>
             div#TracyEnableButton {
                 bottom: 10px !important;
                 '.($this->data['barPosition'] == 'bottom-left' ? 'left' : 'right').':10px !important;
@@ -2882,6 +2906,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
         }
         return $nonceAttr;
+    }
+
+    /**
+     * JS for Debugger::$customJsStr that adds the CSS of these <style> blocks to the page head in a
+     * <style> with the bar script's nonce. Tracy adds $customCssStr with innerHTML, which leaves
+     * its <style> elements without a nonce, so a CSP without 'unsafe-inline' blocks them.
+     *
+     */
+    private static function barStylesJs($html): string {
+        preg_match_all('#<style[^>]*>(.*?)</style>#s', (string) $html, $matches);
+        $css = trim(implode("\n", $matches[1]));
+        if($css === '') return '';
+        return '(function(){var s = document.createElement("style"), n = document.currentScript && (document.currentScript.nonce || document.currentScript.getAttribute("nonce")); s.className = "tracy-debug"; if(n) s.setAttribute("nonce", n); s.textContent = ' . json_encode($css) . '; document.head.appendChild(s);})();' . "\n";
     }
 
     public static function formatPageStatus($val, $status) {
