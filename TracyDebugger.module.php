@@ -2946,7 +2946,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     /**
      * Path of a cache file holding this bar JS, for Debugger::$customJsFiles (Tracy reads those
      * files when it builds the bar bundle). Named by a hash of the content, so requests that build
-     * different JS never overwrite each other's file.
+     * different JS never overwrite each other's file. Writing a new one (something that feeds the JS
+     * changed) also removes those more than a day old; a variant still in use is just written again.
      *
      */
     private function barJsFile($js) {
@@ -2955,6 +2956,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $tmpFile = $file . '.' . getmypid() . '.tmp';
             file_put_contents($tmpFile, $js);
             rename($tmpFile, $file);
+            foreach(glob($this->tracyCacheDir . 'bar-*.js') ?: array() as $oldFile) {
+                if($oldFile !== $file && filemtime($oldFile) < time() - 86400) @unlink($oldFile);
+            }
         }
         return $file;
     }
