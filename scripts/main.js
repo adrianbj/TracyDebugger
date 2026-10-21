@@ -70,6 +70,33 @@
     }
 })();
 
+// Tracy's reset.css clears color and background on every hovered element in the bar, panels and
+// BlueScreen ("tracy-div:not(a b) *:hover"), which beats many of our panel styles and the Ace
+// editor theme (its background turns transparent while hovered). Narrow it to the direct children
+// of tracy-div in each Tracy stylesheet, including those an AJAX BlueScreen adds later.
+(function() {
+    function narrowHoverReset() {
+        document.querySelectorAll('style.tracy-debug').forEach(function(style) {
+            if(!style.sheet) return;
+            Array.prototype.forEach.call(style.sheet.cssRules, function(rule) {
+                if(rule.selectorText && /^tracy-div:not\(a b\) (\*)?:hover$/.test(rule.selectorText)) {
+                    rule.selectorText = 'tracy-div:not(a b) > *:hover';
+                }
+            });
+        });
+    }
+    narrowHoverReset();
+
+    if(window.Tracy && Tracy.BlueScreen && Tracy.BlueScreen.loadAjax) {
+        var bsLoadAjax = Tracy.BlueScreen.loadAjax;
+        Tracy.BlueScreen.loadAjax = function() {
+            var result = bsLoadAjax.apply(this, arguments);
+            narrowHoverReset();
+            return result;
+        };
+    }
+})();
+
 function tracyResizePanel(panel) {
     panel = document.getElementById("tracy-debug-panel-ProcessWire-" + panel);
     var tracyPanel = window.Tracy.Debug.panels[panel.id];
