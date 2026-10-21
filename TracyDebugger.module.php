@@ -1529,19 +1529,25 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/exception-loader.js';
                 }
 
+                // TracyDebugger's own bar JS, added to Tracy's bundle as a file (see barJsFile()). Tracy caches the
+                // bundle by URL for 10 days, so nothing in it may depend on this request's cookies, session or
+                // $showPanels - anything that does is decided in the browser instead.
+                $barJs = '';
+
                 if($this->showServerTypeIndicator()) {
                     $this->serverStyleInfo = $this->getServerAdminStyles();
-                    Debugger::$customJsStr .= static::barStylesJs($this->setServerAdminStyleColor());
-                    if(in_array('favicon', $this->data['styleAdminType'])) Debugger::$customJsStr .= $this->setFaviconBadge();
+                    $barJs .= static::barStylesJs($this->setServerAdminStyleColor());
+                    if(in_array('favicon', $this->data['styleAdminType'])) $barJs .= $this->setFaviconBadge();
                 }
 
                 // load font-awesome for our panels. inAdmin normally has it via the admin template, but on a
                 // bluescreen the admin template never renders, so we'd lose our icons. duplicate loads are harmless.
-                if(in_array('fileEditor', static::$showPanels) || (in_array('processwireInfo', static::$showPanels) && count($this->data['customPWInfoPanelLinks']))) {
-                    Debugger::$customCssStr .= '<link id="fontAwesomeStyles" type="text/css" href="'.$this->wire('config')->urls->root . 'wire/templates-admin/styles/font-awesome/css/font-awesome.min.css" rel="stylesheet" />';
+                // gated on who could open the File Editor (as for its JS above), not on $showPanels.
+                if(static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser || count($this->data['customPWInfoPanelLinks'])) {
+                    $barJs .= '(function(){var l = document.createElement("link"); l.id = "fontAwesomeStyles"; l.rel = "stylesheet"; l.href = ' . json_encode($this->wire('config')->urls->root . 'wire/templates-admin/styles/font-awesome/css/font-awesome.min.css') . '; document.head.appendChild(l);})();' . "\n";
                 }
 
-                Debugger::$customJsStr .= static::barStylesJs('
+                $barJs .= static::barStylesJs('
                 <style>
                     #tracy-debug-bar {
                         left:'.($this->data['barPosition'] == 'bottom-left' ? '0' : 'auto').' !important;
@@ -1703,12 +1709,15 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     }
                 });
 
-                Debugger::$customBodyStr .= '
-                    <div id="tracy-show-button" title="Show Tracy">&#8689;</div>
-                ';
+                $barJs .= '
+                    document.addEventListener("DOMContentLoaded", function() {
+                        var showButton = document.createElement("div");
+                        showButton.id = "tracy-show-button";
+                        showButton.title = "Show Tracy";
+                        showButton.textContent = "\u21F1";
+                        document.body.appendChild(showButton);
+                    });
 
-
-                Debugger::$customJsStr .= '
                     function addHideLink() {
                         if(!document.getElementById("tracy-debug-bar")) {
                             window.requestAnimationFrame(addHideLink);
@@ -1788,14 +1797,17 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     });
                 ';
 
-                if($this->data['hideDebugBar'] && $this->showServerTypeIndicator() && in_array('custom', $this->data['styleAdminType']) && !$this->wire('input')->cookie->tracyShow) {
+                if($this->data['hideDebugBar'] && $this->showServerTypeIndicator() && in_array('custom', $this->data['styleAdminType'])) {
                     // hide server type indicator bar if debug bar is hidden by default
-                    Debugger::$customJsStr .= 'document.body.classList.add("tracyHidden");';
-                    Debugger::$customJsStr .= 'document.body.classList.remove("has-tracy-debugbar");';
+                    $barJs .= '
+                    if(!/(^|;\\s*)tracyShow=[^;]/.test(document.cookie)) {
+                        document.body.classList.add("tracyHidden");
+                        document.body.classList.remove("has-tracy-debugbar");
+                    }';
                 }
 
                 // remove localStorage items to prevent the panel from staying open
-                Debugger::$customJsStr .= '
+                $barJs .= '
                     localStorage.removeItem("tracy-debug-panel-ProcessWire-PanelSelectorPanel");
                     if(localStorage.getItem("remove-tracy-debug-panel-ProcessWire-ProcesswireInfoPanel")) {
                         localStorage.removeItem("tracy-debug-panel-ProcessWire-ProcesswireInfoPanel");
@@ -1807,18 +1819,23 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     }
                 ';
 
-                if(is_null($this->wire('session')->tracyDumpsRecorderItems) && !$this->data['recordGuestDumps'] && !in_array('dumpsRecorder', static::$showPanels)) {
-                    Debugger::$customJsStr .= '
-                        localStorage.removeItem("tracy-debug-panel-ProcessWire-DumpsRecorderPanel");
-                    ';
-                }
+                $barJs .= '
+                    function removeDumpsRecorderPanelState() {
+                        if(!document.getElementById("tracy-debug-bar")) {
+                            window.requestAnimationFrame(removeDumpsRecorderPanelState);
+                        } else if(!document.getElementById("tracy-debug-panel-ProcessWire-DumpsRecorderPanel")) {
+                            localStorage.removeItem("tracy-debug-panel-ProcessWire-DumpsRecorderPanel");
+                        }
+                    }
+                    removeDumpsRecorderPanelState();
 
-                if(!$this->wire('input')->cookie->tracyHidden) {
-                    Debugger::$customJsStr .= '
                     document.addEventListener("DOMContentLoaded", function() {
-                        document.body.classList.add("has-tracy-debugbar");
+                        if(!/(^|;\\s*)tracyHidden=[^;]/.test(document.cookie)) {
+                            document.body.classList.add("has-tracy-debugbar");
+                        }
                     });';
-                }
+
+                Debugger::$customJsFiles[] = $this->barJsFile($barJs);
 
             }
 
@@ -2915,9 +2932,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     }
 
     /**
-     * JS for Debugger::$customJsStr that adds the CSS of these <style> blocks to the page head in a
-     * <style> with the bar script's nonce. Tracy adds $customCssStr with innerHTML, which leaves
-     * its <style> elements without a nonce, so a CSP without 'unsafe-inline' blocks them.
+     * JS for the bar bundle that adds the CSS of these <style> blocks to the page head in a
+     * <style> with the bar script's nonce, so a CSP without 'unsafe-inline' doesn't block them.
      *
      */
     private static function barStylesJs($html): string {
@@ -2925,6 +2941,22 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $css = trim(implode("\n", $matches[1]));
         if($css === '') return '';
         return '(function(){var s = document.createElement("style"), n = document.currentScript && (document.currentScript.nonce || document.currentScript.getAttribute("nonce")); s.className = "tracy-debug"; if(n) s.setAttribute("nonce", n); s.textContent = ' . json_encode($css) . '; document.head.appendChild(s);})();' . "\n";
+    }
+
+    /**
+     * Path of a cache file holding this bar JS, for Debugger::$customJsFiles (Tracy reads those
+     * files when it builds the bar bundle). Named by a hash of the content, so requests that build
+     * different JS never overwrite each other's file.
+     *
+     */
+    private function barJsFile($js) {
+        $file = $this->tracyCacheDir . 'bar-' . md5($js) . '.js';
+        if(!is_file($file)) {
+            $tmpFile = $file . '.' . getmypid() . '.tmp';
+            file_put_contents($tmpFile, $js);
+            rename($tmpFile, $file);
+        }
+        return $file;
     }
 
     public static function formatPageStatus($val, $status) {

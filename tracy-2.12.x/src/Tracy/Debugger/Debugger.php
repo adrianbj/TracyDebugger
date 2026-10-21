@@ -145,15 +145,6 @@ class Debugger
 	/** @var string[] path prefixes of "transparent" packages whose frames are skipped when locating user code and collapsed in stack traces */
 	public static array $transparentPaths = [];
 
-	/** @var string */
-	public static ?string $customCssStr = null;
-
-	/** @var string */
-	public static ?string $customJsStr = null;
-
-	/** @var string */
-	public static ?string $customBodyStr = null;
-
 	/** @var array<\Closure(string, int): ?array{file: string, label: string, line?: int, column?: int, active?: bool}> */
 	private static array $sourceMappers = [];
 
