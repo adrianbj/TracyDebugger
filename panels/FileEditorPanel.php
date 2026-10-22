@@ -48,7 +48,12 @@ class FileEditorPanel extends BasePanel {
     public function getPanel() {
 
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
-        $currentUrl = htmlspecialchars($_SERVER['REQUEST_URI'] ?? '', ENT_QUOTES, 'UTF-8');
+        // the values below go into an inline <script> (which carries the CSP nonce), so they're JSON-encoded,
+        // with <, >, &, ' and " as \u escapes: the file path comes from a cookie and the URL from the request
+        $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES;
+        $currentUrl = json_encode((string) ($_SERVER['REQUEST_URI'] ?? ''), $jsonFlags);
+        $filePathJs = json_encode((string) $this->tracyFileEditorFilePath, $jsonFlags);
+        $errorMessageJs = json_encode((string) $this->errorMessage, $jsonFlags);
 
         // CSRF token is generated in a ProcessWire::finished hook (see
         // TracyDebugger::init) so it persists with SessionHandlerDB, whose
@@ -138,10 +143,10 @@ class FileEditorPanel extends BasePanel {
 
                 tfe: {},
                 tracyModuleUrl: "$tracyModuleUrl",
-                currentUrl: "$currentUrl",
+                currentUrl: $currentUrl,
                 csrfToken: "$csrfToken",
-                tracyFileEditorFilePath: "{$this->tracyFileEditorFilePath}",
-                errorMessage: "{$this->errorMessage}",
+                tracyFileEditorFilePath: $filePathJs,
+                errorMessage: $errorMessageJs,
                 customSnippetsUrl: "$customSnippetsUrl",
                 pwAutocomplete: $pwAutocomplete,
                 aceTheme: "$aceTheme",
@@ -164,7 +169,7 @@ class FileEditorPanel extends BasePanel {
                 },
 
                 getRawFileEditorCode: function() {
-                    document.cookie = "tracyFileEditorFilePath=" + document.getElementById('fileEditorFilePath').value + "; path=/";
+                    document.cookie = "tracyFileEditorFilePath=" + encodeURIComponent(document.getElementById('fileEditorFilePath').value) + "; path=/";
 
                     // doing btoa because if code contains <script>, browsers are failing with ERR_BLOCKED_BY_XSS_AUDITOR
                     document.getElementById("tracyFileEditorRawCode").innerHTML = btoa(unescape(encodeURIComponent(tracyFileEditor.tfe.getValue())));
@@ -508,7 +513,7 @@ HTML;
         </svg>
         ';
 
-        $out .= '<h1>'.$this->icon.' File Editor <span id="tracyFileEditorKeyboardShortcuts" title="Keyboard Shortcuts" style="display: inline-block; margin-left: 5px; cursor: pointer">' . $keyboardShortcutIcon . '</span> <span id="panelTitleFilePath" style="font-size:14px">'.($this->tracyFileEditorFilePath ?: 'no selected file').'</span><span id="panelTitleDirty" style="display:none; line-height:0; margin-left:8px; vertical-align:middle; position:relative; top:-2px; color:'.TracyDebugger::COLOR_ALERT.'">•</span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" data-tracy-resize="FileEditorPanel">⛶</a></span></span>
+        $out .= '<h1>'.$this->icon.' File Editor <span id="tracyFileEditorKeyboardShortcuts" title="Keyboard Shortcuts" style="display: inline-block; margin-left: 5px; cursor: pointer">' . $keyboardShortcutIcon . '</span> <span id="panelTitleFilePath" style="font-size:14px">'.($this->tracyFileEditorFilePath ? htmlspecialchars($this->tracyFileEditorFilePath, ENT_QUOTES, 'UTF-8') : 'no selected file').'</span><span id="panelTitleDirty" style="display:none; line-height:0; margin-left:8px; vertical-align:middle; position:relative; top:-2px; color:'.TracyDebugger::COLOR_ALERT.'">•</span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" data-tracy-resize="FileEditorPanel">⛶</a></span></span>
         <div class="tracy-inner">
             <div id="tracyFileEditorContainer" style="height: 100%;">
 
@@ -532,7 +537,7 @@ HTML;
                             <fieldset>
                                 '.$this->csrfInput().'
                                 <textarea id="tracyFileEditorRawCode" name="tracyFileEditorRawCode" style="display:none"></textarea>
-                                <input type="hidden" id="fileEditorFilePath" name="fileEditorFilePath" value="'.$this->tracyFileEditorFilePath.'" />
+                                <input type="hidden" id="fileEditorFilePath" name="fileEditorFilePath" value="'.htmlspecialchars((string) $this->tracyFileEditorFilePath, ENT_QUOTES, 'UTF-8').'" />
                                 <div id="fileEditorButtons"></div>
                             </fieldset>
                         </form>
