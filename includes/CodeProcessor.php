@@ -560,8 +560,9 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
 
 // error handler function
 function tracyConsoleErrorHandler($errno, $errstr, $errfile, $errline) {
-    // this prevents silenced(@) errors from being captured by this custom error handler
-    if(error_reporting() === 0) {
+    // this prevents silenced(@) errors from being captured by this custom error handler. Since PHP 8, @ lowers
+    // error_reporting() to the fatal levels instead of 0, so test the error's own level against it
+    if(!(error_reporting() & $errno)) {
         // continue script execution, skipping standard PHP error handler
         return true;
     }
