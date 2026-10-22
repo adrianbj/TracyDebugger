@@ -75,6 +75,7 @@ class ConsolePanel extends BasePanel {
         $snippets = array();
         $snippetsPath = TracyDebugger::getDataValue('snippetsPath').'/TracyDebugger/snippets/';
         if(file_exists($this->wire('config')->paths->site.$snippetsPath)) {
+            TracyDebugger::denyWebAccess($this->wire('config')->paths->site.$snippetsPath);
             $snippetFiles = new \DirectoryIterator($this->wire('config')->paths->site.$snippetsPath);
             $i=0;
             foreach($snippetFiles as $snippetFile) {

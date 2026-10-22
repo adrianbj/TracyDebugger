@@ -13,6 +13,7 @@ $snippetsPath = $this->wire('config')->paths->site.TracyDebugger::getDataValue('
 if(!is_dir($snippetsPath)) if(!wireMkdir($snippetsPath, true)) {
     throw new WireException("Unable to create snippets path: $snippetsPath");
 }
+TracyDebugger::denyWebAccess($snippetsPath);
 
 // sanitize snippet name to prevent path traversal
 $snippetName = basename($_POST['snippetname']);

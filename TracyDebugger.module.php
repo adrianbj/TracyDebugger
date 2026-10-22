@@ -1271,16 +1271,24 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                         $backup->setDatabaseConfig($this->wire('config'));
                         $file = $backup->backup(array('tables' => array('modules'), 'filename' => $this->modulesDbBackupFilename));
 
+                        // the panel tells users to copy this to the site root if the site breaks, where anyone could
+                        // load it, so it only runs with the key shown in the panel, and deletes that copy once used
+                        $backupPath = $this->tracyCacheDir . $this->modulesDbBackupFilename;
                         $restoreModulesCode =
                         "<?php\n" .
-                        "if(file_exists('".$this->tracyCacheDir.$this->modulesDbBackupFilename."')) {\n" .
+                        "if(!isset(\$_GET['key']) || !hash_equals(" . var_export(static::restoreModulesKey(), true) . ", (string) \$_GET['key'])) {\n" .
+                            "\thttp_response_code(403);\n" .
+                            "\texit('Forbidden: use the URL from the Module Disabler panel, including its key.');\n" .
+                        "}\n" .
+                        "if(file_exists(" . var_export($backupPath, true) . ")) {\n" .
                             "\t\$db = " . $this->getRestorePdoCode() . ";\n" .
-                            "\t\$sql = file_get_contents('" . $this->tracyCacheDir . $this->modulesDbBackupFilename . "');\n" .
+                            "\t\$sql = file_get_contents(" . var_export($backupPath, true) . ");\n" .
                             "\t\$qr = \$db->query(\$sql);\n" .
                         "}\n" .
                         "if(isset(\$qr) && \$qr) {\n" .
                             "\tsetcookie('modulesRestored', 1, time() + (24 * 60 * 60));\n" .
-                            "\theader('Location: ".self::inputHttpUrl(true)."');\n" .
+                            "\tif(realpath(__DIR__) !== realpath(" . var_export(rtrim($this->tracyCacheDir, '/\\'), true) . ")) @unlink(__FILE__);\n" .
+                            "\theader('Location: ' . " . var_export(self::inputHttpUrl(true), true) . ");\n" .
                         "}\n" .
                         "else {\n" .
                         "\techo 'Sorry, there was a problem and the database could not be restored.';\n" .
@@ -3528,6 +3536,30 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $token = (string) wire('session')->tracyActionToken;
         if($token !== '') $url .= '&tracyToken=' . $token;
         return htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+    }
+
+    /**
+     * Put an .htaccess denying all web access in $dir (if it doesn't have one): for folders under site/ that hold
+     * files the web server would otherwise serve as-is, like Console snippets saved without a .php extension
+     *
+     * @param string $dir
+     */
+    public static function denyWebAccess($dir) {
+        $htaccess = rtrim($dir, '/\\') . '/.htaccess';
+        if(is_file($htaccess) || !is_dir($dir)) return;
+        @file_put_contents($htaccess, "# TracyDebugger: not for the web\n<IfModule mod_authz_core.c>\n    Require all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\n    Order allow,deny\n    Deny from all\n</IfModule>\n");
+    }
+
+    /**
+     * Key that the generated restoremodules.php requires (?key=), shown in the Module Disabler panel's
+     * instructions. Derived from the modules backup and the site's secret userAuthSalt, so it changes with
+     * each new backup and can't be guessed
+     *
+     * @return string
+     */
+    public static function restoreModulesKey() {
+        $backup = wire('config')->paths->cache . 'TracyDebugger/modulesBackup.sql';
+        return substr(hash_hmac('sha256', $backup . '|' . (is_file($backup) ? filemtime($backup) : ''), (string) wire('config')->userAuthSalt), 0, 24);
     }
 
     public static function urlWithoutActionToken($url) {
