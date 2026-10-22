@@ -3065,6 +3065,27 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * @return string|bool Name of Template or false
      *
      */
+    /**
+     * Is $file one of the files the Template Path panel and Page Versions offer for $template: a file in the
+     * templates folder with the template file extension, whose name contains the template's name, that isn't
+     * another template's file or a File Editor test file (-tracytemp)?
+     *
+     * @param string $file basename
+     * @param Template $template
+     * @return bool
+     */
+    public static function isAlternativeTemplateFile($file, Template $template) {
+        $config = wire('config');
+        $file = (string) $file;
+        if($file === '' || $file !== basename($file) || strpos($file, '\\') !== false || strpos($file, "\0") !== false) return false;
+        if(strtolower(pathinfo($file, PATHINFO_EXTENSION)) !== strtolower((string) $config->templateExtension)) return false;
+        if(strpos(pathinfo($file, PATHINFO_FILENAME), $template->name) === false || strpos($file, '-tracytemp') !== false) return false;
+        foreach(wire('templates') as $t) {
+            if($t->id != $template->id && pathinfo($t->filename, PATHINFO_BASENAME) === $file) return false;
+        }
+        return is_file($config->paths->templates . $file);
+    }
+
     private function findPageTemplateInCookie($cookie) {
         if(!$cookie) return false;
         $templateName = $this->wire('page')->template->name;
@@ -3073,12 +3094,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $arr = explode("|", $templateEntry, 2);
             if($arr[0] == $templateName && isset($arr[1])) {
                 // the value becomes the page's template file, so only accept what the Template Path panel and
-                // Page Versions offer: a file in the templates folder whose name contains the template's name
-                $file = $arr[1];
-                if($file === '' || $file !== basename($file) || strpos($file, '\\') !== false) return false;
-                if(strpos(pathinfo($file, PATHINFO_FILENAME), $templateName) === false) return false;
-                if(!is_file($this->wire('config')->paths->templates . $file)) return false;
-                return $file;
+                // Page Versions offer
+                return static::isAlternativeTemplateFile($arr[1], $this->wire('page')->template) ? $arr[1] : false;
             }
         }
         return false;

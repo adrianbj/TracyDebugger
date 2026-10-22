@@ -14,7 +14,7 @@ if(wire('user')->hasPermission('tracy-page-versions')) {
             $fileName = pathinfo($file, PATHINFO_FILENAME);
             $baseName = pathinfo($file, PATHINFO_BASENAME);
             if(in_array($baseName, $templateFilenames) && $templateBasename != $baseName) continue;
-            if(strpos($fileName, wire('page')->template->name) !== false && strpos($fileName, '-tracytemp') === false) { // '-tracytemp' is extension from template editor panel
+            if(TracyDebugger::isAlternativeTemplateFile($baseName, wire('page')->template)) {
                 $templateOptions .= '<option value="'.$file.'"'.($templateBasename == $file ? 'selected="selected"' : '').'>'.formatPageName($file).'</option>';
                 $countTemplateOptions++;
             }
