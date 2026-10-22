@@ -114,7 +114,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $tracyVersion;
     public static $panelGenerationTime = array();
     public static $hideInAdmin = array('validator', 'templateResources', 'templatePath');
-    public static $superUserOnlyPanels = array('console', 'fileEditor', 'adminer', 'terminal', 'adminTools', 'moduleDisabler');
+    // phpInfo shows environment variables (often credentials) and the request's cookies, incl. the session cookie
+    public static $superUserOnlyPanels = array('console', 'fileEditor', 'adminer', 'terminal', 'adminTools', 'moduleDisabler', 'phpInfo');
     public static $pageHtml;
     public static $consoleRunId = '';
     public static $consoleRunStatusDir = '';
