@@ -206,7 +206,16 @@ class ProcessWirePlugin extends Plugin {
                         let fileSrc = items[currentIndex].getAttribute("data-src");
                         let fileName = items[currentIndex].getAttribute("data-filename");
 
-                        modalFilename.innerHTML = '<a target="_blank" style="color:#FFFFFF; text-decoration: underline" href="'+fileName+'">'+fileName+'</a>';
+                        // built with DOM methods: the name can come from a database cell
+                        modalFilename.textContent = '';
+                        let fileLink = document.createElement('a');
+                        fileLink.target = '_blank';
+                        fileLink.rel = 'noopener';
+                        fileLink.style.color = '#FFFFFF';
+                        fileLink.style.textDecoration = 'underline';
+                        if(fileName && (/^https?:\/\//i.test(fileName) || fileName.charAt(0) === '/')) fileLink.href = fileName;
+                        fileLink.textContent = fileName || '';
+                        modalFilename.appendChild(fileLink);
 
                         // Hide all media elements first
                         modalImg.style.display = "none";
@@ -451,7 +460,7 @@ class ProcessWirePlugin extends Plugin {
                 $template = wire('templates')->get((int) $val);
                 $name = $template ? $template->get('label|name') : '';
                 if($name) {
-                    $val = '<a href="'.wire('config')->urls->admin.'setup/template/edit/?id='.$val.'" target="_parent" title="'.$name.'">'.$val.'</a>';
+                    $val = '<a href="'.wire('config')->urls->admin.'setup/template/edit/?id='.$val.'" target="_parent" title="'.htmlspecialchars((string) $name, ENT_QUOTES, 'UTF-8').'">'.$val.'</a>';
                 }
             }
             elseif($_GET['select'] == 'fields' && $field['field'] == 'id') {
@@ -461,7 +470,7 @@ class ProcessWirePlugin extends Plugin {
                 $f = wire('fields')->get((int) $val);
                 if($f) {
                     $name = $f->get('label|name');
-                    $val = '<a href="'.wire('config')->urls->admin.'setup/field/edit/?id='.$val.'" target="_parent" title="'.$name.'">'.$val.'</a>';
+                    $val = '<a href="'.wire('config')->urls->admin.'setup/field/edit/?id='.$val.'" target="_parent" title="'.htmlspecialchars((string) $name, ENT_QUOTES, 'UTF-8').'">'.$val.'</a>';
                 }
             }
             elseif($_GET['select'] == 'pages' && $field['field'] == 'id') {
@@ -470,7 +479,7 @@ class ProcessWirePlugin extends Plugin {
                     if($name) {
                         $val_with_status = $this->formatPageStatus($val, $name['status']);
                         $name = (isset($name['title']) ? $name['title'] : $name['name']) . (isset($name['url']) ? ' ('.$name['url'].')' : '');
-                        $val = '<a href="'.wire('config')->urls->admin.'page/edit/?id='.$val.'" target="_parent" title="'.$name.'">'.$val_with_status.'</a>';
+                        $val = '<a href="'.wire('config')->urls->admin.'page/edit/?id='.$val.'" target="_parent" title="'.htmlspecialchars((string) $name, ENT_QUOTES, 'UTF-8').'">'.$val_with_status.'</a>';
                     }
                 }
                 else {
@@ -483,7 +492,7 @@ class ProcessWirePlugin extends Plugin {
                     if($name) {
                         $val_with_status = $this->formatPageStatus($val, $name['status']);
                         $name = (isset($name['title']) ? $name['title'] : $name['name']) . (isset($name['url']) ? ' ('.$name['url'].')' : '');
-                        $val = '<a href="'.wire('config')->urls->admin.'access/users/edit/?id='.$val.'" target="_parent" title="'.$name.'">'.$val_with_status.'</a>';
+                        $val = '<a href="'.wire('config')->urls->admin.'access/users/edit/?id='.$val.'" target="_parent" title="'.htmlspecialchars((string) $name, ENT_QUOTES, 'UTF-8').'">'.$val_with_status.'</a>';
                     }
                 }
                 else {
@@ -500,7 +509,7 @@ class ProcessWirePlugin extends Plugin {
                 if($_GET['select'] == 'field_process' && $field['field'] == 'data') {
                     $name = wire('modules')->getModuleClass($val);
                     if($name) {
-                        $val = '<a href="'.wire('config')->urls->admin.'module/edit/?name='.$name.'" target="_parent" title="'.$name.'">'.$val.'</a>';
+                        $val = '<a href="'.wire('config')->urls->admin.'module/edit/?name='.urlencode((string) $name).'" target="_parent" title="'.htmlspecialchars((string) $name, ENT_QUOTES, 'UTF-8').'">'.$val.'</a>';
                     }
                 }
                 elseif(in_array($field['field'], $valid_page_fields)) {
@@ -518,7 +527,7 @@ class ProcessWirePlugin extends Plugin {
                                 if($name) {
                                     $v_with_status = $this->formatPageStatus($v, $name['status']);
                                     $name = (isset($name['title']) ? $name['title'] : $name['name']) . (isset($name['url']) ? ' ('.$name['url'].')' : '') . (isset($name['template']) ? ' ('.$name['template']['name'].')' : '');
-                                    $allids[] = '<a href="'.wire('config')->urls->admin.'page/edit/?id='.str_replace('pid', '', $v).'" target="_parent" title="'.$name.'">'.$v_with_status.'</a>';
+                                    $allids[] = '<a href="'.wire('config')->urls->admin.'page/edit/?id='.str_replace('pid', '', $v).'" target="_parent" title="'.htmlspecialchars((string) $name, ENT_QUOTES, 'UTF-8').'">'.$v_with_status.'</a>';
                                 }
                             }
                             else {
