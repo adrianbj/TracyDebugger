@@ -961,8 +961,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 exit;
             }
 
-            // code execution
-            if($this->wire('input')->post->tracyConsole == 1) {
+            // code execution - checked here too (CodeProcessor.php checks again with the token), so a request from
+            // anyone else doesn't get the run's status/pid files, lock and unlimited time limit set up first
+            if($this->wire('input')->post->tracyConsole == 1 && (static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser)) {
                 // garbage collect files left behind by finished background runs (older than
                 // 1 hour). A run can legitimately outlive that window (set_time_limit(0)), so
                 // skip any run whose worker is still alive — its .pid lock is the cancel
