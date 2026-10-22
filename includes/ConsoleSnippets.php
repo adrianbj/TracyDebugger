@@ -17,6 +17,12 @@ TracyDebugger::denyWebAccess($snippetsPath);
 
 // sanitize snippet name to prevent path traversal
 $snippetName = basename($_POST['snippetname']);
+// and no dotfiles: the folder's .htaccess keeps it off the web
+if($snippetName === '' || strpos($snippetName, '.') === 0) {
+    http_response_code(400);
+    echo 'Invalid snippet name';
+    exit;
+}
 
 if(isset($_POST['deletesnippet']) && file_exists($snippetsPath.$snippetName)) {
     unlink($snippetsPath.$snippetName);

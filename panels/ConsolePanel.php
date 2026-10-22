@@ -79,7 +79,8 @@ class ConsolePanel extends BasePanel {
             $snippetFiles = new \DirectoryIterator($this->wire('config')->paths->site.$snippetsPath);
             $i=0;
             foreach($snippetFiles as $snippetFile) {
-                if(!$snippetFile->isDot() && $snippetFile->isFile()) {
+                // skip dotfiles, like the .htaccess that keeps the folder off the web
+                if(!$snippetFile->isDot() && $snippetFile->isFile() && strpos($snippetFile->getFilename(), '.') !== 0) {
                     $snippetFileName = $snippetFile->getPathname();
                     $snippets[$i]['name'] = pathinfo($snippetFileName, PATHINFO_BASENAME);
                     $snippets[$i]['filename'] = $snippetFileName;
