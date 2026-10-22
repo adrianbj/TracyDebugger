@@ -4424,6 +4424,19 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $this->wire('session')->redirect($this->inputUrl(true).'#wrap_Inputfield_customPhpCode');
         }
 
+        // TracyDebugger's settings decide who gets the debug bar and its Console, and two of them run PHP code
+        // (the Custom PHP panel and User Bar custom features), but PW lets any user with module-admin edit a
+        // module's settings. So only superusers get the fields: others get this notice, and with no fields on
+        // the form, saving it changes nothing
+        if(!$this->wire('user')->isSuperuser()) {
+            $wrapper = new InputfieldWrapper();
+            $f = $this->wire('modules')->get('InputfieldMarkup');
+            $f->label = __('TracyDebugger settings', __FILE__);
+            $f->value = '<p>' . __('Only superusers can view or change the TracyDebugger settings.', __FILE__) . '</p>';
+            $wrapper->add($f);
+            return $wrapper;
+        }
+
         // load JS & CSS files for config settings
         $this->wire('config')->styles->append($this->wire('config')->urls->TracyDebugger . "styles/config.css");
         $this->wire('config')->scripts->append($this->wire('config')->urls->TracyDebugger . "scripts/ace-editor/ace.js");
