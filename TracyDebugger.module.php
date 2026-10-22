@@ -4176,8 +4176,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $url = trim($link_parts[0]);
         $title = isset($link_parts[1]) ? trim($link_parts[1]) : '';
         $url = str_replace($this->wire('config')->urls->httpRoot, '/', $url);
-        if($title == '') {
-            $fullUrl = strpos($url, 'http') === false ? $this->wire('config')->urls->httpRoot . $url : $url;
+        if($title == '' && preg_match('#^(https?://|/)#i', $url)) {
+            // fetch the page's title, but only from an http(s) URL or a path on this site
+            $fullUrl = strpos($url, 'http') === 0 ? $url : rtrim($this->wire('config')->urls->httpRoot, '/') . '/' . ltrim($url, '/');
             $html = $http->get($fullUrl);
             libxml_use_internal_errors(true);
             $dom = new \DOMDocument();
@@ -4198,9 +4199,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     public function getModuleConfigInputfields(array $data) {
 
-        // if link info is in POST then add it to the Links panel
+        // if link info is in POST then add it to the Links panel (the panel's form sends a CSRF token)
         $link = $this->wire('input')->post->link;
-        if($link) {
+        if($link && $this->wire('session')->CSRF->hasValidToken()) {
             $link = $this->prepLink($link);
             $tracyConfig = $this->wire('modules')->getModuleConfigData($this);
             if(!isset($tracyConfig['linksCode'])) $tracyConfig['linksCode'] = '';
