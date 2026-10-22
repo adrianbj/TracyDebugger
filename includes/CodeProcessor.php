@@ -3,7 +3,7 @@
 use Tracy\Debugger;
 
 unset($this->wire('input')->cookie->tracyCodeError);
-setcookie("tracyCodeError", "", time()-3600);
+setcookie("tracyCodeError", "", time()-3600, "/");
 // Background execution support: accept run ID and make PHP resilient to connection abort
 $tracyRunId = isset($_POST['runId']) ? preg_replace('/[^a-zA-Z0-9_.]/', '', $_POST['runId']) : '';
 /* Whether the panel's "Stream results" checkbox was ticked for this run.
@@ -668,10 +668,12 @@ function writeError($error, $terminal = true) {
 
     if(!$terminal) return;
 
+    // session cookie (it only has to last until the next run clears it), and not HttpOnly because the Console's
+    // JS writes it too (console-panel.js)
     if(PHP_VERSION_ID >= 70300) {
-        setcookie('tracyCodeError', $error['type'].': '.$customErrStr, ['expires' => time() + (10 * 365 * 24 * 60 * 60), 'path' => '/', 'samesite' => 'Strict']);
+        setcookie('tracyCodeError', $error['type'].': '.$customErrStr, ['expires' => 0, 'path' => '/', 'samesite' => 'Strict', 'secure' => (bool) wire('config')->https]);
     } else {
-        setcookie('tracyCodeError', $error['type'].': '.$customErrStr, time() + (10 * 365 * 24 * 60 * 60), '/');
+        setcookie('tracyCodeError', $error['type'].': '.$customErrStr, 0, '/', '', (bool) wire('config')->https);
     }
 
     // write error to protected cache, update public status marker

@@ -1390,9 +1390,8 @@ Object.assign(tracyConsole, {
                                 .then(function(){ return tracyConsole.clearRunIdOnTab(originTabId); })
                                 .catch(function(){});
 
-                            const errorExpires = new Date();
-                            errorExpires.setMinutes(errorExpires.getMinutes() + (10 * 365 * 24 * 60));
-                            document.cookie = "tracyCodeError=" + encodeURIComponent(errorStr) + ";expires="+errorExpires.toGMTString()+";path=/;SameSite=Strict";
+                            // session cookie: it only has to last until the next run clears it
+                            document.cookie = "tracyCodeError=" + encodeURIComponent(errorStr) + ";path=/;SameSite=Strict" + (location.protocol === "https:" ? ";Secure" : "");
                         }
                         listenerMap.delete(xmlhttp);
                         xmlhttp.getAllResponseHeaders();
