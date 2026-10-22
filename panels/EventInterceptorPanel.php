@@ -16,7 +16,7 @@ class EventInterceptorPanel extends BasePanel {
         $items = $this->wire('session')->tracyEventItems;
         $this->eventCount = is_array($items) ? count($items) : 0;
         if($this->eventCount > 0) {
-            $this->iconColor = $this->wire('input')->cookie->eventInterceptorHook ? TracyDebugger::COLOR_ALERT : TracyDebugger::COLOR_NORMAL;
+            $this->iconColor = TracyDebugger::tokenCookie('eventInterceptorHook') ? TracyDebugger::COLOR_ALERT : TracyDebugger::COLOR_NORMAL;
             $this->entries .= '
             <div class="event-items">
                 <p><input type="submit" id="tracyClearEvents" value="Clear Events" /></p><br />';
@@ -29,7 +29,7 @@ class EventInterceptorPanel extends BasePanel {
             }
             $this->entries .= '</div>';
         }
-        elseif($this->wire('input')->cookie->eventInterceptorHook) {
+        elseif(TracyDebugger::tokenCookie('eventInterceptorHook')) {
             $this->iconColor = TracyDebugger::COLOR_WARN;
             $this->entries = 'No Events Intercepted';
         }
@@ -51,14 +51,15 @@ class EventInterceptorPanel extends BasePanel {
 
 
     public function getPanel() {
-        if($this->wire('input')->cookie->eventInterceptorHook) {
-            $hookSettings = json_decode($this->wire('input')->cookie->eventInterceptorHook, true);
+        if(TracyDebugger::tokenCookie('eventInterceptorHook')) {
+            $hookSettings = json_decode(TracyDebugger::tokenCookie('eventInterceptorHook'), true);
         }
 
         $out = $this->buildPanelHeader('Event Interceptor', false, true);
 
         $out .= '
         <script' . TracyDebugger::getNonceAttr() . '>
+            var tracyEventCookieToken = ' . json_encode((string) $this->wire('session')->tracyActionToken) . ';
             function clearEvents() {
                 document.cookie = "tracyClearEventItems=true;expires=0;path=/";
 
@@ -93,7 +94,7 @@ class EventInterceptorPanel extends BasePanel {
                     interceptEvent.hook = document.getElementById("eventInterceptorHook").value;
                     interceptEvent.when = document.getElementById("tracyEventWhenBefore").checked ? "before" : "after";
                     interceptEvent.return = document.getElementById("tracyEventReturnFalse").checked ? "false" : "default";
-                    document.cookie = "eventInterceptorHook="+JSON.stringify(interceptEvent)+"; expires=0; path=/";
+                    document.cookie = "eventInterceptorHook="+tracyEventCookieToken+"|"+JSON.stringify(interceptEvent)+"; expires=0; path=/";
                     document.getElementById("eventHookLegend").innerHTML = "<strong>" + document.getElementById("eventInterceptorHook").value + "</strong> <em>" + interceptEvent.when + "</em> hook is set to return <em>" + interceptEvent.return + "</em>";
                 }
 

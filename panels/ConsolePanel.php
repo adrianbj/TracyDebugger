@@ -15,7 +15,7 @@ class ConsolePanel extends BasePanel {
 
         Debugger::timer('console');
 
-        $this->tracyIncludeCode = json_decode((string)$this->wire('input')->cookie->tracyIncludeCode, true);
+        $this->tracyIncludeCode = json_decode((string) TracyDebugger::tokenCookie('tracyIncludeCode', 'tracyConsoleToken'), true);
         if($this->tracyIncludeCode && $this->tracyIncludeCode['when'] !== 'off') {
             $this->iconColor = $this->wire('input')->cookie->tracyCodeError ? TracyDebugger::COLOR_ALERT : TracyDebugger::COLOR_WARN;
         }

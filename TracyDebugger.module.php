@@ -1904,8 +1904,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 setcookie("tracyClearEventItems", "", time()-3600, "/");
             }
             // event interceptor hook
-            if(in_array('eventInterceptor', static::$showPanels) && $this->wire('input')->cookie->eventInterceptorHook) {
-                $this->hookSettings = json_decode($this->wire('input')->cookie->eventInterceptorHook, true);
+            if(in_array('eventInterceptor', static::$showPanels) && static::tokenCookie('eventInterceptorHook')) {
+                $this->hookSettings = json_decode(static::tokenCookie('eventInterceptorHook'), true);
                 if(is_array($this->hookSettings) && !empty($this->hookSettings['hook'])) {
                     if(isset($this->hookSettings['when']) && $this->hookSettings['when'] == 'before') {
                         $this->wire()->addHookBefore($this->hookSettings['hook'], $this, 'interceptEvent');
@@ -2540,11 +2540,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         array_push($mailItems, $mailItem);
         $this->wire('session')->tracyMailItems = $mailItems;
 
-        if($this->wire('input')->cookie->tracyTestEmail) {
+        $testEmail = static::tokenCookie('tracyTestEmail');
+        if($testEmail) {
             $event->object->to();
             $event->object->cc();
             $event->object->bcc();
-            $event->object->to($this->wire('input')->cookie->tracyTestEmail);
+            $event->object->to($testEmail);
         }
         else {
             $event->replace = true;
@@ -3237,10 +3238,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if((!static::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) ||
             $this->wire('config')->ajax ||
             $this->wire('input')->cookie->tracyCodeError ||
-            !$this->wire('input')->cookie->tracyIncludeCode)
+            !static::tokenCookie('tracyIncludeCode', 'tracyConsoleToken'))
                 return;
 
-        $options = json_decode($this->wire('input')->cookie->tracyIncludeCode, true);
+        $options = json_decode(static::tokenCookie('tracyIncludeCode', 'tracyConsoleToken'), true);
         if(!is_array($options) || !isset($options['when']) || $options['when'] !== $when) return;
 
         // populate API variables, eg so $page equals $this->wire('page')
@@ -3643,6 +3644,24 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $secret = (string) @file_get_contents($secretFile);
         }
         return substr(hash_hmac('sha256', $cachePath . 'restoremodules.php', $secret), 0, 24);
+    }
+
+    /**
+     * Value of a cookie that TracyDebugger's panel JS writes as "<token>|<value>", where <token> is one of the
+     * session's Tracy tokens, or null if the prefix doesn't match. Used for cookies that change what the server
+     * does (send all mail to an address, run the last Console code, intercept a hook): a cookie can also be set
+     * by another subdomain of the site ("cookie tossing"), which can't know the token
+     *
+     * @param string $name
+     * @param string $tokenName session variable holding the token
+     * @return string|null
+     */
+    public static function tokenCookie($name, $tokenName = 'tracyActionToken') {
+        $value = isset($_COOKIE[$name]) ? (string) $_COOKIE[$name] : '';
+        $token = (string) wire('session')->$tokenName;
+        $separator = strpos($value, '|');
+        if($token === '' || $separator === false || !hash_equals($token, substr($value, 0, $separator))) return null;
+        return substr($value, $separator + 1);
     }
 
     public static function urlWithoutActionToken($url) {

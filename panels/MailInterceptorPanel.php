@@ -107,6 +107,7 @@ class MailInterceptorPanel extends BasePanel {
 
         $out .= '
         <script' . TracyDebugger::getNonceAttr() . '>
+            var tracyMailCookieToken = ' . json_encode((string) $this->wire('session')->tracyActionToken) . ';
             function clearEmails() {
                 document.cookie = "tracyClearMailItems=true;expires=0;path=/";
 
@@ -141,7 +142,7 @@ class MailInterceptorPanel extends BasePanel {
                     document.getElementById("tracyTestEmail").style.color = "#000000";
                 }
                 else if(document.getElementById("tracyTestEmail").value != "") {
-                    document.cookie = "tracyTestEmail="+document.getElementById("tracyTestEmail").value+"; expires=0; path=/";
+                    document.cookie = "tracyTestEmail="+tracyMailCookieToken+"|"+document.getElementById("tracyTestEmail").value+"; expires=0; path=/";
                     removeEmailButton.disabled = false;
                     setEmailButton.disabled = true;
                     document.getElementById("tracyTestEmail").style.color = "#009900";
@@ -161,7 +162,7 @@ class MailInterceptorPanel extends BasePanel {
             <fieldset id="mailInterceptor">';
                 $out .= '
                 <p>
-                    <input type="text" style="width:250px !important; color:'.($this->wire('input')->cookie->tracyTestEmail ? '#009900' : '#000000').'" id="tracyTestEmail" name="tracyTestEmail" placeholder="Test Email Address" value="'.$this->e($this->wire('input')->cookie->tracyTestEmail).'">
+                    <input type="text" style="width:250px !important; color:'.(TracyDebugger::tokenCookie('tracyTestEmail') ? '#009900' : '#000000').'" id="tracyTestEmail" name="tracyTestEmail" placeholder="Test Email Address" value="'.$this->e(TracyDebugger::tokenCookie('tracyTestEmail')).'">
                 </p>
                 <input id="setEmailButton" type="submit" value="Set Email" />&nbsp;
                 <input id="removeEmailButton" type="submit" value="Remove Email" />&nbsp;
