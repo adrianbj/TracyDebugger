@@ -2067,6 +2067,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if(isset($_GET['_tracy_bar']) && !headers_sent()) {
                 header_remove('Expires');
                 header_remove('Pragma');
+                // Tracy lets browsers keep the bar bundle for 10 days, under a URL that only changes with Tracy's
+                // version, so a TracyDebugger update or a settings change that feeds the bundle would reach them up
+                // to 10 days late. Replace that Cache-Control just before the headers go out
+                if($_GET['_tracy_bar'] === 'js') {
+                    header_register_callback(function() {
+                        if(preg_grep('#^Cache-Control:\s*max-age=#i', headers_list())) header('Cache-Control: max-age=3600');
+                    });
+                }
             }
             // registered before Debugger::enable() registers Tracy's own shutdown handler, so it runs first.
             // When the Console asks (CodeProcessor.php), it takes the request's last error for the Console's
