@@ -192,6 +192,8 @@
             window.requestAnimationFrame(init);
             return;
         }
+        // this script is in every bar bundle, so only poll when the Dumps Recorder panel is in this bar
+        if(!document.getElementById(recorderPanelId)) return;
         // lastSeenId stays -1 until the first poll, which fully syncs the panel from
         // the polled entries (replacing the server-rendered set) so nothing is duplicated
         pollTimer = setTimeout(poll, pollInterval);

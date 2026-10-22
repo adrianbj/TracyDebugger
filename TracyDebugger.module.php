@@ -1500,13 +1500,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/main.js';
                 Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/tinycon.min.js';
                 Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/js-loader.js';
-                // only load dumps polling when something on this page would actually consume it:
-                // the Dumps Recorder panel is enabled, or guest-dumps recording is on (which
-                // auto-enables the panel later in ready()). without one of these there's no
-                // panel to update and no reason for the recorder to be writing dumps.json.
-                if(in_array('dumpsRecorder', static::$showPanels) || $this->data['recordGuestDumps']) {
-                    Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/dumps-polling.js';
-                }
+                // always loaded, not gated on $showPanels (which varies with the sticky/once panel cookies and
+                // would leave a cached bundle without it); it only polls when the Dumps Recorder panel is in the bar
+                Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/dumps-polling.js';
 
                 // load File Editor panel if Tracy online editor is selected
                 if(static::$useOnlineEditor && static::$onlineEditor == 'tracy' && !in_array('fileEditor', static::$showPanels)) {
@@ -1525,11 +1521,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     }
                 }
 
-                if(in_array('tracyExceptions', static::$showPanels)) {
-                    // this needs to be loaded here (not just in Tracy Exceptions panel) so that links
-                    // will work even if Tracy Exceptions panel hasn't been opened yet
-                    Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/exception-loader.js';
-                }
+                // this needs to be loaded here (not just in Tracy Exceptions panel) so that links
+                // will work even if Tracy Exceptions panel hasn't been opened yet. always loaded, not gated
+                // on $showPanels, for the same reason as dumps-polling.js above
+                Debugger::$customJsFiles[] = $this->wire('config')->paths->TracyDebugger.'scripts/exception-loader.js';
 
                 // TracyDebugger's own bar JS, added to Tracy's bundle as a file (see barJsFile()). Tracy caches the
                 // bundle by URL for 10 days, so nothing in it may depend on this request's cookies, session or
