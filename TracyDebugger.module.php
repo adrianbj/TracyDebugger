@@ -3268,12 +3268,22 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         if(!empty($data)) {
             // the log can be read by any Tracy user later, so don't store credentials from the logged
             // request (login passwords, session cookies, auth headers, tokens)
+            $parsedInputBefore = isset($data['inputParsed']) ? $data['inputParsed'] : null;
             foreach(array('headers', 'post', 'get', 'inputParsed') as $key) {
                 if(isset($data[$key]) && is_array($data[$key])) $data[$key] = static::hideSensitiveData($data[$key]);
             }
+            foreach(array('url', 'httpUrl') as $key) {
+                if(isset($data[$key])) $data[$key] = static::hideSensitiveUrlParams($data[$key]);
+            }
+            if(isset($data['headers']) && is_array($data['headers'])) {
+                foreach($data['headers'] as $name => $value) {
+                    if(strtolower((string) $name) === 'referer' && is_string($value)) $data['headers'][$name] = static::hideSensitiveUrlParams($value);
+                }
+            }
             if(isset($data['input']) && $data['input'] !== '') {
                 if(is_array($data['inputParsed'])) {
-                    $data['input'] = json_encode($data['inputParsed']);
+                    // rewrite the raw body only if something was hidden, so it otherwise stays byte-for-byte as sent
+                    if($data['inputParsed'] !== $parsedInputBefore) $data['input'] = json_encode($data['inputParsed'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
                 }
                 else {
                     parse_str($data['input'], $parsedInput);
@@ -3295,17 +3305,60 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     }
 
     /**
-     * Copy of $data with the values of credential-like keys (any containing pass, pwd, secret, token, auth or
-     * cookie, and those in the "Keys to hide" setting) replaced, at any depth
+     * Does $key look like it holds a credential: does it contain pass, pwd, secret, token, cookie, session,
+     * authorization, apikey / api_key or signature, is it auth, pw, key or sig, or is it in the "Keys to hide"
+     * setting?
+     *
+     * @param string|int $key
+     * @return bool
+     */
+    public static function isSensitiveKey($key) {
+        static $keysToHide = null;
+        if($keysToHide === null) $keysToHide = array_filter(array_map('strtolower', array_map('trim', explode(',', (string) static::getDataValue('keysToHide')))));
+        $lowerKey = strtolower((string) $key);
+        return in_array($lowerKey, $keysToHide, true)
+            || in_array($lowerKey, array('auth', 'pw', 'key', 'sig'), true)
+            || (bool) preg_match('/pass|pwd|secret|token|cookie|session|authorization|api[-_]?key|signature/', $lowerKey);
+    }
+
+    /**
+     * $url with the values of credential-like query string parameters (see isSensitiveKey()) replaced
+     *
+     * @param string $url
+     * @return string
+     */
+    public static function hideSensitiveUrlParams($url) {
+        $url = (string) $url;
+        $queryStart = strpos($url, '?');
+        if($queryStart === false) return $url;
+        $fragment = '';
+        $hashPos = strpos($url, '#', $queryStart);
+        if($hashPos !== false) {
+            $fragment = substr($url, $hashPos);
+            $url = substr($url, 0, $hashPos);
+        }
+        $pairs = explode('&', substr($url, $queryStart + 1));
+        $changed = false;
+        foreach($pairs as $i => $pair) {
+            $name = urldecode(strstr($pair, '=', true) !== false ? strstr($pair, '=', true) : $pair);
+            $name = preg_replace('/\[.*$/', '', $name);
+            if($name !== '' && strpos($pair, '=') !== false && static::isSensitiveKey($name)) {
+                $pairs[$i] = strstr($pair, '=', true) . '=*****';
+                $changed = true;
+            }
+        }
+        return $changed ? substr($url, 0, $queryStart + 1) . implode('&', $pairs) . $fragment : $url . $fragment;
+    }
+
+    /**
+     * Copy of $data with the values of credential-like keys (see isSensitiveKey()) replaced, at any depth
      *
      * @param array $data
      * @return array
      */
     public static function hideSensitiveData(array $data) {
-        $keysToHide = array_filter(array_map('strtolower', array_map('trim', explode(',', (string) static::getDataValue('keysToHide')))));
         foreach($data as $key => $value) {
-            $lowerKey = strtolower((string) $key);
-            if(in_array($lowerKey, $keysToHide, true) || preg_match('/pass|pwd|secret|token|auth|cookie/', $lowerKey)) {
+            if(static::isSensitiveKey($key)) {
                 $data[$key] = '*****';
             }
             elseif(is_array($value)) {
