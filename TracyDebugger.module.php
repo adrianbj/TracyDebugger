@@ -3015,6 +3015,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * @return bool
      *
      */
+    /**
+     * May the current user use Adminer? A superuser, and if "Restrict superusers" is on, one with the
+     * tracy-debugger permission, like Tracy itself (worked out here rather than from $allowedSuperuser, because
+     * init() can return before that's set)
+     *
+     * @return bool
+     */
+    public static function adminerAllowed() {
+        if(!wire('user')->isSuperuser()) return false;
+        return !static::getDataValue('restrictSuperusers') || self::userHasPermission('tracy-debugger');
+    }
+
     private static function userHasPermission($permission) {
         foreach(wire('user')->roles as $role) {
             foreach($role->permissions as $perm) {

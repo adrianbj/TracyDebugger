@@ -95,7 +95,8 @@ class RequestLoggerPanel extends BasePanel {
             $out .= '<p>You are not on a publicly available endpoint, so logging cannot be enabled for this page.</p>';
         }
 
-        if($publicEndpoint) {
+        // only superusers (and local / switched users) can turn logging on or off, see RequestLoggerPost.php
+        if($publicEndpoint && (TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser)) {
             $out .= '<p>';
             if(!in_array($this->p->id, $this->requestLoggerPages)) {
                 $out .= '
