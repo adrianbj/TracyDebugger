@@ -3561,14 +3561,21 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     /**
      * Key that the generated restoremodules.php requires (?key=), shown in the Module Disabler panel's
-     * instructions. Derived from the modules backup and the site's secret userAuthSalt, so it changes with
-     * each new backup and can't be guessed
+     * instructions. It doesn't depend on the backup, so the key shown before any module is disabled is still the
+     * one that works once the backup exists. Derived with the site's secret userAuthSalt, or, if a site has none,
+     * a random secret kept in TracyDebugger's cache folder, so it can't be guessed
      *
      * @return string
      */
     public static function restoreModulesKey() {
-        $backup = wire('config')->paths->cache . 'TracyDebugger/modulesBackup.sql';
-        return substr(hash_hmac('sha256', $backup . '|' . (is_file($backup) ? filemtime($backup) : ''), (string) wire('config')->userAuthSalt), 0, 24);
+        $cachePath = wire('config')->paths->cache . 'TracyDebugger/';
+        $secret = (string) wire('config')->userAuthSalt;
+        if($secret === '') {
+            $secretFile = $cachePath . '.restoremodules-secret';
+            if(!is_file($secretFile)) @file_put_contents($secretFile, bin2hex(random_bytes(32)), LOCK_EX);
+            $secret = (string) @file_get_contents($secretFile);
+        }
+        return substr(hash_hmac('sha256', $cachePath . 'restoremodules.php', $secret), 0, 24);
     }
 
     public static function urlWithoutActionToken($url) {
