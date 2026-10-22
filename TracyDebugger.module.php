@@ -1340,6 +1340,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             // EMAIL SENT FLAG
             require_once(__DIR__ . '/includes/post_processors/EmailSentFlagPost.php');
 
+            // PROCESSWIRE LOGS and TRACY LOGS (delete all) - development mode only: in production mode
+            // allowedTracyUser is 'production' for every visitor, guests included
+            require_once(__DIR__ . '/includes/post_processors/ProcesswireLogsPost.php');
+            require_once(__DIR__ . '/includes/post_processors/TracyLogsPost.php');
+
             // CONSOLE PANEL CODE INJECTION
             $this->insertCode('init');
             $this->wire()->addHookBefore('ProcessWire::finished', function($event) {
@@ -1370,14 +1375,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // SET TRACY AS ENABLED
         // if we get this far, Tracy is fully enabled, so set this for checking in ready()
         $this->tracyEnabled = true;
-
-
-        // PROCESSWIRE LOGS
-        require_once(__DIR__ . '/includes/post_processors/ProcesswireLogsPost.php');
-
-
-        // TRACY LOGS
-        require_once(__DIR__ . '/includes/post_processors/TracyLogsPost.php');
 
         // override default PW core behavior that converts exceptions to string for passing to trigger_error()
         // runs in all outputModes so Tracy can intercept guest-facing exceptions in production and save bluescreen HTML
