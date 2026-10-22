@@ -2074,7 +2074,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             else {
                 Debugger::getLogger()->mailer = function($value) {
 
-                    $message = nl2br(\Tracy\Logger::formatMessage($value));
+                    $plainMessage = \Tracy\Logger::formatMessage($value);
+                    // escaped for the HTML email: exception messages can contain text from the request that caused them
+                    $message = nl2br(htmlspecialchars($plainMessage, ENT_QUOTES, 'UTF-8'));
 
                     $m = $this->wire('mail')->new();
                     $m->from($this->data['fromEmail']);
