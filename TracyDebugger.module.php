@@ -3520,12 +3520,16 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     /**
      * Is this GET action request (see actionUrl()) from TracyDebugger's own link: does it carry the session's
-     * action token, or is it verifiably same-origin?
+     * action token? Only before the session has a token (the first page after login, whose links were rendered
+     * without one) does a same-origin request count instead, because same-site content (an <img> in a page
+     * body, say) also sends a same-origin Referer
      *
      * @return boolean
      */
     public static function validActionRequest() {
-        return self::validTracyRequest((string) wire('session')->tracyActionToken, (string) wire('input')->get->tracyToken);
+        $sessionToken = (string) wire('session')->tracyActionToken;
+        if($sessionToken !== '') return hash_equals($sessionToken, (string) wire('input')->get->tracyToken);
+        return self::sameOriginRequest();
     }
 
     /**
