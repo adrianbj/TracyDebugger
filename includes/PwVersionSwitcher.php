@@ -8,6 +8,12 @@
 class PwVersionSwitcher {
 
     /**
+     * Whether this request's version switch POST passed the CSRF check in handleVersionSwitchPost().
+     * performFileSwap() (run from TracyDebugger::__destruct) only swaps files when it did.
+     */
+    public static $switchPostValidated = false;
+
+    /**
      * Handle auto-revert cleanup in init().
      * If an auto-revert occurred, clean up infrastructure and clear stale session vars.
      *
@@ -26,7 +32,9 @@ class PwVersionSwitcher {
     public static function handleVersionSwitchPost($module) {
         // if PW version changed, reload to initialize new version
         // don't add in_array(static::$showPanels) check because that won't be true if enabled ONCE due to multiple redirects waiting for $module->wire('config')->version to update
-        if(($module->wire('input')->post->tracyPwVersion && $module->wire('input')->post->tracyPwVersion != $module->wire('config')->version && $module->wire('session')->CSRF->validate()) || $module->wire('session')->tracyPwVersion) {
+        $validSwitchPost = $module->wire('input')->post->tracyPwVersion && $module->wire('input')->post->tracyPwVersion != $module->wire('config')->version && $module->wire('session')->CSRF->validate();
+        if($validSwitchPost) self::$switchPostValidated = true;
+        if($validSwitchPost || $module->wire('session')->tracyPwVersion) {
             $module->wire('session')->tracyPwVersion = $module->wire('session')->tracyPwVersion ?: $module->wire('input')->post->tracyPwVersion;
             $tracyPwVersionRetries = $module->wire('session')->tracyPwVersionRetries ?: 0;
             if($module->wire('session')->tracyPwVersion != $module->wire('config')->version && $tracyPwVersionRetries < 5) {
@@ -89,7 +97,8 @@ class PwVersionSwitcher {
      * @param TracyDebugger $module
      */
     public static function performFileSwap($module) {
-        if($module->wire('input') && $module->wire('input')->post->tracyPwVersion && $module->wire('input')->post->tracyPwVersion != $module->wire('config')->version
+        // self::$switchPostValidated: the POST passed the CSRF check in init(), so it isn't a forged request
+        if(self::$switchPostValidated && $module->wire('input') && $module->wire('input')->post->tracyPwVersion && $module->wire('input')->post->tracyPwVersion != $module->wire('config')->version
             && (TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser)) {
 
             $rootPath = $module->wire('config')->paths->root;
