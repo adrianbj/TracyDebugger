@@ -1360,12 +1360,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         Debugger::$showLocation = array_reduce($locations, function($a, $b) { return $a | $b; }, 0);
 
         if(version_compare(PHP_VERSION, '7.2.0', '>=')) {
-            $keys = array_map('trim', explode(',', $this->data['keysToHide']));
+            $keys = array_values(array_filter(array_map('trim', explode(',', $this->data['keysToHide'])), 'strlen'));
+            // dumps
             if(property_exists(Debugger::class, 'keysToHide')) {
                 Debugger::$keysToHide = $keys;
             }
-            elseif(method_exists(Debugger::class, 'getBlueScreen')) {
-                Debugger::getBlueScreen()->keysToHide = $keys;
+            // the BlueScreen dumps with its own list (Debugger::$keysToHide doesn't reach it), so add ours to
+            // Tracy's defaults there too
+            if(method_exists(Debugger::class, 'getBlueScreen')) {
+                $blueScreen = Debugger::getBlueScreen();
+                if(property_exists($blueScreen, 'keysToHide')) {
+                    $blueScreen->keysToHide = array_values(array_unique(array_merge((array) $blueScreen->keysToHide, $keys)));
+                }
             }
         }
 
