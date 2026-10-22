@@ -4440,7 +4440,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'guestForceDevelopmentLocal');
         $f->label = __('Force guest users into DEVELOPMENT mode on localhost', __FILE__);
         $f->description = __('Check to force DEVELOPMENT mode for guests when server detected as localhost.', __FILE__);
-        $f->notes = __('By default, guest users will always be in PRODUCTION mode (no debug bar). However, with this checked, they will always be in DEVELOPMENT mode on localhost.', __FILE__);
+        $f->notes = __('By default, guest users will always be in PRODUCTION mode (no debug bar). However, with this checked, they will always be in DEVELOPMENT mode on localhost, with the full debug bar including the Console, which runs PHP code. WARNING - "localhost" means the request comes from 127.0.0.1 / ::1 without an X-Forwarded-For or Forwarded header, so behind a reverse proxy on the same server that doesn\'t add one of those headers, every visitor counts as local. Only use this on a machine that nobody else can reach.', __FILE__);
         $f->columnWidth = 34;
         $f->attr('checked', $data['guestForceDevelopmentLocal'] == '1' ? 'checked' : '');
         $fieldset->add($f);
@@ -4449,7 +4449,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'forceIsLocal');
         $f->label = __('Force isLocal check to always return true', __FILE__);
         $f->description = __('Check to force isLocal.', __FILE__);
-        $f->notes = __('WARNING - Only use this if you know what you are doing! You will expose debug info to guest users on a live site when combined with the previous setting.', __FILE__);
+        $f->notes = __('WARNING - Only use this if you know what you are doing! Combined with the previous setting, every guest on a live site gets the full debug bar, including the Console, which runs PHP code.', __FILE__);
         $f->columnWidth = 33;
         $f->attr('checked', $data['forceIsLocal'] == '1' ? 'checked' : '');
         $fieldset->add($f);
