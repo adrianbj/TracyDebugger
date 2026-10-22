@@ -324,12 +324,11 @@ class TD extends TracyDebugger {
         }
         $new = substr($buf, self::$consoleStreamOffset);
         if($new === '' || $new === false) return;
-        /* The run installs tracyConsoleErrorHandler for its whole life, and that
-           handler's suppression guard is the pre-PHP-8 `error_reporting() === 0`
-           idiom — under PHP 8 `@` sets a non-zero mask instead, so a failed write
-           here would reach it and echo a red E_WARNING block into the buffer,
+        /* The run installs tracyConsoleErrorHandler for its whole life, and a
+           warning that reached it would echo a red E_WARNING block into the buffer,
            i.e. into the delivered result. This side-channel must never be able to
-           alter canonical output, so silence it with a real handler swap. */
+           alter canonical output, so silence a failed write with a real handler
+           swap rather than relying on @ and that handler's suppression check. */
         if(self::$consoleStreamOffset + strlen($new) > self::CONSOLE_STREAM_MAX_BYTES) {
             set_error_handler(function() { return true; });
             file_put_contents(

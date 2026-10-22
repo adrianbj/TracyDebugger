@@ -63,7 +63,7 @@ if($this->wire('input')->post->allowBluescreen !== 'true') {
     set_exception_handler(__NAMESPACE__.'\tracyConsoleExceptionHandler');
 }
 if(TracyDebugger::getDataValue('use_php_session') === 1 || TracyDebugger::$tracyVersion == '2.7.x') {
-    Debugger::$disableShutdownHandler = true;
+    TracyDebugger::$skipTracyShutdownHandler = true;
 }
 register_shutdown_function(__NAMESPACE__.'\tracyConsoleShutdownHandler');
 
@@ -560,8 +560,10 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
 
 // error handler function
 function tracyConsoleErrorHandler($errno, $errstr, $errfile, $errline) {
-    // this prevents silenced(@) errors from being captured by this custom error handler
-    if(error_reporting() === 0) {
+    // this prevents silenced(@) errors from being captured by this custom error handler, unless Tracy's
+    // scream mode (forceScream) asks for them. Since PHP 8, @ lowers error_reporting() to the fatal
+    // levels instead of 0, so test the error's own level against it
+    if(!Debugger::$scream && !(error_reporting() & $errno)) {
         // continue script execution, skipping standard PHP error handler
         return true;
     }
@@ -605,13 +607,9 @@ function tracyConsoleShutdownHandler() {
     /* always release the lock first, regardless of error state, so the panel
        stops reporting "Running..." the moment this request actually ends */
     tracyConsoleReleasePidLock();
-    // this prevents silenced(@) errors from being captured by this custom error handler
-    if(error_reporting() === 0) {
-        // continue script execution, skipping standard PHP error handler
-        return true;
-    }
 
-    $lasterror = error_get_last();
+    // when Tracy's shutdown handler is skipped, TracyDebugger's earlier shutdown function has taken the error
+    $lasterror = TracyDebugger::$skipTracyShutdownHandler ? TracyDebugger::$consoleLastError : error_get_last();
 
     // convert error constants to strings,
     // otherwise the error's numerical value (http://php.net/manual/en/errorfunc.constants.php) is returned

@@ -7,7 +7,7 @@
 
 namespace Tracy;
 
-use function array_slice, is_string, strlen;
+use function is_string, strlen;
 
 
 /**
@@ -82,10 +82,6 @@ final class DeferredContent
 			header('Content-Type: application/javascript; charset=UTF-8');
 			header('Cache-Control: max-age=864000');
 			header_remove('Pragma');
-			// TracyDebugger patch: PHP's session cache limiter has already queued
-			// "Expires: Thu, 19 Nov 1981" by this point, so the response contradicted its own
-			// Cache-Control. Browsers prefer Cache-Control, but an intermediary need not.
-			header_remove('Expires');
 			header_remove('Set-Cookie');
 			$str = $this->buildJsCss();
 			header('Content-Length: ' . strlen($str));
@@ -105,8 +101,6 @@ final class DeferredContent
 			[, $ajax, $requestId] = $m;
 			header('Content-Type: application/javascript; charset=UTF-8');
 			header('Cache-Control: max-age=60');
-			header_remove('Expires'); // TracyDebugger patch: see above
-			header_remove('Pragma'); // TracyDebugger patch: as the branch above already does
 			header_remove('Set-Cookie');
 			$str = $ajax ? '' : $this->buildJsCss();
 			$data = &$this->getItems('setup');
@@ -128,7 +122,7 @@ final class DeferredContent
 
 	private function buildJsCss(): string
 	{
-		$css = array_map(file_get_contents(...), array_merge([
+		$css = array_map(file_get_contents(...), [
 			__DIR__ . '/../assets/reset.css',
 			__DIR__ . '/../Bar/assets/bar.css',
 			__DIR__ . '/../assets/toggle.css',
@@ -137,7 +131,8 @@ final class DeferredContent
 			__DIR__ . '/../Dumper/assets/dumper-light.css',
 			__DIR__ . '/../Dumper/assets/dumper-dark.css',
 			__DIR__ . '/../BlueScreen/assets/bluescreen.css',
-		], Debugger::$customCssFiles));
+			...Debugger::$customCssFiles,
+		]);
 
 		$js1 = array_map(fn($file) => '(function() {' . file_get_contents($file) . '})();', [
 			__DIR__ . '/../Bar/assets/bar.js',
@@ -158,12 +153,6 @@ final class DeferredContent
 	el.textContent=" . Helpers::jsonEncode(Helpers::minifyCss(implode('', $css))) . ";
 	document.head.appendChild(el);})
 ();\n" . implode('', $js1) . implode('', $js2);
-
-		if(Debugger::$customCssStr) $str .= "(function(){var el = document.createElement('div'); el.className='tracy-debug'; el.innerHTML='".preg_replace('#\s+#u', ' ', Debugger::$customCssStr)."'; document.head.appendChild(el);})();\n";
-
-		if(Debugger::$customJsStr) $str .= Debugger::$customJsStr;
-
-		if(Debugger::$customBodyStr) $str .= "(function(){var el = document.createElement('div'); el.className='tracy-debug'; el.innerHTML='".preg_replace('#\s+#u', ' ', Debugger::$customBodyStr)."'; document.addEventListener('DOMContentLoaded', function() { document.body.appendChild(el);});})();\n";
 
 		return $str;
 	}

@@ -39,7 +39,7 @@ tracy-div:not(a b) * {
 	min-height: initial;
 }
 
-tracy-div:not(a b) > *:hover {
+tracy-div:not(a b) *:hover {
 	color: inherit;
 	background: transparent;
 }

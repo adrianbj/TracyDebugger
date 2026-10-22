@@ -8,7 +8,7 @@
 namespace Tracy\Dumper;
 
 use Tracy\Helpers;
-use function count, htmlspecialchars, is_array, is_bool, is_float, is_int, is_object, is_string, str_repeat, str_replace, strlen, strrpos, substr, substr_count;
+use function count, is_array, is_bool, is_float, is_int, is_object, is_string, strlen;
 
 
 /**
@@ -53,7 +53,7 @@ final class Renderer
 				$html = $this->renderVar($value);
 				$json = $snapshot = null;
 
-			} elseif ($this->lazy && (is_array($value) && $value || is_object($value))) { // full lazy-loading
+			} elseif ($this->lazy && ((is_array($value) && $value) || is_object($value))) { // full lazy-loading
 				$html = '';
 				$snapshot = $this->collectingMode ? null : $this->snapshot;
 				$json = $value;
@@ -72,25 +72,24 @@ final class Renderer
 		if ($model->location && $this->sourceLocation) {
 			[$file, $line, $code] = $model->location;
 			$uri = Helpers::editorUri($file, $line);
-			$location = '<div class="tracy-dump-location-container">';
-			$location .= Helpers::formatHtml(
+			$location = Helpers::formatHtml(
 				'<a href="%" class="tracy-dump-location" title="in file % on line %%">',
 				$uri ?? '#',
 				$file,
 				$line,
-				$uri ? "\nClick to open in editor" : ''
-			) . Helpers::encodeString($code, 50) . "</a\n>";
-			$location .= "  " . '<span class="tracy-dump-location tracy-dump-location-path">' . Helpers::editorLink($file, $line) . '</span></div>';
+				$uri ? "\nClick to open in editor" : '',
+			) . Helpers::encodeString($code, 50) . " 📍</a\n>";
 		}
 
 		return '<pre class="tracy-dump' . ($this->theme ? ' tracy-' . htmlspecialchars($this->theme) : '')
-				. ($json && $this->collapseTop === true ? ' tracy-collapsed' : '') . '"'
-				. ($snapshot !== null ? " data-tracy-snapshot='" . Helpers::jsonEncode($snapshot) . "'" : '')
-				. ($json ? " data-tracy-dump='" . Helpers::jsonEncode($json) . "'" : '')
-				. ($location || strlen($html) > 100 ? "\n" : '')
+			. ($json && $this->collapseTop === true ? ' tracy-collapsed' : '') . '"'
+			. ($snapshot !== null ? " data-tracy-snapshot='" . Helpers::jsonEncode($snapshot) . "'" : '')
+			. ($json ? " data-tracy-dump='" . Helpers::jsonEncode($json) . "'" : '')
+			. ($location || strlen($html) > 100 ? "\n" : '')
 			. '>'
+			. $location
 			. $html
-			. "</pre>\n" . $location;
+			. "</pre>\n";
 	}
 
 
@@ -232,7 +231,11 @@ final class Renderer
 				if ($this->lazy !== false) {
 					$ref = new Value(Value::TypeRef, $array->id);
 					$this->copySnapshot($ref);
-					return '<span class="tracy-toggle tracy-collapsed" data-tracy-dump=\'' . Helpers::jsonEncode($ref) . "'>" . $out . '</span>';
+					return '<span class="tracy-toggle tracy-collapsed" data-tracy-dump=\''
+						. Helpers::jsonEncode($ref)
+						. "'>"
+						. $out
+						. '</span>';
 
 				} elseif ($this->hash) {
 					return $out . (isset($this->above[$array->id]) ? ' <i>see above</i>' : ' <i>see below</i>');
@@ -315,7 +318,11 @@ final class Renderer
 			if ($this->lazy !== false) {
 				$ref = new Value(Value::TypeRef, $object->id);
 				$this->copySnapshot($ref);
-				return '<span class="tracy-toggle tracy-collapsed" data-tracy-dump=\'' . Helpers::jsonEncode($ref) . "'>" . $out . '</span>';
+				return '<span class="tracy-toggle tracy-collapsed" data-tracy-dump=\''
+					. Helpers::jsonEncode($ref)
+					. "'>"
+					. $out
+					. '</span>';
 
 			} elseif ($this->hash) {
 				return $out . (isset($this->above[$object->id]) ? ' <i>see above</i>' : ' <i>see below</i>');
@@ -369,7 +376,11 @@ final class Renderer
 			if ($this->lazy !== false) {
 				$ref = new Value(Value::TypeRef, $resource->id);
 				$this->copySnapshot($ref);
-				return '<span class="tracy-toggle tracy-collapsed" data-tracy-dump=\'' . Helpers::jsonEncode($ref) . "'>" . $out . '</span>';
+				return '<span class="tracy-toggle tracy-collapsed" data-tracy-dump=\''
+					. Helpers::jsonEncode($ref)
+					. "'>"
+					. $out
+					. '</span>';
 			}
 
 			return $out . ' <i>see above</i>';
