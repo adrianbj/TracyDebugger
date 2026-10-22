@@ -114,7 +114,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $tracyVersion;
     public static $panelGenerationTime = array();
     public static $hideInAdmin = array('validator', 'templateResources', 'templatePath');
-    public static $superUserOnlyPanels = array('console', 'fileEditor', 'adminer', 'terminal', 'adminTools');
+    public static $superUserOnlyPanels = array('console', 'fileEditor', 'adminer', 'terminal', 'adminTools', 'moduleDisabler');
     public static $pageHtml;
     public static $consoleRunId = '';
     public static $consoleRunStatusDir = '';
@@ -1236,7 +1236,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             // MODULES DISABLER
             //set up backup directory/file - outside conditional so they are available for cleanup when panel is disabled
             $this->modulesDbBackupFilename = 'modulesBackup.sql';
-            if(in_array('moduleDisabler', static::$showPanels) && $this->wire('config')->debug && $this->wire('config')->advanced) {
+            // superusers (and local / switched users) only: $showPanels comes from the user's own panel cookies,
+            // and disabling autoload modules can switch off security ones
+            if((static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser) && in_array('moduleDisabler', static::$showPanels) && $this->wire('config')->debug && $this->wire('config')->advanced) {
                 // if modules DB was just restored, clear the cookie
                 if($this->wire('input')->cookie->modulesRestored == 1) {
                     unset($this->wire('input')->cookie->modulesRestored);
@@ -2093,6 +2095,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             // dropped. ProcessWire::finished fires before either shutdown
             // function for all session backends.
             $this->wire()->addHookAfter('ProcessWire::finished', function() {
+                // only development mode has panels that use these; in production mode this would copy every
+                // visitor's POST data (login passwords included) into their session
+                if(static::$allowedTracyUser !== 'development') return;
                 $session = $this->wire('session');
                 if(!$session->tracyConsoleToken) {
                     $session->tracyConsoleToken = bin2hex(random_bytes(32));
@@ -3233,6 +3238,22 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $data = $page->getRequestData();
         $data = json_decode(json_encode($data), true);
         if(!empty($data)) {
+            // the log can be read by any Tracy user later, so don't store credentials from the logged
+            // request (login passwords, session cookies, auth headers, tokens)
+            foreach(array('headers', 'post', 'get', 'inputParsed') as $key) {
+                if(isset($data[$key]) && is_array($data[$key])) $data[$key] = static::hideSensitiveData($data[$key]);
+            }
+            if(isset($data['input']) && $data['input'] !== '') {
+                if(is_array($data['inputParsed'])) {
+                    $data['input'] = json_encode($data['inputParsed']);
+                }
+                else {
+                    parse_str($data['input'], $parsedInput);
+                    if($parsedInput && static::hideSensitiveData($parsedInput) !== $parsedInput) {
+                        $data['input'] = http_build_query(static::hideSensitiveData($parsedInput));
+                    }
+                }
+            }
             $data['html'] = $event->return;
             $this->wire('cache')->save("tracyRequestLogger_id_{$data['id']}_page_{$page->id}", $data);
 
@@ -3243,6 +3264,27 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $this->wire('cache')->delete(key($allData));
             }
         }
+    }
+
+    /**
+     * Copy of $data with the values of credential-like keys (any containing pass, pwd, secret, token, auth or
+     * cookie, and those in the "Keys to hide" setting) replaced, at any depth
+     *
+     * @param array $data
+     * @return array
+     */
+    public static function hideSensitiveData(array $data) {
+        $keysToHide = array_filter(array_map('strtolower', array_map('trim', explode(',', (string) static::getDataValue('keysToHide')))));
+        foreach($data as $key => $value) {
+            $lowerKey = strtolower((string) $key);
+            if(in_array($lowerKey, $keysToHide, true) || preg_match('/pass|pwd|secret|token|auth|cookie/', $lowerKey)) {
+                $data[$key] = '*****';
+            }
+            elseif(is_array($value)) {
+                $data[$key] = static::hideSensitiveData($value);
+            }
+        }
+        return $data;
     }
 
     /**

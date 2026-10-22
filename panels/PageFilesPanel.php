@@ -155,8 +155,10 @@ class PageFilesPanel extends BasePanel {
         $out .= $this->openPanel();
 
         $numOrphanFiles = count($this->orphanFiles);
+        // the delete buttons only work for superusers (and local / switched users), see PageFilesPost.php
+        $canDelete = TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser;
 
-        if($numOrphanFiles > 0) {
+        if($numOrphanFiles > 0 && $canDelete) {
             $out .= '
             <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" data-confirm="Do you really want to delete all the orange highlighted orphan files?">
                 '.$this->csrfInput().'
@@ -165,7 +167,7 @@ class PageFilesPanel extends BasePanel {
             </form>&nbsp&nbsp;';
         }
 
-        if($this->numMissingFiles > 0) {
+        if($this->numMissingFiles > 0 && $canDelete) {
             $out .= '
             <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" data-confirm="Do you really want to delete all the red highlighted missing pagefiles?">
                 '.$this->csrfInput().'
@@ -174,7 +176,7 @@ class PageFilesPanel extends BasePanel {
             </form>';
         }
 
-        if($numOrphanFiles > 0 || $this->numMissingFiles > 0) {
+        if($canDelete && ($numOrphanFiles > 0 || $this->numMissingFiles > 0)) {
             $out .= '<br /><br />';
         }
 
