@@ -1029,8 +1029,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // clear session & cookies option in Processwire Info panel
-        // not inside static::$allowedTracyUser === 'development' check because it won't validate during forceLogin()
-        if($this->wire('input')->get->tracyClearSession) {
+        // not inside the static::$allowedTracyUser === 'development' block below because it won't validate during
+        // forceLogin(), but still only for development mode users, and only from the panel's link (validActionRequest)
+        if($this->wire('input')->get->tracyClearSession && static::$allowedTracyUser === 'development' && static::validActionRequest()) {
             $userName = $this->wire('user')->name;
             $this->wire('session')->logout();
 
@@ -1045,7 +1046,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
 
             $this->wire('session')->forceLogin($userName);
-            $this->wire('session')->tracyLastUrl = substr(str_replace('tracyClearSession=1', '', self::inputUrl(true)), 0, -1);
+            $this->wire('session')->tracyLastUrl = substr(str_replace('tracyClearSession=1', '', self::urlWithoutActionToken(self::inputUrl(true))), 0, -1);
             $this->wire('session')->redirect($this->wire('config')->urls->admin.'module/?reset=1');
 
         }
@@ -1182,9 +1183,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             // ProcessWire Info panel early redirects
             // logout
-            if($this->wire('input')->get->tracyLogout) {
+            if($this->wire('input')->get->tracyLogout && static::validActionRequest()) {
                 $this->wire('session')->logout();
-                $this->wire('session')->redirect(rtrim(substr(str_replace(array('tracyLogout=1', 'login=1'), '', self::inputUrl(true)), 0, -1), '?'));
+                $this->wire('session')->redirect(rtrim(substr(str_replace(array('tracyLogout=1', 'login=1'), '', self::urlWithoutActionToken(self::inputUrl(true))), 0, -1), '?'));
             }
             // login
             if($this->wire('input')->get->tracyLogin) {
@@ -1197,8 +1198,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
 
             // refresh modules
-            if($this->wire('input')->get->tracyModulesRefresh) {
-                $this->wire('session')->tracyLastUrl = substr(str_replace('tracyModulesRefresh=1', '', self::inputUrl(true)), 0, -1);
+            if($this->wire('input')->get->tracyModulesRefresh && static::validActionRequest()) {
+                $this->wire('session')->tracyLastUrl = substr(str_replace('tracyModulesRefresh=1', '', self::urlWithoutActionToken(self::inputUrl(true))), 0, -1);
                 $this->wire('session')->redirect($this->wire('config')->urls->admin.'module/?reset=1');
             }
             if($this->wire('input')->get->reset == 2 && $this->wire('session')->tracyLastUrl) {
@@ -2087,7 +2088,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     if($this->data['slackChannel'] != '' && $this->data['slackAppOauthToken'] != '') {
                         require_once __DIR__ . '/includes/SlackLogger.php';
                         $slackLogger = new SlackLogger();
-                        $slackLogger->log($message);
+                        $slackLogger->log(nl2br($plainMessage));
                     }
 
                 };
@@ -2110,6 +2111,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 }
                 if(!$session->tracyFileEditorToken) {
                     $session->tracyFileEditorToken = bin2hex(random_bytes(32));
+                }
+                // for links that trigger an action with a GET request (see actionUrl()); separate from the
+                // Console's token because these URLs can end up in server logs
+                if(!$session->tracyActionToken) {
+                    $session->tracyActionToken = bin2hex(random_bytes(16));
                 }
                 $session->tracyPostData = $this->wire('input')->post->getArray();
                 $session->tracyGetData = $this->wire('input')->get->getArray();
@@ -3495,6 +3501,35 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         return self::sameOriginRequest();
     }
 
+
+    /**
+     * Is this GET action request (see actionUrl()) from TracyDebugger's own link: does it carry the session's
+     * action token, or is it verifiably same-origin?
+     *
+     * @return boolean
+     */
+    public static function validActionRequest() {
+        return self::validTracyRequest((string) wire('session')->tracyActionToken, (string) wire('input')->get->tracyToken);
+    }
+
+    /**
+     * HTML-escaped URL of the current page with $param=1 and the action token added, for links that trigger an
+     * action with a GET request (checked with validActionRequest())
+     *
+     * @param string $param
+     * @return string
+     */
+    public static function actionUrl($param) {
+        $url = self::urlWithoutActionToken(self::inputUrl(true));
+        $url .= (strpos($url, '?') !== false ? '&' : '?') . $param . '=1';
+        $token = (string) wire('session')->tracyActionToken;
+        if($token !== '') $url .= '&tracyToken=' . $token;
+        return htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+    }
+
+    public static function urlWithoutActionToken($url) {
+        return preg_replace(array('/([?&])tracyToken=[^&#]*&/', '/[?&]tracyToken=[^&#]*/'), array('$1', ''), (string) $url);
+    }
 
     /**
      * Is the current request verifiably same-origin?
