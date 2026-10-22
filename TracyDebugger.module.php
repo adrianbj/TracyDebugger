@@ -1812,7 +1812,10 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                         }
                     });';
 
-                Debugger::$customJsFiles[] = $this->barJsFile($barJs);
+                // Tracy only reads $customJsFiles when it serves the bundle (?_tracy_bar=...)
+                if(isset($_GET['_tracy_bar']) && ($barJsFile = $this->barJsFile($barJs))) {
+                    Debugger::$customJsFiles[] = $barJsFile;
+                }
 
             }
 
