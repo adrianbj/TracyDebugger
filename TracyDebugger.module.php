@@ -2940,20 +2940,25 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
     /**
      * Path of a cache file holding this bar JS, for Debugger::$customJsFiles (Tracy reads those
-     * files when it builds the bar bundle). Named by a hash of the content, so requests that build
-     * different JS never overwrite each other's file. Writing a new one (something that feeds the JS
-     * changed) also removes those more than a day old; a variant still in use is just written again.
+     * files when it builds the bar bundle), or null if it can't be written. Named by a hash of the
+     * content, so requests that build different JS never overwrite each other's file. A file in use
+     * is written again at most hourly, which keeps its mtime recent, so the clean-up of files more
+     * than a day old only removes variants nothing has asked for since.
      *
      */
     private function barJsFile($js) {
         $file = $this->tracyCacheDir . 'bar-' . md5($js) . '.js';
-        if(!is_file($file)) {
-            $tmpFile = $file . '.' . getmypid() . '.tmp';
-            file_put_contents($tmpFile, $js);
-            rename($tmpFile, $file);
-            foreach(glob($this->tracyCacheDir . 'bar-*.js') ?: array() as $oldFile) {
-                if($oldFile !== $file && filemtime($oldFile) < time() - 86400) @unlink($oldFile);
-            }
+        if(is_file($file) && filemtime($file) > time() - 3600) return $file;
+
+        $tmpFile = $file . '.' . getmypid() . '.tmp';
+        if(@file_put_contents($tmpFile, $js) === false || !@rename($tmpFile, $file)) {
+            @unlink($tmpFile);
+            if(is_file($file)) return $file;
+            $this->wire('log')->error("TracyDebugger: unable to write the bar JS file $file");
+            return null;
+        }
+        foreach(glob($this->tracyCacheDir . 'bar-*.js') ?: array() as $oldFile) {
+            if($oldFile !== $file && filemtime($oldFile) < time() - 86400) @unlink($oldFile);
         }
         return $file;
     }
