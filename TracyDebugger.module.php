@@ -1171,8 +1171,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 static::$showPanels[] = 'panelSelector';
             }
 
-            // unhide and unlock all fields
-            if($this->wire('input')->cookie->tracyUnhideUnlockFields == 1) {
+            // unhide and unlock all fields - superusers (and local / switched users) only, as its button is in the
+            // superuser-only Admin Tools panel: unlocked fields become editable, which other users shouldn't get
+            if($this->wire('input')->cookie->tracyUnhideUnlockFields == 1 && (static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser)) {
                 $this->wire()->addHookAfter('Field::getInputfield', function(HookEvent $event) {
                     if($this->page->process !== 'ProcessPageEdit' && $this->page->process !== 'ProcessUser') return;
                     $inputfield = $event->return;
