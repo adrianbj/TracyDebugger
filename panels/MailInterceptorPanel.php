@@ -57,7 +57,7 @@ class MailInterceptorPanel extends BasePanel {
                                     if($item['bodyHTML']) {
                                         $this->entries .= "
                                         <a href='#' rel='#html-body' style='font-size:12px !important; position: absolute; left:56px; top:3px;' class='tracy-toggle tracy-collapsed'>HTML</a>
-                                        <div id='html-body' class='tracy-section tracy-collapsed'><iframe sandbox srcdoc=\"".$this->e($item['bodyHTML'])."\" style='width:100%; min-width:500px; height:400px; border:0; background:#fff; resize:vertical'></iframe></div>
+                                        <div id='html-body' class='tracy-section tracy-collapsed'><iframe sandbox=\"allow-popups allow-popups-to-escape-sandbox\" srcdoc=\"".$this->e('<base target="_blank">' . $item['bodyHTML'])."\" style='width:100%; min-width:500px; height:400px; border:0; background:#fff; resize:vertical'></iframe></div>
                                         <a href='#' rel='#source-body' style='font-size:12px !important; position: absolute; left:120px; top:3px;' class='tracy-toggle tracy-collapsed'>Source</a>
                                         <div id='source-body' class='tracy-section tracy-collapsed'><pre style='max-width: 800px; white-space: normal;'>".htmlentities($item['bodyHTML'])."</pre></div>";
                                     }
