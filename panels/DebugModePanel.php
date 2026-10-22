@@ -207,7 +207,7 @@ class DebugModePanel extends BasePanel {
                     else {
                         $backtrace = '';
                     }
-                    $caller = $query->arguments[1]['caller'] ?? '';
+                    $caller = $this->wire('sanitizer')->entities1((string) ($query->arguments[1]['caller'] ?? ''));
 
                     $selector = $this->wire('sanitizer')->entities1((string)$query->arguments[0]);
                     if(method_exists($query->return, 'getDebugQuery')) {
@@ -218,6 +218,8 @@ class DebugModePanel extends BasePanel {
                         // 3.0.157 and earlier
                         $sqlStr = $query->return->getQuery();
                     }
+                    // bound values (e.g. from a search box) are inlined into the SQL, so escape it for HTML
+                    $sqlStr = $this->wire('sanitizer')->entities1((string) $sqlStr);
                     $options = array(Dumper::LIVE => true, Dumper::DEPTH => TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => TracyDebugger::getDataValue('maxLength'), Dumper::COLLAPSE => false);
                     if(defined('\Tracy\Dumper::ITEMS')) array_push($options, array(Dumper::ITEMS => TracyDebugger::getDataValue('maxItems')));
                     $row = "\n<tr><td>$n</td><td style='max-width: 400px' class='tracy-force-break'>".$selector."</td><td>".$caller."<br />".$backtrace."</td><td style='max-width: 400px' class='tracy-force-break'>".$sqlStr."</td><td>".(isset($query->arguments[1]) ? Dumper::toHtml($query->arguments[1], $options) : '')."</td><td>".($query->arguments[2]*1000)."</td></tr>";

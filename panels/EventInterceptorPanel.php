@@ -124,9 +124,9 @@ class EventInterceptorPanel extends BasePanel {
         ' . $this->openPanel('tracy-DumpPanel', 'min-width:350px !important') . '
 
             <fieldset id="eventInterceptor">
-                <legend><span id="eventHookLegend">'.(isset($hookSettings['hook']) ? '<strong>' . $hookSettings['hook'] . '</strong> <em>' . $hookSettings['when'] . '</em> hook is set to return <em>' . $hookSettings['return'] . '</em>' : 'Enter an Event Hook (eg. PageRender::renderPage)') .'</span></legend><br />';
+                <legend><span id="eventHookLegend">'.(isset($hookSettings['hook']) ? '<strong>' . htmlspecialchars((string) $hookSettings['hook'], ENT_QUOTES, 'UTF-8') . '</strong> <em>' . htmlspecialchars((string) $hookSettings['when'], ENT_QUOTES, 'UTF-8') . '</em> hook is set to return <em>' . htmlspecialchars((string) $hookSettings['return'], ENT_QUOTES, 'UTF-8') . '</em>' : 'Enter an Event Hook (eg. PageRender::renderPage)') .'</span></legend><br />';
                 $out .= '
-                <input type="text" style="width:250px !important" id="eventInterceptorHook" name="eventInterceptorHook" value="'.(isset($hookSettings['hook']) ? $hookSettings['hook'] : '') .'">
+                <input type="text" style="width:250px !important" id="eventInterceptorHook" name="eventInterceptorHook" value="'.(isset($hookSettings['hook']) ? htmlspecialchars((string) $hookSettings['hook'], ENT_QUOTES, 'UTF-8') : '') .'">
                 <p>
                     Hook: <label style="display:inline-block !important"><input type="radio" id="tracyEventWhenBefore" name="when" value="before" '. (isset($hookSettings['when']) && $hookSettings['when'] == 'before' ? ' checked="checked"' : '') .' /> Before</label>
                     <label style="display:inline-block !important"><input type="radio" id="tracyEventWhenAfter" name="when" value="after" '. (!isset($hookSettings) || $hookSettings['when'] == 'after' ? ' checked="checked"' : '') .' /> After</label>

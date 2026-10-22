@@ -204,7 +204,7 @@ class ProcesswireLogsPanel extends BasePanel {
             if($this->numLogEntries > 0) {
                 $out .= '
                 <p>
-                    <form method="post" action="'.TracyDebugger::inputUrl(true).'">
+                    <form method="post" action="'.htmlspecialchars(TracyDebugger::inputUrl(true), ENT_QUOTES, 'UTF-8').'">
                         '.$this->csrfInput().'
                         <input type="submit" name="deleteProcessWireLogs" value="Delete All Logs" />
                     </form>

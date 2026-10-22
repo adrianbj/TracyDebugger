@@ -34,7 +34,7 @@ class MailInterceptorPanel extends BasePanel {
                 <table id="mail-item" style="margin-bottom:15px !important; min-width:300px !important">
                     <thead>
                         <tr>
-                            <th colspan="2"><strong>'.$item['subject'].'</strong></th>
+                            <th colspan="2"><strong>'.$this->e($item['subject']).'</strong></th>
                         </tr>
                     </thead>
                     <tbody>';
@@ -44,7 +44,7 @@ class MailInterceptorPanel extends BasePanel {
                         <tr><td>To</td><td>".$this->formatEmailAddress($item['to'], $item['toName'])."</td></tr>" .
                         ($item['cc'] ? "<tr><td>Cc</td><td>".$this->formatEmailAddress($item['cc'], $item['ccName'])."</td></tr>" : "") .
                         ($item['bcc'] ? "<tr><td>Bcc</td><td>".$this->formatEmailAddress($item['bcc'], null)."</td></tr>" : "") . "
-                        <tr><td>From</td><td>".$item['fromName'] . ' &lt;' . $item['from']."&gt;</td></tr>" .
+                        <tr><td>From</td><td>".$this->e($item['fromName']) . ' &lt;' . $this->e($item['from'])."&gt;</td></tr>" .
                         ($item['attachments'] ? "<tr><td>Attachments</td><td>".$this->formatAttachments($item['attachments'])."</td></tr>" : "") . "
                         <tr>
                             <td colspan='2'>
@@ -52,12 +52,12 @@ class MailInterceptorPanel extends BasePanel {
                                     if($item['body']) {
                                         $this->entries .= "
                                         <a href='#' rel='#text-body' style='font-size:12px !important; position: absolute; left:0; top:3px;' class='tracy-toggle tracy-collapsed'>Text</a>
-                                        <div id='text-body' class='tracy-section tracy-collapsed'>".($item['body'] ? nl2br($item['body']) : "Ø")."</div>";
+                                        <div id='text-body' class='tracy-section tracy-collapsed'>".($item['body'] ? nl2br($this->e($item['body'])) : "Ø")."</div>";
                                     }
                                     if($item['bodyHTML']) {
                                         $this->entries .= "
                                         <a href='#' rel='#html-body' style='font-size:12px !important; position: absolute; left:56px; top:3px;' class='tracy-toggle tracy-collapsed'>HTML</a>
-                                        <div id='html-body' class='tracy-section tracy-collapsed'>".$item['bodyHTML']."</div>
+                                        <div id='html-body' class='tracy-section tracy-collapsed'><iframe sandbox srcdoc=\"".$this->e($item['bodyHTML'])."\" style='width:100%; min-width:500px; height:400px; border:0; background:#fff; resize:vertical'></iframe></div>
                                         <a href='#' rel='#source-body' style='font-size:12px !important; position: absolute; left:120px; top:3px;' class='tracy-toggle tracy-collapsed'>Source</a>
                                         <div id='source-body' class='tracy-section tracy-collapsed'><pre style='max-width: 800px; white-space: normal;'>".htmlentities($item['bodyHTML'])."</pre></div>";
                                     }
@@ -66,9 +66,9 @@ class MailInterceptorPanel extends BasePanel {
                                     <div id='metadata' class='tracy-section tracy-collapsed'>
                                         <table id='metadata-table' style='margin-bottom:15px; width:100%'>
                                             <tbody>";
-                                                if(isset($item['header']['X-Mailer'])) $this->entries .= "<tr><td>X-Mailer</td><td>".$item['header']['X-Mailer']."</td></tr>";
+                                                if(isset($item['header']['X-Mailer'])) $this->entries .= "<tr><td>X-Mailer</td><td>".$this->e($item['header']['X-Mailer'])."</td></tr>";
                                                 foreach(array('priority' => 'Priority', 'default_charset' => 'Default Charset', 'dispositionNotification' => 'Disposition Notification', 'addSignature' => 'Add Signature', 'sendSingle' => 'Send Single', 'sendBulk' => 'Send Bulk', 'useSentLog' => 'Use Sent Log', 'wrapText' => 'Wrap Text', 'sender_signature' => 'Sender Signature', 'sender_signature_html' => 'Sender Signature HTML') as $param => $label) {
-                                                    if(isset($item[$param])) $this->entries .= "<tr><td>".$label."</td><td>".(is_bool($item[$param]) ? ($item[$param] ? 'true' : 'false') : $item[$param])."</td></tr>";
+                                                    if(isset($item[$param])) $this->entries .= "<tr><td>".$label."</td><td>".(is_bool($item[$param]) ? ($item[$param] ? 'true' : 'false') : $this->e(is_array($item[$param]) ? json_encode($item[$param]) : $item[$param]))."</td></tr>";
                                                 }
                                             $this->entries .= "
                                             </tbody>
@@ -161,7 +161,7 @@ class MailInterceptorPanel extends BasePanel {
             <fieldset id="mailInterceptor">';
                 $out .= '
                 <p>
-                    <input type="text" style="width:250px !important; color:'.($this->wire('input')->cookie->tracyTestEmail ? '#009900' : '#000000').'" id="tracyTestEmail" name="tracyTestEmail" placeholder="Test Email Address" value="'.$this->wire('input')->cookie->tracyTestEmail.'">
+                    <input type="text" style="width:250px !important; color:'.($this->wire('input')->cookie->tracyTestEmail ? '#009900' : '#000000').'" id="tracyTestEmail" name="tracyTestEmail" placeholder="Test Email Address" value="'.$this->e($this->wire('input')->cookie->tracyTestEmail).'">
                 </p>
                 <input id="setEmailButton" type="submit" value="Set Email" />&nbsp;
                 <input id="removeEmailButton" type="submit" value="Remove Email" />&nbsp;
@@ -177,10 +177,10 @@ class MailInterceptorPanel extends BasePanel {
         if(!is_array($addresses)) $addresses = array($addresses);
         foreach($addresses as $address) {
             if($names) {
-                $styledAddresses .= $names[$address].' &lt;'.$address.'&gt;<br />';
+                $styledAddresses .= $this->e(isset($names[$address]) ? $names[$address] : '').' &lt;'.$this->e($address).'&gt;<br />';
             }
             else {
-                $styledAddresses .= $address.'<br />';
+                $styledAddresses .= $this->e($address).'<br />';
             }
         }
         return $styledAddresses;
@@ -191,9 +191,16 @@ class MailInterceptorPanel extends BasePanel {
         if(!is_array($attachments)) $attachments = array($attachments);
         foreach($attachments as $key => $val) {
             $attachment = is_numeric($key) ? $val : $key;
-            $styledAttachments .= '<a href="'.str_replace($this->wire('config')->paths->root, $this->wire('config')->urls->root, $attachment).'">'.$this->stripRootPath($attachment) . '</a><br />';
+            $styledAttachments .= '<a href="'.$this->e(str_replace($this->wire('config')->paths->root, $this->wire('config')->urls->root, $attachment)).'">'.$this->e($this->stripRootPath($attachment)) . '</a><br />';
         }
         return $styledAttachments;
+    }
+
+    /**
+     * Escape for HTML: email fields can carry text from site visitors (form submissions etc)
+     */
+    protected function e($str) {
+        return htmlspecialchars((string) $str, ENT_QUOTES, 'UTF-8');
     }
 
 }

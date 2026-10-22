@@ -1007,7 +1007,7 @@ HTML;
             $thumb = $thumb['thumb'];
             $imagePreview = '<a class="pw-modal" href="'.$image->url.'"><img style="padding:5px 0" width="125" src="'.$thumb->url.'" /></a><br />';
         }
-        return '<p><strong>'.$image->name.'</strong><br />'.$imagePreview.'description: '.$image->description.'<br />tags: '.$image->tags.'<br />dimensions: '.$image->width.'x'.$image->height.'<br />size: '.$image->filesizeStr.'<br />variations: '.$this->variationsStr($image).'</p><br />';
+        return '<p><strong>'.$image->name.'</strong><br />'.$imagePreview.'description: '.htmlspecialchars((string) $image->description, ENT_QUOTES, 'UTF-8').'<br />tags: '.htmlspecialchars((string) $image->tags, ENT_QUOTES, 'UTF-8').'<br />dimensions: '.$image->width.'x'.$image->height.'<br />size: '.$image->filesizeStr.'<br />variations: '.$this->variationsStr($image).'</p><br />';
     }
 
 

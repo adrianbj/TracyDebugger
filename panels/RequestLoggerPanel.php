@@ -82,7 +82,7 @@ class RequestLoggerPanel extends BasePanel {
         if(count($this->requestData) > 0) {
             foreach($this->requestData as $datum) {
                 $time = date("Y-m-d H:i:s", $datum['time']);
-                $out .= "<h2 style='white-space: nowrap;'>{$datum['requestMethod']} @ $time | " . ($datum['remoteHost'] ?: $datum['remoteAddress']) . " | #{$datum['id']}</h2>";
+                $out .= "<h2 style='white-space: nowrap;'>" . htmlspecialchars($datum['requestMethod'] . " @ $time | " . ($datum['remoteHost'] ?: $datum['remoteAddress']) . " | #" . $datum['id'], ENT_QUOTES, 'UTF-8') . "</h2>";
                 if(TracyDebugger::getDataValue('requestLoggerReturnType') == 'object') $datum = json_decode(json_encode($datum), false);
                 $out .= Dumper::toHtml($datum, array(Dumper::LIVE => true, Dumper::DEPTH => 9, Dumper::TRUNCATE => 99999, Dumper::COLLAPSE => true));
             }
@@ -99,7 +99,7 @@ class RequestLoggerPanel extends BasePanel {
             $out .= '<p>';
             if(!in_array($this->p->id, $this->requestLoggerPages)) {
                 $out .= '
-                <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'">
+                <form style="display:inline" method="post" action="'.htmlspecialchars(TracyDebugger::inputUrl(true), ENT_QUOTES, 'UTF-8').'">
                     '.$this->csrfInput().'
                     <input type="hidden" name="requestLoggerLogPageId" value="'.$this->p->id.'" />
                     <input type="submit" name="tracyRequestLoggerEnableLogging" value="Enable logging on this page" />
@@ -108,7 +108,7 @@ class RequestLoggerPanel extends BasePanel {
             }
             else {
                 $out .= '
-                <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" data-confirm="Do you really want to disable logging on this page and clear logged data?">
+                <form style="display:inline" method="post" action="'.htmlspecialchars(TracyDebugger::inputUrl(true), ENT_QUOTES, 'UTF-8').'" data-confirm="Do you really want to disable logging on this page and clear logged data?">
                     '.$this->csrfInput().'
                     <input type="hidden" name="requestLoggerLogPageId" value="'.$this->p->id.'" />
                     <input type="submit" name="tracyRequestLoggerDisableLogging" value="Disable logging & clear data" />

@@ -39,7 +39,7 @@ class LanguageSwitcherPanel extends BasePanel {
         }
         else {
             $out .= '
-            <form name="languageSwitcherPanel" action="'.TracyDebugger::inputUrl(true).'" method="post">
+            <form name="languageSwitcherPanel" action="'.htmlspecialchars(TracyDebugger::inputUrl(true), ENT_QUOTES, 'UTF-8').'" method="post">
                 '.$this->csrfInput().'
                 <select id="tracyLanguageSwitcher" name="tracyLanguageSwitcher" size="5" style="width:100% !important; height:150px !important">';
                     foreach($this->wire('pages')->find('template=language, include=all, sort=name') as $lang) {

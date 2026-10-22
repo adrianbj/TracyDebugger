@@ -528,7 +528,7 @@ HTML;
                     $out .= '
                     </div>
                     <div style="padding: 8px 12px 0 0; float:right">
-                        <form id="tracyFileEditorSubmission" style="padding: 0; margin: 0;" method="post" action="'.TracyDebugger::inputUrl(true).'">
+                        <form id="tracyFileEditorSubmission" style="padding: 0; margin: 0;" method="post" action="'.htmlspecialchars(TracyDebugger::inputUrl(true), ENT_QUOTES, 'UTF-8').'">
                             <fieldset>
                                 '.$this->csrfInput().'
                                 <textarea id="tracyFileEditorRawCode" name="tracyFileEditorRawCode" style="display:none"></textarea>
