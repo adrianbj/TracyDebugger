@@ -1540,7 +1540,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 // load font-awesome for our panels. inAdmin normally has it via the admin template, but on a
                 // bluescreen the admin template never renders, so we'd lose our icons. duplicate loads are harmless.
                 // gated on who could open the File Editor (as for its JS above), not on $showPanels.
-                if(static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser || count($this->data['customPWInfoPanelLinks'])) {
+                if(static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser || !empty($this->data['customPWInfoPanelLinks'])) {
                     $barJs .= '(function(){var l = document.createElement("link"); l.id = "fontAwesomeStyles"; l.rel = "stylesheet"; l.href = ' . json_encode($this->wire('config')->urls->root . 'wire/templates-admin/styles/font-awesome/css/font-awesome.min.css') . '; document.head.appendChild(l);})();' . "\n";
                 }
 
