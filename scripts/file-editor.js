@@ -21,7 +21,8 @@ if(!tracyFileEditorLoader) {
 
         initializeEditor: function() {
             if(!document.getElementById("tfe_recently_opened")) {
-                window.requestAnimationFrame(tracyFileEditorLoader.initializeEditor);
+                // the panel's content isn't in the page until Tracy initializes the panel
+                window.tracyDebuggerOnPanelInit("tracy-debug-panel-ProcessWire-FileEditorPanel", tracyFileEditorLoader.initializeEditor);
             }
             else {
                 // populate recently opened files select, normalizing legacy entries with inconsistent

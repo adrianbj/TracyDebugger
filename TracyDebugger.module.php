@@ -1553,6 +1553,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     #tracy-show-button {
                         '.($this->data['barPosition'] == 'bottom-left' ? 'left:0' : 'right:0').' !important;
                     }
+                    #tracy-bs {
+                        z-index: '.(int) $this->data['panelZindex'].' !important;
+                    }
                 </style>
                 ');
 
@@ -1707,37 +1710,6 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 });
 
                 $barJs .= '
-                    document.addEventListener("DOMContentLoaded", function() {
-                        var showButton = document.createElement("div");
-                        showButton.id = "tracy-show-button";
-                        showButton.title = "Show Tracy";
-                        showButton.textContent = "\u21F1";
-                        document.body.appendChild(showButton);
-                    });
-
-                    function addHideLink() {
-                        if(!document.getElementById("tracy-debug-bar")) {
-                            window.requestAnimationFrame(addHideLink);
-                        } else {
-                            var debugBar = document.getElementById("tracy-debug-bar");
-                            var barul = debugBar.getElementsByTagName("ul")[0];
-                            var toggleli = document.createElement("li");
-                            toggleli.appendChild(document.createTextNode("⇲"));
-                            toggleli.setAttribute("id", "hide-button");
-                            toggleli.setAttribute("title", "Hide Tracy");
-                            toggleli.addEventListener("click", function() {
-                                document.body.classList.remove("has-tracy-debugbar");
-                                document.getElementById("tracy-debug").style.display = "none";
-                                document.getElementById("tracy-show-button").style.display = "block";
-                                document.cookie = "tracyHidden=1; path=/";
-                                document.cookie = "tracyShow=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
-                            });
-                            barul.replaceChild(toggleli, barul.lastChild.previousElementSibling);
-                            window.Tracy.Debug.bar.restorePosition();
-                        }
-                    }
-                    addHideLink();
-
                     function unhideBar() {
                         document.getElementById("tracy-debug").style.display = "block";
                         document.getElementById("tracy-show-button").style.display = "none";
@@ -1746,41 +1718,44 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                         document.cookie = "tracyHidden=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
                         document.cookie = "tracyShow=1; path=/";
                     }
-                    function attachUnhideBar() {
-                        var btn = document.getElementById("tracy-show-button");
-                        if(!btn) {
-                            window.requestAnimationFrame(attachUnhideBar);
-                        } else {
-                            btn.addEventListener("click", unhideBar);
-                        }
-                    }
-                    attachUnhideBar();
 
-                    function modifyTracyLogo() {
-                        if(!document.getElementById("tracy-debug-bar")) {
-                            window.requestAnimationFrame(modifyTracyLogo);
-                        } else {
-                            var tracyLogo = document.getElementById("tracy-debug-logo");
-                            tracyLogo.setAttribute("title", tracyLogo.getAttribute("title") + "\n\nTracy Debugger for PW '.$this->getModuleInfo()['version'].'\nClick to scroll to page top\nDouble-click to visit module settings");
-                            tracyLogo.addEventListener("click", function() {
-                                window.scrollTo(0,0);
-                            }, false);
-                            tracyLogo.addEventListener("dblclick", function() {
-                                window.open("'.$this->wire('config')->urls->admin.'module/edit?name=TracyDebugger","_blank");
-                            }, false);
-                        }
-                    }
-                    modifyTracyLogo();
+                    document.addEventListener("DOMContentLoaded", function() {
+                        var showButton = document.createElement("div");
+                        showButton.id = "tracy-show-button";
+                        showButton.title = "Show Tracy";
+                        showButton.textContent = "\u21F1";
+                        showButton.addEventListener("click", unhideBar);
+                        document.body.appendChild(showButton);
+                    });
 
-                    function bsZIndex() {
-                        if(!document.getElementById("tracy-bs")) {
-                            window.requestAnimationFrame(bsZIndex);
-                        } else {
-                            if(document.getElementById("tracy-bs"))
-                                document.getElementById("tracy-bs").style.zIndex = ' . $this->data['panelZindex'] .';
-                        }
-                    }
-                    bsZIndex();
+                    window.tracyDebuggerOnBar(function() {
+                        var debugBar = document.getElementById("tracy-debug-bar");
+                        var barul = debugBar.getElementsByTagName("ul")[0];
+                        var toggleli = document.createElement("li");
+                        toggleli.appendChild(document.createTextNode("⇲"));
+                        toggleli.setAttribute("id", "hide-button");
+                        toggleli.setAttribute("title", "Hide Tracy");
+                        toggleli.addEventListener("click", function() {
+                            document.body.classList.remove("has-tracy-debugbar");
+                            document.getElementById("tracy-debug").style.display = "none";
+                            document.getElementById("tracy-show-button").style.display = "block";
+                            document.cookie = "tracyHidden=1; path=/";
+                            document.cookie = "tracyShow=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
+                        });
+                        barul.replaceChild(toggleli, barul.lastChild.previousElementSibling);
+                        window.Tracy.Debug.bar.restorePosition();
+                    });
+
+                    window.tracyDebuggerOnBar(function() {
+                        var tracyLogo = document.getElementById("tracy-debug-logo");
+                        tracyLogo.setAttribute("title", tracyLogo.getAttribute("title") + "\n\nTracy Debugger for PW '.$this->getModuleInfo()['version'].'\nClick to scroll to page top\nDouble-click to visit module settings");
+                        tracyLogo.addEventListener("click", function() {
+                            window.scrollTo(0,0);
+                        }, false);
+                        tracyLogo.addEventListener("dblclick", function() {
+                            window.open("'.$this->wire('config')->urls->admin.'module/edit?name=TracyDebugger","_blank");
+                        }, false);
+                    });
 
                     document.addEventListener("keydown", function(e) {
                         if((e.keyCode==27||e.charCode==27)) {
@@ -1825,14 +1800,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 )) . ';' . "\n";
 
                 $barJs .= '
-                    function removeDumpsRecorderPanelState() {
-                        if(!document.getElementById("tracy-debug-bar")) {
-                            window.requestAnimationFrame(removeDumpsRecorderPanelState);
-                        } else if(!document.getElementById("tracy-debug-panel-ProcessWire-DumpsRecorderPanel")) {
-                            localStorage.removeItem("tracy-debug-panel-ProcessWire-DumpsRecorderPanel");
+                    window.tracyDebuggerOnBar(function() {
+                        if(!document.getElementById("tracy-debug-panel-ProcessWire-DumpsRecorderPanel")) {
+                        localStorage.removeItem("tracy-debug-panel-ProcessWire-DumpsRecorderPanel");
                         }
-                    }
-                    removeDumpsRecorderPanelState();
+                    });
 
                     document.addEventListener("DOMContentLoaded", function() {
                         if(!/(^|;\\s*)tracyHidden=[^;]/.test(document.cookie)) {

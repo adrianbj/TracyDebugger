@@ -70,6 +70,47 @@
     }
 })();
 
+// Run code once Tracy has built the bar, or once a panel's content is in the page, rather than polling for
+// their elements on every animation frame: a popup window or a page whose panel is never opened would
+// otherwise poll for as long as it stays open
+(function() {
+    var barCallbacks = [];
+    var panelCallbacks = {};
+
+    window.tracyDebuggerOnBar = function(fn) {
+        if(document.getElementById('tracy-debug-bar')) fn();
+        else barCallbacks.push(fn);
+    };
+
+    window.tracyDebuggerOnPanelInit = function(panelId, fn) {
+        (panelCallbacks[panelId] = panelCallbacks[panelId] || []).push(fn);
+    };
+
+    if(!window.Tracy || !Tracy.Debug || !Tracy.DebugPanel) return;
+
+    // callbacks run even when Tracy's init throws partway (e.g. on a corrupt panel position in localStorage)
+    var debugInit = Tracy.Debug.init;
+    Tracy.Debug.init = function() {
+        try {
+            return debugInit.apply(this, arguments);
+        }
+        finally {
+            if(document.getElementById('tracy-debug-bar')) barCallbacks.splice(0).forEach(function(fn) { fn(); });
+        }
+    };
+
+    var panelInit = Tracy.DebugPanel.prototype.init;
+    Tracy.DebugPanel.prototype.init = function() {
+        try {
+            return panelInit.apply(this, arguments);
+        }
+        finally {
+            var callbacks = this.elem && panelCallbacks[this.elem.id];
+            if(callbacks) callbacks.splice(0).forEach(function(fn) { fn(); });
+        }
+    };
+})();
+
 // Tracy's reset.css clears color and background on every hovered element in the bar, panels and
 // BlueScreen ("tracy-div:not(a b) *:hover"), which beats many of our panel styles and the Ace
 // editor theme (its background turns transparent while hovered). Narrow it to the direct children

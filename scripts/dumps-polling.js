@@ -188,10 +188,6 @@
     }
 
     function init() {
-        if(!document.getElementById("tracy-debug-bar")) {
-            window.requestAnimationFrame(init);
-            return;
-        }
         // this script is in every bar bundle, so only poll when the Dumps Recorder panel is in this bar
         if(!document.getElementById(recorderPanelId)) return;
         // lastSeenId stays -1 until the first poll, which fully syncs the panel from
@@ -199,7 +195,7 @@
         pollTimer = setTimeout(poll, pollInterval);
     }
 
-    init();
+    window.tracyDebuggerOnBar(init);
 
     function resetToMinAndPollSoon() {
         pollInterval = minPollInterval;
