@@ -3019,12 +3019,18 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     private function findPageTemplateInCookie($cookie) {
         if(!$cookie) return false;
+        $templateName = $this->wire('page')->template->name;
         $templateEntries = explode(',', $cookie);
         foreach($templateEntries as $templateEntry) {
             $arr = explode("|", $templateEntry, 2);
-            if($arr[0] == $this->wire('page')->template->name) {
-                return $arr[1];
-                break;
+            if($arr[0] == $templateName && isset($arr[1])) {
+                // the value becomes the page's template file, so only accept what the Template Path panel and
+                // Page Versions offer: a file in the templates folder whose name contains the template's name
+                $file = $arr[1];
+                if($file === '' || $file !== basename($file) || strpos($file, '\\') !== false) return false;
+                if(strpos(pathinfo($file, PATHINFO_FILENAME), $templateName) === false) return false;
+                if(!is_file($this->wire('config')->paths->templates . $file)) return false;
+                return $file;
             }
         }
         return false;
