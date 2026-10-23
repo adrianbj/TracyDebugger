@@ -57,12 +57,22 @@ class ValidatorPanel extends BasePanel {
                 $before = mb_substr($extract, 0, $start, 'UTF-8');
                 $hilite = mb_substr($extract, $start, $length, 'UTF-8');
                 $after = mb_substr($extract, $start + $length, null, 'UTF-8');
-                $items .= '<p class="extract"><code>' . nl2br($e($before)) . '<b>' . nl2br($e($hilite)) . '</b>' . nl2br($e($after)) . '</code></p>';
+                // line breaks shown as the validator's own HTML output shows them, so the extract stays on one line
+                $lf = function($value) use ($e) { return str_replace(array("\r\n", "\n", "\r"), '<span class="lf" title="Line break">&#8617;</span>', $e($value)); };
+                $items .= '<p class="extract"><code>' . $lf($before) . '<b>' . $lf($hilite) . '</b>' . $lf($after) . '</code></p>';
             }
             $items .= '</li>';
         }
         if($messages !== null) {
-            $this->message = $hasErrors ? '<p class="failure">There were errors.</p>' : '<p class="success">The document validates according to the specified schema(s).</p>';
+            if($hasErrors) {
+                $this->message = '<p class="validator-status validator-status-error">There were errors.</p>';
+            }
+            elseif($hasWarnings) {
+                $this->message = '<p class="validator-status validator-status-warning">The document validates, but there were warnings.</p>';
+            }
+            else {
+                $this->message = '<p class="validator-status validator-status-success">The document validates according to the specified schema(s).</p>';
+            }
             $this->filteredResult = $items !== '' ? '<ol>' . $items . '</ol>' : '';
         }
 
@@ -124,39 +134,39 @@ class ValidatorPanel extends BasePanel {
                     background-color: #ff0;
                 }
 
-                .success,
-                .failure,
-                .fatalfailure {
+                #results > p.validator-status {
+                    margin: 0;
+                    padding: 0.6em 0.8em;
+                    border-left: 5px solid;
                     border-radius: 4px;
-                    padding: 0.5em;
+                    color: #000;
                     font-weight: 700;
                     font-family: Arial, sans-serif;
                 }
 
-                .success {
-                    color: #000;
-                    background-color: #cfc;
-                    border: 1px solid #ccc;
+                #results > p.validator-status-error {
+                    border-color: '.TracyDebugger::COLOR_ALERT.';
+                    background-color: #fbe5e5;
                 }
 
-                .failure {
-                    color: #fff;
-                    background-color: #365d95;
+                #results > p.validator-status-warning {
+                    border-color: '.TracyDebugger::COLOR_WARN.';
+                    background-color: #fff0e0;
                 }
 
-                .fatalfailure {
-                    color: #fff;
-                    background-color: #f00;
+                #results > p.validator-status-success {
+                    border-color: '.TracyDebugger::COLOR_GREEN.';
+                    background-color: #e3f3e3;
                 }
 
-                #results > ol:first-child {
+                #results > ol {
                     margin-top: 10px;
                     padding: 15px;
                     background-color: #efefef;
                     border-radius: 4px;
                 }
 
-                #results > ol:first-child > li {
+                #results > ol > li {
                     border: 1px solid #ccc;
                     margin-bottom: 8px;
                     padding-left: 12px;
@@ -164,26 +174,26 @@ class ValidatorPanel extends BasePanel {
                     background-color: #fff;
                 }
 
-                #results > ol:first-child > li > p:first-child,
-                #results > ol:first-child > li > p:first-child code {
+                #results > ol > li > p:first-child,
+                #results > ol > li > p:first-child code {
                     font-size: 16px !important;
                     font-weight: 700 !important;
                 }
 
-                #results > ol:first-child > li > p:first-child code {
+                #results > ol > li > p:first-child code {
                     font-weight: 400 !important;
                 }
 
-                #results > ol:first-child > li > p:first-child {
+                #results > ol > li > p:first-child {
                     color: transparent;
                 }
 
-                #results > ol:first-child > li > p:first-child > strong,
-                #results > ol:first-child > li > p:first-child > span {
+                #results > ol > li > p:first-child > strong,
+                #results > ol > li > p:first-child > span {
                     color: #000;
                 }
 
-                #results > ol:first-child > li > p:first-child > strong:first-child {
+                #results > ol > li > p:first-child > strong:first-child {
                     padding: 1px 6px;
                     border-radius: 6px;
                     border: 1px solid #ccc;
