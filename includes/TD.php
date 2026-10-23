@@ -704,9 +704,22 @@ class TD extends TracyDebugger {
         if($var->id == '' || $var->id === 0) {
             return;
         }
-        else {
-            return '<li style="float:right"><a href="' . wire('config')->urls->admin . $section . ($section ? '/' : '') . $type . '/edit/?' . ($type == 'module' ? 'name=' . $var->className : 'id=' . $var->id) . '" title="Edit ' . trim($type, 's') . ': ' . $var->name . '">#' . ($type=='module' ? $var->className : $var->id) . '</a>' . ($type == 'page' && $var->viewable() ? '<a href="' . $var->url . '" title="View ' . trim($type, 's') . ': ' . $var->path . '" class="' . (method_exists($var, 'hasStatus') && $var->hasStatus('unpublished') ? 'pageUnpublished' : '') . (method_exists($var, 'hasStatus') && $var->hasStatus('hidden') ? 'pageHidden' : '') . '">' : '<span class="pageTitle">') . (($var->get('title|name') && strlen($var->get('title|name')) > 20) ? substr($var->get('title|name'),0,19).'…' : $var->get('title|name')) . ($type == 'page' && $var->viewable() ? '</a>' : '</span>') . '</li>';
+        // escaped: names, titles and paths can be set by editors
+        $e = function($value) { return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8'); };
+        // decoded first: with output formatting on, PW has already entity-encoded the title
+        $label = html_entity_decode((string) $var->get('title|name'), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        if(strlen($label) > 20) $label = (function_exists('mb_substr') ? mb_substr($label, 0, 19, 'UTF-8') : substr($label, 0, 19)) . '…';
+        $editId = $type == 'module' ? 'name=' . urlencode((string) $var->className) : 'id=' . (int) $var->id;
+        $viewable = $type == 'page' && $var->viewable();
+        $out = '<li style="float:right"><a href="' . $e(wire('config')->urls->admin . $section . ($section ? '/' : '') . $type . '/edit/?' . $editId) . '" title="Edit ' . $e(trim($type, 's') . ': ' . $var->name) . '">#' . $e($type == 'module' ? $var->className : $var->id) . '</a>';
+        if($viewable) {
+            $class = (method_exists($var, 'hasStatus') && $var->hasStatus('unpublished') ? 'pageUnpublished' : '') . (method_exists($var, 'hasStatus') && $var->hasStatus('hidden') ? 'pageHidden' : '');
+            $out .= '<a href="' . $e($var->url) . '" title="View ' . $e(trim($type, 's') . ': ' . $var->path) . '" class="' . $class . '">' . $e($label) . '</a>';
         }
+        else {
+            $out .= '<span class="pageTitle">' . $e($label) . '</span>';
+        }
+        return $out . '</li>';
     }
 
     /**
