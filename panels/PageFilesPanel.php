@@ -92,7 +92,7 @@ class PageFilesPanel extends BasePanel {
                     }
                     $this->filesListStr .= '
                     <tr>
-                        <td><a style="'.$style.' !important" href="'.$filesUrl.$file.'">'.$file.'</a></td>
+                        <td><a style="'.$style.' !important" href="'.htmlspecialchars($filesUrl.rawurlencode($file), ENT_QUOTES, 'UTF-8').'">'.htmlspecialchars($file, ENT_QUOTES, 'UTF-8').'</a></td>
                         <td>'.TracyDebugger::human_filesize(filesize($filesPath . $file)).'</td>
                         <td>'.date('Y-m-d H:i:s', filemtime($filesPath . $file)).'</td>
                         <td style="width: 1px">'.$fileField.'</td>' .
