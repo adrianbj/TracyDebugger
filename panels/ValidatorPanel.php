@@ -13,6 +13,7 @@ class ValidatorPanel extends BasePanel {
     protected $resultLabel;
     protected $validationUrl;
     protected $validatorUrl;
+    protected $failure;
 
     public function getTab() {
 
@@ -23,18 +24,36 @@ class ValidatorPanel extends BasePanel {
         $this->validationUrl = $this->validatorUrl . "?doc=".rawurlencode($this->wire('page')->httpUrl)."&showimagereport=yes&showsource=yes";
 
         // results as JSON, rendered here with everything escaped, rather than inserting the validator's own HTML
-        $http = new WireHttp();
-        $http->setHeader('Content-Type', 'text/html; charset=utf-8');
-        $http->setHeader('User-Agent', 'ProcessWireTracyDebugger');
-        $this->rawResult = $http->post($this->validatorUrl . '?out=json', TracyDebugger::$pageHtml);
-        $results = $this->rawResult ? json_decode($this->rawResult, true) : null;
-        $messages = is_array($results) && isset($results['messages']) && is_array($results['messages']) ? $results['messages'] : null;
-        if($messages === null) $this->rawResult = '';
+        $pageHtml = (string) TracyDebugger::$pageHtml;
+        $messages = null;
+        $this->rawResult = '';
+        if($pageHtml === '') {
+            $this->failure = '<p class="validator-status validator-status-warning">There was no page HTML to validate.</p><p>The panel validates the HTML that <code>Page::render()</code> returned for this request, and there wasn\'t any (eg. the request was handled by a URL hook, or the template exited before rendering).</p>';
+        }
+        else {
+            $http = new WireHttp();
+            $http->setHeader('Content-Type', 'text/html; charset=utf-8');
+            $http->setHeader('User-Agent', 'ProcessWireTracyDebugger');
+            $start = microtime(true);
+            // one transport only (PW 3.0.192+ 'use' option; older versions ignore it): when the validator hangs,
+            // falling back to fopen and then sockets adds a timeout each, which can push the page past max_execution_time
+            $response = $http->post($this->validatorUrl . '?out=json', $pageHtml, array('use' => function_exists('curl_init') ? 'curl' : 'fopen'));
+            $seconds = microtime(true) - $start;
+            $results = is_string($response) && $response !== '' ? json_decode($response, true) : null;
+            if(is_array($results) && isset($results['messages']) && is_array($results['messages'])) {
+                $messages = $results['messages'];
+                $this->rawResult = $response;
+            }
+            else {
+                $this->failure = $this->describeFailure($http, is_string($response) ? $response : '', $seconds, strlen($pageHtml));
+            }
+        }
 
         $showPanelLabels = TracyDebugger::getDataValue('showPanelLabels');
 
         $e = function($value) { return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8'); };
-        $hasErrors = $messages === null;
+        $failed = $messages === null;
+        $hasErrors = false;
         $hasWarnings = false;
         $items = '';
         foreach((array) $messages as $message) {
@@ -86,12 +105,12 @@ class ValidatorPanel extends BasePanel {
             $this->resultLabel = 'Validation Errors';
             $this->label = $showPanelLabels ? $this->resultLabel : '';
         }
-        elseif($hasWarnings) {
+        elseif($hasWarnings || $failed) {
             $this->color = TracyDebugger::COLOR_WARN;
             $this->icon = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 483.537 483.537" style="enable-background:new 0 0 483.537 483.537;" xml:space="preserve" width="16px" height="16px">
                             <path d="M479.963,425.047L269.051,29.854c-5.259-9.88-15.565-16.081-26.782-16.081h-0.03     c-11.217,0-21.492,6.171-26.782,16.051L3.603,425.016c-5.046,9.485-4.773,20.854,0.699,29.974     c5.502,9.15,15.413,14.774,26.083,14.774H453.12c10.701,0,20.58-5.594,26.083-14.774     C484.705,445.84,484.979,434.471,479.963,425.047z M242.239,408.965c-16.781,0-30.399-13.619-30.399-30.399     c0-16.78,13.619-30.399,30.399-30.399c16.75,0,30.399,13.619,30.399,30.399C272.638,395.346,259.02,408.965,242.239,408.965z      M272.669,287.854c0,16.811-13.649,30.399-30.399,30.399c-16.781,0-30.399-13.589-30.399-30.399V166.256     c0-16.781,13.619-30.399,30.399-30.399c16.75,0,30.399,13.619,30.399,30.399V287.854z" fill="'.$this->color.'"/>
                         </svg>';
-            $this->resultLabel = 'Validation Warnings';
+            $this->resultLabel = $failed ? 'Validator Unavailable' : 'Validation Warnings';
             $this->label = $showPanelLabels ? $this->resultLabel : '';
         }
         else {
@@ -142,6 +161,15 @@ class ValidatorPanel extends BasePanel {
                     color: #000;
                     font-weight: 700;
                     font-family: Arial, sans-serif;
+                }
+
+                #results > p.validator-status + p {
+                    margin: 1em 0;
+                }
+
+                #results table.validator-failure th {
+                    width: 90px;
+                    font-weight: 700;
                 }
 
                 #results > p.validator-status-error {
@@ -321,10 +349,68 @@ class ValidatorPanel extends BasePanel {
             $out .= '<div id="results">'.$this->message.$this->filteredResult.'</div>';
         }
         else {
-            $out .= '<h2>Sorry, but there was a problem accessing the validation server at '.$this->validatorUrl.'</h2><h2>'.$validatorLink.'</h2>';
+            $out .= '<div id="results">'.$this->failure.'</div>';
         }
 
         return $this->closePanel($out, 'validator');
+    }
+
+    /**
+     * What went wrong when the validator didn't return a result, as HTML for the panel
+     *
+     * @param WireHttp $http
+     * @param string $response body of the validator's response
+     * @param float $seconds how long the request took
+     * @param int $bytes size of the page HTML that was sent
+     * @return string
+     */
+    protected function describeFailure(WireHttp $http, $response, $seconds, $bytes) {
+        $e = function($value) { return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8'); };
+        $code = method_exists($http, 'getHttpCode') ? (int) $http->getHttpCode() : 0;
+        $status = method_exists($http, 'getHttpCode') ? trim((string) $http->getHttpCode(true)) : (string) $code;
+        $error = method_exists($http, 'getError') ? trim((string) $http->getError()) : '';
+        $retryAfter = $code === 429 && method_exists($http, 'getResponseHeader') ? trim((string) $http->getResponseHeader('retry-after')) : '';
+        $timeout = method_exists($http, 'getTimeout') ? (float) $http->getTimeout() : 0;
+
+        if($code === 0) {
+            $summary = 'Couldn\'t get a response from validator.w3.org.';
+            $detail = $timeout && $seconds >= $timeout - 0.1
+                ? 'The request timed out after ' . round($timeout, 1) . ' seconds. The validator may be slow or down, or this page may be too large to check in that time.'
+                : 'The request failed before the validator answered. Check that this server can make outgoing HTTPS connections (a firewall, proxy or DNS problem can block them).';
+        }
+        elseif($code === 429) {
+            $summary = 'validator.w3.org is limiting requests from this server (HTTP ' . $status . ').';
+            $detail = 'Too many pages have been sent for checking recently. ' . ($retryAfter !== '' ? 'It asks to wait ' . (ctype_digit($retryAfter) ? $retryAfter . ' seconds' : 'until ' . $retryAfter) . ' before trying again.' : 'Try again in a few minutes.');
+        }
+        elseif($code === 413) {
+            $summary = 'validator.w3.org refused the page because it is too large (HTTP ' . $status . ').';
+            $detail = 'The page HTML sent was ' . round($bytes / 1024) . ' KB.';
+        }
+        elseif($code >= 500) {
+            $summary = 'validator.w3.org failed while checking this page (HTTP ' . $status . ').';
+            $detail = 'This is a problem on the validator\'s side. It can be temporary, and it can also happen with particular pages while others validate fine. Try again later, or open the link above to have the validator fetch the page itself.';
+        }
+        elseif($code >= 400) {
+            $summary = 'validator.w3.org rejected the request (HTTP ' . $status . ').';
+            $detail = '';
+        }
+        else {
+            $summary = 'validator.w3.org returned a response that isn\'t a validation result (HTTP ' . $status . ').';
+            $detail = 'It may be showing an error or maintenance page instead.';
+        }
+
+        $out = '<p class="validator-status validator-status-warning">' . $e($summary) . '</p>';
+        if($detail !== '') $out .= '<p>' . $e($detail) . '</p>';
+        $facts = array();
+        if($error !== '' && $code === 0) $facts['Error'] = $error;
+        $facts['Sent'] = round($bytes / 1024, 1) . ' KB of page HTML';
+        $facts['Time'] = round($seconds, 2) . ' seconds';
+        $body = trim(preg_replace('/\s+/', ' ', strip_tags(str_replace('<', ' <', $response))));
+        if($body !== '') $facts['Response'] = mb_strlen($body, 'UTF-8') > 300 ? mb_substr($body, 0, 300, 'UTF-8') . '…' : $body;
+        $out .= '<table class="validator-failure">';
+        foreach($facts as $label => $value) $out .= '<tr><th>' . $e($label) . '</th><td>' . $e($value) . '</td></tr>';
+        $out .= '</table>';
+        return $out;
     }
 
 }
