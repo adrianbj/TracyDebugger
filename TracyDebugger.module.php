@@ -4082,6 +4082,24 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * @return string|bool String is 'development' or 'production'. Bool is only for false
      *
      */
+    /**
+     * Does this request match the browser fingerprint recorded when the User Switcher session started? Checked
+     * where development access is granted to a switched user, so a copied session cookie doesn't carry it to
+     * another browser or network; on a mismatch the switcher session is ended. Like UserSwitcherPost.php, this
+     * follows $config->sessionFingerprint (with it off, both sides are empty and match)
+     *
+     * @return bool
+     */
+    protected static function userSwitcherFingerprintOk() {
+        $session = wire('session');
+        if(!method_exists($session, 'getFingerprint')) return true;
+        $storedFp = $session->tracyUserSwitcherFp;
+        if($storedFp !== null && hash_equals((string) $storedFp, (string) $session->getFingerprint())) return true;
+        $session->remove('tracyUserSwitcherId');
+        $session->remove('tracyUserSwitcherFp');
+        return false;
+    }
+
     public static function allowedTracyUser() {
 
         $outputMode = static::getDataValue('outputMode');
@@ -4096,7 +4114,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 self::$validLocalUser = true;
                 return 'development';
         }
-        elseif(wire('session')->tracyUserSwitcherId && (isset($userSwitchSession[wire('session')->tracyUserSwitcherId]) && $userSwitchSession[wire('session')->tracyUserSwitcherId] > time())) {
+        elseif(wire('session')->tracyUserSwitcherId && (isset($userSwitchSession[wire('session')->tracyUserSwitcherId]) && $userSwitchSession[wire('session')->tracyUserSwitcherId] > time()) && static::userSwitcherFingerprintOk()) {
             self::$validSwitchedUser = true;
             return 'development';
         }
