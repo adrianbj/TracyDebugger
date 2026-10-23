@@ -21,8 +21,20 @@ class ProcesswireLogsPanel extends BasePanel {
         $isNewErrors = 0;
         $entriesArr = array();
 
-        $logs = $this->wire('log')->getLogs();
-        if($logs === null) {
+        // like PW's own Logs page, other Tracy users need the logs-view permission, and never see the log of
+        // the SQL that superusers run in Adminer
+        $superuserLevel = TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser;
+        $logs = $superuserLevel || $this->wire('user')->hasPermission('logs-view') ? $this->wire('log')->getLogs() : false;
+        if(is_array($logs) && !$superuserLevel) {
+            foreach($logs as $key => $log) {
+                if($log['name'] === 'adminer_queries') unset($logs[$key]);
+            }
+        }
+        if($logs === false) {
+            $this->numLogEntries = 0;
+            $this->logEntries .= 'Viewing the ProcessWire logs needs the logs-view permission.';
+        }
+        elseif($logs === null) {
             $this->logEntries .= 'Logs directory is not readable.';
         }
         elseif(count($logs) == 0) {
