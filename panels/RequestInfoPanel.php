@@ -501,11 +501,14 @@ class RequestInfoPanel extends BasePanel {
                 $filePathParts = explode(':', $v);
 
                 if($k == 'file') {
-                    $v = TracyDebugger::createEditorLink($this->wire('config')->paths->root . ltrim($filePathParts[0], '/'), $filePathParts[1], $v, 'Edit ' . $filePathParts[0]);
+                    $v = TracyDebugger::createEditorLink($this->wire('config')->paths->root . ltrim($filePathParts[0], '/'), $filePathParts[1] ?? '', htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8'), 'Edit ' . $filePathParts[0]);
+                }
+                else {
+                    $v = htmlspecialchars(is_scalar($v) ? (string) $v : print_r($v, true), ENT_QUOTES, 'UTF-8');
                 }
                 $redirectInfo .= '
                     <tr>
-                        <td>'.$k.'</td>
+                        <td>'.htmlspecialchars((string) $k, ENT_QUOTES, 'UTF-8').'</td>
                         <td>'.$v.'</td>
                     </tr>
                 ';

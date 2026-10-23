@@ -3944,7 +3944,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $file = static::forwardSlashPath($file);
         if(static::$useOnlineEditor) $file = str_replace(static::$onlineFileEditorDirPath, '', $file);
         elseif(self::getDataValue('localRootPath') != '') $file = str_replace(wire('config')->paths->root, self::getDataValue('localRootPath'), $file);
-        return '<a '.($title ? 'title="'.$title.'"' : '').' href="'.$file.'">'.$linkText.'</a>';
+        // $linkText is HTML (callers pass icons); the title and URL are escaped
+        return '<a '.($title ? 'title="'.htmlspecialchars((string) $title, ENT_QUOTES, 'UTF-8').'"' : '').' href="'.htmlspecialchars((string) $file, ENT_QUOTES, 'UTF-8').'">'.$linkText.'</a>';
     }
 
 
