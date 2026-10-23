@@ -675,7 +675,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 }
                 $dumpsFile = $this->wire('config')->paths->cache . 'TracyDebugger/dumps.json';
                 $allEntries = file_exists($dumpsFile) ? json_decode(file_get_contents($dumpsFile), true) : array();
-                if(!$allEntries) $allEntries = array();
+                $allEntries = static::visibleRecordedDumps($allEntries);
                 header('Content-Type: application/json');
                 echo json_encode(array(
                     'entries' => $allEntries,
@@ -1225,7 +1225,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             require_once(__DIR__ . '/includes/post_processors/RequestLoggerPost.php');
 
 
-            if($this->data['recordGuestDumps'] || $this->wire('input')->cookie->tracyGuestDumps) {
+            // the guest dumps setting is site-wide, so only superusers (and local / switched users) change it
+            if((static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser) && ($this->data['recordGuestDumps'] || $this->wire('input')->cookie->tracyGuestDumps)) {
                 $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
                 if($this->wire('input')->cookie->tracyGuestDumps) {
                     $configData['recordGuestDumps'] = $this->data['recordGuestDumps'] = 1;
@@ -3689,6 +3690,23 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $separator = strpos($value, '|');
         if($token === '' || $separator === false || !hash_equals($token, substr($value, 0, $separator))) return null;
         return substr($value, $separator + 1);
+    }
+
+    /**
+     * The Dumps Recorder's entries (dumps.json, shared by all users) that the current user may see: superusers
+     * (and local / switched users) see all; other Tracy users their own and guests' dumps
+     *
+     * @param mixed $entries
+     * @return array
+     */
+    public static function visibleRecordedDumps($entries) {
+        if(!is_array($entries)) return array();
+        if(static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser) return $entries;
+        $userName = wire('user')->name;
+        return array_values(array_filter($entries, function($entry) use ($userName) {
+            $entryUser = is_array($entry) && isset($entry['user']) ? (string) $entry['user'] : '';
+            return $entryUser === $userName || $entryUser === 'guest';
+        }));
     }
 
     public static function urlWithoutActionToken($url) {
