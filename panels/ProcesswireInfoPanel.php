@@ -190,7 +190,8 @@ HTML;
          */
 
         // Config Data
-        if(in_array('configData', $panelSections)) {
+        // superusers (and local / switched users) only: $config holds the database password and salts
+        if(in_array('configData', $panelSections) && (TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser)) {
             $configData = $this->sectionHeader(array('Key', 'Value'));
             $config = $this->wire('config')->getArray();
             ksort($config);
@@ -203,7 +204,7 @@ HTML;
                 }
                 $options = array(Dumper::DEPTH => TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => TracyDebugger::getDataValue('maxLength'), Dumper::ITEMS => TracyDebugger::getDataValue('maxItems'), Dumper::LIVE => true, Dumper::COLLAPSE => true);
                 if(defined('\Tracy\Dumper::ITEMS')) array_push($options, array(Dumper::ITEMS => TracyDebugger::getDataValue('maxItems')));
-                $value = Dumper::toHtml($value, $options);
+                $value = TracyDebugger::isSensitiveKey($key) || stripos((string) $key, 'salt') !== false ? '*****' : Dumper::toHtml($value, $options);
                 $configData .= "<tr><td>".$this->wire('sanitizer')->entities($key)."</td><td>" . $value . "</td></tr>";
             }
             $configData .= $this->sectionEnd();
