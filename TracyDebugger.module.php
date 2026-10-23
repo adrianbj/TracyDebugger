@@ -528,6 +528,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
         // EARLY EXITS
+        // these keep the bar and Tracy's development features out of iframes, modals and polling requests, so
+        // they match on the URL's path (not its query string) and only apply to development mode users below
+        $earlyExitPath = (string) parse_url(isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '', PHP_URL_PATH);
         // modals
         if(in_array('regularModal', $this->data['hideDebugBarModals']) && $this->wire('input')->get->modal == '1') $this->earlyExit = true;
         if(in_array('inlineModal', $this->data['hideDebugBarModals']) && $this->wire('input')->get->modal == 'inline') $this->earlyExit = true;
@@ -536,40 +539,43 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // formbuilder iframe
         if(in_array('formBuilderIframe', $this->data['hideDebugBarModals']) &&
             !static::$inAdmin &&
-            strpos(self::inputUrl(true), '/form-builder/') !== false) {
+            strpos($earlyExitPath, '/form-builder/') !== false) {
                 $this->earlyExit = true;
             }
 
         // adminer iframe
-        if(strpos(self::inputUrl(true), 'adminer-renderer') !== false) $this->earlyExit = true;
+        if(static::$inAdmin && preg_match('#/adminer-renderer(/|$)#', $earlyExitPath)) $this->earlyExit = true;
         // terminal iframe
-        if(strpos(self::inputUrl(true), 'terminal') !== false) $this->earlyExit = true;
+        if(static::$inAdmin && preg_match('#/terminal(/|$)#', $earlyExitPath)) $this->earlyExit = true;
 
         // don't init Tracy for @soma's PageEditSoftLock polling on Page Edit
-        if(strpos(self::inputUrl(), 'checkpagelock') !== false) $this->earlyExit = true;
+        if(static::$inAdmin && strpos($earlyExitPath, 'checkpagelock') !== false) $this->earlyExit = true;
 
         // don't init Tracy for PW ProDevTools ajax request - ATM I know this works for UserActivity module
         if($this->wire('config')->input->pwpdt) $this->earlyExit = true;
 
         // don't init Tracy for Pro Profiler ajax request
-        if(strpos(self::inputUrl(true), '?field=ProfilerEventsTable') !== false) $this->earlyExit = true;
+        if(static::$inAdmin && $this->wire('input')->get('field') === 'ProfilerEventsTable') $this->earlyExit = true;
 
         if(isset($_SERVER['REQUEST_URI'])) {
             $info = parse_url($_SERVER['REQUEST_URI']);
             $queryString = isset($info['query']) ? $info['query'] : '';
             // don't init Tracy for the PW Notifications module polling
-            if(strpos($queryString, 'Notifications=update') !== false) $this->earlyExit = true;
+            if(static::$inAdmin && strpos($queryString, 'Notifications=update') !== false) $this->earlyExit = true;
 
             // don't init Tracy for sidenav iframes in admin themes that support this
-            if(strpos($queryString, 'layout=sidenav-side') !== false ||
+            if(static::$inAdmin && (strpos($queryString, 'layout=sidenav-side') !== false ||
                 strpos($queryString, 'layout=sidenav-tree') !== false ||
-                strpos($queryString, 'layout=sidenav-init') !== false) $this->earlyExit = true;
+                strpos($queryString, 'layout=sidenav-init') !== false)) $this->earlyExit = true;
 
             // don't init Tracy for Setup > Logs view polling
-            if(strpos($_SERVER['REQUEST_URI'], DIRECTORY_SEPARATOR.'logs'.DIRECTORY_SEPARATOR.'view'.DIRECTORY_SEPARATOR) !== false &&
+            if(static::$inAdmin && strpos($earlyExitPath, '/logs/view/') !== false &&
                 strpos($queryString, 'q=') !== false) $this->earlyExit = true;
 
         }
+
+        // for everyone else there's no bar to keep out, and skipping Tracy would only skip its production error logging
+        if($this->earlyExit && static::$allowedTracyUser !== 'development') $this->earlyExit = false;
 
         // if "enabled" not checked or tracyDisabled via config or other early exit
         if(!$this->data['enabled'] || $this->wire('config')->tracyDisabled || $this->earlyExit) {
