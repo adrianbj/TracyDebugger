@@ -115,7 +115,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $panelGenerationTime = array();
     public static $hideInAdmin = array('validator', 'templateResources', 'templatePath');
     // phpInfo shows environment variables (often credentials) and the request's cookies, incl. the session cookie
-    public static $superUserOnlyPanels = array('console', 'fileEditor', 'adminer', 'terminal', 'adminTools', 'moduleDisabler', 'phpInfo');
+    // eventInterceptor can make any hooked method return a chosen value (e.g. Page::editable), which would let
+    // other users get past permission checks
+    public static $superUserOnlyPanels = array('console', 'fileEditor', 'adminer', 'terminal', 'adminTools', 'moduleDisabler', 'phpInfo', 'eventInterceptor');
     public static $pageHtml;
     public static $consoleRunId = '';
     public static $consoleRunStatusDir = '';
@@ -1915,7 +1917,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 setcookie("tracyClearEventItems", "", time()-3600, "/");
             }
             // event interceptor hook
-            if(in_array('eventInterceptor', static::$showPanels) && static::tokenCookie('eventInterceptorHook')) {
+            if((static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser) && in_array('eventInterceptor', static::$showPanels) && static::tokenCookie('eventInterceptorHook')) {
                 $this->hookSettings = json_decode(static::tokenCookie('eventInterceptorHook'), true);
                 if(is_array($this->hookSettings) && !empty($this->hookSettings['hook'])) {
                     if(isset($this->hookSettings['when']) && $this->hookSettings['when'] == 'before') {
