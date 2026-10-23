@@ -36,6 +36,8 @@ To make it more friendly for your clients/editors, the labels in the list are fo
 
 Users must also have the "tracy-page-versions" permission assigned to their role.
 
+Only the files in the list can be selected: files in `/site/templates/` with the template file extension whose names contain the page's template name, other than another template's own file.
+
 ***
 
 ## Adminer
@@ -52,10 +54,10 @@ Optional AI SQL assistants (Google Gemini and Open WebUI) can be enabled in the 
 
 When Tracy is in PRODUCTION mode, errors are written to `/site/assets/logs/tracy/` as full bluescreen HTML files. You can have Tracy push the same errors to:
 
-* **Email** — set the "From" / "To" addresses under the Error logging section of the config. To avoid flooding your inbox after a single recurring error, Tracy writes an `email-sent` flag file after the first email; clear it by ticking the "Clear email sent flag" checkbox and saving.
+* **Email** — set the "From" / "To" addresses under the Error logging section of the config. To avoid flooding your inbox after a single recurring error, Tracy writes an `email-sent` flag file after the first email; clear it by ticking the "Clear email sent flag" checkbox and saving, or with the link in the notice Tracy shows in the admin while the flag is set.
 * **Slack** — set a channel name and a Slack app OAuth token (`xoxb-…` with `chat:write` scope) and Tracy will post errors to that channel.
 
-Both deliveries can be configured side-by-side.
+Either can be used on its own, or both side-by-side. They share the `email-sent` flag, so after the first alert neither sends again until it's cleared.
 
 ***
 
@@ -66,6 +68,16 @@ Tracy uses a small set of PW permissions to control who sees what:
 * **tracy-debugger** — grants non-superusers access to the Tracy debug bar (subject to the IP restriction setting, if any).
 * **tracy-restricted-panels** — assign this as a role or permission to a user, then check the panels they should NOT see in the "Disabled panels for restricted users" config.
 * **tracy-page-versions** — required to use the User Bar's Page Versions feature.
+
+Some things are only available to superusers (and to local users when guests are forced into DEVELOPMENT mode on localhost, and to users switched to with the [User Switcher](debug-bar.md#user-switcher)), even if other users have the `tracy-debugger` permission:
+
+* The Console (including snippets), File Editor, Adminer, Terminal, Admin Tools, Module Disabler, PHP Info, and Event Interceptor panels.
+* The TracyDebugger settings.
+* ProcessWire Info's Config Data and Request Info's Module Settings sections.
+* Page Files' delete buttons, turning the Request Logger on or off, unhiding / unlocking fields, and the "Record guest dumps" setting.
+* Other users' entries in the Dumps Recorder.
+
+Other users with the `tracy-debugger` permission also need ProcessWire's `logs-view` permission to see the ProcessWire Logs panel's entries, and `logs-edit` to delete logs from either logs panel.
 
 For the [User Dev Template feature](configuration.md#user-dev-template), Tracy looks for dynamic permissions named `tracy-{template}-{suffix}` (or `tracy-all-{suffix}` to enable across all templates). For example, with suffix `dev`, a permission named `tracy-basic-page-dev` would cause that user to render any `basic-page` using `basic-page-dev.php` instead.
 

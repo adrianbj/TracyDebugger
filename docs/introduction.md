@@ -34,5 +34,8 @@ Tracy will automatically show notices, warnings, and errors and you will be able
 
 That's the basics, but there is much more to explore, so be sure to read through the rest of the docs.
 
+## Content Security Policy
+If your site sends a `Content-Security-Policy` header with a nonce (eg. `script-src 'nonce-...'; style-src 'nonce-...'`), Tracy picks the nonce up from that header and adds it to the debug bar's scripts and styles, its panels, and the BlueScreen and production error pages, so you don't need to allow `'unsafe-inline'` for them.
+
 ## Acknowledgements
 Firstly, I want to send out a big thanks to [@tpr](https://processwire.com/talk/profile/3156-tpr/) / [@rolandtoth](https://github.com/rolandtoth/) for introducing me to Tracy and for the idea for this module and for significant feedback, testing, and feature suggestions. Many other ProcessWire forum members have also been instrumental in testing - it has been a real community effort to get everything working on all systems. Thank you everyone!

@@ -2,6 +2,8 @@
 
 The sections below follow the order of fields in the module's configuration page (`Modules > Configure > TracyDebugger`).
 
+Only superusers can view or change these settings. They control who gets the debug bar and its Console, and some of them hold PHP code, so a user who can configure modules (the `module-admin` permission) but isn't a superuser only sees a notice on this page.
+
 ## Main setup
 
 ##### Enable Tracy Debugger
@@ -83,7 +85,8 @@ The sections below follow the order of fields in the module's configuration page
 @default: disabled
 ```
 
-* By default, guest users will always be in PRODUCTION mode (no debug bar). However, with this checked, they will always be in DEVELOPMENT mode on localhost.
+* By default, guest users will always be in PRODUCTION mode (no debug bar). However, with this checked, they will always be in DEVELOPMENT mode on localhost, with the full debug bar including the Console, which runs PHP code.
+* WARNING: "localhost" means the request comes from 127.0.0.1 / ::1 without an `X-Forwarded-For` or `Forwarded` header. Behind a reverse proxy on the same server that doesn't add one of those headers, every visitor counts as local. Only use this on a machine that nobody else can reach.
 
 ##### Force isLocal check to always return true
 
@@ -95,7 +98,7 @@ The sections below follow the order of fields in the module's configuration page
 @default: disabled
 ```
 
-* WARNING: Only use this if you know what you are doing. When combined with "Force guest users into DEVELOPMENT mode on localhost", you can expose debug info to guest users on a live site.
+* WARNING: Only use this if you know what you are doing. Combined with "Force guest users into DEVELOPMENT mode on localhost", every guest on a live site gets the full debug bar, including the Console, which runs PHP code.
 
 ##### Restrict non-superusers
 
@@ -182,6 +185,7 @@ The sections below follow the order of fields in the module's configuration page
 ```
 
 * Enter keys separated by commas. Matching values will be replaced with `*****` when dumped or rendered in a bluescreen. Requires PHP 7.2+.
+* These keys are also masked in the entries stored by the [Request Logger](debug-bar.md#request-logger).
 
 ##### Maximum nesting depth
 
@@ -306,7 +310,7 @@ E_RECOVERABLE_ERROR | E_DEPRECATED | E_USER_DEPRECATED | E_ALL
 @param: one address per line
 ```
 
-* Leave blank to log to file (/site/assets/logs/tracy/) without being notified.
+* Leave blank to log to file (/site/assets/logs/tracy/) without being emailed. Slack alerts (below) work with or without email.
 
 ##### Clear "email sent" flag
 
@@ -318,7 +322,8 @@ E_RECOVERABLE_ERROR | E_DEPRECATED | E_USER_DEPRECATED | E_ALL
 @default: disabled
 ```
 
-* Once an email has been sent, further errors will not be emailed until you do this. This prevents flooding of your email inbox.
+* Once an email (or Slack alert) has been sent, further errors will not be sent until you do this. This prevents flooding of your email inbox.
+* The link in the error email takes you to the admin, where a notice offers a link to clear the flag.
 
 ##### Slack Channel
 
@@ -337,6 +342,8 @@ E_RECOVERABLE_ERROR | E_DEPRECATED | E_USER_DEPRECATED | E_ALL
 ```
 
 * Create a Slack app, add the `chat:write` scope, install it to your workspace, and paste the bot user OAuth token here. Tracy will post to the channel above when an error fires in PRODUCTION mode.
+* Slack alerts don't need email alerts to be set up, and they share the "email sent" flag above.
+* The message is sent as plain text, with `&`, `<` and `>` escaped, so text from the request in an error message can't add mentions like `<!channel>` or links to the alert.
 
 ***
 
@@ -529,6 +536,8 @@ E_RECOVERABLE_ERROR | E_DEPRECATED | E_USER_DEPRECATED | E_ALL
 ```
 
 * Neither of these directories exist by default so you will need to create them.
+* Tracy adds an `.htaccess` file to the snippets folder that denies web access, so snippets can't be loaded in a browser. This relies on Apache; on nginx, add an equivalent rule or use the `/site/assets/` location.
+* Files starting with a dot (like that `.htaccess`) aren't listed or accepted as snippets.
 
 ##### Maximum number of automatically named backups
 

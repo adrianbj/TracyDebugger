@@ -38,12 +38,16 @@ This will take care of deleting any associated fields (for Fieldtype modules) an
 
 Hopefully it goes without saying that these can be extremely destructive and bypass core protections against data loss so use with extreme caution. Each action has a confirmation dialog that you must confirm to reduce any accidental clicks and the entire panel is restricted to superusers only, but you must still use with extreme caution.
 
+The tools refuse to touch ProcessWire's own system items, whatever is posted to them: they won't delete the children of pages in the admin tree (eg. the Users parent), the default language, system templates, or system and permanent fields, and they won't uninstall core modules or TracyDebugger itself. When changing a field's type, the new type must be an installed Fieldtype.
+
 ***
 
 ## ![Adminer](icons/adminer.svg ':no-zoom')Adminer
 Adminer is a MySQL database management tool similar to PHPMyAdmin.
 
 You can access it via a panel from the debug bar, or from your PW admin Setup menu.
+
+The panel and the Setup menu page are only available to superusers, and they respect the "Restrict superusers" setting.
 
 You will be automatically connected to the database table for the current ProcessWire installation using the credentials in your /site/config.php file.
 
@@ -123,6 +127,7 @@ Results are cached for speed, but will be updated whenever you update your Proce
 		* /site/templates/TracyDebugger/snippets/
 		* /site/assets/TracyDebugger/snippets/
 	* You can edit the snippets within the Console panel, or using your external code editor.
+* Snippets are only available to superusers. Tracy adds an `.htaccess` file to the snippets folder that denies web access to it, so snippets can't be loaded in a browser (this relies on Apache; on nginx, add an equivalent rule or use the `/site/assets/` location).
 * Options to run code instead at `init`, `ready`, or `finished` - useful for testing hooks. To use this, select `init`, `ready`, or `finished`, click the Inject button, and then execute whatever action in ProcessWire that is needed to trigger the hook. An orange icon will indicate this feature is active. You can switch to `off` manually when you are done. It will also expire automatically after 5 minutes.
 
 Remember that this allows you to run any PHP code, so be careful!
@@ -186,9 +191,13 @@ bd(array('a' => array(1,2,3), 'b' => array(4,5,6)), 'Test Array');
 ***
 
 ## ![Dumps Recorder](icons/dumps-recorder.svg ':no-zoom')Dumps Recorder
-If this panel is enabled, any calls to bd() will be sent to this panel instead of the main dumps panel. This is useful in several situations where you want to compare dumps from various page requests. Dumps will be preserved until the session is closed, or until you click the "Clear Dumps" button. It can also be useful in some situations where dumps are not being captured with the regular dumps panel which can sometimes happen with modules, complex redirects, or other scenarios that are hard to pin down.
+If this panel is enabled, any calls to bd() will be sent to this panel instead of the main dumps panel. This is useful in several situations where you want to compare dumps from various page requests. Dumps are stored in `/site/assets/cache/TracyDebugger/dumps.json` and kept until you click the "Clear Dumps" button (the most recent 200 are kept). It can also be useful in some situations where dumps are not being captured with the regular dumps panel which can sometimes happen with modules, complex redirects, or other scenarios that are hard to pin down.
 
 The panel polls for new dumps in the background (adaptive 3–30s interval) so you'll see dumps produced by other requests — for example, a webhook firing on the same page — appear without needing to reload.
+
+You can also record dumps from guest (and other non-Tracy) requests by enabling "Record guest dumps" from the [Panel Selector](#panel-selector). This is a site-wide setting, so only superusers can change it. Echoes recorded from those requests (via `barEcho()`) are shown as plain text rather than HTML, because they can contain visitor input.
+
+Superusers see all recorded dumps. Other users with the `tracy-debugger` permission only see their own dumps and those from guest requests.
 
 ***
 
@@ -202,6 +211,8 @@ The errors panel is only displayed when there are non-fatal errors and you are n
 ## ![Event Interceptor](icons/event-interceptor.svg ':no-zoom')Event Interceptor
 
 > This panel lets you define any Hook that you want to intercept.
+
+This panel is only available to superusers, because a hook that returns a chosen value (eg. on `Page::editable`) can get past ProcessWire's permission checks.
 
 ```
 @Hook
@@ -230,6 +241,7 @@ For example, setting the hook to `Pages::save` and then deleting a page can resu
 
 ## ![File Editor](icons/file-editor.svg ':no-zoom')File Editor
 
+* Only available to superusers
 * Supports editing all files in your PW install (you can define the root as /, /site, or /site/templates
 * Can be used as the handler for opening editor links from the debug bar (errors, log files, Captain Hook, ToDo, Template editor, etc), rather than your code editor
 * Can be enabled as the link handler for live sites only, or local as well if you prefer
@@ -283,10 +295,14 @@ Two ways to populate it:
 * Module config — "Links code" field. One link per line, optional pipe + label, eg. `https://www.google.com | Google Search`.
 * Inline — click the "+" icon in the panel itself, paste a URL, and it gets appended to the same setting. URLs that point at your own site are stored root-relative for portability.
 
+Only `http://`, `https://` and site-relative URLs are turned into links.
+
 ***
 
 ## ![Mail Interceptor](icons/mail-interceptor.svg ':no-zoom')Mail Interceptor
 Intercepts all outgoing emails sent using `wireMail()` and displays them in the panel. Ideal for form submission testing. This panel is activated when enabled, so it's best to enable it from the Panel Selector using the sticky option when needed. If you'd also like to receive the email at a test address (but not the original recipients), you can enter an address and click "Set Email".
+
+Every field is shown as text, and the HTML body is rendered in a sandboxed frame, so an email's content (which often includes what a visitor typed into a form) can't run scripts in your browser. Links in the HTML body open in a new tab.
 
 ![Mail Interceptor Panel](img/mail-interceptor.png)
 
@@ -300,13 +316,13 @@ Lists available logging methods you can call in your PHP code.<br />Links to Tra
 ***
 
 ## ![Module Disabler](icons/module-disabler.svg ':no-zoom')Module Disabler
-This panel makes use of the ProcessWire core "disabled" flag for disabling autoload modules for testing / debugging purposes. It can potentially result in a fatal error on your site (this is a ProcessWire core issue, rather than specific to this panel). Because of this, it is only available when ProcessWire's advanced and debug modes are enabled.
+This panel makes use of the ProcessWire core "disabled" flag for disabling autoload modules for testing / debugging purposes. It can potentially result in a fatal error on your site (this is a ProcessWire core issue, rather than specific to this panel). Because of this, it is only available to superusers, and only when ProcessWire's advanced and debug modes are enabled.
 
 If you do end up with a fatal error after disabling a module, this panel provides a script for automatically restoring the modules database table. Whenever you disable any modules, a backup of the "modules" database table is automatically saved.
 
 To restore you have two choices:
 
-Copy "/site/assets/cache/TracyDebugger/restoremodules.php" to the root of your site and load it in your browser
+Copy "/site/assets/cache/TracyDebugger/restoremodules.php" to the root of your site and load the URL shown in the panel, eg. `https://example.com/restoremodules.php?key=...`. The script only runs with that key, so make a note of the URL before you disable anything. Once it has restored the modules, the copy in your site root deletes itself.
 
 OR
 
@@ -334,7 +350,7 @@ It alerts (red) you of files which are missing from the /site/assets/files/xxxx 
 
 The icon on the debug bar tells you how many files there are and how many are orphans and how many are missing.
 
-There are "Delete Orphans" and "Delete Missing" buttons for easy cleanup.
+There are "Delete Orphans" and "Delete Missing" buttons for easy cleanup. These are only shown to superusers. They only delete files inside `/site/assets/files/`, and only remove missing files from pages you can edit.
 
 Note that the results are divided up into page IDs, starting with the ID of the page you are currently viewing/editing and followed by pages for any repeater field items. It also shows the name of the field that each file belongs to (except the orange orphans because obviously these don't belong to a field).
 
@@ -345,7 +361,7 @@ Note that the results are divided up into page IDs, starting with the ID of the 
 ## ![Page Recorder](icons/page-recorder.svg ':no-zoom')Page Recorder
 This panel records the ID of all pages added whenever it is enabled (so this is one you'll want off by default and just enabled via "Sticky" when you need it).
 
-This is perfect for all sorts of testing, whether you need to create a LOT of pages for performance testing or you are testing a form which is automatically creating pages. Once you are done with the testing session, simply click the "Trash Recorded Pages" button and they will all be moved to the Trash.
+This is perfect for all sorts of testing, whether you need to create a LOT of pages for performance testing or you are testing a form which is automatically creating pages. Once you are done with the testing session, simply click the "Trash Recorded Pages" button and they will all be moved to the Trash (any recorded pages you don't have permission to trash are skipped).
 
 If you decide you want to keep the pages, you can click "Clear Recorded Pages List" instead.
 
@@ -397,6 +413,8 @@ bp('D');
 ## ![PHP Info](icons/php-info.svg ':no-zoom')PHP Info
 Provides all the output from PHP's `phpinfo()`. Probable best to leave disabled unless you need to check something.
 
+This panel is only available to superusers, because `phpinfo()` shows environment variables (which often hold credentials) and the request's cookies.
+
 CTRL/CMD + F works well to find relevant entries within this panel (and all panels actually), although this seems to be browser specific. It works in Chrome and Safari, but not Firefox.
 
 ![PHP Info panel](img/php-info.png)
@@ -406,6 +424,8 @@ CTRL/CMD + F works well to find relevant entries within this panel (and all pane
 ## ![ProcessWire Info](icons/processwire-info.svg ':no-zoom')Processwire Info
 Provides a wide variety of links, information and search features for all things ProcessWire.
 
+The Config Data section is only shown to superusers, and credential-like values (database password, salts, etc.) are masked.
+
 ![ProcessWire Info panel](img/processwire-info.png)
 
 ***
@@ -414,6 +434,8 @@ Provides a wide variety of links, information and search features for all things
 Displays the most recent entries across all ProcessWire log files with links to view the log in the PW logs viewer, as well as direct links to view each entry in your code editor. By default it shows the last 100, but this can be changed in the config settings. A red icon indicates the last page load contained an errors or exceptions log entry. An orange icon is for all other log types.
 
 Logs that you don't want surfaced here (eg. high-volume application logs) can be hidden via the "Excluded PW log files" config setting.
+
+As with ProcessWire's own Logs page, users with the `tracy-debugger` permission who aren't superusers also need the `logs-view` permission to see the logs, and `logs-edit` to delete them. The `adminer_queries` log (the SQL run in Adminer) is only shown to superusers.
 
 ![ProcessWire Logs panel](img/processwire-logs.png)
 
@@ -437,6 +459,8 @@ The icon is green when you are using the latest version that is available on you
 ## ![Request Info](icons/request-info.svg ':no-zoom')Request Info
 
 Provides very detailed infomation and links related to the current page. It contains several expandable sections listed below.
+
+For users with the `tracy-debugger` permission who aren't superusers, credential-like `$_SERVER` entries (environment secrets, auth headers, cookies) are masked, and the Module Settings section isn't shown. Tracy's own tokens and CSRF values are masked in the SESSION section for everyone.
 
 ### Page Info
 Links to view (from page name) and edit the page (from page ID), template, parent and sibling pages, etc. Also includes page status, creation, modified, and published username and datetime.
@@ -505,7 +529,7 @@ This section is only available when viewing the settings page for a field in the
 
 ### Module Settings
 
-This section is only available when viewing the settings page for a module in the admin
+This section is only available to superusers, when viewing the settings page for a module in the admin
 
 ![Request Info panel - Module Settings](img/request-info-module-settings.png)
 
@@ -529,6 +553,8 @@ This panel logs incoming requests to your pages. In particular, this can be used
 4. Send a request to that page. This may be something like a confirmation of payment webhook call from Paypal etc.
 
 5. Reload the edit page in the PW admin to see the logged request. The reason we say to edit the page, rather than visit it on the frontend is because visiting the page would result in a logged request.
+
+Only superusers can turn logging on or off for a page. Credential-like values (passwords, tokens, cookies, auth headers, and anything matching the "Keys to hide" setting) are masked in the stored entries, in the headers, GET and POST data, the request body, and the URL's query string. A raw JSON body is stored exactly as sent unless something in it had to be masked.
 
 ![Request Logger results](img/request-logger-results.png)
 
@@ -559,14 +585,14 @@ In the config settings you can define which types of request methods are logged:
 
 ## ![Terminal](icons/terminal.svg ':no-zoom')Terminal
 
-Embeds a web-based shell terminal in a Tracy panel, backed by the [ProcessTerminal](https://modules.processwire.com/modules/process-terminal/) module (which must be installed separately). Handy for running `composer`, `git`, `wireshell`, or other CLI tasks without leaving the browser when you're working on a remote site.
+Only available to superusers. Embeds a web-based shell terminal in a Tracy panel, backed by the [ProcessTerminal](https://modules.processwire.com/modules/process-terminal/) module (which must be installed separately). Handy for running `composer`, `git`, `wireshell`, or other CLI tasks without leaving the browser when you're working on a remote site.
 
 If ProcessTerminal isn't installed, the panel shows a message explaining what's needed.
 
 ***
 
 ## ![Template Path](icons/template-path.svg ':no-zoom')Template Path
-The template path panel allows you to temporarily choose an alternate template file for rendering the current page. It provides a list of files in the site/templates folder that match the name of the default template file, but with a "-suffix" extension. You can have several different versions and quickly test each one. You can make the change last for the browser session (sticky), or just for one reload (once). You can reset to the default template file for the current page, or all changes you may have made to other pages/template files on the site.
+The template path panel allows you to temporarily choose an alternate template file for rendering the current page. It provides a list of files in the site/templates folder that match the name of the default template file, but with a "-suffix" extension. Only the files in this list can be selected. You can have several different versions and quickly test each one. You can make the change last for the browser session (sticky), or just for one reload (once). You can reset to the default template file for the current page, or all changes you may have made to other pages/template files on the site.
 
 Additionally, it automatically swaps out files included via `$config->prependTemplateFile` and `$config->appendTemplateFile` to use the same suffix at the replaced template, eg `_init-dev.php` or `_main-dev.php`
 
@@ -666,6 +692,7 @@ Allows you to instantly switch to any user in the system without knowing their p
 * It only works for the duration of user switcher session (max 60 minutes) and only a superuser can start a session.
 * Starting the session makes use of PW's CSRF protection.
 * The switcher session has a unique ID and expiry time which is stored in the database and must match the ID in the user's session.
+* The switcher session is tied to the browser that started it (via ProcessWire's session fingerprint), so a copied session cookie used from another browser ends it.
 * Once the session has expired, it is no longer possible to switch users. You can manually end the session, or if you forget it will expire automatically based on the session length you set.
 
 As usual, icon colors are meaningful, telling you what type of user is currently logged in:
@@ -685,7 +712,7 @@ Lists all the users/roles with access to the Tracy Debugger bar. A green debug b
 ***
 
 ## ![Validator](icons/validator.svg ':no-zoom')Validator
-Validates the HTML of the page using the validator.nu service. This works with local development sites as well as live sites.
+Validates the HTML of the page using the W3C's [Nu HTML Checker](https://validator.w3.org/nu/). This works with local development sites as well as live sites, because the panel sends the page's HTML to the checker rather than asking it to fetch the page. Keep in mind that this means the HTML of each page you view with this panel enabled goes to validator.w3.org.
 
 ![Validator panel](img/validator.png)
 
