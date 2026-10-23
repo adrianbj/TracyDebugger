@@ -39,6 +39,7 @@ class ModuleDisablerPanel extends BasePanel {
 
         $out = '
         <script' . TracyDebugger::getNonceAttr() . '>
+            var tracyModulesCookieToken = ' . json_encode((string) $this->wire('session')->tracyActionToken) . ';
             function getSelectedTracyModuleCheckboxes() {
                 var selchbox = [];
                 var inpfields = document.getElementsByName("selectedModules[]");
@@ -62,7 +63,7 @@ class ModuleDisablerPanel extends BasePanel {
                 }
                 else {
                     if(confirm("This has the potential to break your site. Be sure to carefully read the Restore Instructons before proceeding.")) {
-                        document.cookie = "tracyModulesDisabled="+getSelectedTracyModuleCheckboxes()+"; expires=0; path=/";
+                        document.cookie = "tracyModulesDisabled="+tracyModulesCookieToken+"|"+getSelectedTracyModuleCheckboxes()+"; expires=0; path=/";
                         location.reload();
                     }
                     else {
@@ -72,7 +73,7 @@ class ModuleDisablerPanel extends BasePanel {
             }
 
             function resetTracyModules() {
-                document.cookie = "tracyModulesDisabled=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
+                document.cookie = "tracyModulesDisabled="+tracyModulesCookieToken+"|; expires=0; path=/";
                 location.reload();
             }
 

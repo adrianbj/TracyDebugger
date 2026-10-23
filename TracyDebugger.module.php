@@ -1263,8 +1263,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     }
                 }
 
+                // the module list is in a cookie written by the panel as "<action token>|<names>", so one set by
+                // another subdomain of the site is ignored (TracyDebugger::tokenCookie()); without a valid one,
+                // no module flags are changed at all
+                $modulesDisabledCookie = static::tokenCookie('tracyModulesDisabled');
+
                 // if modules have been checked to disable
-                if($this->wire('input')->cookie->tracyModulesDisabled) {
+                if($modulesDisabledCookie) {
 
                     // if it doesn't already exist, backup existing modules database
                     if(!file_exists($this->tracyCacheDir . $this->modulesDbBackupFilename)) {
@@ -1302,16 +1307,21 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     }
 
                     // get array of modules that have been checked to disable
-                    static::$disabledModules = array_filter(explode(',', $this->wire('input')->cookie->tracyModulesDisabled));
+                    static::$disabledModules = array_filter(explode(',', $modulesDisabledCookie));
                 }
                 else {
                     $this->deleteFile($this->tracyCacheDir . $this->modulesDbBackupFilename);
                     $this->deleteFile($this->tracyCacheDir . 'restoremodules.php');
                 }
 
-                // add disabled flag to requested modules
+                // add disabled flag to requested modules (and remove it from the others), only when the panel set
+                // the list; an empty list is the panel's reset, after which the cookie is cleared
                 $i=0;
-                foreach(static::$disabableModules as $name) {
+                if($modulesDisabledCookie === '') {
+                    unset($this->wire('input')->cookie->tracyModulesDisabled);
+                    setcookie("tracyModulesDisabled", "", time()-3600, '/');
+                }
+                foreach($modulesDisabledCookie !== null ? static::$disabableModules : array() as $name) {
                     $flags = $this->wire('modules')->getFlags($name);
                     if(in_array($name, static::$disabledModules)) {
                         if(!($flags & Modules::flagsDisabled)) {
