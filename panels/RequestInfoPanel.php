@@ -827,6 +827,9 @@ class RequestInfoPanel extends BasePanel {
                     $key == 'tracyLoginUrl'
                 ) continue;
                 $session_oc++;
+                // Tracy's request tokens (Console, File Editor, action links) and CSRF / other credential-like
+                // values aren't shown: a Tracy user who isn't a superuser could otherwise use the Console's token
+                if(TracyDebugger::isSensitiveKey($key) || stripos((string) $key, 'csrf') !== false) $value = '*****';
                 if(is_object($value)) $value = (string) $value;
                 if(is_array($value)) $value = print_r($value, true);
                 $session .= "<tr><td>".$this->wire('sanitizer')->entities($key)."</td><td><pre>" . $this->wire('sanitizer')->entities($value) . "</pre></td></tr>";

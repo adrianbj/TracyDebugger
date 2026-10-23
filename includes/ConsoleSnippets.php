@@ -1,5 +1,12 @@
 <?php namespace ProcessWire;
 
+// Console snippets are run from the Console, so like the Console they're for superusers (and local / switched
+// users) only: another Tracy user writing one could plant code a superuser later runs
+if(!TracyDebugger::$allowedSuperuser && !TracyDebugger::$validLocalUser && !TracyDebugger::$validSwitchedUser) {
+    http_response_code(403);
+    exit;
+}
+
 // validate CSRF token
 $csrfToken = isset($_POST['csrfToken']) ? $_POST['csrfToken'] : '';
 if(!$csrfToken || !hash_equals((string)$this->wire('session')->tracyConsoleToken, $csrfToken)) {
