@@ -562,7 +562,10 @@ class TD extends TracyDebugger {
     private static function dumpToBar($var, $title = NULL, $options = [], $echo = false) {
         $dumpItem = array();
         $dumpItem['title'] = $title;
-        $dumpItem['dump'] = $echo ? '<div class="tracy-echo">' . $var . '</div>' : static::safeGenerateDump($var, $options);
+        // an echo is shown as HTML, which a developer may want for their own markup; one recorded from a guest
+        // request (recordGuestDumps) can contain visitor input, so it's shown as text
+        $echoHtml = self::tracyUnavailable() ? nl2br(htmlspecialchars((string) $var, ENT_QUOTES, 'UTF-8')) : $var;
+        $dumpItem['dump'] = $echo ? '<div class="tracy-echo">' . $echoHtml . '</div>' : static::safeGenerateDump($var, $options);
         $dumpItem['text'] = null;
         if(!$echo && self::tracySupportsAgent() && \Tracy\Helpers::isAgent()) {
             try { $dumpItem['text'] = self::agentText($var); } catch(\Throwable $e) { try { self::log($e); } catch(\Throwable $logErr) {} }
