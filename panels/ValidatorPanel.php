@@ -20,47 +20,53 @@ class ValidatorPanel extends BasePanel {
         Debugger::timer('validator');
 
         $this->validatorUrl = 'https://validator.w3.org/nu/';
-        $this->validationUrl = $this->validatorUrl . "?doc=".$this->wire('page')->httpUrl."&out=html&showimagereport=yes&showsource=yes";
+        $this->validationUrl = $this->validatorUrl . "?doc=".rawurlencode($this->wire('page')->httpUrl)."&showimagereport=yes&showsource=yes";
 
-        // get results from validator and convert any entities to UTF-8
+        // results as JSON, rendered here with everything escaped, rather than inserting the validator's own HTML
         $http = new WireHttp();
         $http->setHeader('Content-Type', 'text/html; charset=utf-8');
         $http->setHeader('User-Agent', 'ProcessWireTracyDebugger');
-
-        $this->rawResult = $http->post($this->validatorUrl, TracyDebugger::$pageHtml);
-        //$this->rawResult = preg_replace('/[^(\x20-\x7F)]*/','', $this->rawResult);
-        $this->rawResult = mb_encode_numericentity($this->rawResult, [0x80, 0x10FFFF, 0, ~0], 'UTF-8');
+        $this->rawResult = $http->post($this->validatorUrl . '?out=json', TracyDebugger::$pageHtml);
+        $results = $this->rawResult ? json_decode($this->rawResult, true) : null;
+        $messages = is_array($results) && isset($results['messages']) && is_array($results['messages']) ? $results['messages'] : null;
+        if($messages === null) $this->rawResult = '';
 
         $showPanelLabels = TracyDebugger::getDataValue('showPanelLabels');
 
-        if($this->rawResult) {
-            $doc = new \DOMDocument();
-            libxml_use_internal_errors(true);
-            $doc->loadHTML($this->rawResult, LIBXML_HTML_NODEFDTD | LIBXML_HTML_NOIMPLIED);
-            libxml_use_internal_errors(false);
-
-            $xpath = new \DOMXPath($doc);
-            $success = $xpath->query("//*[@class='success']");
-            $failure = $xpath->query("//*[@class='failure']");
-
-            if($success->length > 0) {
-                $this->message = $success->item(0)->nodeValue;
+        $e = function($value) { return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8'); };
+        $hasErrors = $messages === null;
+        $hasWarnings = false;
+        $items = '';
+        foreach((array) $messages as $message) {
+            $type = isset($message['type']) ? (string) $message['type'] : 'info';
+            $subType = isset($message['subType']) ? (string) $message['subType'] : '';
+            if($type === 'error' || $type === 'non-document-error') $hasErrors = true;
+            else $hasWarnings = true;
+            $class = $type === 'non-document-error' ? 'error' : $type;
+            if($subType !== '') $class .= ' ' . $subType;
+            $label = $subType === 'fatal' ? 'Fatal Error' : ($subType === 'warning' ? 'Warning' : ucfirst($type === 'non-document-error' ? 'error' : $type));
+            $items .= '<li class="' . $e($class) . '"><p><strong>' . $e($label) . '</strong>: <span>' . $e($message['message'] ?? '') . '</span></p>';
+            if(isset($message['lastLine'])) {
+                $firstLine = $message['firstLine'] ?? $message['lastLine'];
+                $items .= '<p class="location">From line ' . (int) $firstLine . (isset($message['firstColumn']) ? ', column ' . (int) $message['firstColumn'] : '') . '; to line ' . (int) $message['lastLine'] . (isset($message['lastColumn']) ? ', column ' . (int) $message['lastColumn'] : '') . '</p>';
             }
-            if($failure->length > 0) {
-                $this->message = $failure->item(0)->nodeValue;
+            if(isset($message['extract']) && $message['extract'] !== '') {
+                $extract = (string) $message['extract'];
+                $start = (int) ($message['hiliteStart'] ?? 0);
+                $length = (int) ($message['hiliteLength'] ?? 0);
+                $before = mb_substr($extract, 0, $start, 'UTF-8');
+                $hilite = mb_substr($extract, $start, $length, 'UTF-8');
+                $after = mb_substr($extract, $start + $length, null, 'UTF-8');
+                $items .= '<p class="extract"><code>' . nl2br($e($before)) . '<b>' . nl2br($e($hilite)) . '</b>' . nl2br($e($after)) . '</code></p>';
             }
-
-            $resultsList = $doc->getElementsByTagName('ol');
-            if($resultsList && $resultsList->length > 0) {
-                $resultsList = $resultsList->item(0);
-                $this->filteredResult = $doc->savehtml($resultsList);
-            }
+            $items .= '</li>';
+        }
+        if($messages !== null) {
+            $this->message = $hasErrors ? '<p class="failure">There were errors.</p>' : '<p class="success">The document validates according to the specified schema(s).</p>';
+            $this->filteredResult = $items !== '' ? '<ol>' . $items . '</ol>' : '';
         }
 
-        $errors = (!$this->rawResult ||
-            strpos($this->rawResult, 'class="error"') !== false ||
-            strpos($this->rawResult, 'class="failure"') !== false ||
-            strpos($this->rawResult, 'Connection refused') !== false) ? true : false;
+        $errors = $hasErrors;
 
         if($errors) {
             $this->color = TracyDebugger::COLOR_ALERT;
@@ -70,7 +76,7 @@ class ValidatorPanel extends BasePanel {
             $this->resultLabel = 'Validation Errors';
             $this->label = $showPanelLabels ? $this->resultLabel : '';
         }
-        elseif(strpos($this->rawResult, 'class="warning"') !== false || strpos($this->rawResult, 'class="info"') !== false || strpos($this->rawResult, 'class="info warning"') !== false) {
+        elseif($hasWarnings) {
             $this->color = TracyDebugger::COLOR_WARN;
             $this->icon = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 483.537 483.537" style="enable-background:new 0 0 483.537 483.537;" xml:space="preserve" width="16px" height="16px">
                             <path d="M479.963,425.047L269.051,29.854c-5.259-9.88-15.565-16.081-26.782-16.081h-0.03     c-11.217,0-21.492,6.171-26.782,16.051L3.603,425.016c-5.046,9.485-4.773,20.854,0.699,29.974     c5.502,9.15,15.413,14.774,26.083,14.774H453.12c10.701,0,20.58-5.594,26.083-14.774     C484.705,445.84,484.979,434.471,479.963,425.047z M242.239,408.965c-16.781,0-30.399-13.619-30.399-30.399     c0-16.78,13.619-30.399,30.399-30.399c16.75,0,30.399,13.619,30.399,30.399C272.638,395.346,259.02,408.965,242.239,408.965z      M272.669,287.854c0,16.811-13.649,30.399-30.399,30.399c-16.781,0-30.399-13.589-30.399-30.399V166.256     c0-16.781,13.619-30.399,30.399-30.399c16.75,0,30.399,13.619,30.399,30.399V287.854z" fill="'.$this->color.'"/>
@@ -299,7 +305,7 @@ class ValidatorPanel extends BasePanel {
             </style>
             <br />';
 
-        $validatorLink = '<a href="'.$this->validationUrl.'">Results for '.$this->wire('page')->httpUrl.' at '.$this->validatorUrl.'</a>';
+        $validatorLink = '<a href="'.htmlspecialchars($this->validationUrl, ENT_QUOTES, 'UTF-8').'">Results for '.htmlspecialchars($this->wire('page')->httpUrl, ENT_QUOTES, 'UTF-8').' at '.$this->validatorUrl.'</a>';
         $out .= '<h2>'.$validatorLink.'</h2>';
         if($this->rawResult) {
             $out .= '<div id="results">'.$this->message.$this->filteredResult.'</div>';
