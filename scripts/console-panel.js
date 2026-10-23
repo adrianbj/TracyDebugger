@@ -517,7 +517,8 @@ Object.assign(tracyConsole, {
                 else {
                     const expires = new Date();
                     expires.setMinutes(expires.getMinutes() + 5);
-                    document.cookie = "tracyIncludeCode="+JSON.stringify(params)+"; expires="+expires.toGMTString()+";path=/; SameSite=Strict";
+                    // prefixed with the Console's token, which the server checks (TracyDebugger::tokenCookie())
+                    document.cookie = "tracyIncludeCode="+tracyConsole.csrfToken+"|"+JSON.stringify(params)+"; expires="+expires.toGMTString()+";path=/; SameSite=Strict";
                     while (i < icons.length) {
                         icons[i].style.fill = this.colorWarn;
                         i++;
@@ -1341,7 +1342,7 @@ Object.assign(tracyConsole, {
                         if(originTabId === tracyConsole.currentTabId) {
                             const statusDiv = document.getElementById("tracyConsoleStatus");
                             if (statusDiv) {
-                                statusDiv.innerHTML = "✔ " + (codeReturn ? "Executed" : "Injected @ " + escapeHtml(JSON.parse(tracyConsole.getCookie('tracyIncludeCode')).when));
+                                statusDiv.innerHTML = "✔ " + (codeReturn ? "Executed" : "Injected @ " + escapeHtml(JSON.parse(tracyConsole.getCookie('tracyIncludeCode').replace(/^[^|]*\|/, '')).when));
                             }
                         }
                         /* deliver the result even when the panel DOM is not present (panel
@@ -1390,9 +1391,8 @@ Object.assign(tracyConsole, {
                                 .then(function(){ return tracyConsole.clearRunIdOnTab(originTabId); })
                                 .catch(function(){});
 
-                            const errorExpires = new Date();
-                            errorExpires.setMinutes(errorExpires.getMinutes() + (10 * 365 * 24 * 60));
-                            document.cookie = "tracyCodeError=" + encodeURIComponent(errorStr) + ";expires="+errorExpires.toGMTString()+";path=/;SameSite=Strict";
+                            // session cookie: it only has to last until the next run clears it
+                            document.cookie = "tracyCodeError=" + encodeURIComponent(errorStr) + ";path=/;SameSite=Strict" + (location.protocol === "https:" ? ";Secure" : "");
                         }
                         listenerMap.delete(xmlhttp);
                         xmlhttp.getAllResponseHeaders();

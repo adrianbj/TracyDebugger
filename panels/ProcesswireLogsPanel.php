@@ -21,8 +21,20 @@ class ProcesswireLogsPanel extends BasePanel {
         $isNewErrors = 0;
         $entriesArr = array();
 
-        $logs = $this->wire('log')->getLogs();
-        if($logs === null) {
+        // like PW's own Logs page, other Tracy users need the logs-view permission, and never see the log of
+        // the SQL that superusers run in Adminer
+        $superuserLevel = TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser;
+        $logs = $superuserLevel || $this->wire('user')->hasPermission('logs-view') ? $this->wire('log')->getLogs() : false;
+        if(is_array($logs) && !$superuserLevel) {
+            foreach($logs as $key => $log) {
+                if($log['name'] === 'adminer_queries') unset($logs[$key]);
+            }
+        }
+        if($logs === false) {
+            $this->numLogEntries = 0;
+            $this->logEntries .= 'Viewing the ProcessWire logs needs the logs-view permission.';
+        }
+        elseif($logs === null) {
             $this->logEntries .= 'Logs directory is not readable.';
         }
         elseif(count($logs) == 0) {
@@ -158,7 +170,7 @@ class ProcesswireLogsPanel extends BasePanel {
                     $this->logEntries .= "
                     \n<tr>
                         <td ".($lineIsNew ? 'style="background: '.$color.' !important; color: #FFFFFF !important"' : '')."><a ".($lineIsNew ? 'style="color: #FFFFFF !important"' : '')." title='View \"".$item['log']."\" log file in PW admin' href='".$this->wire('config')->urls->admin."setup/logs/view/".$item['log']."/'>".str_replace('-', '&#8209;', $item['log'])."</a></td>" .
-                        "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',$item['date']))."</td>" .
+                        "<td>".str_replace('-','&#8209;',str_replace(' ','&nbsp;',htmlspecialchars((string) $item['date'], ENT_QUOTES, 'UTF-8')))."</td>" .
                         "<td>".htmlspecialchars($item['user'] ?? '', ENT_QUOTES, 'UTF-8')."</td>" .
                         "<td>".$item['url']."</td>" .
                         "<td>".TracyDebugger::createEditorLink($this->wire('config')->paths->logs . $item['log'] . '.txt', 1, (strlen($trimmedText) > 350 ? substr($trimmedText,0, 350)." ... (".strlen($trimmedText).")" : $trimmedText), 'View in your code editor').(TracyDebugger::isJson($item['text']) ? "\n".\Tracy\Dumper::toHtml(json_decode($item['text'], true)) : '')."</td>" .
@@ -204,7 +216,7 @@ class ProcesswireLogsPanel extends BasePanel {
             if($this->numLogEntries > 0) {
                 $out .= '
                 <p>
-                    <form method="post" action="'.TracyDebugger::inputUrl(true).'">
+                    <form method="post" action="'.htmlspecialchars(TracyDebugger::inputUrl(true), ENT_QUOTES, 'UTF-8').'">
                         '.$this->csrfInput().'
                         <input type="submit" name="deleteProcessWireLogs" value="Delete All Logs" />
                     </form>

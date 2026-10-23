@@ -83,8 +83,17 @@ form.addEventListener('submit', function(event) {
 EOT;
         if(TracyDebugger::getDataValue('linksCode')) {
             foreach(explode("\n", TracyDebugger::getDataValue('linksCode')) as $link) {
-                $link_parts = explode('|', $link);
-                $out .= '<a href="'.trim($link_parts[0]).'">'.trim($link_parts[1]).'</a><br />';
+                if(trim($link) === '') continue;
+                $link_parts = explode('|', $link, 2);
+                $url = trim($link_parts[0]);
+                $title = isset($link_parts[1]) && trim($link_parts[1]) !== '' ? trim($link_parts[1]) : $url;
+                // escaped, and only linked for http(s) URLs and paths on this site (no javascript: etc)
+                if(preg_match('#^(https?://|/)#i', $url)) {
+                    $out .= '<a href="'.htmlspecialchars($url, ENT_QUOTES, 'UTF-8').'">'.htmlspecialchars($title, ENT_QUOTES, 'UTF-8').'</a><br />';
+                }
+                else {
+                    $out .= htmlspecialchars($title, ENT_QUOTES, 'UTF-8').'<br />';
+                }
             }
         }
         $out .= '</div>';

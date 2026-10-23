@@ -29,7 +29,7 @@ function openAdminer(queryStr) {
                     curEl = curEl.parentNode;
                 }
 
-                if (curEl && curEl.href && curEl.href.indexOf("adminer://") !== -1) {
+                if (curEl && curEl.href && curEl.href.indexOf("adminer://") === 0) {
                     e.preventDefault();
                     const queryStr = curEl.href.split('?')[1];
                     if (e.shiftKey) {

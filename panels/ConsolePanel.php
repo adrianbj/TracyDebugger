@@ -15,7 +15,7 @@ class ConsolePanel extends BasePanel {
 
         Debugger::timer('console');
 
-        $this->tracyIncludeCode = json_decode((string)$this->wire('input')->cookie->tracyIncludeCode, true);
+        $this->tracyIncludeCode = json_decode((string) TracyDebugger::tokenCookie('tracyIncludeCode', 'tracyConsoleToken'), true);
         if($this->tracyIncludeCode && $this->tracyIncludeCode['when'] !== 'off') {
             $this->iconColor = $this->wire('input')->cookie->tracyCodeError ? TracyDebugger::COLOR_ALERT : TracyDebugger::COLOR_WARN;
         }
@@ -75,10 +75,12 @@ class ConsolePanel extends BasePanel {
         $snippets = array();
         $snippetsPath = TracyDebugger::getDataValue('snippetsPath').'/TracyDebugger/snippets/';
         if(file_exists($this->wire('config')->paths->site.$snippetsPath)) {
+            TracyDebugger::denyWebAccess($this->wire('config')->paths->site.$snippetsPath);
             $snippetFiles = new \DirectoryIterator($this->wire('config')->paths->site.$snippetsPath);
             $i=0;
             foreach($snippetFiles as $snippetFile) {
-                if(!$snippetFile->isDot() && $snippetFile->isFile()) {
+                // skip dotfiles, like the .htaccess that keeps the folder off the web
+                if(!$snippetFile->isDot() && $snippetFile->isFile() && strpos($snippetFile->getFilename(), '.') !== 0) {
                     $snippetFileName = $snippetFile->getPathname();
                     $snippets[$i]['name'] = pathinfo($snippetFileName, PATHINFO_BASENAME);
                     $snippets[$i]['filename'] = $snippetFileName;

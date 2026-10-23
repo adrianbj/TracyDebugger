@@ -19,7 +19,7 @@ class DumpsRecorderPanel extends BasePanel {
         TD::flushRecorderDumps();
 
         $dumpsFile = $this->wire('config')->paths->cache . 'TracyDebugger/dumps.json';
-        $items = file_exists($dumpsFile) ? json_decode(file_get_contents($dumpsFile), true) : array();
+        $items = TracyDebugger::visibleRecordedDumps(file_exists($dumpsFile) ? json_decode(file_get_contents($dumpsFile), true) : array());
         $this->dumpCount = is_array($items) ? count($items) : 0;
         if($this->dumpCount > 0) {
             $this->iconColor = TracyDebugger::COLOR_WARN;

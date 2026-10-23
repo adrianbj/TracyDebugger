@@ -81,7 +81,7 @@ if(!tracyExceptionLoader) {
 
                 var filePathInput = panelEl.querySelector("#tracyExceptionFilePath");
                 if(filePathInput) filePathInput.value = filePath;
-                document.cookie = "tracyExceptionFile=" + filePath + "; path=/; SameSite=Strict";
+                document.cookie = "tracyExceptionFile=" + encodeURIComponent(filePath) + "; path=/; SameSite=Strict";
                 var titleEl = panelEl.querySelector("#panelTitleFilePath");
                 if(titleEl) titleEl.textContent = filePath.replace('site/assets/logs/tracy/', '');
 
@@ -313,7 +313,7 @@ if(!tracyExceptionLoader) {
                     curEl = curEl.parentNode;
                 }
 
-                if (curEl && curEl.href && curEl.href.indexOf("tracyexception://") !== -1) {
+                if (curEl && curEl.href && curEl.href.indexOf("tracyexception://") === 0) {
                     e.preventDefault();
                     const panelEl = tracyExceptionLoader.findOriginatingPanel(curEl) || tracyExceptionLoader.getMainPanel();
                     const queryStr = curEl.href.split('?')[1];

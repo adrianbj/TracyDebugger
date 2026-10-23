@@ -2,7 +2,11 @@
 
 $p = $this->wire('pages')->get((int)$_POST['goToPage']);
 $pageInfo = array();
-if($p->id) {
+// superusers (and local / switched users) can look up any page; other Tracy users only pages they can view or
+// edit, so this doesn't reveal unpublished or access-restricted pages (titles, paths, user names) to them
+$canLookUp = TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser
+    || ($p->id && ($p->viewable() || $p->editable()));
+if($p->id && $canLookUp) {
     // Decode any pre-encoded entities (PW's HtmlEntityEncoder text formatter
     // can store titles like "A &amp; B"). The client renders via textContent,
     // so we want plain characters here, not HTML-encoded ones.

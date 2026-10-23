@@ -1,4 +1,12 @@
 <?php
+// adminneo.php includes this file when it's requested directly (on servers that don't block PHP files in
+// site/modules), and without the instance it would fall back to a default AdminNeo login page for any database
+// server. It's only meant to run inside ProcessWire, via ProcessTracyAdminerRenderer
+if(!function_exists('ProcessWire\wire')) {
+    http_response_code(404);
+    exit;
+}
+
 // global namespace so adminneo.php can call \adminneo_instance()
 function adminneo_instance() {
 

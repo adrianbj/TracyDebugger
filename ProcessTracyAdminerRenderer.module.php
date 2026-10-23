@@ -23,7 +23,8 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
     }
 
     public function ___execute() {
-        if(!$this->wire('user')->isSuperuser()) throw new Wire404Exception();
+        // a superuser, and with "Restrict superusers" on, one with the tracy-debugger permission (as for the bar)
+        if(!$this->wire('user')->isSuperuser() || (class_exists('\\ProcessWire\\TracyDebugger', false) && !TracyDebugger::adminerAllowed())) throw new Wire404Exception();
 
         /* AdminNeo turns on zlib.output_compression partway through the response —
            page_header() in adminneo.php does it right before emitting the document.

@@ -92,7 +92,7 @@ class PageFilesPanel extends BasePanel {
                     }
                     $this->filesListStr .= '
                     <tr>
-                        <td><a style="'.$style.' !important" href="'.$filesUrl.$file.'">'.$file.'</a></td>
+                        <td><a style="'.$style.' !important" href="'.htmlspecialchars($filesUrl.rawurlencode($file), ENT_QUOTES, 'UTF-8').'">'.htmlspecialchars($file, ENT_QUOTES, 'UTF-8').'</a></td>
                         <td>'.TracyDebugger::human_filesize(filesize($filesPath . $file)).'</td>
                         <td>'.date('Y-m-d H:i:s', filemtime($filesPath . $file)).'</td>
                         <td style="width: 1px">'.$fileField.'</td>' .
@@ -155,26 +155,28 @@ class PageFilesPanel extends BasePanel {
         $out .= $this->openPanel();
 
         $numOrphanFiles = count($this->orphanFiles);
+        // the delete buttons only work for superusers (and local / switched users), see PageFilesPost.php
+        $canDelete = TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser;
 
-        if($numOrphanFiles > 0) {
+        if($numOrphanFiles > 0 && $canDelete) {
             $out .= '
-            <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" data-confirm="Do you really want to delete all the orange highlighted orphan files?">
+            <form style="display:inline" method="post" action="'.htmlspecialchars(TracyDebugger::inputUrl(true), ENT_QUOTES, 'UTF-8').'" data-confirm="Do you really want to delete all the orange highlighted orphan files?">
                 '.$this->csrfInput().'
                 <input type="hidden" name="orphanPaths" value="'.implode('|', $this->orphanFiles).'" />
                 <input type="submit" style="color:'.TracyDebugger::COLOR_WARN.' !important; color: #FFFFFF" name="deleteOrphanFiles" value="Delete '.$numOrphanFiles.' orphan'._n('', 's', $numOrphanFiles).'" />
             </form>&nbsp&nbsp;';
         }
 
-        if($this->numMissingFiles > 0) {
+        if($this->numMissingFiles > 0 && $canDelete) {
             $out .= '
-            <form style="display:inline" method="post" action="'.TracyDebugger::inputUrl(true).'" data-confirm="Do you really want to delete all the red highlighted missing pagefiles?">
+            <form style="display:inline" method="post" action="'.htmlspecialchars(TracyDebugger::inputUrl(true), ENT_QUOTES, 'UTF-8').'" data-confirm="Do you really want to delete all the red highlighted missing pagefiles?">
                 '.$this->csrfInput().'
                 <input type="hidden" name="missingPaths" value="'.urlencode(json_encode($this->missingFiles)).'" />
                 <input type="submit" style="color:'.TracyDebugger::COLOR_ALERT.' !important; color: #FFFFFF" name="deleteMissingFiles" value="Delete '.$this->numMissingFiles.' missing pagefile'._n('', 's', $this->numMissingFiles).'" />
             </form>';
         }
 
-        if($numOrphanFiles > 0 || $this->numMissingFiles > 0) {
+        if($canDelete && ($numOrphanFiles > 0 || $this->numMissingFiles > 0)) {
             $out .= '<br /><br />';
         }
 

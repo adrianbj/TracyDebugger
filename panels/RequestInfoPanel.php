@@ -297,7 +297,8 @@ class RequestInfoPanel extends BasePanel {
 
 
         // Module Settings
-        if(in_array('moduleSettings', $panelSections) && $isPwPage) {
+        // superusers (and local / switched users) only: module settings include other modules' passwords / API keys
+        if(in_array('moduleSettings', $panelSections) && $isPwPage && (TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser)) {
             if($this->wire('input')->get('name') && $this->wire('page')->process == 'ProcessModule') {
                 $moduleSettings = '';
                 $moduleName = $this->wire('sanitizer')->name($this->wire('input')->get('name'));
@@ -500,11 +501,14 @@ class RequestInfoPanel extends BasePanel {
                 $filePathParts = explode(':', $v);
 
                 if($k == 'file') {
-                    $v = TracyDebugger::createEditorLink($this->wire('config')->paths->root . ltrim($filePathParts[0], '/'), $filePathParts[1], $v, 'Edit ' . $filePathParts[0]);
+                    $v = TracyDebugger::createEditorLink($this->wire('config')->paths->root . ltrim($filePathParts[0], '/'), $filePathParts[1] ?? '', htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8'), 'Edit ' . $filePathParts[0]);
+                }
+                else {
+                    $v = htmlspecialchars(is_scalar($v) ? (string) $v : print_r($v, true), ENT_QUOTES, 'UTF-8');
                 }
                 $redirectInfo .= '
                     <tr>
-                        <td>'.$k.'</td>
+                        <td>'.htmlspecialchars((string) $k, ENT_QUOTES, 'UTF-8').'</td>
                         <td>'.$v.'</td>
                     </tr>
                 ';
@@ -554,7 +558,7 @@ class RequestInfoPanel extends BasePanel {
         if($this->wire('languages') && in_array('languageInfo', $panelSections) && $isPwPage) {
             $languageInfo .= '<table><tr><th>language</th><th>id</th><th>title</th><th>name</th><th>active</th></tr>';
             foreach($this->wire('languages') as $language) {
-                $languageInfo .= '<tr><td>' . htmlspecialchars($language->title ?? '', ENT_QUOTES, 'UTF-8') . ' ('.$language->name.')</td><td><a title="Edit Language" href="'.$this->wire('config')->urls->admin.'/setup/languages/edit/?id='.$language->id.'">'.$language->id.'</a></td><td>' . htmlspecialchars($this->getLanguageVersion($p, 'title', $language) ?? '', ENT_QUOTES, 'UTF-8') . '</td><td>' . $this->getLanguageVersion($p, 'name', $language) . '</td><td>' . ($language->isDefaultLanguage ? 'default' : ($p->get("status{$language->id}") ? "✔" : "✘")) . '</td></tr>';
+                $languageInfo .= '<tr><td>' . htmlspecialchars($language->title ?? '', ENT_QUOTES, 'UTF-8') . ' ('.$language->name.')</td><td><a title="Edit Language" href="'.$this->wire('config')->urls->admin.'/setup/languages/edit/?id='.$language->id.'">'.$language->id.'</a></td><td>' . $this->getLanguageVersion($p, 'title', $language) . '</td><td>' . $this->getLanguageVersion($p, 'name', $language) . '</td><td>' . ($language->isDefaultLanguage ? 'default' : ($p->get("status{$language->id}") ? "✔" : "✘")) . '</td></tr>';
             }
             $languageInfo .= '</table>';
         }
@@ -768,10 +772,14 @@ class RequestInfoPanel extends BasePanel {
         if(in_array('serverRequest', $panelSections)) {
             $serverRequest = '
             <table>';
+            // superusers (and local / switched users) see everything; others get credential-like values (from
+            // environment variables, auth headers, cookies) masked
+            $showAllServer = TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser;
             foreach($_SERVER as $k => $v) {
+                if(!$showAllServer && (TracyDebugger::isSensitiveKey($k) || preg_match('/auth|_pw$|cookie/i', (string) $k))) $v = '*****';
                 $serverRequest .= '
                     <tr>
-                        <td>'.$k.'</td>
+                        <td>'.htmlspecialchars((string) $k, ENT_QUOTES, 'UTF-8').'</td>
                         <td>'.Dumper::toHtml($v).'</td>
                     </tr>
                 ';
@@ -827,6 +835,9 @@ class RequestInfoPanel extends BasePanel {
                     $key == 'tracyLoginUrl'
                 ) continue;
                 $session_oc++;
+                // Tracy's request tokens (Console, File Editor, action links) and CSRF / other credential-like
+                // values aren't shown: a Tracy user who isn't a superuser could otherwise use the Console's token
+                if(TracyDebugger::isSensitiveKey($key) || stripos((string) $key, 'csrf') !== false) $value = '*****';
                 if(is_object($value)) $value = (string) $value;
                 if(is_array($value)) $value = print_r($value, true);
                 $session .= "<tr><td>".$this->wire('sanitizer')->entities($key)."</td><td><pre>" . $this->wire('sanitizer')->entities($value) . "</pre></td></tr>";
@@ -1007,7 +1018,7 @@ HTML;
             $thumb = $thumb['thumb'];
             $imagePreview = '<a class="pw-modal" href="'.$image->url.'"><img style="padding:5px 0" width="125" src="'.$thumb->url.'" /></a><br />';
         }
-        return '<p><strong>'.$image->name.'</strong><br />'.$imagePreview.'description: '.$image->description.'<br />tags: '.$image->tags.'<br />dimensions: '.$image->width.'x'.$image->height.'<br />size: '.$image->filesizeStr.'<br />variations: '.$this->variationsStr($image).'</p><br />';
+        return '<p><strong>'.$image->name.'</strong><br />'.$imagePreview.'description: '.htmlspecialchars((string) $image->description, ENT_QUOTES, 'UTF-8').'<br />tags: '.htmlspecialchars((string) $image->tags, ENT_QUOTES, 'UTF-8').'<br />dimensions: '.$image->width.'x'.$image->height.'<br />size: '.$image->filesizeStr.'<br />variations: '.$this->variationsStr($image).'</p><br />';
     }
 
 
@@ -1020,7 +1031,11 @@ HTML;
     }
 
 
+    /**
+     * The page's title or name in $lang, HTML-escaped (titles are editor-entered text)
+     */
     private function getLanguageVersion($p, $fieldName, $lang, $showDefault = false) {
+        $e = function($value) { return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8'); };
 
         if($this->wire('languages') && method_exists($p, 'localName')) {
             $p->of(false);
@@ -1044,10 +1059,10 @@ HTML;
                     $result = $p->$fieldName;
                 }
             }
-            return $result == '' && $showDefault ? '<span title="No '.$fieldName.' for '.htmlspecialchars($lang->title ?? '', ENT_QUOTES, 'UTF-8').'" style="color:#000000; font-weight: bold" aria-hidden="true">&#9432; </span>' . $p->$fieldName : $result;
+            return $result == '' && $showDefault ? '<span title="No '.$fieldName.' for '.$e($lang->title ?? '').'" style="color:#000000; font-weight: bold" aria-hidden="true">&#9432; </span>' . $e($p->$fieldName) : $e($result);
         }
         else {
-            return $p->$fieldName;
+            return $e($p->$fieldName);
         }
     }
 

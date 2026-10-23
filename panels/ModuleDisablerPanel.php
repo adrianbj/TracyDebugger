@@ -39,6 +39,7 @@ class ModuleDisablerPanel extends BasePanel {
 
         $out = '
         <script' . TracyDebugger::getNonceAttr() . '>
+            var tracyModulesCookieToken = ' . json_encode((string) $this->wire('session')->tracyActionToken) . ';
             function getSelectedTracyModuleCheckboxes() {
                 var selchbox = [];
                 var inpfields = document.getElementsByName("selectedModules[]");
@@ -62,7 +63,7 @@ class ModuleDisablerPanel extends BasePanel {
                 }
                 else {
                     if(confirm("This has the potential to break your site. Be sure to carefully read the Restore Instructons before proceeding.")) {
-                        document.cookie = "tracyModulesDisabled="+getSelectedTracyModuleCheckboxes()+"; expires=0; path=/";
+                        document.cookie = "tracyModulesDisabled="+tracyModulesCookieToken+"|"+getSelectedTracyModuleCheckboxes()+"; expires=0; path=/";
                         location.reload();
                     }
                     else {
@@ -72,7 +73,7 @@ class ModuleDisablerPanel extends BasePanel {
             }
 
             function resetTracyModules() {
-                document.cookie = "tracyModulesDisabled=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
+                document.cookie = "tracyModulesDisabled="+tracyModulesCookieToken+"|; expires=0; path=/";
                 location.reload();
             }
 
@@ -109,7 +110,7 @@ class ModuleDisablerPanel extends BasePanel {
         $out .= $this->openPanel() . '
             <fieldset>';
                 if(count(TracyDebugger::$disabableModules) > 0 && $this->wire('config')->advanced && $this->wire('config')->debug) {
-                    $out .= '<legend><p>Temporarily disable autoload modules. Check to disable.</p><p><strong>Restore Instructions</strong><br />If your site is broken after disabling modules you can restore your modules by <strong>either one</strong> of the following methods:<ul><li>Copy "/site/assets/cache/TracyDebugger/restoremodules.php" to the root of your site and load it in your browser<br /><strong>OR</strong></li><li>Execute "/site/assets/cache/TracyDebugger/modulesBackup.sql" manually (via PHPMyAdmin, the command line, etc)</li></ul></p></legend><br />';
+                    $out .= '<legend><p>Temporarily disable autoload modules. Check to disable.</p><p><strong>Restore Instructions</strong><br />If your site is broken after disabling modules you can restore your modules by <strong>either one</strong> of the following methods:<ul><li>Copy "/site/assets/cache/TracyDebugger/restoremodules.php" to the root of your site and load <strong>'.htmlspecialchars($this->wire('config')->urls->httpRoot . 'restoremodules.php?key=' . TracyDebugger::restoreModulesKey(), ENT_QUOTES, 'UTF-8').'</strong> in your browser (keep a note of this URL; the copy deletes itself once it has restored the modules)<br /><strong>OR</strong></li><li>Execute "/site/assets/cache/TracyDebugger/modulesBackup.sql" manually (via PHPMyAdmin, the command line, etc)</li></ul></p></legend><br />';
                     $out .= '<label><input type="checkbox" id="tracyToggleAllModules" ' . (count($this->disabledModules) == count(TracyDebugger::$disabableModules) ? 'checked="checked"' : '') . ' /> Toggle All</label><br />';
                     foreach(TracyDebugger::$disabableModules as $name) {
                         $flags = $this->wire('modules')->getFlags($name);

@@ -65,7 +65,7 @@ class ProcesswireVersionPanel extends BasePanel {
                 }
                 else {
                     $out .= '
-                    <form method="post" action="'.TracyDebugger::inputUrl(true).'">
+                    <form method="post" action="'.htmlspecialchars(TracyDebugger::inputUrl(true), ENT_QUOTES, 'UTF-8').'">
                         <input type="hidden" name="'.htmlentities($this->wire('session')->CSRF->getTokenName()).'" value="'.htmlentities($this->wire('session')->CSRF->getTokenValue()).'" />
                         <select name="tracyPwVersion">';
                         foreach($this->versions as $version) {

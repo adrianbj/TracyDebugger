@@ -190,7 +190,8 @@ HTML;
          */
 
         // Config Data
-        if(in_array('configData', $panelSections)) {
+        // superusers (and local / switched users) only: $config holds the database password and salts
+        if(in_array('configData', $panelSections) && (TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser)) {
             $configData = $this->sectionHeader(array('Key', 'Value'));
             $config = $this->wire('config')->getArray();
             ksort($config);
@@ -203,7 +204,7 @@ HTML;
                 }
                 $options = array(Dumper::DEPTH => TracyDebugger::getDataValue('maxDepth'), Dumper::TRUNCATE => TracyDebugger::getDataValue('maxLength'), Dumper::ITEMS => TracyDebugger::getDataValue('maxItems'), Dumper::LIVE => true, Dumper::COLLAPSE => true);
                 if(defined('\Tracy\Dumper::ITEMS')) array_push($options, array(Dumper::ITEMS => TracyDebugger::getDataValue('maxItems')));
-                $value = Dumper::toHtml($value, $options);
+                $value = TracyDebugger::isSensitiveKey($key) || stripos((string) $key, 'salt') !== false ? '*****' : Dumper::toHtml($value, $options);
                 $configData .= "<tr><td>".$this->wire('sanitizer')->entities($key)."</td><td>" . $value . "</td></tr>";
             }
             $configData .= $this->sectionEnd();
@@ -409,7 +410,7 @@ HTML;
                     $linkTitle = 'Logout ('.$this->wire('user')->name.')';
                     $out .= '
                     <li ' . ($withLabels ? ' class="with-labels"' : '') . '>
-                        <a data-tracy-close="ProcesswireInfo" href="'.TracyDebugger::inputUrl(true) . (strpos(TracyDebugger::inputUrl(true), '?') !== false ? '&' : '?') . 'tracyLogout=1"'.(!$withLabels ? ' title="'.$linkTitle.'"' : '').'>
+                        <a data-tracy-close="ProcesswireInfo" href="'.TracyDebugger::actionUrl('tracyLogout').'"'.(!$withLabels ? ' title="'.$linkTitle.'"' : '').'>
                             <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
                                  width="16px" height="16px" viewBox="2.5 0 16 16" enable-background="new 2.5 0 16 16" xml:space="preserve">
                                 <g>
@@ -452,7 +453,7 @@ HTML;
                 $linkTitle = 'Clear Session, Cookies, & Modules Refresh';
                 $out .= '
                 <li ' . ($withLabels ? ' class="with-labels"' : '') . '>
-                    <a data-tracy-close="ProcesswireInfo" href="'.TracyDebugger::inputUrl(true) . (strpos(TracyDebugger::inputUrl(true), '?') !== false ? '&' : '?') . 'tracyClearSession=1"'.(!$withLabels ? ' title="'.$linkTitle.'"' : '').'>
+                    <a data-tracy-close="ProcesswireInfo" href="'.TracyDebugger::actionUrl('tracyClearSession').'"'.(!$withLabels ? ' title="'.$linkTitle.'"' : '').'>
                         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 16 16" enable-background="new 0 0 16 16" xml:space="preserve">
                             <path fill="'.TracyDebugger::COLOR_NORMAL.'" d="M15.747201,6.8416004h-1.9904003C13.2032013,3.5680001,10.3552008,1.072,6.9280005,1.072
                             C3.1040001,1.072,0.0032,4.1760001,0.0032,8s3.1008,6.9280005,6.9248004,6.9280005
@@ -468,7 +469,7 @@ HTML;
                 $linkTitle = 'Modules Refresh';
                 $out .= '
                 <li ' . ($withLabels ? ' class="with-labels"' : '') . '>
-                    <a data-tracy-close="ProcesswireInfo" href="'.TracyDebugger::inputUrl(true) . (strpos(TracyDebugger::inputUrl(true), '?') !== false ? '&' : '?') . 'tracyModulesRefresh=1"'.(!$withLabels ? ' title="'.$linkTitle.'"' : '').'>
+                    <a data-tracy-close="ProcesswireInfo" href="'.TracyDebugger::actionUrl('tracyModulesRefresh').'"'.(!$withLabels ? ' title="'.$linkTitle.'"' : '').'>
                         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="16px" height="16px" viewBox="888 888 16 16" enable-background="new 888 888 16 16" xml:space="preserve">
                             <path fill="'.TracyDebugger::COLOR_NORMAL.'" d="M903.7,897.7C903.7,897.7,903.7,897.7,903.7,897.7c-0.5,1.9-1.4,3.4-2.8,4.6s-3.1,1.7-5,1.7
                                 c-1,0-2-0.2-2.9-0.6c-0.9-0.4-1.8-0.9-2.5-1.6l-1.3,1.3c-0.1,0.1-0.3,0.2-0.5,0.2c-0.2,0-0.3-0.1-0.5-0.2c-0.1-0.1-0.2-0.3-0.2-0.5

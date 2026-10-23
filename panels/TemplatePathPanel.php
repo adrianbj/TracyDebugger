@@ -26,7 +26,7 @@ class TemplatePathPanel extends BasePanel {
                 $baseName = pathinfo($file, PATHINFO_BASENAME);
                 if(in_array($baseName, $templateFilenames) && $templateBasename != $baseName) continue;
                 if(strpos($file, '-'.TracyDebugger::getDataValue('userDevTemplateSuffix').'.'.$fileExt)) $userDevTemplateFiles++;
-                if(strpos($fileName, $this->wire('page')->template->name) !== false && strpos($fileName, '-tracytemp') === false) { // '-tracytemp' is extension from template editor panel
+                if(TracyDebugger::isAlternativeTemplateFile($baseName, $this->wire('page')->template)) {
                     $this->templateOptions .= '<option value="'.$file.'"'.(pathinfo($this->wire('page')->template->filename, PATHINFO_BASENAME) == $file ? 'selected="selected"' : '').'>'.$file.'</option>';
                 }
             }
