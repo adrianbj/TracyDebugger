@@ -22,7 +22,7 @@ class FileEditorPanel extends BasePanel {
         $path = str_replace('\\', '/', $cookiePath !== '' ? $cookiePath : $tplPath);
         $this->tracyFileEditorFilePath = ($path !== '' && $path[0] !== '/') ? '/' . $path : $path;
 
-        if(isset($_POST['tracyTestTemplateCode']) || $this->wire('input')->cookie->tracyTestFileEditor) {
+        if(isset($_POST['tracyTestTemplateCode']) || TracyDebugger::tokenCookie('tracyTestFileEditor')) {
             $iconColor = TracyDebugger::COLOR_ALERT;
         }
         else {

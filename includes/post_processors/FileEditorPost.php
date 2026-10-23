@@ -70,9 +70,10 @@
 
                                     if($this->wire('input')->post->tracyTestFileCode) {
                                         if(PHP_VERSION_ID >= 70300) {
-                                            setcookie('tracyTestFileEditor', $relPath, ['expires' => time() + (10 * 365 * 24 * 60 * 60), 'path' => '/', 'samesite' => 'Strict']);
+                                            // "<action token>|<path>", see TracyDebugger::tokenCookie()
+                                            setcookie('tracyTestFileEditor', $this->wire('session')->tracyActionToken . '|' . $relPath, ['expires' => time() + (10 * 365 * 24 * 60 * 60), 'path' => '/', 'samesite' => 'Strict']);
                                         } else {
-                                            setcookie('tracyTestFileEditor', $relPath, time() + (10 * 365 * 24 * 60 * 60), '/');
+                                            setcookie('tracyTestFileEditor', $this->wire('session')->tracyActionToken . '|' . $relPath, time() + (10 * 365 * 24 * 60 * 60), '/');
                                         }
                                     }
                                     $writeSucceeded = true;
@@ -98,7 +99,7 @@
                 // if file editor restore
                 if($this->wire('input')->post->tracyRestoreFileEditorBackup && $this->wire('session')->CSRF->validate()) {
                     $rootPath = str_replace('\\', '/', $this->wire('config')->paths->root);
-                    $editorPath = str_replace('\\', '/', (string) ($this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor));
+                    $editorPath = str_replace('\\', '/', (string) ($this->wire('input')->post->fileEditorFilePath ?: TracyDebugger::tokenCookie('tracyTestFileEditor')));
                     $this->filePath = str_replace('\\', '/', (string) realpath($rootPath . $editorPath));
                     if($this->filePath === '') {
                         $this->filePath = str_replace('\\', '/', (string) realpath($editorPath));

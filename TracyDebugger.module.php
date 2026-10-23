@@ -4375,9 +4375,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // if using Test mode in File Editor on regular files, then immediately replace loaded file with backed up version
         // this is here instead of ProcessWire::finished because this works if test version has fatal error
-        if(isset($_COOKIE['tracyTestFileEditor']) && (static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser)) {
+        // the cookie is "<action token>|<path>" (set by FileEditorPost.php), so one set by another subdomain of the
+        // site can't make this restore a backup over a file
+        $testFileEditorPath = static::tokenCookie('tracyTestFileEditor');
+        if($testFileEditorPath !== null && (static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser)) {
             $rootPath = str_replace('\\', '/', $this->wire('config')->paths->root);
-            $editorPath = str_replace('\\', '/', (string) ($this->wire('input')->post->fileEditorFilePath ?: $this->wire('input')->cookie->tracyTestFileEditor));
+            $editorPath = str_replace('\\', '/', (string) ($this->wire('input')->post->fileEditorFilePath ?: $testFileEditorPath));
             $resolvedFilePath = str_replace('\\', '/', (string) realpath($rootPath . $editorPath));
             if($resolvedFilePath === '') {
                 $resolvedFilePath = str_replace('\\', '/', (string) realpath($editorPath));
