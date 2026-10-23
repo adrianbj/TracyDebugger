@@ -2097,7 +2097,11 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 error_clear_last();
                 Debugger::$showBar = false;
             });
-            Debugger::enable($outputMode, $logFolder, $this->data['fromEmail'] != '' && $this->data['email'] != '' ? $this->data['email'] : null);
+            // Tracy only calls the mailer below when it has an email address, so with only Slack alerts set up
+            // the Slack channel stands in for one (the mailer doesn't use it)
+            $emailAlerts = $this->data['fromEmail'] != '' && $this->data['email'] != '';
+            $slackAlerts = $this->data['slackChannel'] != '' && $this->data['slackAppOauthToken'] != '';
+            Debugger::enable($outputMode, $logFolder, $emailAlerts ? $this->data['email'] : ($slackAlerts ? $this->data['slackChannel'] : null));
 
             // Tracy's production error page, with the CSP nonce on its <style> (unless the site has its own)
             if(!Debugger::$errorTemplate) Debugger::$errorTemplate = __DIR__ . '/includes/error.500.php';
@@ -2107,25 +2111,28 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 Debugger::getLogger()->mailer = null;
             }
             else {
-                Debugger::getLogger()->mailer = function($value) {
+                Debugger::getLogger()->mailer = function($value) use ($emailAlerts, $slackAlerts) {
 
                     $plainMessage = \Tracy\Logger::formatMessage($value);
-                    // escaped for the HTML email: exception messages can contain text from the request that caused them
-                    $message = nl2br(htmlspecialchars($plainMessage, ENT_QUOTES, 'UTF-8'));
 
-                    $m = $this->wire('mail')->new();
-                    $m->from($this->data['fromEmail']);
-                    foreach(explode("\n", trim($this->data['email'])) as $recipient) {
-                        $m->to(trim($recipient));
+                    if($emailAlerts) {
+                        // escaped for the HTML email: exception messages can contain text from the request that caused them
+                        $message = nl2br(htmlspecialchars($plainMessage, ENT_QUOTES, 'UTF-8'));
+
+                        $m = $this->wire('mail')->new();
+                        $m->from($this->data['fromEmail']);
+                        foreach(explode("\n", trim($this->data['email'])) as $recipient) {
+                            $m->to(trim($recipient));
+                        }
+                        $m->subject('Error on server: ' . $this->wire('config')->urls->httpRoot);
+                        $m->bodyHTML($message . "<br /><br />Remember to <a href='".$this->wire('config')->urls->httpAdmin."?clearEmailSent=1'>clear email sent flag</a> to receive future emails.");
+                        $m->send();
                     }
-                    $m->subject('Error on server: ' . $this->wire('config')->urls->httpRoot);
-                    $m->bodyHTML($message . "<br /><br />Remember to <a href='".$this->wire('config')->urls->httpAdmin."?clearEmailSent=1'>clear email sent flag</a> to receive future emails.");
-                    $m->send();
 
-                    if($this->data['slackChannel'] != '' && $this->data['slackAppOauthToken'] != '') {
+                    if($slackAlerts) {
                         require_once __DIR__ . '/includes/SlackLogger.php';
                         $slackLogger = new SlackLogger();
-                        $slackLogger->log(nl2br($plainMessage));
+                        $slackLogger->log($plainMessage);
                     }
 
                 };

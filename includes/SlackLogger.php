@@ -14,7 +14,9 @@ class SlackLogger {
             $icon = ':information_source:';
         }
 
-        $this->message($icon . ' ' . $message);
+        // Slack reads <...> as links and mentions (<!channel>, <https://...|text>), and exception messages can
+        // contain text from the request that caused them, so these are escaped as Slack's docs ask
+        $this->message($icon . ' ' . str_replace(array('&', '<', '>'), array('&amp;', '&lt;', '&gt;'), $message));
     }
 
     protected $endpointUrl = 'https://slack.com/api/';
