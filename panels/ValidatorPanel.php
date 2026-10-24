@@ -280,11 +280,6 @@ class ValidatorPanel extends BasePanel {
                     color: #222;
                 }
 
-                .extract {
-                    overflow: hidden;
-                    max-height: 5.5em;
-                }
-
                 .extract b,
                 .source b {
                     color: #000;
