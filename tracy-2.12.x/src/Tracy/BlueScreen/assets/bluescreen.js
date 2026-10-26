@@ -59,7 +59,8 @@ class BlueScreen {
 		if (ajaxBs) {
 			ajaxBs.remove();
 		}
-		document.body.insertAdjacentHTML('beforeend', content);
+		// TracyDebugger patch: Trusted Types (nette/tracy#624)
+		document.body.insertAdjacentHTML('beforeend', Tracy.trusted.html(content));
 		ajaxBs = document.getElementById('tracy-bs');
 		Tracy.Dumper.init(ajaxBs);
 		BlueScreen.init(true);

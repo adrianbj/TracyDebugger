@@ -335,7 +335,8 @@ function createEl(el, attrs, content) {
 	}
 
 	if (content && content.html !== undefined) {
-		el.innerHTML = content.html;
+		// TracyDebugger patch: Trusted Types (nette/tracy#624)
+		el.innerHTML = Tracy.trusted.html(content.html);
 		return el;
 	}
 

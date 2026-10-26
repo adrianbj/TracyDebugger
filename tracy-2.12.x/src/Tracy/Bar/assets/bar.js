@@ -41,7 +41,9 @@ class Panel {
 		let elem = this.elem;
 
 		this.init = function () {};
-		elem.innerHTML = elem.tracyContent = elem.dataset.tracyContent;
+		elem.tracyContent = elem.dataset.tracyContent;
+		// TracyDebugger patch: Trusted Types (nette/tracy#624)
+		elem.innerHTML = Tracy.trusted.html(elem.tracyContent);
 		delete elem.dataset.tracyContent;
 		Tracy.Dumper.init(Debug.layer);
 		evalScripts(elem);
@@ -164,16 +166,18 @@ class Panel {
 		doc.body.id = 'tracy-debug';
 
 		let script = doc.createElement('script');
-		script.src = baseUrl + '_tracy_bar=js&XDEBUG_SESSION_STOP=1';
+		// TracyDebugger patch: Trusted Types (nette/tracy#624)
+		script.src = Tracy.trusted.scriptURL(baseUrl + '_tracy_bar=js&XDEBUG_SESSION_STOP=1');
 		script.async = true;
 		script.addEventListener('load', () => win.Tracy.Dumper.init());
 		doc.head.appendChild(script);
 
 		let meta = this.elem.parentElement.lastElementChild;
-		doc.body.innerHTML = '<tracy-div itemscope>'
+		// TracyDebugger patch: Trusted Types (nette/tracy#624)
+		doc.body.innerHTML = Tracy.trusted.html('<tracy-div itemscope>'
 			+ '<div class="tracy-panel tracy-mode-window" id="' + this.elem.id + '">' + this.elem.tracyContent + '</div>'
 			+ meta.outerHTML
-			+ '</tracy-div>';
+			+ '</tracy-div>');
 		evalScripts(doc.body);
 		if (this.elem.querySelector('h1')) {
 			doc.title = this.elem.querySelector('h1').textContent;
@@ -405,7 +409,8 @@ class Debug {
 		Debug.panels = {};
 		Debug.layer = document.createElement('tracy-div');
 		Debug.layer.setAttribute('id', 'tracy-debug');
-		Debug.layer.innerHTML = content;
+		// TracyDebugger patch: Trusted Types (nette/tracy#624)
+		Debug.layer.innerHTML = Tracy.trusted.html(content);
 		(document.body || document.documentElement).appendChild(Debug.layer);
 		evalScripts(Debug.layer);
 		Debug.layer.style.display = 'block';
@@ -449,9 +454,11 @@ class Debug {
 			});
 		}
 
-		Debug.layer.insertAdjacentHTML('beforeend', content.panels);
+		// TracyDebugger patch: Trusted Types (nette/tracy#624)
+		Debug.layer.insertAdjacentHTML('beforeend', Tracy.trusted.html(content.panels));
 		evalScripts(Debug.layer);
-		Debug.bar.elem.insertAdjacentHTML('beforeend', content.bar);
+		// TracyDebugger patch: Trusted Types (nette/tracy#624)
+		Debug.bar.elem.insertAdjacentHTML('beforeend', Tracy.trusted.html(content.bar));
 		let ajaxBar = Debug.bar.elem.querySelector('.tracy-row:last-child');
 
 		Debug.layer.querySelectorAll('.tracy-panel').forEach((panel) => {
@@ -538,7 +545,8 @@ class Debug {
 			Debug.scriptElem.remove();
 		}
 		Debug.scriptElem = document.createElement('script');
-		Debug.scriptElem.src = url;
+		// TracyDebugger patch: Trusted Types (nette/tracy#624)
+		Debug.scriptElem.src = Tracy.trusted.scriptURL(url);
 		(document.body || document.documentElement).appendChild(Debug.scriptElem);
 	}
 }
@@ -549,7 +557,8 @@ function evalScripts(elem) {
 		if ((!script.hasAttribute('type') || script.type === 'text/javascript' || script.type === 'application/javascript') && !script.tracyEvaluated) {
 			let document = script.ownerDocument;
 			let dolly = document.createElement('script');
-			dolly.textContent = script.textContent;
+			// TracyDebugger patch: Trusted Types (nette/tracy#624)
+			dolly.textContent = Tracy.trusted.script(script.textContent);
 			(document.body || document.documentElement).appendChild(dolly);
 			dolly.remove();
 			script.tracyEvaluated = true;
