@@ -78,7 +78,7 @@ class EventInterceptorPanel extends BasePanel {
                 var eventCounts = document.getElementsByClassName("eventCount");
                 i=0;
                 while(i < eventCounts.length) {
-                    eventCounts[i].innerHTML="";
+                    eventCounts[i].textContent="";
                     i++;
                 }
             }
@@ -87,7 +87,7 @@ class EventInterceptorPanel extends BasePanel {
                 if(status === "remove") {
                     document.cookie = "eventInterceptorHook=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
                     document.getElementById("eventInterceptorHook").value = "";
-                    document.getElementById("eventHookLegend").innerHTML = "Enter an Event Hook (eg. PageRender::renderPage)";
+                    document.getElementById("eventHookLegend").textContent = "Enter an Event Hook (eg. PageRender::renderPage)";
                 }
                 else if(document.getElementById("eventInterceptorHook").value != "") {
                     var interceptEvent = {};
@@ -95,7 +95,13 @@ class EventInterceptorPanel extends BasePanel {
                     interceptEvent.when = document.getElementById("tracyEventWhenBefore").checked ? "before" : "after";
                     interceptEvent.return = document.getElementById("tracyEventReturnFalse").checked ? "false" : "default";
                     document.cookie = "eventInterceptorHook="+tracyEventCookieToken+"|"+JSON.stringify(interceptEvent)+"; expires=0; path=/";
-                    document.getElementById("eventHookLegend").innerHTML = "<strong>" + document.getElementById("eventInterceptorHook").value + "</strong> <em>" + interceptEvent.when + "</em> hook is set to return <em>" + interceptEvent.return + "</em>";
+                    var hookName = document.createElement("strong"), hookWhen = document.createElement("em"), hookReturn = document.createElement("em");
+                    hookName.textContent = interceptEvent.hook;
+                    hookWhen.textContent = interceptEvent.when;
+                    hookReturn.textContent = interceptEvent.return;
+                    var legend = document.getElementById("eventHookLegend");
+                    legend.textContent = "";
+                    legend.append(hookName, " ", hookWhen, " hook is set to return ", hookReturn);
                 }
 
                 if(status === "set") {

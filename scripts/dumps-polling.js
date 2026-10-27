@@ -104,7 +104,7 @@
         if(panel.dataset && panel.dataset.tracyContent) {
             var html = buildRecorderHtml(entries);
             var temp = document.createElement("div");
-            temp.innerHTML = panel.dataset.tracyContent;
+            temp.innerHTML = tracyTrusted.html(panel.dataset.tracyContent);
             var tempContainer = temp.querySelector("#tracyDumpsRecorderEntries");
             if(tempContainer) {
                 removeNoRecordsText(tempContainer);
@@ -114,13 +114,13 @@
                     tempItems.className = "dumpsrecorder-items";
                     tempContainer.appendChild(tempItems);
                 }
-                tempItems.innerHTML = html;
+                tempItems.innerHTML = tracyTrusted.html(html);
                 // ensure the Clear Dumps button is present in the cached HTML so it
                 // appears when the panel is opened (mirrors the DOM-side branch below)
                 if(entries.length > 0 && !temp.querySelector("#clearRecorderDumpsBtn")) {
                     var tempBtn = document.createElement("div");
                     tempBtn.style.cssText = "margin:10px 0 5px 0; text-align:right";
-                    tempBtn.innerHTML = '<input type="submit" id="clearRecorderDumpsBtn" value="Clear Dumps" />';
+                    tempBtn.innerHTML = tracyTrusted.html('<input type="submit" id="clearRecorderDumpsBtn" value="Clear Dumps" />');
                     tempContainer.parentNode.insertBefore(tempBtn, tempContainer.nextSibling);
                 }
             }
@@ -139,18 +139,18 @@
             }
 
             if(wasCleared || (firstSync && entries.length > 0)) {
-                itemsDiv.innerHTML = buildRecorderHtml(entries);
+                itemsDiv.innerHTML = tracyTrusted.html(buildRecorderHtml(entries));
                 if(window.Tracy && Tracy.Dumper) Tracy.Dumper.init(container);
             } else if(!firstSync && newEntries.length > 0) {
                 var newHtml = buildRecorderHtml(newEntries);
-                itemsDiv.insertAdjacentHTML('beforeend', newHtml);
+                itemsDiv.insertAdjacentHTML('beforeend', tracyTrusted.html(newHtml));
                 if(window.Tracy && Tracy.Dumper) Tracy.Dumper.init(itemsDiv);
             }
 
             if(!document.getElementById("clearRecorderDumpsBtn")) {
                 var btnDiv = document.createElement("div");
                 btnDiv.style.cssText = "margin:10px 0 5px 0; text-align:right";
-                btnDiv.innerHTML = '<input type="submit" id="clearRecorderDumpsBtn" value="Clear Dumps" />';
+                btnDiv.innerHTML = tracyTrusted.html('<input type="submit" id="clearRecorderDumpsBtn" value="Clear Dumps" />');
                 container.parentNode.insertBefore(btnDiv, container.nextSibling);
                 document.getElementById("clearRecorderDumpsBtn").addEventListener("click", function() { clearRecorderDumps(); });
             }

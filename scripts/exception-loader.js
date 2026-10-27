@@ -54,7 +54,7 @@ if(!tracyExceptionLoader) {
             var btn = panelEl.querySelector("#clearException");
             if(btn) btn.style = 'display: none !important';
             var title = panelEl.querySelector("#panelTitleFilePath");
-            if(title) title.innerHTML = '';
+            if(title) title.textContent = '';
             var bs = document.getElementById('tracy-bs');
             if(bs) {
                 while(bs.firstChild) bs.removeChild(bs.firstChild);
@@ -98,7 +98,7 @@ if(!tracyExceptionLoader) {
 
                             if(isBlueScreen) {
                                 var parser = new DOMParser();
-                                var doc = parser.parseFromString(fileData.contents, "text/html");
+                                var doc = parser.parseFromString(tracyTrusted.html(fileData.contents), "text/html");
                                 var styles = doc.querySelectorAll("style");
                                 var bsEl = doc.getElementById("tracy-bs");
                                 var bsContent = "";
@@ -107,7 +107,7 @@ if(!tracyExceptionLoader) {
 
                                 if(typeof tracyFileEditorLoader !== "undefined" && bsEl) {
                                     var tempDiv = document.createElement("div");
-                                    tempDiv.innerHTML = bsContent;
+                                    tempDiv.innerHTML = tracyTrusted.html(bsContent);
                                     tempDiv.querySelectorAll("a.tracy-editor").forEach(function(a) {
                                         var href = a.getAttribute("href");
                                         if(!href || href.indexOf("tracy://") === 0) return;

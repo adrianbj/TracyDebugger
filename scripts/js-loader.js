@@ -5,7 +5,7 @@ if(!tracyJSLoader) {
         load: function(src, callback) {
             var script = document.createElement("script"),
                     loaded;
-            script.setAttribute("src", src);
+            script.src = tracyTrusted.scriptURL(src);
             if(callback) {
                 script.onreadystatechange = script.onload = function() {
                     if(!loaded) {

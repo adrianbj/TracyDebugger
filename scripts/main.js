@@ -1,3 +1,12 @@
+// Pages that enforce Trusted Types (require-trusted-types-for 'script') refuse plain strings at innerHTML, script
+// text, and script URLs. TracyDebugger's own markup goes through Tracy's 'tracy' policy where the bundled core has
+// one, and stays a plain string otherwise.
+window.tracyTrusted = (window.Tracy && Tracy.trusted) || {
+    html: function(s) { return s; },
+    script: function(s) { return s; },
+    scriptURL: function(s) { return s; }
+};
+
 // Panel markup can contain <style> elements without a nonce, and Tracy inserts it with innerHTML,
 // so a CSP without 'unsafe-inline' blocks them. Add the bar script's nonce to them before Tracy
 // inserts the markup: the initial panels, AJAX and redirect bars, and lazily loaded panels.
@@ -8,7 +17,7 @@
     function addNonces(html) {
         if(typeof html !== 'string' || html.indexOf('<style') === -1) return html;
         var el = document.createElement('div');
-        el.innerHTML = html;
+        el.innerHTML = tracyTrusted.html(html);
         el.querySelectorAll('style').forEach(function(style) {
             style.setAttribute('nonce', nonce);
         });
@@ -485,7 +494,7 @@ function tracyDumpsToggler(el, show) {
         var icon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
         var bar = document.createElement('div');
         bar.className = 'tracy-md-copy-all-bar' + (extraClass ? ' ' + extraClass : '');
-        bar.innerHTML = '<button type="button" data-tracy-md-copy-all' + (pageScoped ? ' data-tracy-page-dumps' : '') + ' class="tracy-md-copy-all-btn" title="Copy all dumps as plaintext for an AI agent">' + icon + '<span>Copy all</span></button>';
+        bar.innerHTML = tracyTrusted.html('<button type="button" data-tracy-md-copy-all' + (pageScoped ? ' data-tracy-page-dumps' : '') + ' class="tracy-md-copy-all-btn" title="Copy all dumps as plaintext for an AI agent">' + icon + '<span>Copy all</span></button>');
         return bar;
     }
 
@@ -538,7 +547,7 @@ function tracyDumpsToggler(el, show) {
         btn.className = 'tracy-md-copy-btn';
         btn.style.cssText = 'position:absolute;top:6px;right:8px;padding:0;line-height:0;cursor:pointer;background:transparent;border:0;color:#888;opacity:0.6;z-index:1;';
         btn.title = 'Copy this output as plaintext for an AI agent';
-        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
+        btn.innerHTML = tracyTrusted.html('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>');
         wrap.appendChild(btn);
         var text = '';
         for(var i = 0; i < group.length; i++) {
@@ -548,7 +557,7 @@ function tracyDumpsToggler(el, show) {
         var src = document.createElement('script');
         src.type = 'application/json';
         src.setAttribute('data-tracy-md-source', '');
-        src.textContent = JSON.stringify(text.trim());
+        src.textContent = tracyTrusted.script(JSON.stringify(text.trim()));
         wrap.appendChild(src);
     }
 

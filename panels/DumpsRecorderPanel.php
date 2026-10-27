@@ -84,7 +84,7 @@ class DumpsRecorderPanel extends BasePanel {
                 var dumpsRecorderCounts = document.getElementsByClassName("dumpsRecorderCount");
                 i=0;
                 while(i < dumpsRecorderCounts.length) {
-                    dumpsRecorderCounts[i].innerHTML="";
+                    dumpsRecorderCounts[i].textContent="";
                     i++;
                 }
 

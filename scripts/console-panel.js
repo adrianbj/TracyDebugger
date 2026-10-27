@@ -441,8 +441,8 @@ Object.assign(tracyConsole, {
             clearResults: async function() {
                 const resultsDiv = document.getElementById("tracyConsoleResult");
                 const statusDiv = document.getElementById("tracyConsoleStatus");
-                if (resultsDiv) resultsDiv.innerHTML = "";
-                if (statusDiv) statusDiv.innerHTML = "";
+                if (resultsDiv) resultsDiv.textContent = "";
+                if (statusDiv) statusDiv.textContent = "";
                 this._rawResultHtml = '';
 
                 // Update only the result field of the current tab.
@@ -464,7 +464,7 @@ Object.assign(tracyConsole, {
                 const code = this.tce.getSelectedText() || this.tce.getValue();
                 const statusDiv = document.getElementById("tracyConsoleStatus");
                 if (statusDiv) {
-                    statusDiv.innerHTML = "<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> Processing";
+                    statusDiv.innerHTML = tracyTrusted.html("<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> Processing");
                 }
                 const codeReturn = this.getCookie('tracyIncludeCode') ? false : true;
                 /* disable Run synchronously — callPhp normally does this, but it now
@@ -487,7 +487,7 @@ Object.assign(tracyConsole, {
                     if (snippetName) {
                         const statusDiv = document.getElementById("tracyConsoleStatus");
                         if (statusDiv) {
-                            statusDiv.innerHTML = "<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> Processing";
+                            statusDiv.innerHTML = tracyTrusted.html("<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> Processing");
                         }
                         this.reloadSnippet(true);
                     }
@@ -538,7 +538,7 @@ Object.assign(tracyConsole, {
                     if (mainContainer) mainContainer.style.width = "calc(100% - 290px)";
                     if (snippetPaneToggle) snippetPaneToggle.style.right = "-290px";
                     if (snippetsContainer) snippetsContainer.classList.remove('tracyHidden');
-                    if (snippetPaneToggle) snippetPaneToggle.innerHTML = "&#xf054;";
+                    if (snippetPaneToggle) snippetPaneToggle.textContent = "\uf054";
                 }
                 else {
                     const expires = new Date();
@@ -550,7 +550,7 @@ Object.assign(tracyConsole, {
                     if (mainContainer) mainContainer.style.width = "100%";
                     if (snippetPaneToggle) snippetPaneToggle.style.right = "0";
                     if (snippetsContainer) snippetsContainer.classList.add('tracyHidden');
-                    if (snippetPaneToggle) snippetPaneToggle.innerHTML = "&#xf053;";
+                    if (snippetPaneToggle) snippetPaneToggle.textContent = "\uf053";
                 }
             },
 
@@ -596,10 +596,7 @@ Object.assign(tracyConsole, {
             renderRunningStatus: function(runId, timeStr) {
                 return "<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> "
                      + "Running... " + timeStr
-                     + " <a href='#' title='Cancel running script' "
-                     + "onclick='event.preventDefault(); tracyConsole.cancelRun(\"" + runId + "\");' "
-                     + "onmouseover='this.style.opacity=\"0.7\"' "
-                     + "onmouseout='this.style.opacity=\"1\"' "
+                     + " <a href='#' title='Cancel running script' data-cancel-run='" + runId + "' "
                      + "style='margin-left:6px; color:#e22006 !important; text-decoration:none !important; font-family: FontAwesome !important' "
                      + "class='fa fa-times-circle'></a>";
             },
@@ -643,7 +640,7 @@ Object.assign(tracyConsole, {
                 }
                 if(!tabClosing && tabId !== null && tabId === tracyConsole.currentTabId) {
                     var initialStatusDiv = document.getElementById("tracyConsoleStatus");
-                    if(initialStatusDiv) initialStatusDiv.innerHTML = "<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> Cancelling...";
+                    if(initialStatusDiv) initialStatusDiv.innerHTML = tracyTrusted.html("<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> Cancelling...");
                 }
                 if(tabId === null && !tracyConsole.runs[tracyConsole.currentTabId]) {
                     /* stale cancel: the run already delivered and its registry entry is
@@ -652,7 +649,7 @@ Object.assign(tracyConsole, {
                        send the server kill below in case the process is genuinely alive. */
                     tracyConsole.stopStatusTimer();
                     var staleStatusDiv = document.getElementById("tracyConsoleStatus");
-                    if(staleStatusDiv) staleStatusDiv.innerHTML = "✘ Cancelled";
+                    if(staleStatusDiv) staleStatusDiv.textContent = "✘ Cancelled";
                     tracyConsole.setRunButtonEnabled(true);
                 }
                 var xhr = new XMLHttpRequest();
@@ -678,7 +675,7 @@ Object.assign(tracyConsole, {
                     }
                     if(!tabClosing && tabId !== null && tabId === tracyConsole.currentTabId) {
                         var statusDiv = document.getElementById("tracyConsoleStatus");
-                        if(statusDiv) statusDiv.innerHTML = killed ? "✘ Cancelled" : "✘ Cancelled (process may still be running)";
+                        if(statusDiv) statusDiv.textContent = killed ? "✘ Cancelled" : "✘ Cancelled (process may still be running)";
                     }
                 };
                 xhr.open("POST", tracyConsole.currentUrl, true);
@@ -707,7 +704,7 @@ Object.assign(tracyConsole, {
                 }
                 tracyConsole.stopStatusTimer();
                 var statusDiv = document.getElementById("tracyConsoleStatus");
-                if(statusDiv) statusDiv.innerHTML = "<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> Force-killing all runs...";
+                if(statusDiv) statusDiv.innerHTML = tracyTrusted.html("<span style='font-family: FontAwesome !important' class='fa fa-spinner fa-spin'></span> Force-killing all runs...");
                 var xhr = new XMLHttpRequest();
                 xhr.onreadystatechange = function() {
                     if(xhr.readyState !== XMLHttpRequest.DONE) return;
@@ -724,9 +721,9 @@ Object.assign(tracyConsole, {
                             var parts = [];
                             if(live > 0) parts.push("killed " + live + " live run" + (live === 1 ? "" : "s"));
                             if(stale > 0) parts.push("swept " + stale + " stale leftover" + (stale === 1 ? "" : "s"));
-                            statusDiv.innerHTML = "✘ " + (parts.length ? parts.join(", ") : "nothing to clear");
+                            statusDiv.textContent = "✘ " + (parts.length ? parts.join(", ") : "nothing to clear");
                         } else {
-                            statusDiv.innerHTML = "✘ Force-kill failed (HTTP " + xhr.status + ")";
+                            statusDiv.textContent = "✘ Force-kill failed (HTTP " + xhr.status + ")";
                         }
                     }
                     for(var k in tracyConsole.runs) {
@@ -865,7 +862,7 @@ Object.assign(tracyConsole, {
                                though pollForResults stopped it at delivery time */
                             tracyConsole.stopStatusTimer();
                             var statusDiv = document.getElementById("tracyConsoleStatus");
-                            if(statusDiv) statusDiv.innerHTML = status === 'error' ? "✘ Error" : "✔ Executed";
+                            if(statusDiv) statusDiv.textContent = status === 'error' ? "✘ Error" : "✔ Executed";
                         }
                         delete tracyConsole.runs[tabId];
                         tracyConsole.setTabRunning(tabId, false);
@@ -1030,7 +1027,7 @@ Object.assign(tracyConsole, {
                 var resultsDiv = tabId === this.currentTabId ? document.getElementById("tracyConsoleResult") : null;
                 if(resultsDiv) {
                     this._rawResultHtml = (this._rawResultHtml || "") + html;
-                    resultsDiv.insertAdjacentHTML("beforeend", html);
+                    resultsDiv.insertAdjacentHTML("beforeend", tracyTrusted.html(html));
                     if(window.Tracy && Tracy.Dumper) Tracy.Dumper.init(resultsDiv);
                     if(window.tracyEnsureConsoleCopyAll) window.tracyEnsureConsoleCopyAll();
                     try {
@@ -1094,7 +1091,7 @@ Object.assign(tracyConsole, {
                     var secs = elapsed % 60;
                     var timeStr = mins > 0 ? mins + 'm ' + secs + 's' : secs + 's';
                     var sd = document.getElementById("tracyConsoleStatus");
-                    if(sd) sd.innerHTML = tracyConsole.renderRunningStatus(run.runId, timeStr);
+                    if(sd) sd.innerHTML = tracyTrusted.html(tracyConsole.renderRunningStatus(run.runId, timeStr));
                 };
                 paint();
                 tracyConsole._bgTimer = setInterval(paint, 1000);
@@ -1162,7 +1159,7 @@ Object.assign(tracyConsole, {
                                typing. The rest of the panel scrolls once, at delivery. */
                             var pane = el.parentNode;
                             var atBottom = pane && (pane.scrollHeight - pane.scrollTop - pane.clientHeight) < 40;
-                            el.insertAdjacentHTML("beforeend", chunk);
+                            el.insertAdjacentHTML("beforeend", tracyTrusted.html(chunk));
                             if(window.Tracy && Tracy.Dumper) Tracy.Dumper.init(el);
                             if(atBottom && pane) pane.scrollTop = pane.scrollHeight;
                         }
@@ -1342,7 +1339,7 @@ Object.assign(tracyConsole, {
                         if(originTabId === tracyConsole.currentTabId) {
                             const statusDiv = document.getElementById("tracyConsoleStatus");
                             if (statusDiv) {
-                                statusDiv.innerHTML = "✔ " + (codeReturn ? "Executed" : "Injected @ " + escapeHtml(JSON.parse(tracyConsole.getCookie('tracyIncludeCode').replace(/^[^|]*\|/, '')).when));
+                                statusDiv.textContent = "✔ " + (codeReturn ? "Executed" : "Injected @ " + JSON.parse(tracyConsole.getCookie('tracyIncludeCode').replace(/^[^|]*\|/, '')).when);
                             }
                         }
                         /* deliver the result even when the panel DOM is not present (panel
@@ -1605,7 +1602,7 @@ Object.assign(tracyConsole, {
                 }
 
                 // Replace previous content and (re)attach a single delegated listener.
-                tracySnippets.innerHTML = '';
+                tracySnippets.textContent = '';
                 tracySnippets.appendChild(ul);
 
                 // Remove any previous delegated listener before adding a new one.
@@ -1638,7 +1635,7 @@ Object.assign(tracyConsole, {
                 editSpan.classList.add('consoleSnippetIcon', 'consoleEditIcon');
                 editSpan.style.fontFamily = 'FontAwesome';
                 const safeEditorLink = this.externalEditorLink.replace('ExternalEditorDummyFile', encodeURIComponent(obj.name));
-                editSpan.innerHTML = safeEditorLink;
+                editSpan.innerHTML = tracyTrusted.html(safeEditorLink);
                 li.appendChild(editSpan);
 
                 // Delete icon — uses data-snippet-name, wired via delegation
@@ -1647,7 +1644,7 @@ Object.assign(tracyConsole, {
                 deleteSpan.style.fontFamily = 'FontAwesome';
                 deleteSpan.title = 'Delete snippet';
                 deleteSpan.dataset.snippetName = obj.name;
-                deleteSpan.innerHTML = '&#xf1f8;';
+                deleteSpan.textContent = '\uf1f8';
                 li.appendChild(deleteSpan);
 
                 // Name label — uses data-snippet-name, wired via delegation
@@ -1733,7 +1730,7 @@ Object.assign(tracyConsole, {
                     vals.reverse();
                 }
 
-                ul.innerHTML = '';
+                ul.textContent = '';
                 for (let i = 0, l = vals.length; i < l; i++) {
                     ul.appendChild(vals[i]);
                 }
@@ -2066,7 +2063,7 @@ Object.assign(tracyConsole, {
                 const resultsDiv = document.getElementById("tracyConsoleResult");
                 if (resultsDiv) {
                     this._rawResultHtml = tab && tab.result ? tab.result : '';
-                    resultsDiv.innerHTML = this._rawResultHtml;
+                    resultsDiv.innerHTML = tracyTrusted.html(this._rawResultHtml);
                     if (window.Tracy && Tracy.Dumper) Tracy.Dumper.init(resultsDiv);
                     if (window.tracyEnsureConsoleCopyAll) window.tracyEnsureConsoleCopyAll();
                 }
@@ -2081,7 +2078,7 @@ Object.assign(tracyConsole, {
                     this.startStream(this.runs[tabId].runId, tabId);
                 } else {
                     this.stopStatusTimer();
-                    if(statusDiv) statusDiv.innerHTML = '';
+                    if(statusDiv) statusDiv.textContent = '';
                 }
                 this.setRunButtonEnabled(true);
                 this.setSelectedTabId(this.currentTabId);
@@ -2123,7 +2120,7 @@ Object.assign(tracyConsole, {
                     }
                     this.buildTab(tabId, name);
                     const resultsDiv = document.getElementById("tracyConsoleResult");
-                    if (resultsDiv) resultsDiv.innerHTML = '';
+                    if (resultsDiv) resultsDiv.textContent = '';
                     this._rawResultHtml = '';
 
                     // Persist the new tab skeleton to DB before switching to it.
@@ -2439,6 +2436,19 @@ Object.assign(tracyConsole, {
                         tracyConsole.addTabButton.addEventListener("click", addTabHandler);
                         listenerMap.set(tracyConsole.addTabButton, { click: addTabHandler });
                     }
+
+                    // the status line's cancel link, delegated: a CSP without 'unsafe-inline' blocks inline handlers
+                    const consoleStatusDiv = document.getElementById("tracyConsoleStatus");
+                    if (consoleStatusDiv) {
+                        const cancelRunHandler = function(e) {
+                            const link = e.target.closest('[data-cancel-run]');
+                            if (!link) return;
+                            e.preventDefault();
+                            tracyConsole.cancelRun(link.dataset.cancelRun);
+                        };
+                        consoleStatusDiv.addEventListener("click", cancelRunHandler);
+                        listenerMap.set(consoleStatusDiv, { click: cancelRunHandler });
+                    }
                     let draggedTab = null;
                     if (tracyConsole.tabsContainer) {
                         const dragStartHandler = function(e) {
@@ -2679,7 +2689,7 @@ Object.assign(tracyConsole, {
                     tracyConsole.resizeAce();
 
                     const toggleFullscreenButton = document.createElement('div');
-                    toggleFullscreenButton.innerHTML = '<span class="fullscreenToggleButton" title="Toggle fullscreen">' + tracyConsole.maximizeSvg + '</span>';
+                    toggleFullscreenButton.innerHTML = tracyTrusted.html('<span class="fullscreenToggleButton" title="Toggle fullscreen">' + tracyConsole.maximizeSvg + '</span>');
                     const aceGutter = document.getElementById("tracyConsoleContainer").querySelector('.ace_gutter');
                     if (aceGutter) aceGutter.prepend(toggleFullscreenButton);
                     toggleFullscreenButton.querySelector('.fullscreenToggleButton').addEventListener('click', function() { tracyConsole.toggleFullscreen(); });

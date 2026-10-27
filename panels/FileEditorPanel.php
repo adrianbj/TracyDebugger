@@ -172,7 +172,7 @@ class FileEditorPanel extends BasePanel {
                     document.cookie = "tracyFileEditorFilePath=" + encodeURIComponent(document.getElementById('fileEditorFilePath').value) + "; path=/";
 
                     // doing btoa because if code contains <script>, browsers are failing with ERR_BLOCKED_BY_XSS_AUDITOR
-                    document.getElementById("tracyFileEditorRawCode").innerHTML = btoa(unescape(encodeURIComponent(tracyFileEditor.tfe.getValue())));
+                    document.getElementById("tracyFileEditorRawCode").textContent = btoa(unescape(encodeURIComponent(tracyFileEditor.tfe.getValue())));
                 },
 
                 isDirty: function() {
@@ -416,7 +416,7 @@ class FileEditorPanel extends BasePanel {
 
                         // create and append toggle fullscreen/restore buttons
                         var toggleFullscreenButton = document.createElement('div');
-                        toggleFullscreenButton.innerHTML = '<span class="fullscreenToggleButton" title="Toggle fullscreen">$maximizeSvg</span>';
+                        toggleFullscreenButton.innerHTML = tracyTrusted.html('<span class="fullscreenToggleButton" title="Toggle fullscreen">$maximizeSvg</span>');
                         document.getElementById("tracyFileEditorContainer").querySelector('.ace_gutter').prepend(toggleFullscreenButton);
                         toggleFullscreenButton.querySelector('.fullscreenToggleButton').addEventListener('click', function() { tracyFileEditor.toggleFullscreen(); });
 

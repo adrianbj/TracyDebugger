@@ -1675,7 +1675,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                                             var content = panelContent(tab);
                                             if(content === null) return;
                                             var holder = document.createElement("div");
-                                            holder.innerHTML = content;
+                                            holder.innerHTML = tracyTrusted.html(content);
                                             var rows = holder.querySelectorAll("pre");
                                             if(!rows.length) return;
                                             var allDeprecations = true;

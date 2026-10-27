@@ -480,9 +480,9 @@
 
                 if (text) {
                     if (typeof text === "function") {
-                        $display.el.innerHTML = $displays[i].text.call(self);
+                        $display.el.innerHTML = tracyTrusted.html($displays[i].text.call(self));
                     } else {
-                        $display.el.innerHTML = text;
+                        $display.el.innerHTML = tracyTrusted.html(text);
                     }
                 }
 
@@ -519,7 +519,7 @@
 
                 $label = document.createElement("label");
                 $label.setAttribute("for", id);
-                $label.innerHTML = label;
+                $label.innerHTML = tracyTrusted.html(label);
 
                 $input.id || $input.setAttribute("id", id);
 

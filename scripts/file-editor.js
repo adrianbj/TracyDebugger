@@ -92,29 +92,31 @@ if(!tracyFileEditorLoader) {
             if(typeof fileData === 'undefined') return;
 
             var fileEditorButtons = document.getElementById("fileEditorButtons");
+            var buttons;
 
             if(fileData["writeable"]) {
                 if(fileData["isTemplateFile"]) {
-                    fileEditorButtons.innerHTML =
+                    buttons =
                         this.createButton('tracyTestTemplateCode', 'Test', true) +
                         this.createButton('tracyChangeTemplateCode', 'Save', true);
                 }
                 else {
-                    fileEditorButtons.innerHTML =
+                    buttons =
                         this.createButton('tracyTestFileCode', 'Test', true) +
                         this.createButton('tracySaveFileCode', 'Save', true);
                 }
 
                 if(this.getCookie('tracyTestFileEditor') || fileData["isTemplateTest"]) {
-                    fileEditorButtons.innerHTML += this.createButton('tracyResetTemplateCode', 'Reset', false);
+                    buttons += this.createButton('tracyResetTemplateCode', 'Reset', false);
                 }
                 else if(fileData["backupExists"]) {
-                    fileEditorButtons.innerHTML +=
+                    buttons +=
                         this.createButton('tracyRestoreFileEditorBackup', 'Restore Backup', false);
                 }
+                fileEditorButtons.innerHTML = tracyTrusted.html(buttons);
             }
             else {
-                fileEditorButtons.innerHTML = "File is not writeable";
+                fileEditorButtons.textContent = "File is not writeable";
             }
         },
 

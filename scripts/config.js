@@ -92,7 +92,11 @@
         links.forEach(function(link) {
             var label = link.querySelector('label');
             var li = document.createElement('li');
-            li.innerHTML = '<a class="label" href="#' + link.id + '">' + (label ? label.textContent : '') + '</a>';
+            var a = document.createElement('a');
+            a.className = 'label';
+            a.href = '#' + link.id;
+            a.textContent = label ? label.textContent : '';
+            li.appendChild(a);
             linksList.appendChild(li);
         });
         var quickLinks = document.getElementById('tracy-quick-links');
