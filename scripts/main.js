@@ -7,6 +7,15 @@ window.tracyTrusted = (window.Tracy && Tracy.trusted) || {
     scriptURL: function(s) { return s; }
 };
 
+// Panels aren't laid out for a window of their own, so styles.css hides the button that opens one. Tracy also opens
+// one on Shift+click of a bar tab, and reopens one where a panel was last left in a window; refusing here makes
+// Tracy float the panel instead in both cases.
+if(window.Tracy && Tracy.DebugPanel) {
+    Tracy.DebugPanel.prototype.toWindow = function() {
+        return false;
+    };
+}
+
 // Panel markup can contain <style> elements without a nonce, and Tracy inserts it with innerHTML,
 // so a CSP without 'unsafe-inline' blocks them. Add the bar script's nonce to them before Tracy
 // inserts the markup: the initial panels, AJAX and redirect bars, and lazily loaded panels.
@@ -45,30 +54,6 @@ window.tracyTrusted = (window.Tracy && Tracy.trusted) || {
         }
         return panelInit.apply(this, arguments);
     };
-
-    // a panel opened in its own window loads the bar script there, which reads the nonce for
-    // Tracy's CSS from its own script element; give that element the nonce before it runs
-    var toWindow = Tracy.DebugPanel.prototype.toWindow;
-    if(toWindow) {
-        Tracy.DebugPanel.prototype.toWindow = function() {
-            var open = window.open, popup = null;
-            window.open = function() {
-                popup = open.apply(window, arguments);
-                return popup;
-            };
-            try {
-                return toWindow.apply(this, arguments);
-            }
-            finally {
-                window.open = open;
-                if(popup && popup.document) {
-                    popup.document.querySelectorAll('script[src*="_tracy_bar=js"]').forEach(function(script) {
-                        script.setAttribute('nonce', nonce);
-                    });
-                }
-            }
-        };
-    }
 
     // the BlueScreen for an AJAX request, a redirect, or the Tracy Exceptions panel
     if(Tracy.BlueScreen && Tracy.BlueScreen.loadAjax) {
