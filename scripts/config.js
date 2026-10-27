@@ -39,7 +39,16 @@
         editor.resize();
     }
 
+    // Ace loads its extensions itself: version their URLs the way ace.js was (ace.1792537113.js or ace.js?v=5.1.6,
+    // see TracyDebugger::assetUrl()), so a CDN serves an update's copies
+    function versionAceModules() {
+        var script = document.querySelector('script[src*="/ace-editor/ace."]');
+        var version = script && /\/ace(\.\d{10,})?\.js(\?[^#]*)?$/.exec(script.src);
+        if(version) ace.config.set("suffix", (version[1] || "") + ".js" + (version[2] || ""));
+    }
+
     function initAceEditor(options) {
+        versionAceModules();
         var textarea = options.textarea;
         textarea.style.display = 'none';
         var container = makeContainer(textarea);

@@ -82,6 +82,10 @@ class FileEditorPanel extends BasePanel {
 
         $codeUseSoftTabs = TracyDebugger::getDataValue('codeUseSoftTabs');
         $codeShowInvisibles = TracyDebugger::getDataValue('codeShowInvisibles');
+        $aceUrl = TracyDebugger::assetUrl('scripts/ace-editor/ace.js');
+        $codeSnippetsUrl = TracyDebugger::assetUrl('scripts/code-snippets.js');
+        $filterboxUrl = TracyDebugger::assetUrl('scripts/filterbox/filterbox.js');
+        $fileEditorSearchUrl = TracyDebugger::assetUrl('scripts/file-editor-search.js');
         $codeTabSize = TracyDebugger::getDataValue('codeTabSize');
         $customSnippetsUrl = TracyDebugger::getDataValue('customSnippetsUrl');
 
@@ -270,7 +274,7 @@ class FileEditorPanel extends BasePanel {
 
             };
 
-            tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/ace-editor/ace.js", function() {
+            tracyJSLoader.load("$aceUrl", function() {
                 if(typeof ace !== "undefined") {
                     tracyFileEditor.tfe = ace.edit("tracyFileEditorCode");
                     tracyFileEditor.lineHeight = tracyFileEditor.codeLineHeight;
@@ -319,7 +323,7 @@ class FileEditorPanel extends BasePanel {
                     tracyFileEditor.tfe.setTheme("ace/theme/" + tracyFileEditor.aceTheme);
 
                     // set mode appropriately
-                    tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/ace-editor/ext-modelist.js", function() {
+                    ace.config.loadModule("ace/ext/modelist", function() {
                         tracyFileEditor.modelist = ace.require("ace/ext/modelist");
                         tracyFileEditor.mode = tracyFileEditor.modelist.getModeForPath(tracyFileEditor.tracyFileEditorFilePath).mode;
                         tracyFileEditor.tfe.session.setMode(tracyFileEditor.mode);
@@ -369,7 +373,7 @@ class FileEditorPanel extends BasePanel {
                             }
 
                             // included PW snippets
-                            tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/code-snippets.js", function() {
+                            tracyJSLoader.load("$codeSnippetsUrl", function() {
                                 tracyFileEditor.snippetManager = ace.require("ace/snippets").snippetManager;
                                 tracyFileEditor.snippetManager.register(getCodeSnippets(), tracyFileEditor.mode.replace('ace/mode/', ''));
 
@@ -467,8 +471,8 @@ class FileEditorPanel extends BasePanel {
             });
 
             tracyFileEditorLoader.generateButtons($tracyFileEditorFileData);
-            tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/filterbox/filterbox.js", function() {
-                tracyJSLoader.load(tracyFileEditor.tracyModuleUrl + "scripts/file-editor-search.js");
+            tracyJSLoader.load("$filterboxUrl", function() {
+                tracyJSLoader.load("$fileEditorSearchUrl");
             });
 
             document.cookie = "tracyTestFileEditor=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";

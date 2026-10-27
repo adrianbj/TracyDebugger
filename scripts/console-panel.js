@@ -1466,7 +1466,7 @@ Object.assign(tracyConsole, {
 
                                 if (process) tracyConsole.processTracyCode();
 
-                                tracyJSLoader.load(tracyConsole.tracyModuleUrl + "scripts/ace-editor/ext-modelist.js", function() {
+                                ace.config.loadModule("ace/ext/modelist", function() {
                                     tracyConsole.modelist = ace.require("ace/ext/modelist");
                                     let mode = tracyConsole.modelist.getModeForPath(tracyConsole.rootPath + tracyConsole.snippetsPath + name).mode;
 
@@ -2394,12 +2394,12 @@ Object.assign(tracyConsole, {
 
 
         const loadSplitJs = () => new Promise(resolve => {
-            tracyJSLoader.load(tracyConsole.tracyModuleUrl + "/scripts/splitjs/split.min.js", function() {
+            tracyJSLoader.load(tracyConsole.splitUrl, function() {
                 resolve();
             });
         });
 
-        tracyJSLoader.load(tracyConsole.tracyModuleUrl + "scripts/ace-editor/ace.js", function() {
+        tracyJSLoader.load(tracyConsole.aceUrl, function() {
             if (typeof ace !== "undefined") {
                 tracyConsole.tce = ace.edit("tracyConsoleEditor");
                 tracyConsole.tce.container.style.lineHeight = tracyConsole.lineHeight + 'px';
@@ -2650,7 +2650,7 @@ Object.assign(tracyConsole, {
                     }
 
                     tracyConsole.snippetManager = ace.require("ace/snippets").snippetManager;
-                    tracyJSLoader.load(tracyConsole.tracyModuleUrl + "scripts/code-snippets.js", function() {
+                    tracyJSLoader.load(tracyConsole.codeSnippetsUrl, function() {
                         tracyConsole.snippetManager.register(getCodeSnippets(), "php-inline");
                         if (tracyConsole.customSnippetsUrl !== '') {
                             tracyJSLoader.load(tracyConsole.customSnippetsUrl, function() {

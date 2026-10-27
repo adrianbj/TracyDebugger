@@ -91,12 +91,13 @@ class UserSwitcherPanel extends BasePanel {
                         }
 
                         if(count($selectableUsers) > 10) {
-                            $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
+                            $filterboxUrl = TracyDebugger::assetUrl('scripts/filterbox/filterbox.js');
+                            $searchUrl = TracyDebugger::assetUrl('scripts/user-switcher-search.js');
                             $nonceAttr = TracyDebugger::getNonceAttr();
                             $out .= <<< HTML
                                 <script{$nonceAttr}>
-                                    tracyJSLoader.load("{$tracyModuleUrl}scripts/filterbox/filterbox.js", function() {
-                                        tracyJSLoader.load("{$tracyModuleUrl}scripts/user-switcher-search.js");
+                                    tracyJSLoader.load("$filterboxUrl", function() {
+                                        tracyJSLoader.load("$searchUrl");
                                     });
                                 </script>
 HTML;

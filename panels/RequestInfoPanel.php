@@ -858,11 +858,11 @@ class RequestInfoPanel extends BasePanel {
 
 
         // Load all the panel sections
-        $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
+        $fileEditorUrl = TracyDebugger::assetUrl('scripts/file-editor.js');
         $nonceAttr = TracyDebugger::getNonceAttr();
         $out = <<< HTML
         <script{$nonceAttr}>
-            tracyJSLoader.load("{$tracyModuleUrl}scripts/file-editor.js");
+            tracyJSLoader.load("$fileEditorUrl");
         </script>
 HTML;
 

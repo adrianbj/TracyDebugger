@@ -51,12 +51,13 @@ class CaptainHookPanel extends BasePanel {
 
         $out = $this->buildPanelHeader('Captain Hook', true);
 
-        $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
+        $filterboxUrl = TracyDebugger::assetUrl('scripts/filterbox/filterbox.js');
+        $searchUrl = TracyDebugger::assetUrl('scripts/captain-hook-search.js');
         $nonceAttr = TracyDebugger::getNonceAttr();
         $out .= <<< HTML
         <script{$nonceAttr}>
-            tracyJSLoader.load("{$tracyModuleUrl}scripts/filterbox/filterbox.js", function() {
-                tracyJSLoader.load("{$tracyModuleUrl}scripts/captain-hook-search.js");
+            tracyJSLoader.load("$filterboxUrl", function() {
+                tracyJSLoader.load("$searchUrl");
             });
         </script>
 HTML;

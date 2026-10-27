@@ -120,7 +120,10 @@ class ConsolePanel extends BasePanel {
         $codeTabSizeJs = (int) $codeTabSize;
         $codeUseSoftTabsJs = $codeUseSoftTabs ? 'true' : 'false';
         $codeShowInvisiblesJs = $codeShowInvisibles ? 'true' : 'false';
-        $consolePanelJsVersion = TracyDebugger::getModuleInfo()['version'];
+        $consolePanelJsUrl = TracyDebugger::assetUrl('scripts/console-panel.js');
+        $aceUrl = TracyDebugger::assetUrl('scripts/ace-editor/ace.js');
+        $splitUrl = TracyDebugger::assetUrl('scripts/splitjs/split.min.js');
+        $codeSnippetsUrl = TracyDebugger::assetUrl('scripts/code-snippets.js');
 
         // Only the current page's fields are inlined here. The API variables/methods/functions
         // are the bulk of the list (~200KB of JSON with descriptions enabled) and are the same
@@ -182,6 +185,9 @@ class ConsolePanel extends BasePanel {
             pwAutocompleteUrl: "$pwAutocompleteUrl",
             pwAutocompleteLoaded: false,
             aceTheme: "$aceTheme",
+            aceUrl: "$aceUrl",
+            splitUrl: "$splitUrl",
+            codeSnippetsUrl: "$codeSnippetsUrl",
             codeFontSize: $codeFontSize,
             lineHeight: $codeLineHeight,
             externalEditorLink: "$externalEditorLink",
@@ -207,7 +213,7 @@ class ConsolePanel extends BasePanel {
         window.tracyConsole = tracyConsole;
         if (!window.tracyConsolePanelLoading) {
             window.tracyConsolePanelLoading = true;
-            tracyJSLoader.load(tracyConsole.tracyModuleUrl + "scripts/console-panel.js?v=$consolePanelJsVersion");
+            tracyJSLoader.load("$consolePanelJsUrl");
         }
         </script>
 

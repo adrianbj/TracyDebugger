@@ -293,6 +293,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "styleAdminType" => ['favicon'],
             "showPWInfoPanelIconLabels" => 1,
             "linksNewTab" => '',
+            "versionAssetFilenames" => '',
             "pWInfoPanelLinksNewTab" => '',
             "customPWInfoPanelLinks" => [11, 16, 22, 21, 29, 30, 31, 304],
             "adminerEditFieldLink" => 1,
@@ -3977,6 +3978,23 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      * @return mixed Value of property
      *
      */
+    /**
+     * URL of one of TracyDebugger's own CSS or JS files, versioned so browsers and CDNs fetch an update's copy:
+     * ?v=<module version>, or with versionAssetFilenames on, the file's modification time in its name
+     * (console-panel.1792537113.js), which a rewrite rule in the site's .htaccess maps back to the file
+     *
+     * @param string $file path relative to the module's folder, eg. scripts/console-panel.js
+     * @return string
+     */
+    public static function assetUrl($file) {
+        $url = wire('config')->urls->TracyDebugger . $file;
+        $path = wire('config')->paths->TracyDebugger . $file;
+        if(static::getDataValue('versionAssetFilenames') && is_file($path)) {
+            return preg_replace('/\.(css|js)$/', '.' . filemtime($path) . '.$1', $url);
+        }
+        return $url . '?v=' . static::getModuleInfo()['version'];
+    }
+
     public static function getDataValue($property) {
         if(!is_string(self::$_data->$property) || is_array(self::$_data->$property) || is_int(self::$_data->$property) || $property == 'consoleCodePrefix') {
             return self::$_data->$property;
@@ -4541,9 +4559,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         }
 
         // load JS & CSS files for config settings
-        $this->wire('config')->styles->append($this->wire('config')->urls->TracyDebugger . "styles/config.css");
-        $this->wire('config')->scripts->append($this->wire('config')->urls->TracyDebugger . "scripts/ace-editor/ace.js");
-        $this->wire('config')->scripts->append($this->wire('config')->urls->TracyDebugger . "scripts/config.js");
+        $this->wire('config')->styles->append(static::assetUrl('styles/config.css'));
+        $this->wire('config')->scripts->append(static::assetUrl('scripts/ace-editor/ace.js'));
+        $this->wire('config')->scripts->append(static::assetUrl('scripts/config.js'));
 
         // convert PW Info panel custom links from path back to ID for the InputfieldPageListSelectMultiple field.
         // values may be IDs (legacy state, never re-saved after install) or paths (post-save, export-portable).
@@ -4844,6 +4862,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->notes = __('This is used by links such as those in the Captain Hook and API Explorer panels.', __FILE__);
         $f->columnWidth = 50;
         $f->attr('checked', $data['linksNewTab'] == '1' ? 'checked' : '');
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name', 'versionAssetFilenames');
+        $f->label = __('Version CSS and JS in the filename', __FILE__);
+        $f->description = __('Put each file\'s modification time in its name (console-panel.1792537113.js) instead of adding ?v=. For a CDN that ignores query strings, which would otherwise keep serving the old files after an update.', __FILE__);
+        $f->notes = __('Needs this rule in the site\'s .htaccess, before ProcessWire\'s own rewrite rules, or TracyDebugger\'s CSS and JS files (including the Ace editor) return 404:', __FILE__) . "\n`RewriteRule ^(.+)\\.(\\d{10,})\\.(js|css)$ $1.$3 [L]`";
+        $f->attr('checked', $data['versionAssetFilenames'] == '1' ? 'checked' : '');
         $fieldset->add($f);
 
         // Error Logging Settings
