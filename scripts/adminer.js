@@ -1,22 +1,17 @@
 function openAdminer(queryStr) {
     var authQuery = window.AdminerAuthQuery && queryStr.indexOf("username=") === -1 ? window.AdminerAuthQuery + "&" : "";
     var url = window.AdminerRendererUrl + "?" + authQuery + queryStr;
-    if(document.getElementById("tracy-debug-panel-ProcessWire-AdminerPanel").classList.contains("tracy-mode-window")) {
-        document.getElementById('adminer-iframe').src = url;
+    if(!window.Tracy.Debug.panels || !document.getElementById("tracy-debug-panel-ProcessWire-AdminerPanel")) {
+        window.requestAnimationFrame(function() { openAdminer(queryStr); });
     }
     else {
-        if(!window.Tracy.Debug.panels || !document.getElementById("tracy-debug-panel-ProcessWire-AdminerPanel")) {
-            window.requestAnimationFrame(function() { openAdminer(queryStr); });
+        var panel = window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-AdminerPanel"];
+        if(panel.elem.dataset.tracyContent) {
+            panel.init();
         }
-        else {
-            var panel = window.Tracy.Debug.panels["tracy-debug-panel-ProcessWire-AdminerPanel"];
-            if(panel.elem.dataset.tracyContent) {
-                panel.init();
-            }
-            document.getElementById('adminer-iframe').src = url;
-            panel.toFloat();
-            panel.focus();
-        }
+        document.getElementById('adminer-iframe').src = url;
+        panel.toFloat();
+        panel.focus();
     }
 }
 

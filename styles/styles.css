@@ -1132,18 +1132,8 @@ button[data-tab-id].tracyTabRunning .button-label::before {
     width: 100% !important;
 }
 
-#tracy-debug-panel-ProcessWire-ConsolePanel.tracy-mode-window {
-    width: 100% !important;
-}
-
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"] #tracyConsoleMainContainer {
     float: left;
-    display: block;
-}
-
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-window"] #tracyConsoleMainContainer {
-    float: left;
-    width: calc(100% - 240px) !important;
     display: block;
 }
 
@@ -1159,10 +1149,6 @@ button[data-tab-id].tracyTabRunning .button-label::before {
     background-clip: content-box;
 }
 
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-window"] {
-    border: none !important;
-}
-
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>* {
     padding: 10px 12px 11px 10px;
     margin: 0;
@@ -1171,10 +1157,6 @@ button[data-tab-id].tracyTabRunning .button-label::before {
 #tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-"]>.tracy-inner {
     padding: 12px 12px 0 12px !important;
     margin: 0 0 20px 0 !important;
-}
-
-#tracy-debug [id^="tracy-debug-panel-"][class*="tracy-mode-window"]>.tracy-inner {
-    min-width: 0 !important;
 }
 
 .tracy-icons a:hover {
@@ -1323,10 +1305,6 @@ button[data-tab-id].tracyTabRunning .button-label::before {
     margin: 0 0 10px 0 !important;
     border: 1px solid #D2D2D2 !important;
     border-radius: 0 !important;
-}
-
-#tracy-debug-panel-ProcessWire-FileEditorPanel.tracy-mode-window {
-    width: 100% !important;
 }
 
 #tracy-debug [data-filterbox-active="1"] tr td {

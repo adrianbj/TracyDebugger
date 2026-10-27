@@ -266,22 +266,17 @@ if(!tracyExceptionLoader) {
                 window.requestAnimationFrame(function() { tracyExceptionLoader.loadExceptionFile(filePath); });
                 return;
             }
-            if(panelEl.classList.contains("tracy-mode-window")) {
-                this.populateExceptionViewer(filePath, panelEl);
+            if(!window.Tracy.Debug.panels || !window.Tracy.Debug.panels[panelEl.id]) {
+                window.requestAnimationFrame(function() { tracyExceptionLoader.loadExceptionFile(filePath, panelEl); });
             }
             else {
-                if(!window.Tracy.Debug.panels || !window.Tracy.Debug.panels[panelEl.id]) {
-                    window.requestAnimationFrame(function() { tracyExceptionLoader.loadExceptionFile(filePath, panelEl); });
+                var panel = window.Tracy.Debug.panels[panelEl.id];
+                if(panel.elem.dataset.tracyContent) {
+                    panel.init();
                 }
-                else {
-                    var panel = window.Tracy.Debug.panels[panelEl.id];
-                    if(panel.elem.dataset.tracyContent) {
-                        panel.init();
-                    }
-                    this.populateExceptionViewer(filePath, panelEl);
-                    panel.toFloat();
-                    panel.focus();
-                }
+                this.populateExceptionViewer(filePath, panelEl);
+                panel.toFloat();
+                panel.focus();
             }
         }
     };
