@@ -213,14 +213,26 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
     // compiled paths — so anything else in this request that pulls in those same files the
     // normal way (the accessTemplateVars replay below, console code, a rendered template)
     // declares their functions a second time: "Cannot redeclare function ProcessWire\ents()".
+    //
+    // includeFile() also runs each file with the working directory set to the file's own
+    // directory (restoring it afterwards), so relative includes like include './_inc.php'
+    // resolve against site/ rather than wherever this request's cwd happens to be (#511).
     $compileStatusFiles = (bool) $this->wire('config')->templateCompile;
     $readyPath = $this->wire('config')->paths->site . 'ready.php';
     $finishedPath = $this->wire('config')->paths->site . 'finished.php';
-    if(file_exists($readyPath)) {
-        include_once($compileStatusFiles ? $this->wire('files')->compile($readyPath, array('skipIfNamespace' => true)) : $readyPath);
+    $tracyStatusFileCwd = getcwd();
+    try {
+        if(file_exists($readyPath)) {
+            chdir(dirname($readyPath));
+            include_once($compileStatusFiles ? $this->wire('files')->compile($readyPath, array('skipIfNamespace' => true)) : $readyPath);
+        }
+        if(file_exists($finishedPath)) {
+            chdir(dirname($finishedPath));
+            include_once($compileStatusFiles ? $this->wire('files')->compile($finishedPath, array('skipIfNamespace' => true)) : $finishedPath);
+        }
     }
-    if(file_exists($finishedPath)) {
-        include_once($compileStatusFiles ? $this->wire('files')->compile($finishedPath, array('skipIfNamespace' => true)) : $finishedPath);
+    finally {
+        if($tracyStatusFileCwd !== false) chdir($tracyStatusFileCwd);
     }
 
     $cachePath = $this->wire('config')->paths->cache . 'TracyDebugger/';
