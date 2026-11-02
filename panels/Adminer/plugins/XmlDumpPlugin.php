@@ -5,7 +5,7 @@ namespace AdminNeo;
 /**
  * Adds option to export table data to XML format in structure <database name=""><table name=""><column name="">.
  *
- * Last changed in release: v5.2.0
+ * Last changed in release: v5.9.0
  *
  * @link https://www.adminneo.org/plugins/#usage
  *
@@ -21,10 +21,13 @@ class XmlDumpPlugin extends Plugin
 
 	public function getDumpFormats()
 	{
-		return ['xml' => 'XML'];
+		return ['xml' => [
+			'name' => 'XML',
+			'data' => true,
+		]];
 	}
 
-	public function sendDumpHeaders($identifier, $multiTable = false)
+	public function sendDumpFormatHeaders($identifier, $multiTable = false)
 	{
 		if ($_POST["format"] != "xml") {
 			return null;

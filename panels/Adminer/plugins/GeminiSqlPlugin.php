@@ -7,7 +7,7 @@ namespace AdminNeo;
  *
  * Beware that this sends your whole database structure (not data) to Google Gemini.
  *
- * Last changed in release: v5.8.0
+ * Last changed in release: v5.9.0
  *
  * @link https://gemini.google.com/
  * @link https://www.adminneo.org/plugins/#usage
@@ -137,7 +137,7 @@ class GeminiSqlPlugin extends Plugin
 		ajax(
 			'',
 			req => setSqlAreaValue(req.responseText),
-			'gemini=' + encodeURIComponent(textarea.value) + '&token=' + encodeURIComponent(this.form['token'].value),
+			'gemini=' + encodeURIComponent(textarea.value) + '&token=' + encodeURIComponent(this.form['token'].value)
 		);
 	};
 

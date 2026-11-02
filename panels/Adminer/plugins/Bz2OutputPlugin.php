@@ -5,7 +5,7 @@ namespace AdminNeo;
 /**
  * Adds bzip2 compression of data export.
  *
- * Last changed in release: v5.2.0
+ * Last changed in release: v5.9.0
  *
  * @link https://www.adminneo.org/plugins/#usage
  *
@@ -28,7 +28,7 @@ class Bz2OutputPlugin extends Plugin
 		return function_exists('bzopen') ? ['bz2' => 'bzip2'] : [];
 	}
 
-	public function sendDumpHeaders($identifier, $multiTable = false)
+	public function sendDumpOutputHeaders($identifier, $extension)
 	{
 		if ($_POST["output"] == "bz2") {
 			$this->filename = tempnam("", "bz2");

@@ -5,7 +5,7 @@ namespace AdminNeo;
 /**
  * Adds option to export table data to JSON format.
  *
- * Last changed in release: v5.2.1
+ * Last changed in release: v5.9.0
  *
  * @link https://www.adminneo.org/plugins/#usage
  *
@@ -21,10 +21,13 @@ class JsonDumpPlugin extends Plugin
 
 	public function getDumpFormats()
 	{
-		return ['json' => 'JSON'];
+		return ['json' => [
+			'name' => 'JSON',
+			'data' => true,
+		]];
 	}
 
-	public function sendDumpHeaders($identifier, $multiTable = false)
+	public function sendDumpFormatHeaders($identifier, $multiTable = false)
 	{
 		if ($_POST["format"] != "json") {
 			return null;

@@ -7,8 +7,8 @@ use ZipArchive;
 /**
  * Adds ZIP compression of data export.
  *
- * Last changed in release: v5.2.0
- * 
+ * Last changed in release: v5.9.0
+ *
  * @link https://www.adminneo.org/plugins/#usage
  *
  * @author Jakub Vrana, https://www.vrana.cz/
@@ -30,10 +30,10 @@ class ZipOutputPlugin extends Plugin
 		return class_exists('ZipArchive') ? ['zip' => 'ZIP'] : [];
 	}
 
-	public function sendDumpHeaders($identifier, $multiTable = false)
+	public function sendDumpOutputHeaders($identifier, $extension)
 	{
 		if ($_POST["output"] == "zip") {
-			$this->filename = "$identifier." . ($multiTable && preg_match("~[ct]sv~", $_POST["format"]) ? "tar" : $_POST["format"]);
+			$this->filename = "$identifier.$extension";
 
 			header("Content-Type: application/zip");
 
