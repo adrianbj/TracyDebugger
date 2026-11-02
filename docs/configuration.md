@@ -810,10 +810,24 @@ Optional AI-assisted SQL generation in Adminer's SQL command. Each provider acti
 ##### Gemini model
 
 ```
-@default: gemini-2.5-flash
+@default: gemini-3.1-flash-lite
 ```
 
 * See [Gemini API model list](https://ai.google.dev/gemini-api/docs/models).
+
+##### Claude API key
+
+> Anthropic Claude API key. Leave blank to disable.
+
+* Get one at [platform.claude.com/settings/keys](https://platform.claude.com/settings/keys).
+
+##### Claude model
+
+```
+@default: claude-opus-5-5
+```
+
+* See [Claude models overview](https://platform.claude.com/docs/en/about-claude/models/overview).
 
 ##### Open WebUI API URL
 

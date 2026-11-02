@@ -46,7 +46,7 @@ When the companion [ProcessTracyAdminer](https://modules.processwire.com/modules
 
 Adminer is auto-connected to the current PW database using credentials from `/site/config.php`, so no separate login is required. From within Tracy panels, several "open in Adminer" links jump you straight to the relevant table row (page, template, field, module).
 
-Optional AI SQL assistants (Google Gemini and Open WebUI) can be enabled in the Adminer config to generate queries from natural-language prompts — see the [Adminer config section](configuration.md#adminer-panel) for details.
+Optional AI SQL assistants (Google Gemini, Anthropic Claude, and Open WebUI) can be enabled in the Adminer config to generate queries from natural-language prompts — see the [Adminer config section](configuration.md#adminer-panel) for details.
 
 ***
 

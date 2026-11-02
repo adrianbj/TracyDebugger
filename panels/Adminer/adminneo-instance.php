@@ -35,7 +35,14 @@ function adminneo_instance() {
     if(!empty($tracyConfig['adminerGeminiApiKey'])) {
         $plugins[] = new \AdminNeo\GeminiSqlPlugin(
             $tracyConfig['adminerGeminiApiKey'],
-            !empty($tracyConfig['adminerGeminiModel']) ? $tracyConfig['adminerGeminiModel'] : 'gemini-2.5-flash'
+            !empty($tracyConfig['adminerGeminiModel']) ? $tracyConfig['adminerGeminiModel'] : 'gemini-3.1-flash-lite'
+        );
+    }
+
+    if(!empty($tracyConfig['adminerClaudeApiKey'])) {
+        $plugins[] = new \AdminNeo\ClaudeSqlPlugin(
+            $tracyConfig['adminerClaudeApiKey'],
+            !empty($tracyConfig['adminerClaudeModel']) ? $tracyConfig['adminerClaudeModel'] : 'claude-opus-5-5'
         );
     }
 

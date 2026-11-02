@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.1.7',
+            'version' => '5.1.8',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -304,7 +304,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "adminerJsonInEdit" => 1,
             "adminerJsonMaxTextLength" => 200,
             "adminerGeminiApiKey" => '',
-            "adminerGeminiModel" => 'gemini-2.5-flash',
+            "adminerGeminiModel" => 'gemini-3.1-flash-lite',
+            "adminerClaudeApiKey" => '',
+            "adminerClaudeModel" => 'claude-opus-5-5',
             "adminerOpenWebUiApiUrl" => '',
             "adminerOpenWebUiModel" => 'gpt-oss:120b',
             "adminerOpenWebUiApiKey" => '',
@@ -5514,9 +5516,28 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $f->attr('name', 'adminerGeminiModel');
             $f->label = __('Gemini model', __FILE__);
             $f->description = __('Gemini model name.', __FILE__);
-            $f->notes = __('Default: gemini-2.5-flash. See https://ai.google.dev/gemini-api/docs/models', __FILE__);
+            $f->notes = __('Default: gemini-3.1-flash-lite. See https://ai.google.dev/gemini-api/docs/models', __FILE__);
             $f->columnWidth = 50;
             if($this->data['adminerGeminiModel']) $f->attr('value', $this->data['adminerGeminiModel']);
+            $aiFieldset->add($f);
+
+            $f = $this->wire('modules')->get("InputfieldText");
+            $f->attr('name', 'adminerClaudeApiKey');
+            $f->attr('type', 'password');
+            $f->label = __('Claude API key', __FILE__);
+            $f->description = __('Anthropic Claude API key. Leave blank to disable.', __FILE__);
+            $f->notes = __('Get one at https://platform.claude.com/settings/keys', __FILE__);
+            $f->columnWidth = 50;
+            if($this->data['adminerClaudeApiKey']) $f->attr('value', $this->data['adminerClaudeApiKey']);
+            $aiFieldset->add($f);
+
+            $f = $this->wire('modules')->get("InputfieldText");
+            $f->attr('name', 'adminerClaudeModel');
+            $f->label = __('Claude model', __FILE__);
+            $f->description = __('Claude model name.', __FILE__);
+            $f->notes = __('Default: claude-opus-5-5. See https://platform.claude.com/docs/en/about-claude/models/overview', __FILE__);
+            $f->columnWidth = 50;
+            if($this->data['adminerClaudeModel']) $f->attr('value', $this->data['adminerClaudeModel']);
             $aiFieldset->add($f);
 
             $f = $this->wire('modules')->get("InputfieldText");
@@ -6259,6 +6280,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // make sure the ProcessTracyAdminerRenderer module is installed
         if($this->wire('modules')->isInstalled('ProcessTracyAdminer') && !$this->wire('modules')->isInstalled('ProcessTracyAdminerRenderer')) {
             $this->wire('modules')->install('ProcessTracyAdminerRenderer');
+        }
+
+        // the old default Gemini model has been shut down by Google, so move sites still on it to the new default
+        $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
+        if(isset($configData['adminerGeminiModel']) && $configData['adminerGeminiModel'] === 'gemini-2.5-flash') {
+            $configData['adminerGeminiModel'] = 'gemini-3.1-flash-lite';
+            $this->data['adminerGeminiModel'] = 'gemini-3.1-flash-lite';
+            $this->wire('modules')->saveModuleConfigData($this, $configData);
         }
 
         // initial save of default data so it's available to Adminer in case settings aren't manually saved
