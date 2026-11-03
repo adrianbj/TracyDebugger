@@ -362,7 +362,7 @@ class TD extends TracyDebugger {
             $options = $title;
             $title = NULL;
         }
-        if(PHP_SAPI === 'cli') {
+        if(PHP_SAPI === 'cli' && !TracyDebugger::$cliHtmlDumps) {
             echo $title . PHP_EOL;
             if(is_array($var) || is_object($var)) {
                 print_r($var);
@@ -410,7 +410,7 @@ class TD extends TracyDebugger {
             $options = $title;
             $title = NULL;
         }
-        if(PHP_SAPI === 'cli') {
+        if(PHP_SAPI === 'cli' && !TracyDebugger::$cliHtmlDumps) {
             echo $title . PHP_EOL;
             if(is_array($var) || is_object($var)) {
                 print_r($var);

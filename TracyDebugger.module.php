@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.1.8',
+            'version' => '5.1.9',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -98,6 +98,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $templateFuncs = array();
     public static $includedFiles = array();
     public static $fromConsole = false;
+    public static $cliHtmlDumps = false;
     public static $oncePanels;
     public static $stickyPanels;
     public static $showPanels;
@@ -4131,6 +4132,23 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $session->remove('tracyUserSwitcherId');
         $session->remove('tracyUserSwitcherFp');
         return false;
+    }
+
+    /**
+     * Capture dumps in a CLI process that is doing work for a user whose web request had Tracy development
+     * access (eg. an AdminActions action run via CLI so it isn't cut off by a host's request time limit).
+     *
+     * After calling this, bd()/bdb() calls are recorded in TracyDebugger::$dumpItems (each with 'title' and
+     * 'dump' HTML) and d()/db() output HTML instead of plain text, so the caller can return them to the browser.
+     * The caller is responsible for only calling this when the user it is acting for is allowed to see dumps.
+     *
+     * @return bool False if not running under CLI or Tracy isn't enabled
+     */
+    public static function enableCliDumps() {
+        if(PHP_SAPI !== 'cli' || !static::getDataValue('enabled') || !class_exists('\Tracy\Debugger')) return false;
+        static::$allowedTracyUser = 'development';
+        static::$cliHtmlDumps = true;
+        return true;
     }
 
     public static function allowedTracyUser() {

@@ -15,6 +15,10 @@ Every `bd()` / `d()` (and the big-variant) call renders a small "Copy as Markdow
 
 The same button appears on stack frames in the Tracy Exceptions panel.
 
+### Dumps from CLI processes
+
+A CLI process has no debug bar. By default, `bd()` does nothing there, and `d()` prints plain text. A CLI process that is doing work for a user who can see dumps in the browser (eg. an [Admin Actions](https://processwire.com/modules/process-admin-actions/) action run in CLI mode) can call `TracyDebugger::enableCliDumps()`. After that, `bd()` calls are recorded in `TracyDebugger::$dumpItems` (each with `title` and `dump` HTML) so the process can return them to the browser, and `d()` outputs HTML. It only works under CLI, and the caller is responsible for checking that the user is allowed to see dumps.
+
 ## addBreakpoint
 
 Method for use with the [Performance Panel](debug-bar.md#performance)
