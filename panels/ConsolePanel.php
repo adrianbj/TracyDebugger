@@ -262,6 +262,11 @@ HTML;
                                 <input type="checkbox" id="streamResults" '.($this->wire('input')->cookie->tracyConsoleStreamResults ? 'checked="checked"' : '').' /> Stream results
                             </label>
                         </span>
+                        <span style="display: inline-block; padding: 0 20px 5px 0">
+                            <label title="Run the code in a separate PHP CLI process, so a long script isn\'t cut off by a web server or proxy request time limit (eg. LiteSpeed\'s 120 seconds). bd() dumps are shown with the result, and changes the code makes to $session are not kept.">
+                                <input type="checkbox" id="runCli" '.($this->wire('input')->cookie->tracyConsoleRunCli ? 'checked="checked"' : '').' /> Run in CLI
+                            </label>
+                        </span>
                         ';
 
                         if(!$inAdmin) {

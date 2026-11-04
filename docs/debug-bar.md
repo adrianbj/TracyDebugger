@@ -105,6 +105,7 @@ Results are cached for speed, but will be updated whenever you update your Proce
 * Caches code so it stored between page reloads, navigation to other pages, and even browser restarts
 * In-code search & replace with CMD/CTRL + F
 * Cancel button lets you kill a long-running script mid-execution. A "Cancel all runs" option is also available if the normal cancel button doesn't respond
+* "Run in CLI" runs the code in a separate PHP CLI process, so a long script isn't cut off by a web server or proxy request time limit (eg. LiteSpeed's 120 seconds or Cloudflare's 100 seconds). Cancel, Stream results and the other options work the same way. `bd()` dumps are shown with the result instead of in the bar. Changes the code makes to `$session` are not kept. It needs PHP's `proc_open()` function and a Linux or macOS server. The PHP CLI binary is detected automatically; if that doesn't work, set "PHP CLI path" in the Console section of the module settings
 * Code Execution
 	* CTRL/CMD + Enter	Run
 	* ALT/OPT + Enter	Clear & Run

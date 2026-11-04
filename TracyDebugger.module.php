@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.1.9',
+            'version' => '5.1.10',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -99,6 +99,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     public static $includedFiles = array();
     public static $fromConsole = false;
     public static $cliHtmlDumps = false;
+    public static $consoleCliJob = null;
     public static $oncePanels;
     public static $stickyPanels;
     public static $showPanels;
@@ -327,6 +328,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             "imagesInFieldListValues" => 0,
             "snippetsPath" => 'templates',
             "consoleBackupLimit" => 25,
+            "consolePhpCliPath" => '',
             "consoleCodePrefix" => '',
             "userSwitcherSelector" => '',
             "userSwitcherRestricted" => [],
@@ -834,6 +836,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     @unlink($cacheDir . $runId . '.pid');
                     @unlink($cacheDir . $runId . '.connid');
                     @unlink($cacheDir . $runId . '.partial');
+                    @unlink($cacheDir . $runId . '.log');
                 }
                 exit;
             }
@@ -868,6 +871,28 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 if(file_exists($statusFile)) {
                     $data = @json_decode((string) @file_get_contents($statusFile), true);
                     if(is_array($data) && isset($data['status'])) $status = $data['status'];
+                }
+                /* A worker that was killed outright (SIGKILL, a host's time or memory limit) never gets to
+                   update its status, so without this it would be polled as "running" forever. It holds
+                   LOCK_EX on its .pid file while alive. The status is re-read after finding the lock free
+                   because a finishing worker writes its final status BEFORE releasing the lock. */
+                $pidFile = $this->wire('config')->paths->cache . 'TracyDebugger/console_runs/' . $runId . '.pid';
+                if($status === 'running' && file_exists($pidFile) && !$this->consoleRunIsLive($runId)) {
+                    clearstatcache(true, $statusFile);
+                    $data = @json_decode((string) @file_get_contents($statusFile), true);
+                    if(is_array($data) && isset($data['status']) && $data['status'] === 'running') {
+                        file_put_contents($this->wire('config')->paths->cache . 'TracyDebugger/console_runs/' . $runId . '.json', json_encode(array(
+                            'status' => 'error',
+                            'output' => 'The process running this code ended before it finished - it may have been stopped by the server (eg. a time or memory limit).',
+                            'time' => '',
+                            'memory' => ''
+                        )));
+                        file_put_contents($statusFile, json_encode(array('status' => 'error')));
+                        $status = 'error';
+                    }
+                    elseif(is_array($data) && isset($data['status'])) {
+                        $status = $data['status'];
+                    }
                 }
                 /* realtime streaming: hand back whatever d()/db() has published to
                    the .partial file since the caller's offset, so the panel can
@@ -991,8 +1016,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $gcRunIds = array();
                 foreach(array($statusDir, $cacheRunDir) as $runDir) {
                     if(!is_dir($runDir)) continue;
-                    foreach(glob($runDir . '*.{json,pid,connid,partial}', GLOB_BRACE) as $file) {
-                        $gcRunIds[pathinfo($file, PATHINFO_FILENAME)] = true;
+                    foreach(glob($runDir . '*.{json,pid,connid,partial,log}', GLOB_BRACE) as $file) {
+                        $gcRunIds[preg_replace('/\.job$/', '', pathinfo($file, PATHINFO_FILENAME))] = true;
                     }
                 }
                 foreach(glob($cachePath . 'consoleCode_*.php') as $file) {
@@ -1009,7 +1034,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 foreach(array_keys($gcRunIds) as $gcRunId) {
                     if($gcRunId === '' || $this->consoleRunIsLive($gcRunId)) continue;
                     foreach(array($statusDir, $cacheRunDir) as $runDir) {
-                        foreach(array('.json', '.pid', '.connid', '.partial') as $ext) {
+                        foreach(array('.json', '.pid', '.connid', '.partial', '.log', '.job.json') as $ext) {
                             $f = $runDir . $gcRunId . $ext;
                             if(is_file($f) && filemtime($f) < $gcCutoff) @unlink($f);
                         }
@@ -2694,10 +2719,159 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         @unlink($connIdFile);
         @unlink($cacheDir . $runId . '.json');
         @unlink($cacheDir . $runId . '.partial');
+        @unlink($cacheDir . $runId . '.log');
+        // a CLI run that hasn't started yet won't start once its job file is gone
+        @unlink($cacheDir . $runId . '.job.json');
         @unlink($statusDir . $runId . '.json');
         @unlink($cachePath . 'consoleCode_' . $runId . '.php');
 
         return $result;
+    }
+
+    /**
+     * Hand a Console run to a separate PHP CLI process ("Run in CLI"), so it isn't subject to the web
+     * server's request time limit. Called from CodeProcessor.php once the run has been validated.
+     * Responds with {status: 'background'} (the panel then polls for the result) and exits.
+     *
+     * @param string $runId
+     * @param array $sessionCache Session data CodeProcessor.php needs (the CLI process has no session)
+     */
+    private function startConsoleCliRun($runId, array $sessionCache) {
+        Debugger::$showBar = false;
+        header_remove('X-Tracy-Ajax');
+        $cacheDir = $this->wire('config')->paths->cache . 'TracyDebugger/console_runs/';
+        $statusDir = $this->wire('config')->paths->assets . 'TracyDebugger/console_runs/';
+        $post = $_POST;
+        unset($post['runCli']);
+        $job = array(
+            'userId' => $this->wire('user')->id,
+            'post' => $post,
+            'sessionCache' => $sessionCache,
+            'cookies' => array('tracyCodeReturn' => (string) $this->wire('input')->cookie->tracyCodeReturn),
+            // the access checks this request passed, which can depend on its IP address and session
+            'allowedSuperuser' => (bool) static::$allowedSuperuser,
+            'validLocalUser' => (bool) static::$validLocalUser,
+            'validSwitchedUser' => (bool) static::$validSwitchedUser,
+        );
+        $jobFile = $cacheDir . $runId . '.job.json';
+        $error = '';
+        if(file_put_contents($jobFile, json_encode($job)) === false) $error = 'Unable to write the job file for the CLI process.';
+        if(!$error) $error = $this->spawnConsoleCliRunner($runId);
+
+        /* The runner deletes the job file as soon as it has loaded ProcessWire and read it, which is how we
+           know it started. Wait for that so a process that never starts gives a clear error. */
+        if(!$error) {
+            $waitUntil = microtime(true) + 15;
+            while(is_file($jobFile) && microtime(true) < $waitUntil) {
+                usleep(200000);
+                clearstatcache(true, $jobFile);
+            }
+            // unlink succeeding means the runner never picked the job up (and now won't)
+            if(@unlink($jobFile)) {
+                $log = is_file($cacheDir . $runId . '.log') ? trim((string) file_get_contents($cacheDir . $runId . '.log')) : '';
+                $error = 'The CLI process did not start within 15 seconds.' . ($log !== '' ? ' It reported: ' . substr($log, -2000) : '');
+            }
+        }
+        else {
+            @unlink($jobFile);
+        }
+
+        if($error) {
+            $error .= ' Check the "PHP CLI path" setting in the Console section of the TracyDebugger settings, or untick "Run in CLI".';
+            file_put_contents($cacheDir . $runId . '.json', json_encode(array('status' => 'error', 'output' => $error, 'time' => '', 'memory' => '')));
+            file_put_contents($statusDir . $runId . '.json', json_encode(array('status' => 'error')));
+            echo '<div style="color:#c00">' . htmlspecialchars($error, ENT_QUOTES, 'UTF-8') . '</div>';
+            exit;
+        }
+        header('Content-Type: application/json');
+        echo json_encode(array('status' => 'background'));
+        exit;
+    }
+
+    /**
+     * Launch includes/ConsoleCliRunner.php as a detached background process
+     *
+     * @param string $runId
+     * @return string Error message, or blank on success
+     */
+    private function spawnConsoleCliRunner($runId) {
+        if(!function_exists('proc_open')) return 'Running code via CLI needs PHP\'s proc_open() function, which is disabled on this server.';
+        $php = static::getPhpCliPath();
+        $logFile = $this->wire('config')->paths->cache . 'TracyDebugger/console_runs/' . $runId . '.log';
+        $cmd = escapeshellarg($php) . ' ' . escapeshellarg(__DIR__ . '/includes/ConsoleCliRunner.php') . ' ' . escapeshellarg($runId) . ' ' . escapeshellarg($this->wire('config')->paths->root);
+        /* & with HUP ignored (what nohup does - but nohup itself refuses to run without a console on macOS)
+           detaches it from this request; setsid (where available) also moves it out of the web server's
+           process group so it isn't killed along with the request */
+        $setsid = @is_executable('/usr/bin/setsid') ? '/usr/bin/setsid ' : '';
+        $cmd = "trap '' HUP; " . $setsid . $cmd . ' > /dev/null 2>> ' . escapeshellarg($logFile) . ' &';
+        $process = @proc_open($cmd, array(0 => array('file', '/dev/null', 'r'), 1 => array('file', '/dev/null', 'w'), 2 => array('file', '/dev/null', 'w')), $pipes);
+        if(!is_resource($process)) return 'Unable to start the CLI process (proc_open() failed).';
+        proc_close($process); // returns as soon as the shell has backgrounded the runner
+        return '';
+    }
+
+    /**
+     * Path to the PHP CLI binary: the "PHP CLI path" setting, or the "php" binary alongside the running PHP
+     *
+     * @return string
+     */
+    public static function getPhpCliPath() {
+        $path = (string) static::getDataValue('consolePhpCliPath');
+        if($path !== '') return $path;
+        // PHP_BINARY is the web SAPI (php-fpm, lsphp, etc) in a web request, so look for the CLI binary next to it
+        foreach(array(PHP_BINDIR . '/php', dirname(PHP_BINARY) . '/php', '/usr/local/bin/php', '/usr/bin/php') as $candidate) {
+            if(@is_file($candidate) && @is_executable($candidate)) return $candidate;
+        }
+        return 'php'; // rely on PATH
+    }
+
+    /**
+     * Run a Console job started by startConsoleCliRun(). Called by includes/ConsoleCliRunner.php in the CLI process.
+     *
+     * @param string $runId
+     */
+    public function runConsoleCliJob($runId) {
+        if(PHP_SAPI !== 'cli') return;
+        $runId = preg_replace('/[^a-zA-Z0-9_.]/', '', (string) $runId);
+        if($runId === '' || strpos($runId, '..') !== false) return;
+        $jobFile = $this->wire('config')->paths->cache . 'TracyDebugger/console_runs/' . $runId . '.job.json';
+        $job = is_file($jobFile) ? json_decode((string) file_get_contents($jobFile), true) : null;
+        /* removing the job file tells the web request that started us that we're running; if it has already
+           removed it itself (it gave up waiting, or the run was cancelled) don't run it */
+        if(!is_array($job) || !@unlink($jobFile)) return;
+
+        $user = $this->wire('users')->get((int) $job['userId']);
+        if(!$user->id) return;
+        $this->wire('users')->setCurrentUser($user);
+        static::$allowedSuperuser = !empty($job['allowedSuperuser']);
+        static::$validLocalUser = !empty($job['validLocalUser']);
+        static::$validSwitchedUser = !empty($job['validSwitchedUser']);
+        static::enableCliDumps();
+        static::$consoleCliJob = $job;
+
+        // recreate the request CodeProcessor.php expects
+        $_POST = is_array($job['post']) ? $job['post'] : array();
+        foreach($_POST as $key => $value) $this->wire('input')->post->$key = $value;
+        foreach($job['cookies'] as $key => $value) {
+            if($value !== '') $this->wire('input')->cookie->$key = $value;
+        }
+        require_once(__DIR__ . '/includes/CodeProcessor.php');
+    }
+
+    /**
+     * bd() dumps recorded in a CLI process (see enableCliDumps()), rendered like the Dumps panel
+     *
+     * @return string
+     */
+    public static function getCliDumpsHtml() {
+        if(empty(static::$dumpItems)) return '';
+        $out = '';
+        foreach(static::$dumpItems as $item) {
+            if(isset($item['title']) && $item['title'] != '') $out .= '<h2>' . \Tracy\Helpers::escapeHtml($item['title']) . '</h2>';
+            $out .= $item['dump'];
+        }
+        static::$dumpItems = array();
+        return '<div class="tracy-inner" style="height:auto !important"><div class="tracy-DumpPanel"><p><strong>bd() dumps</strong></p>' . $out . '</div></div>';
     }
 
     /**
@@ -5202,6 +5376,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->description = __('The maximum number of automatically named backups that will be retained before pruning the oldest.', __FILE__);
         $f->notes = __('Default: 25.', __FILE__);
         $f->attr('value', $data['consoleBackupLimit']);
+        $fieldset->add($f);
+
+        $f = $this->wire('modules')->get("InputfieldText");
+        $f->attr('name', 'consolePhpCliPath');
+        $f->label = __('PHP CLI path', __FILE__);
+        $f->description = __('Path to the PHP command line binary used when "Run in CLI" is ticked in the Console panel. That runs the code in a separate PHP CLI process, so a long script isn\'t cut off by a web server or proxy request time limit. Leave blank to detect it.', __FILE__);
+        $f->notes = __('Needs PHP\'s proc_open() function and a Linux/macOS server. Changes the code makes to $session are not kept.', __FILE__) . ($data['consolePhpCliPath'] ? '' : ' ' . sprintf(__('Detected: %s', __FILE__), static::getPhpCliPath()));
+        $f->attr('value', $data['consolePhpCliPath']);
         $fieldset->add($f);
 
         $f = $this->wire('modules')->get("InputfieldSelect");

@@ -1327,8 +1327,13 @@ Object.assign(tracyConsole, {
                         /* inline response arrived — stop this run's poll so it can't
                            also deliver the same result */
                         if(thisRun.pollXhr) { try { thisRun.pollXhr.abort(); } catch(e) {} }
-                        /* gateway timeout or error — switch to background polling */
-                        if(xmlhttp.status === 502 || xmlhttp.status === 504) {
+                        /* gateway/proxy timeout (incl. LiteSpeed's 503 and Cloudflare's 524), or "Run in CLI"
+                           handed the code to a CLI process — PHP is still running, so poll for the result */
+                        var startedInBackground = false;
+                        if(xmlhttp.status === 200 && xmlhttp.responseText.charAt(0) === '{') {
+                            try { startedInBackground = JSON.parse(xmlhttp.responseText).status === 'background'; } catch(e) {}
+                        }
+                        if(startedInBackground || xmlhttp.status === 502 || xmlhttp.status === 503 || xmlhttp.status === 504 || xmlhttp.status === 524) {
                             thisRun.pollingActive = true;
                             tracyConsole.setRunButtonEnabled(false);
                             if(originTabId === tracyConsole.currentTabId) tracyConsole.startStatusTimer(originTabId);
@@ -1439,6 +1444,7 @@ Object.assign(tracyConsole, {
                 xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
                 xmlhttp.send("tracyConsole=1&runId=" + encodeURIComponent(runId) + "&csrfToken=" + encodeURIComponent(this.csrfToken) + "&codeReturn=" + encodeURIComponent(codeReturn) + "&allowBluescreen=" + encodeURIComponent(allowBluescreen) +
                     "&streamResults=" + encodeURIComponent(tracyConsole.streamResultsEnabled()) +
+                    "&runCli=" + encodeURIComponent(tracyConsole.runCliEnabled()) +
                     "&dbBackup=" + encodeURIComponent(dbBackup) + "&backupFilename=" + encodeURIComponent(backupFilename) +
                     "&accessTemplateVars=" + encodeURIComponent(accessTemplateVars) + "&pid=" + encodeURIComponent(tracyConsole.pid) +
                     "&fid=" + encodeURIComponent(tracyConsole.fid) + "&tid=" + encodeURIComponent(tracyConsole.tid) + "&mid=" + encodeURIComponent(tracyConsole.mid) +
@@ -1992,6 +1998,26 @@ Object.assign(tracyConsole, {
 
             streamResultsEnabled: function() {
                 var cb = document.getElementById("streamResults");
+                return !!(cb && cb.checked);
+            },
+
+            /* Persist the Run in CLI choice across page loads, like Stream results */
+            updateRunCliState: function() {
+                var cb = document.getElementById("runCli");
+                if(!cb) return;
+                if(cb.checked) {
+                    var expires = new Date();
+                    expires.setFullYear(expires.getFullYear() + 1);
+                    document.cookie = "tracyConsoleRunCli=1;expires=" + expires.toGMTString() + ";path=/;SameSite=Strict";
+                }
+                else {
+                    document.cookie = "tracyConsoleRunCli=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/;SameSite=Strict";
+                }
+                if(this.tce) this.tce.focus();
+            },
+
+            runCliEnabled: function() {
+                var cb = document.getElementById("runCli");
                 return !!(cb && cb.checked);
             },
 
@@ -2918,6 +2944,8 @@ Object.assign(tracyConsole, {
         if(el) el.addEventListener('click', function() { tracyConsole.tce.focus(); });
         el = document.getElementById('streamResults');
         if(el) el.addEventListener('click', function() { tracyConsole.updateStreamResultsState(); });
+        el = document.getElementById('runCli');
+        if(el) el.addEventListener('click', function() { tracyConsole.updateRunCliState(); });
         el = document.getElementById('tracyConsoleClearResults');
         if(el) el.addEventListener('click', function() { tracyConsole.clearResults(); });
         el = document.getElementById('tracyConsoleForceKillAll');

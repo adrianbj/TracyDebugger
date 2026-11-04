@@ -14,6 +14,11 @@ $tracyRunId = isset($_POST['runId']) ? preg_replace('/[^a-zA-Z0-9_.]/', '', $_PO
    streaming fail on every run whose session has post data, while working on ones
    whose session does not, which is exactly as confusing as it sounds. */
 $tracyStreamResults = (isset($_POST['streamResults']) && $_POST['streamResults'] === 'true');
+/* "Run in CLI" ticked: this web request only validates the run, then starts a separate PHP CLI
+   process (includes/ConsoleCliRunner.php) to execute it, so it isn't cut off by a web server or
+   proxy request time limit. $tracyCliJob is set when this IS that CLI process. */
+$tracyCliJob = TracyDebugger::$consoleCliJob;
+$tracyDispatchCli = $tracyRunId && !$tracyCliJob && PHP_SAPI !== 'cli' && isset($_POST['runCli']) && $_POST['runCli'] === 'true';
 $tracyRunStatusDir = $this->wire('config')->paths->assets . 'TracyDebugger/console_runs/';
 $tracyRunCacheDir = $this->wire('config')->paths->cache . 'TracyDebugger/console_runs/';
 if($tracyRunId) {
@@ -34,7 +39,8 @@ if($tracyRunId) {
        LOCK_NB to know whether this script is genuinely still running, since
        checking the PID itself is unreliable: PHP-FPM workers persist across
        requests, so the PID in the file stays alive long after the script ends. */
-    if(function_exists('getmypid')) {
+    /* when handing the run to a CLI process, the pid lock and connection id belong to that process */
+    if(!$tracyDispatchCli && function_exists('getmypid')) {
         $tracyPidFh = fopen($tracyRunCacheDir . $tracyRunId . '.pid', 'w');
         if($tracyPidFh) {
             flock($tracyPidFh, LOCK_EX);
@@ -48,7 +54,7 @@ if($tracyRunId) {
        on the PHP process closes the TCP socket but does not necessarily
        abort an already-running query (e.g. one stuck in "waiting for handler
        commit") */
-    try {
+    if(!$tracyDispatchCli) try {
         $tracyDbConnId = (int) $this->wire('database')->query('SELECT CONNECTION_ID()')->fetchColumn();
         if($tracyDbConnId) file_put_contents($tracyRunCacheDir . $tracyRunId . '.connid', (string) $tracyDbConnId);
     } catch(\Exception $e) {}
@@ -160,7 +166,8 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
     // validate CSRF token, falling back to a same-origin check so a stale
     // baked-in token (session changed under an open console tab) doesn't fail
     $csrfToken = isset($_POST['csrfToken']) ? $_POST['csrfToken'] : '';
-    if(!TracyDebugger::validTracyRequest($this->wire('session')->tracyConsoleToken, $csrfToken)) {
+    // a CLI job was validated by the web request that started it (and a CLI process has no session)
+    if(!$tracyCliJob && !TracyDebugger::validTracyRequest($this->wire('session')->tracyConsoleToken, $csrfToken)) {
         http_response_code(403);
         echo 'CSRF token validation failed';
         exit;
@@ -168,16 +175,16 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
 
     /* cache all session data we need, then release session lock immediately
        so the user isn't blocked from browsing while code executes */
-    $tracySessionCache = array(
+    $tracySessionCache = $tracyCliJob ? $tracyCliJob['sessionCache'] : array(
         'includedFiles' => $this->wire('session')->tracyIncludedFiles,
         'getData' => $this->wire('session')->tracyGetData,
         'postData' => $this->wire('session')->tracyPostData,
         'whitelistData' => $this->wire('session')->tracyWhitelistData,
     );
-    session_write_close();
+    if(!$tracyCliJob) session_write_close();
     /* release Tracy's own FileSession lock — it holds LOCK_EX for the
        entire request and blocks other tabs that share the tracy-session cookie */
-    $tracySessionStorage = Debugger::getSessionStorage();
+    $tracySessionStorage = $tracyCliJob ? null : Debugger::getSessionStorage();
     if($tracySessionStorage instanceof \Tracy\FileSession) {
         $ref = new \ReflectionProperty($tracySessionStorage, 'file');
         // setAccessible required on PHP < 8.1; deprecated on PHP 8.5+; no-op in between.
@@ -187,6 +194,9 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
             flock($fileHandle, LOCK_UN);
         }
     }
+
+    // hand the run to a CLI process (responds and exits)
+    if($tracyDispatchCli) $this->startConsoleCliRun($tracyRunId, $tracySessionCache);
 
     $page = $pages->get((int)$_POST['pid']);
     if(isset($_POST['tracyConsole'])) {
@@ -489,6 +499,10 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
                the tap armed. */
             TD::$consoleStreamPath = null;
         }
+
+        /* a CLI process has no debug bar, so bd() dumps (recorded since TracyDebugger::enableCliDumps())
+           go with the result instead */
+        if($tracyCliJob) $renderedOutput .= TracyDebugger::getCliDumpsHtml();
 
         $timeStr = TracyDebugger::formatTime(Debugger::timer('consoleCode'), false);
         $memStr = TracyDebugger::human_filesize((max((memory_get_usage() - $initialMemory), 0)), false);
