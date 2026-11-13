@@ -58,14 +58,17 @@ class TD extends TracyDebugger {
      * the agent sees the same hooks/data/Wire metadata as the visible dump,
      * then run AIExport::scrub() to redact patterns Tracy's exact-key
      * KEYS_TO_HIDE doesn't catch (emails, IPs, JWTs, AWS keys, etc.).
+     * $options are the dump's own Dumper options, so the copy goes as deep, and
+     * keeps strings and lists as long, as the dump it sits next to (eg. d($x, [10, 500])
+     * or dumpBig()); without them, the module's maxDepth/maxLength/maxItems settings.
      * @tracySkipLocation
      */
-    private static function agentText($var) {
+    private static function agentText($var, array $options = array()) {
         $opts = array();
-        $opts[Dumper::DEPTH] = TracyDebugger::getDataValue('maxDepth');
-        $opts[Dumper::TRUNCATE] = TracyDebugger::getDataValue('maxLength');
+        $opts[Dumper::DEPTH] = isset($options[Dumper::DEPTH]) ? $options[Dumper::DEPTH] : TracyDebugger::getDataValue('maxDepth');
+        $opts[Dumper::TRUNCATE] = isset($options[Dumper::TRUNCATE]) ? $options[Dumper::TRUNCATE] : TracyDebugger::getDataValue('maxLength');
         if(defined('\\Tracy\\Dumper::ITEMS')) {
-            $opts[Dumper::ITEMS] = TracyDebugger::getDataValue('maxItems');
+            $opts[Dumper::ITEMS] = isset($options[Dumper::ITEMS]) ? $options[Dumper::ITEMS] : TracyDebugger::getDataValue('maxItems');
         }
         $opts[Dumper::DEBUGINFO] = TracyDebugger::getDataValue('debugInfo');
         if(self::phpSupportsKeysToHide()) {
@@ -116,10 +119,10 @@ class TD extends TracyDebugger {
      * Mirror Tracy 2.12's d-to-console-when-agent-detected behavior for our custom dump path.
      * @tracySkipLocation
      */
-    private static function agentDumpToConsole($var, $title = null) {
+    private static function agentDumpToConsole($var, $title = null, array $options = array()) {
         if(!self::tracySupportsAgent()) return;
         if(!\Tracy\Helpers::isAgent()) return;
-        $text = self::agentText($var);
+        $text = self::agentText($var, $options);
         if($text === null || $text === '') return;
         \Tracy\Helpers::consoleLog(($title ? $title . ":\n" : '') . $text);
     }
@@ -199,8 +202,8 @@ class TD extends TracyDebugger {
      * right of the +/- togglers (which are shifted left in styles.css to make room).
      * @tracySkipLocation
      */
-    private static function buildAgentCopyButton($var) {
-        return self::buildAgentTextCopyButton(self::agentText($var), 'Copy this dump as plaintext for an AI agent');
+    private static function buildAgentCopyButton($var, array $options = array()) {
+        return self::buildAgentTextCopyButton(self::agentText($var, $options), 'Copy this dump as plaintext for an AI agent');
     }
 
     /**
@@ -395,7 +398,7 @@ class TD extends TracyDebugger {
             echo static::safeGenerateDump($var, $options) .
             '   </div>
             </div>';
-            try { static::agentDumpToConsole($var, $title); } catch(\Throwable $e) { try { self::log($e); } catch(\Throwable $logErr) {} }
+            try { static::agentDumpToConsole($var, $title, $options); } catch(\Throwable $e) { try { self::log($e); } catch(\Throwable $logErr) {} }
             static::publishConsoleChunk();
         }
     }
@@ -441,7 +444,7 @@ class TD extends TracyDebugger {
             echo static::safeGenerateDump($var, $options) .
             '   </div>
             </div>';
-            try { static::agentDumpToConsole($var, $title); } catch(\Throwable $e) { try { self::log($e); } catch(\Throwable $logErr) {} }
+            try { static::agentDumpToConsole($var, $title, $options); } catch(\Throwable $e) { try { self::log($e); } catch(\Throwable $logErr) {} }
             static::publishConsoleChunk();
         }
     }
@@ -568,7 +571,7 @@ class TD extends TracyDebugger {
         $dumpItem['dump'] = $echo ? '<div class="tracy-echo">' . $echoHtml . '</div>' : static::safeGenerateDump($var, $options);
         $dumpItem['text'] = null;
         if(!$echo && self::tracySupportsAgent() && \Tracy\Helpers::isAgent()) {
-            try { $dumpItem['text'] = self::agentText($var); } catch(\Throwable $e) { try { self::log($e); } catch(\Throwable $logErr) {} }
+            try { $dumpItem['text'] = self::agentText($var, $options); } catch(\Throwable $e) { try { self::log($e); } catch(\Throwable $logErr) {} }
         }
         TracyDebugger::$dumpItems[] = $dumpItem;
         // only persist to dumps.json when something will actually consume it:
@@ -669,15 +672,15 @@ class TD extends TracyDebugger {
             $tabDivs .= '</div>';
             if($numTabs > 1) {
 	            $wrapperOpen = '<div style="clear:both; position:relative;">';
-	            $tabDivs = $wrapperOpen . self::buildAgentCopyButton($var) . substr($tabDivs, strlen($wrapperOpen));
+	            $tabDivs = $wrapperOpen . self::buildAgentCopyButton($var, $options) . substr($tabDivs, strlen($wrapperOpen));
 	            $out .= $tabs . $tabDivs;
 	        }
 	        else {
-            	$out .= '<div style="clear:both; position:relative;">' . self::buildAgentCopyButton($var) . $lastDump . '</div>';
+            	$out .= '<div style="clear:both; position:relative;">' . self::buildAgentCopyButton($var, $options) . $lastDump . '</div>';
 	        }
         }
         else {
-            $out .= '<div style="clear:both; position:relative;">' . self::buildAgentCopyButton($var) . Dumper::toHtml($var, $options) . '</div>';
+            $out .= '<div style="clear:both; position:relative;">' . self::buildAgentCopyButton($var, $options) . Dumper::toHtml($var, $options) . '</div>';
         }
 
         $out .= '</div>';
