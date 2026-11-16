@@ -7,7 +7,7 @@ namespace AdminNeo;
  *
  * Beware that this sends your whole database structure (not data) to Google Gemini.
  *
- * Last changed in release: v5.9.0
+ * Last changed in release: v5.9.1
  *
  * @link https://gemini.google.com/
  * @link https://www.adminneo.org/plugins/#usage
@@ -40,6 +40,11 @@ class GeminiSqlPlugin extends Plugin
 	{
 		// If the request does NOT come from the Gemini textarea, just let the normal AdminNeo flow continue.
 		if (!isset($_POST["gemini"]) || isset($_POST["query"])) {
+			return null;
+		}
+
+		// The method is called also on the login page, where the request is neither authenticated nor verified.
+		if (!is_authenticated()) {
 			return null;
 		}
 

@@ -8,7 +8,7 @@ namespace AdminNeo;
  * This version mirrors the original Gemini plugin but talks to an OpenWebUI instance
  * (any OpenAI‑compatible chat endpoint).
  *
- * Last changed in release: v5.8.0
+ * Last changed in release: v5.9.1
  *
  * @link https://github.com/open-webui/open-webui
  * @link https://docs.openwebui.com/
@@ -50,6 +50,11 @@ class OpenWebUiPlugin extends Plugin
 	{
 		// If the request does NOT come from the Open WebUI textarea, just let the normal AdminNeo flow continue.
 		if (!isset($_POST["openwebui"]) || isset($_POST["query"])) {
+			return null;
+		}
+
+		// The method is called also on the login page, where the request is neither authenticated nor verified.
+		if (!is_authenticated()) {
 			return null;
 		}
 
