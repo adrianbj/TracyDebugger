@@ -101,6 +101,11 @@ abstract class BasePanel extends WireData implements IBarPanel {
             if(!$p || $p instanceof NullPage) {
                 return $this->wire('page');
             }
+            // for a user who isn't a superuser (or a local / switched user), only a page they can view: the
+            // fallback above loads the page by its id whatever its access, and the panels show its fields
+            if(!(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser) && !$p->viewable()) {
+                return $this->wire('page');
+            }
             return $p;
         }
         return $this->wire('page');
