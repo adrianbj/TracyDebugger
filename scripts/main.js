@@ -108,7 +108,9 @@ if(window.Tracy && Tracy.DebugPanel) {
 // Tracy's reset.css clears color and background on every hovered element in the bar, panels and
 // BlueScreen ("tracy-div:not(a b) *:hover"), which beats many of our panel styles and the Ace
 // editor theme (its background turns transparent while hovered). Narrow it to the direct children
-// of tracy-div in each Tracy stylesheet, including those an AJAX BlueScreen adds later.
+// of tracy-div in each Tracy stylesheet, including those an AJAX BlueScreen adds later. A <style>
+// that is moved in the document gets a new stylesheet built from its text, which undoes the change,
+// so it's made again whenever <head>'s children change (an admin theme can reorder them).
 (function() {
     function narrowHoverReset() {
         document.querySelectorAll('style.tracy-debug').forEach(function(style) {
@@ -121,6 +123,10 @@ if(window.Tracy && Tracy.DebugPanel) {
         });
     }
     narrowHoverReset();
+
+    if(window.MutationObserver && document.head) {
+        new MutationObserver(narrowHoverReset).observe(document.head, {childList: true});
+    }
 
     if(window.Tracy && Tracy.BlueScreen && Tracy.BlueScreen.loadAjax) {
         var bsLoadAjax = Tracy.BlueScreen.loadAjax;
