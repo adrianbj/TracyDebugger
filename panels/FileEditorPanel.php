@@ -19,6 +19,14 @@ class FileEditorPanel extends BasePanel {
 
         $cookiePath = TracyDebugger::stripRootPath((string) $this->wire('input')->cookie->tracyFileEditorFilePath, '/');
         $tplPath = TracyDebugger::stripRootPath((string) $this->p->template->filename, '/');
+        // the cookie is only a pointer to the last file opened: one that doesn't resolve to a file under the
+        // site root (as includes/GetFileDetails.php requires) is ignored
+        if($cookiePath !== '') {
+            $rootPath = str_replace('\\', '/', $this->wire('config')->paths->root);
+            $resolvedPath = str_replace('\\', '/', (string) realpath($rootPath . ltrim(str_replace('\\', '/', $cookiePath), '/')));
+            $inRoot = DIRECTORY_SEPARATOR === '\\' ? stripos($resolvedPath, $rootPath) === 0 : strpos($resolvedPath, $rootPath) === 0;
+            if($resolvedPath === '' || !$inRoot) $cookiePath = '';
+        }
         $path = str_replace('\\', '/', $cookiePath !== '' ? $cookiePath : $tplPath);
         $this->tracyFileEditorFilePath = ($path !== '' && $path[0] !== '/') ? '/' . $path : $path;
 

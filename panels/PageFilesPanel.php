@@ -33,6 +33,8 @@ class PageFilesPanel extends BasePanel {
         }
 
         if(!$this->p) return;
+        // a page the user can't view isn't theirs to list the files of (superusers, and local / switched users, can view all)
+        if(!(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser) && $this->p->id && !$this->p->viewable()) return;
 
         $diskFiles = $this->getDiskFiles($this->p);
         $pageFiles = $this->getPageFiles($this->p);

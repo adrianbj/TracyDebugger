@@ -19,6 +19,14 @@ $tracyStreamResults = (isset($_POST['streamResults']) && $_POST['streamResults']
    proxy request time limit. $tracyCliJob is set when this IS that CLI process. */
 $tracyCliJob = TracyDebugger::$consoleCliJob;
 $tracyDispatchCli = $tracyRunId && !$tracyCliJob && PHP_SAPI !== 'cli' && isset($_POST['runCli']) && $_POST['runCli'] === 'true';
+/* the Console's token (or a same-origin request), checked before anything is set up for the run: a
+   request without it shouldn't leave a "running" status and a pid lock behind. A CLI job was
+   validated by the web request that started it */
+if(!$tracyCliJob && !TracyDebugger::validTracyRequest($this->wire('session')->tracyConsoleToken, isset($_POST['csrfToken']) ? (string) $_POST['csrfToken'] : '')) {
+    http_response_code(403);
+    echo 'CSRF token validation failed';
+    exit;
+}
 $tracyRunStatusDir = $this->wire('config')->paths->assets . 'TracyDebugger/console_runs/';
 $tracyRunCacheDir = $this->wire('config')->paths->cache . 'TracyDebugger/console_runs/';
 if($tracyRunId) {

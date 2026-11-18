@@ -58,6 +58,12 @@ class AIExport {
         array('/\beyJ[A-Za-z0-9_\-]+\.eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\b/', '[REDACTED_JWT]'),
         // Email addresses (keep domain for context)
         array('/[A-Za-z0-9._%+\-]+@([A-Za-z0-9.\-]+\.[A-Za-z]{2,})/', '[REDACTED_EMAIL]@$1'),
+        // credential-like URL query parameters: ?token=..., &api_key=..., &password=...
+        array('/([?&][\w\-\[\]%.]*(?:pass|pwd|secret|token|key|signature|auth|session)[\w\-\[\]%.]*=)[^&\s#"\']+/i', '$1[REDACTED]'),
+        // IPv6: the full eight groups, or a form shortened with "::" (with a digit somewhere, so a static
+        // call like DB::add isn't one)
+        array('/(?<![\w:.])(?:[0-9a-f]{1,4}:){7}[0-9a-f]{1,4}(?![\w:])/i', '[REDACTED_IPV6]'),
+        array('/(?<![\w:.])(?=[0-9a-f:]*\d)(?:[0-9a-f]{1,4}:){0,6}:(?:[0-9a-f]{1,4}(?::[0-9a-f]{1,4}){0,5})?(?![\w:(])/i', '[REDACTED_IPV6]'),
         // IPv4 (leave first octet so AI knows it was an IP)
         array('/\b(\d{1,3})\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/', '$1.x.x.x'),
     );

@@ -9,6 +9,7 @@
                     && TracyDebugger::validTracyRequest($this->wire('session')->tracyFileEditorToken, isset($_POST['csrfToken']) ? (string) $_POST['csrfToken'] : '');
 
                 if($fileEditorTokenOk && $this->wire('input')->post->fileEditorFilePath && $this->wire('session')->CSRF->validate()) {
+                    $this->fileEditorPostValidated = true;
                     $rawCode = base64_decode($this->wire('input')->post->tracyFileEditorRawCode);
                     if(static::$inAdmin &&
                         $this->data['referencePageEdited'] &&

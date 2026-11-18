@@ -3,7 +3,7 @@
 class TracyPwApiData extends WireData {
 
     // bump whenever the API data building logic changes shape, to force a rebuild of stale caches on upgrade
-    const API_DATA_SCHEMA = 1;
+    const API_DATA_SCHEMA = 2;
 
     private $n = 0;
     private $pwVars = array();
@@ -291,7 +291,9 @@ class TracyPwApiData extends WireData {
                     $methodStr = $info['comment'];
                 }
                 else {
-                    $methodStr = "$" . lcfirst($class) . '->' . str_replace(array('___', '()'), '', $name) . (isset($info['params']) ? implode(', ', $info['params']) : '');
+                    // 'comment' is output as HTML by the panels (it can be the doc comment toggle's markup), so text
+                    // that comes from a file's source is escaped here
+                    $methodStr = htmlspecialchars("$" . lcfirst($class) . '->' . str_replace(array('___', '()'), '', $name) . (isset($info['params']) ? implode(', ', $info['params']) : ''), ENT_QUOTES, 'UTF-8');
                 }
                 $items[$class][$name]['comment'] = $methodStr;
 
@@ -392,6 +394,7 @@ class TracyPwApiData extends WireData {
         $secondLastStringWasThis = false;
         $lastStringWasObjectOperator = false;
         $lastStringWasAddHook = false;
+        $lastStringWasComment = false;
         $className = null;
         $extendsClassName = null;
         $docComment = null;
@@ -449,7 +452,7 @@ class TracyPwApiData extends WireData {
                                 }
                             }
 
-                            $methodStr = ltrim(self::getFunctionLine($lines[($token[2]-1)]), 'function');
+                            $methodStr = htmlspecialchars(ltrim(self::getFunctionLine($lines[($token[2]-1)]), 'function'), ENT_QUOTES, 'UTF-8');
                             if(
                                 ($hooks && TracyDebugger::getDataValue('captainHookToggleDocComment')) ||
                                 (!$hooks && TracyDebugger::getDataValue('apiExplorerToggleDocComment'))
@@ -515,14 +518,14 @@ class TracyPwApiData extends WireData {
                     if($lastStringWasAddHook) {
                         $lastStringWasAddHook = false;
                         $lastStringWasComment = false;
-                        $name = str_replace(array("'", '"'), "", $token[1]);
+                        $name = htmlspecialchars(str_replace(array("'", '"'), "", $token[1]), ENT_QUOTES, 'UTF-8');
                         $files['filename'] = $file;
                         $files['classname'] = $className;
                         $files['extends'] = $extendsClassName;
                         $files['pwFunctions'][$name]['rawname'] = $name;
                         $files['pwFunctions'][$name]['name'] = $name;
                         $files['pwFunctions'][$name]['lineNumber'] = $token[2];
-                        $files['pwFunctions'][$name]['comment'] = self::strip_comments(trim($lines[($token[2]-1)]));
+                        $files['pwFunctions'][$name]['comment'] = htmlspecialchars(self::strip_comments(trim($lines[($token[2]-1)])), ENT_QUOTES, 'UTF-8');
                     }
                     break;
             }

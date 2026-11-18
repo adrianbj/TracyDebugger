@@ -3,7 +3,7 @@
 // PROCESSWIRE LOGS
 // delete ProcessWire logs if requested
 // superusers (and local / switched users), or users with PW's logs-edit permission, as for PW's own Logs page
-if((TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser || $this->wire('user')->hasPermission('logs-edit')) && $this->wire('input')->post->deleteProcessWireLogs && $this->wire('session')->CSRF->validate()) {
+if((TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser || $this->wire('user')->hasPermission('logs-edit')) && !TracyDebugger::panelRestricted('processwireLogs') && $this->wire('input')->post->deleteProcessWireLogs && $this->wire('session')->CSRF->validate()) {
     $files = glob($this->wire('config')->paths->logs.'*');
     foreach($files as $file) {
         if(is_file($file)) {
