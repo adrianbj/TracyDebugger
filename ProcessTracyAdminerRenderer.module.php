@@ -8,7 +8,7 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
             'summary' => __('Adminer renderer for TracyDebugger.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/12208-tracy-debugger/',
-            'version' => '2.0.10',
+            'version' => '2.0.11',
             'autoload' => false,
             'singular' => true,
             'icon' => 'database',
@@ -25,6 +25,45 @@ class ProcessTracyAdminerRenderer extends Process implements Module {
     public function ___execute() {
         // a superuser, and with "Restrict superusers" on, one with the tracy-debugger permission (as for the bar)
         if(!$this->wire('user')->isSuperuser() || (class_exists('\\ProcessWire\\TracyDebugger', false) && !TracyDebugger::adminerAllowed())) throw new Wire404Exception();
+
+        /* AdminNeo's forms post from its own pages in the iframe, so a POST from another site is never
+           ours. And a POST carrying auth[...] is AdminNeo's login form, which isn't used here (login is
+           automatic, see ExternalLoginPlugin): AdminNeo gives such a request a valid token of its own
+           before checking it, so with the automatic login it would run without one. */
+        if(isset($_SERVER['REQUEST_METHOD']) && strtoupper($_SERVER['REQUEST_METHOD']) === 'POST') {
+            $fetchSite = isset($_SERVER['HTTP_SEC_FETCH_SITE']) ? $_SERVER['HTTP_SEC_FETCH_SITE'] : '';
+            $sameOrigin = $fetchSite !== '' ? $fetchSite === 'same-origin' : (class_exists('\\ProcessWire\\TracyDebugger', false) && TracyDebugger::sameOriginRequest());
+            if(isset($_POST['auth']) || !$sameOrigin) {
+                http_response_code(403);
+                exit;
+            }
+        }
+
+        /* AdminNeo keeps the database password in the session (ExternalLoginPlugin's automatic login saves
+           it there), encrypted only if the browser has its "neo_key" cookie, which AdminNeo itself only
+           sets on its login page: a page the automatic login never shows. So set the cookie here, and drop
+           a password that an earlier request saved unencrypted, which makes the plugin save it again. */
+        if(empty($_COOKIE['neo_key']) || !is_string($_COOKIE['neo_key'])) {
+            $neoKey = bin2hex(random_bytes(16));
+            $_COOKIE['neo_key'] = $neoKey;
+            $cookiePath = $this->wire('config')->urls->admin;
+            $secure = (bool) $this->wire('config')->https;
+            if(PHP_VERSION_ID >= 70300) {
+                setcookie('neo_key', $neoKey, array('expires' => 0, 'path' => $cookiePath, 'secure' => $secure, 'httponly' => true, 'samesite' => 'Lax'));
+            }
+            else {
+                setcookie('neo_key', $neoKey, 0, $cookiePath, '', $secure, true);
+            }
+        }
+        if(isset($_SESSION['pwds']) && is_array($_SESSION['pwds'])) {
+            foreach($_SESSION['pwds'] as $driver => $servers) {
+                foreach((array) $servers as $server => $users) {
+                    foreach((array) $users as $username => $password) {
+                        if(!is_array($password)) unset($_SESSION['pwds'][$driver][$server][$username]);
+                    }
+                }
+            }
+        }
 
         /* AdminNeo turns on zlib.output_compression partway through the response —
            page_header() in adminneo.php does it right before emitting the document.

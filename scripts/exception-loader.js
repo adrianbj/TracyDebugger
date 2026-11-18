@@ -185,7 +185,7 @@ if(!tracyExceptionLoader) {
                 xmlhttp.open("POST", tracyExceptionsViewer.currentURL, true);
                 xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-                xmlhttp.send("filePath=" + encodeURIComponent(filePath) + "&csrfToken=" + encodeURIComponent(tracyExceptionsViewer.csrfToken));
+                xmlhttp.send("filePath=" + encodeURIComponent(filePath) + "&exceptionFile=1&csrfToken=" + encodeURIComponent(tracyExceptionsViewer.csrfToken));
             }
         },
 
@@ -257,7 +257,7 @@ if(!tracyExceptionLoader) {
             xhr.open("POST", tracyExceptionsViewer.currentURL, true);
             xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-            xhr.send("filePath=" + encodeURIComponent(mdPath) + "&csrfToken=" + encodeURIComponent(tracyExceptionsViewer.csrfToken));
+            xhr.send("filePath=" + encodeURIComponent(mdPath) + "&exceptionFile=1&csrfToken=" + encodeURIComponent(tracyExceptionsViewer.csrfToken));
         },
 
         loadExceptionFile: function(filePath, panelEl) {
@@ -308,9 +308,10 @@ if(!tracyExceptionLoader) {
                     curEl = curEl.parentNode;
                 }
 
-                if (curEl && curEl.href && curEl.href.indexOf("tracyexception://") === 0) {
+                // only the panel's own file list: a tracyexception:// link elsewhere in the page isn't ours
+                const panelEl = curEl && curEl.href && curEl.href.indexOf("tracyexception://") === 0 ? tracyExceptionLoader.findOriginatingPanel(curEl) : null;
+                if (panelEl) {
                     e.preventDefault();
-                    const panelEl = tracyExceptionLoader.findOriginatingPanel(curEl) || tracyExceptionLoader.getMainPanel();
                     const queryStr = curEl.href.split('?')[1];
                     const fullFilePath = tracyExceptionLoader.getFileLineVars(queryStr, "f").replace(/\\/g, "/");
                     tracyExceptionLoader.loadExceptionFile(fullFilePath, panelEl);

@@ -50,7 +50,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             'summary' => __('Tracy debugger from Nette with many PW specific custom tools.', __FILE__),
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/forum/58-tracy-debugger/',
-            'version' => '5.1.12',
+            'version' => '5.1.13',
             'autoload' => 100000, // in PW 3.0.114+ higher numbers are loaded first - we want Tracy first
             'singular' => true,
             'requires'  => 'ProcessWire>=3.0.0, PHP>=7.1.0',
@@ -520,6 +520,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 throw new WireException("Unable to create cache path: " . $this->tracyCacheDir);
             }
         }
+        // PW's .htaccess keeps site/assets/cache/ off the web, but not every site has it unchanged, and what's
+        // kept here includes dumps and the Module Disabler's backup (Apache only, like PW's own)
+        static::denyWebAccess($this->tracyCacheDir);
 
         // Tracy log folder path
         $logFolder = $this->wire('config')->paths->logs.'tracy';
@@ -585,6 +588,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // if "enabled" not checked or tracyDisabled via config or other early exit
         if(!$this->data['enabled'] || $this->wire('config')->tracyDisabled || $this->earlyExit) {
+            PwVersionSwitcher::discardSwitchAttempt($this);
             return;
         }
 
@@ -605,7 +609,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if($this->wire('input')->get('tracyAutocomplete') !== null) {
                 Debugger::$showBar = false;
                 header_remove('X-Tracy-Ajax');
-                if(!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) {
+                if((!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) || self::panelRestricted('console')) {
                     http_response_code(403);
                     exit;
                 }
@@ -629,7 +633,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if($this->wire('input')->get->tracyConsoleDownload == 1) {
                 Debugger::$showBar = false;
                 header_remove('X-Tracy-Ajax');
-                if(!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) {
+                if((!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) || self::panelRestricted('console')) {
                     http_response_code(403);
                     exit;
                 }
@@ -698,11 +702,28 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 exit;
             }
 
+            // validator panel: validate the page HTML it kept when the page was rendered, now that it's been opened
+            if($this->wire('input')->post->tracyValidate) {
+                Debugger::$showBar = false;
+                header_remove('X-Tracy-Ajax');
+                $csrfToken = isset($_POST['csrfToken']) ? (string) $_POST['csrfToken'] : '';
+                if(static::$allowedTracyUser !== 'development' || self::panelRestricted('validator') || !self::validTracyRequest($this->wire('session')->tracyActionToken, $csrfToken)) {
+                    http_response_code(403);
+                    exit;
+                }
+                require_once __DIR__ . '/panels/ValidatorPanel.php';
+                $validator = new ValidatorPanel();
+                $out = json_encode($validator->validateStored((string) $this->wire('input')->post->tracyValidate), defined('JSON_INVALID_UTF8_SUBSTITUTE') ? JSON_INVALID_UTF8_SUBSTITUTE : 0);
+                header('Content-Type: application/json');
+                echo $out === false ? '{"html":""}' : $out;
+                exit;
+            }
+
             // background execution: cancel a running console script
             if($this->wire('input')->post->tracyConsoleCancel == 1) {
                 Debugger::$showBar = false;
                 header_remove('X-Tracy-Ajax');
-                if(!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) {
+                if((!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) || self::panelRestricted('console')) {
                     http_response_code(403);
                     exit;
                 }
@@ -745,7 +766,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if($this->wire('input')->post->tracyConsoleCancelAll == 1) {
                 Debugger::$showBar = false;
                 header_remove('X-Tracy-Ajax');
-                if(!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) {
+                if((!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) || self::panelRestricted('console')) {
                     http_response_code(403);
                     exit;
                 }
@@ -806,7 +827,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if($this->wire('input')->post->tracyConsoleCleanup == 1) {
                 Debugger::$showBar = false;
                 header_remove('X-Tracy-Ajax');
-                if(!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) {
+                if((!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) || self::panelRestricted('console')) {
                     http_response_code(403);
                     exit;
                 }
@@ -850,7 +871,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if($this->wire('input')->post->tracyConsolePoll == 1) {
                 Debugger::$showBar = false;
                 header_remove('X-Tracy-Ajax');
-                if(!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) {
+                if((!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) || self::panelRestricted('console')) {
                     http_response_code(403);
                     exit;
                 }
@@ -959,7 +980,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             if($this->wire('input')->post->tracyConsoleActiveRuns == 1) {
                 Debugger::$showBar = false;
                 header_remove('X-Tracy-Ajax');
-                if(!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) {
+                if((!self::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) || self::panelRestricted('console')) {
                     http_response_code(403);
                     exit;
                 }
@@ -1001,7 +1022,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
             // code execution - checked here too (CodeProcessor.php checks again with the token), so a request from
             // anyone else doesn't get the run's status/pid files, lock and unlimited time limit set up first
-            if($this->wire('input')->post->tracyConsole == 1 && (static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser)) {
+            if($this->wire('input')->post->tracyConsole == 1 && (static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser) && !self::panelRestricted('console')) {
                 // garbage collect files left behind by finished background runs (older than
                 // 1 hour). A run can legitimately outlive that window (set_time_limit(0)), so
                 // skip any run whose worker is still alive — its .pid lock is the cancel
@@ -1112,6 +1133,14 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         // Various features that can be run before loading Tracy core files
         if(static::$allowedTracyUser === 'development') {
 
+            // the token for links that trigger an action with a GET request (see actionUrl()). Made here as well
+            // as with the panels' tokens further down, which isn't reached when Tracy is toggled off: the actions
+            // still work then, and a session without a token only has validActionRequest()'s same-origin check
+            $this->wire()->addHookAfter('ProcessWire::finished', function() {
+                $session = $this->wire('session');
+                if(!$session->tracyActionToken) $session->tracyActionToken = bin2hex(random_bytes(16));
+            });
+
             // PANELS TO DISPLAY
             $configEnabledPanels = static::$inAdmin ? $this->data['backendPanels'] : $this->data['frontendPanels'];
 
@@ -1203,7 +1232,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 $i++;
             }
             // move Panel Selector to the end so it has access to the generation time values for all other panels
-            static::$showPanels = $showPanelsOrdered;
+            // without the "Restricted panels" of a restricted user, so that what's done for a panel in showPanels
+            // (a switch of user or language, an intercepted hook, ...) isn't done for one this user doesn't get
+            static::$showPanels = array_values(array_diff($showPanelsOrdered, static::$restrictedUserDisabledPanels));
             if(($key = array_search('panelSelector', static::$showPanels)) !== false) {
                 unset(static::$showPanels[$key]);
                 static::$showPanels[] = 'panelSelector';
@@ -1262,10 +1293,12 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             require_once(__DIR__ . '/includes/post_processors/RequestLoggerPost.php');
 
 
-            // the guest dumps setting is site-wide, so only superusers (and local / switched users) change it
-            if((static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser) && ($this->data['recordGuestDumps'] || $this->wire('input')->cookie->tracyGuestDumps)) {
+            // the guest dumps setting is site-wide, so only superusers (and local / switched users) change it, with
+            // the cookie the Panel Selector writes as "<action token>|1" (see TracyDebugger::tokenCookie())
+            $guestDumpsCookie = static::tokenCookie('tracyGuestDumps') !== null;
+            if((static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser) && ($this->data['recordGuestDumps'] || $guestDumpsCookie)) {
                 $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
-                if($this->wire('input')->cookie->tracyGuestDumps) {
+                if($guestDumpsCookie) {
                     $configData['recordGuestDumps'] = $this->data['recordGuestDumps'] = 1;
                 }
                 else {
@@ -1348,8 +1381,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     static::$disabledModules = array_filter(explode(',', $modulesDisabledCookie));
                 }
                 else {
-                    $this->deleteFile($this->tracyCacheDir . $this->modulesDbBackupFilename);
-                    $this->deleteFile($this->tracyCacheDir . 'restoremodules.php');
+                    $this->deleteModulesBackup();
                 }
 
                 // add disabled flag to requested modules (and remove it from the others), only when the panel set
@@ -1375,8 +1407,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                 if($i > 0) $this->wire('session')->redirect($this->httpReferer);
             }
             else {
-                $this->deleteFile($this->tracyCacheDir . $this->modulesDbBackupFilename);
-                $this->deleteFile($this->tracyCacheDir . 'restoremodules.php');
+                $this->deleteModulesBackup();
             }
             // try to delete modules restore file from root
             $rootRestoreFile = $this->wire('config')->paths->root . 'restoremodules.php';
@@ -1419,26 +1450,34 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $locations = array_map('constant', $this->data['showLocation']);
         Debugger::$showLocation = array_reduce($locations, function($a, $b) { return $a | $b; }, 0);
 
-        if(version_compare(PHP_VERSION, '7.2.0', '>=')) {
-            $keys = array_values(array_filter(array_map('trim', explode(',', $this->data['keysToHide'])), 'strlen'));
-            // dumps
-            if(property_exists(Debugger::class, 'keysToHide')) {
-                Debugger::$keysToHide = $keys;
+        $keys = array_values(array_filter(array_map('trim', explode(',', $this->data['keysToHide'])), 'strlen'));
+        // dumps
+        if(property_exists(Debugger::class, 'keysToHide')) {
+            Debugger::$keysToHide = $keys;
+        }
+        // the BlueScreen dumps with its own list (Debugger::$keysToHide doesn't reach it), so add ours to
+        // Tracy's defaults there too
+        if(method_exists(Debugger::class, 'getBlueScreen')) {
+            $blueScreen = Debugger::getBlueScreen();
+            if(property_exists($blueScreen, 'keysToHide')) {
+                $blueScreen->keysToHide = array_values(array_unique(array_merge((array) $blueScreen->keysToHide, $keys)));
             }
-            // the BlueScreen dumps with its own list (Debugger::$keysToHide doesn't reach it), so add ours to
-            // Tracy's defaults there too
-            if(method_exists(Debugger::class, 'getBlueScreen')) {
-                $blueScreen = Debugger::getBlueScreen();
-                if(property_exists($blueScreen, 'keysToHide')) {
-                    $blueScreen->keysToHide = array_values(array_unique(array_merge((array) $blueScreen->keysToHide, $keys)));
-                }
+            // keysToHide only matches whole key names, which leaves the Cookie and Authorization headers,
+            // the session cookie and environment secrets like DB_PASSWORD in the exception files Tracy logs
+            if(property_exists($blueScreen, 'scrubber')) {
+                $blueScreen->scrubber = function($key, $value = null) {
+                    return TracyDebugger::isSensitiveDumpKey($key, $value);
+                };
             }
         }
 
 
         // START ENABLING TRACY
         // now that required classes above have been loaded, we can now exit if user is not allowed
-        if(!static::$allowedTracyUser) return;
+        if(!static::$allowedTracyUser) {
+            PwVersionSwitcher::discardSwitchAttempt($this);
+            return;
+        }
 
         // SET TRACY AS ENABLED
         // if we get this far, Tracy is fully enabled, so set this for checking in ready()
@@ -1550,6 +1589,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
                     });
                 }
                 // Tracy not enabled so exit now
+                PwVersionSwitcher::discardSwitchAttempt($this);
                 $this->tracyEnabled = false;
                 return;
             }
@@ -1969,7 +2009,23 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             // if dump recorder panel items were cleared, clear them from the session variable and remove cookie
             if($this->wire('input')->cookie->tracyClearDumpsRecorderItems) {
                 $dumpsFile = $this->tracyCacheDir.'dumps.json';
-                if(file_exists($dumpsFile)) unlink($dumpsFile);
+                if(file_exists($dumpsFile)) {
+                    // the file is shared by all users: superusers (and local / switched users) clear it, other
+                    // Tracy users only the entries they can see (see visibleRecordedDumps())
+                    if(static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser) {
+                        unlink($dumpsFile);
+                    }
+                    else {
+                        $allDumps = json_decode((string) file_get_contents($dumpsFile), true);
+                        if(is_array($allDumps)) {
+                            $visibleDumps = static::visibleRecordedDumps($allDumps);
+                            $keptDumps = array_values(array_filter($allDumps, function($entry) use ($visibleDumps) {
+                                return !in_array($entry, $visibleDumps, true);
+                            }));
+                            $this->wire('files')->filePutContents($dumpsFile, json_encode($keptDumps), LOCK_EX);
+                        }
+                    }
+                }
                 unset($this->wire('input')->cookie->tracyClearDumpsRecorderItems);
                 setcookie("tracyClearDumpsRecorderItems", "", time()-3600, "/");
             }
@@ -2089,7 +2145,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
         // ENABLE TRACY
         if($this->tracyEnabled) {
-            if($this->data['use_php_session'] === 1 && !$this->wire('modules')->isInstalled('SessionHandlerDB') && self::$tracyVersion != '2.7.x') {
+            // development mode only: the session is for the debug bar, and starting one for every production
+            // mode visitor (guests and bots included) gives each a session cookie and file
+            if(static::$allowedTracyUser === 'development' && $this->data['use_php_session'] === 1 && !$this->wire('modules')->isInstalled('SessionHandlerDB') && self::$tracyVersion != '2.7.x') {
                 if (session_status() === PHP_SESSION_NONE) {
                     session_start();
                 }
@@ -3234,6 +3292,44 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         return !static::getDataValue('restrictSuperusers') || self::userHasPermission('tracy-debugger');
     }
 
+    /**
+     * Folder for the File Editor's backups of the files it changes, each at its path from the site root. In a
+     * folder of their own so that such a path can't be one of TracyDebugger's own files in its cache folder
+     * (a backup of the root .htaccess would otherwise be that folder's .htaccess)
+     *
+     * @return string
+     */
+    public static function fileEditorBackupPath() {
+        return wire('config')->paths->cache . 'TracyDebugger/file_editor_backups/';
+    }
+
+    /**
+     * Delete the Module Disabler's backup of the modules table and its restoremodules.php, unless a module is
+     * still disabled: they're the way back from that, and a request without the panel (another user's, another
+     * browser's, or with the panel not shown) isn't a sign that they're finished with
+     */
+    private function deleteModulesBackup() {
+        $backupFile = $this->tracyCacheDir . $this->modulesDbBackupFilename;
+        $restoreFile = $this->tracyCacheDir . 'restoremodules.php';
+        if(!file_exists($backupFile) && !file_exists($restoreFile)) return;
+        foreach($this->wire('modules') as $name => $label) {
+            if($this->wire('modules')->getFlags($name) & Modules::flagsDisabled) return;
+        }
+        $this->deleteFile($backupFile);
+        $this->deleteFile($restoreFile);
+    }
+
+    /**
+     * Is $panel one of the "Restricted panels" that the current user, as a restricted user, doesn't get? For what
+     * a panel does on the server (run Console code, save a file), which a request can ask for without the panel
+     *
+     * @param string $panel
+     * @return bool
+     */
+    public static function panelRestricted($panel) {
+        return in_array($panel, static::$restrictedUserDisabledPanels, true);
+    }
+
     private static function userHasPermission($permission) {
         foreach(wire('user')->roles as $role) {
             foreach($role->permissions as $perm) {
@@ -3457,6 +3553,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
      */
     private function insertCode($when) {
         if((!static::$allowedSuperuser && !self::$validLocalUser && !self::$validSwitchedUser) ||
+            self::panelRestricted('console') ||
             $this->wire('config')->ajax ||
             $this->wire('input')->cookie->tracyCodeError ||
             !static::tokenCookie('tracyIncludeCode', 'tracyConsoleToken'))
@@ -3555,6 +3652,36 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         return in_array($lowerKey, $keysToHide, true)
             || in_array($lowerKey, array('auth', 'pw', 'key', 'sig'), true)
             || (bool) preg_match('/pass|pwd|secret|token|cookie|session|authorization|api[-_]?key|signature/', $lowerKey);
+    }
+
+    /**
+     * Should the value under $key be hidden in a BlueScreen (which is also what's saved in the logged exception
+     * files): a credential-like key (see isSensitiveKey()), one of the session cookies, the HTTP basic auth
+     * password, or where Adminer keeps the database password in the session? An array or object is only hidden
+     * whole by name (those, and the "Keys to hide" setting, which Tracy applies itself): otherwise its own
+     * keys are checked instead, so $_SESSION['Session'] or a $session argument still shows what isn't a credential
+     *
+     * @param string|int $key
+     * @param mixed $value
+     * @return bool
+     */
+    public static function isSensitiveDumpKey($key, $value = null) {
+        static $names = null;
+        if($names === null) {
+            $config = wire('config');
+            $sessionName = (string) $config->sessionName;
+            $sessionNameSecure = (string) $config->sessionNameSecure;
+            if($sessionNameSecure === '') $sessionNameSecure = $sessionName . 's';
+            $names = array('php_auth_pw', 'php_auth_digest', 'pwds', 'neo_key', strtolower((string) session_name()));
+            foreach(array($sessionName, $sessionNameSecure) as $name) {
+                if($name === '') continue;
+                $names[] = strtolower($name);
+                $names[] = strtolower($name . '_challenge');
+            }
+        }
+        if(in_array(strtolower((string) $key), $names, true)) return true;
+        if(is_array($value) || is_object($value)) return false;
+        return self::isSensitiveKey($key);
     }
 
     /**
@@ -3706,7 +3833,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $link = '';
             // don't add link again unless it's a repeater field
             if(strpos($appendedMarkup, 'adminer_EditFieldLink') === false || $inputfield instanceof InputfieldRepeater) {
-                $link = '<div class="wrap_adminer_EditFieldLink" style="display: none"><a tabindex="-1" class="adminer_EditFieldLink" title="Edit '.($f->label ? $f->label : $f->name).' in Adminer (SHIFT+Click for full Adminer)" href="adminer://?'.$adminerQuery.'">'.$adminerIcon.'</a></div>';
+                $link = '<div class="wrap_adminer_EditFieldLink" style="display: none"><a tabindex="-1" class="adminer_EditFieldLink" title="Edit '.htmlspecialchars((string) ($f->label ? $f->label : $f->name), ENT_QUOTES, 'UTF-8').' in Adminer (SHIFT+Click for full Adminer)" href="adminer://?'.$adminerQuery.'">'.$adminerIcon.'</a></div>';
             }
 
             $inputfield->appendMarkup = $inputfield->appendMarkup . $link;
@@ -3925,6 +4052,9 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             $host = parse_url($_SERVER[$header], PHP_URL_HOST);
             if(!$host) return false;
             $port = parse_url($_SERVER[$header], PHP_URL_PORT);
+            // http://host isn't the same origin as https://host. Only that way round is refused: behind a proxy
+            // that ends TLS, a request can be http here while the browser's origin is https
+            if(wire('config')->https && strtolower((string) parse_url($_SERVER[$header], PHP_URL_SCHEME)) === 'http') return false;
             return strtolower($host . ($port ? ':' . $port : '')) === $expectedHost;
         }
         return false;
@@ -4651,7 +4781,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
             }
             $isWindows = DIRECTORY_SEPARATOR === '\\';
             $prefixOk = $isWindows ? (stripos($resolvedFilePath, $rootPath) === 0) : (strpos($resolvedFilePath, $rootPath) === 0);
-            $tracyCacheDirNorm = str_replace('\\', '/', $this->tracyCacheDir);
+            $tracyCacheDirNorm = str_replace('\\', '/', static::fileEditorBackupPath());
             if($resolvedFilePath !== '' && $prefixOk) {
                 $relPath = $isWindows ? substr($resolvedFilePath, strlen($rootPath)) : str_replace($rootPath, '', $resolvedFilePath);
                 $resolvedCachePath = str_replace('\\', '/', (string) realpath($tracyCacheDirNorm . $relPath));
@@ -4852,7 +4982,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f = $this->wire('modules')->get("InputfieldSelect");
         $f->attr('name', 'outputMode');
         $f->label = 'Output mode';
-        $f->description = __('The DETECT option automatically switches from DEVELOPMENT to PRODUCTION mode based on whether the IP of the site is publicly accessible or not.', __FILE__);
+        $f->description = __('The DETECT option uses DEVELOPMENT mode when the request is local and PRODUCTION mode otherwise. A request is local when it comes from 127.0.0.1 or ::1 with no X-Forwarded-For or Forwarded header - so on a server behind a proxy or tunnel on the same machine that does not add one of those headers, every visitor is local.', __FILE__);
         $f->notes = __('In PRODUCTION mode, all errors and dumps etc are logged to file. Nothing is displayed in the browser. In DEVELOPMENT mode, the debug bar is displayed for authorized users - superusers and those with the `tracy-debugger` permission. All other users will be forced into PRODUCTION mode, regardless of this setting.', __FILE__);
         $f->columnWidth = 33;
         $f->required = true;
@@ -4890,7 +5020,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->attr('name', 'forceIsLocal');
         $f->label = __('Force isLocal check to always return true', __FILE__);
         $f->description = __('Check to force isLocal.', __FILE__);
-        $f->notes = __('WARNING - Only use this if you know what you are doing! Combined with the previous setting, every guest on a live site gets the full debug bar, including the Console, which runs PHP code.', __FILE__);
+        $f->notes = __('WARNING - Only use this if you know what you are doing! Combined with the previous setting, every guest on a live site gets the full debug bar, including the Console, which runs PHP code. On its own it still gives every user with the `tracy-debugger` permission the panels that are otherwise for superusers, the Console and File Editor included, as on any local site.', __FILE__);
         $f->columnWidth = 33;
         $f->attr('checked', $data['forceIsLocal'] == '1' ? 'checked' : '');
         $fieldset->add($f);

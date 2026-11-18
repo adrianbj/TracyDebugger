@@ -52,7 +52,7 @@ class TracyExceptionsPanel extends BasePanel {
 
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
         $exceptionLoaderUrl = TracyDebugger::assetUrl('scripts/exception-loader.js');
-        $currentUrl = htmlspecialchars($_SERVER['REQUEST_URI'] ?? '', ENT_QUOTES, 'UTF-8');
+        $currentUrlJs = json_encode((string) ($_SERVER['REQUEST_URI'] ?? ''), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 
         // CSRF token (shared with File Editor) is generated in a
         // ProcessWire::finished hook (see TracyDebugger::init) so it persists
@@ -65,7 +65,7 @@ class TracyExceptionsPanel extends BasePanel {
         <script{$nonceAttr}>
             var tracyExceptionsViewer = {
                 tracyModuleUrl: "$tracyModuleUrl",
-                currentURL: "$currentUrl",
+                currentURL: $currentUrlJs,
                 csrfToken: "$csrfToken",
             };
             tracyJSLoader.load("$exceptionLoaderUrl");

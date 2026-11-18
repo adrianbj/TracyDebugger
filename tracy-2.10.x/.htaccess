@@ -1,0 +1,9 @@
+# TracyDebugger: Tracy is loaded by PHP, nothing in here is for the web (its examples, tools and
+# .phtml templates would otherwise be served, or run, on a server that does not block them)
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

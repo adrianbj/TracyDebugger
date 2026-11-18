@@ -161,7 +161,7 @@ foreach($pwVars->getArray() as $key => $value) {
     $$key = $value;
 }
 
-if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser) {
+if((TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser) && !TracyDebugger::panelRestricted('console')) {
 
     // validate CSRF token, falling back to a same-origin check so a stale
     // baked-in token (session changed under an open console tab) doesn't fail
@@ -685,7 +685,7 @@ function writeError($error, $terminal = true) {
     // attach an agent-copy button + [data-tracy-md-source] payload so a single
     // error block is copyable on its own and "Copy all" picks it up in DOM order
     // alongside any dumps (matches the dump copy-button layout in TD).
-    $agentErrButton = TD::buildAgentTextCopyButton($error['type'] . ': ' . $customErrStr, 'Copy this error as plaintext for an AI agent');
+    $agentErrButton = TD::buildAgentTextCopyButton(AIExport::scrub($error['type'] . ': ' . $customErrStr), 'Copy this error as plaintext for an AI agent');
     echo '<div style="position:relative; border: 1px solid #d9d9d9; border-left: 3px solid #c00; padding: 6px 28px 6px 10px; background: #fff3f3; color: #c00; font-family: monospace; white-space: normal; margin-bottom: 5px;">'
         . $agentErrButton
         . '<strong>' . htmlspecialchars($error['type'], ENT_QUOTES, 'UTF-8') . ':</strong> '

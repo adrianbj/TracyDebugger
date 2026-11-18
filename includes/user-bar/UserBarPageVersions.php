@@ -15,7 +15,7 @@ if(wire('user')->hasPermission('tracy-page-versions')) {
             $baseName = pathinfo($file, PATHINFO_BASENAME);
             if(in_array($baseName, $templateFilenames) && $templateBasename != $baseName) continue;
             if(TracyDebugger::isAlternativeTemplateFile($baseName, wire('page')->template)) {
-                $templateOptions .= '<option value="'.$file.'"'.($templateBasename == $file ? 'selected="selected"' : '').'>'.formatPageName($file).'</option>';
+                $templateOptions .= '<option value="'.htmlspecialchars((string) $file, ENT_QUOTES, 'UTF-8').'"'.($templateBasename == $file ? 'selected="selected"' : '').'>'.htmlspecialchars((string) formatPageName($file), ENT_QUOTES, 'UTF-8').'</option>';
                 $countTemplateOptions++;
             }
         }

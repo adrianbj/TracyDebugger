@@ -540,7 +540,9 @@ class ProcessWirePlugin extends Plugin {
 
             }
         }
-        elseif(preg_match('/\.(jpg|jpeg|png|gif|svg|webp|bmp)$/i', $val)) {
+        // a file name or path only: a value with "..", a query string or a fragment isn't one of this page's
+        // images, and as an <img> it would have the browser request whatever URL it spells out
+        elseif(preg_match('/\.(jpg|jpeg|png|gif|svg|webp|bmp)$/i', $val) && !preg_match('#\.\.|[?\#\\\\]#', $val)) {
             $thumb = $this->getAvailableThumb($val, $pages_id);
             $fullPath = $this->getFullPath($val, $pages_id);
             $safeFullPath = htmlspecialchars($fullPath ?? '', ENT_QUOTES, 'UTF-8');
@@ -662,7 +664,7 @@ class ProcessWirePlugin extends Plugin {
         $fullpath2 = $config->paths->root . $filepath2;
 
         $src = file_exists($fullpath1) ? $filepath1 : (file_exists($fullpath2) ? $filepath2 : $filePath);
-        return '<img class="image-thumb-icon" src="' . $src . '" />';
+        return '<img class="image-thumb-icon" src="' . htmlspecialchars($src, ENT_QUOTES, 'UTF-8', false) . '" />';
 
     }
 

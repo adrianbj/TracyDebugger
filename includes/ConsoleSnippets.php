@@ -2,7 +2,7 @@
 
 // Console snippets are run from the Console, so like the Console they're for superusers (and local / switched
 // users) only: another Tracy user writing one could plant code a superuser later runs
-if(!TracyDebugger::$allowedSuperuser && !TracyDebugger::$validLocalUser && !TracyDebugger::$validSwitchedUser) {
+if((!TracyDebugger::$allowedSuperuser && !TracyDebugger::$validLocalUser && !TracyDebugger::$validSwitchedUser) || TracyDebugger::panelRestricted('console')) {
     http_response_code(403);
     exit;
 }

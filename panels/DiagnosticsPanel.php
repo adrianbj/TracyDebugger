@@ -1344,7 +1344,7 @@ class DiagnosticsPanel extends BasePanel {
         foreach(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->wire('config')->paths->root, \RecursiveDirectoryIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST) as $fileinfo) {
             if((strpos($fileinfo->getPathname(), 'assets'.DIRECTORY_SEPARATOR.'sessions'.DIRECTORY_SEPARATOR) === false && !$fileinfo->isDir() && strpos($fileinfo->getPathname(), DIRECTORY_SEPARATOR.'.') === false) || $fileinfo->getFilename() == ".htaccess") {
                 $octal_perms = substr(sprintf('%o', $fileinfo->getPerms()), -4);
-                if($octal_perms != $this->wire('config')->chmodFile) $this->incorrectFiles .= '<tr><td>'.$fileinfo->getPathname() . "</td><td>" . $octal_perms . "</tr>\n";
+                if($octal_perms != $this->wire('config')->chmodFile) $this->incorrectFiles .= '<tr><td>'.htmlspecialchars((string) $fileinfo->getPathname(), ENT_QUOTES, 'UTF-8') . "</td><td>" . $octal_perms . "</tr>\n";
             }
         }
         $this->incorrectFiles .= '
@@ -1360,6 +1360,43 @@ class DiagnosticsPanel extends BasePanel {
     /**
      *
      */
+    /**
+     * A check, made by the browser when the panel is opened, that TracyDebugger's cache folder can't be read over
+     * the web. ProcessWire's .htaccess (and the folder's own) see to that on Apache; other servers need a rule
+     * of their own, and what's in there includes recorded dumps and the Module Disabler's backup.
+     *
+     * @return string
+     */
+    protected function webAccessCheck() {
+        $probeName = 'web-access-probe.txt';
+        $probeFile = $this->wire('config')->paths->cache . 'TracyDebugger/' . $probeName;
+        if(!is_file($probeFile)) @file_put_contents($probeFile, 'tracy-web-access-probe');
+        if(!is_file($probeFile)) return '';
+        $probeUrl = json_encode($this->wire('config')->urls->assets . 'cache/TracyDebugger/' . $probeName, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+        return '
+        <h3>Web Access</h3>
+        <p id="tracyWebAccessCheck">Checking that the TracyDebugger cache folder is not readable over the web&hellip;</p>
+        <script' . TracyDebugger::getNonceAttr() . '>
+            (function() {
+                var el = document.getElementById("tracyWebAccessCheck");
+                if(!el || !window.fetch) return;
+                fetch(' . $probeUrl . ', {cache: "no-store", credentials: "omit"}).then(function(response) {
+                    return response.text().then(function(text) {
+                        if(response.ok && text.indexOf("tracy-web-access-probe") !== -1) {
+                            el.style.color = "' . TracyDebugger::COLOR_ALERT . '";
+                            el.textContent = "FAIL: files in site/assets/cache/TracyDebugger/ can be read over the web (HTTP " + response.status + "). They include recorded dumps and the Module Disabler\u0027s backup. Block web access to site/assets/cache/ in the web server configuration, as ProcessWire\u0027s .htaccess does on Apache.";
+                        }
+                        else {
+                            el.textContent = "OK: the TracyDebugger cache folder is not readable over the web (HTTP " + response.status + ").";
+                        }
+                    });
+                }).catch(function() {
+                    el.textContent = "The web access check could not be completed.";
+                });
+            })();
+        </script>';
+    }
+
     public function getPanel() {
         $panelSections = TracyDebugger::getDataValue('diagnosticsPanelSections');
         $is_local  = TracyDebugger::$isLocal;
@@ -1395,6 +1432,7 @@ class DiagnosticsPanel extends BasePanel {
                 $out .= '<input type="submit" id="tracyDedicatedServerMode" value="' . ($this->wire('input')->cookie->tracyDedicatedServerMode ? 'Disable' : 'Enable') .' Dedicated Server Mode" /><br><br>';
                 $out .= '</p>';
                 $out .= '<p>'.$this->file_asset_report.'</p>';
+                $out .= $this->webAccessCheck();
                 $out .= '<h3>Config File Settings</h3><p>'.$this->conf_asset_report.'</p>';
                 $out .= '
             </div>

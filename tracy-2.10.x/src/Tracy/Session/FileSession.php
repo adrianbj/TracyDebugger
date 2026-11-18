@@ -51,12 +51,21 @@ class FileSession implements SessionStorage
 			|| !($file = @fopen($path = $this->dir . '/' . self::FilePrefix . $id, 'r+')) // intentionally @
 		) {
 			$id = Helpers::createId();
-			setcookie($this->cookieName, $id, time() + self::CookieLifetime, '/', '', secure: false, httponly: true);
+			// TracyDebugger patch: Secure on https and SameSite=Lax, as in Tracy 2.12
+			setcookie($this->cookieName, $id, [
+				'expires' => time() + self::CookieLifetime,
+				'path' => '/',
+				'secure' => !empty($_SERVER['HTTPS']) && strcasecmp($_SERVER['HTTPS'], 'off') !== 0,
+				'httponly' => true,
+				'samesite' => 'Lax',
+			]);
 
 			$file = @fopen($path = $this->dir . '/' . self::FilePrefix . $id, 'c+'); // intentionally @
 			if ($file === false) {
 				throw new \RuntimeException("Unable to create file '$path'. " . error_get_last()['message']);
 			}
+
+			@chmod($path, 0600); // TracyDebugger patch: as in Tracy 2.12, so other users of a shared temp folder can't read it (@ - may not be supported by the filesystem)
 		}
 
 		if (!@flock($file, LOCK_EX)) { // intentionally @
@@ -64,7 +73,7 @@ class FileSession implements SessionStorage
 		}
 
 		$this->file = $file;
-		$this->data = @unserialize(stream_get_contents($this->file)) ?: []; // @ - file may be empty
+		$this->data = @unserialize(stream_get_contents($this->file), ['allowed_classes' => false]) ?: []; // @ - file may be empty. TracyDebugger patch: allowed_classes, as in Tracy 2.12 (the data contains no objects)
 
 		if (mt_rand() / mt_getrandmax() < $this->gcProbability) {
 			$this->clean();

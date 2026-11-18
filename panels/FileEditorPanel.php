@@ -68,7 +68,7 @@ class FileEditorPanel extends BasePanel {
             $tracyFileEditorFileCode = json_encode(file_get_contents(strpos($this->p->template->filename, '-tracytemp') !== false ? $this->p->template->filename : $filePath));
             $tracyFileEditorFileData = array(
                 'writeable' => is_writable($filePath),
-                'backupExists' => !isset($_POST['tracyTestTemplateCode']) && file_exists($this->wire('config')->paths->cache . 'TracyDebugger/' . $this->tracyFileEditorFilePath) ? true : false,
+                'backupExists' => !isset($_POST['tracyTestTemplateCode']) && file_exists(TracyDebugger::fileEditorBackupPath() . $this->tracyFileEditorFilePath) ? true : false,
                 'isTemplateFile' => str_replace('-tracytemp', '', $this->p->template->filename) === $filePath,
                 'isTemplateTest' => strpos($this->p->template->filename, '-tracytemp')
             );
@@ -540,6 +540,7 @@ HTML;
                         <form id="tracyFileEditorSubmission" style="padding: 0; margin: 0;" method="post" action="'.htmlspecialchars(TracyDebugger::inputUrl(true), ENT_QUOTES, 'UTF-8').'">
                             <fieldset>
                                 '.$this->csrfInput().'
+                                <input type="hidden" name="csrfToken" value="'.htmlspecialchars((string) $csrfToken, ENT_QUOTES, 'UTF-8').'" />
                                 <textarea id="tracyFileEditorRawCode" name="tracyFileEditorRawCode" style="display:none"></textarea>
                                 <input type="hidden" id="fileEditorFilePath" name="fileEditorFilePath" value="'.htmlspecialchars((string) $this->tracyFileEditorFilePath, ENT_QUOTES, 'UTF-8').'" />
                                 <div id="fileEditorButtons"></div>
@@ -643,13 +644,13 @@ HTML;
 
                 if(@is_dir("$directory/$file")) {
                     $subtree = $this->php_file_tree_dir("$directory/$file", $extensions, $extFilter, "$parent/$file"); // no need to urlencode parent/file
-                    if($subtree != '') $tree .= "<li class='tft-d'><a>$fileName</a>";
+                    if($subtree != '') $tree .= "<li class='tft-d'><a>" . htmlspecialchars($fileName ?? '', ENT_QUOTES, 'UTF-8') . "</a>";
                     $tree .= $subtree;
                     $tree .= "</li>";
                 } else {
                     // file
                     // $parent = str_replace($this->dirPath, "", $directory);
-                    $ext = strtolower(substr($file, strrpos($file, ".") + 1));
+                    $ext = preg_replace('/[^a-z0-9_-]/', '', strtolower(substr($file, strrpos($file, ".") + 1)));
                     $link = str_replace("%2F", "/", rawurlencode("$dirPath")); // to overcome bug/feature on apache
                     //bd($link);
                     $link = trim($link, '/');

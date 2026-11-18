@@ -66,7 +66,7 @@ class ProcesswireInfoPanel extends BasePanel {
 
         $out = '';
         $panelSections = TracyDebugger::getDataValue('processwireInfoPanelSections');
-        $currentUrl = htmlspecialchars($_SERVER['REQUEST_URI'] ?? '', ENT_QUOTES, 'UTF-8');
+        $currentUrlJs = json_encode((string) ($_SERVER['REQUEST_URI'] ?? ''), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 
         $nonceAttr = TracyDebugger::getNonceAttr();
         if(in_array('gotoId', $panelSections)) {
@@ -143,7 +143,7 @@ class ProcesswireInfoPanel extends BasePanel {
                                 }
                             }
 
-                            xmlhttp.open("POST", "$currentUrl", true);
+                            xmlhttp.open("POST", $currentUrlJs, true);
                             xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                             xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
                             xmlhttp.send("goToPage="+pid);

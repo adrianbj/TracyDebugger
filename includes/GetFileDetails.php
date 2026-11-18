@@ -1,6 +1,7 @@
 <?php namespace ProcessWire;
 
-if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser) {
+// the Tracy Exceptions panel reads its files here too (exceptionFile, see below)
+if((TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser) && !TracyDebugger::panelRestricted($this->wire('input')->post->exceptionFile ? 'tracyExceptions' : 'fileEditor')) {
 
     // validate CSRF token, falling back to a same-origin check so a stale
     // baked-in token (session changed under an open File Editor tab) doesn't fail
@@ -22,6 +23,16 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
     // canonical case, which may differ from paths->root. Use stripos there.
     $isWindows = DIRECTORY_SEPARATOR === '\\';
     $prefixOk = $isWindows ? (stripos($resolvedPath, $rootPath) === 0) : (strpos($resolvedPath, $rootPath) === 0);
+
+    // the Tracy Exceptions panel renders the file it asks for as HTML, so it only gets the exception files
+    // that Tracy logged, not any file under the root (which could be one a user uploaded)
+    if($prefixOk && $this->wire('input')->post->exceptionFile) {
+        $exceptionsPath = str_replace('\\', '/', (string) realpath($this->wire('config')->paths->logs . 'tracy'));
+        $inExceptionsPath = $exceptionsPath !== '' && ($isWindows
+            ? stripos($resolvedPath, $exceptionsPath . '/') === 0
+            : strpos($resolvedPath, $exceptionsPath . '/') === 0);
+        if(!$inExceptionsPath || !preg_match('/\.(html|md)$/iD', $resolvedPath)) $prefixOk = false;
+    }
 
     if($resolvedPath !== '' && $prefixOk) {
 
@@ -46,10 +57,14 @@ if(TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDe
         $relPath = $isWindows
             ? substr($resolvedPath, strlen($rootPath))
             : str_replace($rootPath, '', $resolvedPath);
-        $fileData['backupExists'] = file_exists($this->wire('config')->paths->cache . 'TracyDebugger/' . $relPath) ? true : false;
+        $fileData['backupExists'] = file_exists(TracyDebugger::fileEditorBackupPath() . $relPath) ? true : false;
         $templateFilename = str_replace('\\', '/', (string) $p->template->filename);
         $fileData['isTemplateFile'] = $isWindows ? (strcasecmp($resolvedPath, $templateFilename) === 0) : ($resolvedPath === $templateFilename);
         $fileData['contents'] = file_get_contents($resolvedPath);
+        // an exception's Markdown copy is for pasting into an AI tool, so it gets the same scrub as the dumps' copy
+        if($this->wire('input')->post->exceptionFile && preg_match('/\.md$/iD', $resolvedPath)) {
+            $fileData['contents'] = AIExport::scrub((string) $fileData['contents']);
+        }
         echo json_encode($fileData);
     }
 }

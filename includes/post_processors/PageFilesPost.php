@@ -4,7 +4,7 @@
 // both delete files, so like the File Editor they're limited to superusers (and local / switched users), not
 // every tracy-debugger user, and to page files: orphan paths must be inside site/assets/files/ and missing
 // pagefiles are only removed from pages the user can edit
-$tracyPageFilesAllowed = TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser;
+$tracyPageFilesAllowed = (TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser) && !TracyDebugger::panelRestricted('pageFiles');
 // delete orphaned files if requested
 if($tracyPageFilesAllowed && $this->wire('input')->post->deleteOrphanFiles && $this->wire('input')->post->orphanPaths && $this->wire('session')->CSRF->validate()) {
     $filesPath = rtrim(str_replace('\\', '/', (string) realpath($this->wire('config')->paths->files)), '/') . '/';
