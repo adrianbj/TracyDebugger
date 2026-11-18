@@ -70,7 +70,7 @@ class RequestInfoPanel extends BasePanel {
                     $fieldSettings .= '
                         <tr>
                             <td>label</td>
-                            <td>'.$field->label.'</td>
+                            <td>'.htmlspecialchars((string) $field->label, ENT_QUOTES, 'UTF-8').'</td>
                         </tr>
                         <tr>
                             <td>name</td>
@@ -207,7 +207,7 @@ class RequestInfoPanel extends BasePanel {
                         $templateSettings .= '
                             <tr>
                                 <td>label</td>
-                                <td>'.$template->label.'</td>
+                                <td>'.htmlspecialchars((string) $template->label, ENT_QUOTES, 'UTF-8').'</td>
                             </tr>
                             <tr>
                                 <td>name</td>
@@ -388,7 +388,7 @@ class RequestInfoPanel extends BasePanel {
             $pageInfo .= '
             <tr>
                 <td>template</td>
-                <td><a title="Edit Template" href="'.$this->wire('config')->urls->admin.'setup/template/edit?id='.$p->template->id.'">'.$p->template->name.'</a>'.($p->template->label ? ' ('.($this->wire('languages') ? $p->template->getLabel($userLang) : $p->template->label).')' :'').'</td>
+                <td><a title="Edit Template" href="'.$this->wire('config')->urls->admin.'setup/template/edit?id='.$p->template->id.'">'.$p->template->name.'</a>'.($p->template->label ? ' ('.htmlspecialchars((string) ($this->wire('languages') ? $p->template->getLabel($userLang) : $p->template->label), ENT_QUOTES, 'UTF-8').')' :'').'</td>
             </tr>
             <tr>
                 <td>process</td>
@@ -623,7 +623,7 @@ class RequestInfoPanel extends BasePanel {
                 <table>
                     <tr>
                         <td>label</td>
-                        <td>'.($this->wire('languages') ? $template->getLabel($userLang) : $template->label).'</td>
+                        <td>'.htmlspecialchars((string) ($this->wire('languages') ? $template->getLabel($userLang) : $template->label), ENT_QUOTES, 'UTF-8').'</td>
                     </tr>
                     <tr>
                         <td>name</td>
@@ -749,7 +749,7 @@ class RequestInfoPanel extends BasePanel {
                 $row = "\n<tr>" .
                     "<td>$f->id</td>" .
                     '<td><a title="Edit Field" href="'.$this->wire('config')->urls->admin.'setup/field/edit?id='.$f->id.'">'.$f->name.'</a></td>' .
-                    "<td>$f->label</td>" .
+                    "<td>" . htmlspecialchars((string) $f->label, ENT_QUOTES, 'UTF-8') . "</td>" .
                     "<td>".str_replace('Fieldtype', '', $f->type)."</td>";
                 if($f->inputfield || $f->inputfieldClass) {
                     $row .= "<td>".str_replace('Inputfield', '', ($f->inputfield ? $f->inputfield : $f->inputfieldClass))."</td>";

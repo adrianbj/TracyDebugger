@@ -74,6 +74,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     protected $tracyEnabled = false;
     protected $earlyExit = false;
     protected $tracyCacheDir;
+    protected $fileEditorPostValidated = false;
     protected $modulesDbBackupFilename;
     protected $serverStyleInfo;
     protected static $useOnlineEditor;
@@ -119,7 +120,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
     // phpInfo shows environment variables (often credentials) and the request's cookies, incl. the session cookie
     // eventInterceptor can make any hooked method return a chosen value (e.g. Page::editable), which would let
     // other users get past permission checks
-    public static $superUserOnlyPanels = array('console', 'fileEditor', 'adminer', 'terminal', 'adminTools', 'moduleDisabler', 'phpInfo', 'eventInterceptor');
+    // diagnostics shows absolute paths, the user PHP runs as, and file ownership and permissions
+    public static $superUserOnlyPanels = array('console', 'fileEditor', 'adminer', 'terminal', 'adminTools', 'moduleDisabler', 'phpInfo', 'eventInterceptor', 'diagnostics');
     public static $pageHtml;
     public static $consoleRunId = '';
     public static $consoleRunStatusDir = '';
@@ -4774,7 +4776,8 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $testFileEditorPath = static::tokenCookie('tracyTestFileEditor');
         if($testFileEditorPath !== null && (static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser)) {
             $rootPath = str_replace('\\', '/', $this->wire('config')->paths->root);
-            $editorPath = str_replace('\\', '/', (string) ($this->wire('input')->post->fileEditorFilePath ?: $testFileEditorPath));
+            // the path in a POST only when it's one that FileEditorPost.php accepted (token and CSRF checked)
+            $editorPath = str_replace('\\', '/', (string) ($this->fileEditorPostValidated && $this->wire('input')->post->fileEditorFilePath ? $this->wire('input')->post->fileEditorFilePath : $testFileEditorPath));
             $resolvedFilePath = str_replace('\\', '/', (string) realpath($rootPath . $editorPath));
             if($resolvedFilePath === '') {
                 $resolvedFilePath = str_replace('\\', '/', (string) realpath($editorPath));
@@ -5030,7 +5033,7 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
         $f->label = __('Restrict non-superusers', __FILE__);
         $f->description = __('IP Address that non-superusers need to use TracyDebugger. Enter IP address or a PCRE regular expression to match IP address of user, eg. /^123\.456\.789\./ would match all IP addresses that started with 123.456.789.', __FILE__);
         $f->columnWidth = 50;
-        $f->notes = __('Non-superusers are already blocked unless they have the `tracy-debugger` permission. But once a user has been given the permission, this option restricts access to the listed IP address. Highly recommended for debugging live sites that you have manually set into DEVELOPMENT mode.', __FILE__);
+        $f->notes = __('Non-superusers are already blocked unless they have the `tracy-debugger` permission. But once a user has been given the permission, this option restricts access to the listed IP address. Highly recommended for debugging live sites that you have manually set into DEVELOPMENT mode. The address checked is the one connecting to the web server (REMOTE_ADDR): behind a proxy, load balancer or CDN that is the proxy\'s address, the same for every visitor, so this setting can\'t tell them apart there.', __FILE__);
         if($data['ipAddress']) $f->attr('value', $data['ipAddress']);
         $fieldset->add($f);
 

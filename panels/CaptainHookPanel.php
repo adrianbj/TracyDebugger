@@ -69,9 +69,9 @@ HTML;
         $lastSection = null;
         $sections = array();
         foreach($hooks as $file => $info) {
-            $name = pathinfo($info['filename'], PATHINFO_FILENAME);
+            $name = htmlspecialchars(pathinfo($info['filename'], PATHINFO_FILENAME), ENT_QUOTES, 'UTF-8');
             $label = $this->stripRootPath($info['filename'], '');
-            $label = TracyDebugger::forwardSlashPath($label);
+            $label = htmlspecialchars(TracyDebugger::forwardSlashPath($label), ENT_QUOTES, 'UTF-8');
             $path = parse_url($label, PHP_URL_PATH);
             $segments = explode('/', $path);
             $currentSection = ucfirst($segments[0]) . ' ' . ucfirst($segments[1]);
