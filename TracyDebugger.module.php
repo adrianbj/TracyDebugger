@@ -1426,7 +1426,13 @@ class TracyDebugger extends WireData implements Module, ConfigurableModule {
 
 
             // PAGE RECORDER
-            require_once(__DIR__ . '/includes/post_processors/PageRecorderPost.php');
+            // at ready rather than here: it asks whether the user may trash / edit each page, and those methods
+            // (Page::trashable, Page::editable) are hooks that PagePermissions hasn't added yet during init
+            if($this->wire('input')->post->trashRecordedPages || $this->wire('input')->post->clearRecordedPages) {
+                $this->wire()->addHookAfter('ProcessWire::ready', function() {
+                    require_once(__DIR__ . '/includes/post_processors/PageRecorderPost.php');
+                });
+            }
 
 
             // ADMIN TOOLS
