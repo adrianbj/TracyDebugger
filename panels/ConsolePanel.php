@@ -38,7 +38,6 @@ class ConsolePanel extends BasePanel {
     public function getPanel() {
 
         $rootPath = $this->wire('config')->paths->root;
-        $currentUrl = htmlspecialchars($_SERVER['REQUEST_URI'] ?? '', ENT_QUOTES, 'UTF-8');
         $tracyModuleUrl = $this->wire('config')->urls->TracyDebugger;
         $inAdmin = TracyDebugger::$inAdmin;
 
@@ -112,7 +111,7 @@ class ConsolePanel extends BasePanel {
         // scripts/console-panel.js. json_encode() keeps strings (and the multi-line SVG) valid
         // as JS literals, and the null fallbacks keep the object literal syntactically valid
         // when there is no field/template/module in context.
-        $currentUrlJs = json_encode($currentUrl);
+        $currentUrlJs = json_encode((string) ($_SERVER['REQUEST_URI'] ?? ''), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
         $midJs = json_encode((string) $mid);
         $maximizeSvgJs = json_encode($maximizeSvg);
         $fidJs = $fid === null ? 'null' : (int) $fid;

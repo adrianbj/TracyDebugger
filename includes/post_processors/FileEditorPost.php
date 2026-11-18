@@ -2,8 +2,13 @@
 // Post processor for File Editor panel - test, save, restore template/file code
 
             // FILE/TEMPLATE EDITOR
-            if(static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser) {
-                if($this->wire('input')->post->fileEditorFilePath && $this->wire('session')->CSRF->validate()) {
+            if((static::$allowedSuperuser || self::$validLocalUser || self::$validSwitchedUser) && !self::panelRestricted('fileEditor')) {
+                // the File Editor's own token (or a same-origin request, see validTracyRequest()) as well as PW's
+                // CSRF check, which passes everything when $config->protectCSRF is off
+                $fileEditorTokenOk = ($this->wire('input')->post->fileEditorFilePath || $this->wire('input')->post->tracyRestoreFileEditorBackup)
+                    && TracyDebugger::validTracyRequest($this->wire('session')->tracyFileEditorToken, isset($_POST['csrfToken']) ? (string) $_POST['csrfToken'] : '');
+
+                if($fileEditorTokenOk && $this->wire('input')->post->fileEditorFilePath && $this->wire('session')->CSRF->validate()) {
                     $rawCode = base64_decode($this->wire('input')->post->tracyFileEditorRawCode);
                     if(static::$inAdmin &&
                         $this->data['referencePageEdited'] &&
@@ -45,7 +50,7 @@
                             $relPath = $isWindows ? substr($filePath, strlen($rootPath)) : str_replace($rootPath, '', $filePath);
 
                             // backup old version to Tracy cache directory
-                            $cachePath = $this->tracyCacheDir . $relPath;
+                            $cachePath = static::fileEditorBackupPath() . $relPath;
                             if(!is_dir($cachePath)) if(!wireMkdir(pathinfo($cachePath, PATHINFO_DIRNAME), true)) {
                                 if($isAjaxSave) {
                                     $errorMsg = "Unable to create cache path: $cachePath";
@@ -97,7 +102,7 @@
                 }
 
                 // if file editor restore
-                if($this->wire('input')->post->tracyRestoreFileEditorBackup && $this->wire('session')->CSRF->validate()) {
+                if($fileEditorTokenOk && $this->wire('input')->post->tracyRestoreFileEditorBackup && $this->wire('session')->CSRF->validate()) {
                     $rootPath = str_replace('\\', '/', $this->wire('config')->paths->root);
                     $editorPath = str_replace('\\', '/', (string) ($this->wire('input')->post->fileEditorFilePath ?: TracyDebugger::tokenCookie('tracyTestFileEditor')));
                     $this->filePath = str_replace('\\', '/', (string) realpath($rootPath . $editorPath));
@@ -106,7 +111,7 @@
                     }
                     $isWindows = DIRECTORY_SEPARATOR === '\\';
                     $prefixOk = $isWindows ? (stripos($this->filePath, $rootPath) === 0) : (strpos($this->filePath, $rootPath) === 0);
-                    $tracyCacheDirNorm = str_replace('\\', '/', $this->tracyCacheDir);
+                    $tracyCacheDirNorm = str_replace('\\', '/', static::fileEditorBackupPath());
                     if($this->filePath !== '' && $prefixOk) {
                         $relPath = $isWindows ? substr($this->filePath, strlen($rootPath)) : str_replace($rootPath, '', $this->filePath);
                         $this->cachePath = str_replace('\\', '/', (string) realpath($tracyCacheDirNorm . $relPath));

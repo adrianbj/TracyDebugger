@@ -84,7 +84,7 @@ class DumpsPanel extends BasePanel {
         foreach($data as $item) {
             if(empty($item['text'])) continue;
             if(!empty($item['title'])) {
-                $out .= '### ' . \Tracy\Helpers::escapeMd($item['title']) . "\n\n";
+                $out .= '### ' . \Tracy\Helpers::escapeMd(AIExport::scrub((string) $item['title'])) . "\n\n";
             }
             $out .= \Tracy\Helpers::escapeMd($item['text']) . "\n";
         }

@@ -45,6 +45,9 @@ class SlackLogger {
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        // this runs in the request that had the error, so a slow Slack mustn't hold it up
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
         $result = curl_exec($ch);
         if (PHP_MAJOR_VERSION < 8) curl_close($ch);
         return $result;

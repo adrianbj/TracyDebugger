@@ -104,7 +104,7 @@ class PageFilesPanel extends BasePanel {
                     foreach($this->missingFiles[$pid] as $missingFile) {
                         $this->filesListStr .= '
                         <tr>
-                            <td><span style="color: ' . TracyDebugger::COLOR_ALERT . ' !important">'.pathinfo($missingFile['filename'], PATHINFO_BASENAME).'</td>
+                            <td><span style="color: ' . TracyDebugger::COLOR_ALERT . ' !important">'.htmlspecialchars((string) pathinfo($missingFile['filename'], PATHINFO_BASENAME), ENT_QUOTES, 'UTF-8').'</td>
                             <td></td>
                             <td></td>
                             <td>'.$missingFile['field'].'</td>' .
@@ -162,7 +162,7 @@ class PageFilesPanel extends BasePanel {
             $out .= '
             <form style="display:inline" method="post" action="'.htmlspecialchars(TracyDebugger::inputUrl(true), ENT_QUOTES, 'UTF-8').'" data-confirm="Do you really want to delete all the orange highlighted orphan files?">
                 '.$this->csrfInput().'
-                <input type="hidden" name="orphanPaths" value="'.implode('|', $this->orphanFiles).'" />
+                <input type="hidden" name="orphanPaths" value="'.htmlspecialchars((string) implode('|', $this->orphanFiles), ENT_QUOTES, 'UTF-8').'" />
                 <input type="submit" style="color:'.TracyDebugger::COLOR_WARN.' !important; color: #FFFFFF" name="deleteOrphanFiles" value="Delete '.$numOrphanFiles.' orphan'._n('', 's', $numOrphanFiles).'" />
             </form>&nbsp&nbsp;';
         }

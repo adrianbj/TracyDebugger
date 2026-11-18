@@ -57,7 +57,7 @@ class MailInterceptorPanel extends BasePanel {
                                     if($item['bodyHTML']) {
                                         $this->entries .= "
                                         <a href='#' rel='#html-body' style='font-size:12px !important; position: absolute; left:56px; top:3px;' class='tracy-toggle tracy-collapsed'>HTML</a>
-                                        <div id='html-body' class='tracy-section tracy-collapsed'><iframe sandbox=\"allow-popups allow-popups-to-escape-sandbox\" srcdoc=\"".$this->e('<base target="_blank">' . $item['bodyHTML'])."\" style='width:100%; min-width:500px; height:400px; border:0; background:#fff; resize:vertical'></iframe></div>
+                                        <div id='html-body' class='tracy-section tracy-collapsed'><a href='#' class='tracy-mail-load-remote' data-srcdoc=\"".$this->e('<base target="_blank">' . $item['bodyHTML'])."\" style='font-size:12px !important; display:block; margin-bottom:4px'>Load remote images and styles</a><iframe sandbox=\"allow-popups allow-popups-to-escape-sandbox\" srcdoc=\"".$this->e('<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; img-src data: cid:; font-src data:; media-src data:"><base target="_blank">' . $item['bodyHTML'])."\" style='width:100%; min-width:500px; height:400px; border:0; background:#fff; resize:vertical'></iframe></div>
                                         <a href='#' rel='#source-body' style='font-size:12px !important; position: absolute; left:120px; top:3px;' class='tracy-toggle tracy-collapsed'>Source</a>
                                         <div id='source-body' class='tracy-section tracy-collapsed'><pre style='max-width: 800px; white-space: normal;'>".htmlentities($item['bodyHTML'])."</pre></div>";
                                     }
@@ -156,6 +156,14 @@ class MailInterceptorPanel extends BasePanel {
             if(el) el.addEventListener("click", function() { setTestEmail("set"); });
             el = document.getElementById("removeEmailButton");
             if(el) el.addEventListener("click", function() { setTestEmail("remove"); });
+            document.addEventListener("click", function(e) {
+                var link = e.target && e.target.closest ? e.target.closest(".tracy-mail-load-remote") : null;
+                if(!link) return;
+                e.preventDefault();
+                var frame = link.parentNode.querySelector("iframe");
+                if(frame) frame.srcdoc = tracyTrusted.html(link.getAttribute("data-srcdoc"));
+                link.parentNode.removeChild(link);
+            });
         </script>
 
         ' . $this->openPanel() . '

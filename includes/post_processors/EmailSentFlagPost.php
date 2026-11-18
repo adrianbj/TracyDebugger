@@ -8,13 +8,14 @@ if(($this->wire('input')->post->clearEmailSent && $this->wire('session')->CSRF->
     if(file_exists($emailSentPath)) {
         $removed = unlink($emailSentPath);
     }
+    // redirect either way, so the page isn't left showing at a URL with the action token in it
     if (!isset($removed) || !$removed) {
-        $this->wire()->error( __('No file to remove'));
+        $this->wire('session')->error( __('No file to remove'));
     }
     else {
-        $this->wire()->message(__("email-sent file deleted successfully"));
-        $this->wire('session')->redirect(str_replace(array('?clearEmailSent=1', '&clearEmailSent=1'), '', TracyDebugger::urlWithoutActionToken($this->wire('input')->url(true))));
+        $this->wire('session')->message(__("email-sent file deleted successfully"));
     }
+    $this->wire('session')->redirect(str_replace(array('?clearEmailSent=1', '&clearEmailSent=1'), '', TracyDebugger::urlWithoutActionToken($this->wire('input')->url(true))));
 }
 
 if(file_exists($emailSentPath)) {

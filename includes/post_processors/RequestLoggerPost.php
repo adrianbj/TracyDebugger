@@ -3,7 +3,7 @@
 // REQUEST LOGGER
 // enable/disable page logging
 // superusers (and local / switched users) only: logging captures other visitors' requests and rendered pages
-if((TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser) && ($this->wire('input')->post->tracyRequestLoggerEnableLogging || $this->wire('input')->post->tracyRequestLoggerDisableLogging) && $this->wire('session')->CSRF->validate()) {
+if((TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser) && !TracyDebugger::panelRestricted('requestLogger') && ($this->wire('input')->post->tracyRequestLoggerEnableLogging || $this->wire('input')->post->tracyRequestLoggerDisableLogging) && $this->wire('session')->CSRF->validate()) {
     $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");
     $requestLoggerLogPageId = (int) $this->wire('input')->post->requestLoggerLogPageId;
     if($this->wire('input')->post->tracyRequestLoggerEnableLogging) {

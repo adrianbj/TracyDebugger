@@ -34,6 +34,21 @@ class AIExport {
         // Bearer / Basic auth headers
         array('/(Authorization:\s*Bearer\s+)[A-Za-z0-9\-_\.=]+/i', '$1[REDACTED_BEARER]'),
         array('/(Authorization:\s*Basic\s+)[A-Za-z0-9\+\/=]+/i',   '$1[REDACTED_BASIC]'),
+        // the same credentials where there's no "Authorization:" before them, as in a dump: 'Authorization' => 'Bearer ...'
+        array('/\b(Bearer\s+)[A-Za-z0-9\-_\.=]{16,}/',              '$1[REDACTED_BEARER]'),
+        array('/\b(Basic\s+)[A-Za-z0-9\+\/]{16,}={0,2}/',           '$1[REDACTED_BASIC]'),
+        // Cookie / Set-Cookie header lines
+        array('/(\b(?:Set-)?Cookie:\s*)[^\r\n]+/i',                 '$1[REDACTED_COOKIE]'),
+        // PEM private keys
+        array('/-----BEGIN [A-Z ]*PRIVATE KEY-----.*?-----END [A-Z ]*PRIVATE KEY-----/s', '[REDACTED_PRIVATE_KEY]'),
+        // password in a URL or DSN: scheme://user:password@host (before the email pattern, which "password@host" looks like)
+        array('/\b([a-z][a-z0-9+.\-]*:\/\/[^\s:\/@]+:)[^\s@\/]+(@)/i', '$1[REDACTED]$2'),
+        // password hashes (bcrypt, argon2)
+        array('/\$2[aby]\$\d{2}\$[.\/A-Za-z0-9]{53}/',             '[REDACTED_HASH]'),
+        array('/\$argon2(?:id|i|d)\$[^\s"\']+/',                    '[REDACTED_HASH]'),
+        // AI provider keys (Anthropic / OpenAI "sk-", Google "AIza") and Stripe test / webhook secrets
+        array('/\b(sk-[A-Za-z0-9\-_]{20,}|AIza[0-9A-Za-z\-_]{35}|sk_test_[A-Za-z0-9]{10,}|rk_test_[A-Za-z0-9]{10,}|whsec_[A-Za-z0-9]{10,})/',
+              '[REDACTED_TOKEN]'),
         // AWS-style access keys
         array('/AKIA[0-9A-Z]{16}/',                                '[REDACTED_AWS_KEY]'),
         // GitHub / Slack / Stripe style token prefixes

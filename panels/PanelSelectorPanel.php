@@ -145,11 +145,11 @@ class PanelSelectorPanel extends BasePanel {
             }
 
             function toggleGuestDumps() {
-                if(getCookie("tracyGuestDumps")) {
+                if(' . (TracyDebugger::tokenCookie('tracyGuestDumps') !== null ? 'true' : 'false') . ') {
                     document.cookie = "tracyGuestDumps=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
                 }
                 else {
-                    document.cookie = "tracyGuestDumps=1; expires=0; path=/";
+                    document.cookie = "tracyGuestDumps=" + ' . json_encode((string) $this->wire('session')->tracyActionToken) . ' + "|1; expires=0; path=/";
                 }
                 location.reload();
             }
@@ -270,7 +270,7 @@ class PanelSelectorPanel extends BasePanel {
                 <input type="submit" id="tracyPanelsReset" value="Reset" />
             </span>
             <span style="float:right">';
-        $out .= '<input type="submit" id="tracyGuestDumps" style="' . ($this->wire('input')->cookie->tracyGuestDumps ? 'color:' . TracyDebugger::COLOR_WARN : '') . '" value="' . ($this->wire('input')->cookie->tracyGuestDumps ? 'Disable' : 'Enable') . ' Guest Dumps" />&nbsp;&nbsp;';
+        $out .= '<input type="submit" id="tracyGuestDumps" style="' . (TracyDebugger::tokenCookie('tracyGuestDumps') !== null ? 'color:' . TracyDebugger::COLOR_WARN : '') . '" value="' . (TracyDebugger::tokenCookie('tracyGuestDumps') !== null ? 'Disable' : 'Enable') . ' Guest Dumps" />&nbsp;&nbsp;';
         if(!TracyDebugger::getDataValue('strictMode')) {
             $out .= '<input type="submit" id="tracyStrictMode" value="' . ($this->wire('input')->cookie->tracyStrictMode ? 'Disable' : 'Enable') . ' Strict Mode" />&nbsp;&nbsp;';
         }

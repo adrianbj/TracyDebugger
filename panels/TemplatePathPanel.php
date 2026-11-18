@@ -27,7 +27,7 @@ class TemplatePathPanel extends BasePanel {
                 if(in_array($baseName, $templateFilenames) && $templateBasename != $baseName) continue;
                 if(strpos($file, '-'.TracyDebugger::getDataValue('userDevTemplateSuffix').'.'.$fileExt)) $userDevTemplateFiles++;
                 if(TracyDebugger::isAlternativeTemplateFile($baseName, $this->wire('page')->template)) {
-                    $this->templateOptions .= '<option value="'.$file.'"'.(pathinfo($this->wire('page')->template->filename, PATHINFO_BASENAME) == $file ? 'selected="selected"' : '').'>'.$file.'</option>';
+                    $this->templateOptions .= '<option value="'.htmlspecialchars((string) $file, ENT_QUOTES, 'UTF-8').'"'.(pathinfo($this->wire('page')->template->filename, PATHINFO_BASENAME) == $file ? 'selected="selected"' : '').'>'.htmlspecialchars((string) $file, ENT_QUOTES, 'UTF-8').'</option>';
                 }
             }
         }

@@ -130,7 +130,9 @@ class ProcesswireLogsPanel extends BasePanel {
                     }
                     $entriesArr[$itemKey]['text'] = $isCustom ? json_encode($entry) : $entry['text'];
                     $entriesArr[$itemKey]['user'] = $isCustom ? '' : $entry['user'];
-                    $entriesArr[$itemKey]['url'] = $isCustom ? '' : "<a href='".htmlspecialchars($entry['url'] ?? '', ENT_QUOTES, 'UTF-8')."'>".htmlspecialchars($entry['url'] ?? '', ENT_QUOTES, 'UTF-8')."</a>";
+                    // a link only for an http(s) URL, as in the Tracy Logs panel: the column comes from the log file
+                    $entryUrl = htmlspecialchars($entry['url'] ?? '', ENT_QUOTES, 'UTF-8');
+                    $entriesArr[$itemKey]['url'] = $isCustom ? '' : (preg_match('#^https?://#i', $entryUrl) ? "<a href='".$entryUrl."'>".$entryUrl."</a>" : $entryUrl);
                     $entriesArr[$itemKey]['log'] = $log['name'];
                     $x--;
                     $this->numLogEntries++;

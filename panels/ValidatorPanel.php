@@ -12,7 +12,8 @@ class ValidatorPanel extends BasePanel {
     protected $message;
     protected $resultLabel;
     protected $validationUrl;
-    protected $validatorUrl;
+    protected $validatorUrl = 'https://validator.w3.org/nu/';
+    protected $htmlId = '';
     protected $failure;
 
     public function getTab() {
@@ -20,11 +21,84 @@ class ValidatorPanel extends BasePanel {
         if(TracyDebugger::isAdditionalBar()) return;
         Debugger::timer('validator');
 
-        $this->validatorUrl = 'https://validator.w3.org/nu/';
         $this->validationUrl = $this->validatorUrl . "?doc=".rawurlencode($this->wire('page')->httpUrl)."&showimagereport=yes&showsource=yes";
 
-        // results as JSON, rendered here with everything escaped, rather than inserting the validator's own HTML
         $pageHtml = (string) TracyDebugger::$pageHtml;
+        // nothing to send, so this is the result
+        if($pageHtml === '') return $this->buildResult('');
+
+        // the page HTML only goes to the validator once the panel is opened (see getPanel() and validateStored()),
+        // not on every page view, so it's kept until then
+        $this->htmlId = self::storePageHtml($pageHtml);
+        $this->color = TracyDebugger::COLOR_NORMAL;
+        $this->resultLabel = 'Validator';
+        $this->icon = '<span style="opacity:0.5"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 191.667 191.667" style="enable-background:new 0 0 191.667 191.667;" xml:space="preserve" width="16px" height="16px">
+                            <path d="M95.833,0C42.991,0,0,42.99,0,95.833s42.991,95.834,95.833,95.834s95.833-42.991,95.833-95.834S148.676,0,95.833,0z   M150.862,79.646l-60.207,60.207c-2.56,2.56-5.963,3.969-9.583,3.969c-3.62,0-7.023-1.409-9.583-3.969l-30.685-30.685  c-2.56-2.56-3.97-5.963-3.97-9.583c0-3.621,1.41-7.024,3.97-9.584c2.559-2.56,5.962-3.97,9.583-3.97c3.62,0,7.024,1.41,9.583,3.971  l21.101,21.1l50.623-50.623c2.56-2.56,5.963-3.969,9.583-3.969c3.62,0,7.023,1.409,9.583,3.969  C156.146,65.765,156.146,74.362,150.862,79.646z" fill="\'.$this->color.\'"/>
+                        </svg></span>';
+        if($this->htmlId === '') {
+            $this->failure = '<p class="validator-status validator-status-warning">The page HTML could not be stored for validation.</p><p>Check that the TracyDebugger cache folder is writable.</p>';
+        }
+        return $this->buildTab('Validator: open the panel to validate this page', 'Validator');
+    }
+
+    /**
+     * Folder for the page HTML kept until the Validator panel is opened
+     *
+     * @return string
+     */
+    protected static function htmlPath() {
+        return wire('config')->paths->cache . 'TracyDebugger/validator/';
+    }
+
+    /**
+     * Keep the HTML of this page view for validateStored(), and remove what's left from page views over an hour ago
+     *
+     * @param string $pageHtml
+     * @return string id to pass to validateStored(), or '' if it couldn't be stored
+     */
+    protected static function storePageHtml($pageHtml) {
+        $path = self::htmlPath();
+        if(!is_dir($path) && !wireMkdir($path, true)) return '';
+        TracyDebugger::denyWebAccess($path);
+        foreach((array) glob($path . '*.html') as $file) {
+            if(@filemtime($file) < time() - 3600) @unlink($file);
+        }
+        $id = bin2hex(random_bytes(10));
+        return @file_put_contents($path . $id . '.html', $pageHtml, LOCK_EX) === false ? '' : $id;
+    }
+
+    /**
+     * Validate the page HTML that storePageHtml() kept: what the panel asks for when it's opened
+     *
+     * @param string $id
+     * @return array HTML for the panel: 'html' (the results), 'heading' and 'tab'
+     */
+    public function validateStored($id) {
+        $file = preg_match('/^[a-f0-9]{20}$/D', (string) $id) ? self::htmlPath() . $id . '.html' : '';
+        if($file === '' || !is_file($file)) {
+            return array(
+                'html' => '<p class="validator-status validator-status-warning">The HTML of this page view is no longer stored.</p><p>Reload the page and open the panel again.</p>',
+                'heading' => '',
+                'tab' => '',
+            );
+        }
+        $tab = $this->buildResult((string) file_get_contents($file));
+        return array(
+            'html' => $this->rawResult ? $this->message . $this->filteredResult : (string) $this->failure,
+            'heading' => str_replace('#FFFFFF', $this->color, $this->icon) . ' ' . $this->resultLabel,
+            'tab' => $tab,
+        );
+    }
+
+    /**
+     * Send $pageHtml to the validator and set up the result
+     *
+     * @param string $pageHtml
+     * @return string HTML for the panel's tab
+     */
+    protected function buildResult($pageHtml) {
+
+        // results as JSON, rendered here with everything escaped, rather than inserting the validator's own HTML
         $messages = null;
         $this->rawResult = '';
         if($pageHtml === '') {
@@ -137,7 +211,7 @@ class ValidatorPanel extends BasePanel {
     public function getPanel() {
 
         $out = '
-        <h1>'.str_replace('#FFFFFF', $this->color, $this->icon).' '.$this->resultLabel.'</h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" data-tracy-resize="ValidatorPanel">⛶</a></span></span>
+        <h1><span id="tracyValidatorHeading">'.str_replace('#FFFFFF', $this->color, $this->icon).' '.$this->resultLabel.'</span></h1><span class="tracy-icons"><span class="resizeIcons"><a href="#" title="Maximize / Restore" data-tracy-resize="ValidatorPanel">⛶</a></span></span>
         ' . $this->openPanel() . '
             <style type="text/css"' . TracyDebugger::getNonceAttr() . '>
 
@@ -340,7 +414,38 @@ class ValidatorPanel extends BasePanel {
 
         $validatorLink = '<a href="'.htmlspecialchars($this->validationUrl, ENT_QUOTES, 'UTF-8').'">Results for '.htmlspecialchars($this->wire('page')->httpUrl, ENT_QUOTES, 'UTF-8').' at '.$this->validatorUrl.'</a>';
         $out .= '<h2>'.$validatorLink.'</h2>';
-        if($this->rawResult) {
+        if($this->htmlId !== '') {
+            $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
+            $out .= '<div id="results"><p>Validating this page at validator.w3.org&hellip;</p></div>
+            <script' . TracyDebugger::getNonceAttr() . '>
+                (function() {
+                    var panel = document.getElementById("tracy-debug-panel-ProcessWire-ValidatorPanel");
+                    if(!panel) return;
+                    var results = panel.querySelector("#results");
+                    var heading = panel.querySelector("#tracyValidatorHeading");
+                    if(!results) return;
+                    var xhr = new XMLHttpRequest();
+                    xhr.onreadystatechange = function() {
+                        if(xhr.readyState !== XMLHttpRequest.DONE) return;
+                        var data = null;
+                        try { data = JSON.parse(xhr.responseText); } catch(e) {}
+                        if(xhr.status !== 200 || !data || typeof data.html !== "string") {
+                            results.textContent = "The validation request failed (HTTP " + xhr.status + "). Reload the page to try again.";
+                            return;
+                        }
+                        results.innerHTML = tracyTrusted.html(data.html);
+                        if(heading && data.heading) heading.innerHTML = tracyTrusted.html(data.heading);
+                        var tab = document.querySelector("#tracy-debug-bar a[rel=tracy-debug-panel-ProcessWire-ValidatorPanel]");
+                        if(tab && data.tab) tab.innerHTML = tracyTrusted.html(data.tab);
+                    };
+                    xhr.open("POST", ' . json_encode((string) ($_SERVER['REQUEST_URI'] ?? ''), $jsonFlags) . ', true);
+                    xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                    xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+                    xhr.send("tracyValidate=" + encodeURIComponent(' . json_encode($this->htmlId, $jsonFlags) . ') + "&csrfToken=" + encodeURIComponent(' . json_encode((string) $this->wire('session')->tracyActionToken, $jsonFlags) . '));
+                })();
+            </script>';
+        }
+        elseif($this->rawResult) {
             $out .= '<div id="results">'.$this->message.$this->filteredResult.'</div>';
         }
         else {

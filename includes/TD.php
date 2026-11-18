@@ -394,7 +394,7 @@ class TD extends TracyDebugger {
             echo '
             <div class="tracy-inner" style="height:auto !important">
                 <div class="tracy-DumpPanel">';
-            if($title) echo '<h2>'.$title.'</h2>';
+            if($title) echo '<h2>'.htmlspecialchars((string) $title, ENT_QUOTES, 'UTF-8').'</h2>';
             echo static::safeGenerateDump($var, $options) .
             '   </div>
             </div>';
@@ -440,7 +440,7 @@ class TD extends TracyDebugger {
             echo '
             <div class="tracy-inner" style="height:auto !important">
                 <div class="tracy-DumpPanel">';
-            if($title) echo '<h2>'.$title.'</h2>';
+            if($title) echo '<h2>'.htmlspecialchars((string) $title, ENT_QUOTES, 'UTF-8').'</h2>';
             echo static::safeGenerateDump($var, $options) .
             '   </div>
             </div>';
@@ -523,7 +523,7 @@ class TD extends TracyDebugger {
         // order alongside the dumps. position:relative + right padding give the
         // absolutely-positioned button room (matches the dump copy-button layout).
         $agentText = $type . ': ' . $message . (($file !== null && $line !== null) ? ' in ' . $file . ':' . (int)$line : '');
-        $copyButton = self::buildAgentTextCopyButton($agentText, 'Copy this error as plaintext for an AI agent');
+        $copyButton = self::buildAgentTextCopyButton(AIExport::scrub($agentText), 'Copy this error as plaintext for an AI agent');
         return '<div style="position:relative; border: 1px solid #d9d9d9; border-left: 3px solid #c00; padding: 6px 28px 6px 10px; background: #fff3f3; color: #c00; font-family: monospace; white-space: normal; margin-bottom: 5px;">'
             . $copyButton
             . '<strong>' . htmlspecialchars($type, ENT_QUOTES, 'UTF-8') . ':</strong> '

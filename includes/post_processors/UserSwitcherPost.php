@@ -181,9 +181,11 @@
                     $session->redirect($this->httpReferer);
                 }
             }
-            elseif($hasAction && $switcherId) {
-                // Action submitted with a switcher id, but the gate failed (CSRF,
-                // expired session, or fingerprint mismatch). Tear down silently.
+            elseif($hasAction && $csrfOk && $switcherId) {
+                // Action submitted with a switcher id, but the gate failed (expired
+                // session or fingerprint mismatch). Tear down silently. Not when it's the
+                // CSRF check that failed: that request didn't come from the panel, and a
+                // forged one shouldn't be able to end the session and log the user out.
                 $session->remove("tracyUserSwitcherId");
                 $session->remove("tracyUserSwitcherFp");
                 $configData = $this->wire('modules')->getModuleConfigData("TracyDebugger");

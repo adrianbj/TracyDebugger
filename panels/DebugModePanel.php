@@ -95,7 +95,7 @@ class DebugModePanel extends BasePanel {
                         "<td>$p->id</td>" .
                         "<td>$path</td>" .
                         "<td>" . wireClassName($p) . "</td>" .
-                        "<td>$p->_debug_loader</td>" .
+                        "<td>" . $this->wire('sanitizer')->entities1((string) $p->_debug_loader) . "</td>" .
                         "</tr>";
                     $pagesLoaded_oc++;
                     return $row;
@@ -236,7 +236,7 @@ class DebugModePanel extends BasePanel {
                 $savedTimers = Debug::getSavedTimers();
                 foreach($savedTimers as $name => $timer) {
                     $timers_oc++;
-                    $timers .= "\n<tr><td>$name</td><td>$timer</td></tr>";
+                    $timers .= "\n<tr><td>" . $this->wire('sanitizer')->entities1((string) $name) . "</td><td>" . $this->wire('sanitizer')->entities1((string) $timer) . "</td></tr>";
                 }
                 $timers .= $this->sectionEnd();
             }

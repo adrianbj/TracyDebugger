@@ -63,6 +63,27 @@ class PwVersionSwitcher {
     }
 
     /**
+     * For a request that leaves init() early on purpose (Tracy not enabled, toggled off, or not for this
+     * user): PW booted, so the request isn't a failed attempt at the switched version, but it hasn't run all
+     * of init() either, so the marker stays for a request that does. Removing the "attempted" flag that the
+     * revert handler set for this request keeps the next request from reverting because of it.
+     *
+     * @param TracyDebugger $module
+     */
+    public static function discardSwitchAttempt($module) {
+        $rootPath = $module->wire('config')->paths->root;
+        $markerFile = $rootPath . '.tracy-pw-revert';
+        if(!file_exists($markerFile)) return;
+        $attemptedFile = $rootPath . '.tracy-pw-revert-attempted';
+        register_shutdown_function(function() use ($markerFile, $attemptedFile) {
+            // a 500 is left for the revert handler, as in cleanupPwVersionSwitchMarker()
+            $code = http_response_code();
+            if($code !== false && $code >= 500) return;
+            if(file_exists($markerFile)) @unlink($attemptedFile);
+        });
+    }
+
+    /**
      * Show auto-revert notification in ready().
      * Deferred to ready() because PW's session system is fully stable here.
      *
@@ -99,7 +120,7 @@ class PwVersionSwitcher {
     public static function performFileSwap($module) {
         // self::$switchPostValidated: the POST passed the CSRF check in init(), so it isn't a forged request
         if(self::$switchPostValidated && $module->wire('input') && $module->wire('input')->post->tracyPwVersion && $module->wire('input')->post->tracyPwVersion != $module->wire('config')->version
-            && (TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser)) {
+            && (TracyDebugger::$allowedSuperuser || TracyDebugger::$validLocalUser || TracyDebugger::$validSwitchedUser) && !TracyDebugger::panelRestricted('processwireVersion')) {
 
             $rootPath = $module->wire('config')->paths->root;
 
