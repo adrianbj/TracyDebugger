@@ -513,7 +513,7 @@ HTML;
 
             $out .= '<ul class="pw-info-links">';
             foreach(TracyDebugger::getDataValue('customPWInfoPanelLinks') as $path) {
-                if(is_integer($path)) {
+                if(is_int($path)) {
                     $cp = $this->wire('pages')->get($path);
                 }
                 elseif(method_exists($this->wire('pages'), 'getByPath')) {
